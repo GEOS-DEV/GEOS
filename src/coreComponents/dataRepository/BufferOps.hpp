@@ -62,11 +62,22 @@ constexpr bool is_packable_array< ArraySlice< T, NDIM, USD > > = is_packable_hel
 template< typename T >
 constexpr bool is_packable_array< ArrayOfArrays< T > > = is_packable_helper< T >::value;
 
+
+template< typename >
+constexpr bool is_packable_vector = false;
+
+template< typename T >
+constexpr bool is_packable_vector< stdVector< T > > = is_packable_helper< T >::value;
+
+
 template< typename >
 constexpr bool is_packable_set = false;
 
 template< typename T >
 constexpr bool is_packable_set< SortedArray< T > > = is_packable_helper< T >::value;
+
+template< typename T >
+constexpr bool is_packable_set< set< T > > = is_packable_helper< T >::value;
 
 
 template< typename >
@@ -81,6 +92,7 @@ template< typename T >
 struct is_packable_helper
 {
   static constexpr bool value = is_noncontainer_type_packable< T > ||
+                                is_packable_vector< T > ||
                                 is_packable_array< T > ||
                                 is_packable_map< T > ||
                                 is_packable_set< T >;
@@ -90,7 +102,7 @@ template< typename T >
 constexpr bool is_packable = is_packable_helper< T >::value;
 
 template< typename T >
-constexpr bool is_packable_by_index = is_packable_array< T >;
+constexpr bool is_packable_by_index = is_packable_array< T > || is_packable_vector< T >;
 
 template< typename >
 constexpr bool is_map_packable_by_index = false;
@@ -122,10 +134,24 @@ Pack( buffer_unit_type * & buffer,
       const string & var );
 
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename SET >
+localIndex
+PackSet( buffer_unit_type * & buffer,
+         SET const & var );
+
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      SortedArray< T > const & var );
+      SortedArray< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
+
+template< bool DO_PACKING, typename T >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      set< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
+
+
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -138,6 +164,11 @@ template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       ArrayView< T, NDIM, USD > const & var );
+
+template< bool DO_PACKING, typename T >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      stdVector< T > const & var );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -176,7 +207,7 @@ typename std::enable_if< !is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
       T const & GEOS_UNUSED_PARAM( var ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) but type is not packable.", typeid(T).name() ) );
   return 0;
 }
 
@@ -213,6 +244,13 @@ PackArray( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename T_indices >
+typename std::enable_if< is_packable< T >, localIndex >::type
+PackByIndex( buffer_unit_type * & buffer,
+             stdVector< T > const & var,
+             const T_indices & indices );
+
+//------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
@@ -239,7 +277,7 @@ PackByIndex( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
              T const & GEOS_UNUSED_PARAM( var ),
              T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) but type is not packable by index.", typeid(T).name() ) );
   return 0;
 }
 
@@ -264,16 +302,35 @@ Unpack( buffer_unit_type const * & buffer,
         T & var );
 
 //------------------------------------------------------------------------------
+template< typename T, typename SET >
+localIndex
+UnpackSet( buffer_unit_type const * & buffer,
+           SET & var );
+
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var );
+        SortedArray< T > & var )
+{ return UnpackSet< T >( buffer, var ); }
+
+template< typename T >
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        set< T > & var )
+{ return UnpackSet< T >( buffer, var ); }
+
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, typename PERMUTATION >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         Array< T, NDIM, PERMUTATION > & var );
+
+template< typename T >
+typename std::enable_if< is_packable< T >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        stdVector< T > & var );
+
 
 //------------------------------------------------------------------------------
 template< typename T >
@@ -316,7 +373,7 @@ typename std::enable_if< !is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
         T & GEOS_UNUSED_PARAM( var ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) but type is not packable.", typeid(T).name() ) );
   return 0;
 }
 
@@ -353,6 +410,13 @@ UnpackArray( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               stdVector< T > & var,
+               T_indices const & indices );
+
+//------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
@@ -380,7 +444,7 @@ UnpackByIndex( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                T & GEOS_UNUSED_PARAM( var ),
                T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) but type is not packable by index.", typeid(T).name() ) );
   return 0;
 }
 
@@ -596,16 +660,6 @@ typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::typ
 Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unpackIndices );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
-localIndex
-Pack( buffer_unit_type * & buffer, std::pair< T_FIRST, T_SECOND > const & var );
-
-//------------------------------------------------------------------------------
-template< typename T_FIRST, typename T_SECOND >
-localIndex
-Unpack( buffer_unit_type const * & buffer, std::pair< T_FIRST, T_SECOND > & var );
-
-//------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
@@ -627,14 +681,14 @@ PackSize( VARPACK && ... pack )
   return Pack< false >( junk, pack ... );
 }
 
-#ifdef GEOS_USE_ARRAY_BOUNDS_CHECK
+#ifdef GEOS_USE_BOUNDS_CHECK
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ), T const & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) but type is not packable by index.", typeid(T).name() ) );
   return 0;
 }
 
@@ -644,7 +698,7 @@ typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ), T & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) but type is not packable by index.", typeid(T).name() ) );
   return 0;
 }
 
@@ -664,7 +718,7 @@ Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< INDEX_TYPE > const & indices,
         INDEX_TYPE & length );
 
-#endif /* GEOS_USE_ARRAY_BOUNDS_CHECK */
+#endif /* GEOS_USE_BOUNDS_CHECK */
 
 } /* namespace bufferOps */
 } /* namespace geos */

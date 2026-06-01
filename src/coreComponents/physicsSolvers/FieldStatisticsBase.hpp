@@ -49,7 +49,6 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
-    enableLogLevelInput();
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
@@ -60,7 +59,7 @@ public:
     this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Write statistics into a CSV file" );
+      setDescription( "When set to 1, write the statistics into a CSV file" );
   }
 
   /**
@@ -88,10 +87,9 @@ protected:
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                             getDataContext(),
+                   GEOS_FMT( "Could not find solver '{}' of type {}",
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
-                   InputError );
+                   InputError, getDataContext() );
 
     // create dir for output
     if( m_writeCSV > 0 )

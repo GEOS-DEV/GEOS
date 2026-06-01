@@ -18,8 +18,11 @@
  */
 
 #include "ImmiscibleWaterFlashModel.hpp"
-#include "ImmiscibleWaterParameters.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 
 namespace geos
 {
@@ -38,9 +41,11 @@ string ImmiscibleWaterFlashModel::catalogName()
 
 ImmiscibleWaterFlashModel::ImmiscibleWaterFlashModel( string const & name,
                                                       ComponentProperties const & componentProperties,
-                                                      ModelParameters const & modelParameters ):
+                                                      ModelParameters const & modelParameters,
+                                                      arrayView1d< integer const > const phaseTypes ):
   FunctionBase( name, componentProperties ),
-  m_parameters( modelParameters )
+  m_parameters( modelParameters ),
+  m_phaseTypes( phaseTypes )
 {
   m_waterComponentIndex = ImmiscibleWaterParameters::getWaterComponentIndex( componentProperties );
 }
@@ -48,14 +53,22 @@ ImmiscibleWaterFlashModel::ImmiscibleWaterFlashModel( string const & name,
 ImmiscibleWaterFlashModel::KernelWrapper
 ImmiscibleWaterFlashModel::createKernelWrapper() const
 {
-  constexpr integer liquidIndex = 0;
-  constexpr integer vapourIndex = 1;
-  constexpr integer aqueousIndex = 2;
+  array1d< integer > phaseOrder( KernelWrapper::getNumberOfPhases());
+  calculatePhaseOrdering( m_phaseTypes, phaseOrder );
+  integer const liquidIndex = phaseOrder[0];
+  integer const vapourIndex = phaseOrder[1];
+  integer const aqueousIndex = phaseOrder[2];
+
   EquationOfState const * equationOfState = m_parameters.get< EquationOfState >();
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  array1d< real64 > componentCriticalVolume( m_componentProperties.getNumberOfComponents());
+  BrineSalinity const * brineSalinity = m_parameters.get< BrineSalinity >();
+  real64 const salinity = (brineSalinity == nullptr) ? 0.0 : brineSalinity->m_salinity;
+
+  CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
+
+  FlashParameters const * flashParameters = m_parameters.get< FlashParameters >();
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
@@ -64,7 +77,10 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
-                        componentCriticalVolume );
+                        salinity,
+                        criticalVolume->m_componentCriticalVolume,
+                        flashParameters->m_continuousParameters,
+                        flashParameters->m_discreteParameters );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
@@ -75,13 +91,19 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   integer const waterComponentIndex,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
-  arrayView1d< real64 const > const componentCriticalVolume ):
+  real64 const salinity,
+  arrayView1d< real64 const > const componentCriticalVolume,
+  arrayView1d< real64 const > const continuousFlashParameters,
+  arrayView1d< integer const > const discreteFlashParameters ):
   m_twoPhaseModel( numComponents,
                    liquidIndex,
                    vapourIndex,
                    liquidEos,
                    vapourEos,
-                   componentCriticalVolume ),
+                   salinity,
+                   componentCriticalVolume,
+                   continuousFlashParameters,
+                   discreteFlashParameters ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
@@ -95,6 +117,34 @@ ImmiscibleWaterFlashModel::createParameters( std::unique_ptr< ModelParameters > 
   auto params = NegativeTwoPhaseFlashModel::createParameters( std::move( parameters ) );
   params = ImmiscibleWaterParameters::create( std::move( params ) );
   return params;
+}
+
+void ImmiscibleWaterFlashModel::calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                                        arrayView1d< integer > const & phaseOrder )
+{
+  integer liquidIndex = -1;
+  integer vapourIndex = -1;
+  integer aqueousIndex = -1;
+
+  for( integer ip = 0; ip < KernelWrapper::getNumberOfPhases(); ++ip )
+  {
+    if( isPhaseType( phaseTypes[ip], PhaseType::LIQUID ))
+    {
+      liquidIndex = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::VAPOUR ))
+    {
+      vapourIndex = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::AQUEOUS ))
+    {
+      aqueousIndex = ip;
+    }
+  }
+
+  phaseOrder[0] = liquidIndex;
+  phaseOrder[1] = vapourIndex;
+  phaseOrder[2] = aqueousIndex;
 }
 
 } // end namespace compositional

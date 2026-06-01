@@ -351,12 +351,13 @@ std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
 stringToInputVariable( T & target, string const & value, Regex const & regex )
 {
   validateString( value, regex );
-
-  std::istringstream ss( value );
+  string_view stringTrimed = stringutilities::trimSpaces( value );
+  std::istringstream ss( (string( stringTrimed )) );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string \"" << value <<
-                 "\" to type " << LvArray::system::demangleType< T >(),
+                 GEOS_FMT( "Error detected while parsing string \"{}\" to type {}",
+                           value,
+                           LvArray::system::demangleType< T >() ),
                  InputError );
 }
 
@@ -393,6 +394,14 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
+/**
+ * @brief Parse a string and fill a vector of strings with the value(s) in the string.
+ * @param[out] array the array to read values into
+ * @param[in]  value the string that contains the data to be parsed into target
+ * @param[in]  regex the regular expression used for validating the string value.
+ */
+void stringToInputVariable( stdVector< std::string > & array, string const & value, Regex const & regex );
+
 ///@}
 
 namespace internal
@@ -424,6 +433,15 @@ template< typename T, int NDIM, typename PERM >
 static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 { lhs.template setValues< serialPolicy >( rhs ); }
 
+template< typename T >
+static void equate( stdVector< T > & lhs, T const & rhs )
+{
+  for( auto & val : lhs )
+  {
+    val = rhs;
+  }
+}
+
 }   // namespace internal
 
 /**
@@ -445,7 +463,11 @@ template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
 readAttributeAsType( T &, string const & name, Regex const &, xmlNode const &, U const & )
 {
-  GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOS_THROW( GEOS_FMT( "Cannot parse key with name ({}) with the given type {}",
+                        name,
+                        LvArray::system::demangleType< T >() ),
+              InputError );
+  return false;
 }
 
 /**

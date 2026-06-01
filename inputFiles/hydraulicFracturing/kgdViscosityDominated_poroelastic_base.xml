@@ -21,9 +21,8 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
@@ -38,7 +37,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      rockToughness="1e4"
+      initialRockToughness="1e4"
       mpiCommOrder="1"
       isPoroelastic="1"/>
   </Solvers>
@@ -214,8 +213,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroToughness_poroelastic"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"

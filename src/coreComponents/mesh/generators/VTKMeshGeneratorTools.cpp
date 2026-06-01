@@ -41,7 +41,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   diy::mpi::communicator comm( mpiComm );
   assert( static_cast< int >( localParts.GetNumberOfPartitions() ) == comm.size() );
 
-  using BlockType = std::vector< vtkSmartPointer< vtkUnstructuredGrid > >;
+  using BlockType = stdVector< vtkSmartPointer< vtkUnstructuredGrid > >;
 
   diy::Master master( comm, 1, -1,
                       [] { return static_cast< void * >( new BlockType() ); },
@@ -197,14 +197,14 @@ redistribute( vtkPartitionedDataSet & localParts,
   return result;
 }
 
-std::vector< vtkBoundingBox >
+stdVector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
 {
   // The code below is modified from vtkDIYGhostUtilities::ExchangeBoundingBoxes():
   // https://gitlab.kitware.com/vtk/vtk/-/blob/1f0e4b2d0be7cd328795131642b5bf7984f681c1/Parallel/DIY/vtkDIYGhostUtilities.txx#L300
   // It makes some simplifications (e.g. just one input dataset per rank).
 
-  using BlockType = std::map< int, vtkBoundingBox >;
+  using BlockType = stdMap< int, vtkBoundingBox >;
 
   diy::mpi::communicator comm( mpiComm );
   diy::Master master( comm, 1, -1,
@@ -254,7 +254,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   boxMap.emplace( comm.rank(), vtkBoundingBox( dataSet.GetBounds() ) );
   assert( static_cast< int >( boxMap.size() ) == comm.size() );
 
-  std::vector< vtkBoundingBox > boxes;
+  stdVector< vtkBoundingBox > boxes;
   boxes.reserve( boxMap.size() );
   for( auto const & rankBox : boxMap )
   {

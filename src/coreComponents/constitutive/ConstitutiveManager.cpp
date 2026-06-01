@@ -44,7 +44,8 @@ ConstitutiveManager::~ConstitutiveManager()
 Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::factory( childKey, childName, this );
+  std::unique_ptr< ConstitutiveBase > material =
+    ConstitutiveBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &registerGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
@@ -77,7 +78,8 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                  GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
                            "Make sure that the same constitutive model is not listed as a material on a"
                            " region both as a stand-alone one and as part of a compound constitutive model.",
-                           constitutiveRelationInstanceName, parent->getDataContext().toString() ) );
+                           constitutiveRelationInstanceName, parent->getDataContext().toString() ),
+                 parent->getDataContext() );
 
   ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
@@ -85,6 +87,10 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
   material->allocateConstitutiveData( *parent,
                                       numConstitutivePointsPerParentIndex );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  {}/{} allocated",
+                             constitutiveGroup->getName(),
+                             constitutiveRelation.getName(),
+                             numConstitutivePointsPerParentIndex ) );
 
   ConstitutiveBase &
   materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
@@ -92,28 +98,10 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   materialGroup.resize( constitutiveGroup->size() );
 
   // 2. Allocate subrelations (for compound models)
-  std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
+  stdVector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
   for( string const & subRelationName : subRelationNames )
   {
-    // we only want to register the subRelation if it has not been registered yet.
-    GEOS_ERROR_IF( constitutiveGroup->hasGroup( subRelationName ),
-                   GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
-                             "Make sure that the same constitutive model is not listed as a material on a"
-                             " region both as a stand-alone one and as part of a compound constitutive model.",
-                             subRelationName, parent->getDataContext().toString() ) );
-
-    ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
-
-    std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
-
-    constitutiveModel->allocateConstitutiveData( *parent,
-                                                 numConstitutivePointsPerParentIndex );
-
-
-    ConstitutiveBase &
-    group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
-    group.setSizedFromParent( 1 );
-    group.resize( constitutiveGroup->size() );
+    hangConstitutiveRelation( subRelationName, parent, numConstitutivePointsPerParentIndex );
   }
 }
 

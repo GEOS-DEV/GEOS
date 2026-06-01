@@ -42,6 +42,26 @@ public:
 
   using dataRepository::Group::Group;
 
+  /// deleted default constructor
+  ExecutableGroup() = delete;
+
+  /// deleted copy constructor
+  ExecutableGroup( ExecutableGroup const & ) = delete;
+
+  /// default move constructor
+  ExecutableGroup( ExecutableGroup && ) = default;
+
+  /// deleted assignment operator
+  ExecutableGroup & operator=( ExecutableGroup const & ) = delete;
+
+  /// deleted move operator
+  ExecutableGroup & operator=( ExecutableGroup && ) = delete;
+
+  /**
+   * @brief Default destructor for the ExecutableGroup
+   */
+  virtual ~ExecutableGroup() override = default;
+
   /**
    * @brief Main extension point of executable targets.
    * @param[in] time_n        current time level

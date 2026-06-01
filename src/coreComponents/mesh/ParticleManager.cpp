@@ -77,23 +77,18 @@ void ParticleManager::setMaxGlobalIndex()
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
 
-  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
-                         &m_maxGlobalIndex,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOS );
+  m_maxGlobalIndex = MpiWrapper::allReduce( m_localMaxGlobalIndex,
+                                            MpiWrapper::Reduction::Max,
+                                            MPI_COMM_GEOS );
 }
 
 Group * ParticleManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
   return &particleRegions.registerGroup( childName,
-                                         CatalogInterface::factory( childKey, childName, &particleRegions ) );
-
+                                         CatalogInterface::factory( childKey, getDataContext(),
+                                                                    childName, &particleRegions ) );
 }
 
 void ParticleManager::expandObjectCatalogs()
@@ -221,7 +216,8 @@ int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOS_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+  GEOS_ERROR_IF( name != this->getName(),
+                 GEOS_FMT( "Unpacked name ({}) does not equal object name ({})", name, this->getName() ) );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

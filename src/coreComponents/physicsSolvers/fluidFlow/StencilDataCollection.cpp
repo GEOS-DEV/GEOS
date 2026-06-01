@@ -24,8 +24,10 @@
 #include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -33,16 +35,12 @@ namespace geos
 
 using namespace constitutive;
 using namespace dataRepository;
-
+using namespace fields;
 
 StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
   Base( name, parent )
 {
-  enableLogLevelInput();
-  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    setDescription( "When higher than 1: Display store events details." );
-
   registerWrapper( viewKeyStruct::solverNameString(), &m_solverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
@@ -57,6 +55,9 @@ StencilDataCollection::StencilDataCollection( const string & name,
   registerWrapper( viewKeyStruct::cellBGlobalIdString(), &m_cellBGlobalId );
   registerWrapper( viewKeyStruct::transmissibilityABString(), &m_transmissibilityAB );
   registerWrapper( viewKeyStruct::transmissibilityBAString(), &m_transmissibilityBA );
+
+  addLogLevel< logInfo::StencilConnection >();
+  addLogLevel< logInfo::StencilInitialization >();
 }
 
 void StencilDataCollection::postInputInitialization()
@@ -68,10 +69,8 @@ void StencilDataCollection::postInputInitialization()
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "{}: Could not find flow solver named '{}'.",
-                             getDataContext(),
-                             m_solverName ),
-                   InputError );
+                   GEOS_FMT( "Could not find flow solver named '{}'.", m_solverName ),
+                   InputError, getDataContext() );
   }
 
   { // find mesh & discretization
@@ -90,8 +89,9 @@ void StencilDataCollection::postInputInitialization()
     } catch( BadTypeError const & e )
     {
       // only TPFA is supported for now
-      GEOS_ERROR( GEOS_FMT( "{}: target discretization is not supported by {} (for now, only '{}' is).",
-                            getDataContext(), catalogName(), TwoPointFluxApproximation::catalogName() ) );
+      GEOS_ERROR( GEOS_FMT( "target discretization is not supported by {} (for now, only '{}' is).",
+                            catalogName(), TwoPointFluxApproximation::catalogName() ),
+                  getDataContext() );
     }
   }
 }
@@ -107,12 +107,15 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
     m_cellBGlobalId.resize( connCount );
     m_transmissibilityAB.resize( connCount );
     m_transmissibilityBA.resize( connCount );
-    GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                         getName(), connCount, m_discretization->getName() ) );
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::StencilInitialization,
+                            GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
+                                      getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
-  GEOS_ERROR_IF( supportedStencilCount == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
-  GEOS_ERROR_IF( supportedStencilCount > 1, GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
+  GEOS_ERROR_IF( supportedStencilCount == 0, "No compatible discretization was found.",
+                 getDataContext() );
+  GEOS_ERROR_IF( supportedStencilCount > 1, "Multiple discretization was found.",
+                 getDataContext() );
 }
 
 
@@ -146,7 +149,7 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability >;
+                                                          permeability::permeability >;
 
 
   /**
@@ -204,7 +207,7 @@ StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWra
   typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
 
   Kernel::launch< parallelDevicePolicy<> >( kernelData.toView(), stencilWrapper,
-                                            accessor.get< fields::permeability::permeability >() );
+                                            accessor.get< permeability::permeability >() );
 
   return kernelData;
 }
@@ -237,10 +240,8 @@ string formatKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnec
                       kernelIterator->m_transmissibility[0],
                       kernelIterator->m_transmissibility[1] );
   }
-  TableLayout const tableLayout{
-    { "regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA" },
-    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() )
-  };
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() ),
+                                               {"regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA"} );
   TableTextFormatter const tableFormatter{ tableLayout };
   return tableFormatter.toString( tableData );
 }
@@ -265,8 +266,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 
   { // data storing
     GEOS_ERROR_IF_NE_MSG( size_t( m_cellAGlobalId.size() ), size_t( sortedData.size() ),
-                          GEOS_FMT( "{}: Unexpected stencil size!\n{}",
-                                    getDataContext(), formatKernelDataExtract( kernelData, 8 ) ) );
+                          GEOS_FMT( "Unexpected stencil size!\n{}", formatKernelDataExtract( kernelData, 8 ) ),
+                          getDataContext() );
     globalIndex i = 0;
     for( ConnectionData const & conn : sortedData )
     {
@@ -284,8 +285,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 void StencilDataCollection::logStoredConnections( string_view stencilName )
 {
   integer const connCount = MpiWrapper::sum( m_cellAGlobalId.size() );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: {} connections stored for '{}'.",
-                                      getName(), connCount, stencilName ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::StencilConnection, GEOS_FMT( "{}: {} connections stored for '{}'.",
+                                                               getName(), connCount, stencilName ) );
 }
 
 

@@ -10,6 +10,7 @@
       useMass="0"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
+        lineSearchAction="None"
         newtonTol="1.0e-8"
         newtonMaxIter="15"
         maxTimeStepCuts="2"
@@ -87,11 +88,11 @@
       beginTime="1e5"
       target="/Solvers/compflow"/>
 
-    <!--  <PeriodicEvent
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e7"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>

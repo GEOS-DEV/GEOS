@@ -19,17 +19,6 @@
  */
 
 #include "CoupledSolidBase.hpp"
-#include "ElasticIsotropic.hpp"
-#include "ElasticTransverseIsotropic.hpp"
-#include "ElasticOrthotropic.hpp"
-#include "DelftEgg.hpp"
-#include "DruckerPrager.hpp"
-#include "DruckerPragerExtended.hpp"
-#include "DuvautLionsSolid.hpp"
-#include "Damage.hpp"
-#include "DamageSpectral.hpp"
-#include "DamageVolDev.hpp"
-#include "ModifiedCamClay.hpp"
 
 namespace geos
 {
@@ -40,11 +29,7 @@ namespace constitutive
 {
 
 CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_solidModelName(),
-  m_porosityModelName(),
-  m_permeabilityModelName(),
-  m_solidInternalEnergyModelName()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -67,7 +52,6 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
     setDescription( "Name of the solid internal energy model." );
 }
 
-CoupledSolidBase::~CoupledSolidBase() = default;
+} /* namespace constitutive */
 
-}
 } /* namespace geos */

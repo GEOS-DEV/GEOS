@@ -55,19 +55,20 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
+  using SinglePhaseBase::updatePorosityAndPermeability;
+
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const override;
 
 protected:
 
-  virtual void validateConstitutiveModels( DomainPartition & domain ) const override;
-
-  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
+  // this is needed to avoid calling SinglePhaseBase::validateConstitutiveModels
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const override { GEOS_UNUSED_VAR( domain ); }
 
 private:
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 }

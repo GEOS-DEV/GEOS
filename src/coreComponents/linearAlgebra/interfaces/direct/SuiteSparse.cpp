@@ -21,6 +21,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/Stopwatch.hpp"
+#include "common/TimingMacros.hpp"
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/Arnoldi.hpp"
@@ -138,7 +139,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   }
 
   // print the symbolic factorization
-  if( params.logLevel > 1 )
+  if( params.logLevel >= 4 )
   {
     umfpack_dl_report_symbolic( data.symbolic, data.control );
   }
@@ -160,7 +161,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   }
 
   // print the numeric factorization
-  if( params.logLevel > 1 )
+  if( params.logLevel >= 4 )
   {
     umfpack_dl_report_numeric( data.symbolic, data.control );
   }
@@ -170,7 +171,7 @@ void setOptions( SuiteSparseData & data, LinearSolverParameters const & params )
 {
   // Get the default control parameters
   umfpack_dl_defaults( data.control );
-  data.control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
+  data.control[UMFPACK_PRL] = params.logLevel;
   data.control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
 }
 
@@ -217,6 +218,7 @@ template< typename LAI >
 void SuiteSparse< LAI >::apply( Vector const & src,
                                 Vector & dst ) const
 {
+  GEOS_MARK_FUNCTION;
   doSolve( src, dst, false );
 }
 
@@ -272,24 +274,20 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
       condEst = estimateConditionNumberAdvanced();
       if( m_result.residualReduction > condEst * precTol )
       {
-        if( m_params.logLevel > 0 )
+        if( m_params.logLevel > 0 && MpiWrapper::commRank( rhs.comm() ) == 0 )
         {
-          GEOS_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
-                        "Condition number estimate: " << condEst );
+          GEOS_WARNING( GEOS_FMT( "SuiteSparse: failed to reduce residual below tolerance.\n"
+                                  "Condition number estimate: {}",
+                                  condEst ) );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }
     }
   }
 
-  if( m_params.logLevel >= 1 )
-  {
-    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
-                     " | Iterations: " << m_result.numIterations <<
-                     " | Final Rel Res: " << m_result.residualReduction <<
-                     " | Setup Time: " << m_result.setupTime << " s" <<
-                     " | Solve Time: " << m_result.solveTime << " s" );
-  }
+  GEOS_LOG_RANK_0_IF( m_params.logLevel >= 1,
+                      GEOS_FMT( "        Linear Solver | {} | Iterations: {} | Final Rel Res: {} | Setup Time: {} s | Solve Time: {} s",
+                                m_result.status, m_result.numIterations, m_result.residualReduction, m_result.setupTime, m_result.solveTime ) );
 }
 
 template< typename LAI >
@@ -301,36 +299,45 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
   GEOS_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
   GEOS_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
 
-  m_export->exportVector( b, m_data->rhs );
-
-  if( MpiWrapper::commRank( b.comm() ) == m_workingRank )
   {
-    m_data->rhs.move( hostMemorySpace, false );
-    m_data->sol.move( hostMemorySpace, true );
+    GEOS_MARK_SCOPE( export );
+    m_export->exportVector( b, m_data->rhs );
+  }
 
-    // To be able to use UMFPACK direct solver we need to disable floating point exceptions
-    LvArray::system::FloatingPointExceptionGuard guard;
-
-    // Note: UMFPACK expects column-sparse matrix, but we have row-sparse, so we flip the transpose flag
-    SSlong const status = umfpack_dl_solve( transpose ? UMFPACK_A : UMFPACK_At,
-                                            m_data->rowPtr.data(),
-                                            m_data->colIndices.data(),
-                                            m_data->values.data(),
-                                            m_data->sol.data(),
-                                            m_data->rhs.data(),
-                                            m_data->numeric,
-                                            m_data->control,
-                                            m_data->info );
-
-    if( status < 0 )
+  {
+    GEOS_MARK_SCOPE( solve );
+    if( MpiWrapper::commRank( b.comm() ) == m_workingRank )
     {
-      umfpack_dl_report_info( m_data->control, m_data->info );
-      umfpack_dl_report_status( m_data->control, status );
-      GEOS_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
+      m_data->rhs.move( hostMemorySpace, false );
+      m_data->sol.move( hostMemorySpace, true );
+
+      // To be able to use UMFPACK direct solver we need to disable floating point exceptions
+      LvArray::system::FloatingPointExceptionGuard guard;
+
+      // Note: UMFPACK expects column-sparse matrix, but we have row-sparse, so we flip the transpose flag
+      SSlong const status = umfpack_dl_solve( transpose ? UMFPACK_A : UMFPACK_At,
+                                              m_data->rowPtr.data(),
+                                              m_data->colIndices.data(),
+                                              m_data->values.data(),
+                                              m_data->sol.data(),
+                                              m_data->rhs.data(),
+                                              m_data->numeric,
+                                              m_data->control,
+                                              m_data->info );
+
+      if( status < 0 )
+      {
+        umfpack_dl_report_info( m_data->control, m_data->info );
+        umfpack_dl_report_status( m_data->control, status );
+        GEOS_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
+      }
     }
   }
 
-  m_export->importVector( m_data->sol, x );
+  {
+    GEOS_MARK_SCOPE( import );
+    m_export->importVector( m_data->sol, x );
+  }
 }
 
 template< typename LAI >
@@ -358,7 +365,7 @@ real64 SuiteSparse< LAI >::estimateConditionNumberAdvanced() const
   GEOS_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
-  NormalOperator< LAI > const normalOperator( matrix() );
+  NormalOperator< Matrix > const normalOperator( matrix() );
   real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
   InverseNormalOperator< LAI, SuiteSparse > const inverseNormalOperator( matrix(), *this );

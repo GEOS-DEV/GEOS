@@ -60,7 +60,7 @@ CompositeFunction::~CompositeFunction()
 void CompositeFunction::initializeFunction()
 {
   // Register variables
-  for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
+  for( auto ii=0u; ii<m_variableNames.size(); ++ii )
   {
     parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
@@ -76,7 +76,9 @@ void CompositeFunction::initializeFunction()
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
+    FunctionBase * function = &functionManager.getGroup< FunctionBase >( m_functionNames[ii] );
+    function->initializeFunction();
+    m_subFunctions.emplace_back( function );
   }
 }
 

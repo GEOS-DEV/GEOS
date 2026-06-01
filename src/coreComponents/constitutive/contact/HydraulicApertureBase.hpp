@@ -21,8 +21,6 @@
 #define GEOS_CONSTITUTIVE_CONTACT_HYDRAULICAPERTUREBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
 
 
 namespace geos
@@ -49,11 +47,6 @@ public:
    */
   HydraulicApertureBase( string const & name,
                          Group * const parent );
-
-  /**
-   * @brief default destructor
-   */
-  virtual ~HydraulicApertureBase() override;
 
 protected:
 

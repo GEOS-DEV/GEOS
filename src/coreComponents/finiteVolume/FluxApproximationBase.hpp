@@ -39,7 +39,8 @@ enum class UpwindingScheme : integer
 {
   PPU,    ///< PPU upwinding
   C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
-  IHU ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
+  IHU,    ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
+  HU2PH   ///< HU simplified 2-phase version
 };
 
 /**
@@ -48,7 +49,8 @@ enum class UpwindingScheme : integer
 ENUM_STRINGS( UpwindingScheme,
               "PPU",
               "C1PPU",
-              "IHU" );
+              "IHU",
+              "HU2PH" );
 
 /**
  * @struct UpwindingParameters
@@ -57,7 +59,7 @@ ENUM_STRINGS( UpwindingScheme,
  */
 struct UpwindingParameters
 {
-  /// PPU or C1-PPU or IHU
+  /// PPU or C1-PPU or IHU or HU2PH
   UpwindingScheme upwindingScheme;
 
   /// C1-PPU smoothing tolerance
@@ -196,7 +198,7 @@ public:
    * @param[in] meshBodyName name of the meshBody
    * @return a list of the target regions on the meshBody
    */
-  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
+  string_array & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
    * @brief set the name of the field.
@@ -285,13 +287,13 @@ protected:
 
 
   /// name of the primary solution field
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
 
   /// names of target regions to build the stencil for
-  map< string, array1d< string > > m_targetRegions;
+  map< string, string_array > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

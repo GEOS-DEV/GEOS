@@ -117,7 +117,7 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
 
   {
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -202,8 +202,29 @@ void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
   m_sigmayzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
+real32 ElasticFirstOrderWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
 
-void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+  real32 localMinWavespeed = 1e8;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )
+    {
+      localMinWavespeed = subRegionMinWavespeed;
+    }
+  } );
+
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
+
+  return globalMinWavespeed;
+
+}
+
+void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -241,8 +262,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError, getDataContext(), elementSubRegion.getDataContext().getContextInfo().setPriority( -1 ) );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -311,7 +332,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
     precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
@@ -393,7 +414,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
 real64 ElasticFirstOrderWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
-  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( " Time-Step computation for the first order elastic wave propagator not yet implemented", getDataContext());
   return dtOut;
 }
 
@@ -423,7 +444,7 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                   [&]( FieldSpecificationBase const & bc,
+                   [&]( FieldSpecification const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group &,
@@ -461,9 +482,9 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                               real64 const & dt,
-                                                              integer cycleNumber,
+                                                              integer const cycleNumber,
                                                               DomainPartition & domain,
-                                                              bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                              integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -473,11 +494,11 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & tim
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
-                                                               bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                               integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( getDataContext() << ": Backward propagation for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the first order elastic wave propagator not yet implemented", getDataContext());
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -501,7 +522,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
 
   {
 
@@ -661,7 +682,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -715,12 +736,12 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticFirstOrderWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( getDataContext() << ": PML for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order elastic wave propagator not yet implemented", getDataContext());
 }
 
 void ElasticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( getDataContext() << ": PML for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order elastic wave propagator not yet implemented", getDataContext());
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ElasticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )

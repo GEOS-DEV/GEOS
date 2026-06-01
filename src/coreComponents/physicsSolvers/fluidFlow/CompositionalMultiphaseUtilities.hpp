@@ -25,8 +25,41 @@
 namespace geos
 {
 
+/**
+ * @brief Options for density treatment in gravity
+ */
+enum class GravityDensityScheme : integer
+{
+  ArithmeticAverage, ///< average phase density is computed using simple arithmetic average:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j)
+  PhasePresence      ///< average phase density is computed using checking for phase presence:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j) if phase is present in both cells i and j
+                     ///          = rho_i if phase is present in only cell i
+                     ///          = rho_j if phase is present in only cell j
+};
+
+/**
+ * @brief Strings for options for density treatment in gravity
+ */
+ENUM_STRINGS( GravityDensityScheme,
+              "ArithmeticAverage",
+              "PhasePresence" );
+
 namespace compositionalMultiphaseUtilities
 {
+
+/**
+ * @brief Solution scaling type, used in CompositionalMultiphaseFVM
+ */
+enum class ScalingType : integer
+{
+  Global,         ///< Scale the Newton update with a unique scaling factor
+  Local            ///< Scale the Newton update locally (modifies the Newton direction)
+};
+
+ENUM_STRINGS( ScalingType,
+              "Global",
+              "Local" );
 
 /**
  * @brief In each block, shift the elements from 0 to numRowsToShift-1 one position ahead and replaces the first element

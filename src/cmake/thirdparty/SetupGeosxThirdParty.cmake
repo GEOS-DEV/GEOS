@@ -211,6 +211,28 @@ else()
 endif()
 
 ################################
+# ZLIB
+################################
+if(DEFINED ZLIB_DIR)
+  list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
+endif()
+
+find_package(ZLIB REQUIRED)
+
+# Print ZLIB info after finding it
+message(STATUS "----> ZLIB version: ${ZLIB_VERSION}")
+message(STATUS "----> ZLIB include dirs: ${ZLIB_INCLUDE_DIRS}")
+message(STATUS "----> ZLIB library: ${ZLIB_LIBRARIES}")
+
+blt_convert_to_system_includes(TARGET ZLIB::ZLIB)
+
+set(ENABLE_ZLIB ON CACHE BOOL "")
+
+unset(_ZLIB_FIND_OPTIONS)
+
+
+
+################################
 # HDF5
 ################################
 if(DEFINED HDF5_DIR)
@@ -229,6 +251,8 @@ if(DEFINED HDF5_DIR)
 else()
     mandatory_tpl_doesnt_exist("hdf5" HDF5_DIR)
 endif()
+
+target_link_libraries(HDF5::HDF5 INTERFACE ZLIB::ZLIB)
 
 ################################
 # SILO
@@ -557,27 +581,17 @@ endif()
 if(DEFINED SCOTCH_DIR)
     message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
 
-    find_and_import(NAME scotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      HEADER scotch.h
-                      LIBRARIES scotch scotcherr )
+    find_package(SCOTCH REQUIRED
+                 PATHS ${SCOTCH_DIR}
+                 NO_DEFAULT_PATH)
 
-    find_and_import(NAME ptscotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      DEPENDS scotch
-                      HEADER ptscotch.h
-                      LIBRARIES ptscotch ptscotcherr )
+    message( " ----> scotch_VERSION = ${SCOTCH_VERSION}")
 
-    extract_version_from_header( NAME scotch
-                                 HEADER "${SCOTCH_DIR}/include/scotch.h"
-                                 MAJOR_VERSION_STRING "SCOTCH_VERSION"
-                                 MINOR_VERSION_STRING "SCOTCH_RELEASE"
-                                 PATCH_VERSION_STRING "SCOTCH_PATCHLEVEL")
-
-    set(ENABLE_SCOTCH ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+    foreach(_scotch_target SCOTCH::scotch SCOTCH::ptscotch SCOTCH::scotcherr )
+        get_target_property(SCOTCH_INCLUDE_DIRS ${_scotch_target} INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(${_scotch_target} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${SCOTCH_INCLUDE_DIRS}")
+        set(thirdPartyLibs ${thirdPartyLibs} ${_scotch_target})
+    endforeach()
 else()
     if(ENABLE_SCOTCH)
         message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
@@ -624,11 +638,18 @@ endif()
 if(DEFINED SUITESPARSE_DIR)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
+    set( SUITESPARSE_LIBRARIES umfpack amd suitesparseconfig )
+    if( APPLE )
+      # UMFPACK on macOS can route ordering through CHOLMOD internals.
+      # Link these components explicitly to avoid fragile runtime symbol resolution.
+      list( APPEND SUITESPARSE_LIBRARIES cholmod colamd camd ccolamd )
+    endif()
+
     find_and_import(NAME suitesparse
                       INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
                       LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
                       HEADER umfpack.h
-                      LIBRARIES umfpack
+                      LIBRARIES ${SUITESPARSE_LIBRARIES}
                       DEPENDS blas lapack)
 
     extract_version_from_header( NAME suitesparse
@@ -654,6 +675,11 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_INSTALL_DIR "${HYPRE_DIR}" )
+    if( EXISTS "${HYPRE_DIR}/HYPREConfig.cmake" OR EXISTS "${HYPRE_DIR}/HYPREConfigVersion.cmake" )
+        get_filename_component( HYPRE_INSTALL_DIR "${HYPRE_DIR}/../../.." ABSOLUTE )
+    endif()
+
     set( HYPRE_DEPENDS blas lapack umpire )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS superlu_dist )
@@ -674,18 +700,18 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     endif( )
 
     find_and_import( NAME hypre
-                     INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                     LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                     INCLUDE_DIRECTORIES ${HYPRE_INSTALL_DIR}/include
+                     LIBRARY_DIRECTORIES ${HYPRE_INSTALL_DIR}/lib
                      HEADER HYPRE.h
                      LIBRARIES HYPRE
                      DEPENDS ${HYPRE_DEPENDS} )
 
     extract_version_from_header( NAME hypre
-                                 HEADER "${HYPRE_DIR}/include/HYPRE_config.h"
+                                 HEADER "${HYPRE_INSTALL_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
 
     # Extract some additional information about development version of hypre
-    file( READ ${HYPRE_DIR}/include/HYPRE_config.h header_file )
+    file( READ ${HYPRE_INSTALL_DIR}/include/HYPRE_config.h header_file )
     if( "${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"" )
         set( hypre_dev_string "${CMAKE_MATCH_1}" )
         if( "${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"" )
@@ -697,7 +723,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
     # if (NOT CMAKE_HOST_APPLE)
-    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_INSTALL_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
     # endif()
 
     # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
@@ -721,12 +747,93 @@ else()
 endif()
 
 ################################
+# HYPREDRV
+################################
+if( ENABLE_HYPREDRV AND NOT ENABLE_HYPRE )
+    message( FATAL_ERROR "ENABLE_HYPREDRV requires ENABLE_HYPRE." )
+endif()
+
+if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
+    message( STATUS "HYPREDRV_DIR = ${HYPREDRV_DIR}" )
+
+    list( PREPEND CMAKE_PREFIX_PATH "${HYPREDRV_DIR}" )
+    if( DEFINED HYPRE_DIR )
+        list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
+    endif()
+
+    find_package( HYPREDRV REQUIRED CONFIG
+                  PATHS ${HYPREDRV_DIR}
+                        ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/cmake/HYPREDRV
+                  NO_DEFAULT_PATH )
+
+    blt_convert_to_system_includes( TARGET HYPREDRV::HYPREDRV )
+
+    unset( hypredrv_config_header )
+    unset( hypredrv_dev_string )
+    unset( hypredrv_dev_branch )
+    get_target_property( hypredrv_include_dirs HYPREDRV::HYPREDRV INTERFACE_INCLUDE_DIRECTORIES )
+    foreach( include_dir IN LISTS hypredrv_include_dirs )
+        if( EXISTS "${include_dir}/HYPREDRV_config.h" )
+            set( hypredrv_config_header "${include_dir}/HYPREDRV_config.h" )
+            break()
+        endif()
+    endforeach()
+
+    if( hypredrv_config_header )
+        file( READ "${hypredrv_config_header}" header_file )
+        if( "${header_file}" MATCHES "HYPREDRV_RELEASE_VERSION *\"([^\"]*)\"" )
+            set( HYPREDRV_VERSION "${CMAKE_MATCH_1}" )
+            set( HYPREDRV_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
+        endif()
+
+        # Extract additional information about development versions of hypredrive.
+        if( "${header_file}" MATCHES "HYPREDRV_DEVELOP_STRING *\"([^\"]*)\"" )
+            set( hypredrv_dev_string "${CMAKE_MATCH_1}" )
+            if( "${header_file}" MATCHES "HYPREDRV_BRANCH_NAME *\"([^\"]*)\"" )
+                set( hypredrv_dev_branch "${CMAKE_MATCH_1}" )
+            elseif( "${header_file}" MATCHES "HYPREDRV_GIT_BRANCH *\"([^\"]*)\"" )
+                set( hypredrv_dev_branch "${CMAKE_MATCH_1}" )
+            endif()
+
+            if( hypredrv_dev_branch )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" CACHE STRING "" FORCE )
+            else()
+                set( HYPREDRV_VERSION "${hypredrv_dev_string}" )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string}" CACHE STRING "" FORCE )
+            endif()
+        endif()
+    endif()
+
+    if( HYPREDRV_VERSION )
+        message( " ----> HYPREDRV_VERSION = ${HYPREDRV_VERSION}" )
+    endif()
+
+    set( ENABLE_HYPREDRV ON CACHE BOOL "" FORCE )
+    set( thirdPartyLibs ${thirdPartyLibs} HYPREDRV::HYPREDRV )
+else()
+    if( ENABLE_HYPREDRV )
+        message( WARNING "ENABLE_HYPREDRV is ON but HYPREDRV_DIR isn't defined." )
+    endif()
+
+    set( ENABLE_HYPREDRV OFF CACHE BOOL "" FORCE )
+    message( STATUS "Not using HYPREDRV." )
+endif()
+
+################################
 # TRILINOS
 ################################
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    if(EXISTS "${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
+
+    if(EXISTS "${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
@@ -867,7 +974,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.6.0...3.12.2 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...<4.0.0 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)

@@ -115,7 +115,7 @@ public:
 private:
 
   /// Table with brine density tabulated as a function of (P,T,sal)
-  TableFunction const * m_brineDensityTable;
+  TableFunction const * m_brineDensityTable = nullptr;
 
   /// Index of the CO2 phase
   integer m_CO2Index;

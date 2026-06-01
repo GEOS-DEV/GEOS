@@ -101,6 +101,7 @@ public:
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity( solid.getPorosity() ),
+    m_porosity_n( solid.getPorosity_n() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
     m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
@@ -326,13 +327,13 @@ public:
     // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolume depends on temperature
     phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
 
-    // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    stack.localResidual[numComp] = stack.poreVolume * oneMinusPhaseVolFracSum;
+    // scale saturation-based volume balance by old pore volume (for better scaling w.r.t. other equations)
+    real64 const oldPV = m_volume[ei] * m_porosity_n[ei][0];
+    stack.localResidual[numComp] = oldPV * oneMinusPhaseVolFracSum;
     for( integer idof = 0; idof < numDof; ++idof )
     {
-      stack.localJacobian[numComp][idof] *= stack.poreVolume;
+      stack.localJacobian[numComp][idof] *= oldPV;
     }
-    stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
   }
 
   /**
@@ -418,6 +419,7 @@ protected:
 
   /// Views on the porosity
   arrayView2d< real64 const > const m_porosity;
+  arrayView2d< real64 const > const m_porosity_n;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// Views on the derivatives of comp fractions wrt component density
@@ -474,8 +476,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   integer const useTotalMassEquation,
-                   integer const useSimpleAccumulation,
+                   BitFlags< KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -487,12 +488,6 @@ public:
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
-
-      BitFlags< KernelFlags > kernelFlags;
-      if( useTotalMassEquation )
-        kernelFlags.set( KernelFlags::TotalMassEquation );
-      if( useSimpleAccumulation )
-        kernelFlags.set( KernelFlags::SimpleAccumulation );
 
       AccumulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
                                                       fluid, solid, localMatrix, localRhs, kernelFlags );

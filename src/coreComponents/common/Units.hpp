@@ -30,6 +30,8 @@ namespace geos
 namespace units
 {
 
+/// Darcy to m^2 conversion factor
+static constexpr double DarcyToSqM = 9.869233e-13;
 
 /**
  * @return the input Kelvin degrees converted in Celsius
@@ -48,7 +50,10 @@ inline constexpr double convertCToK( double celsius )
 
 
 /**
- * @brief Enumerator of available unit types. Units are in SI by default.
+ * @brief Enumerator of available unit types for given physical scales. Units are in SI by default.
+ * @todo Current `Unit` enum is short for `PhysicalScaleDefaultUnit`. We should separate `Unit` (`Meters`,
+ *       `celsius`) and `PhysicalScale` (`Distance`, `Temperature`), and add a function
+ *       `Unit getDefaultUnit( PhysicalScale )` to link the physical scales with GEOS default units.
  */
 enum Unit : integer
 {
@@ -99,6 +104,18 @@ enum Unit : integer
 
   /// Transmissibility in m2/s
   Transmissibility,
+
+  /// Molar volume in m3/mol
+  MolarVolume,
+
+  /// Molar density in mol/m3
+  MolarDensity,
+
+  /// Permeability in m^2
+  Permeability,
+
+  /// Reservoir volume in rm^3
+  ReservoirVolume
 };
 
 
@@ -126,6 +143,10 @@ constexpr inline std::string_view getDescription( Unit unit )
     case MassRate:          return "mass rate [kg/s]";
     case MoleRate:          return "mole rate [mol/s]";
     case Transmissibility:  return "transmissibility [(Pa*s*rm3/s)/Pa]";
+    case MolarVolume:       return "molar volume [m3/mol]";
+    case MolarDensity:      return "molar density [mol/m3]";
+    case Permeability:      return "permeability [m2]";
+    case ReservoirVolume:   return "reservoir volume [rm3]";
   }
 }
 
@@ -153,6 +174,41 @@ constexpr inline std::string_view getSymbol( Unit unit )
     case MassRate:          return "kg/s";
     case MoleRate:          return "mol/s";
     case Transmissibility:  return "(Pa*s*rm3/s)/Pa";
+    case MolarVolume:       return "m3/mol";
+    case MolarDensity:      return "mol/m3";
+    case Permeability:      return "m2";
+    case ReservoirVolume:   return "rm3";
+  }
+}
+
+/**
+ * @param unit The unit we want the information.
+ * @return A typical variable symbol of the specified unit that is unique for a given physical scale.
+ */
+constexpr inline std::string_view getVariableSymbol( Unit unit )
+{
+  switch( unit )
+  {
+    default:
+    case Dimensionless:     return "?";
+    case Pressure:          return "P";
+    case Temperature:       return "T";
+    case TemperatureInC:    return "T";
+    case Distance:          return "L";
+    case Time:              return "t";
+    case Viscosity:         return "mu";
+    case Enthalpy:          return "H";
+    case Density:           return "rho";
+    case Solubility:        return "S";
+    case Mass:              return "m";
+    case Mole:              return "n";
+    case MassRate:          return "Q_m";
+    case MoleRate:          return "Q_n";
+    case Transmissibility:  return "T_r";
+    case MolarVolume:       return "V_m";
+    case MolarDensity:      return "rho_n";
+    case Permeability:      return "K";
+    case ReservoirVolume:   return "V";
   }
 }
 
@@ -183,6 +239,10 @@ inline string formatValue( real64 value, Unit unit )
     case MassRate:          return GEOS_FMT( "mass rate of {} [kg/s]", value );
     case MoleRate:          return GEOS_FMT( "mole rate of {} [mol/s]", value );
     case Transmissibility:  return GEOS_FMT( "transmissibility of {} [(Pa*s*rm3/s)/Pa]", value );
+    case MolarVolume:       return GEOS_FMT( "molar volume of {} [m3/mol]", value );
+    case MolarDensity:      return GEOS_FMT( "molar density of {} [mol/m3]", value );
+    case Permeability:      return GEOS_FMT( "permeability of {} [m2]", value );
+    case ReservoirVolume:   return GEOS_FMT( "reservoir volume of {} [rm3]", value );
   }
 }
 

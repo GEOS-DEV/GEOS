@@ -33,7 +33,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid compressibility" );
+    setDescription( "Fluid compressibility [Pa^-1]" );
 
   registerWrapper( viewKeyStruct::referenceProppantDensityString(), &m_referenceProppantDensity ).
     setApplyDefaultValue( 1400.0 ).
@@ -43,7 +43,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 1e5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
+    setDescription( "Reference pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).
@@ -62,36 +62,37 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
 
 }
 
-ProppantSlurryFluid::~ProppantSlurryFluid() = default;
-
-void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void ProppantSlurryFluid::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SlurryFluidBase::allocateConstitutiveData( parent, numPts );
 
-  m_density.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+  m_density.value.setValues< serialPolicy >( m_referenceDensity );
+  m_viscosity.value.setValues< serialPolicy >( m_referenceViscosity );
 }
-
 
 void ProppantSlurryFluid::postInputInitialization()
 {
   SlurryFluidBase::postInputInitialization();
 
   GEOS_ERROR_IF_LT_MSG( m_compressibility, 0.0,
-                        getFullName() << ": invalid value of " << viewKeyStruct::compressibilityString() );
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::compressibilityString() ),
+                        getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_referenceDensity, 0.0,
-                        getFullName() << ": invalid value of " << viewKeyStruct::referenceDensityString() );
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::referenceDensityString() ),
+                        getDataContext() );
 
   GEOS_ERROR_IF_LT_MSG( m_referenceViscosity, 0.0,
-                        getFullName() << ": invalid value of " << viewKeyStruct::referenceViscosityString() );
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::referenceViscosityString() ),
+                        getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_maxProppantConcentration, 0.0,
-                        getFullName() << ": invalid value of " << viewKeyStruct::maxProppantConcentrationString() );
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::maxProppantConcentrationString() ),
+                        getDataContext() );
 
   GEOS_ERROR_IF_GT_MSG( m_maxProppantConcentration, 1.0,
-                        getFullName() << ": invalid value of " << viewKeyStruct::maxProppantConcentrationString() );
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::maxProppantConcentrationString() ),
+                        getDataContext() );
 }
 
 ProppantSlurryFluid::KernelWrapper
@@ -109,21 +110,21 @@ ProppantSlurryFluid::createKernelWrapper()
                         m_nIndices,
                         m_Ks,
                         m_isNewtonianFluid,
-                        m_density,
-                        m_dDensity_dPressure,
+                        m_density.value,
+                        m_density.derivs,
                         m_dDensity_dProppantConc,
                         m_dDensity_dCompConc,
                         m_componentDensity,
                         m_dCompDens_dPres,
                         m_dCompDens_dCompConc,
-                        m_fluidDensity,
+                        m_fluidDensity.value,
                         m_dFluidDens_dPres,
                         m_dFluidDens_dCompConc,
                         m_fluidViscosity,
                         m_dFluidVisc_dPres,
                         m_dFluidVisc_dCompConc,
-                        m_viscosity,
-                        m_dViscosity_dPressure,
+                        m_viscosity.value,
+                        m_viscosity.derivs,
                         m_dViscosity_dProppantConc,
                         m_dViscosity_dCompConc );
 }

@@ -9,7 +9,6 @@
         <SolidMechanicsLagrangeContact name="lagrangiancontact"
             logLevel="1"
             discretization="FE1"
-            timeIntegrationOption="QuasiStatic"
             stabilizationName="TPFAstabilization"
              targetRegions="{ Region, Fracture }" >
 

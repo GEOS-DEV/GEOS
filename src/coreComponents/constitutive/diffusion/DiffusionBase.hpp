@@ -102,7 +102,7 @@ public:
   DiffusionBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Getter for the number of fluid phases
@@ -114,7 +114,7 @@ public:
    * @brief Getter for the phase names
    * @return an arrayView of phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the phase diffusivity multipliers
@@ -140,8 +140,7 @@ public:
    *
    * Note: this is needed because for now, the temperature is treated **explicitly** in the diffusion tensor
    */
-  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
-  { GEOS_UNUSED_VAR( initialTemperature ); }
+  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const;
 
   /**
    * @brief Save the temperature state (needed when diffusion depends on temperature)
@@ -157,15 +156,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * defaultPhaseDiffusivityMultiplierString() { return "defaultPhaseDiffusivityMultipliers"; }
   };
-
-private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
 
 protected:
 

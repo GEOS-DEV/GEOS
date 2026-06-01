@@ -51,7 +51,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   }
 
   // store the local allocations for each wrapper
-  std::vector< size_t > localAllocations;
+  stdVector< size_t > localAllocations;
 
   // use the first index for the summation of all Wrappers in a Group
   localAllocations.emplace_back( 0 );
@@ -66,7 +66,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   int const numValues = localAllocations.size();
 
   // storage for the gathered values of localAllocation
-  std::vector< size_t > globalAllocations;
+  stdVector< size_t > globalAllocations;
   if( MpiWrapper::commRank()==0 )
   {
     globalAllocations.resize( numRanks * numValues );

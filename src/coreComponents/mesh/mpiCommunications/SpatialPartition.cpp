@@ -17,8 +17,15 @@
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#ifdef GEOS_USE_TRILINOS
+#include "mesh/graphs/ZoltanGraphColoring.hpp"
+#else
+#include "mesh/graphs/RLFGraphColoringMPI.hpp"
+#endif
 
 #include <cmath>
+#include <set>
+#include <vector>
 
 namespace geos
 {
@@ -49,8 +56,8 @@ real64 MapValueToRange( real64 value, real64 min, real64 max )
 
 SpatialPartition::SpatialPartition():
   PartitionBase(),
-  m_Periodic( nsdof ),
-  m_coords( nsdof ),
+  m_Periodic( m_nsdof ),
+  m_coords( m_nsdof ),
   m_min{ 0.0 },
   m_max{ 0.0 },
   m_blockSize{ 1.0 },
@@ -77,7 +84,7 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
   m_Partitions( 1 ) = yPartitions;
   m_Partitions( 2 ) = zPartitions;
   m_size = 1;
-  for( int i = 0; i < nsdof; i++ )
+  for( int i = 0; i < m_nsdof; i++ )
   {
     m_size *= m_Partitions( i );
   }
@@ -86,26 +93,110 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  int color = 0;
+  return getColor( {} );
+}
 
-  if( isOdd( m_coords[0] ) )
+int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
+{
+  // Determine neighbor source
+  bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
+
+  if( useGraphColoring )
   {
-    color += 1;
-  }
+    // External partitioner such as ParMetis or PTScotch (for VTK external mesh).
+    //
+    // findNeighborRanks() runs independently on each rank using bounding-box intersection,
+    // which can produce ASYMMETRIC neighbor lists in Release builds: rank A may include rank B
+    // in its list while rank B does not include rank A (or vice versa), due to floating-point
+    // differences in the intersection test under -O2/-O3.  An asymmetric graph fed to the RLF
+    // coloring algorithm on rank 0 means the coloring is only valid for one direction of each
+    // missing edge; the subsequent isColoringValid() check (which uses the rank's own local
+    // adjncy) then detects the conflict and raises GEOS_ERROR.
+    //
+    // Fix: symmetrize the global neighbor graph before coloring.
+    // Each rank allgathers its own neighbor list; any rank i that appears in rank j's list
+    // automatically gets rank j added to its own list.  After symmetrization the graph is
+    // guaranteed to be undirected and the coloring is valid for all ranks.
 
-  if( isOdd( m_coords[1] ) )
+    int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+    int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+    // Step 1: allgather the sizes of every rank's neighbor list.
+    int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
+    stdVector< int > allNeighborCounts( commSize );
+    MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
+
+    // Step 2: allgatherv the neighbor lists themselves.
+    stdVector< int > displacements( commSize, 0 );
+    for( int i = 1; i < commSize; ++i )
+    {
+      displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
+    }
+    int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
+
+    stdVector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    stdVector< int > allNeighbors( totalNeighbors );
+    MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
+                            allNeighbors.data(), allNeighborCounts.data(),
+                            displacements.data(), MPI_COMM_GEOS );
+
+    // Step 3: build the symmetrized local adjacency list.
+    // Start from the current (possibly incomplete) local list, then add any rank j
+    // that lists commRank as its neighbor but is not yet in our list.
+    std::set< int > symmetricNeighbors( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    for( int rankJ = 0; rankJ < commSize; ++rankJ )
+    {
+      if( rankJ == commRank )
+        continue;
+      int const start = displacements[rankJ];
+      int const end   = start + allNeighborCounts[rankJ];
+      for( int k = start; k < end; ++k )
+      {
+        if( allNeighbors[k] == commRank )
+        {
+          // rank j lists us as a neighbor → we must list rank j too
+          symmetricNeighbors.insert( rankJ );
+          break;
+        }
+      }
+    }
+
+    stdVector< size_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+
+#ifdef GEOS_USE_TRILINOS
+    geos::graph::ZoltanGraphColoring coloring;
+#else
+    geos::graph::RLFGraphColoringMPI coloring;
+#endif
+    int const color = coloring.colorGraph( adjncy );
+
+    if( !coloring.isColoringValid( adjncy, color ))
+    {
+      // Print per-rank diagnostics to help identify the root cause.
+      std::string neighborStr;
+      for( auto const nb : adjncy )
+        neighborStr += std::to_string( nb ) + " ";
+      GEOS_LOG_RANK( "getColor() coloring FAILED on rank " << commRank
+                                                           << "  assigned color=" << color
+                                                           << "  neighbors=[" << neighborStr << "]" );
+      MpiWrapper::barrier( MPI_COMM_GEOS );
+      GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
+    }
+    m_numColors = coloring.getNumberOfColors( color );
+    return color;
+  }
+  else
   {
-    color += 2;
+    // Cartesian partitioner coloring
+    int const color = (isOdd( m_coords[0] ) ? 1 : 0) |
+                      (isOdd( m_coords[1] ) ? 2 : 0) |
+                      (isOdd( m_coords[2] ) ? 4 : 0);
+
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
+    m_numColors = MpiWrapper::max( color ) + 1;
+    return color;
   }
-
-  if( isOdd( m_coords[2] ) )
-  {
-    color += 4;
-  }
-
-  m_numColors = 8;
-
-  return color;
 }
 
 void SpatialPartition::addNeighbors( const unsigned int idim,
@@ -113,10 +204,10 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
                                      int * ncoords )
 {
 
-  if( idim == nsdof )
+  if( idim == m_nsdof )
   {
     bool me = true;
-    for( int i = 0; i < nsdof; i++ )
+    for( int i = 0; i < m_nsdof; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -185,26 +276,30 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
     //check to make sure our dimensions agree
     {
-      int check = 1;
-      for( int i = 0; i < nsdof; i++ )
+      GEOS_MAYBE_UNUSED string_view partitionsLogMessage =
+        "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
+        "The number of cells in an axis cannot be lower that the partition count of this axis\n";
+
+      int nbPartitions = 1;
+      for( int i = 0; i < m_nsdof; i++ )
       {
-        check *= this->m_Partitions( i );
+        nbPartitions *= this->m_Partitions( i );
       }
-      GEOS_ERROR_IF_NE( check, m_size );
+      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, GEOS_FMT( partitionsLogMessage, m_size, nbPartitions )  );
     }
 
     //get communicator, rank, and coordinates
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOS, m_nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
     m_rank = MpiWrapper::commRank( cartcomm );
-    MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
+    MpiWrapper::cartCoords( cartcomm, m_rank, m_nsdof, m_coords.data());
 
     //add neighbors
     {
-      int ncoords[nsdof];
+      int ncoords[m_nsdof];
       m_neighbors.clear();
       addNeighbors( 0, cartcomm, ncoords );
     }
@@ -222,7 +317,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
   LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
   LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < nsdof; ++i )
+  for( int i = 0; i < m_nsdof; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
     const localIndex nlocl = static_cast< localIndex >(nloc);
@@ -290,7 +385,7 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
                                                       const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
-  for( int i = 0; i < nsdof; i++ )
+  for( int i = 0; i < m_nsdof; i++ )
   {
     // Is particle already in bounds of partition?
     if( !(m_Partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
@@ -361,31 +456,31 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
   arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
   array1d< R1Tensor > outOfDomainParticleCoordinates;
-  std::vector< localIndex > outOfDomainParticleLocalIndices;
+  stdVector< localIndex > outOfDomainParticleLocalIndices;
   unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
   forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
+  {
+    bool inPartition = true;
+    R1Tensor p_x;
+    for( int i=0; i<3; i++ )
     {
-      bool inPartition = true;
-      R1Tensor p_x;
-      for( int i=0; i<3; i++ )
-      {
-        p_x[i] = particleCenter[pp][i];
-        inPartition = inPartition && isCoordInPartition( p_x[i], i );
-      }
-      if( particleRank[pp]==this->m_rank && !inPartition )
-      {
-        outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
-        outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
-        particleRank[pp] = -1;                             // Temporarily set particleRank of out-of-domain particle to -1 until it is
+      p_x[i] = particleCenter[pp][i];
+      inPartition = inPartition && isCoordInPartition( p_x[i], i );
+    }
+    if( particleRank[pp]==this->m_rank && !inPartition )
+    {
+      outOfDomainParticleCoordinates.emplace_back( p_x );   // Store the coordinate of the out-of-domain particle
+      outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
+      particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is
                                                            // requested by someone.
-      }
-    } );
+    }
+  } );
 
 
   // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
 
-  std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
+  stdVector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
 
   sendCoordinateListToNeighbors( outOfDomainParticleCoordinates.toView(),       // input: Single list of coordinates sent to all neighbors
                                  commData,                                      // input: Solver MPI communicator
@@ -398,7 +493,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   //     current partition.  make a list of the locations in the coordinate list
   //     of the particles that are to be owned by the current partition.
 
-  std::vector< array1d< localIndex > > particleListIndicesRequestingFromNeighbors( nn );
+  stdVector< array1d< localIndex > > particleListIndicesRequestingFromNeighbors( nn );
   for( size_t n=0; n<nn; n++ )
   {
     // Loop through the unpacked list and make a list of the index of any point in partition interior domain
@@ -422,7 +517,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
   //     and store the request list.
 
-  std::vector< array1d< localIndex > > particleListIndicesRequestedFromNeighbors( nn );
+  stdVector< array1d< localIndex > > particleListIndicesRequestedFromNeighbors( nn );
 
   sendListOfIndicesToNeighbors< localIndex >( particleListIndicesRequestingFromNeighbors,
                                               commData,
@@ -432,10 +527,10 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
   //     of the partition requesting to own the particle.
 
-  std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
+  stdVector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
   {
     unsigned int numberOfRequestedParticles = 0;
-    std::vector< int > outOfDomainParticleRequests( outOfDomainParticleLocalIndices.size(), 0 );
+    stdVector< int > outOfDomainParticleRequests( outOfDomainParticleLocalIndices.size(), 0 );
 
     for( size_t n=0; n<nn; n++ )
     {
@@ -446,15 +541,15 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
       particleLocalIndicesRequestedFromNeighbors[n].resize( ni );
 
       forAll< serialPolicy >( ni, [&, particleRank] GEOS_HOST ( localIndex const k )
-        {
-          int const i = particleListIndicesRequestedFromNeighbors[n][k];
-          outOfDomainParticleRequests[i] += 1;
-          localIndex pp = outOfDomainParticleLocalIndices[i];
+      {
+        int const i = particleListIndicesRequestedFromNeighbors[n][k];
+        outOfDomainParticleRequests[i] += 1;
+        localIndex pp = outOfDomainParticleLocalIndices[i];
 
-          particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
-          // Set ghost rank of the particle equal to neighbor rank.
-          particleRank[pp] = m_neighbors[n].neighborRank();
-        } );
+        particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+        // Set ghost rank of the particle equal to neighbor rank.
+        particleRank[pp] = m_neighbors[n].neighborRank();
+      } );
     }
 
     // Check that there is exactly one processor requesting each out-of-domain particle.
@@ -477,8 +572,8 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
 
   int oldSize = subRegion.size();
   int newSize = subRegion.size();
-  std::vector< int > newParticleStartingIndices( nn );
-  std::vector< int > numberOfIncomingParticles( nn );
+  stdVector< int > newParticleStartingIndices( nn );
+  stdVector< int > numberOfIncomingParticles( nn );
   for( size_t n=0; n<nn; n++ )
   {
     numberOfIncomingParticles[n] = particleListIndicesRequestingFromNeighbors[n].size();
@@ -511,17 +606,17 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
   forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  {
+    if( particleRankAfter[p] == -1 )
     {
-      if( particleRankAfter[p] == -1 )
-      {
-        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-        indicesToErase.insert( p );
-      }
-      else if( particleRankAfter[p] != m_rank )
-      {
-        indicesToErase.insert( p );
-      }
-    } );
+      GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+      indicesToErase.insert( p );
+    }
+    else if( particleRankAfter[p] != m_rank )
+    {
+      indicesToErase.insert( p );
+    }
+  } );
   subRegion.erase( indicesToErase );
 
   // Resize particle region owning this subregion
@@ -569,30 +664,30 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     arrayView1d< globalIndex > const particleGlobalID = subRegion.getParticleID();
     array1d< R1Tensor > inDomainMasterParticleCoordinates;   // Theoretically the same as particle position evaluated at
                                                              // subRegion.nonGhostIndices()?
-    std::vector< globalIndex > inDomainMasterParticleGlobalIndices;
+    stdVector< globalIndex > inDomainMasterParticleGlobalIndices;
     unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
+    {
+      bool inPartition = true;
+      R1Tensor p_x;
+      for( int i=0; i<3; i++ )
       {
-        bool inPartition = true;
-        R1Tensor p_x;
-        for( int i=0; i<3; i++ )
-        {
-          p_x[i] = particleCenter[p][i];
-          inPartition = inPartition && isCoordInPartition( p_x[i], i );
-        }
-        if( particleRank[p]==this->m_rank && inPartition )
-        {
-          inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-          inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
+        p_x[i] = particleCenter[p][i];
+        inPartition = inPartition && isCoordInPartition( p_x[i], i );
+      }
+      if( particleRank[p]==this->m_rank && inPartition )
+      {
+        inDomainMasterParticleCoordinates.emplace_back( p_x );    // Store the coordinate of the out-of-domain particle
+        inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );       // Store the local index "pp" for the current
                                                                                     // coordinate.
-        }
-      } );
+      }
+    } );
 
 
     // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
 
-    std::vector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
+    stdVector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
 
     sendCoordinateListToNeighbors( inDomainMasterParticleCoordinates.toView(),          // input: Single list of coordinates sent to all
                                                                                         // neighbors
@@ -604,8 +699,8 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     // (3) Pack the list of particle global indices to each neighbor, and send the list to neighbors.
 
-    std::vector< array1d< globalIndex > > particleGlobalIndicesSendingToNeighbors( nn );
-    std::vector< array1d< globalIndex > > particleGlobalIndicesReceivedFromNeighbors( nn );
+    stdVector< array1d< globalIndex > > particleGlobalIndicesSendingToNeighbors( nn );
+    stdVector< array1d< globalIndex > > particleGlobalIndicesReceivedFromNeighbors( nn );
 
     for( size_t n=0; n<nn; ++n )
     {
@@ -626,7 +721,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     //     of the particle.  This will be sent from the master as a new ghost on the current
     //     partition.
 
-    std::vector< array1d< globalIndex > > particleGlobalIndicesRequestingFromNeighbors( nn );
+    stdVector< array1d< globalIndex > > particleGlobalIndicesRequestingFromNeighbors( nn );
 
     for( size_t n=0; n<nn; ++n )
     {
@@ -639,14 +734,14 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
           // This particle should be a ghost on the current processor. See if it already exists here.
           bool alreadyHere = false;
           forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
+          {
+            if( gI == particleGlobalID[p] )
             {
-              if( gI == particleGlobalID[p] )
-              {
-                // The particle already exists as a ghost on this partition, so we should update its rank.
-                particleRank[p] = m_neighbors[n].neighborRank();
-                alreadyHere = true;
-              }
-            } );
+              // The particle already exists as a ghost on this partition, so we should update its rank.
+              particleRank[p] = m_neighbors[n].neighborRank();
+              alreadyHere = true;
+            }
+          } );
           if( !alreadyHere )
           {
             // The global index is not represented on this partition, so we should add the particle.
@@ -660,7 +755,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     // (5) Pack and send request list of Global Indices to each neighbor, receive and unpack
     //     this into a list requested from each neighbor.
 
-    std::vector< array1d< globalIndex > > particleGlobalIndicesRequestedFromNeighbors( nn );
+    stdVector< array1d< globalIndex > > particleGlobalIndicesRequestedFromNeighbors( nn );
 
     sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesRequestingFromNeighbors,
                                                  commData,
@@ -673,12 +768,12 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     int partitionRank = this->m_rank;
     forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
+    {
+      if( particleRank[p] != partitionRank )
       {
-        if( particleRank[p] != partitionRank )
-        {
-          particleRank[p] = -1;
-        }
-      } );
+        particleRank[p] = -1;
+      }
+    } );
 
 
     // (6.1) Resize particle subRegion to accommodate incoming particles.
@@ -686,8 +781,8 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     int oldSize = subRegion.size();
     int newSize = subRegion.size();
-    std::vector< int > newParticleStartingIndices( nn );
-    std::vector< int > numberOfIncomingParticles( nn );
+    stdVector< int > newParticleStartingIndices( nn );
+    stdVector< int > numberOfIncomingParticles( nn );
     for( size_t n=0; n<nn; n++ )
     {
       numberOfIncomingParticles[n] = particleGlobalIndicesRequestingFromNeighbors[n].size();
@@ -703,7 +798,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     // (7) Pack/Send/Receive/Unpack particles to be sent to each neighbor.
 
     {
-      std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
+      stdVector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
 
       for( size_t n=0; n<nn; n++ )
       {
@@ -747,7 +842,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
  */
 void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
                                                       MPI_iCommData & commData,
-                                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
+                                                      stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                                       )
 {
   // Number of neighboring partitions
@@ -769,8 +864,8 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
   GEOS_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                       // make sure the packer is self-consistent
 
   // Declare the receive buffers
-  std::vector< unsigned int > sizeOfReceived( nn );
-  std::vector< buffer_type > receiveBuffer( nn );
+  stdVector< unsigned int > sizeOfReceived( nn );
+  stdVector< buffer_type > receiveBuffer( nn );
 
   // send the coordinate list to each neighbor.  Using an asynchronous send,
   // the mpi request will be different for each send, but the buffer is the same
@@ -840,16 +935,16 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
 }
 
 template< typename indexType >
-void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
+void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
                                                      MPI_iCommData & commData,
-                                                     std::vector< array1d< indexType > > & listReceivedFromEachNeighbor )
+                                                     stdVector< array1d< indexType > > & listReceivedFromEachNeighbor )
 {
   // Number of neighboring partitions
   unsigned int nn = m_neighbors.size();
 
   // Pack the outgoing lists of local indices
-  std::vector< unsigned int > sizeOfPacked( nn );
-  std::vector< buffer_type > sendBuffer( nn );
+  stdVector< unsigned int > sizeOfPacked( nn );
+  stdVector< buffer_type > sendBuffer( nn );
   for( size_t n=0; n<nn; n++ )
   {
     unsigned int sizeToBePacked = 0;                                                  // size of the outgoing data with packing=false (we
@@ -868,9 +963,9 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
   }
 
   // Declare the receive buffers
-  std::vector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector
-                                                    // or std::array
-  std::vector< buffer_type > receiveBuffer( nn );
+  stdVector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, stdVector
+                                                  // or std::array
+  stdVector< buffer_type > receiveBuffer( nn );
 
   // send the list of local indices to each neighbor using an asynchronous send
   {
@@ -939,16 +1034,16 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
 }
 
 void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
-                                                std::vector< int > const & newParticleStartingIndices,
-                                                std::vector< int > const & numberOfIncomingParticles,
+                                                stdVector< int > const & newParticleStartingIndices,
+                                                stdVector< int > const & numberOfIncomingParticles,
                                                 MPI_iCommData & commData,
-                                                std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
+                                                stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
 {
   unsigned int nn = m_neighbors.size();
 
   // Pack the send buffer for the particles being sent to each neighbor
-  std::vector< buffer_type > sendBuffer( nn );
-  std::vector< unsigned int > sizeOfPacked( nn );
+  stdVector< buffer_type > sendBuffer( nn );
+  stdVector< unsigned int > sizeOfPacked( nn );
 
   for( size_t n=0; n<nn; n++ )
   {
@@ -959,9 +1054,9 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
   }
 
   // Declare the receive buffers
-  std::vector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector
-                                                    // or std::array
-  std::vector< buffer_type > receiveBuffer( nn );
+  stdVector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, stdVector
+                                                  // or std::array
+  stdVector< buffer_type > receiveBuffer( nn );
 
   // send/receive the size of the packed particle data to each neighbor using an asynchronous send
   {

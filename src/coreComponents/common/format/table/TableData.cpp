@@ -18,68 +18,124 @@
  */
 
 #include "TableData.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
 
-void TableData::addRow( std::vector< string > const & row )
+TableData::TableData():
+  m_errors( std::make_unique< TableErrorListing >() )
+{}
+
+TableData::TableData( TableData const & other ):
+  m_rows( other.m_rows ),
+  m_errors( std::make_unique< TableErrorListing >( *other.m_errors ) )
+{}
+
+TableData::TableData( TableData && other ):
+  m_rows( std::move( other.m_rows )),
+  m_errors( std::move( other.m_errors ))
+{}
+
+TableData & TableData::operator=( TableData && other )
 {
-  if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size() )
+  if( this != &other )
   {
-    string msg = "Remarks : some cells may be missing";
-    if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
-    {
-      m_errorsMsg.push_back( msg );
-    }
+    m_rows = std::move( other.m_rows );
+    m_errors = std::move( other.m_errors );
   }
+  return *this;
+}
+
+TableData & TableData::operator=( TableData const & other )
+{
+  if( this != &other )
+  {
+    m_rows = other.m_rows;
+    *m_errors = *other.m_errors;
+  }
+  return *this;
+}
+
+bool TableData::operator<( TableData const & other ) const
+{
+  return m_rows < other.m_rows;
+}
+
+
+
+void TableData::addRow( stdVector< TableData::CellData > const & row )
+{
   m_rows.push_back( row );
+}
+
+void TableData::addSeparator()
+{
+  if( m_rows.empty())
+  {
+    m_errors->addError( "Warning : Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
+  }
+  else
+  {
+    integer rowSize = m_rows.front().size();
+    m_rows.emplace_back( stdVector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
+  }
+
 }
 
 void TableData::clear()
 {
   m_rows.clear();
-  m_errorsMsg.clear();
+  getErrorsList().clear();
 }
 
-std::vector< std::vector< string > > const & TableData::getTableDataRows() const
+void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                                      arrayView1d< real64 const > dim1AxisCoordinates,
+                                      arrayView1d< real64 const > values,
+                                      bool columnMajorInputValues )
 {
-  return m_rows;
-}
+  arrayView1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
+  arrayView1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
+  integer const nCol = columAxisCoordinates.size();
+  integer const nRow = rowAxisCoordinates.size();
 
-std::vector< string > const & TableData::getErrorMsgs() const
-{
-  return m_errorsMsg;
-}
-
-void TableData2D::collectTableValues( arraySlice1d< real64 const > rowAxisValues,
-                                      arraySlice1d< real64 const > columnAxisValues,
-                                      arrayView1d< real64 const > values )
-{
-  integer const nX = rowAxisValues.size();
-  integer const nY = columnAxisValues.size();
-
-  for( integer i = 0; i < nX; i++ )
+  array1d< real64 > wellFormedValues( values.size() );
+  wellFormedValues = values;
+  if( values.size() < nRow * nCol )
   {
-    for( integer y = 0; y < nY; y++ )
+    m_errors->addError( GEOS_FMT( "Warning: Not enough for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
+    wellFormedValues.resizeDefault( nRow * nCol, 0 );
+  }
+  else if( values.size() > nRow * nCol )
+  {
+    m_errors->addError( GEOS_FMT( "Warning: Too much data for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values."
+                                  " Data may be misaligned",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
+  }
+
+  for( integer y = 0; y < nRow; y++ )
+  {
+    for( integer x = 0; x < nCol; x++ )
     {
-      addCell( rowAxisValues[i], columnAxisValues[y], values[ y*nX + i ] );
+      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellFormedValues[ x + y*nCol ] );
     }
   }
 }
 
-TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > const values,
-                                                          units::Unit const valueUnit,
-                                                          ArrayOfArraysView< real64 const > const coordinates,
+TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                           string_view rowAxisDescription,
-                                                          string_view columnAxisDescription )
+                                                          string_view columnAxisDescription,
+                                                          arrayView1d< real64 const > const values,
+                                                          bool columnMajorValues,
+                                                          string_view valueDescription )
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-
-  collectTableValues( coordinates[0], coordinates[1], values );
-  return buildTableData( string( units::getDescription( valueUnit )),
-                         rowFmt,
-                         columnFmt );
+  collectTableValues( coordX, coordY, values, columnMajorValues );
+  return buildTableData( valueDescription, rowFmt, columnFmt );
 }
 
 TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit,
@@ -87,7 +143,6 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
                                                           string_view columnFmt ) const
 {
   TableData2D::TableDataHolder tableData1D;
-  std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
 
@@ -96,12 +151,17 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
   }
 
+  for( auto const & error : *m_errors )
+  {
+    tableData1D.tableData.getErrorsList().addError( error );
+  }
+
   // insert row value and row cell values
   for( auto const & [rowValue, rowMap] : m_data )
   {
-    std::vector< string > currentRowValues;
+    stdVector< TableData::CellData > currentRowValues;
     currentRowValues.reserve( rowMap.size() );
-    currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
+    currentRowValues.push_back( {CellType::Value, GEOS_FMT( rowFmt, rowValue )} );
 
     std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )
@@ -109,13 +169,13 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
       // if a column value(s) is/are missing, insert empty entry(ies)
       while( columnValue > *( columnIt++ ) && columnIt != m_columnValues.end() )
       {
-        currentRowValues.push_back( "" );
+        currentRowValues.push_back( {CellType::Value, ""} );
       }
-      currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
+
+      currentRowValues.push_back( {CellType::Value, GEOS_FMT( "{}", cellValue )} );
     }
 
-    tableData1D.tableData.addRow( std::move( currentRowValues ) );
-    rowsLength.push_back( currentRowValues.size() );
+    tableData1D.tableData.addRow( currentRowValues );
   }
 
   return tableData1D;

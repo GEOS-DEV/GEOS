@@ -142,6 +142,14 @@ public:
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
+
+  /**
+   * @brief Open and close perfs based on user defined perf status table
+   * @param time_n evaluation time
+   * @param domain  the domain
+   */
+  void setPerforationStatus( real64 const & time_n, DomainPartition & domain );
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -242,9 +250,10 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -253,6 +262,17 @@ public:
   virtual void computePerforationRates( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain ) = 0;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
+                            DomainPartition & domain ) override;
 
   /**
    * @brief Utility function to keep the well variables during a time step (used in poromechanics simulations)
@@ -264,9 +284,11 @@ public:
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
+
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 
 private:
@@ -276,9 +298,6 @@ private:
    * @param domain the domain parition
    */
   void precomputeData( DomainPartition & domain );
-
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
 
 protected:
 
@@ -292,7 +311,7 @@ protected:
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  virtual void initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt ) = 0;
+  virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
 
   /**
    * @brief Make sure that the well constraints are compatible
@@ -330,8 +349,11 @@ protected:
   integer m_writeCSV;
   string const m_ratesOutputDir;
 
+  // flag to enable time step selection base on rates/bhp tables coordinates
+  integer m_timeStepFromTables;
+
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

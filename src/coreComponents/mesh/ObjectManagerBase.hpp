@@ -572,6 +572,8 @@ public:
     // This is required for the Tensor classes.
     typename FIELD_TRAIT::dataType defaultValue( FIELD_TRAIT::defaultValue() );
 
+    m_registeredField.insert( FIELD_TRAIT::key());
+
     return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).
              setApplyDefaultValue( defaultValue ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
@@ -583,16 +585,16 @@ public:
   /**
    * @brief Helper function to register fields
    * @tparam FIELD_TRAIT the type of field
-   * @param[in] fieldTrait the struct corresponding to the field being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename FIELD_TRAIT >
-  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
-                                                                         typename FIELD_TRAIT::type * newObject )
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( typename FIELD_TRAIT::type * newObject )
   {
-    return registerWrapper( fieldTrait.key(), newObject ).
-             setApplyDefaultValue( fieldTrait.defaultValue() ).
+    m_registeredField.insert( FIELD_TRAIT::key());
+
+    return registerWrapper( FIELD_TRAIT::key(), newObject ).
+             setApplyDefaultValue( FIELD_TRAIT::defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
              setDescription( FIELD_TRAIT::description );
@@ -912,6 +914,11 @@ public:
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
 
+  /**
+   * @return A vector containing all registered fields
+   */
+  std::set< string > const & getRegisteredFields() const { return m_registeredField; }
+
 
   /**
    * @brief Get the domain boundary indicator
@@ -981,6 +988,9 @@ protected:
 
   /// The maximum global index of any object of all objects on this rank.
   globalIndex m_localMaxGlobalIndex = -1;
+
+  /// Field that have been registered
+  std::set< string > m_registeredField = {};
 };
 
 

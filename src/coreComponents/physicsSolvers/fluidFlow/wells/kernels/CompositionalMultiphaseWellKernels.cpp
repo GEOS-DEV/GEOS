@@ -19,16 +19,17 @@
 
 #include "CompositionalMultiphaseWellKernels.hpp"
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geos
 {
 
-using namespace constitutive;
 namespace compositionalMultiphaseWellKernels
 {
+
+using namespace constitutive;
 
 /******************************** ControlEquationHelper ********************************/
 
@@ -37,6 +38,7 @@ inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
+                 WellControls::Control const & inputControl,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
                  real64 const & targetBHP,
@@ -46,6 +48,7 @@ ControlEquationHelper::
                  real64 const & currentBHP,
                  arrayView1d< real64 const > const & currentPhaseVolRate,
                  real64 const & currentTotalVolRate,
+                 real64 const & currentMassRate,
                  WellControls::Control & newControl )
 {
   // if isViable is true at the end of the following checks, no need to switch
@@ -58,7 +61,7 @@ ControlEquationHelper::
 
   // Currently, the available constraints are:
   //   - Producer: BHP, PHASEVOLRATE
-  //   - Injector: BHP, TOTALVOLRATE
+  //   - Injector: BHP, TOTALVOLRATE, MASSRATE
 
   // TODO: support GRAT, WRAT, LIQUID for producers and check if any of the active constraint is violated
 
@@ -71,6 +74,10 @@ ControlEquationHelper::
       controlIsViable = ( LvArray::math::abs( currentPhaseVolRate[phasePhaseIndex] ) <= LvArray::math::abs( targetPhaseRate ) );
     }
     // the control is viable if the reference total rate is below the max rate for injectors
+    else if( inputControl == WellControls::Control::MASSRATE )
+    {
+      controlIsViable = ( LvArray::math::abs( currentMassRate ) <= LvArray::math::abs( targetMassRate ) );
+    }
     else
     {
       controlIsViable = ( LvArray::math::abs( currentTotalVolRate ) <= LvArray::math::abs( targetTotalRate ) );
@@ -191,7 +198,7 @@ ControlEquationHelper::
       dControlEqn[COFFSET_WJ::dC+ic] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dC+ic];
     }
     if constexpr ( IS_THERMAL )
-      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+      dControlEqn[COFFSET_WJ::dT] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dT];
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
@@ -218,17 +225,6 @@ ControlEquationHelper::
     }
     if constexpr ( IS_THERMAL )
       dControlEqn[COFFSET_WJ::dT] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dT];
-  }
-  // Total mass rate control
-  else if( currentControl == WellControls::Control::MASSRATE )
-  {
-    controlEqn = massDensity*currentTotalVolRate - targetMassRate;
-    dControlEqn[COFFSET_WJ::dP] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dP];
-    dControlEqn[COFFSET_WJ::dQ] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dQ];
-    for( integer ic = 0; ic < NC; ++ic )
-    {
-      dControlEqn[COFFSET_WJ::dC+ic] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dC+ic];
-    }
   }
   else
   {
@@ -294,8 +290,8 @@ PressureRelationKernel::
   }
   if constexpr ( IS_THERMAL )
   {
-    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
-    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = 0.5 * dTotalMassDens[Deriv::dT];
+    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  -0.5 * dTotalMassDensNext[Deriv::dT]* gravD;
+    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = -0.5 * dTotalMassDens[Deriv::dT]* gravD;
   }
 }
 
@@ -308,7 +304,8 @@ PressureRelationKernel::
           localIndex const iwelemControl,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
+          arrayView1d< integer const > const elemStatus,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -323,10 +320,11 @@ PressureRelationKernel::
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( timeAtEndOfStep );
-  real64 const targetMassRate = wellControls.getTargetMassRate( timeAtEndOfStep );
+  WellControls::Control const inputControl = wellControls.getInputControl();
+  real64 const targetBHP = wellControls.getTargetBHP( time );
+  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
+  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
+  real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
   // dynamic well control data
   real64 const & currentBHP =
@@ -344,6 +342,9 @@ PressureRelationKernel::
   arrayView1d< real64 const > const & dCurrentTotalVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() );
 
+  real64 const & currentMassRate =
+    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
+
   real64 const & massDensity  =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
 
@@ -352,12 +353,19 @@ PressureRelationKernel::
   // loop over the well elements to compute the pressure relations between well elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
+    if( elemStatus[iwelem] ==  WellElementSubRegion::WellElemStatus::CLOSED )
+    {
+      return;
+    }
+
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
+
       WellControls::Control newControl = currentControl;
       ControlEquationHelper::switchControl( isProducer,
+                                            inputControl,
                                             currentControl,
                                             targetPhaseIndex,
                                             targetBHP,
@@ -367,6 +375,7 @@ PressureRelationKernel::
                                             currentBHP,
                                             currentPhaseVolRate,
                                             currentTotalVolRate,
+                                            currentMassRate,
                                             newControl );
       if( currentControl != newControl )
       {
@@ -450,7 +459,8 @@ PressureRelationKernel::
                               localIndex const iwelemControl, \
                               integer const targetPhaseIndex, \
                               WellControls const & wellControls, \
-                              real64 const & timeAtEndOfStep, \
+                              real64 const & time, \
+                              arrayView1d< integer const > const elemStatus, \
                               arrayView1d< globalIndex const > const & wellElemDofNumber, \
                               arrayView1d< real64 const > const & wellElemGravCoef, \
                               arrayView1d< localIndex const > const & nextWellElemIndex, \
@@ -478,7 +488,6 @@ PresTempCompFracInitializationKernel::
           localIndex const subRegionSize,
           integer const numComps,
           integer const numPhases,
-          localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
@@ -490,6 +499,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
+          arrayView1d< integer const > const & perfStatus,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -512,6 +522,7 @@ PresTempCompFracInitializationKernel::
   // In passing, we save the min gravCoef difference between the reference depth and the perforation depth
   // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
 
+  RAJA::ReduceSum< parallelDeviceReduce, integer > numOpenPerfs( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTemp( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumCompFrac[MAX_NUM_COMP]{};
@@ -519,43 +530,47 @@ PresTempCompFracInitializationKernel::
 
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
-    // get the reservoir (sub)region and element indices
-    localIndex const er = resElementRegion[iperf];
-    localIndex const esr = resElementSubRegion[iperf];
-    localIndex const ei = resElementIndex[iperf];
-
-    // save the min gravCoef difference between the reference depth and the perforation depth (times g)
-    localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
-
-    // increment the temperature
-    sumTemp += resTemp[er][esr][ei];
-
-    // increment the total mass density
-    for( integer ip = 0; ip < numPhases; ++ip )
+    if( perfStatus[iperf] )
     {
-      sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
-    }
+      numOpenPerfs += 1;
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
 
-    // increment the component fractions
-    real64 perfTotalDens = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      perfTotalDens += resCompDens[er][esr][ei][ic];
-    }
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      sumCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDens;
+      // save the min gravCoef difference between the reference depth and the perforation depth (times g)
+      localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
+
+      // increment the temperature
+      sumTemp += resTemp[er][esr][ei];
+
+      // increment the total mass density
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
+      }
+
+      // increment the component fractions
+      real64 perfTotalDens = 0.0;
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        perfTotalDens += resCompDens[er][esr][ei][ic];
+      }
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        sumCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDens;
+      }
     }
   } );
   real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
 
-
+  integer totalOpenPerfs = MpiWrapper::sum( numOpenPerfs.get() );
 
   // Step 2: we assign average quantities over the well (i.e., over all the ranks)
   // For composition and temperature, we make a distinction between injection and production
 
   // for total mass density, we always use the values of the perforated reservoir elements, even for injectors
-  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
+  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / totalOpenPerfs;
 
   stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
   real64 avgTemp = 0;
@@ -564,12 +579,12 @@ PresTempCompFracInitializationKernel::
   if( isProducer )
   {
     // use average temperature from reservoir
-    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
+    avgTemp = MpiWrapper::sum( sumTemp.get() ) / totalOpenPerfs;
 
     // use average comp frac from reservoir
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic].get() ) / numPerforations;
+      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic].get() ) / totalOpenPerfs;
     }
   }
   // for an injector, we use the injection stream values
@@ -605,16 +620,19 @@ PresTempCompFracInitializationKernel::
 
     forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-      // get the reservoir (sub)region and element indices
-      localIndex const er = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei = resElementIndex[iperf];
-
-      // get the perforation pressure and save the estimated reference pressure
-      real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
-      if( isZero( gravCoefDiff - minGravCoefDiff ) )
+      if( perfStatus[iperf] )
       {
-        localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+        // get the reservoir (sub)region and element indices
+        localIndex const er = resElementRegion[iperf];
+        localIndex const esr = resElementSubRegion[iperf];
+        localIndex const ei = resElementIndex[iperf];
+
+        // get the perforation pressure and save the estimated reference pressure
+        real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
+        if( isZero( gravCoefDiff - minGravCoefDiff ) )
+        {
+          localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+        }
       }
     } );
     refPres = MpiWrapper::min( localRefPres.get() );
@@ -631,6 +649,7 @@ PresTempCompFracInitializationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePres( 0 );
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundInconsistentCompFrac( 0 );
 
+  auto const avgCompFracView = avgCompFrac.toViewConst();
 
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
@@ -640,7 +659,7 @@ PresTempCompFracInitializationKernel::
     real64 sumCompFracForCheck = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
+      wellElemCompFrac[iwelem][ic] = avgCompFracView[ic];
       sumCompFracForCheck += wellElemCompFrac[iwelem][ic];
     }
 
@@ -661,14 +680,14 @@ PresTempCompFracInitializationKernel::
 
 
   GEOS_THROW_IF( foundNegativePres.get() == 1,
-                 wellControls.getDataContext() << "Invalid well initialization, negative pressure was found.",
-                 InputError );
+                 "Invalid well initialization, negative pressure was found.",
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( foundNegativeTemp.get() == 1,
-                 wellControls.getDataContext() << "Invalid well initialization, negative temperature was found.",
-                 InputError );
+                 "Invalid well initialization, negative temperature was found.",
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( foundInconsistentCompFrac.get() == 1,
-                 wellControls.getDataContext() << "Invalid well initialization, inconsistent component fractions were found.",
-                 InputError );
+                 "Invalid well initialization, inconsistent component fractions were found.",
+                 InputError, wellControls.getDataContext() );
 
 
 }
@@ -699,16 +718,16 @@ RateInitializationKernel::
   launch( localIndex const subRegionSize,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
-          real64 const & currentTime,
+          real64 const & time,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
           arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens,
           arrayView1d< real64 > const & connRate )
 {
   WellControls::Control const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( currentTime );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( currentTime );
-  real64 const targetMassRate = wellControls.getTargetMassRate( currentTime );
+  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
+  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
+  real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
@@ -737,7 +756,6 @@ RateInitializationKernel::
     else if( control == WellControls::Control::MASSRATE )
     {
       connRate[iwelem] = targetMassRate;
-      connRate[iwelem] = targetMassRate* totalDens[iwelem][0];
     }
     else
     {

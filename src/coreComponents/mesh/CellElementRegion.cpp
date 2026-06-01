@@ -17,8 +17,6 @@
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
-#include <fnmatch.h>
-
 namespace geos
 {
 using namespace dataRepository;
@@ -26,7 +24,7 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  std::vector< string > elementNames;
+  stdVector< string > elementNames;
   for( int i = 0; i < numElementTypes(); ++i )
   {
     if( getElementDim( (ElementType)i ) == 3 )
@@ -44,10 +42,6 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
                               " contains the tetrahedric elements for which the regionAttribute is 1.\n"
                               "The element types are: {}.",
                               catalogName(), stringutilities::join( elementNames, ", " ) ) );
-
-  registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0 );
 }
 
 CellElementRegion::~CellElementRegion()
@@ -55,18 +49,16 @@ CellElementRegion::~CellElementRegion()
 
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
-  GEOS_THROW_IF( m_cellBlockNames.empty(),
-                 GEOS_FMT( "{}: No cellBlock selected in this region.",
-                           getDataContext() ),
-                 InputError );
+  GEOS_THROW_IF( m_cellBlockNames.empty(), "No cellBlock selected in this region.",
+                 InputError, getDataContext() );
   Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
   for( string const & cbName : m_cellBlockNames )
   {
     CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cbName );
     GEOS_THROW_IF( cellBlock == nullptr,
-                   GEOS_FMT( "{}: No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
-                             getDataContext(), cbName, stringutilities::join( m_cellBlockNames, ", " ) ),
-                   InputError );
+                   GEOS_FMT( "No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
+                             cbName, stringutilities::join( m_cellBlockNames, ", " ) ),
+                   InputError, getDataContext() );
 
     // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
     CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );

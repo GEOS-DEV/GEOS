@@ -23,8 +23,9 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 
 
 namespace geos
@@ -45,6 +46,8 @@ class ConstitutiveBase;
 class SinglePhaseBase : public FlowSolverBase
 {
 public:
+  using SingleFluidProp = constitutive::SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -72,7 +75,8 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseBase() override = default;
+  virtual ~SinglePhaseBase() override
+  {}
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -205,25 +209,6 @@ public:
                          arrayView1d< real64 > const & localRhs,
                          string const & jumpDofKey ) = 0;
 
-  /**
-   * @brief assembles the flux terms for all cells for the hydrofracture case
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the system matrix
-   * @param localRhs the system right-hand side vector
-   * @param dR_dAper
-   */
-  virtual void
-  assembleHydrofracFluxTerms( real64 const time_n,
-                              real64 const dt,
-                              DomainPartition const & domain,
-                              DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
-
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
@@ -238,7 +223,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void
+  virtual void
   applyDirichletBC( real64 const time_n,
                     real64 const dt,
                     DomainPartition & domain,
@@ -255,7 +240,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void
+  virtual void
   applySourceFluxBC( real64 const time_n,
                      real64 const dt,
                      DomainPartition & domain,
@@ -281,7 +266,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) const = 0;
 
   virtual void
-  updateState ( DomainPartition & domain ) override final;
+  updateState ( DomainPartition & domain ) override;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
@@ -304,6 +289,13 @@ public:
    */
   void
   updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Template function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  template< integer IS_THERMAL >
+  void updateMass( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Function to update energy
@@ -335,9 +327,9 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
 
-  virtual void initializeThermalState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -383,51 +375,14 @@ protected:
    */
   void initializeAquiferBC() const;
 
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
   /**
    * @brief Utility function to save the converged state
    * @param[in] subRegion the element subRegion
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
-  /**
-   * @brief Structure holding views into fluid properties used by the base solver.
-   */
-  struct FluidPropViews
-  {
-    arrayView2d< real64 const > const dens;             ///< density
-    arrayView2d< real64 const > const dDens_dPres;      ///< derivative of density w.r.t. pressure
-    arrayView2d< real64 const > const visc;             ///< viscosity
-    arrayView2d< real64 const > const dVisc_dPres;      ///< derivative of viscosity w.r.t. pressure
-    real64 const defaultDensity;                     ///< default density to use for new elements
-    real64 const defaultViscosity;                    ///< default vi to use for new elements
-  };
-
-  /**
-   * @brief Structure holding views into thermal fluid properties used by the base solver.
-   */
-  struct ThermalFluidPropViews
-  {
-    arrayView2d< real64 const > const dDens_dTemp;      ///< derivative of density w.r.t. temperature
-    arrayView2d< real64 const > const dVisc_dTemp;      ///< derivative of viscosity w.r.t. temperature
-  };
-
-  /**
-   * @brief Extract properties from a fluid.
-   * @param fluid base reference to the fluid object
-   * @return structure with property views
-   *
-   * This function enables derived solvers to substitute SingleFluidBase for a different,
-   * unrelated fluid class, and customize property extraction. For example, it is used by
-   * SinglePhaseProppantBase to allow using  constitutive::SlurryFluidBase, which does not inherit from
-   * SingleFluidBase currently (but this design may need to be revised).
-   */
-  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
-
-  virtual ThermalFluidPropViews getThermalFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
-
 private:
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
@@ -438,13 +393,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  geos::constitutive::SingleFluidBase const & fluid =
-    getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-  //START_SPHINX_INCLUDE_COUPLEDSOLID
-  geos::constitutive::CoupledSolidBase const & solid =
-    getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-  //END_SPHINX_INCLUDE_COUPLEDSOLID
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   if( m_isThermal )
@@ -454,8 +402,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }
@@ -466,8 +412,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }

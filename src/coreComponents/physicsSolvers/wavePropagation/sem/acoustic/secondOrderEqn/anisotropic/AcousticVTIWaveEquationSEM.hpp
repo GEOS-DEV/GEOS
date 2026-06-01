@@ -26,7 +26,7 @@
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 #include "AcousticVTIFields.hpp"
-
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 namespace geos
 {
 
@@ -60,14 +60,19 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
 
   virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                       bool const GEOS_UNUSED_PARAM( computeGradient ) ) override;
+                                       integer const GEOS_UNUSED_PARAM( computeGradient ) ) override;
+
+  /**
+   * @brief Get the minimum wavespeed on a mesh
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**@}*/
 
@@ -129,7 +134,7 @@ private:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Compute the lateral and bottom surface Field indicators of the boxed domain

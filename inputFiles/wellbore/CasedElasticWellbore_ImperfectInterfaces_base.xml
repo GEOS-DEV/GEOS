@@ -4,7 +4,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
@@ -22,7 +21,7 @@
       name="SurfaceGen"
       fractureRegion="Fracture"
       targetRegions="{ casing, cement, rock }"
-      rockToughness="1.0e6"
+      initialRockToughness="1.0e6"
       mpiCommOrder="1"/>
     <!-- SPHINX_SolversSurfaceGeneratorEnd -->
  

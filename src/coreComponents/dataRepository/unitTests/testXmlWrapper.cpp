@@ -26,7 +26,7 @@ TEST( testXmlWrapper, array3d_errors )
   array3d< int > array;
 
   {
-    std::vector< string > workingInputs = {
+    stdVector< string > workingInputs = {
       // testing without spaces with various array sizes
       "{{{0}}}",
       "{{{0,1,2}}}",
@@ -54,7 +54,7 @@ TEST( testXmlWrapper, array3d_errors )
     }
   }
   {
-    std::vector< string > erroneousInputs = {
+    stdVector< string > erroneousInputs = {
       // fordbiden characters
       "{{{0,1,2},{3, hello,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
       "{{{0,1,2 + 2},{3, 2 * 2,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
@@ -243,6 +243,9 @@ INSTANTIATE_TEST_SUITE_P(
   real64AttributeTests,
   real64AttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
+                     std::make_tuple( "1 ", 1, false ),
+                     std::make_tuple( " 1", 1, false ),
+                     std::make_tuple( " 1 ", 1, false ),
                      std::make_tuple( "-23", -23, false ),
                      std::make_tuple( "4.5", 4.5, false ),
                      std::make_tuple( "4.", 4.0, false ),
@@ -260,7 +263,6 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "1.234gamma", 0, true ),
                      std::make_tuple( "1.2.3", 0, true ),
                      std::make_tuple( "1e2.3 ", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1e", 0, true ),
                      std::make_tuple( "1e-", 0, true ),
                      std::make_tuple( "1e+", 0, true )));
@@ -284,6 +286,9 @@ INSTANTIATE_TEST_SUITE_P(
   real32AttributeTests,
   real32AttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
+                     std::make_tuple( "1 ", 1, false ),
+                     std::make_tuple( " 1", 1, false ),
+                     std::make_tuple( " 1 ", 1, false ),
                      std::make_tuple( "-23", -23, false ),
                      std::make_tuple( "4.5", 4.5, false ),
                      std::make_tuple( "4.", 4.0, false ),
@@ -301,7 +306,6 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "1.234gamma", 0, true ),
                      std::make_tuple( "1.2.3", 0, true ),
                      std::make_tuple( "1e2.3 ", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1e", 0, true ),
                      std::make_tuple( "1e-", 0, true ),
                      std::make_tuple( "1e+", 0, true )));
@@ -319,13 +323,15 @@ INSTANTIATE_TEST_SUITE_P(
   integerAttributeTests,
   integerAttributeTestFixture,
   ::testing::Values( std::make_tuple( "1", 1, false ),
+                     std::make_tuple( "1 ", 1, false ),
+                     std::make_tuple( " 1", 1, false ),
+                     std::make_tuple( " 1 ", 1, false ),
                      std::make_tuple( "-23", -23, false ),
                      std::make_tuple( "4.5", 0, true ),
                      std::make_tuple( "4.", 0, true ),
                      std::make_tuple( "alpha", 0, true ),
                      std::make_tuple( "1beta234", 0, true ),
                      std::make_tuple( "1234gamma", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1 2", 0, true )));
 
 
@@ -369,21 +375,25 @@ TEST( testXmlWrapper, testGroupNamesFormats )
   string groupName;
 
   {
-    std::vector< GroupNameTest > workingInputs = {
+    stdVector< GroupNameTest > workingInputs = {
       GroupNameTest( groupNameRegex, "testname" ),
       GroupNameTest( groupNameRegex, "testname01" ),
       GroupNameTest( groupNameRegex, "test_name" ),
       GroupNameTest( groupNameRegex, "test-name" ),
-      GroupNameTest( groupNameRegex, "test.name" ),
+      GroupNameTest( groupNameRegex, " testname " ),
+      GroupNameTest( groupNameRegex, " \t testname \n " ),
     };
     for( GroupNameTest const & input : workingInputs )
     {
-      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      EXPECT_STREQ( input.m_valueToTest.c_str(), groupName.c_str() );
+      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) )
+        << "Parsing input '"<< input.m_valueToTest
+        << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
+      string_view stringTrimed = stringutilities::trimSpaces( input.m_valueToTest );
+      EXPECT_STREQ( groupName.c_str(), std::string{stringTrimed}.c_str()  );
     }
   }
   {
-    std::vector< GroupNameTest > erroneousInputs = {
+    stdVector< GroupNameTest > erroneousInputs = {
       //empty entries
       GroupNameTest( groupNameRegex, "" ),
       GroupNameTest( groupNameRegex, " " ),
@@ -391,13 +401,96 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       //white spaces
       GroupNameTest( groupNameRegex, "test name" ),
       GroupNameTest( groupNameRegex, "test\tname" ),
-      GroupNameTest( groupNameRegex, "testname " ),
-      GroupNameTest( groupNameRegex, " testname" ),
       //fordbiden characters
       GroupNameTest( groupNameRegex, "test/name" ),
       GroupNameTest( groupNameRegex, "test:name" ),
       GroupNameTest( groupNameRegex, "test;name" ),
       GroupNameTest( groupNameRegex, "test\\name" ),
+      GroupNameTest( groupNameRegex, "{[arrayElement]}" ),
+      GroupNameTest( groupNameRegex, "{name1,name2,name3}" ),
+    };
+    for( GroupNameTest const & input : erroneousInputs )
+    {
+      EXPECT_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ),
+                    InputError ) << "Parsing input '"<< input.m_valueToTest
+                                 << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
+    }
+  }
+}
+TEST( testXmlWrapper, testGroupNamesArrayFormats )
+{
+  struct GroupNameTest
+  {
+    Regex const & m_regex;
+    string m_valueToTest;
+    GroupNameTest( Regex const & regex, string_view valueToTest ):
+      m_regex( regex ), m_valueToTest( valueToTest ) {}
+  };
+
+  Regex const & groupNameRefArrayRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRefArray );
+  string groupName;
+
+  {
+    stdVector< GroupNameTest > workingInputs = {
+      GroupNameTest( groupNameRefArrayRegex, "{}" ),
+      GroupNameTest( groupNameRefArrayRegex, " {} " ),
+      GroupNameTest( groupNameRefArrayRegex, " \t {} \n " ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{123name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name123}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{a-Z0-9./*[]-_,}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name.with-special_chars}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{path/to/resource*}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{[arrayElement]}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name1,name2,name3}" ),
+    };
+    for( GroupNameTest const & input : workingInputs )
+    {
+      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
+    }
+  }
+  {
+    stdVector< GroupNameTest > erroneousInputs = {
+      GroupNameTest( groupNameRefArrayRegex, "" ),
+      GroupNameTest( groupNameRefArrayRegex, " " ),
+      GroupNameTest( groupNameRefArrayRegex, " \t " ),
+      GroupNameTest( groupNameRefArrayRegex, "{\t}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test:name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test;name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\\name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test|name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test^name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test$name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test&name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test#name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test!name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test%name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test@name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test(name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test)name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test=name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test+name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test<name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test>name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\tname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\nname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\rname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}} " ),
+      GroupNameTest( groupNameRefArrayRegex, "{}groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName{}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{hello, \t\n\r ,world}" ),
+      GroupNameTest( groupNameRefArrayRegex, "test{groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}test" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName} test" ),
+      GroupNameTest( groupNameRefArrayRegex, "{element with space, another}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{element, element with space, 123.456, a-b}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{ space at ends } " ),
+      GroupNameTest( groupNameRefArrayRegex, "{valuewith,,commas }" ),
+      GroupNameTest( groupNameRefArrayRegex, "{ value with , commas }" ),
+      GroupNameTest( groupNameRefArrayRegex, "{{groupname}}" ),
     };
     for( GroupNameTest const & input : erroneousInputs )
     {

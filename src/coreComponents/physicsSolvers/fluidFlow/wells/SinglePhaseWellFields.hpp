@@ -65,13 +65,13 @@ DECLARE_FIELD( perforationRate,
                WRITE_AND_READ,
                "Perforation rate" );
 
-DECLARE_FIELD( dPerforationRate_dPres,
-               "dPerforationRate_dPres",
-               array2d< real64 >,
+DECLARE_FIELD( dPerforationRate,
+               "dPerforationRate",
+               array3d< real64 >,
                0,
                NOPLOT,
-               WRITE_AND_READ,
-               "Derivative of perforation rate with respect to pressure" );
+               NO_WRITE,
+               "Derivative of perforation rate with respect to pressure and temperature" );
 
 }
 

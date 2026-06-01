@@ -60,7 +60,7 @@ public:
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
                        integer const allowNegativePressure,
-                       CompositionalMultiphaseFVM::ScalingType const scalingType,
+                       compositionalMultiphaseUtilities::ScalingType const scalingType,
                        real64 const scalingFactor,
                        arrayView1d< real64 const > const pressure,
                        arrayView1d< real64 const > const temperature,
@@ -73,6 +73,9 @@ public:
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
+                       ElementsReporterCollector const & negPressureIds,
+                       ElementsReporterCollector const & negDensityIds,
+                       ElementsReporterCollector const & negTotalDensityIds,
                        integer const temperatureOffset )
     : Base( allowCompDensChopping,
             allowNegativePressure,
@@ -86,7 +89,10 @@ public:
             numComp,
             dofKey,
             subRegion,
-            localSolution ),
+            localSolution,
+            negPressureIds,
+            negDensityIds,
+            negTotalDensityIds ),
     m_temperature( temperature ),
     m_temperatureScalingFactor( temperatureScalingFactor ),
     m_temperatureOffset( temperatureOffset )
@@ -103,7 +109,7 @@ public:
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
-      bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
+      bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
       // compute the change in temperature
       real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_temperatureOffset]);
       if( newTemp < minTemperature )
@@ -146,10 +152,10 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static SolutionCheckKernel::StackVariables
+  static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
-                   CompositionalMultiphaseFVM::ScalingType const scalingType,
+                   compositionalMultiphaseUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
                    arrayView1d< real64 const > const pressure,
                    arrayView1d< real64 const > const temperature,
@@ -162,12 +168,15 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
+                   ElementsReporterCollector const & negPressureIds,
+                   ElementsReporterCollector const & negDensityIds,
+                   ElementsReporterCollector const & negTotalDensityIds,
                    integer temperatureOffset )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
-                                pressure, temperature, compDens, pressureScalingFactor, compDensScalingFactor, temperatureScalingFactor,
-                                rankOffset, numComp, dofKey, subRegion, localSolution,
-                                temperatureOffset );
+                                pressure, temperature, compDens, pressureScalingFactor, compDensScalingFactor,
+                                temperatureScalingFactor, rankOffset, numComp, dofKey, subRegion, localSolution,
+                                negPressureIds, negDensityIds, negTotalDensityIds, temperatureOffset );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 

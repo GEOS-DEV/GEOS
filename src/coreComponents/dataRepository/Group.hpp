@@ -250,24 +250,6 @@ public:
   }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
-   *
-   * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
-   * @param[in] name        The name of the group to use as a string key.
-   * @param[in] catalogName The catalog name of the new type.
-   * @return                A pointer to the newly registered Group.
-   *
-   * Creates and registers a Group or class derived from Group as a subgroup of this Group.
-   */
-  template< typename T = Group, typename TBASE = Group >
-  T & registerGroup( string const & name, string const & catalogName )
-  {
-    std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return registerGroup< T >( name, std::move( newGroup ) );
-  }
-
-  /**
    * @brief Removes a child group from this group.
    * @param name the name of the child group to remove from this group.
    */
@@ -330,21 +312,21 @@ public:
    * @tparam KEY The type of the lookup.
    * @param key The key used to perform the lookup.
    * @return A reference to @p T that refers to the sub-group.
-   * @throw std::domain_error If the Group does not exist is thrown.
+   * @throw geos::DomainError If the Group does not exist is thrown.
    */
   template< typename T = Group, typename KEY = void >
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
-                   std::domain_error );
+                   GEOS_FMT( "No child named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpSubGroupsNames() ),
+                   geos::DomainError, getDataContext() );
+
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
-                   BadTypeError );
+                   GEOS_FMT( "'{}' was expected to be a '{}'.",
+                             getName(), LvArray::system::demangleType< T >() ),
+                   BadTypeError, child->getDataContext() );
     return *castedChild;
   }
 
@@ -356,14 +338,14 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
-                   std::domain_error );
+                   GEOS_FMT( "No child named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpSubGroupsNames() ),
+                   geos::DomainError, getDataContext() );
+
     T const * const castedChild = dynamicCast< T const * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
-                   BadTypeError );
+                   GEOS_FMT( "'{}' was expected to be a '{}'.",
+                             getName(), LvArray::system::demangleType< T >() ),
+                   BadTypeError, child->getDataContext() );
     return *castedChild;
   }
 
@@ -374,7 +356,7 @@ public:
    *                 to lookup the Group to return. Absolute paths search
    *                 from the tree root, while relative - from current group.
    * @return A reference to @p T that refers to the sub-group.
-   * @throw std::domain_error If the Group doesn't exist.
+   * @throw geos::DomainError If the Group doesn't exist.
    */
   template< typename T = Group >
   T & getGroupByPath( string const & path )
@@ -412,7 +394,7 @@ public:
   /**
    * @return An array containing all sub groups keys
    */
-  std::vector< string > getSubGroupsNames() const;
+  stdVector< string > getSubGroupsNames() const;
 
   /**
    * @brief Check whether a sub-group exists.
@@ -770,6 +752,26 @@ public:
   void postRestartInitializationRecursive();
 
   /**
+   * @return The validated name for a given Group from its xml value: If the node has a "name"
+   *         attribute, it is validated after the `groupName` rtType regex, and its value is
+   *         returned. Else if the Group name is not "Required", the node tag name is used.
+   * @param targetNode The XML node whose name is to be processed. It throws if not of element type.
+   * @param targetNodePos The position of the target node within the XML document.
+   * @param parentNodeName The name of the parent node, used for error reporting.
+   * @param parentNodePos The position of the parent node, used for error reporting.
+   * @param siblingNames A set containing the names of sibling nodes (to verify that there are no
+   *                     duplicates). The function will populate this set if the attribute name is
+   *                     used and if no error is found.
+   * @throws InputError if the node type is not an xml element or if there are duplicate names
+   *         among xml siblings.
+   */
+  static string processInputName( xmlWrapper::xmlNode const & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos,
+                                  string_view parentNodeName,
+                                  xmlWrapper::xmlNodePos const & parentNodePos,
+                                  std::set< string > & siblingNames );
+
+  /**
    * @brief Recursively read values using ProcessInputFile() from the input
    * file and put them into the wrapped values for this group.
    * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
@@ -783,11 +785,11 @@ public:
    * but allow to reuse an existing xmlNodePos.
    * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
-   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   * @param[in] targetNodePos the target node position, typically obtained with xmlDocument::getNodePosition().
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & nodePos );
+                                  xmlWrapper::xmlNodePos const & targetNodePos );
 
   /**
    * @brief Recursively call postInputInitialization() to apply post processing after
@@ -1115,16 +1117,15 @@ public:
    * @tparam KEY The lookup type.
    * @param key The value used to lookup the wrapper.
    * @return A reference to the WrapperBase that resulted from the lookup.
-   * @throw std::domain_error if the wrapper doesn't exist.
+   * @throw geos::DomainError if the wrapper doesn't exist.
    */
   template< typename KEY >
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
-                            << dumpWrappersNames(),
-                   std::domain_error );
+                   GEOS_FMT( "No wrapper named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpWrappersNames() ),
+                   geos::DomainError, getDataContext() );
 
     return *wrapper;
   }
@@ -1137,9 +1138,8 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
-                            << dumpWrappersNames(),
-                   std::domain_error );
+                   GEOS_FMT( "No wrapper named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpWrappersNames() ),
+                   geos::DomainError, getDataContext() );
 
     return *wrapper;
   }
@@ -1175,7 +1175,7 @@ public:
   /**
    * @return An array containing all wrappers keys
    */
-  std::vector< string > getWrappersNames() const;
+  stdVector< string > getWrappersNames() const;
 
   ///@}
 
@@ -1208,7 +1208,7 @@ public:
    * @tparam LOOKUP_TYPE the type of key used to perform the lookup
    * @param[in] index    a lookup value used to search the collection of wrappers
    * @return A reference to the Wrapper<T> that resulted from the lookup.
-   * @throw std::domain_error if the Wrapper doesn't exist.
+   * @throw geos::DomainError if the Wrapper doesn't exist.
    */
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const & getWrapper( LOOKUP_TYPE const & index ) const
@@ -1266,7 +1266,7 @@ public:
    * @tparam LOOKUP_TYPE type of value used for wrapper lookup
    * @param lookup       value for wrapper lookup
    * @return reference to @p T
-   * @throw A std::domain_error if the Wrapper does not exist.
+   * @throw A geos::DomainError if the Wrapper does not exist.
    */
   template< typename T, typename LOOKUP_TYPE >
   GEOS_DECLTYPE_AUTO_RETURN
@@ -1348,7 +1348,7 @@ public:
    * this group that can be used in output messages.
    * @tparam KEY The lookup type.
    * @param key The value used to lookup the wrapper.
-   * @throw std::domain_error if the wrapper doesn't exist.
+   * @throw geos::DomainError if the wrapper doesn't exist.
    */
   template< typename KEY >
   DataContext const & getWrapperDataContext( KEY key ) const
@@ -1357,11 +1357,13 @@ public:
   /**
    * @brief Access the group's parent.
    * @return reference to parent Group
-   * @throw std::domain_error if the Group doesn't have a parent.
+   * @throw geos::DomainError if the Group doesn't have a parent.
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr,
+                   "Group does not have a parent.",
+                   geos::DomainError, getDataContext() );
     return *m_parent;
   }
 
@@ -1370,7 +1372,9 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr,
+                   "Group does not have a parent.",
+                   geos::DomainError, getDataContext() );
     return *m_parent;
   }
 
@@ -1491,18 +1495,18 @@ public:
   void loadFromConduit();
 
   /**
-   * @deprecated will be remove and replace by addLogLevel
-   */
-  void enableLogLevelInput();
-
-  /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value
    */
   void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
-  /// @return The verbosity level
+  /**
+   * @return The verbosity level of the Group instance.
+   * @warning For logging activation, *Please use `isLogLevelActive< logInfo::yourInfo >( getLogLevel() )`*
+   * to be sure to document to the user what the Group is able to output.
+   */
   integer getLogLevel() const { return m_logLevel; }
+
   ///@}
 
   /**
@@ -1597,7 +1601,7 @@ private:
    */
   template< bool DO_PACKING >
   localIndex packImpl( buffer_unit_type * & buffer,
-                       array1d< string > const & wrapperNames,
+                       string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
                        bool onDevice,

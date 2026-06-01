@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -30,11 +30,11 @@ namespace geos
  * @class EquilibriumInitialCondition
  * Holds data to compute an hydrostatic equilibrium condition for flow problems
  */
-class EquilibriumInitialCondition : public FieldSpecificationBase
+class EquilibriumInitialCondition : public FieldSpecification
 {
 public:
 
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   EquilibriumInitialCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -95,7 +95,7 @@ public:
    * @brief Getter for the component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > getComponentNames() const { return m_componentNames.toViewConst(); }
+  string_array const & getComponentNames() const { return m_componentNames; }
 
   /**
    * @brief Getter for the name of the phase initially saturating the reservoir
@@ -107,7 +107,7 @@ public:
    * @brief Getter for the component fraction table names
    * @return the component fraction table names
    */
-  arrayView1d< string const > getComponentFractionVsElevationTableNames() const { return m_componentFractionVsElevationTableNames.toViewConst(); }
+  string_array const & getComponentFractionVsElevationTableNames() const { return m_componentFractionVsElevationTableNames; }
 
   /**
    * @brief Getter for the temperature table name
@@ -116,9 +116,15 @@ public:
   string getTemperatureVsElevationTableName() const { return m_temperatureVsElevationTableName; }
 
   /**
+   * @brief Getter for the phase contacts' elevations
+   * @return the phase contacts' elevations
+   */
+  real64_array const & getPhaseContacts() const { return m_phaseContacts; }
+
+  /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
 
     // equilibration parameters
@@ -158,6 +164,11 @@ public:
     /// @return String key for the temperature vs elevation table name
     constexpr static char const * temperatureVsElevationTableNameString() { return "temperatureVsElevationTableName"; }
 
+    // array storing phase contact elevations
+
+    /// @return String key for the phase contacts' elevations
+    constexpr static char const * phaseContactsString() { return "phaseContacts"; }
+
   };
 
 
@@ -188,13 +199,16 @@ private:
   string m_initPhaseName;
 
   /// Array of component names
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// Array of table names for component fraction vs elevation
-  array1d< string > m_componentFractionVsElevationTableNames;
+  string_array m_componentFractionVsElevationTableNames;
 
   /// Table name for temperature vs elevation
   string m_temperatureVsElevationTableName;
+
+  /// Array of phase contacts' elevations
+  real64_array m_phaseContacts;
 
 };
 

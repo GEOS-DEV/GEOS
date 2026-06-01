@@ -22,9 +22,8 @@
 
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
 namespace geos
@@ -70,7 +69,7 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
         fluidModelKey ),
   m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
   m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
-  m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
+  m_dFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity() ),
   m_performStressInitialization( performStressInitialization )
 {}
 
@@ -96,7 +95,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,
@@ -151,7 +150,7 @@ computeBodyForce( localIndex const k,
   real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) );
   real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
                                         + ( 1.0 - porosity ) * dSolidDensity_dPressure
-                                        + porosity * m_dFluidDensity_dPressure( k, q );
+                                        + porosity * m_dFluidDensity( k, q, DerivOffset::dP );
 
   LvArray::tensorOps::scaledCopy< 3 >( stack.bodyForce, m_gravityVector, mixtureDensity );
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dVolStrainIncrement, m_gravityVector, dMixtureDens_dVolStrainIncrement );
@@ -177,7 +176,7 @@ computeFluidIncrement( localIndex const k,
 
   stack.fluidMassIncrement = porosity * m_fluidDensity( k, q ) - porosity_n * m_fluidDensity_n( k, q );
   stack.dFluidMassIncrement_dVolStrainIncrement = dPorosity_dVolStrain * m_fluidDensity( k, q );
-  stack.dFluidMassIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dPressure( k, q );
+  stack.dFluidMassIncrement_dPressure = dPorosity_dPressure * m_fluidDensity( k, q ) + porosity * m_dFluidDensity( k, q, 0 );
 }
 
 template< typename SUBREGION_TYPE,
@@ -367,12 +366,12 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
   FE_TYPE::calcN( q, stack.feStack, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
+                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
@@ -400,7 +399,7 @@ complete( localIndex const k,
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )

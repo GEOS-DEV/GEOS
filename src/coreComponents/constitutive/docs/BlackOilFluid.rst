@@ -78,8 +78,6 @@ Parameters
 =========================
 
 Both types are represented by ``<BlackOilFluid>`` node in the input.
-Under the hood this is a wrapper around ``PVTPackage`` library, which is included as a submodule.
-In order to use the model, GEOS must be built with ``-DENABLE_PVTPACKAGE=ON`` (default).
 
 The following attributes are supported:
 

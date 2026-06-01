@@ -20,18 +20,20 @@
 #include "SinglePhaseStatistics.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
 
 using namespace constitutive;
+using namespace fields;
 using namespace dataRepository;
 
 SinglePhaseStatistics::SinglePhaseStatistics( const string & name,
@@ -54,25 +56,36 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    for( integer i = 0; i < regionNames.size(); ++i )
+    for( size_t i = 0; i < regionNames.size(); ++i )
     {
       ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
       region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
       region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
 
-      // write output header
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
+        TableLayout tableLayout( {
+            TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
+            TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
+            TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
+            TableLayout::Column().setName( GEOS_FMT( "Total fluid mass [{}]", units::getSymbol( units::Unit::Mass )))
+          } );
+
+        TableCSVFormatter csvFormatter( tableLayout );
         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
-        outputFile <<
-          "Time [s],Min pressure [Pa],Average pressure [Pa],Max pressure [Pa],Min delta pressure [Pa],Max delta pressure [Pa]," <<
-          "Min temperature [Pa],Average temperature [Pa],Max temperature [Pa],Total dynamic pore volume [rm^3],Total fluid mass [kg]";
-        outputFile << std::endl;
+        outputFile << csvFormatter.headerToString();
         outputFile.close();
       }
     }
@@ -88,7 +101,7 @@ bool SinglePhaseStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & regionNames )
+                                                                          string_array const & regionNames )
   {
     // current time is time_n + dt
     computeRegionStatistics( time_n + dt, mesh, regionNames );
@@ -98,31 +111,30 @@ bool SinglePhaseStatistics::execute( real64 const time_n,
 
 void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
                                                      MeshLevel & mesh,
-                                                     arrayView1d< string const > const & regionNames ) const
+                                                     string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
-
   // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+    RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
-    regionStatistics.averagePressure = 0.0;
-    regionStatistics.maxPressure = -LvArray::NumericLimits< real64 >::max;
-    regionStatistics.minPressure = LvArray::NumericLimits< real64 >::max;
+    stats.averagePressure = 0.0;
+    stats.maxPressure = -LvArray::NumericLimits< real64 >::max;
+    stats.minPressure = LvArray::NumericLimits< real64 >::max;
 
-    regionStatistics.maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
-    regionStatistics.minDeltaPressure = LvArray::NumericLimits< real64 >::max;
+    stats.maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
+    stats.minDeltaPressure = LvArray::NumericLimits< real64 >::max;
 
-    regionStatistics.averageTemperature = 0.0;
-    regionStatistics.maxTemperature = -LvArray::NumericLimits< real64 >::max;
-    regionStatistics.minTemperature = LvArray::NumericLimits< real64 >::max;
+    stats.averageTemperature = 0.0;
+    stats.maxTemperature = -LvArray::NumericLimits< real64 >::max;
+    stats.minTemperature = LvArray::NumericLimits< real64 >::max;
 
-    regionStatistics.totalPoreVolume = 0.0;
-    regionStatistics.totalUncompactedPoreVolume = 0.0;
-    regionStatistics.totalMass = 0.0;
+    stats.totalPoreVolume = 0.0;
+    stats.totalUncompactedPoreVolume = 0.0;
+    stats.totalMass = 0.0;
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -132,9 +144,9 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
-    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+    arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< flow::deltaPressure >();
+    arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
     Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
@@ -144,7 +156,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
 
     string const & fluidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
     SingleFluidBase const & fluid = constitutiveModels.getGroup< SingleFluidBase >( fluidName );
-    arrayView2d< real64 const > const densities = fluid.density();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const densities = fluid.density();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -181,102 +193,105 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
               subRegionTotalMass );
 
     ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion( subRegion ).getName() );
-    RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+    RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
-    regionStatistics.averagePressure += subRegionAvgPresNumerator;
-    if( subRegionMinPres < regionStatistics.minPressure )
+    stats.averagePressure += subRegionAvgPresNumerator;
+    if( subRegionMinPres < stats.minPressure )
     {
-      regionStatistics.minPressure = subRegionMinPres;
+      stats.minPressure = subRegionMinPres;
     }
-    if( subRegionMaxPres > regionStatistics.maxPressure )
+    if( subRegionMaxPres > stats.maxPressure )
     {
-      regionStatistics.maxPressure = subRegionMaxPres;
-    }
-
-    if( subRegionMinDeltaPres < regionStatistics.minDeltaPressure )
-    {
-      regionStatistics.minDeltaPressure = subRegionMinDeltaPres;
-    }
-    if( subRegionMaxDeltaPres > regionStatistics.maxDeltaPressure )
-    {
-      regionStatistics.maxDeltaPressure = subRegionMaxDeltaPres;
+      stats.maxPressure = subRegionMaxPres;
     }
 
-    regionStatistics.averageTemperature += subRegionAvgTempNumerator;
-    if( subRegionMinTemp < regionStatistics.minTemperature )
+    if( subRegionMinDeltaPres < stats.minDeltaPressure )
     {
-      regionStatistics.minTemperature = subRegionMinTemp;
+      stats.minDeltaPressure = subRegionMinDeltaPres;
     }
-    if( subRegionMaxTemp > regionStatistics.maxTemperature )
+    if( subRegionMaxDeltaPres > stats.maxDeltaPressure )
     {
-      regionStatistics.maxTemperature = subRegionMaxTemp;
+      stats.maxDeltaPressure = subRegionMaxDeltaPres;
     }
 
-    regionStatistics.totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
-    regionStatistics.totalPoreVolume += subRegionTotalPoreVol;
-    regionStatistics.totalMass += subRegionTotalMass;
+    stats.averageTemperature += subRegionAvgTempNumerator;
+    if( subRegionMinTemp < stats.minTemperature )
+    {
+      stats.minTemperature = subRegionMinTemp;
+    }
+    if( subRegionMaxTemp > stats.maxTemperature )
+    {
+      stats.maxTemperature = subRegionMaxTemp;
+    }
+
+    stats.totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
+    stats.totalPoreVolume += subRegionTotalPoreVol;
+    stats.totalMass += subRegionTotalMass;
   } );
 
   // Step 3: synchronize the results over the MPI ranks
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+    RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
-    regionStatistics.minPressure = MpiWrapper::min( regionStatistics.minPressure );
-    regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
-    regionStatistics.maxPressure = MpiWrapper::max( regionStatistics.maxPressure );
+    stats.minPressure = MpiWrapper::min( stats.minPressure );
+    stats.averagePressure = MpiWrapper::sum( stats.averagePressure );
+    stats.maxPressure = MpiWrapper::max( stats.maxPressure );
 
-    regionStatistics.minDeltaPressure = MpiWrapper::min( regionStatistics.minDeltaPressure );
-    regionStatistics.maxDeltaPressure = MpiWrapper::max( regionStatistics.maxDeltaPressure );
+    stats.minDeltaPressure = MpiWrapper::min( stats.minDeltaPressure );
+    stats.maxDeltaPressure = MpiWrapper::max( stats.maxDeltaPressure );
 
-    regionStatistics.minTemperature = MpiWrapper::min( regionStatistics.minTemperature );
-    regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
-    regionStatistics.maxTemperature = MpiWrapper::max( regionStatistics.maxTemperature );
+    stats.minTemperature = MpiWrapper::min( stats.minTemperature );
+    stats.averageTemperature = MpiWrapper::sum( stats.averageTemperature );
+    stats.maxTemperature = MpiWrapper::max( stats.maxTemperature );
 
-    regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
-    regionStatistics.totalPoreVolume = MpiWrapper::sum( regionStatistics.totalPoreVolume );
-    regionStatistics.totalMass = MpiWrapper::sum( regionStatistics.totalMass );
+    stats.totalUncompactedPoreVolume = MpiWrapper::sum( stats.totalUncompactedPoreVolume );
+    stats.totalPoreVolume = MpiWrapper::sum( stats.totalPoreVolume );
+    stats.totalMass = MpiWrapper::sum( stats.totalMass );
 
-    if( regionStatistics.totalUncompactedPoreVolume > 0 )
+    if( stats.totalUncompactedPoreVolume > 0 )
     {
-      float invTotalUncompactedPoreVolume = 1.0 / regionStatistics.totalUncompactedPoreVolume;
-      regionStatistics.averagePressure *= invTotalUncompactedPoreVolume;
-      regionStatistics.averageTemperature *= invTotalUncompactedPoreVolume;
+      float invTotalUncompactedPoreVolume = 1.0 / stats.totalUncompactedPoreVolume;
+      stats.averagePressure *= invTotalUncompactedPoreVolume;
+      stats.averageTemperature *= invTotalUncompactedPoreVolume;
     }
     else
     {
-      regionStatistics.averagePressure = 0.0;
-      regionStatistics.averageTemperature = 0.0;
-      GEOS_WARNING( GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
+      stats.averagePressure = 0.0;
+      stats.averageTemperature = 0.0;
+      GEOS_WARNING( GEOS_FMT( "{}: Cannot compute average pressure & temperature because region pore volume is zero.", regionNames[i] ),
+                    getDataContext() );
     }
 
-    string statPrefix = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Pressure (min, average, max): {}, {}, {} Pa",
-                                          statPrefix, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Delta pressure (min, max): {}, {} Pa",
-                                          statPrefix, regionStatistics.minDeltaPressure, regionStatistics.maxDeltaPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Temperature (min, average, max): {}, {}, {} K",
-                                          statPrefix, regionStatistics.minTemperature, regionStatistics.averageTemperature,
-                                          regionStatistics.maxTemperature ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Total dynamic pore volume: {} rm^3",
-                                          statPrefix, regionStatistics.totalPoreVolume ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Total fluid mass: {} kg",
-                                          statPrefix, regionStatistics.totalMass ) );
+    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
-    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+    if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel())&& MpiWrapper::commRank() == 0 )
     {
-      std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
-      outputFile << time << "," << regionStatistics.minPressure << "," << regionStatistics.averagePressure << "," << regionStatistics.maxPressure << "," <<
-        regionStatistics.minDeltaPressure << "," << regionStatistics.maxDeltaPressure << "," <<
-        regionStatistics.minTemperature << "," << regionStatistics.averageTemperature << "," << regionStatistics.maxTemperature << "," <<
-        regionStatistics.totalPoreVolume << "," << regionStatistics.totalMass << std::endl;
-      outputFile.close();
+      TableData singPhaseStatsData;
+      singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
+      singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
+      singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
+      singPhaseStatsData.addSeparator();
+
+      singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
+      singPhaseStatsData.addSeparator();
+      singPhaseStatsData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalMass );
+
+      string const title = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
+      TableLayout const singPhaseStatsLayout( title, { "statistics", "min", "average", "max" } );
+      TableTextFormatter tableFormatter( singPhaseStatsLayout );
+      GEOS_LOG_RANK_0( tableFormatter.toString( singPhaseStatsData ) );
+
+      if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+      {
+        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+        outputFile << time << "," << stats.minPressure << "," << stats.averagePressure << "," << stats.maxPressure << "," <<
+          stats.minDeltaPressure << "," << stats.maxDeltaPressure << "," <<
+          stats.minTemperature << "," << stats.averageTemperature << "," << stats.maxTemperature << "," <<
+          stats.totalPoreVolume << "," << stats.totalMass << std::endl;
+        outputFile.close();
+      }
     }
   }
 }

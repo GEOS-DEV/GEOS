@@ -26,11 +26,14 @@
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ModelParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ModelParameters.hpp"
 
 namespace geos
 {
@@ -58,18 +61,19 @@ public:
   // Currently restrict to 2 or 3 phases
   static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
 
-  using exec_policy = parallelDevicePolicy<>;
-
 public:
-  CompositionalMultiphaseFluid( string const & name, Group * const parent );
+  CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
 
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   static constexpr bool isThermalType(){ return false; }
 
@@ -82,8 +86,7 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void initializeState() const override;
 
   virtual integer getWaterPhaseIndex() const override final;
 
@@ -111,20 +114,11 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
-
-  enum PhaseType : integer
-  {
-    LIQUID = 0,
-    VAPOUR = 1,
-    AQUEOUS = 2,
-  };
-
 private:
   // Create the fluid models
   void createModels();
 
-  integer findPhaseIndex( string names ) const;
+  array1d< integer > getPhaseTypes() const;
 
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
@@ -132,7 +126,8 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase ordering
-  array1d< integer > m_phaseOrder;
+  array1d< integer > m_phaseOrder{};
+  array1d< integer > m_phaseType{};
 
   // Phase models
   std::unique_ptr< PHASE1 > m_phase1{};
@@ -157,11 +152,23 @@ using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFl
   compositional::NegativeTwoPhaseFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::ImmiscibleWaterFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
+using CompositionalKValueLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalKValuePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

@@ -78,7 +78,7 @@ UniformStrainHexahedron::~UniformStrainHexahedron()
  * element).
  */
 
-void UniformStrainHexahedron::reinit( const std::vector< R1TensorT< 3 > > & mapped_support_points )
+void UniformStrainHexahedron::reinit( const stdVector< R1TensorT< 3 > > & mapped_support_points )
 {
   GEOS_ASSERT_EQ( mapped_support_points.size(), n_dofs );
 

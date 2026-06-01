@@ -17,6 +17,7 @@
 #include "MeshManager.hpp"
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
+#include "mesh/LogLevelsInfo.hpp"
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/CellBlockManagerABC.hpp"
@@ -35,6 +36,8 @@ MeshManager::MeshManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
+
+  addLogLevel< logInfo::ImportFields >();
 }
 
 MeshManager::~MeshManager()
@@ -43,7 +46,8 @@ MeshManager::~MeshManager()
 Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< MeshGeneratorBase > mesh = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
+  std::unique_ptr< MeshGeneratorBase > mesh =
+    MeshGeneratorBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup< MeshGeneratorBase >( childName, std::move( mesh ) );
 }
 
@@ -72,7 +76,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
-      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+      meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(), cellBlockManager.getGlobalOffset() ) );
     }
   } );
 }
@@ -162,7 +166,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
                                 string const & regionName,
                                 ElementSubRegionBase & subRegion,
                                 MeshGeneratorBase::Block const block,
-                                std::map< string, string > const & fieldsMapping,
+                                stdMap< string, string > const & fieldsMapping,
                                 FieldIdentifiers & fieldsToBeSync )
 {
   std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
@@ -175,10 +179,9 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
     if( !subRegion.hasWrapper( geosFieldName ) )
     {
       // Skip - the user may have not enabled a particular physics model/solver on this destination region.
-      if( generator.getLogLevel() >= 1 )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "    Skipping import of {} -> {} (field not found)", meshFieldName, geosFieldName ) );
-      }
+      GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::ImportFields,
+                                      GEOS_FMT( "    Skipping import of {} -> {} (field not found)", meshFieldName, geosFieldName ),
+                                      generator );
 
       continue;
     }
@@ -187,10 +190,9 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
     // we can add the geosFieldName to the list of fields to synchronize
     fieldsToBeSync.addElementFields( { geosFieldName }, { regionName } );
     WrapperBase & wrapper = subRegion.getWrapperBase( geosFieldName );
-    if( generator.getLogLevel() >= 1 )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "    {} -> {}", meshFieldName, geosFieldName ) );
-    }
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::ImportFields,
+                                    GEOS_FMT( "    {} -> {}", meshFieldName, geosFieldName ),
+                                    generator );
 
     bool const isMaterialField = materialWrapperNames.count( geosFieldName ) > 0 && wrapper.numArrayDims() > 1;
     generator.importFieldOnArray( block, subRegion.getName(), meshFieldName, isMaterialField, wrapper );

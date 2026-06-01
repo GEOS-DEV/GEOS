@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_
 
 #include "FixedStressThermoPoromechanics.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -84,7 +85,7 @@ setup( localIndex const k,
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   stack.numRows = 3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
@@ -94,9 +95,7 @@ setup( localIndex const k,
 
     for( int i = 0; i < 3; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-#endif
       stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
       stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
       stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
@@ -124,15 +123,15 @@ quadraturePointKernel( localIndex const k,
                        StackVariables & stack ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
+                                            stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
   real64 totalStress[6] = {0};
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
@@ -143,6 +142,7 @@ quadraturePointKernel( localIndex const k,
                                                                   m_pressure_n[k],
                                                                   m_temperature[k],
                                                                   m_temperature_n[k],
+                                                                  m_initialTemperature[k],
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );
@@ -160,11 +160,11 @@ quadraturePointKernel( localIndex const k,
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
-  FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                   totalStress,
-                                   N,
-                                   gravityForce,
-                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+  finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
+                                                totalStress,
+                                                N,
+                                                gravityForce,
+                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template
   addEvaluatedGradGradStabilizationVector< FE_TYPE,
@@ -190,7 +190,7 @@ complete( localIndex const k,
   // TODO: Does this work if BTDB is non-symmetric?
   CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )

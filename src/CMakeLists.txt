@@ -139,6 +139,11 @@ blt_add_executable( NAME geosx
                                ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
+if(APPLE)
+  target_link_options(geosx PRIVATE "-Wl,-export_dynamic")
+endif()
+
+
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
@@ -160,6 +165,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
+  set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
   add_custom_target( geosx_generate_schema
                      ALL
@@ -179,7 +185,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
+                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash ${SCHEMA_DIR}/schema.xsd ${SOURCE_DIR}/examples ${SOURCE_DIR}/inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
@@ -219,8 +225,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-# message(WARNING "Temporarily changing the geosPythonBranch to bugfix/sherman/fixNumpyProd")
-# set(GEOS_PYTHON_PACKAGES_BRANCH "bugfix/sherman/fixNumpyProd" CACHE STRING "" FORCE)
+message(WARNING "Temporarily changing the geosPythonBranch to feature/remove-dndx-detj")
+set(GEOS_PYTHON_PACKAGES_BRANCH "feature/remove-dndx-detj" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )
@@ -276,7 +282,7 @@ if ( Python3_EXECUTABLE )
     add_custom_target( geosx_format_all_xml_files
                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       DEPENDS geosx_xml_tools
+                       DEPENDS geosx_python_tools
                      )
 
 else()

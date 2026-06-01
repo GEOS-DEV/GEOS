@@ -21,10 +21,11 @@
 
 #include "common/GeosxMacros.hpp"
 #include "common/TimingMacros.hpp"
-#include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshFields.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #if PARALLEL_TOPOLOGY_CHANGE_METHOD==1
 namespace geos
@@ -268,7 +269,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator & neighbor,
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
   GEOS_ERROR_IF( bufferSize != packedSize,
-                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+                 GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
+                           bufferSize,
+                           packedSize ) );
 
 
 }
@@ -736,6 +739,11 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator & neighbor,
   bufferSize += edgeManager.packParentChildMapsSize( modEdgesToSend );
   bufferSize += faceManager.packParentChildMapsSize( modFacesToSend );
 
+  bufferSize += nodeManager.packSize( modNodesToSend, 0, false, sizeEvents );
+  bufferSize += edgeManager.packSize( modEdgesToSend, 0, false, sizeEvents );
+  bufferSize += faceManager.packSize( modFacesToSend, 0, false, sizeEvents );
+
+
   waitAllDeviceEvents( sizeEvents );
   neighbor.resizeSendBuffer( commID, bufferSize );
 
@@ -767,6 +775,10 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator & neighbor,
   packedSize += nodeManager.packParentChildMaps( sendBufferPtr, modNodesToSend );
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgesToSend );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, modFacesToSend );
+
+  packedSize += nodeManager.pack( sendBufferPtr, modNodesToSend, 0, false, packEvents );
+  packedSize += edgeManager.pack( sendBufferPtr, modEdgesToSend, 0, false, packEvents );
+  packedSize += faceManager.pack( sendBufferPtr, modFacesToSend, 0, false, packEvents );
 
   GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
@@ -844,6 +856,10 @@ void unpackNewAndModifiedObjectsDataOnGhosts( NeighborCommunicator & neighbor,
   edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
   faceManager.unpackParentChildMaps( receiveBufferPtr, modGhostFaces );
 
+  nodeManager.unpack( receiveBufferPtr, modGhostNodes, 0, false, events );
+  edgeManager.unpack( receiveBufferPtr, modGhostEdges, 0, false, events );
+  faceManager.unpack( receiveBufferPtr, modGhostFaces, 0, false, events );
+
   waitAllDeviceEvents( events );
 
 
@@ -909,11 +925,12 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
 
 void synchronizeTopologyChange( MeshLevel * const mesh,
-                                std::vector< NeighborCommunicator > & neighbors,
+                                stdVector< NeighborCommunicator > & neighbors,
                                 ModifiedObjectLists & modifiedObjects,
                                 ModifiedObjectLists & receivedObjects,
                                 int mpiCommOrder )
 {
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
@@ -942,17 +959,18 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
    *
    * The sequence of steps are:
    * 1a) On the ACR, pack the new/modified objects that are not owned by the ACR and send them to
-   *     their OR.
+   *     their OR. MAPS AND FIELDS ARE PACKED.
    * 1b) On the OR, unpack the new objects that are owned by the rank that has the changes. DO NOT
-   *     unpack the maps as they will potentially contain indices that are not on the OR.
+   *     UNPACK MAPS as they will potentially contain indices that are not on the OR.
    *
-   * At this point the OR has all the new objects that it owns...but not the maps or the fields.
+   * At this point the OR has all the new objects that it owns...but not the maps.
    *
    * 2a) On the OR, pack the new objects that are owned by the rank and send them to the ranks
    *     where they are ghosted (GR). DO NOT PACK THE MAPS as they are incomplete.
+   *     DOES NOT PACK FIELDS.
    * 2b) On the GR, unpack the new objects.
    *
-   * Now everyone has all the objects and we can pack/send/receive/unpack the maps.
+   * Now everyone has all the objects and we can pack/send/receive/unpack the maps and the fields.
    *
    * 3a) On the OR, unpack the map modification on owning ranks from 1b).
    *
@@ -1006,14 +1024,14 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                      MPI_COMM_GEOS );
   }
 
-  MpiWrapper::barrier();
+//  MpiWrapper::barrier();
 //  std::cout<<"***** Step 1b *****"<<std::endl;
 
   //***********************************************************************************************
   // 1b) On the OR, unpack the new objects that are owned by the rank that has the changes. DO NOT
   //     unpack the maps as they will potentially contain indices that are not on the OR.
   //***********************************************************************************************
-  std::vector< TopologyChangeUnpackStepData > step1bUnpackData( neighbors.size() );
+  stdVector< TopologyChangeUnpackStepData > step1bUnpackData( neighbors.size() );
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex = count;
@@ -1068,15 +1086,15 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //     where they are ghosted (GR). DO NOT PACK THE MAPS as they are incomplete.
   //************************************************************************************************
 
-  MpiWrapper::barrier();
+//  MpiWrapper::barrier();
 //  std::cout<<"***** Step 2a *****"<<std::endl;
-  MpiWrapper::barrier();
+//  MpiWrapper::barrier();
 
   // a new MPI_iCommData object is created to avoid overwriting the previous one which isn't
   // finished unpacking
   MPI_iCommData commData2;
   commData2.resize( neighbors.size());
-  std::vector< TopologyChangeStepData > step2and3PackData( neighbors.size() );
+  stdVector< TopologyChangeStepData > step2and3PackData( neighbors.size() );
 
   // pack the new objects to send to ghost ranks
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
@@ -1118,9 +1136,9 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //************************************************************************************************
   // 2b) On the GR, unpack the new objects.
   //************************************************************************************************
-  MpiWrapper::barrier();
+//  MpiWrapper::barrier();
 //  std::cout<<"***** Step 2b *****"<<std::endl;
-  MpiWrapper::barrier();
+//  MpiWrapper::barrier();
 
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {

@@ -134,7 +134,7 @@ public:
    * @param[in,out] X The nodes coordinates.
    * @param[in,out] nodeSets The name to node sets mapping.
    */
-  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
   {
     GEOS_UNUSED_VAR( X );
     GEOS_UNUSED_VAR( nodeSets );
@@ -194,7 +194,7 @@ protected:
 private:
 
   /// String array of region names
-  array1d< string > m_regionNames;
+  string_array m_regionNames;
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];
@@ -206,7 +206,7 @@ private:
   globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
-  array1d< string > m_elementType;
+  string_array m_elementType;
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
@@ -346,11 +346,16 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
+            dataRepository::DataContext const & wrapperContext =
+              getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
+                                     i == 1 ? viewKeyStruct::yBiasString() :
+                                     viewKeyStruct::zBiasString() );
+            GEOS_UNUSED_VAR( wrapperContext );
             GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
-                           getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
-                                                  i == 1 ? viewKeyStruct::yBiasString() :
-                                                  viewKeyStruct::zBiasString() ) <<
-                           ", block index = " << block << " : Mesh bias must between -1 and 1!" );
+                           GEOS_FMT( "{}, block index = {} : Mesh bias must between -1 and 1!",
+                                     wrapperContext,
+                                     block ),
+                           wrapperContext );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];

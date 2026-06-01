@@ -21,7 +21,8 @@
 
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 namespace geos
 {
 
@@ -84,6 +85,7 @@ ControlEquationHelper::
   }
 }
 
+template< integer IS_THERMAL >
 GEOS_HOST_DEVICE
 inline
 void
@@ -93,21 +95,26 @@ ControlEquationHelper::
            real64 const & targetBHP,
            real64 const & targetRate,
            real64 const & currentBHP,
-           real64 const & dCurrentBHP_dPres,
+           arrayView1d< real64 const > const & dCurrentBHP,
            real64 const & currentVolRate,
-           real64 const & dCurrentVolRate_dPres,
-           real64 const & dCurrentVolRate_dRate,
+           arrayView1d< real64 const > const & dCurrentTotalVolRate,
            globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-  localIndex const eqnRowIndex = dofNumber + ROFFSET::CONTROL - rankOffset;
-  globalIndex const presDofColIndex = dofNumber + COFFSET::DPRES;
-  globalIndex const rateDofColIndex = dofNumber + COFFSET::DRATE;
+  using ROFFSET_WJ = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+  using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+
+  localIndex const eqnRowIndex = dofNumber + ROFFSET_WJ::CONTROL - rankOffset;
+  globalIndex dofColIndices[COFFSET_WJ::nDer]{};
+  for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
+  {
+    dofColIndices[ i ] = dofNumber + i;
+  }
 
   real64 controlEqn = 0;
-  real64 dControlEqn_dRate = 0;
-  real64 dControlEqn_dPres = 0;
+  real64 dControlEqn[2+IS_THERMAL]{};
 
   // Note: We assume in the computation of currentBHP that the reference elevation
   //       is in the top well element. This is enforced by a check in the solver.
@@ -120,15 +127,20 @@ ControlEquationHelper::
   {
     // control equation is a difference between current BHP and target BHP
     controlEqn = currentBHP - targetBHP;
-    dControlEqn_dPres = dCurrentBHP_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentBHP[Deriv::dP];
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
     // control equation is the difference between volumetric current rate and target rate
     controlEqn = currentVolRate - targetRate;
-    dControlEqn_dRate = dCurrentVolRate_dRate;
-    dControlEqn_dPres = dCurrentVolRate_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentTotalVolRate[COFFSET_WJ::dP];
+    dControlEqn[COFFSET_WJ::dQ] = dCurrentTotalVolRate[COFFSET_WJ::dQ];
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentTotalVolRate[Deriv::dT];
   }
   else
   {
@@ -136,18 +148,30 @@ ControlEquationHelper::
   }
 
   localRhs[eqnRowIndex] += controlEqn;
-  localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                        &presDofColIndex,
-                                        &dControlEqn_dPres,
-                                        1 );
-  localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                        &rateDofColIndex,
-                                        &dControlEqn_dRate,
-                                        1 );
+  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                            dofColIndices,
+                                                            dControlEqn,
+                                                            COFFSET_WJ::nDer );
 }
 
 /******************************** FluxKernel ********************************/
+#define INST_FluxKernel( IS_THERMAL ) \
+  template \
+  void  \
+  FluxKernel::  \
+    launch< IS_THERMAL >( localIndex const size,  \
+                          globalIndex const rankOffset,  \
+                          arrayView1d< globalIndex const > const & wellElemDofNumber,  \
+                          arrayView1d< localIndex const > const & nextWellElemIndex,  \
+                          arrayView1d< real64 const > const & connRate,  \
+                          real64 const & dt,  \
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,  \
+                          arrayView1d< real64 > const & localRhs )
 
+INST_FluxKernel( 0 );
+INST_FluxKernel( 1 );
+
+template< integer IS_THERMAL >
 void
 FluxKernel::
   launch( localIndex const size,
@@ -236,6 +260,29 @@ FluxKernel::
 
 /******************************** PressureRelationKernel ********************************/
 
+#define INST_PressureRelationKernel( IS_THERMAL ) \
+  template \
+  localIndex \
+  PressureRelationKernel:: \
+    launch< IS_THERMAL >( localIndex const size, \
+                          globalIndex const rankOffset, \
+                          bool const isLocallyOwned, \
+                          localIndex const iwelemControl, \
+                          WellControls const & wellControls, \
+                          real64 const & timeAtEndOfStep, \
+                          arrayView1d< globalIndex const > const & wellElemDofNumber, \
+                          arrayView1d< real64 const > const & wellElemGravCoef, \
+                          arrayView1d< localIndex const > const & nextWellElemIndex, \
+                          arrayView1d< real64 const > const & wellElemPressure, \
+                          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity, \
+                          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity, \
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                          arrayView1d< real64 > const & localRhs )
+
+INST_PressureRelationKernel( 0 );
+INST_PressureRelationKernel( 1 );
+
+template< integer IS_THERMAL >
 localIndex
 PressureRelationKernel::
   launch( localIndex const size,
@@ -243,34 +290,34 @@ PressureRelationKernel::
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+  using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-  real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
+  real64 const targetBHP = wellControls.getTargetBHP( time );
+  real64 const targetRate = wellControls.getTargetTotalRate( time );
 
   // dynamic well control data
   real64 const & currentBHP =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
-  real64 const & dCurrentBHP_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
+  arrayView1d< real64 const > const & dCurrentBHP =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
 
   real64 const & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
-  real64 const & dCurrentVolRate_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
-  real64 const & dCurrentVolRate_dRate =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString() );
+  arrayView1d< real64 const > const & dCurrentVolRate =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
 
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
@@ -295,30 +342,29 @@ PressureRelationKernel::
         switchControl.max( 1 );
       }
 
-      ControlEquationHelper::compute( rankOffset,
-                                      newControl,
-                                      targetBHP,
-                                      targetRate,
-                                      currentBHP,
-                                      dCurrentBHP_dPres,
-                                      currentVolRate,
-                                      dCurrentVolRate_dPres,
-                                      dCurrentVolRate_dRate,
-                                      wellElemDofNumber[iwelemControl],
-                                      localMatrix,
-                                      localRhs );
+      ControlEquationHelper::compute< IS_THERMAL >( rankOffset,
+                                                    newControl,
+                                                    targetBHP,
+                                                    targetRate,
+                                                    currentBHP,
+                                                    dCurrentBHP,
+                                                    currentVolRate,
+                                                    dCurrentVolRate,
+                                                    wellElemDofNumber[iwelemControl],
+                                                    localMatrix,
+                                                    localRhs );
     }
     else if( iwelemNext >= 0 )  // if iwelemNext >= 0, form momentum equation
     {
 
       // local working variables and arrays
-      globalIndex dofColIndices[2]{};
-      real64 localPresRelJacobian[2]{};
+      globalIndex dofColIndices[2*(1+IS_THERMAL)]{};
+      real64 localPresRelJacobian[2*(1+IS_THERMAL)]{};
 
       // compute avg density
       real64 const avgDensity = 0.5 * ( wellElemDensity[iwelem][0] + wellElemDensity[iwelemNext][0] );
-      real64 const dAvgDensity_dPresNext    = 0.5 * dWellElemDensity_dPres[iwelemNext][0];
-      real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensity_dPres[iwelem][0];
+      real64 const dAvgDensity_dPresNext    = 0.5 * dWellElemDensity[iwelemNext][0][Deriv::dP];
+      real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensity[iwelem][0][Deriv::dP];
 
       // compute depth diff times acceleration
       real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
@@ -329,190 +375,39 @@ PressureRelationKernel::
 
       // compute momentum flux and derivatives
       real64 const localPresRel = pressureNext - pressureCurrent - avgDensity * gravD;
-      localPresRelJacobian[TAG::NEXT]    =  1 - dAvgDensity_dPresNext * gravD;
-      localPresRelJacobian[TAG::CURRENT] = -1 - dAvgDensity_dPresCurrent * gravD;
+      localPresRelJacobian[TAG::NEXT *(1+IS_THERMAL)]    =  1 - dAvgDensity_dPresNext * gravD;
+      localPresRelJacobian[TAG::CURRENT *(1+IS_THERMAL)]  = -1 - dAvgDensity_dPresCurrent * gravD;
+
+      if constexpr ( IS_THERMAL )
+      {
+        localPresRelJacobian[TAG::NEXT *(1+IS_THERMAL)+1]    =  -0.5 * dWellElemDensity[iwelemNext][0][Deriv::dT]* gravD;
+        localPresRelJacobian[TAG::CURRENT *(1+IS_THERMAL)+1] =  -0.5 * dWellElemDensity[iwelem][0][Deriv::dT]* gravD;
+      }
 
       // TODO: add friction and acceleration terms
 
       // jacobian indices
       globalIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::CONTROL - rankOffset;
-      dofColIndices[TAG::NEXT]      = wellElemDofNumber[iwelemNext] + COFFSET::DPRES;
-      dofColIndices[TAG::CURRENT]   = wellElemDofNumber[iwelem] + COFFSET::DPRES;
+      dofColIndices[TAG::NEXT *(1+IS_THERMAL)]      = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dP;
+      dofColIndices[TAG::CURRENT *(1+IS_THERMAL)]   = wellElemDofNumber[iwelem] + COFFSET_WJ::dP;
 
+      if constexpr ( IS_THERMAL )
+      {
+        dofColIndices[TAG::NEXT *(1+IS_THERMAL)+1]    = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dT;
+        dofColIndices[TAG::CURRENT *(1+IS_THERMAL)+1] = wellElemDofNumber[iwelem] + COFFSET_WJ::dT;
+      }
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                          &dofColIndices[0],
-                                                                          &localPresRelJacobian[0],
-                                                                          2 );
+                                                                          dofColIndices,
+                                                                          localPresRelJacobian,
+                                                                          2 * (1+IS_THERMAL) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
   } );
   return switchControl.get();
 }
-
-/******************************** PerforationKernel ********************************/
-
-GEOS_HOST_DEVICE
-inline
-void
-PerforationKernel::
-  compute( real64 const & resPressure,
-           real64 const & resDensity,
-           real64 const & dResDensity_dPres,
-           real64 const & resViscosity,
-           real64 const & dResViscosity_dPres,
-           real64 const & wellElemGravCoef,
-           real64 const & wellElemPressure,
-           real64 const & wellElemDensity,
-           real64 const & dWellElemDensity_dPres,
-           real64 const & wellElemViscosity,
-           real64 const & dWellElemViscosity_dPres,
-           real64 const & perfGravCoef,
-           real64 const & trans,
-           real64 & perfRate,
-           arraySlice1d< real64 > const & dPerfRate_dPres )
-{
-  // local working variables and arrays
-  real64 pressure[2]{};
-  real64 dPressure_dP[2]{};
-  real64 multiplier[2]{};
-
-  perfRate = 0.0;
-  dPerfRate_dPres[0] = 0.0;
-  dPerfRate_dPres[1] = 0.0;
-
-  // 1) Reservoir side
-
-
-  // get reservoir variables
-  pressure[TAG::RES] = resPressure;
-  dPressure_dP[TAG::RES] = 1;
-
-  // TODO: add a buoyancy term for the reservoir side here
-
-  // multiplier for reservoir side in the flux
-  multiplier[TAG::RES] = 1;
-
-  // 2) Well side
-
-
-  // get well variables
-  pressure[TAG::WELL] = wellElemPressure;
-  dPressure_dP[TAG::WELL] = 1.0;
-
-  real64 const gravD = ( perfGravCoef - wellElemGravCoef );
-  pressure[TAG::WELL]     += wellElemDensity * gravD;
-  dPressure_dP[TAG::WELL] += dWellElemDensity_dPres * gravD;
-
-  // multiplier for well side in the flux
-  multiplier[TAG::WELL] = -1;
-
-  // compute potential difference
-  real64 potDif = 0.0;
-  for( localIndex i = 0; i < 2; ++i )
-  {
-    potDif += multiplier[i] * trans * pressure[i];
-    dPerfRate_dPres[i] = multiplier[i] * trans * dPressure_dP[i];
-  }
-
-
-  // choose upstream cell based on potential difference
-  localIndex const k_up = (potDif >= 0) ? TAG::RES : TAG::WELL;
-
-  // compute upstream density, viscosity, and mobility
-  real64 densityUp       = 0.0;
-  real64 dDensityUp_dP   = 0.0;
-  real64 viscosityUp     = 0.0;
-  real64 dViscosityUp_dP = 0.0;
-
-  // upwinding the variables
-  if( k_up == TAG::RES ) // use reservoir vars
-  {
-    densityUp     = resDensity;
-    dDensityUp_dP = dResDensity_dPres;
-
-    viscosityUp     = resViscosity;
-    dViscosityUp_dP = dResViscosity_dPres;
-  }
-  else // use well vars
-  {
-    densityUp = wellElemDensity;
-    dDensityUp_dP = dWellElemDensity_dPres;
-
-    viscosityUp = wellElemViscosity;
-    dViscosityUp_dP = dWellElemViscosity_dPres;
-  }
-
-  // compute mobility
-  real64 const mobilityUp     = densityUp / viscosityUp;
-  real64 const dMobilityUp_dP = dDensityUp_dP / viscosityUp
-                                - mobilityUp / viscosityUp * dViscosityUp_dP;
-
-  perfRate = mobilityUp * potDif;
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    dPerfRate_dPres[ke] *= mobilityUp;
-  }
-  dPerfRate_dPres[k_up] += dMobilityUp_dP * potDif;
-}
-
-void
-PerforationKernel::
-  launch( localIndex const size,
-          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
-          ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
-          arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 const > const & wellElemPressure,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView2d< real64 const > const & wellElemViscosity,
-          arrayView2d< real64 const > const & dWellElemViscosity_dPres,
-          arrayView1d< real64 const > const & perfGravCoef,
-          arrayView1d< localIndex const > const & perfWellElemIndex,
-          arrayView1d< real64 const > const & perfTransmissibility,
-          arrayView1d< localIndex const > const & resElementRegion,
-          arrayView1d< localIndex const > const & resElementSubRegion,
-          arrayView1d< localIndex const > const & resElementIndex,
-          arrayView1d< real64 > const & perfRate,
-          arrayView2d< real64 > const & dPerfRate_dPres )
-{
-
-  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
-  {
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er  = resElementRegion[iperf];
-    localIndex const esr = resElementSubRegion[iperf];
-    localIndex const ei  = resElementIndex[iperf];
-
-    // get the local index of the well element
-    localIndex const iwelem = perfWellElemIndex[iperf];
-
-    compute( resPressure[er][esr][ei],
-             resDensity[er][esr][ei][0],
-             dResDensity_dPres[er][esr][ei][0],
-             resViscosity[er][esr][ei][0],
-             dResViscosity_dPres[er][esr][ei][0],
-             wellElemGravCoef[iwelem],
-             wellElemPressure[iwelem],
-             wellElemDensity[iwelem][0],
-             dWellElemDensity_dPres[iwelem][0],
-             wellElemViscosity[iwelem][0],
-             dWellElemViscosity_dPres[iwelem][0],
-             perfGravCoef[iperf],
-             perfTransmissibility[iperf],
-             perfRate[iperf],
-             dPerfRate_dPres[iperf] );
-
-
-  } );
-}
-
 
 /******************************** AccumulationKernel ********************************/
 
@@ -523,12 +418,13 @@ AccumulationKernel::
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemVolume,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView2d< real64 const > const & wellElemDensity_n,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
@@ -541,7 +437,7 @@ AccumulationKernel::
     globalIndex const presDofColIndex = wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
     real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensity_n[iwelem][0] );
-    real64 const localAccumJacobian = wellElemVolume[iwelem] * dWellElemDensity_dPres[iwelem][0];
+    real64 const localAccumJacobian = wellElemVolume[iwelem] * dWellElemDensity[iwelem][0][Deriv::dP];
 
     // add contribution to global residual and jacobian (no need for atomics here)
     localMatrix.addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumJacobian, 1 );
@@ -553,20 +449,23 @@ AccumulationKernel::
 /******************************** PressureInitializationKernel ********************************/
 
 void
-PresInitializationKernel::
-  launch( localIndex const perforationSize,
+PresTempInitializationKernel::
+  launch( integer const isThermal,
+          localIndex const perforationSize,
           localIndex const subRegionSize,
           localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
+          ElementViewConst< arrayView1d< real64 const > > const & resTemp,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 > const & wellElemPressure )
+          arrayView1d< real64 > const & wellElemPressure,
+          arrayView1d< real64 > const & wellElemTemperature )
 {
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
@@ -582,6 +481,7 @@ PresInitializationKernel::
   // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTemp( 0 );
   RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
 
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
@@ -596,7 +496,11 @@ PresInitializationKernel::
 
     // increment the fluid density
     sumDensity += resDensity[er][esr][ei][0];
+
+    // increment the temperature
+    sumTemp += resTemp[er][esr][ei];
   } );
+
   real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
 
 
@@ -605,13 +509,25 @@ PresInitializationKernel::
 
   real64 const avgDensity = MpiWrapper::sum( sumDensity.get() ) / numPerforations;
 
-
-
   // Step 3: we compute the approximate pressure at the reference depth
   // We make a distinction between pressure-controlled wells and rate-controlled wells
 
   real64 refPres = 0.0;
+  real64 avgTemp = 0;
 
+
+  // for a producer, we use the temperature and component fractions from the reservoir
+  if( isProducer )
+  {
+    // use average temperature from reservoir
+    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
+  }
+  // for an injector, we use the injection stream values
+  else
+  {
+    // use temperature from injection stream
+    avgTemp = wellControls.getInjectionTemperature();
+  }
   // if the well is controlled by pressure, initialize the reference pressure at the target pressure
   if( currentControl == WellControls::Control::BHP )
   {
@@ -646,21 +562,31 @@ PresInitializationKernel::
   //  - pressure: hydrostatic pressure using our crude approximation of the total mass density
 
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativeTemp( 0 );
 
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPressure[iwelem] = refPres + avgDensity * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
-
+    wellElemTemperature[iwelem] = avgTemp;
     if( wellElemPressure[iwelem] <= 0 )
     {
       foundNegativePressure.max( 1 );
     }
+    if( wellElemTemperature[iwelem] < 0 )
+    {
+      foundNegativeTemp.max( 1 );
+    }
   } );
 
-
   GEOS_THROW_IF( foundNegativePressure.get() == 1,
-                 wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
-                 InputError );
+                 "Invalid well initialization, negative pressure was found.",
+                 InputError, wellControls.getDataContext() );
+  if( isThermal )   // tjb change  temp in isothermal cases shouldnt be an issue (also what if temp in fluid prop calcs like compo)
+  {
+    GEOS_THROW_IF( foundNegativeTemp.get() == 1,
+                   "Invalid well initialization, negative temperature was found.",
+                   InputError, wellControls.getDataContext() );
+  }
 }
 
 /******************************** RateInitializationKernel ********************************/
@@ -670,7 +596,7 @@ RateInitializationKernel::
   launch( localIndex const subRegionSize,
           WellControls const & wellControls,
           real64 const & currentTime,
-          arrayView2d< real64 const > const & wellElemDens,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDens,
           arrayView1d< real64 > const & connRate )
 {
   real64 const targetRate = wellControls.getTargetTotalRate( currentTime );
@@ -699,7 +625,6 @@ RateInitializationKernel::
     }
   } );
 }
-
 
 } // end namespace singlePhaseWellKernels
 

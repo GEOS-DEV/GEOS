@@ -59,8 +59,28 @@ NodeManager::NodeManager( string const & name,
 }
 
 
+void NodeManager::reserve( localIndex const newSize )
+{
+  m_toFacesRelation.reserve( newSize );
+  m_toFacesRelation.reserveValues( newSize * 2 * getFaceMapOverallocation() );
+
+  m_toEdgesRelation.reserve( newSize );
+  m_toEdgesRelation.reserveValues( newSize * 2 * getEdgeMapOverallocation() );
+
+  m_toElements.m_toElementRegion.reserve( newSize );
+  m_toElements.m_toElementRegion.reserveValues( newSize * 2 * getElemMapOverAllocation() );
+
+  m_toElements.m_toElementSubRegion.reserve( newSize );
+  m_toElements.m_toElementSubRegion.reserveValues( newSize * 2 * getElemMapOverAllocation() );
+
+  m_toElements.m_toElementIndex.reserve( newSize );
+  m_toElements.m_toElementIndex.reserveValues( newSize * 2 * getElemMapOverAllocation() );
+  ObjectManagerBase::reserve( newSize );
+}
+
 void NodeManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
@@ -160,9 +180,9 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   m_referencePosition = cellBlockManager.getNodePositions();
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
   array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );
@@ -299,6 +319,8 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
 
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToEdges.size(), 0 );
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToFaces.size(), 0 );
   return unPackedSize;
 }
 

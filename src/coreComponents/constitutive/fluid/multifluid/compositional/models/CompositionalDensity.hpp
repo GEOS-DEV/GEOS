@@ -21,12 +21,13 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_COMPOSITIONALDENSITY_HPP_
 
 #include "FunctionBase.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CompositionalProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp"
 
 namespace geos
 {
@@ -58,17 +59,18 @@ public:
                 arraySlice1d< real64, USD2 > const & dMassDensity,
                 bool useMass ) const;
 
-private:
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
-  void computeCompressibilityFactor( integer const numComps,
-                                     real64 const & pressure,
-                                     real64 const & temperature,
-                                     arraySlice1d< real64 const, USD > const & composition,
-                                     ComponentProperties::KernelWrapper const & componentProperties,
-                                     EquationOfStateType const equationOfState,
-                                     real64 & compressibilityFactor,
-                                     arraySlice1d< real64 > const & compressibilityFactorDerivs ) const;
+  static void
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD1 > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                EquationOfStateType const equationOfState,
+                                real64 const & salinity,
+                                real64 & compressibilityFactor,
+                                arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
 
 private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
@@ -139,6 +141,7 @@ void CompositionalDensityUpdate::compute(
                                 phaseComposition,
                                 componentProperties,
                                 m_equationOfState,
+                                0.0,
                                 compressibilityFactor,
                                 tempDerivs.toSlice() );
 
@@ -161,38 +164,51 @@ void CompositionalDensityUpdate::compute(
                                                dMassDensity );
 }
 
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void CompositionalDensityUpdate::computeCompressibilityFactor( integer const numComps,
                                                                real64 const & pressure,
                                                                real64 const & temperature,
-                                                               arraySlice1d< real64 const, USD > const & composition,
+                                                               arraySlice1d< real64 const, USD1 > const & composition,
                                                                ComponentProperties::KernelWrapper const & componentProperties,
                                                                EquationOfStateType const equationOfState,
+                                                               real64 const & salinity,
                                                                real64 & compressibilityFactor,
-                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs ) const
+                                                               arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
 {
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
-    computeCompressibilityFactor( numComps,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
   }
   else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
   {
     CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-    computeCompressibilityFactor( numComps,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           salinity,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
   }
 }
 

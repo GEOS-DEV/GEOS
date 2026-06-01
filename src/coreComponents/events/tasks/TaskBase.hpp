@@ -22,7 +22,6 @@
 
 
 #include <limits>
-
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 namespace geos
@@ -68,6 +67,21 @@ public:
 
   /// @copydoc geos::dataRepository::Group::postInputInitialization( )
   void postInputInitialization() override;
+
+  /**
+   * @brief Get the output directory for function output
+   * @return a string containing the output directory
+   */
+  static string const getOutputDirectory();
+
+  /**
+   * @brief Set the output directory for function output
+   * @param outputDir The output directory
+   */
+  static void setOutputDirectory( string const & outputDir );
+
+private:
+  static string s_outputDir;
 };
 
 } /* namespace */

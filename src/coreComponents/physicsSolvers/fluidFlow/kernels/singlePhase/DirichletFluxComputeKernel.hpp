@@ -27,6 +27,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
@@ -44,11 +45,11 @@ namespace singlePhaseFVMKernels
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_EQN, NUM_DOF,
-                                                             BoundaryStencilWrapper >
+class DirichletFluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF,
+                                                                                    BoundaryStencilWrapper >
 {
 public:
-
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
@@ -61,9 +62,9 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
   using AbstractBase::m_mob;
-  using AbstractBase::m_dMob_dPres;
+  using AbstractBase::m_dMob;
   using AbstractBase::m_dens;
-  using AbstractBase::m_dDens_dPres;
+  using AbstractBase::m_dDens;
   using AbstractBase::m_permeability;
   using AbstractBase::m_dPerm_dPres;
   using AbstractBase::m_localMatrix;
@@ -199,12 +200,12 @@ public:
     mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
-    dMobility_dP[Order::ELEM] = m_dMob_dPres[er][esr][ei];
+    dMobility_dP[Order::ELEM] = m_dMob[er][esr][ei][Deriv::dP];
     dMobility_dP[Order::FACE] = 0.0;
 
     // Compute average density
     real64 const densMean = 0.5 * ( m_dens[er][esr][ei][0] + faceDens );
-    real64 const dDens_dP = 0.5 * m_dDens_dPres[er][esr][ei][0];
+    real64 const dDens_dP = 0.5 * m_dDens[er][esr][ei][0][Deriv::dP];
 
     // Evaluate potential difference
     real64 const potDif = (m_pres[er][esr][ei] - m_facePres[kf])
@@ -223,10 +224,14 @@ public:
     real64 const mobility_up = mobility[k_up];
     real64 const dMobility_dP_up = dMobility_dP[k_up];
 
+    // Upwind density
+    real64 const dens_up = ( potDif >= 0 ) ? m_dens[er][esr][ei][0] : faceDens;
+    real64 const dDens_dP_up = ( potDif >= 0 ) ? m_dDens[er][esr][ei][0][Deriv::dP] : 0.0;
+
     // call the lambda in the phase loop to allow the reuse of the fluxes and their derivatives
     // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
 
-    compFluxKernelOp( er, esr, ei, kf, f, dF_dP, mobility_up, dMobility_dP_up );
+    compFluxKernelOp( er, esr, ei, kf, f, dF_dP, mobility_up, dMobility_dP_up, dens_up, dDens_dP_up );
 
     // *** end of upwinding
 

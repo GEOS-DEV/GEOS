@@ -87,11 +87,11 @@ private:
     constexpr static char const * poromechanicsSolverNameString() { return "poromechanicsSolverName"; }
     /// String for the solid mechanics statistics name
     constexpr static char const * solidMechanicsStatisticsNameString() { return "solidMechanicsStatisticsName"; }
+    /// String for the displacement reset flag
+    constexpr static char const * resetDisplacementsString() { return "reset_displacements"; }
   };
 
   void postInputInitialization() override;
-
-//  void registerDataOnMesh( Group & meshBodies ) override;
 
   /// Name of the poromechanics solver
   string m_poromechanicsSolverName;
@@ -106,6 +106,9 @@ private:
   SolidMechanicsStatistics * m_solidMechanicsStatistics;
 
   SolidMechanicsStateReset m_solidMechanicsStateResetTask;
+
+  /// Flag for resetting displacements (and velocities)
+  integer m_resetDisplacements;
 
 };
 

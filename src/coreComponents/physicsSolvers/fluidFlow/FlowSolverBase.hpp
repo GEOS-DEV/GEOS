@@ -73,17 +73,18 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     // misc inputs
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
-    static constexpr char const * solidNamesString() { return "solidNames"; }
-    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
     static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
+
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
   };
 
   /**
@@ -104,7 +105,7 @@ public:
 
   void enableJumpStabilization() { m_isJumpStabilized = true; }
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
@@ -146,9 +147,33 @@ public:
                            real64 const & timeAtBeginningOfStep,
                            real64 const & dt );
 
-  virtual void initializeFluidState( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+  /**
+   * @brief assembles the flux terms for all cells for the hydrofracture case
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   * @param dR_dAper
+   */
+  virtual void assembleHydrofracFluxTerms( real64 const time_n,
+                                           real64 const dt,
+                                           DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs,
+                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
+  {
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+    GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+  }
 
-  virtual void initializeThermalState( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+  void initializeState( DomainPartition & domain );
+
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+
+  virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -158,7 +183,7 @@ public:
    * @param[out] minElevation the min elevation for each initial condition
    */
   void findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                               std::map< string, localIndex > const & equilNameToEquilId,
+                                               stdMap< string, localIndex > const & equilNameToEquilId,
                                                arrayView1d< real64 > const & maxElevation,
                                                arrayView1d< real64 > const & minElevation ) const;
 
@@ -173,10 +198,37 @@ public:
   void computeSourceFluxSizeScalingFactor( real64 const & time,
                                            real64 const & dt,
                                            DomainPartition & domain, // cannot be const...
-                                           std::map< string, localIndex > const & bcNameToBcId,
+                                           stdMap< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
+  integer numberOfDofsPerCell() const { return m_numDofPerCell; }
+
+  /**
+   * @brief Apply the delta volume to the element volume and reset delta volume to zero
+   * @detail This is needed for newly created fracture elements that have a non-zero deltaVolume
+   *         (set by SurfaceGenerator) but zero element volume.
+   * @param[in/out] subRegion the element subRegion
+   */
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
+
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationImpl::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] fieldKey the key of the field specified in the xml file
+   * @param[in] boundaryFieldKey the key of the boundary field
+   */
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const fieldKey,
+                        string const boundaryFieldKey ) const;
 
   /**
    * @brief Increment the cumulative flux from each aquifer
@@ -204,21 +256,24 @@ protected:
   virtual void validatePoreVolumes( DomainPartition const & domain ) const;
 
   virtual void precomputeData( MeshLevel & mesh,
-                               arrayView1d< string const > const & regionNames );
+                               string_array const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
+  /**
+   * @brief Checks the validity of the discretization name for the FiniteVolume method (errors if issues are detected)
+   */
+  void checkDiscretizationName() const;
 
-  void initializeState( DomainPartition & domain );
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
 
-  void initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  void initializePorosityAndPermeability( MeshLevel & mesh, string_array const & regionNames );
 
-  void initializeHydraulicAperture( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+  void initializeHydraulicAperture( MeshLevel & mesh, string_array const & regionNames );
 
-  void saveInitialPressureAndTemperature( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+  void saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames );
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
@@ -232,7 +287,7 @@ protected:
   real64 m_inputTemperature;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
@@ -285,8 +340,6 @@ public:
 private:
     static string generateMessage( string_view baseMessage,
                                    string_view fieldName, string_view setName );
-
-    BCMessage();
   };
 
 private:

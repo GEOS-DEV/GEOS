@@ -22,6 +22,8 @@
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+
 namespace geos
 {
 
@@ -53,7 +55,7 @@ public:
   using Base = poromechanicsKernels::MultiphasePoromechanics< SUBREGION_TYPE,
                                                               CONSTITUTIVE_TYPE,
                                                               FE_TYPE >;
-
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
   /// Number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -325,6 +327,9 @@ protected:
   arrayView2d< real64 const > const m_rockInternalEnergy_n;
   arrayView2d< real64 const > const m_rockInternalEnergy;
   arrayView2d< real64 const > const m_dRockInternalEnergy_dTemperature;
+
+  /// The rank-global reference temperature array
+  arrayView1d< real64 const > const m_referenceTemperature;
 
   /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;

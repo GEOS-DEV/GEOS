@@ -136,6 +136,11 @@ public:
                                  real64 ( &elasticStrain )[6] ) const override final;
 
   GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return m_bulkModulus[k];
@@ -170,6 +175,13 @@ public:
    */
 
 protected:
+
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const ( &stress )[6],
+                                     real64 ( &elasticStrainInc )[6] ) const;
+
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
@@ -212,22 +224,51 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 
 GEOS_HOST_DEVICE
 inline
+void ElasticIsotropicUpdates::computeElasticStrain( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( &stress )[6],
+                                                    real64 ( & elasticStrain)[6] ) const
+{
+  GEOS_UNUSED_VAR( q );
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+
+  elasticStrain[0] = (    stress[0] - nu*stress[1] - nu*stress[2])/E;
+  elasticStrain[1] = (-nu*stress[0] +    stress[1] - nu*stress[2])/E;
+  elasticStrain[2] = (-nu*stress[0] - nu*stress[1] +    stress[2])/E;
+
+  elasticStrain[3] = stress[3] / m_shearModulus[k];
+  elasticStrain[4] = stress[4] / m_shearModulus[k];
+  elasticStrain[5] = stress[5] / m_shearModulus[k];
+}
+
+GEOS_HOST_DEVICE
+inline
 void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
-  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
-  elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
 
-  elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[4] = m_newStress[k][q][4] / m_shearModulus[k];
-  elasticStrain[5] = m_newStress[k][q][5] / m_shearModulus[k];
+  computeElasticStrain( k, q, stress, elasticStrain );
+
 }
 
+GEOS_HOST_DEVICE
+inline
+void ElasticIsotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
+}
 
 GEOS_HOST_DEVICE
 inline
@@ -406,23 +447,15 @@ public:
   ElasticIsotropic( string const & name, Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropic() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropic";
 
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropic"; }
 
   /**
    * @brief Get catalog name
@@ -446,13 +479,6 @@ public:
 
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
-
-    /// string/key for bulk modulus
-    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
-
   };
 
   /**
@@ -547,6 +573,9 @@ protected:
   /// Post-process XML data
   virtual void postInputInitialization() override;
 
+  /// Convert per-cell Young's modulus / Poisson's ratio to bulk / shear modulus if imported from mesh
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
   /// The default value of the bulk modulus for any new allocations.
   real64 m_defaultBulkModulus;
 
@@ -558,6 +587,12 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
+
+  /// Young's modulus per cell (optional; used only when imported from an external mesh)
+  array1d< real64 > m_youngModulus;
+
+  /// Poisson's ratio per cell (optional; used only when imported from an external mesh)
+  array1d< real64 > m_poissonRatio;
 
 };
 

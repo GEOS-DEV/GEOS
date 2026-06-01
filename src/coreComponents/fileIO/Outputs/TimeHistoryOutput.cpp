@@ -16,6 +16,7 @@
 #include "TimeHistoryOutput.hpp"
 
 #include "fileIO/timeHistory/HDFFile.hpp"
+#include "fileIO/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
@@ -24,20 +25,6 @@
 namespace geos
 {
 using namespace dataRepository;
-
-namespace logInfo
-{
-struct TimeHistoryOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Time history output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & TimeHistoryOutput::getTimerCategory() const
-{
-  static logInfo::TimeHistoryOutputTimer timer;
-  return timer;
-}
 
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
@@ -48,8 +35,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_recordCount( 0 ),
   m_io( )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -71,6 +56,8 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
+  addLogLevel< logInfo::DataCollectorInitialization >();
+  addLogLevel< logInfo::HDF5Writing >();
 }
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
@@ -98,6 +85,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
         m_io[idx]->updateCollectingCount( count );
         return m_io[idx]->getBufferHead();
       } );
+
       m_io.back()->init( !freshInit );
     }
   };
@@ -143,7 +131,8 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
+                          GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )
   {
     try
@@ -154,8 +143,13 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                        getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
+      ErrorLogger::global().modifyCurrentExceptionMessage()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
+                           .setPriority( 1 ) );
+      throw InputError( e, errorMsg );
     }
   }
 }

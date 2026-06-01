@@ -49,6 +49,11 @@ FiniteElementDiscretization::FiniteElementDiscretization( string const & name, G
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Specifier to indicate whether to force the use of VEM" );
+
+  registerWrapper( viewKeyStruct::useHighOrderQuadratureRuleString(), &m_useHighOrderQuadratureRule ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Specifier to indicate whether to use a high order quadrature rule" );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -58,7 +63,8 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 void FiniteElementDiscretization::postInputInitialization()
 {
   GEOS_ERROR_IF( m_useVem < 0 || m_useVem > 1,
-                 getDataContext() << ": The flag useVirtualElements can be either 0 or 1" );
+                 "The flag useVirtualElements can be either 0 or 1",
+                 getDataContext() );
 }
 
 std::unique_ptr< FiniteElementBase >
@@ -68,7 +74,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
-      case ElementType::Triangle:      return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
+      case ElementType::Triangle:
+        if( m_useHighOrderQuadratureRule == 1 )
+        {
+          return std::make_unique< H1_TriangleFace_Lagrange1_Gauss4 >();
+        }
+        else
+        {
+          return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
+        }
       case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
       // On polyhedra where FEM are available, we use VEM only if useVirtualElements is set to 1 in
       // the input file.
@@ -78,9 +92,20 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         {
           return std::make_unique< H1_Tetrahedron_VEM_Gauss1 >();
         }
+        else if( m_formulation == Formulation::DG )
+        {
+          return std::make_unique< BB1_Tetrahedron >();
+        }
         else
         {
-          return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+          if( m_useHighOrderQuadratureRule == 1 )
+          {
+            return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss14 >();
+          }
+          else
+          {
+            return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+          }
         }
       }
       case ElementType::Pyramid:
@@ -168,7 +193,9 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #endif
       default:
       {
-        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                              parentElementShape ),
+                    getDataContext() );
       }
     }
     return {};
@@ -181,16 +208,22 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != Formulation::SEM,
-                       getDataContext() << ": Element type Hexahedron with order 2 available" <<
-                       " only when using the Spectral Element Method" );
+                       "Element type Hexahedron with order 2 available only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
+      case ElementType::Tetrahedron:
+        GEOS_ERROR_IF( m_formulation != Formulation::DG,
+                       "Element type Tetrahedron with order 2 available only when using the Discontinuous Galerkin Method",
+                       getDataContext()  );
+        return std::make_unique< BB2_Tetrahedron >();
       default:
       {
-        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
-                    " have an associated element formulation." );
+        GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                              parentElementShape ),
+                    getDataContext()  );
       }
     }
     return {};
@@ -203,16 +236,22 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != Formulation::SEM,
-                       getDataContext() << ": Element type Hexahedron with order 3 available" <<
-                       " only when using the Spectral Element Method" );
+                       "Element type Hexahedron with order 3 available only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
+      case ElementType::Tetrahedron:
+        GEOS_ERROR_IF( m_formulation != Formulation::DG,
+                       "Element type Tetrahedron with order 3 available only when using the Discontinuous Galerkin Method",
+                       getDataContext()  );
+        return std::make_unique< BB3_Tetrahedron >();
       default:
       {
-        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
-                    " have an associated element formulation." );
+        GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                              parentElementShape ),
+                    getDataContext()  );
       }
     }
     return {};
@@ -225,16 +264,22 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != Formulation::SEM,
-                       getDataContext() << ": Element type Hexahedron with order 4 available only" <<
-                       " when using the Spectral Element Method" );
+                       "Element type Hexahedron with order 4 available only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
+      //case ElementType::Tetrahedron:
+      //  GEOS_ERROR_IF( m_formulation != Formulation::DG,
+      //                 GEOS_FMT( "Element type Tetrahedron with order 4 available only when using the Discontinuous Galerkin Method" ),
+      //                  getDataContext()  );
+      //  //return std::make_unique< BB4_Tetrahedron >();
       default:
       {
-        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
-                    " an associated element formulation." );
+        GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                              parentElementShape ),
+                    getDataContext()  );
       }
     }
     return {};
@@ -247,22 +292,29 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
         GEOS_ERROR_IF( m_formulation != Formulation::SEM,
-                       getDataContext() << ": Element type Hexahedron with order 5 available only" <<
-                       " when using the Spectral Element Method" );
+                       "Element type Hexahedron with order 5 available only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
+      //case ElementType::Tetrahedron:
+      //  GEOS_ERROR_IF( m_formulation != Formulation::DG,
+      //                 GEOS_FMT( "Element type Tetrahedron with order 5 available only when using the Discontinuous Galerkin Method" ),
+      //                 getDataContext() );
+      //  //return std::make_unique< BB5_Tetrahedron >();
       default:
       {
-        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
-                    " an associated element formulation." );
+        GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                              parentElementShape ),
+                    getDataContext()  );
       }
     }
     return {};
   }
-  GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have an" <<
-              " associated element formulation." );
+  GEOS_ERROR( GEOS_FMT( "Element type {} does not have an associated element formulation.",
+                        parentElementShape ),
+              getDataContext() );
   return {};
 }
 

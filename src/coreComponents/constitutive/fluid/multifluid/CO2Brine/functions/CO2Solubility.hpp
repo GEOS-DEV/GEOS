@@ -139,10 +139,10 @@ public:
 
 private:
   /// Table to compute solubility as a function of pressure and temperature
-  TableFunction const * m_CO2SolubilityTable;
+  TableFunction const * m_CO2SolubilityTable = nullptr;
 
   /// Table to compute  water vapourisation as a function of pressure and temperature
-  TableFunction const * m_WaterVapourisationTable;
+  TableFunction const * m_WaterVapourisationTable = nullptr;
 
   /// Index of the CO2 component
   integer m_CO2Index;
@@ -192,8 +192,16 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
   real64 const determinant = 1.0 - co2Solubility*watSolubility;
 
-  GEOS_ERROR_IF_LT_MSG ( LvArray::math::abs( determinant ), minForDivision,
-                         GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ) );
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_THROW_IF( LvArray::math::abs( determinant ) < minForDivision,
+                 "Failed to calculate solubility (device).",
+                 geos::InputError );
+#else
+  GEOS_THROW_IF( LvArray::math::abs( determinant ) < minForDivision,
+                 GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.",
+                           pressure, temperature ),
+                 geos::InputError );
+#endif
 
   real64 invDeterminant = 0.0;
   real64 invDeterminantDeriv[2]{ 0.0, 0.0 };

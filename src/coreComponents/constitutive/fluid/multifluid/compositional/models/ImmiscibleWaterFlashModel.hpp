@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_IMMISCIBLEWATERFLASHMODEL_HPP_
 
 #include "FunctionBase.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -55,7 +55,10 @@ public:
                                    integer const waterComponentIndex,
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
-                                   arrayView1d< real64 const > const componentCriticalVolume );
+                                   real64 const salinity,
+                                   arrayView1d< real64 const > const componentCriticalVolume,
+                                   arrayView1d< real64 const > const continuousFlashParameters,
+                                   arrayView1d< integer const > const discreteFlashParameters );
 
   // Mark as a 3-phase flash
   GEOS_HOST_DEVICE
@@ -105,7 +108,8 @@ class ImmiscibleWaterFlashModel : public FunctionBase
 public:
   ImmiscibleWaterFlashModel( string const & name,
                              ComponentProperties const & componentProperties,
-                             ModelParameters const & modelParameters );
+                             ModelParameters const & modelParameters,
+                             arrayView1d< integer const > const phaseTypes );
 
   static string catalogName();
 
@@ -126,8 +130,13 @@ public:
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
+  // Determine phase ordering
+  static void calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                      arrayView1d< integer > const & phaseOrder );
+
 private:
   ModelParameters const & m_parameters;
+  arrayView1d< integer const > const m_phaseTypes;
   integer m_waterComponentIndex{-1};
 };
 
@@ -171,7 +180,7 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
     // Hydrocarbon phases
 
     // Calculate normalised hyrdocarbon composition
-    stackArray1d< real64, maxNumComps > composition( m_numComponents );
+    StackArray< real64, 1, maxNumComps > composition( m_numComponents );
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       composition[ic] = compFraction[ic] / z_hc;

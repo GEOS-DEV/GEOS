@@ -28,18 +28,7 @@
 namespace geos
 {
 
-struct NewObjectLists
-{
-  std::set< localIndex > newNodes;
-  std::set< localIndex > newEdges;
-  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
-
-  void insert( NewObjectLists const & lists );
-};
-
-
 class SpatialPartition;
-
 class NodeManager;
 class FaceManager;
 class ElementRegionManager;
@@ -133,7 +122,7 @@ private:
   // fracture region name
   string m_fractureRegionName;
   // target geometric objects to turn into fractures
-  array1d< string > m_targetObjectsName;
+  string_array m_targetObjectsName;
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 };

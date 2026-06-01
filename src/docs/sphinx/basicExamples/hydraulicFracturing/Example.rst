@@ -46,7 +46,7 @@ The inputs for this case are contained inside a case-specific (``heterogeneousIn
 The ``tables`` directory contains the pre-constructed geologic model.
 This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base xml file.
 
-
+Note: to avoid the dependency on python packages, the processed file (``heterogeneousInSitu_benchmark.xml.processed``) is also provided in the folder.
 
 
 ---------------------------------------------
@@ -157,10 +157,19 @@ Note that the ``gravityVector`` attribute indicates that we are applying gravity
 Similar to other coupled physics solvers, the Hydrofracture solver is specified in three parts:
 
 - Hydrofracture: this is the primary solver, which will be called by the event manager.  Two of its key attributes are the names of the dependent solid and fluid solvers.
-- SolidMechanicsLagrangianSSLE: this is the solid mechanics solver.
+- SolidMechanicsLagrangianFEM: this is the solid mechanics solver.
 - SinglePhaseFVM: this is the fluid solver.
 
 The final solver present in this example is the SurfaceGenerator, which manages how faces in the model break.
+
+.. note::
+   The SurfaceGenerator provides detailed logging to track fracture growth. Set ``logLevel="1"`` on the SurfaceGenerator solver to see per-rank breakdown of fracture element creation during mesh splitting. The default output (at ``logLevel="0"``) shows global statistics including:
+   
+   - Number of nodes split
+   - New fracture elements created
+   - Total fracture elements (cumulative)
+   
+   This information is helpful for monitoring fracture propagation and debugging mesh splitting issues.
 
 .. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml

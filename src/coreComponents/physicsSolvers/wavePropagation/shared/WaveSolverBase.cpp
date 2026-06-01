@@ -23,12 +23,11 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 
+#include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "WaveSolverUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -53,6 +52,13 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
+
+  registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Array which contains the value of the Ricker wavelets at each time-steps" );
+
 
   registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -92,7 +98,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed." );
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -188,7 +194,8 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::timestepStabilityLimitString(), &m_timestepStabilityLimit ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to apply a stability limit to the simulation timestep. The timestep used is that given by the CFL condition times the cflFactor parameter." );
+    setDescription(
+    "Flag that indicates how to deal with timeStep: if it is set to 0 (default value) we do not compute the timeStep and use the one defined inside the xml, 1 means that we use a routine to compute the timeStep but only one time (even with Pygeos), 2 means that we compute the timeStep each time" );
 
   registerWrapper( viewKeyStruct::timeStepString(), &m_timeStep ).
     setInputFlag( InputFlags::FALSE ).
@@ -206,6 +213,21 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+  registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply taper" );
+
+  registerWrapper( viewKeyStruct::reflectivityCoeffString(), &m_reflectivityCoeff ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.001 ).
+    setDescription( "Reflectivity coeff for taper" );
+
+  registerWrapper( viewKeyStruct::thicknessTaperString(), &m_thicknessTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Size for the taper layer " );
 
   registerWrapper( viewKeyStruct::slsReferenceAngularFrequenciesString(), &m_slsReferenceAngularFrequencies ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -231,6 +253,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Names of the table functions, one for each source, that are used to define the source wavelets. If a list is given, it overrides the Ricker wavelet definitions."
                     "The default value is an empty list, which means that a Ricker wavelet is used everywhere." );
 
+  addLogLevel< logInfo::DASType >();
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -249,7 +272,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -265,6 +288,10 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
         nodeCoords32[i][j] = X[i][j];
       }
     }
+
+
+    nodeManager.registerField< fields::taperCoeff >( this->getName());
+
   } );
 }
 
@@ -288,7 +315,7 @@ void WaveSolverBase::initializePreSubGroups()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     m_sourceWaveletTableWrappers.clear();
-    for( integer i = 0; i < m_sourceWaveletTableNames.size(); i++ )
+    for( size_t i = 0; i < m_sourceWaveletTableNames.size(); i++ )
     {
       TableFunction const & sourceWaveletTable = functionManager.getGroup< TableFunction >( m_sourceWaveletTableNames[ i ] );
       m_sourceWaveletTableWrappers.emplace_back( sourceWaveletTable.createKernelWrapper() );
@@ -309,9 +336,8 @@ void WaveSolverBase::postInputInitialization()
   {
     counter++;
   } );
-  GEOS_THROW_IF( counter > 1,
-                 getDataContext() << ": One single PML field specification is allowed",
-                 InputError );
+  GEOS_THROW_IF( counter > 1, "One single PML field specification is allowed",
+                 InputError, getDataContext() );
 
   m_usePML = counter;
 
@@ -328,8 +354,9 @@ void WaveSolverBase::postInputInitialization()
 
   if( m_useDAS != WaveSolverUtils::DASType::none )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, GEOS_FMT( "Linear DAS formulation: {}",
+                                                       m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -359,7 +386,7 @@ void WaveSolverBase::postInputInitialization()
   {
     GEOS_THROW_IF( m_slsReferenceAngularFrequencies.size( 0 ) != m_slsAnelasticityCoefficients.size( 0 ),
                    "The number of attenuation anelasticity coefficients for the SLS model must be equal to the number of reference angular frequencies",
-                   InputError );
+                   InputError, getDataContext() );
     if( m_slsReferenceAngularFrequencies.size( 0 ) == 0 || m_slsAnelasticityCoefficients.size( 0 ) == 0 )
     {
       m_slsReferenceAngularFrequencies.resize( 1 );
@@ -373,11 +400,11 @@ void WaveSolverBase::postInputInitialization()
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the sources",
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers",
-                 InputError );
+                 InputError, getDataContext() );
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -391,9 +418,9 @@ void WaveSolverBase::postInputInitialization()
     m_nsamplesSeismoTrace = 0;
   }
 
-  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && m_sourceWaveletTableNames.size() != m_sourceCoordinates.size( 0 ),
+  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && static_cast< localIndex >(m_sourceWaveletTableNames.size()) != m_sourceCoordinates.size( 0 ),
                  "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
-                 InputError );
+                 InputError, getDataContext() );
   m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
 
 }
@@ -433,14 +460,14 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
-                 InputError );
+                 GEOS_FMT( "FE discretization not found: {}", m_discretizationName ),
+                 InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,
                                        MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
+                                       string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     elemManager.forElementRegions( regionNames,
@@ -525,10 +552,10 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : (m_nsamplesSeismoTrace - 1) - m_indexSeismoTrace;
   for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    localIndex seismoIndex = m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo;
     real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
     if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;
@@ -547,10 +574,10 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : (m_nsamplesSeismoTrace - 1) - m_indexSeismoTrace;
   for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    localIndex seismoIndex = m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo;
     real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
     if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;
@@ -564,6 +591,5 @@ bool WaveSolverBase::directoryExists( std::string const & directoryName )
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
 }
-
 
 } /* namespace geos */

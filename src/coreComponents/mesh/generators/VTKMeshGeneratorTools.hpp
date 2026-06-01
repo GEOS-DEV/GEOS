@@ -20,6 +20,8 @@
 #ifndef GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 #define GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 
+#include "common/StdContainerWrappers.hpp"
+
 #include <vtkPartitionedDataSet.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -55,7 +57,7 @@ redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm );
  * @param mpiComm the MPI communicator
  * @return a vector of bounding boxes, one per rank in @p mpiComm
  */
-std::vector< vtkBoundingBox >
+stdVector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm );
 
 } // namespace geos::vtk

@@ -264,22 +264,37 @@ public:
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector< NeighborCommunicator > & getNeighbors()
+  stdVector< NeighborCommunicator > & getNeighbors()
   { return m_neighbors; }
 
   /**
    * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector< NeighborCommunicator > const & getNeighbors() const
+  stdVector< NeighborCommunicator > const & getNeighbors() const
   { return m_neighbors; };
+
+  /**
+   * @brief Get a list of neighbor ranks.
+   * @return Container of neighbor ranks.
+   */
+  stdVector< int > getNeighborRanks() const
+  {
+    stdVector< int > ranks;
+    ranks.reserve( m_neighbors.size() );
+    for( NeighborCommunicator const & neighbor : m_neighbors )
+    {
+      ranks.push_back( neighbor.neighborRank() );
+    }
+    return ranks;
+  }
 
 private:
 
   /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
-  std::vector< NeighborCommunicator > m_neighbors;
+  stdVector< NeighborCommunicator > m_neighbors;
 };
 
 } /* namespace geos */

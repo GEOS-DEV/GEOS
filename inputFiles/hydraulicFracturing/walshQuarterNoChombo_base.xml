@@ -24,6 +24,30 @@
     <Box name="source"
          xMin="{-1.0000000,  0.0074990, -0.0020000}"
          xMax="{ 0.0011000,  0.0076000,  0.0020000}"/>
+
+    <!--Box name="core0"
+         xMin="{-1.0000000,  0.0064990, -0.0012510}"
+         xMax="{ 1.0000000,  0.0085810, -0.0012490}"/>
+
+    <Box name="core1"
+         xMin="{-1.0000000,  0.0064990,  0.0012490}"
+         xMax="{ 1.0000000,  0.0085810,  0.0012510}"/>
+
+    <Box name="core2"
+         xMin="{-1.0000000,  0.0064990, -0.0012510}"
+         xMax="{ 1.0000000,  0.0065010,  0.0012510}"/>
+
+    <Box name="core3"
+         xMin="{-1.0000000,  0.0085790, -0.0012510}"
+         xMax="{ 1.0000000,  0.0085810,  0.0012510}"/>
+
+    <Box name="coreline"
+         xMin="{-1.0000000,  0.0065010, -0.0010000}"
+         xMax="{ 1.0000000,  0.0085790,  0.0010000}"/>
+
+    <Box name="source"
+         xMin="{-1.0000000,  0.0054990, -0.0020000}"
+         xMax="{ 0.0011000,  0.0086000,  0.0020000}"/-->
   </Geometry>
 
   <ElementRegions>
@@ -84,8 +108,14 @@
   <Outputs>
       <VTK name="siloOutput"
             plotFileRoot="walshQuarter"
-            plotLevel="3"
-            parallelThreads="48"/>
+            plotLevel="3"/>
+            
+      <!--Silo name="siloOutput"
+            writeEdgeMesh="1"
+            writeFEMFaces="1"
+            plotFileRoot="walshQuarter"
+            plotLevel="3"/-->
+
       <Restart name="sidreRestart"/>
 
       <!-- ChomboIO name="chomboCoupling"

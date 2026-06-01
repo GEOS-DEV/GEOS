@@ -25,6 +25,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 
 namespace geos
 {
@@ -72,13 +73,18 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
+
+  /**
+   * @brief Get the minimum wavespeed on a mesh
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**@}*/
 
@@ -87,7 +93,7 @@ public:
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real32 > const rhs );
+  virtual void addSourceToRightHandSide( integer const cycleNumber, arrayView1d< real32 > const rhs );
 
 
   /**
@@ -123,19 +129,21 @@ public:
    */
   real64 explicitStepInternal( real64 const & time_n,
                                real64 const & dt,
+                               integer const cycleNumber,
                                DomainPartition & domain );
 
   void computeUnknowns( real64 const & time_n,
                         real64 const & dt,
+                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
-                        arrayView1d< string const > const & regionNames );
+                        string_array const & regionNames );
 
   void synchronizeUnknowns( real64 const & time_n,
                             real64 const & dt,
                             DomainPartition & domain,
                             MeshLevel & mesh,
-                            arrayView1d< string const > const & regionNames );
+                            string_array const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
 
@@ -153,7 +161,7 @@ private:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

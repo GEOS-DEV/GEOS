@@ -107,72 +107,43 @@ public:
   }
 
   /**
-   * @brief default destructor
-   */
-  virtual ~CoupledReservoirAndWellsBase () override {}
-
-  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override
   {
-    GEOS_MARK_FUNCTION;
-
-    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
-    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-    dofManager.setDomain( domain );
-
-    Base::setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
-    // Set the sparsity pattern without reservoir-well coupling
+    // Set the reservoir sparsity pattern without reservoir-well coupling
     SparsityPattern< globalIndex > patternDiag;
-    dofManager.setSparsityPattern( patternDiag );
+    reservoirSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternDiag );
 
     // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternDiag.numRows() );
+    array1d< localIndex > rowLengths( patternDiag.numRows());
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
       rowLengths[localRow] = patternDiag.numNonZeros( localRow );
     }
 
     // Add the number of nonzeros induced by coupling on perforations
-    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
     // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
       globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
     }
 
     // Add the nonzeros from coupling
-    addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-    // Finally, steal the pattern into a CRS matrix
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-    localMatrix.setName( this->getName() + "/localMatrix" );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    addCouplingSparsityPattern( domain, dofManager, pattern.toView());
   }
 
   /**@}*/
@@ -210,6 +181,9 @@ public:
   {
     Base::postInputInitialization();
 
+    // assume that reservoir solver discretization is the primary one
+    this->m_discretizationName = reservoirSolver()->getDiscretizationName();
+
     setMGRStrategy();
   }
 
@@ -231,6 +205,8 @@ public:
     }
   }
 
+  void initializeState( DomainPartition & domain ) const { return reservoirSolver()->initializeState( domain ); }
+
   void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
@@ -249,8 +225,11 @@ public:
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return reservoirSolver()->updateFluidState( subRegion ); }
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+
+  template< typename ELEMENT_SUB_REGION >
+  void updatePorosityAndPermeability( ELEMENT_SUB_REGION & subRegion ) const
   { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
@@ -333,9 +312,9 @@ private:
    */
   void computeWellTransmissibility( DomainPartition & domain ) const
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & meshLevel,
-                                                                                 arrayView1d< string const > const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & meshLevel,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 

@@ -19,19 +19,19 @@ Also provides commonly used components for such as logging, formatting, memory a
  dependencies.
 #]]
 
-
 #
 # Specify all headers
 #
 set( common_headers
      ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
-     format/table/TableLayout.hpp
-     format/table/TableFormatter.hpp
      format/table/TableData.hpp
+     format/table/TableFormatter.hpp
+     format/table/TableLayout.hpp
+     format/table/TableMpiComponents.hpp
      format/EnumStrings.hpp
+     format/LogPart.hpp
      format/Format.hpp
      format/StringUtilities.hpp
-     logger/Logger.hpp
      BufferAllocator.hpp
      DataLayouts.hpp
      DataTypes.hpp
@@ -39,15 +39,20 @@ set( common_headers
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     logger/GeosExceptions.hpp
      logger/Logger.hpp
+     logger/ErrorHandling.hpp
+     logger/ExternalErrorHandler.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
+     StdContainerWrappers.hpp
      Stopwatch.hpp
      Timer.hpp
      Tensor.hpp
      TimingMacros.hpp
      TypeDispatch.hpp
+     TypesHelpers.hpp
      initializeEnvironment.hpp
      LifoStorage.hpp
      LifoStorageCommon.hpp
@@ -67,11 +72,16 @@ endif( )
 # Specify all sources
 #
 set( common_sources
-     format/table/TableLayout.cpp
-     format/table/TableFormatter.cpp
      format/table/TableData.cpp
+     format/table/TableFormatter.cpp
+     format/table/TableLayout.cpp
+     format/table/TableMpiComponents.cpp
+     format/LogPart.cpp
      format/StringUtilities.cpp
+     logger/GeosExceptions.cpp
      logger/Logger.cpp
+     logger/ErrorHandling.cpp
+     logger/ExternalErrorHandler.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
@@ -80,7 +90,7 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray RAJA chai )
+set( dependencyList ${parallelDeps} lvarray RAJA chai umpire)
 
 if (TARGET conduit::conduit)
   set( dependencyList ${dependencyList} conduit::conduit )
@@ -137,10 +147,20 @@ blt_add_library( NAME       common
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+# Older g++ version need a hint to use std::filesystem
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+    if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
+        target_link_libraries( common PRIVATE "stdc++fs" )
+    endif ()
+endif ()
+if ( ENABLE_CUDA )
+  target_link_libraries( common PRIVATE "stdc++fs" )
+endif ()
+
 install( TARGETS common LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
-  add_subdirectory( format/table/unitTests )
   add_subdirectory( format/unitTests )
+  add_subdirectory( format/table/unitTests )
 endif()

@@ -28,7 +28,7 @@ public:
   UniformStrainHexahedron();
   virtual ~UniformStrainHexahedron();
 
-  void reinit( const std::vector< R1TensorT< 3 > > & mapped_support_points );
+  void reinit( const stdVector< R1TensorT< 3 > > & mapped_support_points );
 
   void zero_energy_mode_control( const array1d< R1Tensor > & dNdx,
                                  const realT & volume,

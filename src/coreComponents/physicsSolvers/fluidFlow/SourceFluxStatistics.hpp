@@ -20,10 +20,13 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 
-#include "../FieldStatisticsBase.hpp"
-#include "FlowSolverBase.hpp"
+#include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
-
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
+#include <map>
 
 namespace geos
 {
@@ -311,6 +314,12 @@ private:
 
   /// the names of the SourceFlux(s) for which we want the statistics
   string_array m_fluxNames;
+  ///
+  TableLayout m_logLayout;
+  TableLayout m_csvLayout;
+
+  string m_csvFilename;
+
 
   /**
    * @copydoc Group::registerDataOnMesh(Group &)
@@ -323,23 +332,44 @@ private:
   void postInputInitialization() override;
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
-                                                                  string_view fluxName,
-                                                                  string_view elementSetName );
+                                                                  string_view fluxName );
 
   /**
-   * @brief If requested, output in the log and CSV the given statistics.
-   * @param minLogLevel    the min log level to output any line.
-   * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param stats          the statistics that must be output in the log.
+   * @brief  If requested, collect statistics in a tableData.
+   * @param logLevel  the min log level to collect any statistics.
+   * @param fluxName The name of the flux(es) for which we collect statistics
+   * @param elementSetName The name of collection of element (region) where we collect statistics
+   * @param tableData The table data where we collect statistics
+   * @param wrappedStats the statistics that must be retrieved.
    */
-  void writeStatsToLog( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
+  void gatherStatsForLog( bool logLevelActive,
+                          string_view fluxName,
+                          string_view elementSetName,
+                          TableData & tableData,
+                          WrappedStats const & wrappedStats );
   /**
-   * @brief If CSV is enabled, create or append a new CSV file.
-   * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param stats          the statistics that must be output in the log.
-   * @param writeHeader    If true, create the CSV with the header. If false, append it with the statistics.
+   * @brief  If requested, collect statistics in a tableData.
+   * @param tableData The TableData where we collect the statistics
+   * @param stats the statistics that must be retrieved.
    */
-  void writeStatsToCSV( string_view elementSetName, WrappedStats const & stats, bool writeHeader );
+  void gatherStatsForCSV( string_view fluxName,
+                          string_view elementSetName,
+                          TableData & tableData,
+                          WrappedStats const & stats );
+
+  /**
+   * @brief If requested, output statistics in the log.
+   * @param logLevel the min log level to output any statistics.
+   * @param fluxesStr A string designating the collection of the subject fluxes in the table title
+   * @param tableMeshData The TableData where we have all collected statistics
+   */
+  void outputStatsToLog( bool logLevelActive, string_view fluxesStr, TableData const & tableMeshData );
+
+  /**
+   * @brief If requested, output statistics in csv.
+   * @param csvData The TableData where we have all collected statistics
+   */
+  void outputStatsToCSV( TableData & csvData );
 
 };
 
@@ -365,7 +395,7 @@ void SourceFluxStatsAggregator::forMeshLevelStatsWrapper( DomainPartition & doma
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                             [&] ( string const &,
                                                   MeshLevel & meshLevel,
-                                                  arrayView1d< string const > const & )
+                                                  string_array const & )
   {
     string const wrapperName = getStatWrapperName( viewKeyStruct::fluxSetWrapperString() );
     WrappedStats & stats = meshLevel.getWrapper< WrappedStats >( wrapperName ).reference();

@@ -23,14 +23,14 @@ using namespace geos;
 
 TEST( Utilities, MapExtraction )
 {
-  std::map< string, int > const m{
+  stdMap< string, int > const m{
     { "k0", 0 },
     { "k1", 1 },
     { "k2", 2 }
   };
 
-  EXPECT_EQ( mapKeys( m ), std::vector< string >( { "k0", "k1", "k2" } ) );
+  EXPECT_EQ( mapKeys( m ), stdVector< string >( { "k0", "k1", "k2" } ) );
   EXPECT_EQ( mapKeys< std::set >( m ), std::set< string >( { "k0", "k1", "k2" } ) );
-  EXPECT_EQ( mapValues( m ), std::vector< int >( { 0, 1, 2 } ) );
+  EXPECT_EQ( mapValues( m ), stdVector< int >( { 0, 1, 2 } ) );
   EXPECT_EQ( mapValues< std::set >( m ), std::set< int >( { 0, 1, 2 } ) );
 }

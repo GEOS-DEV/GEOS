@@ -29,6 +29,8 @@
 #include "SurfaceElementRegion.hpp"
 #include "WellElementRegion.hpp"
 
+#include "common/TypeDispatch.hpp"
+
 namespace geos
 {
 
@@ -570,6 +572,28 @@ public:
   }
 
   /**
+   * @brief This function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( types::TypeList< SUBREGIONTYPES... >, LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete< SUBREGIONTYPES... >( targetRegions,
+                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                    localIndex const,
+                                                                                                    localIndex const,
+                                                                                                    ElementRegionBase &,
+                                                                                                    auto & subRegion )
+    {
+      lambda( targetIndex, subRegion );
+    } );
+  }
+
+  /**
    * @brief This const function is used to launch kernel function over the specified target element subregions with the
    * specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
@@ -857,8 +881,8 @@ public:
    */
   template< typename FIELD_TRAIT >
   ElementViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-  constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                  arrayView1d< string const > const & materialNames,
+  constructMaterialFieldAccessor( string_array const & regionNames,
+                                  string_array const & materialNames,
                                   bool const allowMissingViews = false ) const;
 
   /**
@@ -889,7 +913,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
@@ -907,7 +931,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
@@ -925,7 +949,7 @@ public:
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
   ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
 
@@ -1449,7 +1473,7 @@ ElementRegionManager::
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
@@ -1465,12 +1489,12 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase const & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
@@ -1487,9 +1511,10 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         else
         {
           GEOS_ERROR_IF( !allowMissingViews,
-                         subRegion.getDataContext() <<
-                         ": Material " << constitutiveRelation.getDataContext() <<
-                         " does not contain " << viewName );
+                         GEOS_FMT( " : Material {} does not contain {}",
+                                   constitutiveRelation.getName(),
+                                   viewName ),
+                         subRegion.getDataContext(), constitutiveRelation.getDataContext() );
         }
       } );
     }
@@ -1500,7 +1525,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
@@ -1516,12 +1541,12 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
@@ -1536,8 +1561,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, region.getDataContext() << ": Material " << materialName
-                                                                     << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews,
+                         GEOS_FMT( "Material {} does not contain {}", materialName, viewName ),
+                         region.getDataContext(), subRegion.getDataContext() );
         }
       } );
     }
@@ -1547,8 +1573,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
 template< typename FIELD_TRAIT >
 ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-ElementRegionManager::constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                                      arrayView1d< string const > const & materialNames,
+ElementRegionManager::constructMaterialFieldAccessor( string_array const & regionNames,
+                                                      string_array const & materialNames,
                                                       bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< typename FIELD_TRAIT::type,
@@ -1572,7 +1598,7 @@ template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews ) const
 {
@@ -1608,8 +1634,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
-                                                                    // missing. I am not sure this is the default behaviour we want though.
+        if( constitutiveRelation.template hasWrapper<>( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                      // missing. I am not sure this is the default behaviour we want
+                                                                      // though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

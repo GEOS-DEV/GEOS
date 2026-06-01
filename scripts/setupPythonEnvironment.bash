@@ -11,7 +11,8 @@ PIP_CMD="pip --disable-pip-version-check"
 PACKAGE_BRANCH=main
 
 
-declare -a TARGET_PACKAGES=("geos-mesh"
+declare -a TARGET_PACKAGES=("geos-utils"
+                            "geos-mesh"
                             "geos-xml-tools"
                             "hdf5-wrapper"
                             "pygeos-tools"
@@ -24,6 +25,7 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
                          "geos_ats_log_check"
                          "geos_ats_restart_check"
                          "geos_ats_curve_check"
+                         "geos_ats_process_tests_fails"
                          "mesh-doctor"
                          "activate"
                          "python")
@@ -69,7 +71,7 @@ case $key in
     echo "-p/--python-target \"Target parent python bin\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
     echo "-d/--pkg-dir \"Directory containing target python packages\""
-    echo "-t/--tool-branch \"Target branch for geosPythonPackages (default=main) \""
+    echo "-r/--python-pkg-branch \"Target branch for geosPythonPackages (default=main) \""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit
@@ -118,7 +120,7 @@ fi
 
 # Updating pip
 echo "Updating pip"
-$PYTHON_TARGET -m pip install --upgrade pip
+$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel
 
 # Install packages
 echo "Installing python packages..."
@@ -129,11 +131,12 @@ do
         echo "  $p"
 
         # Try installing the package
-        if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
-            INSTALL_RC=$?
+        if [[ "${VERBOSE}" == true ]]
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m ${PIP_CMD} install --upgrade "${PACKAGE_DIR}/${p}")
+            INSTALL_RC=$?
+        else
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m ${PIP_CMD} install --upgrade "${PACKAGE_DIR}/${p}" 2>&1)
             INSTALL_RC=$?
         fi
 
@@ -235,4 +238,3 @@ fi
 
 
 echo "Done!"
-

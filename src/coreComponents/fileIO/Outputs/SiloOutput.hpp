@@ -82,18 +82,19 @@ public:
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto parallelThreadsString = "parallelThreads";
   } siloOutputViewKeys;
   /// @endcond
-
-protected:
-  /**
-   * @copydoc OutputBase::getTimerCategory
-   */
-  logInfo::OutputTimerBase const & getTimerCategory() const override;
 
 private:
 
   void postInputInitialization() override;
+
+  /**
+   * @brief Get the number of parallel threads to use to write plotfiles
+   * @return The number of threads
+   **/
+  integer parallelThreads() const { return m_parallelThreads; }
 
   string m_plotFileRoot;
   integer m_writeEdgeMesh;
@@ -106,8 +107,9 @@ private:
   integer m_onlyPlotSpecifiedFieldNames;
 
   /// array of names of the fields to output
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
+  integer m_parallelThreads;
 };
 
 

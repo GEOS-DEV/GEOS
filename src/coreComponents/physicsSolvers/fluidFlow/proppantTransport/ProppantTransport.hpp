@@ -31,7 +31,7 @@ namespace dataRepository
 {
 class Group;
 }
-class FieldSpecificationBase;
+class FieldSpecification;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -181,7 +181,7 @@ public:
 
   /**@}*/
 
-  void resizeFractureFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  void resizeFractureFields( MeshLevel & mesh, string_array const & regionNames );
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

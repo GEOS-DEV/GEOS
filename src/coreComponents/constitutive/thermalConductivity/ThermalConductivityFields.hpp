@@ -20,7 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYFIELDS_HPP_
 #define GEOS_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYFIELDS_HPP_
 
-#include "constitutive/relativePermeability/layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geos
@@ -47,6 +47,14 @@ DECLARE_FIELD( dEffectiveConductivity_dT,
                LEVEL_3,
                WRITE_AND_READ,
                "Derivative of effective conductivity w.r.t. temperature" );
+
+DECLARE_FIELD( referenceThermalConductivity,
+               "referenceThermalConductivity",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Reference thermal conductivity" );
 
 DECLARE_FIELD( rockThermalConductivity,
                "rockThermalConductivity",

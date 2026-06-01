@@ -60,11 +60,11 @@ MeshObjectPath::MeshObjectPath( string const path,
 }
 
 
-std::vector< string >
+stdVector< string >
 MeshObjectPath::fillPathTokens( string const & path,
                                 dataRepository::Group const & meshBodies ) const
 {
-  std::vector< string > pathTokens = stringutilities::tokenize( path, "/" );
+  stdVector< string > pathTokens = stringutilities::tokenize( path, "/" );
 
   // find where the object specification is in the path
   auto findObjectIndex = [&]() -> int
@@ -127,7 +127,7 @@ MeshObjectPath::fillPathTokens( string const & path,
         string existingMeshBodiesAndLevels;
         meshBodies.forSubGroups< MeshBody >( [&]( MeshBody const & meshBody )
         {
-          std::vector< string > meshLevelsNames;
+          stdVector< string > meshLevelsNames;
           existingMeshBodiesAndLevels += "  MeshBody "+meshBody.getName() + ": { ";
           meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
           {
@@ -187,12 +187,12 @@ MeshObjectPath::fillPathTokens( string const & path,
 
 
 template< typename SUBNODE >
-static SUBNODE & insertPathNode( std::map< string, SUBNODE > & node, string const & name )
+static SUBNODE & insertPathNode( stdMap< string, SUBNODE > & node, string const & name )
 {
-  return node[ name ];
+  return node.get_inserted( name );
 }
 
-static string & insertPathNode( std::vector< string > & node, string & name )
+static string & insertPathNode( stdVector< string > & node, string & name )
 {
   node.push_back( name );
   return name;
@@ -205,15 +205,15 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
                             NODETYPE & node,
                             CALLBACK && cbfunc )
 {
-  std::vector< string > namesInRepository;
+  stdVector< string > namesInRepository;
   parentGroup.forSubGroups< TYPE >( [&]( TYPE const & group )
   {
     namesInRepository.emplace_back( group.getName() );
   } );
 
   GEOS_THROW_IF( namesInRepository.empty(),
-                 GEOS_FMT( "{0} has no children.", parentGroup.getDataContext().toString()),
-                 InputError );
+                 GEOS_FMT( "{} has no children.", parentGroup.getName()),
+                 InputError, parentGroup.getDataContext() );
 
   for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {
@@ -235,15 +235,15 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     GEOS_THROW_IF( !foundMatch,
                    GEOS_FMT( "{0} has no child named {1}.\n"
                              "{0} has the following children: {{ {2} }}",
-                             parentGroup.getDataContext().toString(),
+                             parentGroup.getName(),
                              inputEntry,
                              stringutilities::join( namesInRepository, ", " ) ),
-                   InputError );
+                   InputError, parentGroup.getDataContext() );
   }
 }
 
 
-void MeshObjectPath::processPathTokens( std::vector< string > const & pathTokens,
+void MeshObjectPath::processPathTokens( stdVector< string > const & pathTokens,
                                         dataRepository::Group const & meshBodies )
 {
 
@@ -251,14 +251,14 @@ void MeshObjectPath::processPathTokens( std::vector< string > const & pathTokens
                                      pathTokens[0],
                                      m_pathPermutations,
                                      [this, &pathTokens] ( MeshBody const & meshBody,
-                                                           std::map< string, std::map< string, std::vector< string > > > & meshBodyNode )
+                                                           stdMap< string, stdMap< string, stdVector< string > > > & meshBodyNode )
   {
     dataRepository::Group const & meshLevels = meshBody.getMeshLevels();
     processTokenRecursive< MeshLevel >( meshLevels,
                                         pathTokens[1],
                                         meshBodyNode,
                                         [this, &pathTokens]( MeshLevel const & meshLevel,
-                                                             std::map< string, std::vector< string > > & meshLevelNode )
+                                                             stdMap< string, stdVector< string > > & meshLevelNode )
     {
       if( m_objectType == ObjectTypes::elems )
       {
@@ -267,7 +267,7 @@ void MeshObjectPath::processPathTokens( std::vector< string > const & pathTokens
                                                     pathTokens[3],
                                                     meshLevelNode,
                                                     [&]( ElementRegionBase const & elemRegion,
-                                                         std::vector< string > & elemRegionNode )
+                                                         stdVector< string > & elemRegionNode )
         {
           dataRepository::Group const & elemSubRegionGroup = elemRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() );
           processTokenRecursive< ElementSubRegionBase >( elemSubRegionGroup,
@@ -286,7 +286,7 @@ void MeshObjectPath::processPathTokens( std::vector< string > const & pathTokens
 void MeshObjectPath::processPath( string const objectPath,
                                   dataRepository::Group const & meshBodies )
 {
-  std::vector< string > pathTokens = fillPathTokens( objectPath, meshBodies );
+  stdVector< string > pathTokens = fillPathTokens( objectPath, meshBodies );
   processPathTokens( pathTokens, meshBodies );
 }
 

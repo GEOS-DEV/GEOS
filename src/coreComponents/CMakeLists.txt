@@ -57,27 +57,30 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
-foreach( lib ${subdirs} )
-  add_subdirectory( ${lib} )
+foreach( subdir ${subdirs} )
+  add_subdirectory( ${subdir} )
 endforeach()
 
 add_library(geosx_core INTERFACE)
+
 if( GEOS_BUILD_SHARED_LIBS)
   target_link_libraries(geosx_core INTERFACE mainInterface )
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_options(geosx_core INTERFACE -Wl,--no-as-needed)
+  endif()
 else()
   target_link_libraries(geosx_core INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,mainInterface> )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake constitutive/PVTPackage )
+                       EXCLUDES cmake constitutive/PVTPackage constitutive/HPCReact )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck
-            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check 2>&1 >/dev/null"
+            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check "
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
 if( GEOS_ENABLE_TESTS )
-  add_subdirectory( unitTests )
+  add_subdirectory( integrationTests )
 endif( )
-

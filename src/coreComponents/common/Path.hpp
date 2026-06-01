@@ -16,6 +16,8 @@
 #ifndef GEOS_COMMON_PATH_HPP
 #define GEOS_COMMON_PATH_HPP
 
+#include "common/StdContainerWrappers.hpp"
+
 // System includes
 #include <string>
 #include <sstream>
@@ -89,9 +91,7 @@ public:
    * @param p Path prefix to be set.
    */
   static void setPathPrefix( std::string_view p )
-  {
-    pathPrefix() = p;
-  }
+  { pathPrefix() = p; }
 
   /**
    * @brief Get the path prefix of the file
@@ -99,39 +99,29 @@ public:
    * @return the path prefix
    */
   static std::string_view getPathPrefix()
-  {
-    return pathPrefix();
-  }
+  { return pathPrefix(); }
 
   /**
    * @brief @return the filename portion of the path
    */
-  std::string filename() const
-  {
-    size_type const pos = find_last_of( '/' );
-    return pos == npos ? static_cast< std::string >( *this ) : substr( pos + 1 );
-  }
+  std::string filename() const;
 
   /**
    * @brief @return the extension of the filename
    */
-  std::string extension() const
-  {
-    std::string const fname = filename();
-    size_type const pos = fname.find_last_of( '.' );
-    return pos == npos ? "" : fname.substr( pos + 1 );
-  }
+  std::string extension() const;
+
+  /**
+   * @brief @return the complete path to the file, relative to getPathPrefix().
+   */
+  std::string relativeFilePath() const;
 
 private:
 
   /**
    * @brief @return the reference of global variable of the path prefix
    */
-  static std::string & pathPrefix()
-  {
-    static std::string s_pathPrefix = "";
-    return s_pathPrefix;
-  }
+  static std::string & pathPrefix();
 
 };
 
@@ -208,7 +198,7 @@ std::string joinPath( ARGS const & ... args )
  * @param[in] path path to the directory
  * @return vector containing all the file paths
  */
-std::vector< std::string > readDirectory( std::string const & path );
+stdVector< std::string > readDirectory( std::string const & path );
 
 /*!
  * @brief Create a directory @p path, where parent directories must already exist.

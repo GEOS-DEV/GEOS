@@ -34,6 +34,7 @@ namespace isothermalCompositionalMultiphaseBaseKernels
 /**
  * @class SolutionScalingAndCheckingKernelBase
  * @brief Define the kernel for scaling the solution and check its validity
+ * @todo document the templated type name `TYPE`.
  */
 template< typename TYPE >
 class SolutionScalingAndCheckingKernelBase
@@ -75,6 +76,7 @@ public:
   /**
    * @struct StackVariables
    * @brief Kernel variables located on the stack
+   * @todo document what can `localMinVal` be in practice.
    */
   struct StackVariables
   {
@@ -84,6 +86,7 @@ public:
 
     StackVariables( real64 _localMinVal )
       :
+      localRow( -1 ),
       localMinVal( _localMinVal )
     { }
 

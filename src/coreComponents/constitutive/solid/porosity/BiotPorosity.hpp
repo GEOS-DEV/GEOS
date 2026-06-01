@@ -22,6 +22,7 @@
 
 #include "PorosityBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -105,7 +106,9 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    savePorosity( k, q, porosity, dPorosity_dPressure, dPorosity_dTemperature );
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
   }
 
   GEOS_HOST_DEVICE
@@ -188,6 +191,14 @@ public:
     m_bulkModulus[k] = bulkModulus;
     m_shearModulus[k] = shearModulus;
 
+    GEOS_THROW_IF( m_bulkModulus[k] <= 0,
+                   GEOS_FMT( "Element {}: the rock bulk modulus must be strictly positive", k ),
+                   InputError );
+
+    GEOS_THROW_IF_GT_MSG( m_bulkModulus[k], m_grainBulkModulus[k],
+                          GEOS_FMT( "Element {}: the rock bulk modulus cannot be greater than the grain bulk modulus", k ),
+                          InputError );
+
     m_biotCoefficient[k] =  1.0 - bulkModulus / m_grainBulkModulus[k];
   }
 
@@ -229,14 +240,13 @@ protected:
 class BiotPorosity : public PorosityBase
 {
 public:
-  BiotPorosity( string const & name, Group * const parent );
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  BiotPorosity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "BiotPorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
@@ -255,7 +265,7 @@ public:
     static constexpr char const *useUniaxialFixedStressString() { return "useUniaxialFixedStress"; }
 
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 
@@ -311,7 +321,6 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
-
 
   /// Default thermal expansion coefficients (read from XML)
   real64 m_defaultThermalExpansionCoefficient;

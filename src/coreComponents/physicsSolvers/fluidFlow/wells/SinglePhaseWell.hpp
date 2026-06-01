@@ -22,6 +22,8 @@
 
 #include "WellSolverBase.hpp"
 
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+
 namespace geos
 {
 
@@ -45,7 +47,7 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
-
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -138,9 +140,10 @@ public:
 
   /**
    * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param elemManager the well region manager
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion );
+  virtual void updateVolRateForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
@@ -162,10 +165,27 @@ public:
                                         real64 const & dt, DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+
+  /**
+   * @brief function to assemble the linear system matrix and rhs
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -224,18 +244,28 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+  /*
+   * @brief apply a special treatment to the wells that are shut
+   * @param time_n the time at the previous converged time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void shutDownWell( real64 const time_n,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs );
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
     // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
-
+    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
     static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
-    static constexpr char const * dCurrentVolRate_dPresString() { return "dCurrentVolumetricRate_dPres"; }
-    static constexpr char const * dCurrentVolRate_dRateString() { return "dCurrentVolumetricRate_dRate"; }
-
+    static constexpr char const * dCurrentVolRateString() { return "dCurrentVolRate"; }
   };
 
 protected:
@@ -249,11 +279,13 @@ protected:
 
 private:
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt ) override;
+  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
 
   /**
    * @brief Make sure that the well constraints are compatible

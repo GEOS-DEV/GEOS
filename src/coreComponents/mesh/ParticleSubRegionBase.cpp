@@ -18,13 +18,11 @@
  */
 
 #include "ParticleSubRegionBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
 {
 
 using namespace dataRepository;
-using namespace constitutive;
 
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
@@ -154,12 +152,12 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
   forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
                                                                                            // a sorted array. Parallelize with atomics?
+  {
+    if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOS ) )
     {
-      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOS ) )
-      {
-        m_activeParticleIndices.insert( p );
-      }
-    } );
+      m_activeParticleIndices.insert( p );
+    }
+  } );
 }
 
 void ParticleSubRegionBase::updateMaps()
@@ -168,9 +166,9 @@ void ParticleSubRegionBase::updateMaps()
   arrayView1d< globalIndex const > const particleID = m_particleID;
   forAll< serialPolicy >( this->size(), [=] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has
                                                                              // to be on host?
-    {
-      localToGlobalMap[p] = particleID[p];
-    } );
+  {
+    localToGlobalMap[p] = particleID[p];
+  } );
   this->constructGlobalToLocalMap();
 }
 

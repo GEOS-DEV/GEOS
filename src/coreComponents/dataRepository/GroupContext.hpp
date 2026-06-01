@@ -57,7 +57,7 @@ protected:
    * @param group The reference to the Group related to this GroupContext.
    * @param objectName Target object name.
    */
-  GroupContext( Group & group, string const & objectName );
+  GroupContext( Group & group, string_view objectName );
 
   /// The reference to the Group related to this GroupContext.
   Group & m_group;
@@ -68,6 +68,13 @@ private:
    * @return the group path with the file & line of the first parent for which this information exists.
    */
   string toString() const override;
+
+  /**
+   * @brief Return contextual information here it is a data path
+   * @return ErrorContext ErrorLogger instance updated with context information
+   */
+  ErrorContext getContextInfo() const override;
+
   /**
    * @copydoc DataContext::getToStringInfo()
    */

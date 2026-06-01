@@ -20,6 +20,7 @@
 #include "SolidMechanicsStateReset.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -36,7 +37,6 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   TaskBase( name, parent ),
   m_solidSolverName()
 {
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -53,7 +53,8 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable/disable inelastic behavior" );
 
-  addLogLevel< logInfo::Initialization >();
+  addLogLevel< logInfo::SolverExecution >();
+  addLogLevel< logInfo::SolverExecutionDetails >();
 }
 
 SolidMechanicsStateReset::~SolidMechanicsStateReset()
@@ -65,9 +66,8 @@ void SolidMechanicsStateReset::postInputInitialization()
   Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
-                 GEOS_FMT( "Task {}: physics solver named {} not found",
-                           getDataContext(), m_solidSolverName ),
-                 InputError );
+                 GEOS_FMT( "physics solver named {} not found", m_solidSolverName ),
+                 InputError, getDataContext() );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
@@ -81,14 +81,14 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 {
   m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Initialization,
-                                  GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
-                                            getName(), time_n, m_solidSolverName ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecution,
+                             GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+                                       getName(), time_n, m_solidSolverName ) );
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -98,6 +98,33 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       }
       nodeManager.getField< solidMechanics::totalDisplacement >().zero();
       nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< solidMechanics::averageStrain >().zero();
+        subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
+      } );
+
+
+      elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< contact::dispJump >().zero();
+        subRegion.getField< contact::slip >().zero();
+      } );
+
+
+      FaceManager & faceManager = mesh.getFaceManager();
+      if( faceManager.hasField< contact::totalBubbleDisplacement >() )
+      {
+        faceManager.getField< contact::totalBubbleDisplacement >().zero();
+        faceManager.getField< contact::incrementalBubbleDisplacement >().zero();
+      }
+
     }
 
     // Option 2: enable / disable inelastic behavior
@@ -109,10 +136,11 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
       Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Initialization, GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",
-                                                                     getName(), time_n, solidMaterialName,
-                                                                     m_disableInelasticity ? "OFF" : "ON",
-                                                                     subRegion.getName() ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecutionDetails,
+                             GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",     //2
+                                       getName(), time_n, solidMaterialName,
+                                       m_disableInelasticity ? "OFF" : "ON",
+                                       subRegion.getName() ) );
 
       SolidBase & constitutiveRelation = constitutiveModels.getGroup< SolidBase >( solidMaterialName );
       constitutiveRelation.disableInelasticity( m_disableInelasticity );

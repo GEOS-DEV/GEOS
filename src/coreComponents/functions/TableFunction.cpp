@@ -17,9 +17,15 @@
  * @file TableFunction.cpp
  */
 
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "TableFunction.hpp"
+#include "LogLevelsInfo.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -57,6 +63,15 @@ TableFunction::TableFunction( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) ).
     setApplyDefaultValue( m_interpolationMethod );
+
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n "
+                    "if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
+
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -66,9 +81,9 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   {
     parseFile( filename, target, skipped );
   }
-  catch( std::runtime_error const & e )
+  catch( geos::RuntimeError const & e )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
+    GEOS_THROW( e.what(), InputError, getDataContext()  );
   }
 }
 
@@ -79,7 +94,7 @@ void TableFunction::setInterpolationMethod( InterpolationType const method )
 }
 
 void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates,
-                                         std::vector< units::Unit > const & dimUnits )
+                                         stdVector< units::Unit > const & dimUnits )
 {
   m_dimUnits = dimUnits;
   m_coordinates.resize( 0 );
@@ -88,9 +103,8 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), i ),
-                     InputError );
+                     GEOS_FMT( "coordinates must be strictly increasing, but axis {} is not", i ),
+                     InputError, getDataContext() );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
@@ -117,9 +131,8 @@ void TableFunction::initializeFunction()
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                          GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-                                    catalogName(), getDataContext() ),
-                          InputError );
+                          "1D table function coordinates and values must have the same length",
+                          InputError, getDataContext()  );
   }
   else
   {
@@ -150,17 +163,15 @@ void TableFunction::reInitializeFunction()
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), ii ),
-                     InputError );
+                     GEOS_FMT( "Coordinates must be strictly increasing, but axis {} is not", ii ),
+                     InputError, getDataContext() );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
     GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
-                          GEOS_FMT( "{} {}: number of values does not match total number of table coordinates",
-                                    catalogName(), getDataContext() ),
-                          InputError );
+                          "Number of values does not match total number of table coordinates",
+                          InputError, getDataContext() );
   }
 
   // Create the kernel wrapper
@@ -170,18 +181,17 @@ void TableFunction::reInitializeFunction()
 void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
 {
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
-                 GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
-                           getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
-                 SimulationError );
+                 GEOS_FMT( "The {} dimension ( no. {} ) doesn't exist in the table.",
+                           units::getDescription( getDimUnit( dim ) ), dim ),
+                 SimulationError, getDataContext() );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
-                 GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
-                           getDataContext(),
+                 GEOS_FMT( "Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
                            units::formatValue( coord, getDimUnit( dim ) ),
                            units::formatValue( lowerBound, getDimUnit( dim ) ),
                            units::formatValue( upperBound, getDimUnit( dim ) ) ),
-                 SimulationError );
+                 SimulationError, getDataContext() );
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
@@ -196,6 +206,16 @@ real64 TableFunction::evaluate( real64 const * const input ) const
   return m_kernelWrapper.compute( input );
 }
 
+real64 TableFunction::getCoord( real64 const * const input, localIndex const dim, InterpolationType interpolationMethod ) const
+{
+  GEOS_ASSERT_MSG( interpolationMethod != InterpolationType::Linear,
+                   GEOS_FMT( "TableFunction::getCoord should not be called with {} interpolation method",
+                             EnumStrings< InterpolationType >::toString( interpolationMethod )),
+                   getDataContext() );
+  GEOS_ASSERT( dim >= 0 && dim < m_coordinates.size() );
+  return m_kernelWrapper.getCoord( input, dim, interpolationMethod );
+}
+
 TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolationMethod,
                                              ArrayOfArraysView< real64 const > const & coordinates,
                                              arrayView1d< real64 const > const & values )
@@ -205,170 +225,292 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
   m_values( values )
 {}
 
-/**
- * @brief Retrieve all data headers from a table function
- * @param formatterStream The stream who contains the csv table string
- * @param tableFunction The table function to be process
- * @param numDimensions Numbers of axes in the table
- * @param valueUnit The table unit value
- */
-void collectHeaders( std::ostringstream & formatterStream,
-                     TableFunction const & tableFunction,
-                     integer const numDimensions,
-                     units::Unit const valueUnit )
+
+string TableFunction::getTableDescription() const
 {
-  for( integer d = 0; d < numDimensions; d++ )
+  std::ostringstream description;
+  auto streamArrayDescription = [&]( string_view name,
+                                     auto const & array,
+                                     units::Unit const unit,
+                                     string_view path )
   {
-    formatterStream << units::getDescription( tableFunction.getDimUnit( d )) << ",";
+    description << GEOS_FMT( "- {}", string( name ) );
+    if( unit != units::Unknown )
+      description << GEOS_FMT( " in {} units", units::getDescription( unit ) );
+    if( !path.empty() )
+      description << GEOS_FMT( " from file: {}", path );
+    description << '\n';
+
+    auto const [minValue, maxValue] = std::minmax_element( array.begin(), array.end());
+    description << GEOS_FMT( "  * {} values, from {} [{}] to {} [{}].",
+                             array.size(),
+                             *minValue, units::getSymbol( unit ),
+                             *maxValue, units::getSymbol( unit ) );
+  };
+
+  for( integer dimId = 0; dimId < numDimensions(); ++dimId )
+  {
+    string const coordFilePath = dimId < m_coordinateFiles.size() ? m_coordinateFiles[dimId].relativeFilePath() : "";
+    streamArrayDescription( "Coordinates " + getCoordsDescription( dimId, true ),
+                            m_coordinates[dimId].toSliceConst(),
+                            getDimUnit( dimId ),
+                            coordFilePath );
+    description << '\n';
   }
-  formatterStream << units::getDescription( valueUnit ) << "\n";
+  streamArrayDescription( "Values",
+                          m_values.toViewConst(),
+                          getValueUnit(),
+                          m_voxelFile.relativeFilePath() );
+
+  return description.str();
+}
+
+string TableFunction::getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const
+{
+  integer const numDims = numDimensions();
+  units::Unit const dimCoordsUnit = getDimUnit( dimId );
+  if( dimCoordsUnit != units::Unknown )
+  {
+    return string( shortUnitsToVariables ?
+                   units::getVariableSymbol( dimCoordsUnit ) :
+                   units::getDescription( dimCoordsUnit ) );
+  }
+  else
+  {
+    static constexpr string_view table2DGenericAxes[] = {"x", "y"};
+    return numDims<=2 ? string( table2DGenericAxes[dimId] ) : GEOS_FMT( "Coord_{}", dimId );
+  }
+}
+
+string TableFunction::getValuesDescription() const
+{
+  return string( getValueUnit() != units::Unknown ?
+                 units::getDescription( getValueUnit() ) :
+                 "Value" );
 }
 
 /**
  * @brief Retrieve all data values
- * @param formatterStream  The stream who contains the csv table string
+ * @param table The table which contains the formatted data:
+ *              Each row contains the coordinates followed by the value.
  * @param numDimensions Numbers of axes in the table
  * @param coordinates The tables axis values
  * @param values The table values to be retrived
  */
-void collectValues( std::ostringstream & formatterStream,
-                    integer const numDimensions,
-                    ArrayOfArraysView< real64 const > const coordinates,
-                    arrayView1d< real64 const > const values )
+void collectTableValues( TableData & table,
+                         integer const numDimensions,
+                         ArrayOfArraysView< real64 const > const coordinates,
+                         arrayView1d< real64 const > const values )
 {
   // prepare dividers
-  std::vector< integer > div( numDimensions );
+  stdVector< integer > div( numDimensions );
   div[0] = 1;
   for( integer d = 1; d < numDimensions; d++ )
   {
     div[d] = div[d-1] * coordinates[d-1].size();
   }
   // loop through all the values
+  stdVector< integer > coordsIdx( numDimensions );
+  stdVector< TableData::CellData > rowData( numDimensions + 1,
+                                            { CellType::Value, string() } );
   for( integer v = 0; v < values.size(); v++ )
   {
     // find coords indices
-    std::vector< integer > idx( numDimensions );
     integer r = v;
     for( integer d = numDimensions-1; d >= 0; d-- )
     {
-      idx[d] = r / div[d];
+      coordsIdx[d] = r / div[d];
       r = r % div[d];
     }
     // finally print out in right order
     for( integer d = 0; d < numDimensions; d++ )
     {
-      arraySlice1d< real64 const > const coords = coordinates[d];
-      formatterStream << coords[idx[d]] << ",";
+      rowData[d].value = GEOS_FMT( "{}", coordinates[d][coordsIdx[d]] );
     }
-    formatterStream << values[v] << "\n";
+    rowData.back().value = GEOS_FMT( "{}", values[v] );
+    table.addRow( rowData );
   }
 }
 
-void TableFunction::outputPVTTableData( OutputOptions const pvtOutputOpts ) const
+bool isTableTooLargeForLog( TableFunction const & table )
 {
-  if( pvtOutputOpts.writeInLog &&  this->numDimensions() <= 2 )
+  static constexpr integer maxWidth = 250;
+  static constexpr integer maxRows = 500;
+  // for now, we only estimate the table width from approximations
+  static constexpr integer meanColumnWidth = 16;
+  integer const numDims = table.numDimensions();
+  integer const columnCount = numDims != 2 ? numDims + 1 : table.getCoordinates()[0].size();
+  integer const columnSepWidth = numDims != 2 ? 5 : 3;
+  integer tableApproxWidth = columnCount * (columnSepWidth + meanColumnWidth);
+  integer tableRowsCount = numDims != 2 ? table.getValues().size() : table.getCoordinates()[1].size();
+
+  return tableApproxWidth > maxWidth || tableRowsCount > maxRows;
+}
+
+void TableFunction::outputTableData( OutputOptions const outputOpts ) const
+{
+  // we only output from rank 0
+  if( MpiWrapper::commRank() != 0 )
+    return;
+
+  bool const logOutputFailed = outputOpts.writeInLog && isTableTooLargeForLog( *this );
+  string csvName =  joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" );
+
+  TableLayout logLayout( { TableLayout::Column().
+                             setName( getName() ).
+                             setHeaderAlignment( TableLayout::Alignment::center ).
+                             setValuesAlignment( TableLayout::Alignment::left ) } );
+  TableCSVFormatter csvFormatter;
+
+  if( outputOpts.writeCSV || logOutputFailed )
   {
-    TableTextFormatter textFormatter;
-    GEOS_LOG_RANK_0( textFormatter.toString( *this ));
+    std::ofstream csvStream( csvName );
+    csvFormatter.showErrors( false );
+    csvStream << csvFormatter.toString( *this );
   }
-  if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && this->numDimensions() >= 3 ) )
+
+  if( outputOpts.writeInLog || outputOpts.writeCSV )
   {
-    string const filename = this->getName();
-    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
-                               FunctionBase::getOutputDirectory(),
-                               filename ));
-    TableCSVFormatter csvFormatter;
-    logStream << csvFormatter.toString( *this );
+    TableTextFormatter logFormatter( logLayout );
+    logFormatter.getErrorsList().appendErrors( csvFormatter.getErrorsList().getErrors() );
+
+    if( outputOpts.writeInLog && !logOutputFailed )
+    {
+      GEOS_LOG( logFormatter.toString( *this ) );
+    }
+    else
+    {
+      TableData logTableData;
+      logTableData.addRow( getTableDescription());
+      if( logOutputFailed )
+      {
+        logTableData.addSeparator();
+        logTableData.addRow( " / \\ The table was too heavy for log output.\n"
+                             "/ ! \\ To visualize the table, please refer to the generated csv." );
+      }
+      logTableData.addSeparator();
+      logTableData.addRow( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
+
+      GEOS_LOG( logFormatter.toString( logTableData ) );
+    }
   }
+
+}
+void TableFunction::initializePostSubGroups()
+{
+  // Output user defined tables (not generated PVT tables)
+  bool const writeLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
+  outputTableData( OutputOptions{
+      m_writeCSV != 0, // writeCSV
+      writeLog         // writeLog
+    } );
 }
 
 template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > const coordinates = tableFunction.getCoordinates();
+
   arrayView1d< real64 const > const values = tableFunction.getValues();
-  units::Unit const valueUnit = tableFunction.getValueUnit();
-  std::ostringstream formatterStream;
+  TableLayout tableLayout;
 
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   if( numDimensions != 2 )
   {
-    collectHeaders( formatterStream, tableFunction, numDimensions, valueUnit );
-    collectValues( formatterStream, numDimensions, coordinates, values );
+    for( integer d = 0; d < numDimensions; d++ )
+    {
+      tableLayout.addColumn( units::getDescription( tableFunction.getDimUnit( d ) ) );
+    }
+    tableLayout.addColumn( units::getDescription( tableFunction.getValueUnit() ) );
+
+    TableData tableData;
+    collectTableValues( tableData, numDimensions, coordinates, values );
+
+    TableCSVFormatter const csvFormat( tableLayout );
+    return csvFormat.toString( tableData );
   }
   else
   {
+    array1d< real64 > coordsX;
+    coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+
+    array1d< real64 > coordsY;
+    coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
     TableData2D tableData2D;
-    TableData2D::TableDataHolder tableConverted;
-    tableConverted = tableData2D.convertTable2D( values,
-                                                 valueUnit,
-                                                 coordinates,
-                                                 units::getDescription( tableFunction.getDimUnit( 0 ) ),
-                                                 units::getDescription( tableFunction.getDimUnit( 1 ) ) );
+    TableData2D::TableDataHolder const tableConverted =
+      tableData2D.convertTable2D( coordsX, coordsY,
+                                  tableFunction.getCoordsDescription( 0, false ),
+                                  tableFunction.getCoordsDescription( 1, false ),
+                                  values,
+                                  false,
+                                  tableFunction.getValuesDescription() );
 
-    TableLayout tableLayout( tableConverted.headerNames );
+    tableLayout.addColumns( tableConverted.headerNames );
 
-    TableCSVFormatter csvFormat( tableLayout );
-    formatterStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
+    TableCSVFormatter const csvFormat( tableLayout );
+    return csvFormat.toString( tableConverted.tableData );
   }
-  return formatterStream.str();
 }
 
 template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
-  units::Unit const valueUnit = tableFunction.getValueUnit();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
-  string const filename = tableFunction.getName();
-  string logOutput;
 
-  GEOS_LOG_RANK_0( GEOS_FMT( "Values in the table are represented by : {}", units::getDescription( valueUnit )));
-
-  if( numDimensions == 1 )
-  {
-    TableData tableData;
-    arraySlice1d< real64 const > const coords = coordinates[0];
-    for( integer idx = 0; idx < values.size(); idx++ )
-    {
-      tableData.addRow( coords[idx], values[idx] );
-    }
-
-    TableLayout const tableLayout( {
-        string( units::getDescription( tableFunction.getDimUnit( 0 ))),
-        string( units::getDescription( valueUnit ))
-      }, filename );
-
-    TableTextFormatter const logTable( tableLayout );
-    logOutput = logTable.toString( tableData );
+  string_view tableTitle = m_tableLayout.getTitleStr();
+  TableLayout::Column parentColumn = TableLayout::Column().
+                                       setName( tableFunction.getTableDescription() ).
+                                       setHeaderAlignment( TableLayout::Alignment::left );
+  if( !m_tableLayout.getColumns().empty() )
+  { // concatainating description parent column if existing
+    parentColumn.m_header.setText( GEOS_FMT( "{}\n{}",
+                                             parentColumn.m_header.getText(),
+                                             m_tableLayout.getColumns()[0].m_header.getText() ) );
   }
-  else if( numDimensions == 2 )
+
+  string logOutput;
   {
-    integer const nX = coordinates[0].size();
-    integer const nY = coordinates[1].size();
-    if( nX * nY <= 500 )
+    if( numDimensions != 2 )
     {
+      for( int i = 0; i < numDimensions; ++i )
+      {
+        bool const shortenDescription = tableFunction.getDimUnit( i ) == units::Unknown;
+        parentColumn.addSubColumn( tableFunction.getCoordsDescription( i, shortenDescription ) );
+      }
+      parentColumn.addSubColumn( tableFunction.getValuesDescription() );
+
+      TableLayout const tableLayout( tableTitle, { parentColumn } );
+      TableTextFormatter const logTable( tableLayout );
+
+      TableData tableData;
+      collectTableValues( tableData, numDimensions, coordinates, values );
+      logOutput = logTable.toString( tableData );
+    }
+    else if( numDimensions == 2 )
+    {
+      array1d< real64 > coordsX;
+      coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+      array1d< real64 > coordsY;
+      coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
       TableData2D tableData2D;
       TableData2D::TableDataHolder tableConverted;
-      tableConverted = tableData2D.convertTable2D( values,
-                                                   valueUnit,
-                                                   coordinates,
-                                                   units::getDescription( tableFunction.getDimUnit( 0 ) ),
-                                                   units::getDescription( tableFunction.getDimUnit( 1 ) ));
+      tableConverted = tableData2D.convertTable2D( coordsX, coordsY,
+                                                   tableFunction.getCoordsDescription( 1, true ),
+                                                   tableFunction.getCoordsDescription( 0, true ),
+                                                   values,
+                                                   true,
+                                                   tableFunction.getValuesDescription() );
 
-      TableLayout tableLayout( tableConverted.headerNames, filename );
-
+      parentColumn.addSubColumns( tableConverted.headerNames );
+      TableLayout const tableLayout = TableLayout( tableTitle, { parentColumn } ).
+                                        setMargin( TableLayout::MarginValue::small );
       TableTextFormatter const table2DLog( tableLayout );
+      tableConverted.tableData.addSeparator();
       logOutput =  table2DLog.toString( tableConverted.tableData );
-    }
-    else
-    {
-      string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
-      TableTextFormatter const tableLog( tableLayoutInfos );
-      logOutput = tableLog.layoutToString();
     }
   }
   return logOutput;

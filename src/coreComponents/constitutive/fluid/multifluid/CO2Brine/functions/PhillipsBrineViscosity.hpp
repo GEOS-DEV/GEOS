@@ -86,8 +86,6 @@ public:
                           array1d< real64 > const & componentMolarWeight,
                           TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~PhillipsBrineViscosity() override = default;
-
   static string catalogName() { return "PhillipsBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
@@ -116,7 +114,7 @@ private:
   void makeCoefficients( string_array const & inputPara );
 
   /// Table with water viscosity tabulated as a function (T)
-  TableFunction const * m_waterViscosityTable;
+  TableFunction const * m_waterViscosityTable = nullptr;
 
   real64 m_coef0;
 
@@ -143,7 +141,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
   // compute the viscosity of pure water as a function of temperature
-  real64 dPureWaterVisc_dTemperature;
+  real64 dPureWaterVisc_dTemperature = 0.0;
   real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature, &dPureWaterVisc_dTemperature );
 
   // then compute the brine viscosity, accounting for the presence of salt

@@ -45,24 +45,12 @@ class SimpleGeometricObjectBase : public dataRepository::Group
 public:
 
   /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
   explicit SimpleGeometricObjectBase( string const & name,
                                       Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~SimpleGeometricObjectBase();
-
-  ///@}
 
   /**
    * @name Static Factory Catalog Functions
@@ -93,6 +81,21 @@ public:
    * @return true if the coordinates are in the object, false otherwise
    */
   virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
+
+  /// @cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    /// Key for the epsilon parameter
+    static constexpr char const * epsilonString() { return "epsilon"; }
+  };
+  /// @endcond
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  /// Tolerance for coordinate checks
+  real64 m_epsilon = 0.0;
 
 };
 

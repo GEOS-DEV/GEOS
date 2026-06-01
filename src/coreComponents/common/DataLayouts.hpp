@@ -155,16 +155,16 @@ namespace cells
 /// Cell node map permutation when using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
 
-/// Cell strain permutation when using cuda
-using STRAIN_PERM = RAJA::PERM_JI;
+/// Cell tensor (i.e. average stress and strain) permutation when using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_JI;
 
 #else
 
 /// Cell node map permutation when not using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
 
-/// Cell strain permutation when not using cuda
-using STRAIN_PERM = RAJA::PERM_IJ;
+/// Cell tensor (i.e. average stress and strain) permutation when not using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_IJ;
 
 #endif
 
@@ -172,7 +172,7 @@ using STRAIN_PERM = RAJA::PERM_IJ;
 static constexpr int NODE_MAP_USD = LvArray::typeManipulation::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
 
 /// Cell strain unit stride dimension
-static constexpr int STRAIN_USD = LvArray::typeManipulation::getStrideOneDimension( STRAIN_PERM {} );
+static constexpr int RANK2_TENSOR_USD = LvArray::typeManipulation::getStrideOneDimension( RANK2_TENSOR_PERM {} );
 
 } // namespace cells
 
@@ -204,6 +204,44 @@ static constexpr int STRESS_USD = LvArray::typeManipulation::getStrideOneDimensi
 static constexpr int STIFFNESS_USD = LvArray::typeManipulation::getStrideOneDimension( STIFFNESS_PERMUTATION {} );
 
 } // namespace solid
+
+
+namespace immiscibleFlow
+{
+#if defined( GEOS_USE_DEVICE )
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_JI;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_JKI;
+
+#else
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_IJ;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_IJK;
+
+#endif
+
+/// Phase property unit stride dimension
+static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE{} );
+
+/// Phase property compositional derivative unit stride dimension
+static constexpr int USD_PHASE_DS = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DS{} );
+
+/// indices of pressure and saturation derivatives
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static int constexpr dP = 0;
+  /// index of first derivative wrt compositions
+  static int constexpr dS = 1;
+};
+
+} // namespace immiscibleFlow
 
 namespace compflow
 {

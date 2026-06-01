@@ -23,12 +23,10 @@
 #include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "kernels/StrainHelper.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "kernels/StressStrainAverageKernels.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -67,22 +65,10 @@ public:
   SolidMechanicsLagrangianFEM( const string & name,
                                Group * const parent );
 
-
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default;
-
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete;
-
-  /**
-   * destructor
-   */
-  virtual ~SolidMechanicsLagrangianFEM() override;
-
   /**
    * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
    */
-  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanicsLagrangianFEM"; }
   /**
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
@@ -125,7 +111,16 @@ public:
                CRSMatrix< real64, globalIndex > & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
-               bool const setSparsity = false ) override;
+               bool setSparsity = true ) override;
+
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      SparsityPattern< globalIndex > & pattern ) override;
+
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -134,6 +129,13 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution,
+                                  integer const cycleNumber,
+                                  integer const nonlinearIteration ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -171,22 +173,20 @@ public:
   /**@}*/
 
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
 
-
-  template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -269,18 +269,29 @@ public:
   real64 & getMaxForce() { return m_maxForce; }
   real64 const & getMaxForce() const { return m_maxForce; }
 
-  arrayView1d< ParallelVector > const & getRigidBodyModes() const
+  void computeRigidBodyModes( DomainPartition & domain ) const;
+
+  arrayView1d< ParallelVector > const & getRigidBodyModes( DomainPartition & domain ) const
   {
+    computeRigidBodyModes( domain );
     return m_rigidBodyModes;
   }
 
-  array1d< ParallelVector > & getRigidBodyModes()
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( bool const performStressInitialization )
   {
-    return m_rigidBodyModes;
+    m_performStressInitialization = performStressInitialization;
   }
+
+  TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
 protected:
   virtual void postInputInitialization() override;
+
+  void initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -294,11 +305,14 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-//  MPI_iCommData m_iComm;
-  bool m_isFixedStressPoromechanicsUpdate;
 
-  /// Rigid body modes
-  array1d< ParallelVector > m_rigidBodyModes;
+  /// Flag to indicate that the solver is running in fixed stress (sequential) mode
+  bool m_isFixedStressPoromechanicsUpdate;
+  /// Flag to indicate that the solver is going to perform stress initialization
+  bool m_performStressInitialization;
+
+  /// Rigid body modes; TODO remove mutable hack
+  mutable array1d< ParallelVector > m_rigidBodyModes;
 
   real64 m_contactPenaltyStiffness;
 
@@ -320,12 +334,12 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 //**********************************************************************************************************************
 
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
                                                     DofManager const & dofManager,
-                                                    arrayView1d< string const > const & regionNames,
+                                                    string_array const & regionNames,
                                                     string const & materialNamesString,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,
@@ -351,12 +365,11 @@ real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 this->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      this->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 
 }
 

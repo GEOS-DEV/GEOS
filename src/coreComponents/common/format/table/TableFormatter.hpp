@@ -22,6 +22,7 @@
 
 #include "TableData.hpp"
 #include "TableLayout.hpp"
+#include "TableTypes.hpp"
 
 namespace geos
 {
@@ -32,70 +33,149 @@ namespace geos
 class TableFormatter
 {
 
+public:
+
+  /// Represent the TableData values
+  using RowsCellInput = stdVector< stdVector< TableData::CellData > >;
+
+  /// Represent a row of the Table (header or values) when structured for formatting
+  struct CellLayoutRow
+  {
+    /// The cell list of the row instance.
+    stdVector< TableLayout::CellLayout > cells;
+
+    /// The maximum number of lines in the `cells` texts (no text is considered as one line).
+    size_t sublinesCount;
+  };
+
+  /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
+  using CellLayoutRows = stdVector< CellLayoutRow >;
+
+  /**
+   * @return The Errors List object
+   */
+  TableErrorListing & getErrorsList() const
+  { return *m_errors; }
+
 protected:
 
   /// Layout for a table
-  TableLayout m_tableLayout;
+  PreparedTableLayout const m_tableLayout;
+  /// Class used for listing all errors that may have occured during table generation
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
-  TableFormatter() = default;
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
+   */
+  TableFormatter();
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
-   * @param tableLayout Contain all column names and optionnaly the table title
+   * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    */
   TableFormatter( TableLayout const & tableLayout );
 
   /**
-   * @brief Destroy the Table Formatter object
+   * @brief Implements the actual writing of content to an output stream.
+   *        Adds appropriate messages to the error list when the operation fails.
+   * @param outputStream The stream to write the content to.
+   * @param content The string view containing data to be written.
    */
-  virtual ~TableFormatter() = default;
+  void toStreamImpl( std::ostream & outputStream, string_view content ) const;
 };
 
 /**
- * @brief class for CSV formatting
+ * @brief Class to format data in a formatted CSV format
  */
-class TableCSVFormatter : public TableFormatter
+class TableCSVFormatter final : public TableFormatter
 {
 public:
 
   /**
-   * @brief Construct a new Table Formatter
+   * @brief The column separator for the CSV output.
+   */
+  static constexpr string_view m_separator = ",";
+
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
    */
   TableCSVFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
-   * @param tableLayout Contain all column names and optionnaly the table title
+   * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    */
   TableCSVFormatter( TableLayout const & tableLayout );
 
   /**
-   * @brief Destroy the TableCSVFormatter object
+   * @brief Destroy the Table CSV Formatter object
+   * We launch GEOS_WARNING if we have encountered any errors
    */
-  virtual ~TableCSVFormatter() = default;
+  ~TableCSVFormatter();
 
   /**
-   * @return The string with all column names.
+   * @return The string with all tableColumnData names.
    */
   string headerToString() const;
 
   /**
-   * @brief Convert the table data to a CSV string.
-   * @param tableData The 1D table data.
+   * @brief Convert the table data to a CSV string..
+   * @param tableData The table data
    * @return The CSV string representation of the table data.
    */
   string dataToString( TableData const & tableData ) const;
 
   /**
    * @brief Convert a data source to a CSV string.
-   * @tparam DATASOURCE The source to convert
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert
    * @return The CSV string representation of a data source.
    */
   template< typename DATASOURCE >
   string toString( DATASOURCE const & tableData ) const;
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @param outputStream The stream to write the content to.
+   */
+  void headerToStream( std::ostream & outputStream ) const
+  { toStreamImpl( outputStream, headerToString() ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @param tableData The table data
+   * @param outputStream The stream to write the content to.
+   */
+  void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
+  { toStreamImpl( outputStream, dataToString( tableData ) ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @tparam DATASOURCE The source to convert
+   * @param tableData The data source to convert
+   * @param outputStream The stream to write the content to.
+   */
+  template< typename DATASOURCE >
+  void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
+  { toStreamImpl( outputStream, toString( tableData ) ); }
+
+  /**
+   * @brief Indicate if we print the encountered errors on destruction. Enabled by default.
+   * @param cond The boolean to turn on/off log errors
+   */
+  void showErrors( bool cond )
+  { m_showErrors = cond; }
+
+private:
+  /// Boolean indicating if we show errors on destruction
+  bool m_showErrors = true;
 
 };
 
@@ -109,142 +189,247 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 
 
 /**
- * @brief class for log formatting
+ * @brief Class to format data in a formatted text format
+ * (for log output typically, expecting fixed character size).
  */
 class TableTextFormatter : public TableFormatter
 {
 public:
 
-
   /**
-   * @brief Construct a new TableFormatter
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
    */
   TableTextFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
    * @brief Construct a new TableFormatter from a tableLayout
-   * @param tableLayout Contain all column names and optionnaly the table title
+   * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    */
   TableTextFormatter( TableLayout const & tableLayout );
 
-
   /**
-   * @brief Destroy the Table Text Formatter object
+   * @return A TableLayout string representation,
+   * The TableTextFormatter receives hasn't received any data, so only the header part is returned.
    */
-  virtual ~TableTextFormatter() = default;
-
-  /**
-   * @return A TableLayout converted into a formatted representation.
-   */
-  string layoutToString() const;
+  string toString() const;
 
   /**
    * @brief Convert a data source to a table string.
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert.
    * @return The table string representation of the TableData.
    */
   template< typename DATASOURCE >
   string toString( DATASOURCE const & tableData ) const;
 
-private:
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString()
+   * @param outputStream The stream to write the content to.
+   */
+  void toStream( std::ostream & outputStream ) const
+  { toStreamImpl( outputStream, toString() ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @tparam DATASOURCE The type of the source to convert
+   * @param tableData The data source to convert.
+   * @param outputStream The stream to write the content to.
+   */
+  template< typename DATASOURCE >
+  void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
+  { toStreamImpl( outputStream, toString( tableData ) ); }
+
+protected:
 
   /// symbol for separator construction
   static constexpr char m_verticalLine = '|';
-  ///  for the extremity of a row
+  /// for the extremity of a row
   static constexpr char m_horizontalLine = '-';
 
-  /**
-   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
-   * @param columns Vector of columns to be filled.
-   * @param tableData Vector containing all rows filled with values
-   */
-  void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > & tableData ) const;
+  /// A functor which allow to customize the columns width after their computation.
+  using ColumnWidthModifier = std::function< void ( stdVector< size_t > & ) >;
 
   /**
-   * @brief Converts a TableLayout into a formatted representation.
+   * @brief Initializes the table layout with the given table data and prepares necessary layouts for headers and data cells.
+   * @param tableLayout A reference to the `TableLayout` object.
+   * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
+   * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
+   * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
+   * @param errorCellsLayout A reference to a `CellLayoutRows` where the error cells will be populated.
+   * @param tableTotalWidth A string that will be used as the table separator line
+   * @param columnWidthModifier A functor which allow to customize the columns width after their computation.
+   */
+  void initalizeTableGrids( PreparedTableLayout const & tableLayout,
+                            TableData const & tableData,
+                            CellLayoutRows & dataCellsLayout,
+                            CellLayoutRows & headerCellsLayout,
+                            CellLayoutRows & errorCellsLayout,
+                            size_t & tableTotalWidth,
+                            ColumnWidthModifier columnWidthModifier ) const;
+
+  /**
+   * @brief Outputs the top part of the formatted table to the provided output stream.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param tableLayout The layout of the table
+   * @param headerCellsLayout The header rows in a grid layout
+   * @param separatorLine A string that will be used as the table separator line
+   */
+  void outputTableHeader( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          CellLayoutRows const & headerCellsLayout,
+                          string_view separatorLine ) const;
+
+  /**
+   * @brief Outputs the data part of the formatted table to the provided output stream.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param tableLayout The layout of the table
+   * @param dataCellsLayout The data rows in a grid layout
+   */
+  void outputTableData( std::ostream & tableOutput,
+                        PreparedTableLayout const & tableLayout,
+                        CellLayoutRows const & dataCellsLayout ) const;
+
+  /**
+   * @brief Outputs the bottom part of the formatted table to the provided output stream.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param tableLayout The layout of the table
+   * @param separatorLine A string that will be used as the table separator line
+   * @param errorCellsLayout The layout of the error rows
+   * @param hasData Indicates whether there is data in the table TableData.
+   */
+  void outputTableFooter( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          CellLayoutRows & errorCellsLayout,
+                          string_view separatorLine,
+                          bool hasData ) const;
+
+private:
+
+  /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   */
+  void outputLines( PreparedTableLayout const & tableLayout,
+                    CellLayoutRows const & cellsLayout,
+                    std::ostream & tableOutput ) const;
+
+  /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param errorCellsLayout The layout of the error rows
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   */
+  void outputErrors( PreparedTableLayout const & tableLayout,
+                     CellLayoutRows & errorCellsLayout,
+                     std::ostream & tableOutput ) const;
+
+  /**
+   * @brief Populate a grid of CellLayout with the title rows.
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
+   *                          gridified layout.
+   * @param nbVisibleColumn The number of columns that are not hidden
+   */
+  void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & headerCellsLayout,
+                                 size_t nbVisibleColumn ) const;
+
+  /**
+   * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
+   * @note To produce a grid with the given column tree, there are 2 corner cases:
+   *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
+   *       - A parent column has 2 or more sub-columns -> it will be subdivised with "MergeNext" cells.
+   *         This is why stretchColumnsByMergedCellsWidth() must be called on the grid,
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
+   *                          gridified layout.
+   * @param nbVisibleColumn The number of columns that are not hidden
+   */
+  void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
+                                  CellLayoutRows & headerCellsLayout,
+                                  size_t nbVisibleColumn ) const;
+  /**
+   * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   */
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
+                                CellLayoutRows & dataCellsLayout,
+                                RowsCellInput const & inputDataValues,
+                                size_t const nbVisibleColumn ) const;
+
+  /**
+   * @brief Populates the error cells layout based on input error values
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param errorCellsLayout A reference to the layout for the error cells that will be populated.
+   * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
+   */
+  void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & errorCellsLayout,
+                                 TableErrorListing const & dataErrors ) const;
+
+  /**
+   * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   */
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
+                                CellLayoutRows & dataCellsLayout,
+                                RowsCellInput const & inputDataValues ) const;
+
+  /**
+   * @brief Expend the columns width to accomodate with the content of all cells that are not merged.
+   * @param columnsWidth The array to store the resulting columns width in.
+   * @param tableGrid The grid of cells containing content.
+   */
+  void stretchColumnsByCellsWidth( stdVector< size_t > & columnsWidth,
+                                   TableFormatter::CellLayoutRows const & tableGrid ) const;
+
+  /**
+   * @brief Adjust cell widths to accommodate merged cells across multiple columns.
+   * @param columnsWidth The array to store the resulting columns width in.
+   *                     Initialized by stretchColumnsByCellsWidth().
+   * @param tableGrid The grid of cells containing content that is potencially merged.
+   *                  The merged cells width will be computed.
+   * @param tableLayout Layout information, including column margins and other settings.
+   * @param compress Enable a final compression pass instead of only expanding widths.
+   */
+  void stretchColumnsByMergedCellsWidth( stdVector< size_t > & columnsWidth,
+                                         TableFormatter::CellLayoutRows & tableGrid,
+                                         PreparedTableLayout const & tableLayout,
+                                         bool const compress ) const;
+
+  /**
+   * @brief Applies column widths to all rows in the table grid.
+   * @param columnsWidth The row containing the finalized column width values.
+   * @param tableGrid The grid of cells that will have widths propagated to all rows.
+   * @param tableLayout Layout information including spacing and other display settings.
+   */
+  void applyColumnsWidth( stdVector< size_t > const & columnsWidth,
+                          TableFormatter::CellLayoutRows & tableGrid,
+                          PreparedTableLayout const & tableLayout ) const;
+
+
+  /**
+   * @brief Formats a table cell and appends it to the table output.
+   * @param tableLayout The layout of the table
    * @param tableOutput The output stream
-   * @param columns The vector containing all table columns
-   * @param msgTableError A vector containg all error related to the table
-   * @param sectionSeparatingLine An empty string for building the section separator
+   * @param cell The cell to format
+   * @param idxLine The current line index used to access the specific content for the cell.
    */
-  void outputLayout( std::ostringstream & tableOutput,
-                     std::vector< TableLayout::Column > & columns,
-                     std::vector< string > const & msgTableError,
-                     string & sectionSeparatingLine ) const;
+  void formatCell( std::ostream & tableOutput,
+                   TableLayout::CellLayout const & cell,
+                   size_t idxLine ) const;
 
-  /**
-   * @brief Split all header names by detecting the newline \\n character. and
-   * set the same vector size for each split header and merge it into columns
-   * @param columns The vector containg all columns
-   * @param largestHeaderVectorSize The largest split header vector size
-   * @param splitHeaders A empty vector who will contain all split header names
-   */
-  void splitAndSetColumnNames( std::vector< TableLayout::Column > & columns,
-                               size_t & largestHeaderVectorSize,
-                               std::vector< std::vector< string > > & splitHeaders ) const;
-
-  /**
-   * @brief For each column find and set the column's longest string
-   * @param columns The vector containg all columns
-   */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns ) const;
-
-  /**
-   * @brief recalculate the largest string size for each columns
-   * @param columns Vector containing all table columns
-   * @param extraCharacters Extra characters to be added to \p m_maxStringSize of each columns
-   */
-  void increaseColumnsSize( std::vector< TableLayout::Column > & columns,
-                            integer const extraCharacters ) const;
-
-  /**
-   * @brief Compute the max table line length, taking into account the length of : title, error, columns header and content
-   * Increase the size of the columns if necessary
-   * @param columns Vector of column containing containing the largest string for each column
-   * @param msgTableError Vector containing all error messages
-   */
-  void computeTableWidth( std::vector< TableLayout::Column > & columns,
-                          std::vector< string > const & msgTableError ) const;
-
-  /**
-   * @brief Build all separators needed from content length contained in the columns vector
-   * @param columns Vector containing all table columns
-   * @param topSeparator Top separator to be built
-   * @param sectionSeparatingLine Line section separator to be built
-   */
-  void buildTableSeparators( std::vector< TableLayout::Column > const & columns,
-                             string & topSeparator,
-                             string & sectionSeparatingLine ) const;
-
-  /**
-   * @brief Add a row on top of the table
-   * @param tableOutput The output stream
-   * @param msg Vector of string(s) to display
-   * @param topSeparator The top table separator
-   * @param alignment The aligment for a row
-   */
-  void outputTopRows( std::ostringstream & tableOutput,
-                      std::vector< string > const & msg,
-                      string_view topSeparator,
-                      TableLayout::Alignment alignment ) const;
-
-  /**
-   * @brief Output a section by specifying it's type ( header or section )
-   * @param columns Vector containing all table columns
-   * @param sectionSeparatingLine Line separator between sections
-   * @param rows A section row
-   * @param nbRows Indicates the number of lines in a section
-   * @param section The section to be built
-   * @note Add the ending line if there are one or more rows
-   */
-  void outputSectionRows( std::vector< TableLayout::Column > const & columns,
-                          string_view sectionSeparatingLine,
-                          std::ostringstream & rows,
-                          integer const nbRows,
-                          TableLayout::Section const section ) const;
 };
 
 /**

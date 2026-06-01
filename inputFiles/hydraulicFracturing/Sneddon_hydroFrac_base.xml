@@ -20,9 +20,8 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
@@ -37,7 +36,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      rockToughness="10.0e6"
+      initialRockToughness="10.0e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SNEDDON_SOLVER_END -->
   </Solvers>

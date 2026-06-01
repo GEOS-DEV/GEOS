@@ -20,8 +20,10 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 #define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 namespace geos
 {
 
@@ -34,6 +36,7 @@ namespace constitutive
 class SingleFluidBaseUpdate
 {
 public:
+  using SingleFluidProp = SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
   /**
    * @brief Get number of elements in this wrapper.
@@ -58,14 +61,15 @@ protected:
    * @param viscosity   fluid viscosity
    * @param dVisc_dPres derivative of viscosity w.r.t. pressure
    */
-  SingleFluidBaseUpdate( arrayView2d< real64 > const & density,
-                         arrayView2d< real64 > const & dDens_dPres,
-                         arrayView2d< real64 > const & viscosity,
-                         arrayView2d< real64 > const & dVisc_dPres )
-    : m_density( density ),
-    m_dDens_dPres( dDens_dPres ),
+  SingleFluidBaseUpdate( arrayView2d< real64, constitutive::singlefluid::USD_FLUID >  const & density,
+                         arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER >  const & dDensity,
+                         arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & viscosity,
+                         arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER >  const & dViscosity )
+    :
+    m_density( density ),
+    m_dDensity( dDensity ),
     m_viscosity( viscosity ),
-    m_dVisc_dPres( dVisc_dPres )
+    m_dViscosity( dViscosity )
   {}
 
   /**
@@ -91,17 +95,14 @@ protected:
   SingleFluidBaseUpdate & operator=( SingleFluidBaseUpdate && ) = delete;
 
 
-  /// Fluid density
-  arrayView2d< real64 > m_density;
+  /// Fluid density property and derivatives
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID >  m_density;
+  arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER >  m_dDensity;
 
-  /// Derivative of density w.r.t. pressure
-  arrayView2d< real64 > m_dDens_dPres;
+  /// Fluid viscosity property and derivatives
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > m_viscosity;
+  arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > m_dViscosity;
 
-  /// Fluid viscosity
-  arrayView2d< real64 > m_viscosity;
-
-  /// Derivative of viscosity w.r.t. pressure
-  arrayView2d< real64 > m_dVisc_dPres;
 
 //END_SPHINX_INCLUDE_01
 
@@ -129,6 +130,41 @@ public:
                           dDensity_dPressure,
                           viscosity,
                           dViscosity_dPressure );
+  }
+
+  template< typename FLUIDWRAPPER >
+  GEOS_HOST_DEVICE
+  static void computeThermalValues( FLUIDWRAPPER const fluidWrapper,
+                                    real64 const pressure,
+                                    real64 const temperature,
+                                    real64 & density,
+                                    real64 & viscosity )
+  {
+    real64 dDensity_dPressure = 0.0;
+    real64 dViscosity_dPressure = 0.0;
+    real64 dDensity_dTemperature = 0.0;
+    real64 dViscosity_dTemperature = 0.0;
+    real64 internalEnergy = 0.0;
+    real64 dInternalEnergy_dPressure = 0.0;
+    real64 dInternalEnergy_dTemperature = 0.0;
+    real64 enthalpy = 0.0;
+    real64 dEnthalpy_dPressure = 0.0;
+    real64 dEnthalpy_dTemperature = 0.0;
+
+    fluidWrapper.compute( pressure,
+                          temperature,
+                          density,
+                          dDensity_dPressure,
+                          dDensity_dTemperature,
+                          viscosity,
+                          dViscosity_dPressure,
+                          dViscosity_dTemperature,
+                          internalEnergy,
+                          dInternalEnergy_dPressure,
+                          dInternalEnergy_dTemperature,
+                          enthalpy,
+                          dEnthalpy_dPressure,
+                          dEnthalpy_dTemperature );
   }
 
 //START_SPHINX_INCLUDE_02
@@ -205,6 +241,21 @@ private:
                        real64 const pressure,
                        real64 const temperature ) const = 0;
 
+  /**
+   * @brief Update fluid state at a single point.
+   * @param[in] k           element index
+   * @param[in] q           gauss point index
+   * @param[in] pressure    the target pressure value
+   * @param[in] temperature the target temperature value
+   * @param[in] logPrimaryConcentration the target logPrimaryConc value
+   */
+  GEOS_HOST_DEVICE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConcentration ) const = 0;
+
 };
 //END_SPHINX_INCLUDE_02
 
@@ -215,12 +266,17 @@ class SingleFluidBase : public ConstitutiveBase
 {
 public:
 
+  using SingleFluidProp = SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
+
   /**
    * @brief Constructor.
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( string const & name, Group * const parent );
+  SingleFluidBase( string const & name, dataRepository::Group * const parent );
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Initialize the model
@@ -229,49 +285,43 @@ public:
 
   virtual void saveConvergedState() const override;
 
-  // *** ConstitutiveBase interface
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   // *** SingleFluid-specific interface
 
-  arrayView2d< real64 const > density() const { return m_density; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > density() const { return m_density.value; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > density() { return m_density.value; }
 
-  arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > dDensity() const
+  { return m_density.derivs; }
 
-  arrayView2d< real64 > dDensity_dTemperature() { return m_dDensity_dTemperature; }
-  arrayView2d< real64 const > dDensity_dTemperature() const { return m_dDensity_dTemperature; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > density_n() const { return m_density_n; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > density_n() { return m_density_n; }
 
-  arrayView2d< real64 const > density_n() const { return m_density_n; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > viscosity() const { return m_viscosity.value; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > viscosity() { return m_viscosity.value; }
 
-  arrayView2d< real64 const > viscosity() const { return m_viscosity; }
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > dViscosity() const
+  { return m_viscosity.derivs; }
 
-  arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > internalEnergy() const { return m_internalEnergy.value; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > internalEnergy() { return m_internalEnergy.value; }
 
-  arrayView2d< real64 > dViscosity_dTemperature() { return m_dViscosity_dTemperature; }
-  arrayView2d< real64 const > dViscosity_dTemperature() const { return m_dViscosity_dTemperature; }
+  arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > dInternalEnergy()
+  { return m_internalEnergy.derivs; }
 
-  arrayView2d< real64 > internalEnergy() { return m_internalEnergy; }
-  arrayView2d< real64 const > internalEnergy() const { return m_internalEnergy; }
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > dInternalEnergy() const
+  { return m_internalEnergy.derivs; }
 
-  arrayView2d< real64 > internalEnergy_n() { return m_internalEnergy_n; }
-  arrayView2d< real64 const > internalEnergy_n() const { return m_internalEnergy_n; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > internalEnergy_n() { return m_internalEnergy_n; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > internalEnergy_n() const { return m_internalEnergy_n; }
 
-  arrayView2d< real64 > dInternalEnergy_dPressure() { return m_dInternalEnergy_dPressure; }
-  arrayView2d< real64 const > dInternalEnergy_dPressure() const { return m_dInternalEnergy_dPressure; }
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > enthalpy() const { return m_enthalpy.value; }
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > enthalpy() { return m_enthalpy.value; }
 
-  arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
-  arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
+  arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > dEnthalpy()
+  { return m_enthalpy.derivs; }
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > dEnthalpy() const
+  { return m_enthalpy.derivs; }
 
-  arrayView2d< real64 > enthalpy() { return m_enthalpy; }
-  arrayView2d< real64 const > enthalpy() const { return m_enthalpy; }
-
-  arrayView2d< real64 > dEnthalpy_dPressure() { return m_dEnthalpy_dPressure; }
-  arrayView2d< real64 const > dEnthalpy_dPressure() const { return m_dEnthalpy_dPressure; }
-
-  arrayView2d< real64 > dEnthalpy_dTemperature() { return m_dEnthalpy_dTemperature; }
-  arrayView2d< real64 const > dEnthalpy_dTemperature() const { return m_dEnthalpy_dTemperature; }
 
   virtual real64 defaultDensity() const = 0;
   virtual real64 defaultViscosity() const = 0;
@@ -288,25 +338,17 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  // Degrees of freedom in fluid characterization
+  integer m_numDOF;
   //START_SPHINX_INCLUDE_00
-  array2d< real64 > m_density;
-  array2d< real64 > m_dDensity_dPressure;
-  array2d< real64 > m_dDensity_dTemperature;
+  SingleFluidProp m_density;
+  SingleFluidProp m_viscosity;
+  SingleFluidProp m_internalEnergy;
+  SingleFluidProp m_enthalpy;
 
-  array2d< real64 > m_density_n;
+  array2d< real64, constitutive::singlefluid::LAYOUT_FLUID >  m_density_n;
+  array2d< real64, constitutive::singlefluid::LAYOUT_FLUID >  m_internalEnergy_n;
 
-  array2d< real64 > m_viscosity;
-  array2d< real64 > m_dViscosity_dPressure;
-  array2d< real64 > m_dViscosity_dTemperature;
-
-  array2d< real64 > m_internalEnergy;
-  array2d< real64 > m_internalEnergy_n;
-  array2d< real64 > m_dInternalEnergy_dPressure;
-  array2d< real64 > m_dInternalEnergy_dTemperature;
-
-  array2d< real64 > m_enthalpy;
-  array2d< real64 > m_dEnthalpy_dPressure;
-  array2d< real64 > m_dEnthalpy_dTemperature;
   //END_SPHINX_INCLUDE_00
 };
 

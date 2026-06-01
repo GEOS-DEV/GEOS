@@ -824,8 +824,8 @@ public:
    */
   template< typename FIELD_TRAIT >
   ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-  constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                  arrayView1d< string const > const & materialNames,
+  constructMaterialFieldAccessor( string_array const & regionNames,
+                                  string_array const & materialNames,
                                   bool const allowMissingViews = false ) const;
 
   /**
@@ -855,7 +855,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
@@ -873,7 +873,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
@@ -891,7 +891,7 @@ public:
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
   ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
 
@@ -1281,7 +1281,7 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                arrayView1d< string const > const & regionNames,
+                                                string_array const & regionNames,
                                                 string const & materialKeyName,
                                                 bool const allowMissingViews ) const
 {
@@ -1297,12 +1297,12 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ParticleRegionBase const & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr,
@@ -1318,7 +1318,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews,
+                         GEOS_FMT( "Material {} does not contain {}", materialKeyName[k], viewName ) );
         }
       } );
     }
@@ -1329,7 +1330,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                arrayView1d< string const > const & regionNames,
+                                                string_array const & regionNames,
                                                 string const & materialKeyName,
                                                 bool const allowMissingViews )
 {
@@ -1345,12 +1346,12 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ParticleRegionBase & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
@@ -1365,7 +1366,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews,
+                         GEOS_FMT( "Material {} does not contain {}", materialName, viewName ) );
         }
       } );
     }
@@ -1375,8 +1377,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 
 template< typename FIELD_TRAIT >
 ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-ParticleManager::constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                                 arrayView1d< string const > const & materialNames,
+ParticleManager::constructMaterialFieldAccessor( string_array const & regionNames,
+                                                 string_array const & materialNames,
                                                  bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< typename FIELD_TRAIT::type,
@@ -1398,7 +1400,7 @@ ParticleManager::constructMaterialFieldAccessor( bool const allowMissingViews ) 
 template< typename T, int NDIM, typename PERM >
 ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ParticleManager::constructMaterialArrayViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
@@ -1434,8 +1436,9 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
-                                                                    // missing. I am not sure this is the default behaviour we want though.
+        if( constitutiveRelation.template hasWrapper<>( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                      // missing. I am not sure this is the default behaviour we want
+                                                                      // though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

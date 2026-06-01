@@ -121,10 +121,10 @@ public:
 private:
 
   /// Table with CO2 enthalpy tabulated as a function of (P,T)
-  TableFunction const * m_CO2EnthalpyTable;
+  TableFunction const * m_CO2EnthalpyTable = nullptr;
 
   /// Table with brine enthalpy tabulated as a function of (T)
-  TableFunction const * m_brineEnthalpyTable;
+  TableFunction const * m_brineEnthalpyTable = nullptr;
 
   /// Index of the CO2 phase
   integer m_CO2Index;

@@ -25,6 +25,7 @@
 #include <vtkExtractEdges.h>
 #include <vtkGeometryFilter.h>
 #include <vtkPointData.h>
+#include <vtkLogger.h>
 
 #include <algorithm>
 
@@ -53,17 +54,17 @@ public:
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( c );
       auto const & l2g = cb.localToGlobalMapConstView();
 
-      std::map< globalIndex, localIndex > g2l;
+      stdMap< globalIndex, localIndex > g2l;
 
       for( auto l = 0; l < l2g.size(); ++l )
       {
         globalIndex const & g = l2g[l];
-        m_elementToCellBlock[g] = c;
-        g2l[g] = l;
+        m_elementToCellBlock.insert( {g, c} );
+        g2l.insert( {g, l} );
       }
 
-      m_cbe[c] = g2l;
-      m_cbf[c] = cb.getElemToFacesConstView();
+      m_cbe.insert( {c, g2l} );
+      m_cbf.insert( {c, cb.getElemToFacesConstView()} );
     }
   }
 
@@ -103,13 +104,13 @@ public:
 
 private:
   /// global element index to the local cell block index
-  std::map< globalIndex, localIndex > m_elementToCellBlock;
+  stdMap< globalIndex, localIndex > m_elementToCellBlock;
 
   /// Cell block index to a mapping from global element index to the local (to the cell block) element index.
-  std::map< localIndex, std::map< globalIndex, localIndex > > m_cbe;
+  stdMap< localIndex, stdMap< globalIndex, localIndex > > m_cbe;
 
   /// Cell block index to a mapping from global element index to the faces indices.
-  std::map< localIndex, arrayView2d< localIndex const > > m_cbf;
+  stdMap< localIndex, arrayView2d< localIndex const > > m_cbf;
 };
 
 } // end of namespace internal
@@ -124,7 +125,7 @@ ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & cn
 {
   ArrayOfArrays< globalIndex > result;
 
-  std::vector< int > sizes( cns.size() );
+  stdVector< int > sizes( cns.size() );
   for( std::size_t i = 0; i < cns.size(); ++i )
   {
     sizes[i] = cns[i].size();
@@ -152,7 +153,7 @@ ArrayOfArrays< localIndex > build2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > 
 {
   // First allocate...
   vtkIdType const numCells = mesh->GetNumberOfCells();
-  std::vector< localIndex > sizes( numCells );
+  stdVector< localIndex > sizes( numCells );
   for( auto i = 0; i < numCells; ++i )
   {
     sizes[i] = mesh->GetCell( i )->GetNumberOfPoints();
@@ -238,14 +239,14 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
 {
   // Each edge is first associated to an hash and to an id.
   // Then we loop over all the edges of each cell and compute its hash to recover the associated id.
-  std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
+  stdUnorderedMap< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
     vtkCell * c = edges->GetCell( i );
     vtkIdList * edgePointIds = c->GetPointIds();
     GEOS_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
     std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
-    face2dIds[minMax] = i;
+    face2dIds.get_inserted( minMax ) = i;
   }
 
   ArrayOfArrays< localIndex > face2dToElems2d( LvArray::integerConversion< localIndex >( edges->GetNumberOfCells() ) );
@@ -280,15 +281,15 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          CollocatedNodes const & collocatedNodes,
                                          ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  std::map< globalIndex, std::vector< localIndex > > n2e;
+  stdMap< globalIndex, stdVector< localIndex > > n2e;
   for( auto i = 0; i < nodeToEdges.size(); ++i )
   {
-    std::vector< localIndex > es;
+    stdVector< localIndex > es;
     for( auto j = 0; j < nodeToEdges[i].size(); ++j )
     {
       es.push_back( nodeToEdges[i][j] );
     }
-    n2e[globalPtIds->GetValue( i )] = es;
+    n2e.insert( { globalPtIds->GetValue( i ), es} );
   }
 
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
@@ -299,7 +300,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
   // Eventually we select one of these edges.
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
-    std::vector< vtkIdType > allDuplicatedNodesOfEdge;
+    stdVector< vtkIdType > allDuplicatedNodesOfEdge;
     vtkCell * edge = edges->GetCell( i );
     for( int j = 0; j < edge->GetNumberOfPoints(); ++j )
     {
@@ -308,13 +309,18 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
         allDuplicatedNodesOfEdge.emplace_back( d );
       }
     }
-    std::map< vtkIdType, int > edgeCount;
+    stdMap< vtkIdType, int > edgeCount;
     for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
       localIndex const dd = LvArray::integerConversion< localIndex >( d );
-      for( localIndex const & val: n2e[dd] )
+      auto n2eIt = n2e.find( dd );
+      if( n2eIt != n2e.end() )
       {
-        edgeCount[val]++;
+        for( localIndex const & val: n2e.at( dd ) )
+        {
+          auto [it, inserted] = edgeCount.try_emplace( val, 0 );
+          it->second++;
+        }
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
@@ -442,16 +448,16 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
   vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
 
-  std::map< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
+  stdMap< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
   for( vtkIdType i = 0; i < globalPtIds->GetNumberOfValues(); ++i )
   {
-    ng2l[globalPtIds->GetValue( i )] = i;
+    ng2l.emplace( globalPtIds->GetValue( i ), i );
   }
 
   // Let's build the elem2d to elem3d mapping.
   // We need to find the 3d elements (and only the 3d elements, so we can safely ignore the others).
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
-  std::map< vtkIdType, std::vector< vtkIdType > > nodesToCellsFull;
+  stdMap< vtkIdType, stdVector< vtkIdType > > nodesToCellsFull;
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
     vtkIdType const cellId = boundaryCells->GetValue( i );
@@ -463,17 +469,18 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
-      nodesToCellsFull[globalPtIds->GetValue( pointId )].emplace_back( globalCellIds->GetValue( cellId ) );
+      nodesToCellsFull.get_inserted( globalPtIds->GetValue( pointId )).
+        emplace_back( globalCellIds->GetValue( cellId ));
     }
   }
 
   // Then we only keep the duplicated nodes. It's only for optimisation purpose.
-  std::map< vtkIdType, std::set< vtkIdType > > nodesToCells;
+  stdMap< vtkIdType, std::set< vtkIdType > > nodesToCells;
   { // scope reduction
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ i ];
+      stdVector< vtkIdType > const & ns = collocatedNodes[ i ];
       allDuplicatedNodes.insert( ns.cbegin(), ns.cend() );
     }
 
@@ -482,9 +489,9 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       auto const it = nodesToCellsFull.find( n );
       if( it != nodesToCellsFull.cend() )
       {
-        std::vector< vtkIdType > const & tmp = it->second;
+        stdVector< vtkIdType > const & tmp = it->second;
         std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
-        nodesToCells[n] = cells;
+        nodesToCells.emplace( n, cells );
       }
     }
   }
@@ -501,15 +508,22 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   {
     // We collect all the duplicated points that are involved for each 2d element.
     vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
-    std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
-    // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
+
+    // Use the common matching function to find candidate 3D cells
+    stdVector< vtkIdType > matchingCells = vtk::findMatchingCellsForFractureElement(
+      pointIds,
+      collocatedNodes,
+      nodesToCells );
+
+    // Collect all duplicated nodes for this 2D element (needed for elem2dToNodes)
     std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
+      stdVector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 
+    // Build elem2dToNodes mapping
     for( vtkIdType const & gni: duplicatedPointOfElem2d )
     {
       auto it = ng2l.find( gni );
@@ -525,42 +539,41 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       }
     }
 
-    // Here, we collect all the 3d elements that are concerned by at least one of those duplicated elements.
-    std::map< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
-    for( vtkIdType const & n: duplicatedPointOfElem2d )
+    // Process each matching 3D cell
+    for( vtkIdType const & cellGlobalId : matchingCells )
     {
-      auto const ncs = nodesToCells.find( n );
-      if( ncs != nodesToCells.cend() )
+      elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( cellGlobalId ) );
+
+      // Find which face matches
+      auto faces = elemToFaces[cellGlobalId];
+      for( int j = 0; j < faces.size( 0 ); ++j )
       {
-        for( vtkIdType const & c: ncs->second )
+        localIndex const faceIndex = faces[j];
+        auto nodes = faceToNodes[faceIndex];
+        std::set< vtkIdType > globalNodes;
+        for( auto const & n: nodes )
         {
-          elem3dToDuplicatedNodes[c].insert( n );
+          globalNodes.insert( globalPtIds->GetValue( n ) );
         }
-      }
-    }
-    // Last we extract which of those candidate 3d elements are the ones actually neighboring the 2d element.
-    for( auto const & e2n: elem3dToDuplicatedNodes )
-    {
-      // If the face of the element 3d has the same number of nodes than the elem 2d, it should be a successful (the mesh is conformal).
-      if( e2n.second.size() == elem2dNumPoints )
-      {
-        // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
-        // Computing the elem2dToFaces mapping.
-        auto faces = elemToFaces[e2n.first];
-        for( int j = 0; j < faces.size( 0 ); ++j )
+
+        // Check if face nodes are a subset of duplicated nodes
+        // Face should have same number of nodes as the fracture element
+        if( globalNodes.size() == static_cast< std::size_t >(pointIds->GetNumberOfIds()) )
         {
-          localIndex const faceIndex = faces[j];
-          auto nodes = faceToNodes[faceIndex];
-          std::set< vtkIdType > globalNodes;
-          for( auto const & n: nodes )
+          bool faceMatch = true;
+          for( vtkIdType gn : globalNodes )
           {
-            globalNodes.insert( globalPtIds->GetValue( n ) );
+            if( duplicatedPointOfElem2d.find( gn ) == duplicatedPointOfElem2d.end() )
+            {
+              faceMatch = false;
+              break;
+            }
           }
-          if( globalNodes == e2n.second )
+
+          if( faceMatch )
           {
             elem2dToFaces.emplaceBack( e2d, faceIndex );
-            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( e2n.first ) );
+            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( cellGlobalId ) );
             break;
           }
         }
@@ -591,7 +604,12 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
   // In order to avoid any cell global id collision, we gather the max cell global id over all the ranks.
   // Then we use this maximum as on offset.
   // TODO This does not take into account multiple fractures.
-  vtkIdType const maxLocalCellId = meshCellGlobalIds->GetMaxId();
+  vtkIdType maxLocalCellId = 0;
+  for( vtkIdType i = 0; i < meshCellGlobalIds->GetNumberOfTuples(); ++i )
+  {
+    maxLocalCellId = std::max( maxLocalCellId,
+                               static_cast< vtkIdType >(meshCellGlobalIds->GetValue( i )) );
+  }
   vtkIdType const maxGlobalCellId = MpiWrapper::max( maxLocalCellId );
   vtkIdType const cellGlobalOffset = maxGlobalCellId + 1;
 
@@ -618,11 +636,15 @@ void importFractureNetwork( string const & faceBlockName,
   CollocatedNodes const collocatedNodes( faceBlockName, faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
+  // Only log warnings and more critical messages from the edge extractor
+  vtkLogger::SetStderrVerbosity( vtkLogger::VERBOSITY_WARNING );
   auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
   edgesExtractor->SetInputData( faceMesh );
   edgesExtractor->UseAllPointsOn();  // Important: we want to prevent any node renumbering.
   edgesExtractor->Update();
   vtkPolyData * edges = edgesExtractor->GetOutput();
+  // Reset logging to default
+  vtkLogger::SetStderrVerbosity( vtkLogger::VERBOSITY_INFO );
 
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
@@ -646,6 +668,14 @@ void importFractureNetwork( string const & faceBlockName,
 
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
+
+  if( num2dElements > 0 )
+  {
+    GEOS_ERROR_IF( !vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
+                   "Global IDs are required but not found for fracture mesh" );
+  }
+  GEOS_ERROR_IF( !vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ),
+                 "Global IDs are required but not found for main mesh" );
 
   faceBlock.setLocalToGlobalMap(
     buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),

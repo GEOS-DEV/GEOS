@@ -23,7 +23,9 @@ Contains:
 # Specify all headers
 #
 set( fileIO_headers
+     LogLevelsInfo.hpp
      Outputs/BlueprintOutput.hpp
+     Outputs/MemoryStatsOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
      Outputs/OutputUtilities.hpp
@@ -42,6 +44,7 @@ set( fileIO_headers
 #
 set( fileIO_sources
      Outputs/BlueprintOutput.cpp
+     Outputs/MemoryStatsOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
      Outputs/OutputUtilities.cpp
@@ -120,5 +123,9 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fileIO LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
-
+# Add unitTests subdirectory
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( timeHistory/unitTests )
+  add_subdirectory( Outputs/unitTests )
+endif()
 

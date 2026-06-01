@@ -22,14 +22,15 @@
  * a similar manner to classic virtual factory method, except that it is no
  * maintained list of derived objects that is required to create new objects.
  * Instead, the ``ObjectCatalog`` creates a "catalog" of derived objects using
- * a ``std::unordered_map``.
- * This ``std::unordered_map`` is then statically initialized through the declaration
+ * a ``stdUnorderedMap``.
+ * This ``stdUnorderedMap`` is then statically initialized through the declaration
  * of a
  */
 
 #include "common/logger/Logger.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "LvArray/src/system.hpp"
+#include "DataContext.hpp"
 
 #include <iostream>
 #include <list>
@@ -70,8 +71,8 @@ public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
   //START_SPHINX_1
-  typedef std::unordered_map< std::string,
-                              std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
+  typedef stdUnorderedMap< std::string,
+                           std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
   //STOP_SPHINX
 
   /**
@@ -171,38 +172,47 @@ public:
   /**
    * @brief Static method to create a new object that derives from BASETYPE
    * @param[in] objectTypeName the key to the catalog entry that is able to create the correct type.
+   * @param context The data context of the Group for which we attempt to create a sub-group.
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
-   *
-   * @note The simulation is killed if the builder is not found.
+   * @note Generate a fatal error:
+   * - if the object type to create is not found in this Catalog,
+   * - if the builder is not found.
    */
   //START_SPHINX_2
   static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName,
+                                              GEOS_MAYBE_UNUSED DataContext const & context,
                                               ARGS... args )
   {
-    // We stop the simulation if the product is not found
-    if( !hasKeyName( objectTypeName ) )
-    {
-      std::list< typename CatalogType::key_type > keys = getKeys();
-      string const tmp = stringutilities::join( keys.cbegin(), keys.cend(), ",\n" );
-
-      string errorMsg = "Could not find keyword \"" + objectTypeName + "\" in this context. ";
-      errorMsg += "Please be sure that all your keywords are properly spelled or that input file parameters have not changed.\n";
-      errorMsg += "All available keys are: [\n" + tmp + "\n]";
-      GEOS_ERROR( errorMsg );
-    }
+    // We stop the simulation if the type to create is not found
+    GEOS_ERROR_IF( !hasKeyName( objectTypeName ), unknownTypeError( objectTypeName, context, getKeys() ) );
 
     // We also stop the simulation if the builder is not here.
     CatalogInterface< BASETYPE, ARGS... > const * builder = getCatalog().at( objectTypeName ).get();
-    if( builder == nullptr )
-    {
-      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is invalid.\n";
-      GEOS_ERROR( errorMsg );
-    }
+    GEOS_ERROR_IF( builder == nullptr,
+                   GEOS_FMT( "Type \"{}\" is valid in {}, but the builder is invalid.",
+                             objectTypeName, context ) );
 
     return builder->allocate( args ... );
   }
   //STOP_SPHINX
+
+  /**
+   * @return Generates a formatted error message for an unknown type for a catalog.
+   * @param objectTypeName The name of the object type that is invalid.
+   * @param context The data context of the Group for which the erroneous type creation was attempted.
+   * @param allowedKeys A container of allowed keys, which will be listed in the error message.
+   * @tparam KEYS_CONTAINER_T A container type holding the allowed keys.
+   */
+  template< typename KEYS_CONTAINER_T >
+  static string unknownTypeError( string const & objectTypeName, DataContext const & context,
+                                  KEYS_CONTAINER_T const & allowedKeys )
+  {
+    return GEOS_FMT( "The tag \"{}\" is invalid within {}. Please verify the keywords spelling and that "
+                     "input file parameters have not changed.\n"
+                     "All available tags are: {}\n",
+                     objectTypeName, context, stringutilities::join( allowedKeys, ", " ) );
+  }
 
   /**
    * @brief Downcast base type reference to derived type
@@ -303,7 +313,7 @@ public:
    */
   CatalogEntry & operator=( CatalogEntry && source )
   {
-    CatalogInterface< BASETYPE, ARGS... >::operator=( std::move(source));
+    CatalogInterface< BASETYPE, ARGS... >::operator=( std::move( source ));
   }
 
   /**
@@ -312,7 +322,7 @@ public:
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
   //START_SPHINX_4
-  virtual std::unique_ptr< BASETYPE > allocate( ARGS... args ) const override
+  virtual std::unique_ptr< BASETYPE > allocate( ARGS ... args ) const override
   {
 #if OBJECTCATALOGVERBOSE > 0
     GEOS_LOG( "Creating type " << LvArray::system::demangle( typeid(TYPE).name())
@@ -416,7 +426,7 @@ class CatalogInterface< BASETYPE >
 public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
-  typedef std::unordered_map< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
+  typedef stdUnorderedMap< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
 
   /**
    * @brief Default constructor.
@@ -589,7 +599,7 @@ public:
    */
   CatalogEntry & operator=( CatalogEntry && source )
   {
-    CatalogInterface< BASETYPE >::operator=( std::move(source));
+    CatalogInterface< BASETYPE >::operator=( std::move( source ));
   }
 
   /**

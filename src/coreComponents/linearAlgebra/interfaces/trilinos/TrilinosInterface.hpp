@@ -70,7 +70,7 @@ struct TrilinosInterface
    */
   static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
   createPreconditioner( LinearSolverParameters params,
-                        array1d< EpetraVector > const & nearNullKernel );
+                        arrayView1d< EpetraVector const > nearNullKernel );
 
   /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;

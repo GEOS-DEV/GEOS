@@ -235,10 +235,7 @@ template<> int GetTensorRank< string >()
   return DB_VARTYPE_SCALAR;
 }
 
-
-
 }
-
 
 
 using namespace constitutive;
@@ -264,7 +261,7 @@ SiloFile::SiloFile():
   m_writeFaceMesh( 0 ),
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
-  m_plotLevel( dataRepository::PlotLevel::LEVEL_1 ),
+  m_plotLevel( PlotLevel::LEVEL_1 ),
   m_requireFieldRegistrationCheck( true ),
   m_ghostFlags( true )
 {
@@ -709,7 +706,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
   if( nmat > 0 )
   {
     array1d< int > matnos( nmat );
-    std::vector< string > materialNameStrings( nmat );
+    stdVector< string > materialNameStrings( nmat );
     array1d< char const * > materialNames( nmat+1 );
     materialNames.back() = nullptr;
 
@@ -821,8 +818,8 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
       int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
 
-      array1d< string > vBlockNames( size );
-      std::vector< char * > BlockNames( size );
+      string_array vBlockNames( size );
+      stdVector< char * > BlockNames( size );
       char currentDirectory[256];
 
       DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -1223,10 +1220,10 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 {
   // TODO: This is a hack.
   conduit::Node conduitNode;
-  dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
+  Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  std::vector< std::map< string, WrapperBase const * > > viewPointers;
+  stdVector< stdMap< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
@@ -1242,7 +1239,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
-        viewPointers[esr][fieldName] = &wrapper;
+        viewPointers[esr].get_inserted( fieldName ) = &wrapper;
 
         types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
@@ -1327,7 +1324,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 }
 
-static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
+static stdVector< int > getSiloNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
@@ -1374,7 +1371,7 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
     default:
     {
-      GEOS_ERROR( "Unsupported element type: " << elementType );
+      GEOS_ERROR( GEOS_FMT( "Unsupported element type: {}", elementType ) );
     }
   }
   return -1;
@@ -1410,7 +1407,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     array1d< char > ghostZoneFlag;
 
 
-    std::vector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
+    stdVector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
 
     int count = 0;
 
@@ -1424,7 +1421,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement() );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
+      stdVector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
@@ -1454,12 +1451,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     } );
 
     string_array
-      regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::SolidBase >();
+      regionSolidMaterialList = elementRegion.getConstitutiveNames< SolidBase >();
 
     localIndex const numSolids = regionSolidMaterialList.size();
 
-    string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< constitutive::SingleFluidBase >();
-    string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< constitutive::MultiFluidBase >();
+    string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< SingleFluidBase >();
+    string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< MultiFluidBase >();
 
     for( string const & matName : regionMultiPhaseFluidList )
     {
@@ -1468,12 +1465,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::FrictionBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< FrictionBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
     string_array
-      nullModelMaterialList = elementRegion.getConstitutiveNames< constitutive::NullModel >();
+      nullModelMaterialList = elementRegion.getConstitutiveNames< NullModel >();
 
     localIndex const numNullModels = nullModelMaterialList.size();
 
@@ -1689,9 +1686,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
       // It is not documented in silo manual.
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array1d< localIndex > > faceToNodeMapCopy( numFaceTypes );
       {
@@ -1740,9 +1737,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array2d< localIndex > > faceToNodeMapCopy( numFaceTypes );
 
@@ -1812,9 +1809,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
     array1d< localIndex * > edgeConnectivity( numEdgeTypes );
     array1d< globalIndex const * > globalEdgeNumbers( numEdgeTypes );
-    std::vector< int > eshapecnt( numEdgeTypes );
-    std::vector< int > eshapetype( numEdgeTypes );
-    std::vector< int > eshapesize( numEdgeTypes );
+    stdVector< int > eshapecnt( numEdgeTypes );
+    stdVector< int > eshapetype( numEdgeTypes );
+    stdVector< int > eshapesize( numEdgeTypes );
 
     array1d< array2d< localIndex > > edgeToNodeMap( numEdgeTypes );
 
@@ -1922,8 +1919,8 @@ void SiloFile::writePolygonMeshObject( const string & meshName,
 
     DBClearOptlist( optlist );
 
-    std::vector< int > nodelist( lnodelist );
-    std::vector< globalIndex > globalZoneNumber( lnodelist );
+    stdVector< int > nodelist( lnodelist );
+    stdVector< globalIndex > globalZoneNumber( lnodelist );
 
     int elemCount = 0;
     for( int j = 0; j < lnodelist; ++j )
@@ -2010,7 +2007,7 @@ int getTensorRankOfArray( ArrayView< TYPE const, NDIM, USD > const & field )
 
 template< typename OUTPUTTYPE >
 void SiloFile::writeWrappersToSilo( string const & meshname,
-                                    const dataRepository::Group::wrapperMap & wrappers,
+                                    const Group::wrapperMap & wrappers,
                                     int const centering,
                                     int const cycleNum,
                                     real64 const problemTime,
@@ -2034,13 +2031,13 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array1d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array1d< real64 > > const & >( *wrapper );
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array2d< real64 > > const & >( *wrapper );
 
         arrayView2d< real64 const > const & array = wrapperT.reference();
         this->writeDataField< real64 >( meshname.c_str(),
@@ -2056,7 +2053,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       }
       if( typeID==typeid(array2d< real64, RAJA::PERM_JI >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
         arrayView2d< real64 const, LvArray::typeManipulation::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
         array = wrapperT.reference();
@@ -2072,25 +2069,25 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       }
       if( typeID==typeid(array3d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array3d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array3d< real64 > > const & >( *wrapper );
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< integer_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< integer_array > const & >( *wrapper );
         this->writeDataField< integer >( meshname.c_str(), fieldName,
                                          wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< localIndex_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< localIndex_array > const & >( *wrapper );
         this->writeDataField< localIndex >( meshname.c_str(), fieldName,
                                             wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< globalIndex_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< globalIndex_array > const & >( *wrapper );
         this->writeDataField< globalIndex >( meshname.c_str(), fieldName,
                                              wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
@@ -2194,9 +2191,9 @@ void SiloFile::writeDataField( string const & meshName,
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
       forAll< serialPolicy >( nels, [=, &castedField] GEOS_HOST ( localIndex const k )
-        {
-          castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
-        } );
+      {
+        castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
+      } );
     }
   }
 
@@ -2767,7 +2764,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
       }
     } );
 
-    for( localIndex a=0; a<materialNames.size(); ++a )
+    for( auto a=0u; a<materialNames.size(); ++a )
     {
       regionpnames[a] = const_cast< char * >(materialNames[a].c_str());
     }
@@ -3195,7 +3192,7 @@ int SiloFile::getMeshType( string const & meshName ) const
   return meshType;
 }
 
-bool SiloFile::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+bool SiloFile::isFieldPlotEnabled( WrapperBase const & wrapper ) const
 {
   return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
                                               m_plotLevel,

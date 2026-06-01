@@ -102,6 +102,15 @@ public:
   virtual void generateMesh( Group const & faceBlocks ) override;
 
   /**
+   * @brief This function generates and adds entries to the face/surface mesh.
+   * @param faceManager pointer to the FaceManager object.
+   * @param faceIndices the local indices of the new faces that define the face element.
+   * @return the local index of the new FaceElement entry.
+   */
+  localIndex addToSurfaceMesh( FaceManager const * const faceManager,
+                               localIndex const faceIndices[2] );
+
+  /**
    * @brief This function generates and adds entries to the face/fracture mesh.
    * @param time_np1 rupture time
    * @param faceManager pointer to the FaceManager object.
@@ -113,6 +122,12 @@ public:
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 localIndex const faceIndices[2] );
+
+  /**
+   * @brief This function updates the face/surface mesh entries for the faces that are part of the surface region.
+   * @param faceManager pointer to the FaceManager object.
+   */
+  void updateSets( FaceManager const & faceManager );
 
   ///@}
 
@@ -196,14 +211,14 @@ private:
   template< typename SUBREGION_TYPE >
   string getUniqueSubRegionName() const
   {
-    std::vector< string > subRegionNames;
+    stdVector< string > subRegionNames;
     forElementSubRegions< SUBREGION_TYPE >( [&]( SUBREGION_TYPE const & sr )
     {
       subRegionNames.push_back( sr.getName() );
     } );
     GEOS_ERROR_IF( subRegionNames.size() != 1,
-                   "Surface region \"" << getDataContext() <<
-                   "\" should have one unique sub region (" << subRegionNames.size() << " found)." );
+                   GEOS_FMT( "Surface region should have one unique sub region ({} found).", subRegionNames.size() ),
+                   getDataContext() );
     return subRegionNames.front();
   }
 

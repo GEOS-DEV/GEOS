@@ -24,7 +24,8 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include <vtkDataSet.h>
+
+class vtkDataSet;
 
 namespace geos
 {
@@ -104,17 +105,18 @@ protected:
 private:
 
   ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
+  struct viewKeyStruct : public ExternalMeshGeneratorBase::viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
     constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
-    constexpr static char const * meshPathString() { return "meshPath"; }
   };
 
   struct groupKeyStruct
@@ -140,22 +142,28 @@ private:
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
-  string m_attributeName;
+  string m_regionAttributeName;
+
+  /// Name of VTK cell attribute storing (semi-)structured cell index, if available
+  string m_structuredIndexAttributeName;
 
   /// Name of the main block to be imported (for multi-block files).
   string m_mainBlockName;
 
   /// Name of the face blocks to be imported (for multi-block files).
-  array1d< string > m_faceBlockNames;
+  string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Additional weight to fracture-connected super-cells during partitioning
+  integer m_partitionFractureWeight = 0;
 
   /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;
@@ -168,9 +176,6 @@ private:
 
   /// Repository name
   string m_dataSourceName;
-
-  /// path to the mesh in the repository
-  string m_meshPath;
 
   /// Repository of VTK objects
   VTKHierarchicalDataSource * m_dataSource;

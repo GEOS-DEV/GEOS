@@ -25,7 +25,7 @@ namespace dataRepository
 {
 
 
-GroupContext::GroupContext( Group & group, string const & objectName ):
+GroupContext::GroupContext( Group & group, string_view objectName ):
   DataContext( objectName ),
   m_group( group )
 {}
@@ -35,7 +35,7 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  std::vector< ToStringInfo > parentsInfo;
+  stdVector< ToStringInfo > parentsInfo;
   for( Group const * group = &m_group; group->hasParent(); group = &group->getParent() )
   {
     parentsInfo.push_back( group->getDataContext().getToStringInfo() );
@@ -52,6 +52,15 @@ string GroupContext::toString() const
               GEOS_FMT( "/{}", info->m_targetName ));
   }
   return path.str();
+}
+
+ErrorContext GroupContext::getContextInfo() const
+{
+  ErrorContext ctxInfo{
+    toString(),
+    { { ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_targetName )} }
+  };
+  return ctxInfo;
 }
 
 DataContext::ToStringInfo GroupContext::getToStringInfo() const

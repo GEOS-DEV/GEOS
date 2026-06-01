@@ -21,7 +21,7 @@
 #define GEOS_MESH_PERFORATION_HPP
 
 #include "dataRepository/Group.hpp"
-
+#include "functions/TableFunction.hpp"
 namespace geos
 {
 
@@ -102,6 +102,18 @@ public:
    */
   real64 getWellSkinFactor() const { return m_wellSkinFactor; }
 
+  /**
+   * @brief Get the target region for the perforation.
+   * @return region name
+   */
+  string const & getTargetRegion() const { return m_targetRegionName; }
+
+  /**
+   * @brief Get the name of perforation status table function
+   * @return table function name
+   */
+  string const & getPerfStatusTableName() const { return m_perfStatusTableName; }
+
   ///@}
 
   /**
@@ -116,12 +128,12 @@ public:
     static constexpr char const *wellTransmissibilityString() { return "transmissibility"; }
     /// @return String key for the well skin factor at this perforation
     static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
-    /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead = {distanceFromHeadString()};
-    /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString()};
-    /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellSkinFactor = { wellSkinFactorString() };
+    /// @return Target region for this perforation
+    static constexpr char const *targetRegionString() { return "targetRegion"; }
+    /// @return Name of table function defining the open/close status for this perforation
+    static constexpr char const *perfStatusTableNameString() { return "perfStatusTableName"; }
+    /// @return Open/closed status this perforation
+    static constexpr char const *perfStatusTableString() { return "perfStatusTable"; }
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
@@ -138,6 +150,15 @@ private:
 
   /// Well skin factor at this perforation
   real64 m_wellSkinFactor;
+
+  /// Name of region the perforation will be connected to
+  string m_targetRegionName;
+
+  /// Perforation status table name (for table defined as function)
+  string m_perfStatusTableName;
+
+  /// Time versus perforation status table (table defined in Perforation object)
+  array2d< real64 > m_perfStatusTable;
 };
 
 } // namespace geos

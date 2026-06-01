@@ -30,9 +30,7 @@ namespace constitutive
 {
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
-  SingleFluidBase( name, parent ),
-  m_densityModelType( ExponentApproximationType::Linear ),
-  m_viscosityModelType( ExponentApproximationType::Linear )
+  SingleFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -45,7 +43,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid compressibility" );
+    setDescription( "Fluid compressibility [Pa^-1]" );
 
   registerWrapper( viewKeyStruct::viscosibilityString(), &m_viscosibility ).
     setApplyDefaultValue( 0.0 ).
@@ -55,7 +53,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
+    setDescription( "Reference pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).
@@ -68,29 +66,23 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setDescription( "Reference fluid viscosity" );
 
   registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( m_densityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Full ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::viscosityModelTypeString(), &m_viscosityModelType ).
-    setApplyDefaultValue( m_viscosityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
 }
 
-CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
-
-void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numPts );
 
-  getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
-
-  m_density.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+  getField< fields::singlefluid::density >().setApplyDefaultValue( m_referenceDensity );
+  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_referenceViscosity );
 }
 
 void CompressibleSinglePhaseFluid::postInputInitialization()
@@ -100,8 +92,8 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
@@ -109,21 +101,22 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LE_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
-  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
-    GEOS_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                          GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                          InputError );
+    GEOS_THROW_IF( value != expectedValue,
+                   GEOS_FMT( "invalid model type in attribute '{}' (only {} currently supported)",
+                             attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
+                   InputError, getDataContext() );
   };
-  checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
-  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+  checkModelType( m_densityModelType, ExponentApproximationType::Full, viewKeyStruct::densityModelTypeString() );
+  checkModelType( m_viscosityModelType, ExponentApproximationType::Linear, viewKeyStruct::viscosityModelTypeString() );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this
@@ -131,8 +124,11 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  getField< fields::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  getField< fields::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+
+  for( integer i=0; i<m_density.value.size(); i++ )
+  {
+    m_density.derivs[0][i][DerivOffset::dP] = dRho_dP;
+  }
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper
@@ -140,10 +136,10 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
-                        m_density,
-                        m_dDensity_dPressure,
-                        m_viscosity,
-                        m_dViscosity_dPressure );
+                        m_density.value,
+                        m_density.derivs,
+                        m_viscosity.value,
+                        m_viscosity.derivs );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )

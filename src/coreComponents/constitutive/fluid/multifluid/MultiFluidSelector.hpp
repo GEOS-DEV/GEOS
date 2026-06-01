@@ -20,14 +20,10 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
+#include "constitutive/fluid/multifluid/constant/InvariantImmiscibleFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
-
-#include "common/TypeDispatch.hpp"
-#ifdef GEOS_USE_PVTPackage
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
-#endif
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
@@ -40,11 +36,9 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
+  ConstitutivePassThruHandler< InvariantImmiscibleFluid,
+                               DeadOilFluid,
                                BlackOilFluid,
-#ifdef GEOS_USE_PVTPackage
-                               CompositionalMultiphaseFluidPVTPackage,
-#endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
@@ -54,6 +48,9 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
+                               CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -63,11 +60,9 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
+  ConstitutivePassThruHandler< InvariantImmiscibleFluid,
+                               DeadOilFluid,
                                BlackOilFluid,
-#ifdef GEOS_USE_PVTPackage
-                               CompositionalMultiphaseFluidPVTPackage,
-#endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
@@ -77,6 +72,9 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
+                               CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -111,7 +109,7 @@ struct ComponentSelector< camp::idx_seq< Is ... > >
 #pragma GCC diagnostic pop
 #endif
     GEOS_THROW_IF( !supported,
-                   "Unsupported number of components: " << numComps << " for fluid " << FluidType::catalogName(),
+                   GEOS_FMT( "Unsupported number of components: {} for fluid {}", numComps, FluidType::catalogName() ),
                    InputError );
   }
 };
@@ -134,7 +132,7 @@ void constitutiveComponentUpdatePassThru( constitutive::MultiFluidBase & fluidBa
     }
     else
     {
-      GEOS_THROW( "Unsupported thermal call for fluid " << FluidType::catalogName(),
+      GEOS_THROW( GEOS_FMT( "Unsupported thermal call for fluid {}", FluidType::catalogName() ),
                   InputError );
     }
   } );

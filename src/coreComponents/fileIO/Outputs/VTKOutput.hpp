@@ -112,12 +112,6 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
-protected:
-  /**
-   * @copydoc OutputBase::getTimerCategory
-   */
-  logInfo::OutputTimerBase const & getTimerCategory() const override;
-
 private:
 
   string m_plotFileRoot;
@@ -137,10 +131,10 @@ private:
   integer m_onlyPlotSpecifiedFieldNames;
 
   /// array of names of the fields to output
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
   /// array of names of the mesh levels to output (an empty array means all levels are saved)
-  array1d< string > m_levelNames;
+  string_array m_levelNames;
 
   /// VTK output mode
   vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;

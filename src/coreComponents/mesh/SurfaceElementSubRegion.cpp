@@ -46,17 +46,17 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation ).
     setDescription( "Map to the edges attached to each SurfaceElement." );
 
-  registerField( fields::elementAperture{}, &m_elementAperture );
+  registerField< fields::elementAperture >( &m_elementAperture );
 
-  registerField( fields::elementArea{}, &m_elementArea );
+  registerField< fields::elementArea >( &m_elementArea );
 
-  registerField( fields::normalVector{}, &m_normalVector ).
+  registerField< fields::normalVector >( &m_normalVector ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerField( fields::tangentVector1{}, &m_tangentVector1 ).
+  registerField< fields::tangentVector1 >( &m_tangentVector1 ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerField( fields::tangentVector2{}, &m_tangentVector2 ).
+  registerField< fields::tangentVector2 >( &m_tangentVector2 ).
     reference().resizeDimension< 1 >( 3 );
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),

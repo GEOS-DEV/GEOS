@@ -144,6 +144,20 @@ private:
 
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
+  real64 getWettingPhaseMinVolumeFraction() const override
+  {
+    integer ipWetting;
+    std::tie( ipWetting, std::ignore ) = wettingAndNonWettingPhaseIndices();
+    return m_phaseMinVolumeFraction[ipWetting];
+  }
+
+  real64 getNonWettingMinVolumeFraction() const override
+  {
+    integer ipNonWetting;
+    std::tie( std::ignore, ipNonWetting ) = wettingAndNonWettingPhaseIndices();
+    return m_phaseMinVolumeFraction[ipNonWetting];
+  };
+
 private:
 
   virtual void postInputInitialization() override;
@@ -156,13 +170,13 @@ private:
   void createAllTableKernelWrappers();
 
   /// Relative permeability table names (one for each phase in the wetting-non-wetting pair)
-  array1d< string > m_wettingNonWettingRelPermTableNames;
+  string_array m_wettingNonWettingRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the wetting-intermediate pair)
-  array1d< string > m_wettingIntermediateRelPermTableNames;
+  string_array m_wettingIntermediateRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the non-wetting-intermediate pair)
-  array1d< string > m_nonWettingIntermediateRelPermTableNames;
+  string_array m_nonWettingIntermediateRelPermTableNames;
 
   /// Kernel wrappers for relative permeabilities in the following order:
   /// Two-phase flow:

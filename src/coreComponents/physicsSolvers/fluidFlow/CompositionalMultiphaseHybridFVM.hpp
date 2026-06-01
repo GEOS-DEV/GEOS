@@ -168,17 +168,34 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+  /**
+   * @brief Function to perform the application of Dirichlet BC data on faces
+   * @param[in] time_n current time
+   * @param[in] dt time step
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[inout] localMatrix the system matrix
+   * @param[inout] localRhs the system right-hand side vector
+   */
+  void
+  applyFaceDirichletBC( real64 const time_n,
+                        real64 const dt,
+                        DofManager const & dofManager,
+                        DomainPartition & domain,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term
-  void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  void precomputeData( MeshLevel & mesh, string_array const & regionNames ) override;
 
 private:
 
-  /// tolerance used in the  computation of the transmissibility matrix
+  /// Tolerance used in the computation of the transmissibility matrix (typically domain_length * 1e-8)
   real64 m_lengthTolerance;
 
-  /// region filter used in flux assembly
+  /// Set of region indices that are targeted by this solver (used to filter flux assembly)
   SortedArray< localIndex > m_regionFilter;
 
 };

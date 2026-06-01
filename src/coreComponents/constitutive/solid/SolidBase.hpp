@@ -338,6 +338,24 @@ public:
   }
 
   /**
+   * @brief Return the current elastic strain increment at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrainInc Current elastic strain increment
+   */
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( & elasticStrainInc )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrainInc );
+    GEOS_ERROR( "getElasticStrainInc() of SolidBase was called." );
+  }
+
+  /**
    * @brief Perform a viscous (rate-dependent) state update
    *
    * @param beta time-dependent parameter
@@ -544,36 +562,16 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
-    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
-    static constexpr char const * densityString() { return "density"; }                ///< Density key
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
-                                                                                                                   // drained
-                                                                                                                   // linear
-                                                                                                                   // thermal
-                                                                                                                   // expansion
-                                                                                                                   // coefficient
-                                                                                                                   // key
+    /// Default density key
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    // Default drained linear thermal expansion coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;

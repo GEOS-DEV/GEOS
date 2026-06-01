@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   // *** MultiFluid-specific interface
 
@@ -80,7 +80,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   /**
    * @brief Getter for the fluid component molar weights
@@ -97,7 +97,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the water phase index
@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -650,8 +650,6 @@ private:
 
 private:
 
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
@@ -659,26 +657,19 @@ private:
 
 protected:
 
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
-
   virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  int m_useMass;
+  integer m_useMass;
 
   /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;
 
   // general fluid composition information
 
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
   array1d< real64 > m_componentMolarWeight;
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   // constitutive data
 
@@ -790,7 +781,6 @@ MultiFluidBase::KernelWrapper::
     totalMolality += compMoleFrac[ic];
   }
 
-  GEOS_ERROR_IF( totalMolality < LvArray::NumericLimits< real64 >::epsilon, "Zero total molality, all component concentrations are equal to zero." );
   real64 const totalMolalityInv = 1.0 / totalMolality;
   for( integer ic = 0; ic < numComps; ++ic )
   {

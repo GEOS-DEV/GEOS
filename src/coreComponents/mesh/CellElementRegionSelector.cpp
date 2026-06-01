@@ -27,21 +27,21 @@ using ViewKeys = CellElementRegion::viewKeyStruct;
 
 CellElementRegionSelector::CellElementRegionSelector(
   Group const & cellBlocks,
-  std::map< integer, std::set< string > > const & regionsCellBlocks )
+  stdMap< integer, std::set< string > > const & regionsCellBlocks )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const name = cellBlock.getName();
-    m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );
+    m_cellBlocksOwners.emplace( name, stdVector< CellElementRegion const * >() );
   } );
 
   for( auto const & regionCellBlocks : regionsCellBlocks )
   {
     string const regionAttributeStr = std::to_string( regionCellBlocks.first );
     m_regionAttributesCellBlocks.emplace( regionAttributeStr, regionCellBlocks.second );
-    m_regionAttributesOwners.emplace( regionAttributeStr, std::vector< CellElementRegion const * >() );
+    m_regionAttributesOwners.emplace( regionAttributeStr, stdVector< CellElementRegion const * >() );
   }
 }
 
@@ -50,6 +50,8 @@ std::set< string >
 CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
                                                   string_view matchPattern ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   std::set< string > matchedCellBlocks;
   bool matching = false;
   for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
@@ -63,15 +65,14 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
   }
 
   GEOS_THROW_IF( !matching,
-                 GEOS_FMT( "{}: No cellBlock name is satisfying the qualifier '{}'.\n"
+                 GEOS_FMT( "No cellBlock name is satisfying the qualifier '{}'.\n"
                            "Available cellBlock list: {{ {} }}\nAvailable region attribute list: {{ {} }}",
-                           region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                            matchPattern,
-                           stringutilities::joinLamda( m_regionAttributesOwners, ", ",
-                                                       []( auto pair ) { return pair->first; } ),
-                           stringutilities::joinLamda( m_cellBlocksOwners, ", ",
-                                                       []( auto pair ) { return pair->first; } ) ),
-                 InputError );
+                           stringutilities::joinLambda( m_regionAttributesOwners, ", ",
+                                                        []( auto pair ) { return pair->first; } ),
+                           stringutilities::joinLambda( m_cellBlocksOwners, ", ",
+                                                        []( auto pair ) { return pair->first; } ) ),
+                 InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   return matchedCellBlocks;
 }
 
@@ -79,16 +80,17 @@ void
 CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & region,
                                                       std::set< string > const & cellBlockNames ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   for( string const & requestedCellBlockName : cellBlockNames )
   {
     // if cell block does not exist in the mesh
     GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
-                   GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
-                             region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
+                   GEOS_FMT( "No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                              requestedCellBlockName,
-                             stringutilities::joinLamda( m_cellBlocksOwners, ", ",
-                                                         []( auto pair ) { return pair->first; } ) ),
-                   InputError );
+                             stringutilities::joinLambda( m_cellBlocksOwners, ", ",
+                                                          []( auto pair ) { return pair->first; } ) ),
+                   InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   }
 }
 
@@ -150,7 +152,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
                                     auto const & qualifiersOwners,
                                     auto & orphanList ) {
     // Search of never or multiple selected attribute values
-    std::vector< string > multipleRefsErrors;
+    stdVector< string > multipleRefsErrors;
     for( auto const & [qualifier, owningRegions] : qualifiersOwners )
     {
       if( owningRegions.size() == 0 )
@@ -162,7 +164,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
         multipleRefsErrors.push_back(
           GEOS_FMT( "The {} '{}' has been referenced in multiple {}:\n{}",
                     qualifierType, qualifier, CellElementRegion::catalogName(),
-                    stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) ) );
+                    stringutilities::joinLambda( owningRegions, '\n', getRegionStr ) ) );
       }
     }
     GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors, "\n\n" ), InputError );

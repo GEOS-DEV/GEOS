@@ -21,8 +21,9 @@
 #ifndef GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geos
 {
@@ -33,10 +34,10 @@ class TableFunction;
  * @class TractionBoundaryCondition
  * Holds data and methods to apply a traction boundary condition
  */
-class TractionBoundaryCondition : public FieldSpecificationBase
+class TractionBoundaryCondition : public FieldSpecification
 {
 public:
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   TractionBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -71,6 +72,7 @@ public:
    * @param blockLocalDofNumber Array of block local DOF numbers for the displacement.
    * @param dofRankOffset The rank offset for the DOF.
    * @param faceManager Reference to the face manager (Tractions are applied on faces)
+   * @param nodePositions The reference position of all nodes (used for proper FEM integration on faces)
    * @param targetSet The set of faces to apply the BC to.
    * @param localRhs The RHS of the system to add contributions to.
    */
@@ -78,13 +80,25 @@ public:
                arrayView1d< globalIndex const > const blockLocalDofNumber,
                globalIndex const dofRankOffset,
                FaceManager const & faceManager,
+               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
                SortedArrayView< localIndex const > const & targetSet,
                arrayView1d< real64 > const & localRhs ) const;
 
   /**
+   * @brief Reinitialize the nodal set of scaling variable on traction magnitude.
+   *        One use is to reduce the nodal traction magnitude when there is damage on the boundary.
+   * @param faceManager Reference to the face manager (Tractions are applied on faces)
+   * @param targetSet The set of faces to apply the BC to.
+   * @param nodalScaleSet The nodal set of scaling variable (damage).
+   */
+  void reinitScaleSet( FaceManager const & faceManager,
+                       SortedArrayView< localIndex const > const & targetSet,
+                       arrayView1d< real64 const > const nodalScaleSet );
+
+  /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
     /// @return The key for tractionType
     constexpr static char const * tractionTypeString() { return "tractionType"; }
@@ -94,6 +108,12 @@ public:
 
 //    /// @return The key for the function describing the components of stress.
 //    constexpr static char const * stressFunctionString() { return "stressFunctions"; }
+
+    /// @return The key for scaleSet
+    constexpr static char const * scaleSetString() { return "scaleSet"; }
+
+    /// @return The key for nodalScaleFlag
+    constexpr static char const * nodalScaleFlagString() { return "nodalScaleFlag"; }
 
   };
 
@@ -119,12 +139,18 @@ protected:
   /// single specified value for stress used to generate the traction if m_tractionType == stress.
   R2SymTensor m_inputStress;
 
+  /// Array of scale values
+  array1d< real64 > m_scaleSet;
+
+  /// The flag for applying the nodal scale
+  integer m_nodalScaleFlag;
+
 //  /// names of the functions used to specify stress for the generation of tractions.
-//  array1d<string> m_stressFunctionNames;
+//  string_array m_stressFunctionNames;
 //
 //  bool m_useStressFunctions;
 //
-//  TableFunction const * m_stressFunctions[6];
+//  TableFunction const * m_stressFunctions[6]; // if this line is re-enabled, ensure that those pointers are initialized
 
 };
 

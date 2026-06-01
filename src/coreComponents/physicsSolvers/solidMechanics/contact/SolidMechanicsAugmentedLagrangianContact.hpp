@@ -1,0 +1,337 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/*
+ * SolidMechanicsAugmentedLagrangianContact.hpp
+ *
+ */
+
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
+
+#include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
+
+namespace geos
+{
+
+class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
+{
+public:
+  SolidMechanicsAugmentedLagrangianContact( const string & name,
+                                            Group * const parent );
+
+  ~SolidMechanicsAugmentedLagrangianContact() override;
+
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   */
+  static string catalogName()
+  {
+    return "SolidMechanicsAugmentedLagrangianContact";
+  }
+  /**
+   * @copydoc PhysicsSolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
+
+  virtual void postInputInitialization() override;
+
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void setupSystem( DomainPartition & domain,
+                            DofManager & dofManager,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
+                            bool const setSparsity = true ) override final;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override final;
+
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override final;
+
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
+
+  void assembleContact( real64 const time,
+                        real64 const dt,
+                        DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
+  void assembleForceResidualPressureContribution( DomainPartition & domain,
+                                                  real64 const & dt,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
+  virtual real64 calculateResidualNorm( real64 const & time_n,
+                                        real64 const & dt,
+                                        DomainPartition const & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localRhs ) override;
+
+  virtual void applySystemSolution( DofManager const & dofManager,
+                                    arrayView1d< real64 const > const & localSolution,
+                                    real64 const scalingFactor,
+                                    real64 const dt,
+                                    DomainPartition & domain ) override;
+
+  void updateState( DomainPartition & domain ) override final;
+
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter ) override final;
+
+
+  /**
+   * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshName The mesh name.
+   * @param lambda The callback function. Take the finite element type name and
+   * the list of face element of the same type.
+   */
+  template< typename LAMBDA >
+  void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
+  {
+
+    stdMap< string,
+            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+
+    for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
+    {
+      arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
+
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
+
+      lambda( finiteElementName, subRegionFE, faceElemList );
+    }
+
+  }
+
+  /**
+   * @brief Loop over the finite element type on the stick fracture subregions of meshName and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshName The mesh name.
+   * @param lambda The callback function. Take the finite element type name and
+   * the list of face element of the same type.
+   */
+  template< typename LAMBDA >
+  void forFiniteElementOnStickFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
+  {
+
+    bool const isStickState = true;
+
+    stdMap< string, array1d< localIndex > > const &
+    faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
+
+    for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
+    {
+      arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
+
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
+
+      lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
+    }
+
+  }
+
+  /**
+   * @brief Loop over the finite element type on the slip fracture subregions of meshName and apply callback.
+   * @tparam LAMBDA The callback function type
+   * @param meshName The mesh name.
+   * @param lambda The callback function. Take the finite element type name and
+   * the list of face element of the same type.
+   */
+  template< typename LAMBDA >
+  void forFiniteElementOnSlipFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
+  {
+
+    bool const isStickState = false;
+
+    stdMap< string, array1d< localIndex > > const &
+    faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
+
+    for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
+    {
+      arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
+
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
+
+      lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
+    }
+
+  }
+
+  /**
+   * @brief Create the list of finite elements of the same type
+   *   for each FaceElementSubRegion (Triangle or Quadrilateral)
+   *   and of the same fracture state (Stick or Slip).
+   * @param domain The physical domain object
+   */
+  void updateStickSlipList( DomainPartition const & domain );
+
+  /**
+   * @brief Create the list of finite elements of the same type
+   *   for each FaceElementSubRegion (Triangle or Quadrilateral).
+   * @param domain The physical domain object
+   */
+  void createFaceTypeList( DomainPartition const & domain );
+
+  /**
+   * @brief Create the list of elements belonging to CellElementSubRegion
+   *  that are enriched with the bubble basis functions
+   * @param domain The physical domain object
+   */
+  void createBubbleCellList( DomainPartition & domain ) const;
+
+private:
+
+  /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
+
+  /**
+   * @brief add the number of non-zero elements induced by the coupling between
+   *   nodal and bubble displacement.
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths the array containing the number of non-zero elements for each row
+   */
+  void addCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
+
+  void computeTolerances( DomainPartition & domain ) const;
+
+  /**
+   * @brief Initialize the traction field from the stress in adjacent volume elements.
+   * @param domain The physical domain object
+   *
+   * This function computes the initial traction on each fracture element by:
+   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture)
+   * 2. Computing the traction vector as t = sigma * n (where n is the face normal) for each side
+   * 3. Averaging the tractions from both sides
+   * 4. Rotating the averaged traction to the local coordinate system of the fracture
+   * 5. Validating the traction against the Coulomb friction law and warning if inconsistent
+   *
+   * This initialization ensures that the ALM traction field starts with a physically
+   * consistent value rather than zero, which is important for proper convergence
+   * when the domain is under stress.
+   */
+  void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
+
+  /// Finite element type to face element index map
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
+
+  /// Finite element type to face element index map (stick mode)
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
+
+  /// Finite element type to face element index map (slip mode)
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
+
+  /// Finite element type to finite element object map
+  stdMap< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+
+    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+
+    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+
+    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
+
+    constexpr static char const * dispJumpUpdPenaltyString() { return "dispJumpUpdPenalty"; }
+
+    constexpr static char const * simultaneousString() { return "simultaneous"; }
+
+    constexpr static char const * symmetricString() { return "symmetric"; }
+
+    constexpr static char const * iterativePenaltyNFacString() { return "iterPenaltyN"; }
+
+    constexpr static char const * iterativePenaltyTFacString() { return "iterPenaltyT"; }
+
+    constexpr static char const * tolJumpDispNFacString() { return "tolJumpN"; }
+
+    constexpr static char const * tolJumpDispTFacString() { return "tolJumpT"; }
+
+    constexpr static char const * tolNormalTracFacString() { return "tolNormalTrac"; }
+
+    constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
+
+  };
+
+  /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
+  /// condition
+  real64 m_slidingCheckTolerance = 5.e-02;
+
+  /// Flag to update the Lagrange multiplier at each Newton iteration (true), or only after the Newton loop has converged (false)
+  int m_simultaneous = 1;
+
+  /// Flag to neglect the non-symmetric contribution in the tangential matrix, i.e., the derivative of tangential traction with respect to
+  /// the normal displacement is neglected
+  int m_symmetric = 1;
+
+  /// Factor for tuning the iterative penalty coefficient for normal traction
+  real64 m_iterPenaltyNFac = 10.0;
+
+  /// Factor for tuning the iterative penalty coefficient for tangential traction
+  real64 m_iterPenaltyTFac = 0.1;
+
+  /// Factor to adjust the tolerance for normal jump
+  real64 m_tolJumpDispNFac = 1.e-07;
+
+  /// Factor to adjust the tolerance for tangential jump
+  real64 m_tolJumpDispTFac = 1.e-05;
+
+  /// Factor to adjust the tolerance for normal traction
+  real64 m_tolNormalTracFac = 0.5;
+
+};
+
+} /* namespace geos */
+
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_ */

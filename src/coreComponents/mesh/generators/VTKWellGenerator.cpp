@@ -20,6 +20,7 @@
 
 #include "VTKWellGenerator.hpp"
 
+#include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
@@ -38,6 +39,7 @@ VTKWellGenerator::VTKWellGenerator( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to the well file" );
 
+  addLogLevel< logInfo::VTKSteps >();
 }
 
 void VTKWellGenerator::fillPolylineDataStructure( )
@@ -49,8 +51,8 @@ void VTKWellGenerator::fillPolylineDataStructure( )
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading well from {}", catalogName(), getName(), m_filePath ) );
   {
-    GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", array1d< string >());
+    GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  reading the dataset..." );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", string_array());
     vtkSmartPointer< vtkDataSet > loadedMesh = allMeshes.getMainMesh();
     controller->Broadcast( loadedMesh, 0 );
 
@@ -67,11 +69,13 @@ void VTKWellGenerator::fillPolylineDataStructure( )
       LvArray::tensorOps::copy< 3 >( m_polyNodeCoords[ipoint], point );
     }
 
-    GEOS_ERROR_IF( polyData->GetLines()->GetNumberOfCells() == 0, GEOS_FMT( "{}: Error! Your VTK file {} doesn't contain any well",
-                                                                            this->getName(), m_filePath ));
+    GEOS_ERROR_IF( polyData->GetLines()->GetNumberOfCells() == 0,
+                   GEOS_FMT( "Error! Your VTK file {} doesn't contain any well",
+                             m_filePath ), this->getDataContext());
 
-    GEOS_LOG_RANK_0_IF( polyData->GetLines()->GetNumberOfCells() > 1, GEOS_FMT( "{}: Warning! Your VTK file {} contains multiple wells. Only the first one will be read",
-                                                                                this->getName(), m_filePath ));
+    GEOS_LOG_RANK_0_IF( polyData->GetLines()->GetNumberOfCells() > 1,
+                        GEOS_FMT( "{}: Warning! Your VTK file {} contains multiple wells. Only the first one will be read",
+                                  this->getName(), m_filePath ));
 
     // load edges
     // polyData->GetLines()->InitTraversal();

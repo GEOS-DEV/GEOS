@@ -28,6 +28,13 @@ decks = [
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="perf_status_test",
+        description='Single phase flow test (2D, incompressible, 3 wells, open close perfs)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="incompressible_single_phase_wells_hybrid_2d",
         description=
         'Single phase flow test (2D, hybrid FVM, incompressible, 3 wells)',

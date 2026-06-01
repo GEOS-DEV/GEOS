@@ -18,11 +18,6 @@
 
 #include "dataRepository/Group.hpp"
 
-namespace pugi
-{
-class xml_node;
-}
-
 namespace geos
 {
 

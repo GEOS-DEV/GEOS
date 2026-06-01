@@ -59,6 +59,20 @@ bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
   return -tol <= val && val <= tol;
 }
 
+template< typename ARRAY_TYPE >
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE
+bool hasNonZero( ARRAY_TYPE const & array )
+{
+  for( auto it = array.begin(); it != array.end(); ++it )
+  {
+    if( !isZero( *it ) )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 template< typename T >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isOdd( T x )
@@ -78,7 +92,7 @@ template< typename T1, typename T2, typename SORTED >
 T2 & stlMapLookup( mapBase< T1, T2, SORTED > & Map, const T1 & key )
 {
   typename mapBase< T1, T2, SORTED >::iterator MapIter = Map.find( key );
-  GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
+  GEOS_ERROR_IF( MapIter == Map.end(), GEOS_FMT( "Key not found: {}", key ) );
   return MapIter->second;
 }
 
@@ -200,6 +214,11 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 string const & optionName,
                 string const & contextName )
 {
+  // In device compilation, GEOS_THROW_IF does not evaluate MSG, so these appear unused.
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( optionName, contextName );
+#endif
+
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
@@ -243,7 +262,7 @@ auto mapTransformer( MAP const & map,
  * @param[in] map The map from which keys will be extracted.
  * @return The container with the keys.
  */
-template< template< typename ... > class C = std::vector, typename MAP >
+template< template< typename ... > class C = stdVector, typename MAP >
 C< typename MAP::key_type > mapKeys( MAP const & map )
 {
   auto transformer = []( auto const & p ) -> typename MAP::key_type
@@ -258,7 +277,7 @@ C< typename MAP::key_type > mapKeys( MAP const & map )
  * @param[in] map The map from which values will be extracted.
  * @return The container with the values.
  */
-template< template< typename ... > class C = std::vector, typename MAP >
+template< template< typename ... > class C = stdVector, typename MAP >
 C< typename MAP::mapped_type > mapValues( MAP const & map )
 {
   auto transformer = []( typename MAP::const_reference p ) -> typename MAP::mapped_type
@@ -469,9 +488,9 @@ VECTOR_TYPE axpy( VECTOR_TYPE const & vec1,
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
                                       [&] GEOS_HOST ( localIndex const i )
-    {
-      result[i] = vec1[i] + alpha * vec2[i];
-    } );
+  {
+    result[i] = vec1[i] + alpha * vec2[i];
+  } );
   return result;
 }
 
@@ -483,9 +502,9 @@ VECTOR_TYPE scale( VECTOR_TYPE const & vec,
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
                                       [&] GEOS_HOST ( localIndex const i )
-    {
-      result[i] = scalarMult * vec[i];
-    } );
+  {
+    result[i] = scalarMult * vec[i];
+  } );
   return result;
 }
 
@@ -498,9 +517,9 @@ real64 dot( VECTOR_TYPE const & vec1,
   const localIndex N = vec1.size();
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
                                       [&] GEOS_HOST ( localIndex const i )
-    {
-      result += vec1[i] * vec2[i];
-    } );
+  {
+    result += vec1[i] * vec2[i];
+  } );
   return result.get();
 }
 
