@@ -41,7 +41,7 @@ class FieldSpecificationABC : public dataRepository::Group
 public:
 
   /**
-   * @defgroup alias and functions to defined statically initialized catalog
+   * @defgroup alias and functions to define statically initialized catalog
    * @{
    */
 
