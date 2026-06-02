@@ -91,7 +91,7 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Array of quadrature point jacobian values" );
+    setDescription( "Jacobian state; in MPM this is synchronized to end-of-step det(F) before update" );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setPlotLevel( PlotLevel::NOPLOT ).

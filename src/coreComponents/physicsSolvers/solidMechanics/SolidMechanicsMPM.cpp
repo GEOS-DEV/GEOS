@@ -22818,7 +22818,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        // Tensor equation: constitutiveJacobian[p][0] = det(particleDeformationGradient[p]).
+        // particleDeformationGradient has already been advanced by updateDeformationGradient().
+        // This copy is therefore the current/end-of-step value J_{n+1}, not the beginning-of-step J_n.
         constitutiveJacobian[p][0] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
       } );
     }
