@@ -7,8 +7,8 @@ Permeability specification
 Overview
 ======================
 
-**PermeabilitySpecification** is an optional, higher-level XML tag that you can place in the **FieldSpecifications** block. 
-It describes a 3-axis permeability on one or more element regions.
+**PermeabilitySpecification** is a XML tag that you can place in the **FieldSpecifications** block to describe a 3-axis permeability on one or more element regions.
+It is an higher-level component than **FieldSpecification**, specialized on permeability.
 After the input deck is read, GEOS expands each **PermeabilitySpecification** into several **FieldSpecification** objects (one per region and per axis) that the rest of the code already understands.
 
 This is convenient when you want the same **setNames**, **fieldName**, and other attributes for all three permeability components, instead of repeating three nearly identical **FieldSpecification**.
