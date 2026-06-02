@@ -14,6 +14,7 @@
  */
 
 #include "PermeabilitySpecification.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -60,7 +61,15 @@ PermeabilitySpecification::~PermeabilitySpecification()
 
 
 void PermeabilitySpecification::postInputInitialization()
-{}
+{
+  R1Tensor scales = getScales();
+  for( int axis = 0; axis < 3; ++axis )
+  {
+    GEOS_ERROR_IF( scales[ axis ] < 0,
+                   GEOS_FMT( "Scale values for a permeability must be non-negative\nA value of {} was given in {} '{}'.",
+                             scales[ axis ], catalogName(), getName() ) );
+  }
+}
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PermeabilitySpecification, string const &, Group * const )
