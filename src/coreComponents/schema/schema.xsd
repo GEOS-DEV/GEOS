@@ -212,6 +212,10 @@
 					<xsd:selector xpath="PML" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="FieldSpecificationsPermeabilitySpecificationUniqueName">
+					<xsd:selector xpath="PermeabilitySpecification" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="FieldSpecificationsSourceFluxUniqueName">
 					<xsd:selector xpath="SourceFlux" />
 					<xsd:field xpath="@name" />
@@ -1307,6 +1311,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="HydrostaticEquilibrium" type="HydrostaticEquilibriumType" />
 			<xsd:element name="PML" type="PMLType" />
+			<xsd:element name="PermeabilitySpecification" type="PermeabilitySpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
@@ -1536,6 +1541,23 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="xMax" type="R1Tensor32" default="{3.40282e+38,3.40282e+38,3.40282e+38}" />
 		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
 		<xsd:attribute name="xMin" type="R1Tensor32" default="{-3.40282e+38,-3.40282e+38,-3.40282e+38}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PermeabilitySpecificationType">
+		<!--fieldName => Name of field that boundary condition is applied to.
+A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
+		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
+		<!--regionNames => Names of the regions that boundary condition is applied to.-->
+		<xsd:attribute name="regionNames" type="groupNameRef_array" use="required" />
+		<!--scales => Apply a scaling factor for the value of the boundary condition.-->
+		<xsd:attribute name="scales" type="R1Tensor" default="{0,0,0}" />
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
