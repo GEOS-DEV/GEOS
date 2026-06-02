@@ -204,34 +204,10 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
   return *this;
 }
 
-DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( StackTrace && stacktrace )
 {
-  m_errorMsg.m_sourceCallStack.clear();
-  m_errorMsg.m_isValidStackTrace = false;
-
-  std::string str = std::string( ossStackTrace );
-  std::istringstream iss( str );
-  std::string stackLine;
-
-  std::regex lvArrayPattern( R"(Frame \d+:\s*)" );
-  std::regex cpptracePattern( R"(^\s*#\d+\s+)" );
-
-  while( std::getline( iss, stackLine ) )
-  {
-    std::smatch m;
-    if( std::regex_search( stackLine, m, lvArrayPattern ) ||
-        std::regex_search( stackLine, m, cpptracePattern ) )
-    {
-      m_errorMsg.m_isValidStackTrace = true;
-      m_errorMsg.m_sourceCallStack.push_back( m.suffix().str() );
-    }
-  }
-
-  if( !m_errorMsg.m_isValidStackTrace )
-  {
-    m_errorMsg.m_sourceCallStack.push_back( str );
-  }
-
+  m_errorMsg.m_isValidStackTrace = stacktrace.isValidStackTrace();
+  m_errorMsg.m_sourceCallStack = std::move( stacktrace ).frames();
   return *this;
 }
 

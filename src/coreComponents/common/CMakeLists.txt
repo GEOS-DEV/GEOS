@@ -44,6 +44,7 @@ set( common_headers
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
      logger/StackTrace.hpp
+     logger/StackTraceParams.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp

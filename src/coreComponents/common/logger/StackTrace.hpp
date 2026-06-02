@@ -20,15 +20,13 @@
 #ifndef GEOS_COMMON_LOGGER_STACKTRACE_HPP
 #define GEOS_COMMON_LOGGER_STACKTRACE_HPP
 
-#include "common/GeosxConfig.hpp" // For the following guards
-#ifdef GEOS_USE_CPPTRACE
-#include <cpptrace/forward.hpp>
-#endif
-
 #include <string>
+#include <vector>
 
 namespace geos
 {
+
+struct StackTraceParams;
 
 /**
  * @brief Utility class to interact with stack traces.
@@ -38,27 +36,33 @@ class StackTrace
 public:
 
   /**
+   * @brief StackTrace constructor
+   * @param params StackTraceParams class containing the type of stacktrace used,
+   *               based on the build.
+   */
+  StackTrace( StackTraceParams const & params );
+
+  /**
    * @brief Get a stack trace for the current thread.
-   * @return The stack trace as a string.
-   * @note Not signal-safe. Use signalSafeStackTrace() from inside a signal handler.
+   * @return The stack trace object containing the stack trace frames.
    */
-  static std::string stackTrace();
+  static StackTrace stackTrace();
 
   /**
-   * @brief Get a stack trace from a context where signal-safety is required.
-   * @return The stack trace as a string.
-   * @note Implementation reverts back to LvArray::system stack trace for signal-safety
+   * @brief Stack trace frames accessor.
+   * @return Container of frames from this stack trace.
    */
-  static std::string signalSafeStackTrace();
+  std::vector< std::string > const & frames() const
+  { return m_frames; }
 
-#ifdef GEOS_USE_CPPTRACE
-  /**
-   * @brief Format a cpptrace stacktrace using the configured formatter.
-   * @param stacktrace The cpptrace stack trace to format.
-   * @return Formatted stack trace string.
-   */
-  static std::string formatStackTrace( cpptrace::stacktrace const & stacktrace );
-#endif
+  bool isValidStackTrace() const
+  { return m_isValidStackTrace; }
+
+private:
+
+  std::vector< std::string > m_frames;
+
+  bool m_isValidStackTrace = false;
 
 };
 

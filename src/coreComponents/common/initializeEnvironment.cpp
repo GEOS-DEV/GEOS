@@ -87,12 +87,11 @@ void setupLogger()
       }
       else
       {
-        std::string const stackHistory = StackTrace::stackTrace();
         DiagnosticMsg diagnosticMsg;
         ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                          MsgType::Error, errorMsg,
                                                                          ::geos::logger::internal::g_rank )
-                                               .addCallStackInfo( stackHistory )
+                                               .addCallStackInfo( StackTrace::stackTrace() )
                                                .addDetectionLocation( detectionLocation )
                                                .getDiagnosticMsg() );
 
@@ -110,13 +109,12 @@ void setupLogger()
       ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
-      std::string const stackHistory = StackTrace::signalSafeStackTrace();
       DiagnosticMsg diagnosticMsg;
       ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                        MsgType::ExternalError, "",
                                                                        ::geos::logger::internal::g_rank )
                                              .addSignal( signal )
-                                             .addCallStackInfo( stackHistory )
+                                             .addCallStackInfo( StackTrace::stackTrace() )
                                              .getDiagnosticMsg() );
 
       // call program termination

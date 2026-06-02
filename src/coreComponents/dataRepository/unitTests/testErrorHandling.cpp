@@ -349,7 +349,7 @@ TEST( ErrorHandling, testStdException )
 
     testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(),
                                                  ::geos::logger::internal::g_rank )
-      .addCallStackInfo( LvArray::system::stackTrace( true ) );
+      .addCallStackInfo( StackTrace::stackTrace() );
 
     std::ostringstream oss;
     ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );

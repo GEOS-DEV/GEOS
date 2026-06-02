@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/StackTrace.hpp"
 #include <mutex>
 
 namespace geos
@@ -252,7 +253,7 @@ public:
    * @param stacktrace stack trace information to add
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & addCallStackInfo( std::string_view stacktrace );
+  DiagnosticMsgBuilder & addCallStackInfo( StackTrace && stacktrace );
 
   /**
    * @return Get the DiagnosticMsg
