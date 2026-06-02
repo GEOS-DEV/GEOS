@@ -12461,6 +12461,12 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   real64 xGlobalMax[3] = {};
   // Tensor equation: xGlobalMax = m_xGlobalMax.
   LvArray::tensorOps::copy< 3 >( xGlobalMax, m_xGlobalMax );
+  real64 domainExtent[3] = {};
+  // Tensor equation: domainExtent = m_domainExtent.
+  LvArray::tensorOps::copy< 3 >( domainExtent, m_domainExtent );
+
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getGroup( domain.groupKeys.partitionManager ) );
+  arrayView1d< int const > const periodic = partition.getPeriodic();
 
   localIndex const numNodes = nodeManager.size();
   arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
@@ -12930,11 +12936,26 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
               {
                 tempGridMassLocal[nodeIndex][fieldIndex] += particleMass[p] * shapeFunctionValue;
 
+                real64 surfacePositionRelativeToNode[3] = {};
+                // Tensor equation: surfacePositionRelativeToNode = particlePosition[p] -
+                //   czReferencePosition[nodeIndex], with periodic minimum-image correction.
+                LvArray::tensorOps::copy< 3 >( surfacePositionRelativeToNode, particlePosition[p] );
+                LvArray::tensorOps::subtract< 3 >( surfacePositionRelativeToNode, czReferencePosition[nodeIndex] );
+                for( int i = 0; i < numDims; ++i )
+                {
+                  if( periodic[i] == 1 )
+                  {
+                    surfacePositionRelativeToNode[i] = Mod( surfacePositionRelativeToNode[i] + 0.5 * domainExtent[i], domainExtent[i] ) -
+                                                       0.5 * domainExtent[i];
+                  }
+                }
+                LvArray::tensorOps::add< 3 >( surfacePositionRelativeToNode, particleSurfacePosition[p] );
+
                 for( int i  = 0; i < numDims; ++i )
                 {
                   tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleSurfaceNormal[p][i] * shapeFunctionValue;
                   tempGridSurfacePositionLocal[nodeIndex][fieldIndex][i] += particleMass[p] *
-                                                                            ( particlePosition[p][i] - czReferencePosition[nodeIndex][i] + particleSurfacePosition[p][i] ) *
+                                                                            surfacePositionRelativeToNode[i] *
                                                                             shapeFunctionValue;
                 }
 
@@ -14063,14 +14084,20 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // Allocate temporary grid fields for cohesive zone calculations
     array2d< real64 > tempGridMassLocal( numCohesiveNodes, m_numVelocityFields );
     array3d< real64 > tempGridDisplacementLocal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array3d< real64 > tempGridPeriodicDisplacementCosLocal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array3d< real64 > tempGridPeriodicDisplacementSinLocal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridParticleSurfaceNormalLocal( numCohesiveNodes, m_numVelocityFields, 3 );
     array4d< real64 > tempGridDeformationGradientCofactorLocal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
     array3d< real64 > tempGridCohesiveTraction( numCohesiveNodes, m_numVelocityFields, 3 );
+
+    real64 constexpr twoPi = 6.283185307179586476925286766559;
 
     // Initialize temporary grid fields to zero
     forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=,
                                                         &tempGridMassLocal,
                                                         &tempGridDisplacementLocal,
+                                                        &tempGridPeriodicDisplacementCosLocal,
+                                                        &tempGridPeriodicDisplacementSinLocal,
                                                         &tempGridParticleSurfaceNormalLocal,
                                                         &tempGridDeformationGradientCofactorLocal,
                                                         &tempGridCohesiveTraction] GEOS_HOST_DEVICE ( localIndex const g )
@@ -14082,6 +14109,8 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
         for( localIndex i = 0; i < numDims; ++i )
         {
           tempGridDisplacementLocal[g][fieldIndex][i] = 0.0;
+          tempGridPeriodicDisplacementCosLocal[g][fieldIndex][i] = 0.0;
+          tempGridPeriodicDisplacementSinLocal[g][fieldIndex][i] = 0.0;
           tempGridParticleSurfaceNormalLocal[g][fieldIndex][i] = 0.0;
           tempGridCohesiveTraction[g][fieldIndex][i] = 0.0;
 
@@ -14117,6 +14146,8 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                               [=,
                               &tempGridMassLocal,
                               &tempGridDisplacementLocal,
+                              &tempGridPeriodicDisplacementCosLocal,
+                              &tempGridPeriodicDisplacementSinLocal,
                               &tempGridParticleSurfaceNormalLocal,
                               &tempGridDeformationGradientCofactorLocal] GEOS_HOST ( localIndex const pp )
         {
@@ -14220,13 +14251,26 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                   LvArray::tensorOps::add< 3 >( cohesiveNodeDisplacement, currentVectorToNode );
                   LvArray::tensorOps::subtract< 3 >( cohesiveNodeDisplacement, referenceVectorToNode );
 
+                  real64 const massShapeFunctionValue = particleMass[p] * shapeFunctionValue;
                   for( localIndex i  = 0; i < numDims; ++i )
                   {
-                    tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += particleMass[p] * cohesiveNodeDisplacement[i] * shapeFunctionValue;
+                    if( periodic[i] == 1 && domainExtent[i] > 0.0 )
+                    {
+                      // Periodic displacements live on a circle. Accumulate sine/cosine moments instead of the
+                      // branch-cut value itself so a single CZ node/field can be averaged robustly while its
+                      // contributing particles are split over opposite periodic images.
+                      real64 const angle = twoPi * cohesiveNodeDisplacement[i] / domainExtent[i];
+                      tempGridPeriodicDisplacementCosLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * LvArray::math::cos( angle );
+                      tempGridPeriodicDisplacementSinLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * LvArray::math::sin( angle );
+                    }
+                    else
+                    {
+                      tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * cohesiveNodeDisplacement[i];
+                    }
                     // tempGridCenterOfVolumeLocal[nodeIndex][fieldIndex][i] += particleVolume[p] *
                     // (particlePosition[p][i] -
                     // m_referenceCohesiveGridNodePositions[nodeIndex][i])* shapeFunctionValue;
-                    tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleSurfaceNormal[p][i] * shapeFunctionValue;
+                    tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * particleSurfaceNormal[p][i];
                   }
 
                   // GEOS_LOG_RANK( "refPos:" << "{" << particleCohesiveReferencePosition[p][0] << ", " << particleCohesiveReferencePosition[p][1] << ", " << particleCohesiveReferencePosition[p][2] << "}, " <<
@@ -14261,6 +14305,8 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // Sync temporary grid fields
     array2d< real64 > tempGridMassGlobal( numCohesiveNodes, m_numVelocityFields );
     array3d< real64 > tempGridDisplacementGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array3d< real64 > tempGridPeriodicDisplacementCosGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array3d< real64 > tempGridPeriodicDisplacementSinGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridParticleSurfaceNormalGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
     array4d< real64 > tempGridDeformationGradientCofactorGlobal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
 
@@ -14271,6 +14317,16 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
     MpiWrapper::allReduce( tempGridDisplacementLocal,
                            tempGridDisplacementGlobal,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
+
+    MpiWrapper::allReduce( tempGridPeriodicDisplacementCosLocal,
+                           tempGridPeriodicDisplacementCosGlobal,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
+
+    MpiWrapper::allReduce( tempGridPeriodicDisplacementSinLocal,
+                           tempGridPeriodicDisplacementSinGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
@@ -14287,6 +14343,8 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // Normalize fields after global sync
     forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=,
                                                         &tempGridDisplacementGlobal,
+                                                        &tempGridPeriodicDisplacementCosGlobal,
+                                                        &tempGridPeriodicDisplacementSinGlobal,
                                                         &tempGridParticleSurfaceNormalGlobal,
                                                         &tempGridDeformationGradientCofactorGlobal] GEOS_HOST_DEVICE ( localIndex const g )
     {
@@ -14296,7 +14354,24 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
         {
           for( int i = 0; i < numDims; ++i )
           {
-            tempGridDisplacementGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
+            if( periodic[i] == 1 && domainExtent[i] > 0.0 )
+            {
+              real64 const periodicCos = tempGridPeriodicDisplacementCosGlobal[g][fieldIndex][i];
+              real64 const periodicSin = tempGridPeriodicDisplacementSinGlobal[g][fieldIndex][i];
+              if( periodicCos * periodicCos + periodicSin * periodicSin > 1.0e-30 * tempGridMassGlobal[g][fieldIndex] * tempGridMassGlobal[g][fieldIndex] )
+              {
+                tempGridDisplacementGlobal[g][fieldIndex][i] =
+                  domainExtent[i] * LvArray::math::atan2( periodicSin, periodicCos ) / twoPi;
+              }
+              else
+              {
+                tempGridDisplacementGlobal[g][fieldIndex][i] = 0.0;
+              }
+            }
+            else
+            {
+              tempGridDisplacementGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
+            }
             tempGridParticleSurfaceNormalGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
 
             for( int j = 0; j < numDims; ++j )
@@ -14343,6 +14418,12 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                                                                                                  preventCZInterpenetration,
                                                                                                  czRegion.getFieldA(),
                                                                                                  czRegion.getFieldB(),
+                                                                                                 periodic[0],
+                                                                                                 periodic[1],
+                                                                                                 periodic[2],
+                                                                                                 domainExtent[0],
+                                                                                                 domainExtent[1],
+                                                                                                 domainExtent[2],
                                                                                                  tempGridMassGlobal,
                                                                                                  tempGridDisplacementGlobal,
                                                                                                  tempGridParticleSurfaceNormalGlobal,

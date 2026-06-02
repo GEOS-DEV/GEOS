@@ -41,6 +41,11 @@ constexpr double pi = 3.141592653589793238;
  */
 constexpr double gasConstant = 8.31446261815324;
 
+/**
+ * @brief Euler's number
+ */
+constexpr double eulerNumber = 2.7182818284590452353602874713526624977572470936999;
+
 } // end namespace constants
 
 } // end namespace geos

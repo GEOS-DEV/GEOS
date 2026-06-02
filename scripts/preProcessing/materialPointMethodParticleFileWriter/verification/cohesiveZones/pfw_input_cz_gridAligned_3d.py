@@ -20,16 +20,20 @@ G = 29.0 # shear modulus (GPa)
 
 sampleWidth = 1.0
 sampleHeight = 1.0
+sampleLength = 1.0
 
-domainWidth = 1.25*sampleWidth
+domainWidth = sampleWidth
 domainHeight = sampleHeight
+domainLength = sampleLength
 
 pfw["xmin"] = -0.5*domainWidth # mm
 pfw["xmax"] = 0.5*domainWidth # mm
 pfw["ymin"] = -0.5*domainHeight # mm
 pfw["ymax"] = 0.5*domainHeight # mm
+pfw["zmin"] =-0.5*domainLength # mm
+pfw["zmax"] = 0.5*domainLength # mm
 
-pfw["planeStrain"] = 1
+pfw["planeStrain"] = 0
 
 pfw["periodic"] = [False, False, False]
 
@@ -38,17 +42,12 @@ cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine
-pfw["zpar"]=1
+pfw["zpar"]=refine
 
 pfw["nI"]=pfw["xpar"]*cpp  # grid cells in the x-direction
 pfw["nJ"]=pfw["ypar"]*cpp  # grid cells in the y-direction
-pfw["nK"]=3                # grid cells in the z-direction
+pfw["nK"]=pfw["zpar"]*cpp  # grid cells in the z-direction
 pfw["ppc"]=2               # particles per cell in each direction
-
-domainLength = domainHeight/(pfw["nJ"]-2)
-
-pfw["zmin"] =-0.5*domainLength # mm
-pfw["zmax"] = 0.5*domainLength # mm
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
@@ -84,7 +83,6 @@ pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
                              "ContactGroup",
                              "SurfaceFlag",
-                             "CZTag",
                              "RVector",
                              "SurfaceNormal",
                              "SurfacePosition"]
@@ -92,37 +90,28 @@ pfw["particleFileFields"] = ["Velocity",
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------
 
 # Define all the geometric objects -------------------------------------------------------
-numBoxes = 3
-box_dy = sampleHeight/numBoxes 
 
-def tag(pt):
-    if pt[1] < 0.0:
-        return 0
-    else:
-        return 1   
+box1=geom.box('box1',[-sampleWidth/2, -sampleHeight/2, -sampleLength/2],[sampleWidth/2, 0.0, sampleLength/2],vel=[0.0, 0.0, 0.0], mat=0, group=0, dim=3, flaggedSurfaces=[False, False, False, True])
+box2=geom.box('box2',[-sampleWidth/2, 0.0, -sampleLength/2],[sampleWidth/2, sampleHeight/2, sampleLength/2],vel=[0.0, 0.0, 0.0], mat=0, group=0, dim=3, flaggedSurfaces=[False, True, False, False])
 
-pfw["objects"] = []
-for b in range(numBoxes):
-    x0 = np.array([-sampleWidth/2, -sampleHeight/2, pfw["zmin"]]) + np.array([0.0, b*box_dy, 0.0])
-    x1 = x0 + np.array([sampleWidth, box_dy, domainLength])
-    box=geom.box('box',x0,x1,vel=[0.0, 0.0, 0.0], mat=0, group=0, dim=2, flaggedSurfaces=[False, True, False, True])
-    boxWSurfFlag = geom.surfaceFlagWrapper('boxWFlag', box, 3)
-    boxWTag = geom.czTagWrapper('boxWTag', boxWSurfFlag, tag )
-    pfw["objects"].append(boxWTag)
+boxWFlag1 = geom.surfaceFlagWrapper('boxWFlag1',box1, 3)
+boxWFlag2 = geom.surfaceFlagWrapper('boxWFlag2',box2, 3)
+
+pfw["objects"]=[boxWFlag1,boxWFlag2]
 
 # Deformation ---------------------------------------------------------------------------------
 
 pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
+pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 0, 0 ]
 
 pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
-               [stopTime,     1.00,  1.30,  1.00]]
+               [stopTime,     1.00,  1.15,  1.00]]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 pfw["mBatch"]=True
-pfw["mWallTime"] = "00:05:00"
+pfw["mWallTime"] = "00:15:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
@@ -143,34 +132,22 @@ pfw["materialPropertyString"] = f"""
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
-    maxNormalDisplacement="0.1"/>
-<CoupledCohesiveZone
-    name="cz2"
-    defaultMaxNormalStress="0.05"
-    defaultMaxShearStress="0.05"
-    characteristicNormalDisplacement="0.05"
-    characteristicTangentialDisplacement="0.05"
-    maxTangentialDisplacement="0.1"
-    maxNormalDisplacement="0.1"/>
-"""
+    maxNormalDisplacement="0.1"/>"""
 
 pfw["cohesiveZoneRegions"] = """
 <CohesiveZoneRegion
     name="cz1"
     constitutiveModel="cz1"
-    tag="0"/>
-<CohesiveZoneRegion
-    name="cz2"
-    constitutiveModel="cz2"
-    tag="1"/>"""
+    tag="0"/>"""
 
 pfw["mpmEventsString"] = """
 <ReferenceCohesiveZones
-    name="czEvent"
+    name="cz1"
     startTime="0.0"
-    regionNames="{cz1, cz2}"
+    regionNames="{cz1}"
     czVolumeNormalization="1"/>
 """
+
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
 def _vv_fast_int(_value, _default):

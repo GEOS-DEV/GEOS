@@ -113,7 +113,7 @@ pfw["objects"]=[boxWFlag1,boxWFlag2]
 # Deformation ---------------------------------------------------------------------------------
 
 pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
+pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 1, 1 ]
 
 pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1

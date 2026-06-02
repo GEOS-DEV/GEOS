@@ -22,6 +22,7 @@
 
 #include "constitutive/cohesiveZone/CohesiveZoneBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -100,7 +101,16 @@ public:
             m_damage[k] = LvArray::math::max( 1.0, m_damage[k] );
         }
 
-        real64 e = 2.7182818284590452353602874713526624977572470936999; // Euler's number
+        // A cohesive node marked as failed must not continue to transmit traction. This also makes the
+        // max-displacement cutoff effective in the same update in which the threshold is crossed.
+        if( m_damage[k] >= 1.0 )
+        {
+            normalStress = 0.0;
+            shearStress = 0.0;
+            return;
+        }
+
+        real64 e = constants::eulerNumber;
         real64 r = 0.0;
         real64 q = 1.0;
    

@@ -8523,6 +8523,62 @@ class surfaceFlagWrapper(BaseWrapper):
 
 
 ############################################
+# Currently only 2D
+class surfaceWrapper(BaseWrapper):
+  def __init__(self,
+               name,
+               subObject,
+               x0,
+               x1,
+               surfaceFlag):
+    super().__init__(name,
+                     subObject)
+    self.surfaceFlag = surfaceFlag
+    self.x0 = np.asarray(x0)
+    self.x1 = np.asarray(x1)
+    self.v = self.x1-self.x0
+    self.v_norm = np.linalg.norm(self.v)
+    self.v = self.v/self.v_norm
+    self.v_p = np.cross(np.array([0.0, 0.0, 1.0]), self.v)
+    
+  def isSurface(self, pt, skinDepth):
+    x = pt-self.x0
+
+    # compute distance perpendicular to surface
+    d_perp = np.abs(np.dot(self.v_p, x))
+    d_parl = np.dot(self.v, x)
+    if d_perp <= skinDepth and d_parl >= 0  and d_parl <= self.v_norm:
+      return True
+    
+    return False
+
+  def isInterior(self, pt, skinDepth):
+    surfaceFlag = self.subObject.isInterior(pt, skinDepth)
+    
+    # If interior to object, check for surface
+    if surfaceFlag >= 0 and self.isSurface(pt, skinDepth):
+      return self.surfaceFlag
+    
+    return surfaceFlag
+
+  def getSurfaceNormal(self, pt):
+    if self.isSurface(pt, 1.0):
+      x = pt-self.x0
+      d_perp = np.dot(self.v_p, x)
+      return -self.v_p * d_perp / np.abs(d_perp)
+     
+    return self.subObject.getSurfaceNormal(pt)
+  
+  def getSurfacePosition(self, pt):
+    if self.isSurface(pt, 1.0):
+      x = pt-self.x0
+      d_perp = np.dot(self.v_p, x)
+      return -self.v_p * d_perp
+     
+    return self.subObject.getSurfacePosition(pt)
+
+  
+############################################
 class czTagWrapper(BaseWrapper):
   def __init__(self,
                name,

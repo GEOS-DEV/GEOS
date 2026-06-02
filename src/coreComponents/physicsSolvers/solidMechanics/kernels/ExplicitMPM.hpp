@@ -155,6 +155,12 @@ struct CohesiveZoneStateUpdateKernel
    * @param[in] preventCZInterpentration Flag to prevent interpentration of cohesive zones in compression
    * @param[in] fieldA Velocity field A of cohesive zone
    * @param[in] fieldB Velocity field B of cohesive zone
+   * @param[in] periodic0 Periodic flag for x-direction
+   * @param[in] periodic1 Periodic flag for y-direction
+   * @param[in] periodic2 Periodic flag for z-direction
+   * @param[in] domainExtent0 Periodic domain extent in x-direction
+   * @param[in] domainExtent1 Periodic domain extent in y-direction
+   * @param[in] domainExtent2 Periodic domain extent in z-direction
    * @param[in] gridMass Array view of the nodal mass
    * @param[in] gridDisplacement Array view of nodal displacement
    * @param[in] gridParticleSurfaceNormal Array view of particle mapped surface normals
@@ -173,6 +179,12 @@ struct CohesiveZoneStateUpdateKernel
                       int preventCZInterpentration,
                       localIndex fieldA,
                       localIndex fieldB,
+                      int periodic0,
+                      int periodic1,
+                      int periodic2,
+                      real64 domainExtent0,
+                      real64 domainExtent1,
+                      real64 domainExtent2,
                       arrayView2d< real64 const > const gridMass,
                       arrayView3d< real64 const > const gridDisplacement,
                       arrayView3d< real64 const > const gridParticleSurfaceNormal,
@@ -254,6 +266,23 @@ struct CohesiveZoneStateUpdateKernel
         real64 displacementVector[3] = {};
         LvArray::tensorOps::copy< 3 >( displacementVector, dA );
         LvArray::tensorOps::subtract< 3 >( displacementVector, dB );
+
+        // The two cohesive fields may choose different periodic images for their absolute nodal displacements after
+        // particles advect through a periodic boundary. The cohesive law depends on the opening vector, so reduce that
+        // jump itself with the minimum-image convention before resolving normal and tangential components.
+        if( periodic0 == 1 && domainExtent0 > 0.0 )
+        {
+          displacementVector[0] -= domainExtent0 * LvArray::math::floor( displacementVector[0] / domainExtent0 + 0.5 );
+        }
+        if( periodic1 == 1 && domainExtent1 > 0.0 )
+        {
+          displacementVector[1] -= domainExtent1 * LvArray::math::floor( displacementVector[1] / domainExtent1 + 0.5 );
+        }
+        if( periodic2 == 1 && domainExtent2 > 0.0 )
+        {
+          displacementVector[2] -= domainExtent2 * LvArray::math::floor( displacementVector[2] / domainExtent2 + 0.5 );
+        }
+
         real64 totalNormalDisplacement = -LvArray::tensorOps::AiBi< 3 >( nAB, displacementVector ); 
 
         real64 tangentialInterfaceDisplacement[3]  = {};
