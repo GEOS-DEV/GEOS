@@ -221,7 +221,7 @@ PresTempCompFracInitializationKernel::
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   real64 const initialPresCoef = wellControls.getInitialPressureCoefficient();
-  WellControls::Control const currentControl = wellControls.getControl();
+  ConstraintTypeId const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
 
 
@@ -319,7 +319,7 @@ PresTempCompFracInitializationKernel::
   real64 refPres = 0.0;
 
   // if the well is controlled by pressure, initialize the reference pressure at the target pressure
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     refPres = targetBHP;
   }
@@ -466,12 +466,11 @@ RateInitializationKernel::
     {
       // this assumes phase control present
       integer const targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-      std::vector< WellConstraintBase * >  const constraints = wellControls.getProdRateConstraints();
+      auto const * rateConstraint = wellControls.getRateConstraints().front();
       // Use first rate constraint to set initial connection rates
-      real64 const rateVal = constraints[0]->getConstraintValue( time );
+      real64 const rateVal = rateConstraint->getConstraintValue( time );
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-
         connRate[iwelem] = LvArray::math::max( 0.1 * rateVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
       } );
     }
@@ -507,9 +506,9 @@ RateInitializationKernel::
     }
     else if( controlType == ConstraintTypeId::BHP )
     {
-      std::vector< WellConstraintBase * >  const constraints = wellControls.getInjRateConstraints();
+      auto const * rateConstraint = wellControls.getRateConstraints().front();
       // Use first rate constraint to set initial connection rates
-      real64 const rateVal = constraints[0]->getConstraintValue( time );
+      real64 const rateVal = rateConstraint->getConstraintValue( time );
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         connRate[iwelem] = LvArray::math::min( 0.1 * rateVal * totalDens[iwelem][0], 1e3 );

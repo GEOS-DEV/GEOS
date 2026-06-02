@@ -528,14 +528,16 @@ public:
 
     m_internalEnergy_n( fluid.internalEnergy_n() )
   {
-    if( wellControls.isProducer() )
+    const WellConstraintBase * currentConstraint = wellControls.getCurrentConstraint();
+    if( currentConstraint->getControl() == ConstraintTypeId::BHP )
     {
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      m_targetBHP = currentConstraint->getConstraintValue( time );
     }
     else
     {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
+      m_targetBHP = std::numeric_limits< real64 >::max();
     }
+
   }
 
 
@@ -567,17 +569,17 @@ public:
         // for the top well element, normalize using the current control
         if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-          if( m_currentControl == WellControls::Control::BHP )
+          if( m_currentControl == ConstraintTypeId::BHP )
           {
             // the residual entry is in pressure units
             normalizer = m_targetBHP;
           }
-          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::TOTALVOLRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::MASSRATE )
+          else if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
@@ -646,7 +648,7 @@ protected:
   bool const m_isProducer;
 
   /// Controls
-  WellControls::Control const m_currentControl;
+  ConstraintTypeId const m_currentControl;
   real64 const m_constraintValue;
   real64 m_targetBHP;
 

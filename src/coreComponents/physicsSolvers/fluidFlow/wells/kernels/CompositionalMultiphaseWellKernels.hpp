@@ -136,8 +136,8 @@ struct ControlEquationHelper
   static
   void
   selectLimitingConstraint( bool const isProducer,
-                            WellControls::Control const & inputControl,
-                            WellControls::Control const & currentControl,
+                            ConstraintTypeId const & inputControl,
+                            ConstraintTypeId const & currentControl,
                             integer const phasePhaseIndex,
                             real64 const & targetBHP,
                             real64 const & targetPhaseRate,
@@ -147,14 +147,14 @@ struct ControlEquationHelper
                             arrayView1d< real64 const > const & currentPhaseVolRate,
                             real64 const & currentTotalVolRate,
                             real64 const & currentMassRate,
-                            WellControls::Control & newControl );
+                            ConstraintTypeId & newControl );
 
   template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
   inline
   static void
   compute( globalIndex const rankOffset,
-           WellControls::Control const currentControl,
+           ConstraintTypeId const currentControl,
            integer const targetPhaseIndex,
            real64 const & targetBHP,
            real64 const & targetPhaseRate,
@@ -519,36 +519,28 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),  // tjb
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
   {
+    //  tjbNote this assumes that there is only one     rate constraint
+    // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+    // This is one of the reasons for restricting  constraint type for a production well
+    // another pr will remove fix this (so the cause for difference results is isolated to one change)
+    auto const * rateConstraint = wellControls.getRateConstraints().front();
+    if( rateConstraint != nullptr )
+    {
+      m_constraintValue = rateConstraint->getConstraintValue( time );
+    }
     if( m_isProducer )
     {
-      if( wellControls.getMinBHPConstraint()->isConstraintActive())
-        m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-      // Note this assumes that there is only one   rate constraint
-      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
-      // This is one of the reasons for restricting  constraint type for a production well
-      // another pr will remove fix this (so the cause for difference results is isolated to one change)
-      m_targetPhaseIndex =   wellControls.getConstraintPhaseIndex(  );
-      m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
-
+      m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
     }
     else
     {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-
-      //  tjbNote this assumes that there is only one     rate constraint
-      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
-      // This is one of the reasons for restricting  constraint type for a production well
-      // another pr will remove fix this (so the cause for difference results is isolated to one change)
       m_targetPhaseIndex = -1;
-      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
-
     }
-
-
   }
 
   GEOS_HOST_DEVICE
@@ -570,22 +562,22 @@ public:
         // for the top well element, normalize using the current control
         if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-          if( m_currentControl == WellControls::Control::BHP )
+          if( m_currentControl == ConstraintTypeId::BHP )
           {
             // the residual entry is in pressure units
             normalizer = m_targetBHP;
           }
-          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::TOTALVOLRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::PHASEVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::PHASEVOLRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::MASSRATE )
+          else if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
@@ -607,7 +599,7 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          if( m_currentControl == WellControls::Control::MASSRATE )
+          if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             normalizer = m_dt * LvArray::math::abs( m_constraintValue );
           }
@@ -632,7 +624,7 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          if( m_currentControl == WellControls::Control::MASSRATE )
+          if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             normalizer = m_dt * LvArray::math::abs( m_constraintValue/  m_totalDens_n[iwelem][0] );
           }
@@ -690,7 +682,7 @@ protected:
   bool const m_isProducer;
 
   /// Controls
-  WellControls::Control const m_currentControl;
+  ConstraintTypeId const m_currentControl;
   real64 m_constraintValue;
   real64 m_targetBHP;
 

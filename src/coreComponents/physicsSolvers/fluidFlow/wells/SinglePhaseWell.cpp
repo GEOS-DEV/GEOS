@@ -38,6 +38,15 @@
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
+
+#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalSinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhasePerforationFluxKernels.hpp"
@@ -336,22 +345,11 @@ void SinglePhaseWell::updateSeparator( ElementRegionManager const & elemManager,
   {
     if( !getReferenceReservoirRegion().empty() )
     {
-      ElementRegionBase const & region = elemManager.getRegion( getReferenceReservoirRegion() );
-      GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
-                      GEOS_FMT( "WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                                getName(), getReferenceReservoirRegion() ),
-                      getDataContext() );
-
-      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
-        SinglePhaseStatistics::regionStatisticsName() );
-
-      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                     GEOS_FMT(
-                       "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                       getName(), getReferenceReservoirRegion() ),
-                     getDataContext());
-      setRegionAveragePressure( stats.averagePressure );
-      setRegionAverageTemperature( stats.averageTemperature );
+      real64 averagePressure = 0.0;
+      real64 averageTemperature = 0.0;
+      validateReferenceRegionStatistics< SinglePhaseStatistics >( elemManager, averagePressure, averageTemperature );
+      setRegionAveragePressure( averagePressure );
+      setRegionAverageTemperature( averageTemperature );
     }
     // use region conditions
     flashPressure =        getRegionAveragePressure();
@@ -489,7 +487,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           if( ConstraintTypeId( getControl()) == constraint.getControl() )
           {
             setCurrentConstraint( &constraint );
-            setControl( static_cast< WellControls::Control >(constraint.getControl()) );
+            setControl( constraint.getControl());
           }
         } );
       }
@@ -501,7 +499,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           if( ConstraintTypeId( getControl()) == constraint.getControl() )
           {
             setCurrentConstraint( &constraint );
-            setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
+            setControl( constraint.getControl()  );
           }
         } );
       }
