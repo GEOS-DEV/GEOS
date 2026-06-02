@@ -36,8 +36,6 @@ if( GEOS_ENABLE_BOUNDS_CHECK )
   set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
 endif()
 
-option( ENABLE_PVTPackage "" ON )
-
 option( ENABLE_HPCREACT "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
@@ -175,6 +173,15 @@ if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
                                 FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
                                 )
+endif()
+
+if( GEOS_ENABLE_FPE )
+  check_cxx_compiler_flag( "-ffp-exception-behavior=strict" GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT)
+  if( GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT )
+    blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS CLANG "-ffp-exception-behavior=strict" )
+  else()
+    message( WARNING "GEOS_ENABLE_FPE is ON, but ${CMAKE_CXX_COMPILER_ID} does not support -ffp-exception-behavior=strict." )
+  endif()
 endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )

@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "PermeabilitySpecification.hpp"
 #include "FieldSpecificationABC.hpp"
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -48,7 +48,7 @@ void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & s
     {
       string const childName = ps->getName() + "_" + regionName + suffixes[ comp ];
 
-      FieldSpecificationBase & fs = manager.registerGroup< FieldSpecificationBase >( childName );
+      FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
       fs.setFieldName( ps->getFieldName() );
       fs.setObjectPath( objectPath );
       fs.setScale( scales[ comp ] );

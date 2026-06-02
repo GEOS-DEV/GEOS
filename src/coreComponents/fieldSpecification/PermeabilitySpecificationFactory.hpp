@@ -25,7 +25,6 @@
 #include "dataRepository/Group.hpp"
 #include "PermeabilitySpecification.hpp"
 #include "FieldSpecificationABC.hpp"
-#include "FieldSpecificationBase.hpp"
 #include "FieldSpecificationFactory.hpp"
 
 namespace geos

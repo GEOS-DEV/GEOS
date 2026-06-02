@@ -20,8 +20,9 @@
 #ifndef GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 #define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "FieldSpecificationFactory.hpp"
+#include "FieldSpecificationImpl.hpp"
 
 #include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -65,9 +66,9 @@ public:
   static FieldSpecificationManager & getInstance();
 
   /**
-   * @brief Create a new FieldSpecificationBase object as a child of this group.
-   * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
-   * @param childName the name of the new FieldSpecificationBase object in the repository
+   * @brief Create a new FieldSpecification object as a child of this group.
+   * @param childKey the catalog key of the new FieldSpecification derived type to create
+   * @param childName the name of the new FieldSpecification object in the repository
    * @return the group child
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
@@ -87,11 +88,11 @@ public:
    *                  name is used for comparing against the value given in the field specification.
    *
    * Interface function that applies a boundary condition directly to a field variable by looping
-   * through all FieldSpecificationBase objects present in the FieldSpecificationManager. Searches
+   * through all FieldSpecification objects present in the FieldSpecificationManager. Searches
    * for the string specified in fieldPath as a substring in the objectPath specified in the input
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
-   * the time parameter falls within the beginTime and endTime of the FieldSpecificationBase object,
-   * and calls FieldSpecificationBase::applyFieldValue().
+   * the time parameter falls within the beginTime and endTime of the FieldSpecification object,
+   * and calls FieldSpecification::applyFieldValue().
    *
    */
   template< typename POLICY=parallelHostPolicy >
@@ -102,7 +103,7 @@ public:
     GEOS_MARK_FUNCTION;
 
     applyFieldValue< POLICY >( time, mesh, fieldName,
-                               [&]( FieldSpecificationBase const &,
+                               [&]( FieldSpecification const &,
                                     SortedArrayView< localIndex const > const & ){} );
   }
 
@@ -122,13 +123,13 @@ public:
    *               after application of value to the field.
    *
    * Interface function that applies a value directly to a field by looping
-   * through all FieldSpecificationBase objects present in the FieldSpecificationManager. Searches
+   * through all FieldSpecification objects present in the FieldSpecificationManager. Searches
    * for the string specified in fieldPath as a substring in the objectPath specified in the input
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
-   * the time parameter falls within the beginTime and endTime of the FieldSpecificationBase object,
-   * and calls FieldSpecificationBase::applyFieldValue(), and calls the lambda function
-   * to apply any operations required for completing the application of the value to the field in addition to
-   * setting the target field.
+   * the time parameter falls within the beginTime and endTime of the FieldSpecification object,
+   * and calls FieldSpecification::applyFieldValue(), and calls the lambda function
+   * to apply any operations required for completing the application of the value to the field in
+   * addition to setting the target field.
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
@@ -155,13 +156,13 @@ public:
    *                   after application of value to the field.
    *
    * Interface function that applies a value directly to a field by looping
-   * through all FieldSpecificationBase objects present in the FieldSpecificationManager. Calls the
+   * through all FieldSpecification objects present in the FieldSpecificationManager. Calls the
    * preLambda function to apply any operations required before the application of the value to the
    * field in addition to setting the target field. Searches for the string specified in fieldPath
    * as a substring in the objectPath specified in the input file, checks if fieldName is equal to
    * the fieldName specified in the input file, and check if the time parameter falls within the
-   * beginTime and endTime of the FieldSpecificationBase object, and calls
-   * FieldSpecificationBase::applyFieldValue(), and calls the postLambda function to apply any
+   * beginTime and endTime of the FieldSpecification object, and calls
+   * FieldSpecification::applyFieldValue(), and calls the postLambda function to apply any
    * operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */
@@ -202,11 +203,11 @@ public:
    *
    * This function loops through all available fields, checks to see if they
    * should be applied, and applies them. More specifically, this function simply checks
-   * values of fieldPath,fieldName, against each FieldSpecificationBase object contained in the
+   * values of fieldPath,fieldName, against each FieldSpecification object contained in the
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
   template< typename OBJECT_TYPE=dataRepository::Group,
-            typename BCTYPE = FieldSpecificationBase,
+            typename BCTYPE = FieldSpecification,
             typename LAMBDA >
   void apply( real64 const time,
               MeshLevel & mesh,
@@ -218,15 +219,14 @@ public:
     string const meshBodyName = mesh.getParent().getParent().getName();
     string const meshLevelName = mesh.getName();
 
-    // loop over all FieldSpecificationBase objects
+    // loop over all FieldSpecification objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-      integer const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
-          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
-      {
-        fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
-      }
+      FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs,
+                                                                    mesh,
+                                                                    std::forward< LAMBDA >( lambda ),
+                                                                    time,
+                                                                    fieldName );
     } );
   }
 
@@ -274,13 +274,17 @@ FieldSpecificationManager::
   GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
-         [&]( FieldSpecificationBase const & fs,
+         [&]( FieldSpecification const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group & targetGroup,
               string const & targetField )
   {
-    fs.applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs,
+                                                                                targetSet,
+                                                                                time,
+                                                                                targetGroup,
+                                                                                targetField );
     lambda( fs, targetSet );
   } );
 }
@@ -297,14 +301,18 @@ FieldSpecificationManager::
   GEOS_MARK_FUNCTION;
 
   apply( time, mesh, fieldName,
-         [&]( FieldSpecificationBase const & fs,
+         [&]( FieldSpecification const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group & targetGroup,
               string const & targetField )
   {
     preLambda( fs, targetSet );
-    fs.applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs,
+                                                                                targetSet,
+                                                                                time,
+                                                                                targetGroup,
+                                                                                targetField );
     postLambda( fs, targetSet );
   } );
 }

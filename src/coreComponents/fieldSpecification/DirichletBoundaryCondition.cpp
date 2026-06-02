@@ -24,7 +24,7 @@ namespace geos
 using namespace dataRepository;
 
 DirichletBoundaryCondition::DirichletBoundaryCondition( string const & name, Group * const parent ):
-  FieldSpecificationBase( name, parent )
+  FieldSpecification( name, parent )
 {
   // TODO Auto-generated constructor stub
 

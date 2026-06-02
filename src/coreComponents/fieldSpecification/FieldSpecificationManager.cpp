@@ -95,7 +95,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
-  this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
+  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )
   {
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
@@ -124,14 +124,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // Step 2: apply the boundary condition
 
-    fs.apply< Group >( mesh,
-                       [&]( FieldSpecificationBase const &,
-                            string const & setName,
-                            SortedArrayView< localIndex const > const & targetSet,
-                            Group & targetGroup,
-                            string const fieldName )
+    FieldSpecificationImpl::apply< Group >( fs,
+                                            mesh,
+                                            [&]( FieldSpecification const &,
+                                                 string const & setName,
+                                                 SortedArrayView< localIndex const > const & targetSet,
+                                                 Group & targetGroup,
+                                                 string const fieldName )
     {
-      InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
+      InputFlags const flag = fs.getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).getInputFlag();
 
       // 2.a) If we enter this loop, we know that the set has been created
       //      Fracture/fault sets are created later and the "apply" call silently ignores them
@@ -216,14 +217,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
       std::ostringstream errorMessageBuilder;
       errorMessageBuilder << GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
-                                       fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
+                                       fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
-                                       FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+                                       FieldSpecification::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       errorMessageBuilder << ( !registeredSets.empty() ?
                                GEOS_FMT( "Available set(s) are: {}",
                                          stringutilities::join( registeredSets, ", " ) ) :
                                GEOS_FMT( "No set are available for the targeted `{}`",
-                                         FieldSpecificationBase::viewKeyStruct::objectPathString() ) );
+                                         FieldSpecification::viewKeyStruct::objectPathString() ) );
 
       GEOS_THROW( errorMessageBuilder.str(), InputError, getDataContext() );
     }
@@ -263,22 +264,22 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           message << GEOS_FMT( "Set '{}' does not capture anything in the mesh ", setName );
         }
       }
-      auto errMode = fs.getReference< FieldSpecificationBase::SetErrorMode >(
-        FieldSpecificationBase::viewKeyStruct::errorSetModeString());
+      auto errMode = fs.getReference< FieldSpecification::SetErrorMode >(
+        FieldSpecification::viewKeyStruct::errorSetModeString());
 
-      if( errMode == FieldSpecificationBase::SetErrorMode::error && m_isSurfaceGenerationCase )
+      if( errMode == FieldSpecification::SetErrorMode::error && m_isSurfaceGenerationCase )
       {
-        errMode = FieldSpecificationBase::SetErrorMode::warning;
+        errMode = FieldSpecification::SetErrorMode::warning;
       }
 
       switch( errMode )
       {
-        case  FieldSpecificationBase::SetErrorMode::silent:
+        case  FieldSpecification::SetErrorMode::silent:
           break;
-        case  FieldSpecificationBase::SetErrorMode::error:
+        case  FieldSpecification::SetErrorMode::error:
           GEOS_THROW( message.str(), InputError, getDataContext() );
           break;
-        case  FieldSpecificationBase::SetErrorMode::warning:
+        case  FieldSpecification::SetErrorMode::warning:
           if( m_isSurfaceGenerationCase )
             message << "As the simulation includes a SurfaceGenerator, the set may be modified later";
           GEOS_WARNING( message.str() );
@@ -290,7 +291,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       std::ostringstream errorMessageBuilder;
       errorMessageBuilder << GEOS_FMT( "\n{}: there are no field named `{}` under the region `{}`.\n",
-                                       fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
+                                       fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::fieldNameString() ),
                                        fs.getFieldName(), fs.getObjectPath() );
 
       std::set< string > registeredFields;
@@ -317,18 +318,19 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
 void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
 {
-  this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
+  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )
   {
     if( fs.initialCondition() )
     {
-      fs.apply< dataRepository::Group >( mesh,
-                                         [&]( FieldSpecificationBase const & bc,
-                                              string const &,
-                                              SortedArrayView< localIndex const > const & targetObject,
-                                              Group & targetGroup,
-                                              string const fieldName )
+      FieldSpecificationImpl::apply< dataRepository::Group >( fs,
+                                                              mesh,
+                                                              [&]( FieldSpecification const & bc,
+                                                                   string const &,
+                                                                   SortedArrayView< localIndex const > const & targetObject,
+                                                                   Group & targetGroup,
+                                                                   string const fieldName )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetObject, 0.0, targetGroup, fieldName );
       } );
     }
   } );

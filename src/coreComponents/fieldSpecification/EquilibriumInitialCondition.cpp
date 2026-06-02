@@ -19,6 +19,7 @@
 
 #include "EquilibriumInitialCondition.hpp"
 
+#include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -27,7 +28,7 @@ namespace geos
 using namespace dataRepository;
 
 EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, Group * parent ):
-  FieldSpecificationBase( name, parent )
+  FieldSpecification( name, parent )
 {
   registerWrapper( viewKeyStruct::datumElevationString(), &m_datumElevation ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -77,18 +78,18 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Phase contacts' elevations [m]" );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::initialConditionString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::initialConditionString() ).
     setInputFlag( InputFlags::FALSE );
   initialCondition( false ); // to make sure this is not called by applyInitialConditions
 
-  getWrapper< string_array >( FieldSpecificationBase::viewKeyStruct::setNamesString() ).
+  getWrapper< string_array >( FieldSpecification::viewKeyStruct::setNamesString() ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::FALSE );
   addSetName( "all" );

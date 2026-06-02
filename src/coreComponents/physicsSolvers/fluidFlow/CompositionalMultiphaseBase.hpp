@@ -25,7 +25,6 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
 #include "constitutive/capillaryPressure/Layouts.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
@@ -457,23 +456,6 @@ protected:
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
-  /**
-   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
-   * @param[in] time_n the time at the beginning of the step
-   * @param[in] dt the time step
-   * @param[in] mesh the mesh level object
-   * @param[in] logMessage the log message issued by the solver if the bc is called
-   * @param[in] fieldKey the key of the field specified in the xml file
-   * @param[in] boundaryFieldKey the key of the boundary field
-   */
-  template< typename OBJECT_TYPE >
-  void applyFieldValue( real64 const & time_n,
-                        real64 const & dt,
-                        MeshLevel & mesh,
-                        char const logMessage[],
-                        string const fieldKey,
-                        string const boundaryFieldKey ) const;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -563,42 +545,6 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
-
-template< typename OBJECT_TYPE >
-void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   MeshLevel & mesh,
-                                                   char const logMessage[],
-                                                   string const fieldKey,
-                                                   string const boundaryFieldKey ) const
-{
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  fsManager.apply< OBJECT_TYPE >( time_n + dt,
-                                  mesh,
-                                  fieldKey,
-                                  [&]( FieldSpecificationBase const & fs,
-                                       string const & setName,
-                                       SortedArrayView< localIndex const > const & lset,
-                                       OBJECT_TYPE & targetGroup,
-                                       string const & )
-  {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
-    }
-
-    // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  targetGroup,
-                                                  boundaryFieldKey );
-  } );
-}
 
 template< typename SUBREGION_TYPE >
 void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,

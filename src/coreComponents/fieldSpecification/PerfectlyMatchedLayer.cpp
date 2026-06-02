@@ -25,7 +25,7 @@ namespace geos
 using namespace dataRepository;
 
 PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const parent ):
-  FieldSpecificationBase( name, parent )
+  FieldSpecification( name, parent )
 {
   registerWrapper( viewKeyStruct::xMinString(), &m_xMin ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -66,11 +66,11 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
     setApplyDefaultValue( {-1.0, -1.0, -1.0} ).
     setDescription( "Wave speed in the PML, at right, back, and bottom sides, used to compute the damping profile" );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::initialConditionString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::initialConditionString() ).
     setInputFlag( InputFlags::FALSE );
   initialCondition( false ); // to make sure this is not called by applyInitialConditions
 

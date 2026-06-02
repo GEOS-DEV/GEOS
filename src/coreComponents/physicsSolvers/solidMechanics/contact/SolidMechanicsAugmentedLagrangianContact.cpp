@@ -37,6 +37,7 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -783,12 +784,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           PorousSolid< ElasticIsotropic, ConstantPermeability >,
-                           CellElementSubRegion >( mesh,
-                                                   poromechanicsRegionNames,
-                                                   getDiscretizationName(),
-                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsALMContactPorousKernelsDispatchTypeList >( mesh,
+                                                                                    poromechanicsRegionNames,
+                                                                                    getDiscretizationName(),
+                                                                                    FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );
@@ -802,43 +802,50 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
   {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    //fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    //{
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+    arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
+
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+    arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
+    arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [ = ]
+                                      GEOS_DEVICE ( localIndex const kfe )
     {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+      // Compute the slip
+      real64 const shearDisp[2] = { dispJump[kfe][1],
+                                    dispJump[kfe][2] };
+      slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( shearDisp );
 
-      arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
+      // Compute current Tau and limit Tau
+      real64 const tau[2] = { traction[kfe][1],
+                              traction[kfe][2] };
+      tangentialTraction[kfe] = LvArray::tensorOps::l2Norm< 2 >( tau );
 
-      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-      arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      oldFractureState[kfe] = fractureState[kfe];
 
-      arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
-      arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const kfe )
-      {
-        // Compute the slip
-        real64 const deltaDisp[2] = { deltaDispJump[kfe][1],
-                                      deltaDispJump[kfe][2] };
-        slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( deltaDisp );
-
-        // Compute current Tau and limit Tau
-        real64 const tau[2] = { traction[kfe][1],
-                                traction[kfe][2] };
-        tangentialTraction[kfe] = LvArray::tensorOps::l2Norm< 2 >( tau );
-
-        LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
-        LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
-        oldFractureState[kfe] = fractureState[kfe];
-
-      } );
     } );
   } );
+  // } );
 
 }
 

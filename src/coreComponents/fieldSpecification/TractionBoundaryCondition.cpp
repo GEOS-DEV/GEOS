@@ -21,6 +21,7 @@
 
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -29,7 +30,7 @@ namespace geos
 using namespace dataRepository;
 
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
-  FieldSpecificationBase( name, parent ),
+  FieldSpecification( name, parent ),
   m_tractionType( TractionType::vector ),
   m_inputStress{},
   m_scaleSet(),
@@ -66,11 +67,11 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The flag to indicate whether to apply the nodal scale on the traction magnitude" );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 }
 
