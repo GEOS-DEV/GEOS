@@ -15,8 +15,10 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#include "dataRepository/ProblemManagerBase.hpp"
 #include "fileIO/timeHistory/HDFFile.hpp"
 #include "fileIO/LogLevelsInfo.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
@@ -130,7 +132,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOS );
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = dataRepository::getProblemManagerBase( *this ).getDomainPartition();
   GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
                           GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )

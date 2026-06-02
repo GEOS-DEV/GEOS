@@ -21,6 +21,7 @@
 #ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
+#include "dataRepository/GlobalViewKeys.hpp"
 #include "dataRepository/ProblemManagerBase.hpp"
 
 namespace geos
@@ -241,20 +242,27 @@ public:
   struct groupKeysStruct
   {
     /// @return Numerical methods string
-    static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
-    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
-    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
-    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
-    dataRepository::GroupKey externalDataSourceManager = { "ExternalDataSource" };        ///< External Data Source key
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
-    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
-    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
-    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
-    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
+    // static constexpr char const * numericalMethodsManagerString()
+    // { return dataRepository::GlobalViewKeys::numericalMethodsManager(); }
+    dataRepository::GroupKey commandLine               = { dataRepository::GlobalViewKeys::commandLine() };               ///< Command line
+                                                                                                                          ///< key
+    dataRepository::GroupKey constitutiveManager       = { dataRepository::GlobalViewKeys::constitutiveManager() };       ///< Constitutive
+                                                                                                                          ///< key
+    dataRepository::GroupKey domain                    = { dataRepository::GlobalViewKeys::domain() };                    ///< Domain key
+    dataRepository::GroupKey eventManager              = { dataRepository::GlobalViewKeys::eventManager() };              ///< Events key
+    dataRepository::GroupKey externalDataSourceManager = { dataRepository::GlobalViewKeys::externalDataSourceManager() }; ///< External Data
+                                                                                                                          ///< Source key
+    dataRepository::GroupKey fieldSpecificationManager = { dataRepository::GlobalViewKeys::fieldSpecificationManager() }; ///< Field
+                                                                                                                          ///< specification
+                                                                                                                          ///< key
+    dataRepository::GroupKey functionManager           = { dataRepository::GlobalViewKeys::functionManager() };           ///< Functions key
+    dataRepository::GroupKey geometricObjectManager    = { dataRepository::GlobalViewKeys::geometricObjectManager() };    ///< Geometry key
+    dataRepository::GroupKey meshManager               = { dataRepository::GlobalViewKeys::meshManager() };               ///< Mesh key
+    dataRepository::GroupKey numericalMethodsManager   = { dataRepository::GlobalViewKeys::numericalMethodsManager() };   ///< Numerical
+                                                                                                                          ///< methods key
+    dataRepository::GroupKey outputManager             = { dataRepository::GlobalViewKeys::outputManager() };             ///< Outputs key
+    dataRepository::GroupKey physicsSolverManager      = { dataRepository::GlobalViewKeys::physicsSolverManager() };      ///< Solvers key
+    dataRepository::GroupKey tasksManager              = { dataRepository::GlobalViewKeys::tasksManager() };              ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
   /**

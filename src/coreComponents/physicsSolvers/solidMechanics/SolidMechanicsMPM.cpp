@@ -30,13 +30,13 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionBase.hpp"
+#include "dataRepository/ProblemManagerBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
@@ -469,7 +469,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 {
   PhysicsSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = dataRepository::getProblemManagerBase( *this ).getDomainPartition();
 
   Group & meshBodies = domain.getMeshBodies();
 
