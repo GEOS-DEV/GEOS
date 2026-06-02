@@ -50,6 +50,7 @@ namespace geos
 namespace dataRepository
 {
 class Group;
+class ProblemManagerBase;
 }
 
 class ProblemManager;
@@ -182,6 +183,10 @@ public:
    *   include @c ProblemManager.hpp.
    */
   dataRepository::Group & getProblemManagerAsGroup();
+
+  dataRepository::ProblemManagerBase & getProblemManagerBase();
+
+  dataRepository::ProblemManagerBase const & getProblemManagerBase() const;
 
   /**
    * @brief Return the FieldSpecificationManager.

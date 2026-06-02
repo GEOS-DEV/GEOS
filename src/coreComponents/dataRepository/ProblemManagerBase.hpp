@@ -79,6 +79,28 @@ public:
 
 };
 
+inline ProblemManagerBase & getProblemManagerBase( Group & group )
+{
+  Group * current = &group;
+  while( current->hasParent() )
+  {
+    current = &current->getParent();
+  }
+  ProblemManagerBase * const root = dynamic_cast< ProblemManagerBase * >( current );
+  return *root;
+}
+
+inline ProblemManagerBase const & getProblemManagerBase( Group const & group )
+{
+  Group const * current = &group;
+  while( current->hasParent() )
+  {
+    current = &current->getParent();
+  }
+  ProblemManagerBase const * const root = dynamic_cast< ProblemManagerBase const * >( current );
+  return *root;
+}
+
 } /* namespace dataRepository */
 } /* namespace geos */
 
