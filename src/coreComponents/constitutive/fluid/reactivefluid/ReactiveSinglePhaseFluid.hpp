@@ -52,6 +52,7 @@ enum class ChemicalSystemType : integer
   carbonate,
   carbonateAllEquilibrium,
   ultramafic,
+  forge,
   momasEasy,
   momasMedium,
   chainSerialAllKinetic
@@ -227,9 +228,10 @@ protected:
   };
 
   std::variant<
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::forgeSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType > >
@@ -284,6 +286,20 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
+      case ChemicalSystemType::forge:
+        return ReactionKernelWrapper< forgeSystemType >( m_primarySpeciesAggregateConcentration,
+                                                                           m_primarySpeciesMobileAggregateConcentration,
+                                                                           m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                           m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                           m_initialPrimarySpeciesConcentration,
+                                                                           m_secondarySpeciesConcentration,
+                                                                           m_kineticReactionRates,
+                                                                           m_aggregateSpeciesRates,
+                                                                           m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                           m_numPrimarySpecies,
+                                                                           m_numSecondarySpecies,
+                                                                           m_numKineticReactions,
+                                                                           forgeSystem );
       case ChemicalSystemType::chainSerialAllKinetic:
         return ReactionKernelWrapper< serialAllKineticType >( m_primarySpeciesAggregateConcentration,
                                                               m_primarySpeciesMobileAggregateConcentration,
@@ -520,6 +536,7 @@ ENUM_STRINGS( ChemicalSystemType,
               "carbonate",
               "carbonateAllEquilibrium",
               "ultramafic",
+              "forge",
               "momasEasy",
               "momasMedium",
               "chainSerialAllKinetic" );

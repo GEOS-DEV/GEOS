@@ -47,18 +47,47 @@ using namespace dataRepository;
 using namespace constitutive;
 
 template< typename POROUSWRAPPER_TYPE >
-void updatePorosityAndPermeabilityFromPressureAndReactions( POROUSWRAPPER_TYPE porousWrapper,
-                                                            ElementSubRegionBase & subRegion,
-                                                            arrayView1d< real64 const > const & pressure,
-                                                            arrayView2d< real64 const, compflow::USD_COMP > const & kineticReactionMolarIncrements )
+void updatePorosityAndPermeabilityFromPressureTemperatureAndReactions( POROUSWRAPPER_TYPE porousWrapper,
+                                                                       ElementSubRegionBase & subRegion,
+                                                                       arrayView1d< real64 const > const & pressure,
+                                                                       arrayView1d< real64 const > const & temperature,
+                                                                       arrayView2d< real64 const, compflow::USD_COMP > const & kineticReactionMolarIncrements )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateStateFromPressureAndReactions( k, q,
-                                                         pressure[k],
-                                                         kineticReactionMolarIncrements[k] );
+      porousWrapper.updateStateFromPressureTemperatureAndReactions( k, q,
+                                                                    pressure[k],
+                                                                    temperature[k],
+                                                                    kineticReactionMolarIncrements[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityReactionsFixedStress( POROUSWRAPPER_TYPE porousWrapper,
+                                                        ElementSubRegionBase & subRegion,
+                                                        arrayView1d< real64 const > const & pressure,
+                                                        arrayView1d< real64 const > const & pressure_k,
+                                                        arrayView1d< real64 const > const & pressure_n,
+                                                        arrayView1d< real64 const > const & temperature,
+                                                        arrayView1d< real64 const > const & temperature_k,
+                                                        arrayView1d< real64 const > const & temperature_n,
+                                                        arrayView2d< real64 const, compflow::USD_COMP > const & kineticReactionMolarIncrements )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateStateReactionsFixedStress( k, q,
+                                                     pressure[k],
+                                                     pressure_k[k],
+                                                     pressure_n[k],
+                                                     temperature[k],
+                                                     temperature_k[k],
+                                                     temperature_n[k],
+                                                     kineticReactionMolarIncrements[k] );
     }
   } );
 }
@@ -234,14 +263,14 @@ void SinglePhaseReactiveTransport::validateConstitutiveModels( DomainPartition &
 
       PorosityBase const & porosity = getConstitutiveModel< PorosityBase >( subRegion, porosityModelName );
 
-      GEOS_THROW_IF( m_isUpdateReactivePorosity && (porosity.getCatalogName() != "ReactivePorosity"),
+      GEOS_THROW_IF( m_isUpdateReactivePorosity && (porosity.getCatalogName() != "ReactivePorosity" && porosity.getCatalogName() != "BiotReactivePorosity"),
                      GEOS_FMT( "SinglePhaseReactiveTransport {}: the reaction porosity update option is enabled in the solver, but the porosity model {} is not for reactive porosity",
                                getDataContext(), porosity.getDataContext() ),
                      InputError );
 
       if( m_isUpdateReactivePorosity )
       {
-        ReactivePorosity const & reactivePorosity = getConstitutiveModel< ReactivePorosity >( subRegion, porosityModelName );
+        ReactivePorosityBase const & reactivePorosity = getConstitutiveModel< ReactivePorosityBase >( subRegion, porosityModelName );
 
         GEOS_THROW_IF_NE_MSG( reactivePorosity.numKineticReactions(), m_numKineticReactions,
                               GEOS_FMT( "Mismatch in number of kinetic reactions, check the number of components input in porosity model {}",
@@ -687,21 +716,41 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
   if( m_isUpdateReactivePorosity )
   {
     arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const kineticReactionMolarIncrements = subRegion.getField< fields::flow::kineticReactionMolarIncrements >();
 
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-    constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-      updatePorosityAndPermeabilityFromPressureAndReactions( porousWrapper, subRegion, pressure, kineticReactionMolarIncrements );
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
+        arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
+        arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
+        arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
+        updatePorosityAndPermeabilityReactionsFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n, kineticReactionMolarIncrements );
+      }
+      else
+      {
+        updatePorosityAndPermeabilityFromPressureTemperatureAndReactions( porousWrapper, subRegion, pressure, temperature, kineticReactionMolarIncrements );
+      }
     } );
   }
   else
   {
     FlowSolverBase::updatePorosityAndPermeability( subRegion );
   }
+}
+
+// To modify for chemical coupling later
+void SinglePhaseReactiveTransport::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  FlowSolverBase::updatePorosityAndPermeability( subRegion );
 }
 
 void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const
@@ -749,7 +798,7 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-    constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
       updateSurfaceAreaFromReactions( porousWrapper, subRegion, initialSurfaceArea, surfaceArea );

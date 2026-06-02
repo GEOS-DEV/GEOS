@@ -91,7 +91,7 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_solventDensity = ultramaficSystem.getSolventDensity();
       break;
 
-    case ChemicalSystemType::carbonate:
+  case ChemicalSystemType::carbonate:
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 10;
       m_numKineticReactions = 1;
@@ -103,6 +103,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
       m_solventDensity = carbonateSystemAllEquilibrium.getSolventDensity();
+      break;
+
+    case ChemicalSystemType::forge:
+      m_numPrimarySpecies = 10;
+      m_numSecondarySpecies = 19;
+      m_numKineticReactions = 5;
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:

@@ -106,7 +106,8 @@ public:
 
   using PorosityAccessors =
     StencilMaterialAccessors< constitutive::PorosityBase,
-                              fields::porosity::referencePorosity >;
+                              fields::porosity::referencePorosity,
+                              fields::porosity::porosity >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -160,6 +161,7 @@ public:
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
+    m_porosity( porosityAccessors.get( fields::porosity::porosity {} ) ),
     m_hasDiffusion( hasDiffusion ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
     m_solventDensity( solventDensity )
@@ -380,14 +382,14 @@ public:
             localIndex const ei_up  = sei[k_up];
 
             // computation of the upwinded species flux
-            diffusionFlux[is] += m_referencePorosity[er_up][esr_up][ei_up] * speciesGrad[is];
+            diffusionFlux[is] += m_porosity[er_up][esr_up][ei_up][0] * speciesGrad[is];
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
             {
               for( integer js = 0; js < numSpecies; ++js )
               {
-                dDiffusionFlux_dLogConc[ke][is][js] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dLogConc[ke][js];
+                dDiffusionFlux_dLogConc[ke][is][js] += m_porosity[er_up][esr_up][ei_up][0] * dSpeciesGrad_i_dLogConc[ke][js];
               }
             }
 
@@ -500,6 +502,9 @@ protected:
 
   /// View on the reference porosity
   ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;
+
+  /// View on the porosity
+  ElementViewConst< arrayView2d< real64 const > > const m_porosity;
 
   /// Flag of adding the diffusion term
   integer const m_hasDiffusion;

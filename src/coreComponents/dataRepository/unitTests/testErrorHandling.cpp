@@ -28,6 +28,8 @@
 #include <filesystem>
 #include <csignal>
 
+#include <csignal>
+
 using namespace geos;
 using namespace dataRepository;
 

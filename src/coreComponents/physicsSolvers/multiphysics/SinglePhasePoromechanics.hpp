@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransport.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
@@ -122,11 +123,11 @@ protected:
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override
   {
     GEOS_MARK_FUNCTION;
 
-    Base::mapSolutionBetweenSolvers( domain, solverType );
+    Base::mapSolutionBetweenSolvers( dt, domain, solverType );
 
     /// After the solid mechanics solver
     if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )

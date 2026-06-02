@@ -47,7 +47,7 @@ DECLARE_FIELD( logPrimarySpeciesConcentration_n,
                "logPrimarySpeciesConcentration_n",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Natural log of primary species concentration (molality) at the previous converged time step" );
 
@@ -71,7 +71,7 @@ DECLARE_FIELD( primarySpeciesAggregateMole_n,
                "primarySpeciesAggregateMole_n",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Aggregate amount of primary species in mole at the previous converged time step" );
 
@@ -95,7 +95,7 @@ DECLARE_FIELD( surfaceArea,
                "surfaceArea",
                array2dLayoutComp,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Surface area for surface reactions." );
 
@@ -103,7 +103,7 @@ DECLARE_FIELD( initialSurfaceArea,
                "initialSurfaceArea",
                array2dLayoutComp,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Initial surface area for surface reactions." );
 
