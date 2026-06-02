@@ -44,8 +44,8 @@ struct GlobalViewKeys
   static constexpr char const * meshManager()               { return "Mesh"; }
   static constexpr char const * numericalMethodsManager()   { return "NumericalMethods"; }
   static constexpr char const * outputManager()             { return "Outputs"; }
-  static constexpr char const * physicSolverManager()       { return "Solvers"; }
-  static constexpr char const * taskManager()               { return "Tasks"; }
+  static constexpr char const * physicsSolverManager()      { return "Solvers"; }
+  static constexpr char const * tasksManager()              { return "Tasks"; }
   static constexpr char const * cellManager()               { return "cellManager"; }
   static constexpr char const * particleManager()           { return "particleManager"; }
   static constexpr char const * partitionManager()          { return "partitionManager"; }
