@@ -23,6 +23,8 @@
 #ifndef GEOS_COMMON_FORMAT_TABLETYPES_HPP
 #define GEOS_COMMON_FORMAT_TABLETYPES_HPP
 
+#include "common/DataTypes.hpp"
+
 namespace geos
 {
 
@@ -37,6 +39,77 @@ enum class CellType : integer
   MergeNext,
   Hidden
 };
+
+/**
+ * @brief Class for retrieving errors in the table classes
+ */
+class TableErrorListing
+{
+
+public:
+  /**
+   * @brief Add an error that will be display at the end of the table
+   * @param text The string error to display.
+   */
+  void addError( string_view text );
+
+  /**
+   * @return true if an error has already been added
+   */
+  bool hasErrors() const;
+
+  /**
+   * @brief Clear all error when calling toString()
+   */
+  void clear();
+
+  /// The iterator alias for the  errors vector of string
+  using Iterator = stdVector< string >::const_iterator;
+
+  /**
+   * @return An Iterator pointing to the first element of the errors vector
+   */
+  Iterator begin() const
+  { return m_errorList.begin(); }
+
+  /**
+   * @return An Iterator pointing to the last element of the errors vector
+   */
+  Iterator end() const
+  { return m_errorList.end(); }
+
+  /**
+   * @brief Append a vector of string to the errors vector.
+   * @param errors A vector of string to append
+   */
+  void appendErrors( stdVector< string > & errors )
+  { m_errorList.insert( m_errorList.end(), errors.begin(), errors.end() );}
+
+  /**
+   * @return A const reference to the errors vector.
+   */
+  stdVector< string > const & getErrors() const
+  { return m_errorList; }
+
+  /**
+   * @return A reference to the errors vector.
+   */
+  stdVector< string > & getErrors()
+  { return m_errorList; }
+
+private:
+  /// Contain all the errors  to display at the end of the table
+  stdVector< string > m_errorList;
+};
+
+inline void TableErrorListing::addError( string_view text )
+{ m_errorList.emplace_back( text ); }
+
+inline bool TableErrorListing::hasErrors() const
+{ return !m_errorList.empty(); }
+
+inline void TableErrorListing::clear()
+{ m_errorList.clear(); }
 
 }
 

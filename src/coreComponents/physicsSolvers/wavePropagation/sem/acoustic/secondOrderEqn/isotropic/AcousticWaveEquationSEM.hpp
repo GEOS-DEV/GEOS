@@ -25,6 +25,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 
 namespace geos
 {
@@ -80,6 +81,11 @@ public:
                                        DomainPartition & domain,
                                        integer const computeGradient ) override;
 
+  /**
+   * @brief Get the minimum wavespeed on a mesh
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
+
   /**@}*/
 
   /**
@@ -87,7 +93,7 @@ public:
    * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
+  virtual void addSourceToRightHandSide( integer const cycleNumber, arrayView1d< real32 > const rhs );
 
 
   /**
@@ -123,12 +129,12 @@ public:
    */
   real64 explicitStepInternal( real64 const & time_n,
                                real64 const & dt,
-                               integer const & cycleNumber,
+                               integer const cycleNumber,
                                DomainPartition & domain );
 
   void computeUnknowns( real64 const & time_n,
                         real64 const & dt,
-                        integer const & cycleNumber,
+                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
                         string_array const & regionNames );

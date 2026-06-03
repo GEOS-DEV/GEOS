@@ -26,7 +26,6 @@
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       contactPenaltyStiffness="0.0e8">
       <NonlinearSolverParameters

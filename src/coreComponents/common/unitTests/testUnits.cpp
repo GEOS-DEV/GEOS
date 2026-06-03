@@ -39,7 +39,7 @@ TEST( Units, SystemDurationFormatTest )
 {
   using namespace std::chrono;
 
-  std::vector< DurationCase > durationCases = {
+  stdVector< DurationCase > durationCases = {
 
     DurationCase(
       "00h00m00s (1.11e-07 s)",
@@ -154,4 +154,12 @@ TEST( Units, SystemDurationFormatTest )
                     TimeFormatInfo::fromDuration( durationCase.m_systemDuration ).toString().c_str() ) << errorInfo;
     }
   }
+}
+
+
+int main( int ac, char * av[] )
+{
+  ::testing::InitGoogleTest( &ac, av );
+  int const result = RUN_ALL_TESTS();
+  return result;
 }

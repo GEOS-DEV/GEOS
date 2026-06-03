@@ -70,7 +70,7 @@ struct PetscInterface
    */
   static std::unique_ptr< PreconditionerBase< PetscInterface > >
   createPreconditioner( LinearSolverParameters params,
-                        array1d< PetscVector > const & nearNullKernel );
+                        arrayView1d< PetscVector const > nearNullKernel );
 
   /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;

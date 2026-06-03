@@ -134,7 +134,8 @@ HDFHistoryIO::HDFHistoryIO( string const & filename,
     m_typeCount *= m_dims[dd];
   }
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
-  m_bufferHead = &m_dataBuffer[0];
+
+  m_bufferHead = m_dataBuffer.data();
 }
 
 void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
@@ -213,10 +214,10 @@ void HDFHistoryIO::init( bool existsOkay )
   // create a dataset in the file if needed, don't erase file
   if( subcomm != MPI_COMM_NULL )
   {
-    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+    GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                       GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
     HDFFile target( m_filename, false, true, subcomm );
-    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+    GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                       GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
@@ -241,7 +242,7 @@ void HDFHistoryIO::init( bool existsOkay )
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
-      GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+      GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                         GEOS_FMT( "TimeHistory: {}, created hdf5 dataset {}.", m_filename, m_name ) );
       H5Dclose( dataset );
       H5Sclose( space );
@@ -255,7 +256,7 @@ void HDFHistoryIO::init( bool existsOkay )
     {
       GEOS_ERROR( "Dataset (" + m_name + ") already exists in output file: " + m_filename );
     }
-    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+    GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                       GEOS_FMT( "TimeHistory: closed file {}.", m_filename ) );
   }
 }
@@ -291,10 +292,10 @@ void HDFHistoryIO::write()
 
       if( m_subcomm != MPI_COMM_NULL )
       {
-        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+        GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                           GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
         HDFFile target( m_filename, false, true, m_subcomm );
-        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+        GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                           GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
 
         if( !target.hasDataset( m_name ) )
@@ -325,7 +326,7 @@ void HDFHistoryIO::write()
         hid_t dxplId = H5Pcreate( H5P_DATASET_XFER );
         H5Pset_dxpl_mpio( dxplId, H5FD_MPIO_COLLECTIVE );
         H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, dxplId, dataBuffer );
-        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+        GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                           GEOS_FMT( "TimeHistory: wrote row {} of dataset '{}'.", m_writeHead, m_name ) );
         H5Pclose( dxplId );
 
@@ -344,7 +345,7 @@ void HDFHistoryIO::write()
         H5Sclose( memspace );
         H5Sclose( filespace );
         H5Dclose( dataset );
-        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+        GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                           GEOS_FMT( "TimeHistory: closing file {}.", m_filename ) );
       }
       m_writeHead++;
@@ -402,7 +403,7 @@ size_t HDFHistoryIO::getRowBytes()
 void HDFHistoryIO::emptyBuffer()
 {
   m_bufferedCount = 0;
-  m_bufferHead = &m_dataBuffer[0];
+  m_bufferHead = m_dataBuffer.data();
 }
 
 void HDFHistoryIO::resizeBuffer()
@@ -412,7 +413,8 @@ void HDFHistoryIO::resizeBuffer()
   m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 
   size_t const capacity = m_dataBuffer.size();
-  size_t const inUse = m_bufferHead - &m_dataBuffer[0];
+  size_t const inUse = capacity == 0 ? 0 : m_bufferHead - m_dataBuffer.data();
+
   size_t const nextRow = getRowBytes( );
   // if needed, resize the buffer
   if( inUse + nextRow > capacity )
@@ -421,7 +423,7 @@ void HDFHistoryIO::resizeBuffer()
     m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
   }
   // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
-  m_bufferHead = &m_dataBuffer[0] + inUse;
+  m_bufferHead = m_dataBuffer.data()==nullptr ? nullptr : m_dataBuffer.data() + inUse;
 }
 
 void HDFHistoryIO::updateCollectingCount( localIndex count )

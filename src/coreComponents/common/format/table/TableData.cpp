@@ -23,6 +23,47 @@
 namespace geos
 {
 
+TableData::TableData():
+  m_errors( std::make_unique< TableErrorListing >() )
+{}
+
+TableData::TableData( TableData const & other ):
+  m_rows( other.m_rows ),
+  m_errors( std::make_unique< TableErrorListing >( *other.m_errors ) )
+{}
+
+TableData::TableData( TableData && other ):
+  m_rows( std::move( other.m_rows )),
+  m_errors( std::move( other.m_errors ))
+{}
+
+TableData & TableData::operator=( TableData && other )
+{
+  if( this != &other )
+  {
+    m_rows = std::move( other.m_rows );
+    m_errors = std::move( other.m_errors );
+  }
+  return *this;
+}
+
+TableData & TableData::operator=( TableData const & other )
+{
+  if( this != &other )
+  {
+    m_rows = other.m_rows;
+    *m_errors = *other.m_errors;
+  }
+  return *this;
+}
+
+bool TableData::operator<( TableData const & other ) const
+{
+  return m_rows < other.m_rows;
+}
+
+
+
 void TableData::addRow( stdVector< TableData::CellData > const & row )
 {
   m_rows.push_back( row );
@@ -32,45 +73,59 @@ void TableData::addSeparator()
 {
   if( m_rows.empty())
   {
-    GEOS_ERROR( "Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
+    m_errors->addError( "Warning : Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
   }
-
-  integer rowSize = m_rows[0].size();
-  m_rows.emplace_back( stdVector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
+  else
+  {
+    integer rowSize = m_rows.front().size();
+    m_rows.emplace_back( stdVector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
+  }
 
 }
 
 void TableData::clear()
 {
   m_rows.clear();
+  getErrorsList().clear();
 }
 
-stdVector< stdVector< TableData::CellData > > const & TableData::getTableDataRows() const
-{
-  return m_rows;
-}
-
-void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
-                                      arraySlice1d< real64 const > dim1AxisCoordinates,
+void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                                      arrayView1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
                                       bool columnMajorInputValues )
 {
-  arraySlice1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
-  arraySlice1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
+  arrayView1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
+  arrayView1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
   integer const nCol = columAxisCoordinates.size();
   integer const nRow = rowAxisCoordinates.size();
-  // TODO: 1. restore the table non-blocking error system. 2. add this assert 3. add any other error to it.
-  GEOS_ASSERT( nRow * nCol == values.size() );
+
+  array1d< real64 > wellFormedValues( values.size() );
+  wellFormedValues = values;
+  if( values.size() < nRow * nCol )
+  {
+    m_errors->addError( GEOS_FMT( "Warning: Not enough for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
+    wellFormedValues.resizeDefault( nRow * nCol, 0 );
+  }
+  else if( values.size() > nRow * nCol )
+  {
+    m_errors->addError( GEOS_FMT( "Warning: Too much data for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values."
+                                  " Data may be misaligned",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
+  }
+
   for( integer y = 0; y < nRow; y++ )
   {
     for( integer x = 0; x < nCol; x++ )
     {
-      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], values[ x + y*nCol ] );
+      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellFormedValues[ x + y*nCol ] );
     }
   }
 }
 
-TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
+TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                           string_view rowAxisDescription,
                                                           string_view columnAxisDescription,
                                                           arrayView1d< real64 const > const values,
@@ -79,7 +134,7 @@ TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< rea
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-  collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
+  collectTableValues( coordX, coordY, values, columnMajorValues );
   return buildTableData( valueDescription, rowFmt, columnFmt );
 }
 
@@ -94,6 +149,11 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   for( auto const & columnValue : m_columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
+  }
+
+  for( auto const & error : *m_errors )
+  {
+    tableData1D.tableData.getErrorsList().addError( error );
   }
 
   // insert row value and row cell values
@@ -111,6 +171,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
       {
         currentRowValues.push_back( {CellType::Value, ""} );
       }
+
       currentRowValues.push_back( {CellType::Value, GEOS_FMT( "{}", cellValue )} );
     }
 

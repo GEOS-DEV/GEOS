@@ -63,7 +63,7 @@ public:
    * @param nearNullKernel the user-provided near null kernel
    */
   HyprePreconditioner( LinearSolverParameters params,
-                       arrayView1d< HypreVector > const & nearNullKernel );
+                       arrayView1d< HypreVector const > nearNullKernel );
 
   /**
    * @brief Destructor.

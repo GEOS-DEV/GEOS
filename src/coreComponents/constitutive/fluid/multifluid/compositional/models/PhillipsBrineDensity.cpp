@@ -232,8 +232,8 @@ void PhillipsBrineDensity::calculateEosWaterMolarVolume( arraySlice1d< real64 co
   integer const numDofs = 2 + numComps;
 
   // Create pure water composition
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > waterComposition( numComps );
-  stackArray1d< real64, 2 + MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
+  StackArray< real64, 1, MultiFluidConstants::MAX_NUM_COMPONENTS > waterComposition( numComps );
+  StackArray< real64, 1, 2 + MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
   for( integer ic = 0; ic < numComps; ++ic )
   {
     waterComposition[ic] = 0.0;
@@ -396,6 +396,7 @@ PhillipsBrineDensity::makeVolumeShiftTable( string const & name,
   volumeShiftTable->setTableCoordinates( tableCoords, { units::Pressure, units::Temperature } );
   volumeShiftTable->setTableValues( volumeShift, units::MolarVolume );
   volumeShiftTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  volumeShiftTable->initializeFunction();
   return volumeShiftTable;
 }
 

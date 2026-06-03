@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   // *** MultiFluid-specific interface
 
@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a stdVector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a stdVector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -650,8 +650,6 @@ private:
 
 private:
 
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
@@ -659,17 +657,10 @@ private:
 
 protected:
 
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
-
   virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  int m_useMass;
+  integer m_useMass;
 
   /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;
@@ -790,7 +781,6 @@ MultiFluidBase::KernelWrapper::
     totalMolality += compMoleFrac[ic];
   }
 
-  GEOS_ERROR_IF( totalMolality < LvArray::NumericLimits< real64 >::epsilon, "Zero total molality, all component concentrations are equal to zero." );
   real64 const totalMolalityInv = 1.0 / totalMolality;
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -1030,27 +1020,16 @@ MultiFluidBase::KernelWrapper::
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+  // Space for dummy derivatives
+  StackArray< real64, 4, 2*maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > derivatives( 2, 1, numPhase, numComp+2 );
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseMassDensAndDeriv { phaseMassDens, dPhaseMassDens[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseEnthalpyAndDeriv { phaseEnthalpy, dPhaseEnthalpy[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseInternalEnergyAndDeriv { phaseInternalEnergy, dPhaseInternalEnergy[0][0] };
+  using SliceType = MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >;
 
   computeInternalEnergy( pressure,
-                         phaseFracAndDeriv,
-                         phaseMassDensAndDeriv,
-                         phaseEnthalpyAndDeriv,
-                         phaseInternalEnergyAndDeriv );
+                         SliceType { phaseFrac, derivatives[0][0] },
+                         SliceType { phaseMassDens, derivatives[0][0] },
+                         SliceType { phaseEnthalpy, derivatives[0][0] },
+                         SliceType { phaseInternalEnergy, derivatives[1][0] } );
 }
 
 GEOS_HOST_DEVICE

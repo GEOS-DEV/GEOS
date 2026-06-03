@@ -38,13 +38,21 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
     setDescription( " Reference normal stress." );
 }
 
-BartonBandis::~BartonBandis()
-{}
+void BartonBandis::postInputInitialization()
+{
+  GEOS_THROW_IF( m_referenceNormalStress <= 0.0,
+                 GEOS_FMT( "The provided reference stress is zero or negative. Value: {}",
+                           m_referenceNormalStress ),
+                 InputError, getDataContext() );
+
+}
 
 BartonBandisUpdates BartonBandis::createKernelWrapper() const
 {
   return KernelWrapper( m_aperture0, m_referenceNormalStress );
 }
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BartonBandis, string const &, Group * const )
 
 } /* namespace constitutive */
 

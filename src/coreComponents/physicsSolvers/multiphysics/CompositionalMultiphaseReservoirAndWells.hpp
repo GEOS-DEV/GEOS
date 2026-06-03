@@ -91,6 +91,27 @@ public:
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
 
+  void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper );
+
+  template< typename SUBREGION_TYPE >
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE const & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
+  {
+    flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+  }
+
+  void prepareStencilWeights( DomainPartition & domain ) const;
+  void updateStencilWeights( DomainPartition & domain ) const;
+
 protected:
 
   virtual void initializePreSubGroups() override;
@@ -100,7 +121,6 @@ protected:
 private:
 
   CompositionalMultiphaseBase * flowSolver() const;
-
 };
 
 } /* namespace geos */

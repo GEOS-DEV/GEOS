@@ -23,7 +23,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -87,7 +87,7 @@ public:
   DruckerPragerExtendedUpdates & operator=( DruckerPragerExtendedUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -384,16 +384,9 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  DruckerPragerExtended( string const & name, Group * const parent );
+  DruckerPragerExtended( string const & name, dataRepository::Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~DruckerPragerExtended() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void saveConvergedState() const override;
 
@@ -402,13 +395,10 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ExtendedDruckerPrager";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ExtendedDruckerPrager"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -433,27 +423,6 @@ public:
 
     /// string/key for default cohesion
     static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
-
-    /// string/key for initial friction angle
-    static constexpr char const * initialFrictionString() { return "initialFriction"; }
-
-    /// string/key for final friction angle
-    static constexpr char const * residualFrictionString() { return "residualFriction"; }
-
-    /// string/key for dilation angle
-    static constexpr char const * dilationRatioString() { return "dilationRatio"; }
-
-    /// string/key for pressure intercept
-    static constexpr char const * pressureInterceptString() { return "pressureIntercept"; }
-
-    /// string/key for cohesion
-    static constexpr char const * hardeningString() { return "hardening"; }
-
-    /// string/key for state variable
-    static constexpr char const * newStateString() { return "stateVariable"; }
-
-    /// string/key for state variable
-    static constexpr char const * oldStateString() { return "oldStateVariable"; }
   };
 
   /**
@@ -505,6 +474,7 @@ public:
 
 
 protected:
+
   virtual void postInputInitialization() override;
 
   /// Material parameter: The default value of the initial yield surface slope

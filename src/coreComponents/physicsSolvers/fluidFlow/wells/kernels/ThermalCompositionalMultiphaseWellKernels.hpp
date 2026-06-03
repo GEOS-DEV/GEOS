@@ -657,6 +657,9 @@ public:
     } );
   }
 };
+
+/******************************** FaceBasedAssemblyKernel ********************************/
+
 /**
  * @class FaceBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components

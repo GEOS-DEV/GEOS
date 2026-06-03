@@ -34,12 +34,31 @@ namespace compositional
 template< typename EOS_TYPE >
 struct SoreideWhitsonEOSPhaseModel
 {
-private:
-  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-
-public:
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
+
+  template< bool DERIVATIVES = false >
+  using StackVariables = SalinityStackVariables_Impl< void, DERIVATIVES >;
+
+  /**
+   * @brief Allocate and initialise composition independent data
+   * @details Will allocate and initialise the data that is independent of the composition. This can be used in subsequent calls
+   * @tparam DERIVATIVES a flag to indicate if derivatives (wrt p and/or t) should be allocated and calculated
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] salinity salinity
+   * @param[out] data The composition data
+   */
+  template< bool DERIVATIVES = false >
+  GEOS_HOST_DEVICE
+  static void
+  initialiseStack( integer const numComps, real64 const & pressure,
+                   real64 const & temperature,
+                   ComponentProperties::KernelWrapper const & componentProperties,
+                   real64 const & salinity,
+                   StackVariables< DERIVATIVES > & data );
 
   /**
    * @brief Main entry point of the Soreide-Whitson EOS model
@@ -49,7 +68,7 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[in] salinity salinity
+   * @param[in] salinity the salinity
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    */
   template< integer USD >
@@ -71,129 +90,21 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[in] logFugacityCoefficients log of the fugacity coefficients
+   * @param[in] salinity the salinity
+   * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 = 0 >
   GEOS_HOST_DEVICE
   static void
-  computeLogFugacityCoefficientDerivs( integer const numComps,
-                                       real64 const & pressure,
-                                       real64 const & temperature,
-                                       arraySlice1d< real64 const, USD > const & composition,
-                                       ComponentProperties::KernelWrapper const & componentProperties,
-                                       real64 const & salinity,
-                                       arraySlice1d< real64 const > const & logFugacityCoefficients,
-                                       arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
-
-  /**
-   * @brief Calculate the pure coefficients
-   * @details Computes the pure coefficients
-   * @param[in] ic Component index
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] salinity salinity
-   * @param[out] aCoefficient pure coefficient (A)
-   * @param[out] bCoefficient pure coefficient (B)
-   */
-  GEOS_HOST_DEVICE
-  static void
-  computePureCoefficients( integer const ic,
-                           real64 const & pressure,
-                           real64 const & temperature,
-                           ComponentProperties::KernelWrapper const & componentProperties,
-                           real64 const & salinity,
-                           real64 & aCoefficient,
-                           real64 & bCoefficient );
-
-  /**
-   * @brief Calculate the pure coefficients derivatives
-   * @details Computes the pure coefficients derivatives
-   * @param[in] ic Component index
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] salinity salinity
-   * @param[out] aCoefficient pure coefficient (A)
-   * @param[out] bCoefficient pure coefficient (B)
-   * @param[out] daCoefficient_dp pure coefficient (A) derivative w.r.t. pressure
-   * @param[out] dbCoefficient_dp pure coefficient (B) derivative w.r.t. pressure
-   * @param[out] daCoefficient_dt pure coefficient (A) derivative w.r.t. temperature
-   * @param[out] dbCoefficient_dt pure coefficient (B) derivative w.r.t. temperature
-   */
-  GEOS_HOST_DEVICE
-  static void
-  computePureCoefficientsAndDerivs( integer const ic,
-                                    real64 const & pressure,
-                                    real64 const & temperature,
-                                    ComponentProperties::KernelWrapper const & componentProperties,
-                                    real64 const & salinity,
-                                    real64 & aCoefficient,
-                                    real64 & bCoefficient,
-                                    real64 & daCoefficient_dp,
-                                    real64 & dbCoefficient_dp,
-                                    real64 & daCoefficient_dt,
-                                    real64 & dbCoefficient_dt );
-
-  /**
-   * @brief Compute the mixture coefficients using pressure, temperature, composition and input
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the phase
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] salinity salinity
-   * @param[out] aPureCoefficient pure coefficient (A)
-   * @param[out] bPureCoefficient pure coefficient (B)
-   * @param[out] aMixtureCoefficient mixture coefficient (A)
-   * @param[out] bMixtureCoefficient mixture coefficient (B)
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  static void
-  computeMixtureCoefficients( integer const numComps,
-                              real64 const & pressure,
-                              real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
-                              ComponentProperties::KernelWrapper const & componentProperties,
-                              real64 const & salinity,
-                              arraySlice1d< real64 > const & aPureCoefficient,
-                              arraySlice1d< real64 > const & bPureCoefficient,
-                              real64 & aMixtureCoefficient,
-                              real64 & bMixtureCoefficient );
-
-  /**
-   * @brief Compute the mixture coefficients derivatives
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the phase
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] salinity salinity
-   * @param[in] aPureCoefficient pure coefficient (A)
-   * @param[in] bPureCoefficient pure coefficient (B)
-   * @param[in] aMixtureCoefficient mixture coefficient (A)
-   * @param[in] bMixtureCoefficient mixture coefficient (B)
-   * @param[out] aMixtureCoefficientDerivs derivatives of mixture coefficient (A)
-   * @param[out] bMixtureCoefficientDerivs derivatives of mixture coefficient (B)
-   * @note Assumes that pressure and temperature are strictly positive
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  static void
-  computeMixtureCoefficientDerivs( integer const numComps,
-                                   real64 const & pressure,
-                                   real64 const & temperature,
-                                   arraySlice1d< real64 const, USD > const & composition,
-                                   ComponentProperties::KernelWrapper const & componentProperties,
-                                   real64 const & salinity,
-                                   arraySlice1d< real64 const > const & aPureCoefficient,
-                                   arraySlice1d< real64 const > const & bPureCoefficient,
-                                   real64 const aMixtureCoefficient,
-                                   real64 const bMixtureCoefficient,
-                                   arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
-                                   arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
+  computeLogFugacityCoefficientsAndDerivs( integer const numComps,
+                                           real64 const & pressure,
+                                           real64 const & temperature,
+                                           arraySlice1d< real64 const, USD1 > const & composition,
+                                           ComponentProperties::KernelWrapper const & componentProperties,
+                                           real64 const & salinity,
+                                           arraySlice1d< real64 > const & logFugacityCoefficients,
+                                           arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor
@@ -203,8 +114,8 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[in] compressibilityFactor the current compressibility factor
-   * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
+   * @param[in] salinity the salinity
+   * @param[out] compressibilityFactor the calculated compressibility factor
    */
   template< integer USD >
   GEOS_HOST_DEVICE
@@ -225,6 +136,7 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
+   * @param[in] salinity the salinity
    * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
@@ -240,6 +152,30 @@ public:
                                          real64 & compressibilityFactor,
                                          arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
 
+  /**
+   * @brief Calculate the pure coefficients derivatives for the water component
+   * @tparam DERIVATIVES a flag to indicate if derivatives (wrt p and/or t) should be calculated
+   * @param[in] h2o_index Water component index
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] salinity the salinity
+   * @param[out] data data The component mixture properties
+   */
+  template< bool DERIVATIVES = false >
+  GEOS_HOST_DEVICE
+  static void
+  computeWaterCoefficients( integer const h2o_index,
+                            real64 const & pressure,
+                            real64 const & temperature,
+                            ComponentProperties::KernelWrapper const & componentProperties,
+                            real64 const & salinity,
+                            StackVariables< DERIVATIVES > & data );
+
+  /**
+   * @brief Calculate the pure component coefficients for the water component
+   *
+   */
   /**
    * @brief Get the binary interaction coefficient between two components
    * @param[in] pressure pressure

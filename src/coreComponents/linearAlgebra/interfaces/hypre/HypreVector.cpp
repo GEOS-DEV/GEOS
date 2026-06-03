@@ -31,6 +31,7 @@ namespace geos
 
 HypreVector::HypreVector()
   : VectorBase(),
+  m_ij_vec{},
   m_vec{}
 {}
 
@@ -66,8 +67,9 @@ HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 {
   if( &src != this )
   {
-    m_vec = src.m_vec;
-    src.m_vec = nullptr;
+    reset();
+    std::swap( m_ij_vec, src.m_ij_vec );
+    std::swap( m_vec, src.m_vec );
     VectorBase::operator=( std::move( src ) );
   }
   return *this;
@@ -76,7 +78,13 @@ HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 void HypreVector::reset()
 {
   VectorBase::reset();
-  if( m_vec )
+  if( m_ij_vec )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorDestroy( m_ij_vec ) );
+    m_ij_vec = nullptr;
+    m_vec = nullptr;
+  }
+  else if( m_vec )
   {
     hypre_ParVectorDestroy( m_vec );
     m_vec = nullptr;
@@ -102,7 +110,6 @@ void HypreVector::create( localIndex const localSize,
 
   // Set up the parallel and local vector data structures
   m_vec = hypre_ParVectorCreate( comm, globalSize, partitioning );
-  hypre_ParVectorOwnsData( m_vec ) = false;
 
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( m_vec );
   hypre_VectorOwnsData( localVector ) = false;
@@ -114,6 +121,7 @@ void HypreVector::create( localIndex const localSize,
   // Complete the initialization (vector will not allocate if data is already set)
   GEOS_LAI_CHECK_ERROR( hypre_ParVectorInitialize_v2( m_vec, hypre::memoryLocation ) );
   GEOS_LAI_CHECK_ERROR( hypre_ParVectorSetConstantValues( m_vec, 0.0 ) );
+  parVectorToIJ( m_vec );
 }
 
 bool HypreVector::created() const
@@ -161,11 +169,9 @@ void HypreVector::scale( real64 const scalingFactor )
 void HypreVector::reciprocal()
 {
   GEOS_LAI_ASSERT( ready() );
-  arrayView1d< real64 > values = m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [values] GEOS_HYPRE_DEVICE ( localIndex const i )
-  {
-    values[i] = 1.0 / values[i];
-  } );
+
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseInverse( m_vec, &m_vec ) );
+  touch();
 }
 
 real64 HypreVector::dot( HypreVector const & vec ) const
@@ -225,22 +231,24 @@ void HypreVector::axpby( real64 const alpha,
   }
 }
 
-void HypreVector::pointwiseProduct( HypreVector const & x,
-                                    HypreVector & y ) const
+void HypreVector::pointwiseProduct( HypreVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
-  GEOS_LAI_ASSERT( y.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
-  GEOS_LAI_ASSERT_EQ( localSize(), y.localSize() );
 
-  arrayView1d< real64 const > const my_values = m_values.toViewConst();
-  arrayView1d< real64 const > const x_values = x.m_values.toViewConst();
-  arrayView1d< real64 > const y_values = y.m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOS_HYPRE_DEVICE ( localIndex const i )
-  {
-    y_values[i] = my_values[i] * x_values[i];
-  } );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
+  touch();
+}
+
+void HypreVector::pointwiseDivide( HypreVector const & x )
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( x.ready() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
+
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
+  touch();
 }
 
 real64 HypreVector::norm1() const
@@ -380,7 +388,7 @@ void HypreVector::write( string const & filename,
 
           for( HYPRE_Int i = 0; i < size; i++ )
           {
-            GEOS_FMT_TO( str, sizeof( str ), "{:>28.16e}\n", data[i] );
+            GEOS_FMT_TO( str, sizeof( str ), "{:>24.16e}\n", data[i] );
             os << str;
           }
         }
@@ -402,10 +410,37 @@ HYPRE_ParVector const & HypreVector::unwrapped() const
   return m_vec;
 }
 
+HypreVector::HYPRE_IJVector const & HypreVector::unwrappedIJ() const
+{
+  return m_ij_vec;
+}
+
 MPI_Comm HypreVector::comm() const
 {
   GEOS_LAI_ASSERT( created() );
   return hypre_ParVectorComm( m_vec );
+}
+
+void HypreVector::parVectorToIJ( HYPRE_ParVector const & parVector )
+{
+  GEOS_LAI_ASSERT( parVector != nullptr );
+
+  hypre_IJVector * const ijVector = hypre_CTAlloc( hypre_IJVector, 1, HYPRE_MEMORY_HOST );
+
+  hypre_IJVectorComm( ijVector ) = hypre_ParVectorComm( parVector );
+  hypre_IJVectorObject( ijVector ) = parVector;
+  hypre_IJVectorTranslator( ijVector ) = nullptr;
+  hypre_IJVectorAssumedPart( ijVector ) = hypre_ParVectorAssumedPartition( parVector );
+  hypre_ParVectorAssumedPartition( parVector ) = nullptr;
+  hypre_IJVectorNumComponents( ijVector ) = hypre_ParVectorNumVectors( parVector );
+  hypre_IJVectorObjectType( ijVector ) = HYPRE_PARCSR;
+  hypre_IJVectorPrintLevel( ijVector ) = 0;
+  hypre_IJVectorGlobalFirstRow( ijVector ) = hypre_ParVectorFirstIndex( parVector );
+  hypre_IJVectorGlobalNumRows( ijVector ) = hypre_ParVectorGlobalSize( parVector );
+  hypre_IJVectorPartitioning( ijVector )[0] = hypre_ParVectorPartitioning( parVector )[0];
+  hypre_IJVectorPartitioning( ijVector )[1] = hypre_ParVectorPartitioning( parVector )[1];
+
+  m_ij_vec = static_cast< HYPRE_IJVector >( ijVector );
 }
 
 } // end namespace geos

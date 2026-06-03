@@ -18,8 +18,7 @@
  */
 
 #include "ReactiveFluidDriver.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "functions/TableFunction.hpp"
 #include "functions/FunctionManager.hpp"
@@ -67,8 +66,7 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  addLogLevel< logInfo::Initialisation >();
-  addLogLevel< logInfo::Results >();
+  addLogLevel< logInfo::LogOutput >();
 }
 
 
@@ -129,7 +127,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "ReactiveFluidDriver should only be run in serial", geos::RuntimeError );
 
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
@@ -139,18 +137,18 @@ bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching ReactiveFluid Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Fluid .................. " << m_fluidName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseFluid.getCatalogName() );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Primary Species ...... " << m_numPrimarySpecies );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Secondary Species ...... " << m_numSecondarySpecies );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Pressure Control ....... " << m_pressureFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Temperature Control .... " << m_temperatureFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching ReactiveFluid Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Fluid .................. " << m_fluidName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseFluid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Primary Species ...... " << m_numPrimarySpecies );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Secondary Species ...... " << m_numSecondarySpecies );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Pressure Control ....... " << m_pressureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -222,7 +220,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   }
 
   TableFunction const * waterDensityTable =
-    constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
+    PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
 
   TableFunction::KernelWrapper waterDensityTableWrapper  = waterDensityTable->createKernelWrapper();
 
@@ -242,7 +240,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
       // convert molarity to molefraction
       real64 const input[2] = {  table( n, PRES ), table( n, TEMP ) };
       real64 const conversionFactor =
-        constitutive::PVTProps::PureWaterProperties::MOLECULAR_WEIGHT / waterDensityTableWrapper.compute( input ) * 1e3;
+        PVTProps::PureWaterProperties::MOLECULAR_WEIGHT / waterDensityTableWrapper.compute( input ) * 1e3;
       for( int i = 0; i < numPrimarySpecies; ++i )
       {
         composition[0][i] = primarySpeciesTotalConcentration[0][i] * conversionFactor;
@@ -304,7 +302,9 @@ void ReactiveFluidDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 
@@ -326,24 +326,27 @@ void ReactiveFluidDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                         << " (row " << row+m_numColumns << " with header)"
-                                                                                         << " and column " << col+1, std::runtime_error );
+      GEOS_THROW_IF( error > m_baselineTol,
+                     GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                               row + 1,
+                               row + m_numColumns,
+                               col + 1 ),
+                     geos::RuntimeError );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

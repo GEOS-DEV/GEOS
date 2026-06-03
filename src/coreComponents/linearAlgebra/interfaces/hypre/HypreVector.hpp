@@ -26,12 +26,15 @@
  * @name Hypre forward declarations.
  *
  * Forward declare hypre's vector structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
+ * to avoid including hypre headers and leaking into the rest of GEOS.
  */
 ///@{
 
 extern "C"
 {
+/// IJVector struct forward declaration
+struct hypre_IJVector_struct;
+
 /// ParVector struct forward declaration
 struct hypre_ParVector_struct;
 }
@@ -140,8 +143,15 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
-  virtual void pointwiseProduct( HypreVector const & x,
-                                 HypreVector & y ) const override;
+  /**
+   * @copydoc VectorBase<HypreVector>::pointwiseProduct
+   */
+  virtual void pointwiseProduct( HypreVector const & x ) override;
+
+  /**
+   * @copydoc VectorBase<HypreVector>::pointwiseDivide
+   */
+  virtual void pointwiseDivide( HypreVector const & x ) override;
 
   /**
    * @copydoc VectorBase<HypreVector>::norm1
@@ -192,6 +202,9 @@ public:
 
 private:
 
+  /// IJVector pointer alias
+  using HYPRE_IJVector = struct hypre_IJVector_struct *;
+
   /// ParVector pointer alias
   using HYPRE_ParVector = struct hypre_ParVector_struct *;
 
@@ -203,7 +216,24 @@ public:
    */
   HYPRE_ParVector const & unwrapped() const;
 
+  /**
+   * @brief Returns a pointer to the IJ wrapper implementation.
+   * @return the underlying HYPRE_IJVector object.
+   */
+  HYPRE_IJVector const & unwrappedIJ() const;
+
 private:
+
+  /**
+   * @brief Create an IJ wrapper around an existing ParVector.
+   * @param parVector the ParVector to wrap
+   */
+  void parVectorToIJ( HYPRE_ParVector const & parVector );
+
+  /**
+   * Pointer to underlying HYPRE_IJVector type.
+   */
+  HYPRE_IJVector m_ij_vec;
 
   /**
    * Pointer to underlying HYPRE_ParVector type.

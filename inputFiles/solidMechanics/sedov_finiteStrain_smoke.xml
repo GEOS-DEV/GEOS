@@ -26,6 +26,7 @@
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
       strainTheory="1"
+      timeIntegrationOption="ExplicitDynamic"
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region2 }"
