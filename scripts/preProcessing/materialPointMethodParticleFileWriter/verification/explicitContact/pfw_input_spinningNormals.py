@@ -37,14 +37,14 @@ pfw["zmax"] =  0.5*domainLength # mm
 # BATCH PARAMETERS  --------------------------------------------------------
 
 pfw["mBatch"]=True
-pfw["mWallTime"] = "00:05:00"
-pfw["mSubmitJobs"]=False
+pfw["mWallTime"] = "00:15:00"
+pfw["mSubmitJobs"]=True
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
 pfw["endTime"]=stopTime             
 pfw["plotInterval"]=stopTime/200
-pfw["restartInterval"]=stopTime*100 # Don't need restarts for now
+pfw["restartInterval"]=stopTime # Don't need restarts for now
 
 pfw["timeIntegrationOption"]="ExplicitDynamic"
 pfw["cflFactor"]=0.25 
@@ -63,7 +63,7 @@ pfw["maxParticleJacobian"]=10.0
 
 pfw["updateMethod"]="FLIP"
 
-pfw["useReferenceVectorsForParticleUpdate"] = 1
+pfw["useReferenceVectorsForParticleUpdate"] = 0
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
@@ -91,12 +91,12 @@ pfw["materialPropertyString"]=f"""
 # GEOMETRY OBJECTS -------------------------------------------------------
 
 # Radially varying velocity (spinning disk)
-maxVelocity = 0.1
+maxAngularVelocity = 2*np.pi*/stopTime
 def getVelocity(self, pt):
     pt = np.array(pt)
     norm = np.linalg.norm(pt)
     pt = pt / norm
-    vel = maxVelocity * ( norm / self.r ) * np.cross(np.array(pt),np.array([0,0,1]))
+    vel = maxAngularVelocity * norm * np.cross(np.array(pt),np.array([0,0,1]))
     return vel
 
 disk1 = geom.cylinder('disk1',[0,0,100.0*pfw["zmin"]],[0,0,100.0*pfw["zmax"]], 0.4, vel=getVelocity, mat=0, group=0)

@@ -65,7 +65,7 @@ pfw["frictionCoefficient"]=0.25
 
 pfw["plotGridFields"]=1
 
-# pfw["plotUnscaledParticles"]=1
+pfw["plotUnscaledParticles"]=1
 # pfw["overlapCorrection"]=2
 # pfw["overlapThreshold1"]=1.05
 # pfw["overlapThreshold2"]=1.10
@@ -129,8 +129,8 @@ pfw["materialPropertyString"]=f"""
 <ElasticIsotropic
     name="elasticIsotropic"
     defaultDensity="{density}"
-    defaultYoungModulus="{E}"
-    defaultPoissonRatio="{nu}"/>"""
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>"""
 
 # # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
