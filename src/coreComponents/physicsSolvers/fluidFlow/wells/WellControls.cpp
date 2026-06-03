@@ -168,6 +168,11 @@ WellControls::~WellControls()
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  if( childKey == groupKeyStruct::wellNewtonSolverString() )
+  {
+    return &m_wellNewtonSolver;
+  }
+
   std::unique_ptr< WellConstraintBase > constraint =
     WellConstraintBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &registerGroup< WellConstraintBase >( childName, std::move( constraint ) );
@@ -180,7 +185,6 @@ void WellControls::expandObjectCatalogs()
   {
     createChild( catalogIter.first, catalogIter.first );
   }
-  // tjbcreateChild( WellNewtonSolver::catalogName(), WellNewtonSolver::catalogName() );
 }
 
 namespace
