@@ -9,6 +9,8 @@ Some text
 .. toctree::
    :maxdepth: 2
    
+   Overview
+
    PhaseSplit
    
    Density
