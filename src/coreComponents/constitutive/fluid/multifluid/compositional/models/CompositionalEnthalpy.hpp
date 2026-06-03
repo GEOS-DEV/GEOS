@@ -64,7 +64,7 @@ public:
                 bool useMass ) const;
 
   /**
-   * @brief Evaluates the Poling polynomial at a given temeperature given a list of coefficients
+   * @brief Evaluates the Poling polynomial at a given temperature given a list of coefficients
    * @param[in] dT - the temperature difference between the temperature and the reference
    * @param[in] a - the coefficients
    * @param[out] enthalpy - the enthalpy
@@ -166,14 +166,8 @@ void CompositionalEnthalpyUpdate::compute(
   integer const numComps = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = numComps + 2;
 
-  // In the mass formulation, the enthalpy will be required to be (annoyingly) in J/kg. The
-  // composition however is preconverted to molar composition before we get to this point.
-  // The derivatives will also be output in molar composition and conversion is done at a
-  // higher level within the fluid model itself. The only change here is to the "unit" of
-  // enthalpy.
   auto const & componentMolarWeight = componentProperties.m_componentMolarWeight;
   auto const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-  real64 phaseMolarWeight = 0.0;
 
   // 1. Calculate the polynomial (ideal) enthalpy
   real64 const dT = temperature - m_refTemperature;
@@ -195,13 +189,6 @@ void CompositionalEnthalpyUpdate::compute(
     else
     {
       enthalpyI += m_referenceEnthalpy( m_phaseIndex, ic );
-    }
-    // Convert from J/mol -> J/kg
-    if( useMass )
-    {
-      enthalpyI /= componentMolarWeight[ic];
-      heatCapacityI /= componentMolarWeight[ic];
-      phaseMolarWeight += phaseComposition[ic] * componentMolarWeight[ic];
     }
     hIdealEnthalpy += phaseComposition[ic] * enthalpyI;
     dhIdealEnthalpy[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
@@ -225,24 +212,34 @@ void CompositionalEnthalpyUpdate::compute(
                                                     m_phaseType );
   } );
 
-  // Convert from J/mol -> J/kg
-  if( useMass )
-  {
-    real64 const invPhaseMolarWeight = 1.0 / phaseMolarWeight;
-    hEosEnthalpy *= invPhaseMolarWeight;
-    dhEosEnthalpy[Deriv::dP] *= invPhaseMolarWeight;
-    dhEosEnthalpy[Deriv::dT] *= invPhaseMolarWeight;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      dhEosEnthalpy[Deriv::dC+ic] = (dhEosEnthalpy[Deriv::dC+ic] - componentMolarWeight[ic] * hEosEnthalpy)*invPhaseMolarWeight;
-    }
-  }
-
   // 3. Combine the 2 values for the actual fluid enthalpy
   enthalpy += hEosEnthalpy;
   for( integer idof = 0; idof < numDofs; idof++ )
   {
     dEnthalpy[idof] += dhEosEnthalpy[idof];
+  }
+
+  // In the mass formulation, the enthalpy will be required to be (annoyingly) in J/kg. The
+  // composition however is preconverted to molar composition before we get to this point.
+  // The derivatives will also be output in molar composition and conversion is done at a
+  // higher level within the fluid model itself. The only change here is to the "unit" of
+  // enthalpy.
+  // Convert from J/mol -> J/kg
+  if( useMass )
+  {
+    real64 phaseMolarWeight = 0.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      phaseMolarWeight += phaseComposition[ic] * componentMolarWeight[ic];
+    }
+    real64 const invPhaseMolarWeight = 1.0 / phaseMolarWeight;
+    enthalpy *= invPhaseMolarWeight;
+    dEnthalpy[Deriv::dP] *= invPhaseMolarWeight;
+    dEnthalpy[Deriv::dT] *= invPhaseMolarWeight;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      dEnthalpy[Deriv::dC+ic] = (dEnthalpy[Deriv::dC+ic] - componentMolarWeight[ic] * enthalpy)*invPhaseMolarWeight;
+    }
   }
 }
 
@@ -253,6 +250,11 @@ void CompositionalEnthalpyUpdate::selectEquationOfState( EquationOfStateType equ
   if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
   {
     std::forward< LAMBDA >( lambda )( SoaveRedlichKwongEOS{} );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    // Soreide-Whitson uses underying Peng-Robinson formulation
+    std::forward< LAMBDA >( lambda )( PengRobinsonEOS{} );
   }
   else
   {
@@ -274,9 +276,9 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
 {
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
-  typename EOS::StackVariables< true > stack( numComps,
-                                              componentProperties.m_componentBinaryCoeff.toSlice(),
-                                              derivs.toSliceConst() );
+  typename EOS::template StackVariables< true > stack( numComps,
+                                                       componentProperties.m_componentBinaryCoeff.toSliceConst(),
+                                                       derivs.toSliceConst() );
 
   typename EOS::SelectedRoot const root = phaseType == PhaseType::LIQUID ?
                                           EOS::SelectedRoot::MINIMUM : EOS::SelectedRoot::MAXIMUM;

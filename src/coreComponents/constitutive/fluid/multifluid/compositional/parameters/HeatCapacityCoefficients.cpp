@@ -137,14 +137,14 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
   {
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      real64 const phase1Enthaply = m_referenceEnthalpy( ip1, ic );
-      real64 const phase2Enthaply = m_referenceEnthalpy( ip2, ic );
-      GEOS_THROW_IF_GT_MSG( phase1Enthaply, phase2Enthaply,
+      real64 const phase1Enthalpy = m_referenceEnthalpy( ip1, ic );
+      real64 const phase2Enthalpy = m_referenceEnthalpy( ip2, ic );
+      GEOS_THROW_IF_GT_MSG( phase1Enthalpy, phase2Enthalpy,
                             GEOS_FMT( "{}: '{}' for component {}, the {} reference enthalpy {} must not "
                                       "be greater than the {} reference enthalpy {}.",
                                       fluid->getFullName(),
                                       viewKeyStruct::referenceEnthalpyString(),
-                                      componentNames[ic], phaseNames[ip1], phase1Enthaply, phaseNames[ip2], phase2Enthaply ),
+                                      componentNames[ic], phaseNames[ip1], phase1Enthalpy, phaseNames[ip2], phase2Enthalpy ),
                             InputError );
     }
   }
@@ -160,7 +160,7 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
                                     viewKeyStruct::componentHeatCapacityCoefficientsString(),
                                     numComps ),
                           InputError );
-    // Third dimension must be equal to 5
+    // Second dimension must be equal to 5
     GEOS_THROW_IF_NE_MSG( dim1, 5,
                           GEOS_FMT( "{}: '{}' the second dimension must be equal 5",
                                     fluid->getFullName(),
@@ -170,7 +170,7 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
 
   // Reference temperature must not be negative
   GEOS_THROW_IF_LE_MSG( m_referenceTemperature, 0.0,
-                        GEOS_FMT( "{}: '{}' the reference temperature {} is must not be zero or negative.",
+                        GEOS_FMT( "{}: '{}' the reference temperature {} must not be zero or negative.",
                                   fluid->getFullName(),
                                   viewKeyStruct::enthalpyReferenceTemperatureString(),
                                   m_referenceTemperature ),
@@ -203,10 +203,11 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
   {
     bool isPositive = isPolynomialPositive( m_coefficients[ic], minTemperature, maxTemperature, negT, negHT );
     GEOS_THROW_IF( !isPositive,
-                   GEOS_FMT( "{}: '{}' coefficients for component {} ({}) give a zero or negative heat capacity of {} at temperature {}.",
+                   GEOS_FMT( "{}: '{}' coefficients for component {} ({}) give a zero or negative heat "
+                             "capacity of {} at temperature difference {} corresponding to a temperature {}.",
                              fluid->getFullName(),
                              viewKeyStruct::componentHeatCapacityCoefficientsString(),
-                             componentNames[ic], m_coefficients[ic], negHT, negT ),
+                             componentNames[ic], m_coefficients[ic], negHT, negT, negT + m_referenceTemperature ),
                    InputError );
   }
 }

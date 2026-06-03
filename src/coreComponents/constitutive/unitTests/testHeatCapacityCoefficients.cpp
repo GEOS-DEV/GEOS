@@ -146,23 +146,30 @@ TEST_F( HeatCapacityCoefficientsTestFixture, testReferenceEnthalpy )
   referenceEnthalpy.resize( numPhases, numComps );
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 
+  constexpr integer vapour = 0;
+  constexpr integer liquid = 2;
+  constexpr integer aqueous = 1;
+
+  referenceEnthalpy( vapour, 2 ) = 100.0;
+  referenceEnthalpy( liquid, 2 ) = 100.0;
+  referenceEnthalpy( aqueous, 2 ) = 100.0;
+
   // Reference enthalpy of gas must be greater than oil
-  referenceEnthalpy( 0, 2 ) = 110.0;
-  referenceEnthalpy( 1, 2 ) = 120.0;
+  referenceEnthalpy( liquid, 2 ) = 110.0;
   EXPECT_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ), InputError );
-  referenceEnthalpy( 1, 2 ) = 100.0;
+  referenceEnthalpy( liquid, 2 ) = 100.0;
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 
   // Reference enthalpy of gas must be greater than water
-  referenceEnthalpy( 2, 2 ) = 120.0;
+  referenceEnthalpy( aqueous, 2 ) = 120.0;
   EXPECT_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ), InputError );
-  referenceEnthalpy( 2, 2 ) = 100.0;
+  referenceEnthalpy( aqueous, 2 ) = 100.0;
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 
   // Reference enthalpy of water must be greater than oil
-  referenceEnthalpy( 1, 2 ) = 120.0;
+  referenceEnthalpy( aqueous, 2 ) = 90.0;
   EXPECT_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ), InputError );
-  referenceEnthalpy( 1, 2 ) = 100.0;
+  referenceEnthalpy( aqueous, 2 ) = 100.0;
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 }
 
