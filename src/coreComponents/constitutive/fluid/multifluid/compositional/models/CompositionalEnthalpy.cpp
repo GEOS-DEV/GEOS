@@ -33,7 +33,6 @@ CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( integer const phaseInd
                                                           PhaseType const phaseType,
                                                           EquationOfStateType const equationOfState,
                                                           real64 const refTemperature,
-                                                          arrayView1d< real64 const > const & criticalTemperature,
                                                           arrayView2d< real64 const > const & referenceEnthalpy,
                                                           arrayView2d< real64 const > const & coefficients ):
   m_phaseIndex( phaseIndex ),
@@ -41,7 +40,6 @@ CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( integer const phaseInd
   m_phaseType( phaseType ),
   m_equationOfState( equationOfState ),
   m_refTemperature( refTemperature ),
-  m_criticalTemperature( criticalTemperature ),
   m_referenceEnthalpy( referenceEnthalpy ),
   m_coefficients( coefficients )
 {}
@@ -68,8 +66,6 @@ CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
       m_vapourIndex = ip;
     }
   }
-
-  m_criticalTemperature = componentProperties.getComponentCriticalTemperature().toViewConst();
 }
 
 CompositionalEnthalpy::KernelWrapper
@@ -80,7 +76,6 @@ CompositionalEnthalpy::createKernelWrapper() const
                         m_phaseType,
                         m_equationOfState,
                         m_heatCapacityCoefficients->m_referenceTemperature,
-                        m_criticalTemperature,
                         m_heatCapacityCoefficients->m_referenceEnthalpy.toViewConst(),
                         m_heatCapacityCoefficients->m_coefficients.toViewConst() );
 }

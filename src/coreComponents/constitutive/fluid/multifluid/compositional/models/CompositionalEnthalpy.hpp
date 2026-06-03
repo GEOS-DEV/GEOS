@@ -50,7 +50,6 @@ public:
                                PhaseType const phaseType,
                                EquationOfStateType const equationOfState,
                                real64 const refTemperature,
-                               arrayView1d< real64 const > const & criticalTemperature,
                                arrayView2d< real64 const > const & referenceEnthalpy,
                                arrayView2d< real64 const > const & coefficients );
 
@@ -104,7 +103,6 @@ public:
                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                          real64 & enthalpy,
                                          arraySlice1d< real64, USD2 > const & dEnthalpy,
-                                         bool useMass,
                                          PhaseType const & phaseType ) const;
 
 private:
@@ -113,7 +111,6 @@ private:
   PhaseType const m_phaseType;
   EquationOfStateType const m_equationOfState;
   real64 const m_refTemperature;
-  arrayView1d< real64 const > const m_criticalTemperature;
   arrayView2d< real64 const > const m_referenceEnthalpy;
   arrayView2d< real64 const > const m_coefficients;
 };
@@ -169,6 +166,15 @@ void CompositionalEnthalpyUpdate::compute(
   integer const numComps = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = numComps + 2;
 
+  // In the mass formulation, the enthalpy will be required to be (annoyingly) in J/kg. The
+  // composition however is preconverted to molar composition before we get to this point.
+  // The derivatives will also be output in molar composition and conversion is done at a
+  // higher level within the fluid model itself. The only change here is to the "unit" of
+  // enthalpy.
+  auto const & componentMolarWeight = componentProperties.m_componentMolarWeight;
+  auto const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+  real64 phaseMolarWeight = 0.0;
+
   // 1. Calculate the polynomial (ideal) enthalpy
   real64 const dT = temperature - m_refTemperature;
   real64 & hIdealEnthalpy = enthalpy;
@@ -182,7 +188,7 @@ void CompositionalEnthalpyUpdate::compute(
     real64 heatCapacityI = 0.0;
     evaluatePolynomial( dT, m_coefficients[ic], enthalpyI, heatCapacityI );
     // If temperature is greater that critical temperature, use the gas enthalpy if the gas phase exists
-    if( m_criticalTemperature[ic] < temperature && 0 <= m_vapourIndex )
+    if( criticalTemperature[ic] < temperature && 0 <= m_vapourIndex )
     {
       enthalpyI += m_referenceEnthalpy( m_vapourIndex, ic );
     }
@@ -190,12 +196,19 @@ void CompositionalEnthalpyUpdate::compute(
     {
       enthalpyI += m_referenceEnthalpy( m_phaseIndex, ic );
     }
+    // Convert from J/mol -> J/kg
+    if( useMass )
+    {
+      enthalpyI /= componentMolarWeight[ic];
+      heatCapacityI /= componentMolarWeight[ic];
+      phaseMolarWeight += phaseComposition[ic] * componentMolarWeight[ic];
+    }
     hIdealEnthalpy += phaseComposition[ic] * enthalpyI;
     dhIdealEnthalpy[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
     dhIdealEnthalpy[Deriv::dC+ic] = enthalpyI;
   }
 
-  // 2. For the gas phase, add a correction from the EoS
+  // 2. Calculate the departure enthalpy from the EoS
   real64 hEosEnthalpy = 0.0;
   stackArray1d< real64, maxNumDof > dhEosEnthalpy( numDofs );
   LvArray::forValuesInSlice( dhEosEnthalpy.toSlice(), setZero );
@@ -209,10 +222,23 @@ void CompositionalEnthalpyUpdate::compute(
                                                     phaseComposition,
                                                     hEosEnthalpy,
                                                     dhEosEnthalpy.toSlice(),
-                                                    useMass,
                                                     m_phaseType );
+
+    // Convert from J/mol -> J/kg
+    if( useMass )
+    {
+      real64 const invPhaseMolarWeight = 1.0 / phaseMolarWeight;
+      hEosEnthalpy *= invPhaseMolarWeight;
+      dhEosEnthalpy[Deriv::dP] *= invPhaseMolarWeight;
+      dhEosEnthalpy[Deriv::dT] *= invPhaseMolarWeight;
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        dhEosEnthalpy[Deriv::dC+ic] = (dhEosEnthalpy[Deriv::dC+ic] - componentMolarWeight[ic] * hEosEnthalpy)*invPhaseMolarWeight;
+      }
+    }
   } );
-  // Add
+
+  // 3. Combine the 2 values for the actual fluid enthalpy
   enthalpy += hEosEnthalpy;
   for( integer idof = 0; idof < numDofs; idof++ )
   {
@@ -244,11 +270,8 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
   arraySlice1d< real64 const, USD1 > const & phaseComposition,
   real64 & enthalpy,
   arraySlice1d< real64, USD2 > const & dEnthalpy,
-  bool useMass,
   PhaseType const & phaseType ) const
 {
-  GEOS_UNUSED_VAR( useMass );
-
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   typename EOS::StackVariables< true > stack( numComps,

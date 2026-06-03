@@ -182,7 +182,7 @@ public:
     checkRelativeError( jouleThomson, expectedJouleThomson, relTol, absTol );
   }
 
-  void testEnthalpyDerivatives( DataType const & data )
+  void testEnthalpyDerivatives( DataType const & data, bool useMass )
   {
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -204,7 +204,7 @@ public:
                            phaseComposition.toSliceConst(),
                            enthalpy,
                            enthalpyDerivs,
-                           false );
+                           useMass );
     // Compare against numerical derivatives
     // -- Pressure derivative
     real64 const dp = 1.0e-4 * pressure;
@@ -218,7 +218,7 @@ public:
                              phaseComposition.toSliceConst(),
                              displacedEnthalpy,
                              tempDerivs,
-                             false );
+                             useMass );
       return displacedEnthalpy;
     } );
 
@@ -234,7 +234,7 @@ public:
                              phaseComposition.toSliceConst(),
                              displacedEnthalpy,
                              tempDerivs,
-                             false );
+                             useMass );
       return displacedEnthalpy;
     } );
 
@@ -254,7 +254,7 @@ public:
                                phaseComposition.toSliceConst(),
                                displacedEnthalpy,
                                tempDerivs,
-                               false );
+                               useMass );
         phaseComposition[ic] = z_old;
         return displacedEnthalpy;
       } );
@@ -289,11 +289,13 @@ TEST_P( SoaveRedlichKwong_6, testEnthalpyValues )
 
 TEST_P( PengRobinson_4, testEnthalpyDerivatives )
 {
-  testEnthalpyDerivatives( GetParam() );
+  testEnthalpyDerivatives( GetParam(), false );
+  testEnthalpyDerivatives( GetParam(), true );
 }
 TEST_P( SoaveRedlichKwong_6, testEnthalpyDerivatives )
 {
-  testEnthalpyDerivatives( GetParam() );
+  testEnthalpyDerivatives( GetParam(), false );
+  testEnthalpyDerivatives( GetParam(), true );
 }
 
 /* UNCRUSTIFY-OFF */

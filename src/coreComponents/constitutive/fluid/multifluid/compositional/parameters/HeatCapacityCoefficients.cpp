@@ -186,9 +186,16 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
     minTemperature = LvArray::math::min( minTemperature, criticalTemperature[ic] );
     maxTemperature = LvArray::math::max( maxTemperature, criticalTemperature[ic] );
   }
+
+  // Extend interval by 10% in each direction
   real64 const dt = LvArray::math::max( maxTemperature - minTemperature, 100.0 );
   minTemperature -= 0.1 * dt;
   maxTemperature += 0.1 * dt;
+
+  // Transform to reference temperature space
+  minTemperature -= m_referenceTemperature;
+  maxTemperature -= m_referenceTemperature;
+
   real64 negT = 0.0;
   real64 negHT = 0.0;
 

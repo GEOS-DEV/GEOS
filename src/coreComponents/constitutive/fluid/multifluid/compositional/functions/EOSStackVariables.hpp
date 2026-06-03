@@ -161,7 +161,7 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
   arraySlice2d< real64 const > const dkij_dT;
 
   /// Internal storage for all derivative-related temporary data.
-  StackArray< real64, 2, 8 * maxNumDof > m_derivativeData;
+  StackArray< real64, 2, 9 * maxNumDof > m_derivativeData;
 
   /// Pressure derivatives of component-specific 'a_i' coefficients (da_i/dp).
   arraySlice1d< real64 > const daic_dp;
