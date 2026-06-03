@@ -73,11 +73,12 @@ void TriaxialDriver::postInputInitialization()
   axialFunction.initializeFunction();
   radialFunction.initializeFunction();
 
-  // determine time increment
+  // determine the number of columns
   string_array columnNames;
   getColumnNames( columnNames );
   integer const numCols = static_cast< integer >(columnNames.size());
 
+  // determine time increment
   ArrayOfArraysView< real64 > coordinates = axialFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
