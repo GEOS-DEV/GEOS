@@ -6728,8 +6728,6 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="TriaxialDriverType">
 		<!--axialControl => Function controlling axial stress or strain (depending on test mode)-->
 		<xsd:attribute name="axialControl" type="groupNameRef" use="required" />
-		<!--baseline => Baseline file-->
-		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
 		<xsd:attribute name="initialStress" type="real64" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
@@ -6742,10 +6740,12 @@ Information output from lower logLevels is added with the desired log level
 		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
 		<xsd:attribute name="mode" type="geos_TriaxialDriver_Mode" use="required" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
+		<xsd:attribute name="output" type="string" default="" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
 		<!--radialControl => Function controlling radial stress or strain (depending on test mode)-->
 		<xsd:attribute name="radialControl" type="groupNameRef" use="required" />
-		<!--steps => Number of load steps to take-->
+		<!--steps => Number of steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
