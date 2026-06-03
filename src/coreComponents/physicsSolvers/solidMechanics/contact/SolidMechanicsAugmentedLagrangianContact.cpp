@@ -1976,6 +1976,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+        // Triangle face elements bound tetrahedral bulk elements; quadrilateral faces bound hexahedral ones.
+        // The charLength formula differs between the two element types.
+        bool const isTriangle = subRegion.size() > 0 && subRegion.getElementType( 0 ) == ElementType::Triangle;
+
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
@@ -2007,14 +2011,19 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
               real64 const M = K + 4.0 / 3.0 * G;
 
-              // real64 const charLength = pow( volume, 1.0 / 3.0 );
-              real64 const charLength = pow( 6*std::sqrt(2)*volume, 1.0 / 3.0 );
+              // For tetrahedra (triangle faces): charLength = edge = (6*sqrt(2)*V)^(1/3)
+              // For hexahedra (quadrilateral faces): charLength = (V)^(1/3)
+              real64 const charLength = isTriangle
+                  ? pow( 6 * std::sqrt( 2 ) * volume, 1.0 / 3.0 )
+                  : pow( volume, 1.0 / 3.0 );
 
               // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
               for( localIndex j = 0; j < 3; ++j )
               {
-                // stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * ( 2.0 - 3.0 * nu ) * charLength;
+                
+                stiffDiagApprox[ i ][ j ] = isTriangle
+                ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * ( 2.0 - 3.0 * nu ) * charLength
+                : E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
               }
 
               averageYoungModulus += 0.5*E;
