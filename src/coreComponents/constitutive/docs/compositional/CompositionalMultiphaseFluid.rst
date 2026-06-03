@@ -1,12 +1,23 @@
-.. _CompositionalMultiphaseFluid:
+.. _CompositionalFluidModel:
 
 ############################################
 Compositional multiphase fluid model
 ############################################
 
-.. toctree::
-   :maxdepth: 1
+Some text
 
-   Overview
-   Flash
+.. toctree::
+   :maxdepth: 2
+   
+   PhaseSplit
+   
+   Density
+
+   Viscosity
+
+   Enthalpy
+
+   Miscellaneous
+
    References
+
