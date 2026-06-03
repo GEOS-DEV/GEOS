@@ -28,6 +28,12 @@
 namespace geos
 {
 
+enum class ConstraintSourceId : integer
+{
+  USER,    /**< The well operates at a specified minimum bottom hole pressure (BHP) */
+  WHP,    /**< The well operates at a specified maximum bottom hole pressure (BHP) */
+  UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
+};
 
 
 enum class ConstraintTypeId : integer
@@ -117,6 +123,12 @@ public:
 
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const = 0;
+
+  /**
+   * @brief Provide source of constraint (user defined, or computed from WHP constraint)
+   * @return true if the constraint is active, false otherwise
+   */
+  ConstraintSourceId getConstraintSource( ) const { return m_constraintSource; }
 
   /**
    * @brief Defines whether the constraint should be evaluated or not
@@ -233,10 +245,13 @@ protected:
    * @param[in] currentTime the current time
    * @param[inout] nextDt the time step
    */
-  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+  void setNextDtFromTables( real64 const currentTime, real64 & nextDt ) const;
 
 
 protected:
+
+  /// Source of the constraint (user defined, or computed from WHP constraint)
+  ConstraintSourceId m_constraintSource;
 
   /// Constraint status
   integer m_isConstraintActive;
@@ -247,7 +262,7 @@ protected:
   /// Constraint value
   real64 m_constraintValue;
 
-  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
   /// Constraint schedule table name
   string m_constraintScheduleTableName;
