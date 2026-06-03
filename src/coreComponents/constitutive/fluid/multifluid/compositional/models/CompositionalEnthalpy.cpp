@@ -28,12 +28,20 @@ namespace constitutive
 namespace compositional
 {
 
-CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( PhaseType const phaseType,
+CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( integer const phaseIndex,
+                                                          integer const vapourIndex,
+                                                          PhaseType const phaseType,
                                                           EquationOfStateType const equationOfState,
-                                                          arrayView1d< real64 const > const & referenceEnthalpy,
-                                                          arrayView2d< real64 const > const & coefficients )
-  : m_phaseType( phaseType ),
+                                                          real64 const refTemperature,
+                                                          arrayView1d< real64 const > const & criticalTemperature,
+                                                          arrayView2d< real64 const > const & referenceEnthalpy,
+                                                          arrayView2d< real64 const > const & coefficients ):
+  m_phaseIndex( phaseIndex ),
+  m_vapourIndex( vapourIndex ),
+  m_phaseType( phaseType ),
   m_equationOfState( equationOfState ),
+  m_refTemperature( refTemperature ),
+  m_criticalTemperature( criticalTemperature ),
   m_referenceEnthalpy( referenceEnthalpy ),
   m_coefficients( coefficients )
 {}
@@ -41,40 +49,40 @@ CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( PhaseType const phaseT
 CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
                                               ComponentProperties const & componentProperties,
                                               integer const phaseIndex,
-                                              ModelParameters const & modelParameters )
-  : FunctionBase( name, componentProperties ),
+                                              ModelParameters const & modelParameters ):
+  FunctionBase( name, componentProperties ),
+  m_phaseIndex( phaseIndex ),
   m_heatCapacityCoefficients ( modelParameters.get< HeatCapacityCoefficients >() )
 {
   EquationOfState const * equationOfState = modelParameters.get< EquationOfState >();
   string const eosName = equationOfState->m_equationsOfStateNames[phaseIndex];
   m_equationOfState = EnumStrings< EquationOfStateType >::fromString( eosName );
 
-  integer const numComps = componentProperties.getNumberOfComponents();
+  integer const numPhases = m_heatCapacityCoefficients->m_phaseTypes.size();
 
-  m_referenceEnthalpy.resize( numComps );
   m_phaseType = m_heatCapacityCoefficients->m_phaseTypes[phaseIndex];
-
-  real64 const refTemperature = m_heatCapacityCoefficients->m_referenceTemperature;
-  for( integer ic = 0; ic < numComps; ic++ )
+  for( integer ip = 0; ip < numPhases; ip++ )
   {
-    // Calculate the enthalpy at the reference temperature
-    real64 refEnthalpy = 0.0;
-    real64 refHeatCapacity = 0.0;
-    KernelWrapper::evaluatePolynomial( refTemperature,
-                                       m_heatCapacityCoefficients->m_coefficients[ic],
-                                       refEnthalpy,
-                                       refHeatCapacity );
-    m_referenceEnthalpy[ic] = m_heatCapacityCoefficients->m_referenceEnthalpy( phaseIndex, ic ) - refEnthalpy;
+    if( m_heatCapacityCoefficients->m_phaseTypes[ip] == PhaseType::VAPOUR )
+    {
+      m_vapourIndex = ip;
+    }
   }
+
+  m_criticalTemperature = componentProperties.getComponentCriticalTemperature().toViewConst();
 }
 
 CompositionalEnthalpy::KernelWrapper
 CompositionalEnthalpy::createKernelWrapper() const
 {
-  return KernelWrapper( m_phaseType,
+  return KernelWrapper( m_phaseIndex,
+                        m_vapourIndex,
+                        m_phaseType,
                         m_equationOfState,
-                        m_referenceEnthalpy.toViewConst(),
-                        m_heatCapacityCoefficients->m_coefficients.toViewConst());
+                        m_heatCapacityCoefficients->m_referenceTemperature,
+                        m_criticalTemperature,
+                        m_heatCapacityCoefficients->m_referenceEnthalpy.toViewConst(),
+                        m_heatCapacityCoefficients->m_coefficients.toViewConst() );
 }
 
 std::unique_ptr< ModelParameters >

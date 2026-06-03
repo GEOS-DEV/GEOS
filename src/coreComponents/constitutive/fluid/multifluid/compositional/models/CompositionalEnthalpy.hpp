@@ -45,9 +45,13 @@ class CompositionalEnthalpyUpdate final : public FunctionBaseUpdate
 {
   using Deriv = multifluid::DerivativeOffset;
 public:
-  CompositionalEnthalpyUpdate( PhaseType const phaseType,
+  CompositionalEnthalpyUpdate( integer const phaseIndex,
+                               integer const vapourIndex,
+                               PhaseType const phaseType,
                                EquationOfStateType const equationOfState,
-                               arrayView1d< real64 const > const & referenceEnthalpy,
+                               real64 const refTemperature,
+                               arrayView1d< real64 const > const & criticalTemperature,
+                               arrayView2d< real64 const > const & referenceEnthalpy,
                                arrayView2d< real64 const > const & coefficients );
 
   template< integer USD1, integer USD2 >
@@ -62,30 +66,55 @@ public:
 
   /**
    * @brief Evaluates the Poling polynomial at a given temeperature given a list of coefficients
-   * @param[in] T - the temperature
+   * @param[in] dT - the temperature difference between the temperature and the reference
    * @param[in] a - the coefficients
    * @param[out] enthalpy - the enthalpy
    * @param[out] heatCapacity - the enthalpy derivative wrt temperature
    */
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  static void evaluatePolynomial( real64 const & T,
+  static void evaluatePolynomial( real64 const & dT,
                                   arraySlice1d< real64 const > const & a,
                                   real64 & enthalpy,
                                   real64 & heatCapacity )
   {
-    real64 constexpr r1 = 1.0/2.0;
-    real64 constexpr r2 = 1.0/3.0;
-    real64 constexpr r3 = 1.0/4.0;
-    real64 constexpr r4 = 1.0/5.0;
-    enthalpy = ((((r4*a[4]*T + r3*a[3])*T + r2*a[2])*T + r1*a[1])*T + a[0])*T;
-    heatCapacity = (((a[4]*T + a[3])*T + a[2])*T + a[1])*T + a[0];
+    constexpr real64 r2 = 1.0 / 2.0;
+    constexpr real64 r3 = 1.0 / 3.0;
+    constexpr real64 r4 = 1.0 / 4.0;
+    constexpr real64 r5 = 1.0 / 5.0;
+
+    // c(T) = a[0] + a[1]*dT + a[2]*dT^2 + a[3]*dT^3 + a[4]*dT^4
+    heatCapacity = a[0] + dT * (a[1] + dT * (a[2] + dT * (a[3] + dT * a[4])));
+
+    // Evaluate enthalpy using the integral of c(s) ds from Tref to T
+    // H(T) = a[0]*dT + (a[1]/2)*dT^2 + (a[2]/3)*dT^3 + (a[3]/4)*dT^4 + (a[4]/5)*dT^5
+    enthalpy = dT * (a[0] + dT * (a[1] * r2 + dT * (a[2] * r3 + dT * (a[3] * r4 + dT * (a[4] * r5)))));
   }
 
+  template< typename LAMBDA >
+  GEOS_HOST_DEVICE
+  static void selectEquationOfState( EquationOfStateType equationOfState, LAMBDA && lambda );
+
+  template< typename EOS, integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  void calculateEquationOfStateEnthalpy( integer const numComps,
+                                         ComponentProperties::KernelWrapper const & componentProperties,
+                                         real64 const & pressure,
+                                         real64 const & temperature,
+                                         arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                         real64 & enthalpy,
+                                         arraySlice1d< real64, USD2 > const & dEnthalpy,
+                                         bool useMass,
+                                         PhaseType const & phaseType ) const;
+
 private:
+  integer const m_phaseIndex{-1};
+  integer const m_vapourIndex{-1};
   PhaseType const m_phaseType;
   EquationOfStateType const m_equationOfState;
-  arrayView1d< real64 const > const m_referenceEnthalpy;
+  real64 const m_refTemperature;
+  arrayView1d< real64 const > const m_criticalTemperature;
+  arrayView2d< real64 const > const m_referenceEnthalpy;
   arrayView2d< real64 const > const m_coefficients;
 };
 
@@ -117,9 +146,11 @@ public:
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
 private:
+  integer m_phaseIndex{-1};
+  integer m_vapourIndex{-1};
   PhaseType m_phaseType;
   EquationOfStateType m_equationOfState;
-  array1d< real64 > m_referenceEnthalpy;
+  arrayView1d< real64 const > m_criticalTemperature;
   HeatCapacityCoefficients const * const m_heatCapacityCoefficients{nullptr};
 };
 
@@ -134,27 +165,110 @@ void CompositionalEnthalpyUpdate::compute(
   arraySlice1d< real64, USD2 > const & dEnthalpy,
   bool useMass ) const
 {
-  GEOS_UNUSED_VAR( useMass );
-  GEOS_UNUSED_VAR( pressure );
-
+  constexpr integer maxNumDof = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
   integer const numComps = componentProperties.m_componentMolarWeight.size();
+  integer const numDofs = numComps + 2;
 
-  // 1. Calculate the ideal gas enthalpy
-  real64 & hIdealGas = enthalpy;
-  auto const & dhIdealGas = dEnthalpy;
-  hIdealGas = 0.0;
-  dhIdealGas[Deriv::dT] = 0.0;
-  dhIdealGas[Deriv::dP] = 0.0;
+  // 1. Calculate the polynomial (ideal) enthalpy
+  real64 const dT = temperature - m_refTemperature;
+  real64 & hIdealEnthalpy = enthalpy;
+  auto const & dhIdealEnthalpy = dEnthalpy;
+  hIdealEnthalpy = 0.0;
+  dhIdealEnthalpy[Deriv::dT] = 0.0;
+  dhIdealEnthalpy[Deriv::dP] = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     real64 enthalpyI = 0.0;
     real64 heatCapacityI = 0.0;
-    evaluatePolynomial( temperature, m_coefficients[ic], enthalpyI, heatCapacityI );
-    enthalpyI += m_referenceEnthalpy[ic];
-    hIdealGas += phaseComposition[ic] * enthalpyI;
-    dhIdealGas[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
-    dhIdealGas[Deriv::dC+ic] = enthalpyI;
+    evaluatePolynomial( dT, m_coefficients[ic], enthalpyI, heatCapacityI );
+    // If temperature is greater that critical temperature, use the gas enthalpy if the gas phase exists
+    if( m_criticalTemperature[ic] < temperature && 0 <= m_vapourIndex )
+    {
+      enthalpyI += m_referenceEnthalpy( m_vapourIndex, ic );
+    }
+    else
+    {
+      enthalpyI += m_referenceEnthalpy( m_phaseIndex, ic );
+    }
+    hIdealEnthalpy += phaseComposition[ic] * enthalpyI;
+    dhIdealEnthalpy[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
+    dhIdealEnthalpy[Deriv::dC+ic] = enthalpyI;
   }
+
+  // 2. For the gas phase, add a correction from the EoS
+  real64 hEosEnthalpy = 0.0;
+  stackArray1d< real64, maxNumDof > dhEosEnthalpy( numDofs );
+  LvArray::forValuesInSlice( dhEosEnthalpy.toSlice(), setZero );
+  selectEquationOfState( m_equationOfState, [&]( auto eos )
+  {
+    using CubicModel = CubicEOSPhaseModel< decltype(eos) >;
+    calculateEquationOfStateEnthalpy< CubicModel >( numComps,
+                                                    componentProperties,
+                                                    pressure,
+                                                    temperature,
+                                                    phaseComposition,
+                                                    hEosEnthalpy,
+                                                    dhEosEnthalpy.toSlice(),
+                                                    useMass,
+                                                    m_phaseType );
+  } );
+  // Add
+  enthalpy += hEosEnthalpy;
+  for( integer idof = 0; idof < numDofs; idof++ )
+  {
+    dEnthalpy[idof] += dhEosEnthalpy[idof];
+  }
+}
+
+template< typename LAMBDA >
+GEOS_HOST_DEVICE
+void CompositionalEnthalpyUpdate::selectEquationOfState( EquationOfStateType equationOfState, LAMBDA && lambda )
+{
+  if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
+  {
+    std::forward< LAMBDA >( lambda )( SoaveRedlichKwongEOS{} );
+  }
+  else
+  {
+    std::forward< LAMBDA >( lambda )( PengRobinsonEOS{} );
+  }
+}
+
+template< typename EOS, integer USD1, integer USD2 >
+GEOS_HOST_DEVICE
+void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
+  integer const numComps,
+  ComponentProperties::KernelWrapper const & componentProperties,
+  real64 const & pressure,
+  real64 const & temperature,
+  arraySlice1d< real64 const, USD1 > const & phaseComposition,
+  real64 & enthalpy,
+  arraySlice1d< real64, USD2 > const & dEnthalpy,
+  bool useMass,
+  PhaseType const & phaseType ) const
+{
+  GEOS_UNUSED_VAR( useMass );
+
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  typename EOS::StackVariables< true > stack( numComps,
+                                              componentProperties.m_componentBinaryCoeff.toSlice(),
+                                              derivs.toSliceConst() );
+
+  typename EOS::SelectedRoot const root = phaseType == PhaseType::LIQUID ?
+                                          EOS::SelectedRoot::MINIMUM : EOS::SelectedRoot::MAXIMUM;
+
+  EOS::initialiseStack( numComps, pressure, temperature, componentProperties, stack );
+  EOS::computeMixtureCoefficients( numComps, phaseComposition, stack );
+  EOS::template computeEnthalpy< USD1, true >( numComps,
+                                               pressure,
+                                               temperature,
+                                               phaseComposition,
+                                               componentProperties,
+                                               stack,
+                                               enthalpy,
+                                               dEnthalpy,
+                                               root );
 }
 
 } // end namespace compositional
