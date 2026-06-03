@@ -151,7 +151,7 @@ public:
 
   ~CompositionalEnthalpyTestFixture() = default;
 
-  void testEnthalpyValues( DataType const & data )
+  void testEnthalpyValues( DataType const & data, bool useMass = false )
   {
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -173,7 +173,7 @@ public:
                            phaseComposition.toSliceConst(),
                            enthalpy,
                            enthalpyDerivs.toSlice(),
-                           false );
+                           useMass );
 
     // Approximate JT coefficient
     real64 const jouleThomson = -enthalpyDerivs[Deriv::dP] / enthalpyDerivs[Deriv::dT];
@@ -277,6 +277,7 @@ protected:
 
 using PengRobinson_4 = CompositionalEnthalpyTestFixture< EquationOfStateType::PengRobinson, 4 >;
 using SoaveRedlichKwong_6 = CompositionalEnthalpyTestFixture< EquationOfStateType::SoaveRedlichKwong, 6 >;
+using SoreideWhitson_6 = CompositionalEnthalpyTestFixture< EquationOfStateType::SoreideWhitson, 6 >;
 
 TEST_P( PengRobinson_4, testEnthalpyValues )
 {
@@ -286,6 +287,10 @@ TEST_P( SoaveRedlichKwong_6, testEnthalpyValues )
 {
   testEnthalpyValues( GetParam() );
 }
+TEST_P( SoreideWhitson_6, testEnthalpyValues )
+{
+  testEnthalpyValues( GetParam(), true );
+}
 
 TEST_P( PengRobinson_4, testEnthalpyDerivatives )
 {
@@ -293,6 +298,11 @@ TEST_P( PengRobinson_4, testEnthalpyDerivatives )
   testEnthalpyDerivatives( GetParam(), true );
 }
 TEST_P( SoaveRedlichKwong_6, testEnthalpyDerivatives )
+{
+  testEnthalpyDerivatives( GetParam(), false );
+  testEnthalpyDerivatives( GetParam(), true );
+}
+TEST_P( SoreideWhitson_6, testEnthalpyDerivatives )
 {
   testEnthalpyDerivatives( GetParam(), false );
   testEnthalpyDerivatives( GetParam(), true );
@@ -380,6 +390,28 @@ INSTANTIATE_TEST_SUITE_P(
     {1.01325e+05, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  1.424903e+04,  3.202080e-06},
     {1.00000e+06, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  1.405756e+04,  3.173047e-06},
     {1.00000e+07, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  1.216120e+04,  2.686232e-06},
+  } )
+);
+
+// This data is in mass units
+INSTANTIATE_TEST_SUITE_P(
+  CompositionalEnthalpyTest, SoreideWhitson_6,
+  ::testing::ValuesIn< typename SoreideWhitson_6::DataType >( {  
+    {1.01325e+05, 283.15, {2.478590e-01, 1.239310e-01, 8.588000e-03, 2.478630e-01, 1.858620e-01, 1.858970e-01}, VAP, -2.076518e+04,  1.253196e-05},
+    {1.01325e+05, 283.15, {1.400000e-05, 0.000000e+00, 9.998400e-01, 0.000000e+00, 1.450000e-04, 0.000000e+00}, LIQ, -2.598884e+06, -2.346874e-07},
+    {1.00000e+06, 283.15, {2.498020e-01, 1.249180e-01, 1.023000e-03, 2.498360e-01, 1.870430e-01, 1.873770e-01}, VAP, -3.590796e+04,  1.327629e-05},
+    {1.00000e+06, 283.15, {1.350000e-04, 0.000000e+00, 9.985240e-01, 1.000000e-06, 1.340000e-03, 0.000000e+00}, LIQ, -2.591487e+06, -2.349740e-07},
+    {1.00000e+07, 283.15, {1.606730e-01, 3.112760e-01, 3.509000e-03, 4.560230e-01, 5.605000e-02, 1.247000e-02}, VAP, -1.089422e+05,  4.162895e-06},
+    {1.00000e+07, 283.15, {2.139420e-01, 2.509800e-02, 2.696610e-01, 1.092340e-01, 1.833080e-01, 1.987580e-01}, LIQ, -5.441170e+05, -2.191882e-07},
+    {1.01325e+05, 298.15, {2.441010e-01, 1.220520e-01, 2.361500e-02, 2.441050e-01, 1.830470e-01, 1.830790e-01}, VAP, -1.510413e+03,  1.151375e-05},
+    {1.01325e+05, 298.15, {1.500000e-05, 0.000000e+00, 9.998430e-01, 0.000000e+00, 1.410000e-04, 0.000000e+00}, LIQ, -2.537116e+06, -2.293975e-07},
+    {1.00000e+06, 298.15, {2.493660e-01, 1.247020e-01, 2.754000e-03, 2.494030e-01, 1.867230e-01, 1.870520e-01}, VAP, -1.534557e+04,  1.183007e-05},
+    {1.00000e+06, 298.15, {1.500000e-04, 0.000000e+00, 9.985160e-01, 2.000000e-06, 1.333000e-03, 0.000000e+00}, LIQ, -2.529758e+06, -2.296823e-07},
+    {1.00000e+07, 298.15, {1.885930e-01, 2.808340e-01, 6.328000e-03, 4.344900e-01, 7.191700e-02, 1.783800e-02}, VAP, -8.762014e+04,  4.252175e-06},
+    {1.00000e+07, 298.15, {2.048090e-01, 2.376400e-02, 2.816490e-01, 1.011430e-01, 1.829180e-01, 2.057170e-01}, LIQ, -5.183653e+05, -1.665260e-07},
+    {1.01325e+05, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  4.147675e+05,  3.509469e-06},
+    {1.00000e+06, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  4.086661e+05,  3.469178e-06},
+    {1.00000e+07, 550.00, {2.000000e-01, 1.000000e-01, 2.000000e-01, 2.000000e-01, 1.500000e-01, 1.500000e-01}, VAP,  3.491882e+05,  2.852633e-06},
   } )
 );
 
