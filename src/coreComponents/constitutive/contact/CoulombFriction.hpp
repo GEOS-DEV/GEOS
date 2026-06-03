@@ -372,7 +372,6 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
   using namespace fields::contact;
 
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 limitTau = 0.0;
 
   // Compute the trial traction
   real64 tractionTrial[ 3 ];
@@ -385,6 +384,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                           tractionTrial[2] };
   real64 const tractionTrialNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
+  // normal treatment
   // If normal tangential trial is positive (opening)
   fractureState = FractureState::Stick;
   if( tractionTrial[ 0 ] > normalTractionTolerance )
@@ -399,19 +399,15 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     dTraction_dDispJump[0][0] = -penalty[ 0 ];
   }
 
+  // In plane treatment
   // Compute limit Tau
-  if( fixedLimitTau )
-  {
-    limitTau = computeLimitTangentialTractionNorm( traction[0],
-                                                   dLimitTangentialTractionNorm_dTraction );
-  }
-  else
-  {
-    limitTau = computeLimitTangentialTractionNorm( tractionNew[0],
-                                                   dLimitTangentialTractionNorm_dTraction );
-  }
+  if( fractureState != FractureState::Open ){
 
-  if( tractionTrialNorm <= tangentialTractionTolerance )
+  real64 limitTau = computeLimitTangentialTractionNorm( (fixedLimitTau) ? traction[0] : tractionNew[0],
+      dLimitTangentialTractionNorm_dTraction );
+
+  /// logic trap ?
+  if( tractionTrialNorm <= tangentialTractionTolerance )//whatever tractionTrialNorm to limitTau is, the limitTau < tractionTrialNorm is --> Stick mode
   {
     // It is needed for the first iteration (both t and u are equal to zero)
     dTraction_dDispJump[1][1] = -penalty[1];
@@ -420,12 +416,9 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     tractionNew[1] = tractionTrial[1];
     tractionNew[2] = tractionTrial[2];
 
-    if( fractureState != FractureState::Open )
-    {
-      fractureState =  FractureState::Stick;
-    }
+    fractureState =  FractureState::Stick;
   }
-  else if( limitTau <= tangentialTractionTolerance )
+  else if(limitTau <= tangentialTractionTolerance )//tractionTrialNorm >= tangentialTractionTolerance >= limitTau  --> Slip
   {
     dTraction_dDispJump[1][1] = 0.0;
     dTraction_dDispJump[2][2] = 0.0;
@@ -433,23 +426,23 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     tractionNew[1] = (fixedLimitTau) ? tractionTrial[1] : 0.0;
     tractionNew[2] = (fixedLimitTau) ? tractionTrial[2] : 0.0;
 
-    if( fractureState != FractureState::Open )
-    {
+    // if( fractureState != FractureState::Open )// FractureState::Slip | Fracture::Stick
+    // {
       fractureState =  FractureState::Slip;
-    }
+    // }
   }
-  else
+  else// (limitTau,tractionTrialNorm) >= tangentialTractionTolerance -> Either place on the cone and Slip (tractionTrialNorm > limitTau)
   {
     // Compute psi and dpsi
     //real64 const psi = std::tanh( tractionTrialNorm/limitTau );
     //real64 const dpsi = 1.0-std::pow(psi,2);
-    real64 const psi = ( tractionTrialNorm > limitTau) ? 1.0 : tractionTrialNorm/limitTau;
-    real64 const dpsi = ( tractionTrialNorm > limitTau) ? 0.0 : 1.0;
+    real64 const psi = min(1.0,tractionTrialNorm/limitTau);
+    real64 const dpsi = (tractionTrialNorm<=limitTau);
 
-    if( fractureState != FractureState::Open )
-    {
-      fractureState = ( tractionTrialNorm > limitTau) ? FractureState::Slip : FractureState::Stick;
-    }
+    // if( fractureState != FractureState::Open )
+    // {
+    fractureState = ( tractionTrialNorm > limitTau) ? FractureState::Slip : FractureState::Stick;
+    // }
 
     // Two symmetric 2x2 matrices
     real64 dNormTTdgT[ 3 ];
@@ -490,6 +483,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     tractionNew[1] = tractionTrial[1];
     tractionNew[2] = tractionTrial[2];
   }
+}
 
 }
 
