@@ -29,7 +29,7 @@
       frictionCoefficient="0.01"/>
     <Coulomb
       name="fractureContact1"
-      cohesion="0.0e6"
+      cohesion="1.0e6"
       frictionCoefficient="0.01"/>
 
   </Constitutive>
@@ -41,6 +41,12 @@
       inputVarNames="{ time }"
       coordinateFiles="{ tables/time.geos }"
       voxelFile="tables/jumps.geos"/>
+
+    <TableFunction
+      name="jDFunction"
+      inputVarNames="{ time }"
+      coordinateFiles="{ tables/time.geos }"
+      voxelFile="tables/djumps.geos"/>
 
     <TableFunction
       name="tFunction"

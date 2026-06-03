@@ -74,6 +74,9 @@ private:
     constexpr static char const * jumpFunctionString()
     { return "jumpControl"; }
 
+    constexpr static char const * dJumpFunctionString()
+    { return "dJumpControl"; }
+
     constexpr static char const * tractionFunctionString()
     { return "tractionControl"; }
 
@@ -85,9 +88,10 @@ private:
   };
 
   // Time is defined in base class
-  enum columnKeys { NJUMP = 1, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
+  enum columnKeys { NJUMP = 1, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, NTRAC, STRAC0, STRAC1, FS, NEWTRAC, SNEWTRAC0, SNEWTRAC1, TLIM };
 
   string m_jumpFunctionName; ///<
+  string m_dJumpFunctionName; ///<
   string m_tractionFunctionName; ///<
 
   real64 m_theta{0.0}; ///< x-tilt of fault

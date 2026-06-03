@@ -49,6 +49,10 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
   registerWrapper( viewKeyStruct::jumpFunctionString(), &m_jumpFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the input function representing jump function along world x-axis" );
+  
+  registerWrapper( viewKeyStruct::dJumpFunctionString(), &m_dJumpFunctionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the input function representing deltaDisplacementJump function along world x-axis" );
 
   registerWrapper( viewKeyStruct::tractionFunctionString(), &m_tractionFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -149,6 +153,9 @@ void FrictionDriver::getColumnNames( string_array & columnNames ) const
   columnNames.emplace_back( "displacement jump,tangent1" );
   columnNames.emplace_back( "displacement jump,tangent2" );
   columnNames.emplace_back( "fracture state" );
+  columnNames.emplace_back( "newtraction,normal" );
+  columnNames.emplace_back( "newtraction,tangent1" );
+  columnNames.emplace_back( "newtraction,tangent2" );
 
   if( dynamic_cast< CoulombFriction const * >(&getFriction()) != nullptr )
   {

@@ -40,7 +40,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#include <cstddef>
 #include <stdio.h>
+#include <tuple>
 
 #if defined( GEOS_USE_CUDA )
 #include <cuda_runtime.h>
@@ -1067,6 +1069,81 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
   GEOS_UNUSED_VAR( domain );
 }
 
+
+std::tuple< array2d<real64>, array1d<int>> SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(
+std::ptrdiff_t const rsize,
+FrictionBase const& frictionLaw,
+arrayView1d< real64 const > const& normalDisplacementTolerance,
+arrayView1d< real64 const > const& normalTractionTolerance,
+arrayView1d< real64 const > const& slidingTolerance,
+arrayView2d<real64 const> const & iterativePenalty,
+arrayView2d<real64 const> const & dispJump,
+arrayView2d<real64 const> const & deltaDispJump,
+arrayView1d< integer const> const& ghostRank,
+arrayView1d< integer const> const& fractureState,
+arrayView2d<real64> const & traction )
+{
+        array2d< real64 > traction_new;
+        std::ptrdiff_t const sizes[2] = {rsize, 3};
+        traction_new.resize(2, sizes);
+        array1d< int > condConv;
+
+        // Update the traction field based on the displacement results from the nonlinear solve
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
+      {
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+
+        if( m_simultaneous )
+        {
+          solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
+            launch< parallelDevicePolicy<> >( rsize,
+                                              iterativePenalty,
+                                              traction,
+                                              dispJump,
+                                              deltaDispJump,
+                                              traction_new.toView() );
+        }
+        else
+        {
+          solidMechanicsALMKernels::ComputeTractionKernel::
+            launch< parallelDevicePolicy<> >( rsize,
+                                              frictionWrapper,
+                                              iterativePenalty,
+                                              traction,
+                                              dispJump,
+                                              deltaDispJump,
+                                              traction_new.toView() );
+        }
+      } );
+
+      real64 const slidingCheckTolerance = m_slidingCheckTolerance;
+
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
+      {
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+
+        solidMechanicsALMKernels::ConstraintCheckKernel::
+          launch< parallelDevicePolicy<> >( rsize,
+                                            frictionWrapper,
+                                            ghostRank,
+                                            traction,
+                                            dispJump,
+                                            deltaDispJump,
+                                            normalTractionTolerance,
+                                            normalDisplacementTolerance,
+                                            slidingTolerance,
+                                            slidingCheckTolerance,
+                                            fractureState,
+                                            condConv.toView() );
+      } );
+
+
+      return std::make_tuple(traction_new,condConv);
+}
+
+
 bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain,
                                                                     integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
@@ -1107,61 +1184,25 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       std::ptrdiff_t const sizes[ 2 ] = {subRegion.size(), 3};
       traction_new.resize( 2, sizes );
-      arrayView2d< real64 > const traction_new_v = traction_new.toView();
+      // arrayView2d< real64 > const traction_new_v = traction_new.toView();
 
-      condConv.resize( subRegion.size());
+      // condConv.resize( subRegion.size());
+
+      std::tie(traction_new, condConv) = updateTractionAndConstraintCheck(
+        subRegion.size(),
+        frictionLaw,
+        normalDisplacementTolerance,
+        normalTractionTolerance,
+        slidingTolerance,
+        iterativePenalty,
+        dispJump,
+        deltaDispJump,
+        ghostRank,
+        fractureState,
+        traction
+      );
       arrayView1d< int > const condConv_v = condConv.toView();
 
-      // Update the traction field based on the displacement results from the nonlinear solve
-      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        using FrictionType = TYPEOFREF( castedFrictionLaw );
-        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
-
-        if( m_simultaneous )
-        {
-          solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
-            launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              iterativePenalty,
-                                              traction,
-                                              dispJump,
-                                              deltaDispJump,
-                                              traction_new_v );
-        }
-        else
-        {
-          solidMechanicsALMKernels::ComputeTractionKernel::
-            launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              frictionWrapper,
-                                              iterativePenalty,
-                                              traction,
-                                              dispJump,
-                                              deltaDispJump,
-                                              traction_new_v );
-        }
-      } );
-
-      real64 const slidingCheckTolerance = m_slidingCheckTolerance;
-
-      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        using FrictionType = TYPEOFREF( castedFrictionLaw );
-        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
-
-        solidMechanicsALMKernels::ConstraintCheckKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            frictionWrapper,
-                                            ghostRank,
-                                            traction,
-                                            dispJump,
-                                            deltaDispJump,
-                                            normalTractionTolerance,
-                                            normalDisplacementTolerance,
-                                            slidingTolerance,
-                                            slidingCheckTolerance,
-                                            fractureState,
-                                            condConv_v );
-      } );
 
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum[5] =
       { RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
