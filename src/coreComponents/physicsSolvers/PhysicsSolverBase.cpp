@@ -367,9 +367,19 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-  GEOS_ERROR_IF( dtRemaining > 0.0,
-                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
-                 getDataContext() );
+
+  if( m_nonlinearSolverParameters.m_allowNonConverged )
+  {
+    GEOS_WARNING_IF( dtRemaining > 0.0,
+                     "Maximum allowed number of sub-steps reached, non-converged solutions are allowed so the simulation continues with innacurate results.",
+                     getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
+  }
+  else
+  {
+    GEOS_ERROR_IF( dtRemaining > 0.0,
+                   "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
+                   getDataContext() );
+  }
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
@@ -917,7 +927,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     }  // end of configuration loop
 
-    if( isConfigurationLoopConverged || allowNonConverged )
+    if( isConfigurationLoopConverged )
     {
       // get out of outer loop
       break;
