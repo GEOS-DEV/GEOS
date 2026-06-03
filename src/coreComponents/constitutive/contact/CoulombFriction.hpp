@@ -121,7 +121,7 @@ private:
    */
   GEOS_HOST_DEVICE
   inline
-  integer computeTrialFractureState( real64 const (& tractionTrial)[3],
+  integer computeTrialFractureState( real64 const (&tractionTrial)[3],
                                      real64 const tractionTrialNorm,
                                      real64 const limitTau,
                                      real64 const normalTractionTolerance,
@@ -130,46 +130,46 @@ private:
   /// Open state: zero normal traction, zero all tangential outputs.
   GEOS_HOST_DEVICE
   inline
-  void applyOpenTractionUpdate( real64 ( & dTraction_dDispJump )[3][3],
-                                 real64 ( & tractionNew )[3] ) const;
+  void applyOpenTractionUpdate( real64 ( &dTraction_dDispJump )[3][3],
+                                real64 ( &tractionNew )[3] ) const;
 
   /// Stick state: copy trial tangential traction, compute derivatives.
   GEOS_HOST_DEVICE
   inline
-  void applyStickTractionUpdate( real64 const (& tractionTrial)[3],
-                                  real64 const tractionTrialNorm,
-                                  real64 const limitTau,
-                                  arraySlice1d< real64 const > const & penalty,
-                                  bool const symmetric,
-                                  real64 const tangentialTractionTolerance,
-                                  real64 ( & dTraction_dDispJump )[3][3],
-                                  real64 ( & tractionNew )[3] ) const;
-
-  /// Slip state: project tangential traction onto friction cone, compute derivatives.
-  GEOS_HOST_DEVICE
-  inline
-  void applySlipTractionUpdate( real64 const (& tractionTrial)[3],
+  void applyStickTractionUpdate( real64 const (&tractionTrial)[3],
                                  real64 const tractionTrialNorm,
                                  real64 const limitTau,
                                  arraySlice1d< real64 const > const & penalty,
                                  bool const symmetric,
-                                 bool const fixedLimitTau,
                                  real64 const tangentialTractionTolerance,
-                                 real64 ( & dTraction_dDispJump )[3][3],
-                                 real64 ( & tractionNew )[3] ) const;
+                                 real64 ( &dTraction_dDispJump )[3][3],
+                                 real64 ( &tractionNew )[3] ) const;
+
+  /// Slip state: project tangential traction onto friction cone, compute derivatives.
+  GEOS_HOST_DEVICE
+  inline
+  void applySlipTractionUpdate( real64 const (&tractionTrial)[3],
+                                real64 const tractionTrialNorm,
+                                real64 const limitTau,
+                                arraySlice1d< real64 const > const & penalty,
+                                bool const symmetric,
+                                bool const fixedLimitTau,
+                                real64 const tangentialTractionTolerance,
+                                real64 ( &dTraction_dDispJump )[3][3],
+                                real64 ( &tractionNew )[3] ) const;
 
   /// Shared kernel for the non-degenerate tangential update (used by both Stick and Slip).
   GEOS_HOST_DEVICE
   inline
   void applyGeneralTangentialUpdate( real64 const psi,
-                                      real64 const dpsi,
-                                      real64 const (& tractionTrial)[3],
-                                      real64 const tractionTrialNorm,
-                                      real64 const limitTau,
-                                      arraySlice1d< real64 const > const & penalty,
-                                      bool const symmetric,
-                                      real64 ( & dTraction_dDispJump )[3][3],
-                                      real64 ( & tractionNew )[3] ) const;
+                                     real64 const dpsi,
+                                     real64 const (&tractionTrial)[3],
+                                     real64 const tractionTrialNorm,
+                                     real64 const limitTau,
+                                     arraySlice1d< real64 const > const & penalty,
+                                     bool const symmetric,
+                                     real64 ( &dTraction_dDispJump )[3][3],
+                                     real64 ( &tractionNew )[3] ) const;
 
 public:
 
@@ -415,11 +415,11 @@ inline void CoulombFrictionUpdates::updateElasticSlip( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline integer CoulombFrictionUpdates::computeTrialFractureState( real64 const (& tractionTrial)[3],
-                                                                   real64 const tractionTrialNorm,
-                                                                   real64 const limitTau,
-                                                                   real64 const normalTractionTolerance,
-                                                                   real64 const tangentialTractionTolerance ) const
+inline integer CoulombFrictionUpdates::computeTrialFractureState( real64 const (&tractionTrial)[3],
+                                                                  real64 const tractionTrialNorm,
+                                                                  real64 const limitTau,
+                                                                  real64 const normalTractionTolerance,
+                                                                  real64 const tangentialTractionTolerance ) const
 {
   using namespace fields::contact;
 
@@ -434,7 +434,7 @@ inline integer CoulombFrictionUpdates::computeTrialFractureState( real64 const (
 
 GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::applyOpenTractionUpdate( real64 ( & dTraction_dDispJump )[3][3],
-                                                              real64 ( & tractionNew )[3] ) const
+                                                             real64 ( & tractionNew )[3] ) const
 {
   tractionNew[0] = 0.0;
   tractionNew[1] = 0.0;
@@ -447,14 +447,14 @@ inline void CoulombFrictionUpdates::applyOpenTractionUpdate( real64 ( & dTractio
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::applyStickTractionUpdate( real64 const (& tractionTrial)[3],
-                                                               real64 const tractionTrialNorm,
-                                                               real64 const limitTau,
-                                                               arraySlice1d< real64 const > const & penalty,
-                                                               bool const symmetric,
-                                                               real64 const tangentialTractionTolerance,
-                                                               real64 ( & dTraction_dDispJump )[3][3],
-                                                               real64 ( & tractionNew )[3] ) const
+inline void CoulombFrictionUpdates::applyStickTractionUpdate( real64 const (&tractionTrial)[3],
+                                                              real64 const tractionTrialNorm,
+                                                              real64 const limitTau,
+                                                              arraySlice1d< real64 const > const & penalty,
+                                                              bool const symmetric,
+                                                              real64 const tangentialTractionTolerance,
+                                                              real64 ( & dTraction_dDispJump )[3][3],
+                                                              real64 ( & tractionNew )[3] ) const
 {
   if( tractionTrialNorm <= tangentialTractionTolerance )
   {
@@ -478,15 +478,15 @@ inline void CoulombFrictionUpdates::applyStickTractionUpdate( real64 const (& tr
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::applySlipTractionUpdate( real64 const (& tractionTrial)[3],
-                                                              real64 const tractionTrialNorm,
-                                                              real64 const limitTau,
-                                                              arraySlice1d< real64 const > const & penalty,
-                                                              bool const symmetric,
-                                                              bool const fixedLimitTau,
-                                                              real64 const tangentialTractionTolerance,
-                                                              real64 ( & dTraction_dDispJump )[3][3],
-                                                              real64 ( & tractionNew )[3] ) const
+inline void CoulombFrictionUpdates::applySlipTractionUpdate( real64 const (&tractionTrial)[3],
+                                                             real64 const tractionTrialNorm,
+                                                             real64 const limitTau,
+                                                             arraySlice1d< real64 const > const & penalty,
+                                                             bool const symmetric,
+                                                             bool const fixedLimitTau,
+                                                             real64 const tangentialTractionTolerance,
+                                                             real64 ( & dTraction_dDispJump )[3][3],
+                                                             real64 ( & tractionNew )[3] ) const
 {
   if( limitTau <= tangentialTractionTolerance )
   {
@@ -511,14 +511,14 @@ inline void CoulombFrictionUpdates::applySlipTractionUpdate( real64 const (& tra
 
 GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::applyGeneralTangentialUpdate( real64 const psi,
-                                                                   real64 const dpsi,
-                                                                   real64 const (& tractionTrial)[3],
-                                                                   real64 const tractionTrialNorm,
-                                                                   real64 const limitTau,
-                                                                   arraySlice1d< real64 const > const & penalty,
-                                                                   bool const symmetric,
-                                                                   real64 ( & dTraction_dDispJump )[3][3],
-                                                                   real64 ( & tractionNew )[3] ) const
+                                                                  real64 const dpsi,
+                                                                  real64 const (&tractionTrial)[3],
+                                                                  real64 const tractionTrialNorm,
+                                                                  real64 const limitTau,
+                                                                  arraySlice1d< real64 const > const & penalty,
+                                                                  bool const symmetric,
+                                                                  real64 ( & dTraction_dDispJump )[3][3],
+                                                                  real64 ( & tractionNew )[3] ) const
 {
   // Two symmetric 2x2 matrices (Voigt-like storage: [t1t1, t2t2, t1t2])
   real64 dNormTTdgT[ 3 ];
@@ -532,7 +532,7 @@ inline void CoulombFrictionUpdates::applyGeneralTangentialUpdate( real64 const p
   dTdgT[ 2 ] = -dNormTTdgT[ 2 ];
 
   LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1.0 / std::pow( tractionTrialNorm, 2 ) );
-  LvArray::tensorOps::scale< 3 >( dTdgT,      1.0 / std::pow( tractionTrialNorm, 3 ) );
+  LvArray::tensorOps::scale< 3 >( dTdgT, 1.0 / std::pow( tractionTrialNorm, 3 ) );
 
   dTraction_dDispJump[1][1] = -penalty[1] * ( dpsi * dNormTTdgT[0] + psi * dTdgT[0] * limitTau );
   dTraction_dDispJump[2][2] = -penalty[1] * ( dpsi * dNormTTdgT[1] + psi * dTdgT[1] * limitTau );
@@ -613,6 +613,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                penalty, symmetric, fixedLimitTau, tangentialTractionTolerance,
                                dTraction_dDispJump, tractionNew );
       break;
+
     default:
       break;
   }
