@@ -215,7 +215,7 @@ bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
   // collect element nodes
   integer const nV = subRegion.numNodesPerElement( eiLocal );
   SurfaceElementSubRegion::NodeMapType const & nodeList = subRegion.nodeList();
-  std::vector< Point3d > polygon( nV );
+  stdVector< Point3d > polygon( nV );
   for( integer i = 0; i < nV; ++i )
   {
     for( integer j = 0; j < 3; ++j )
@@ -1085,7 +1085,7 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
 
 
   // Sort indices based on the global index
-  std::vector< size_t > indices( numElements );
+  stdVector< size_t > indices( numElements );
   for( size_t i = 0; i < indices.size(); ++i )
   {
     indices[i] = i;   // Initialize indices
