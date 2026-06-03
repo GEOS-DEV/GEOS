@@ -223,20 +223,20 @@ void CompositionalEnthalpyUpdate::compute(
                                                     hEosEnthalpy,
                                                     dhEosEnthalpy.toSlice(),
                                                     m_phaseType );
-
-    // Convert from J/mol -> J/kg
-    if( useMass )
-    {
-      real64 const invPhaseMolarWeight = 1.0 / phaseMolarWeight;
-      hEosEnthalpy *= invPhaseMolarWeight;
-      dhEosEnthalpy[Deriv::dP] *= invPhaseMolarWeight;
-      dhEosEnthalpy[Deriv::dT] *= invPhaseMolarWeight;
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        dhEosEnthalpy[Deriv::dC+ic] = (dhEosEnthalpy[Deriv::dC+ic] - componentMolarWeight[ic] * hEosEnthalpy)*invPhaseMolarWeight;
-      }
-    }
   } );
+
+  // Convert from J/mol -> J/kg
+  if( useMass )
+  {
+    real64 const invPhaseMolarWeight = 1.0 / phaseMolarWeight;
+    hEosEnthalpy *= invPhaseMolarWeight;
+    dhEosEnthalpy[Deriv::dP] *= invPhaseMolarWeight;
+    dhEosEnthalpy[Deriv::dT] *= invPhaseMolarWeight;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      dhEosEnthalpy[Deriv::dC+ic] = (dhEosEnthalpy[Deriv::dC+ic] - componentMolarWeight[ic] * hEosEnthalpy)*invPhaseMolarWeight;
+    }
+  }
 
   // 3. Combine the 2 values for the actual fluid enthalpy
   enthalpy += hEosEnthalpy;
