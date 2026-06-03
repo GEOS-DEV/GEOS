@@ -68,12 +68,14 @@ public:
     static constexpr char const * czVolumeNormalizationString() { return "czVolumeNormalization"; }
     static constexpr char const * computeNormalsAndPositionsString() { return "computeNormalsAndPositions"; }
     static constexpr char const * normalsAndPositionsMethodString() { return "normalsAndPositionsMethod"; }
+    static constexpr char const * czSurfaceDisplacementUpdateString() { return "czSurfaceDisplacementUpdate"; }
   } CohesiveZoneMPMEventViewKeys;
   /// @endcond
 
   int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
   int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
   mpm::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
+  mpm::CohesiveSurfaceDisplacementUpdateOption getCZSurfaceDisplacementUpdate() const { return m_czSurfaceDisplacementUpdate; }
 
 private:
 
@@ -85,6 +87,7 @@ protected:
   int m_czVolumeNormalization;
   int m_computeNormalsAndPositions;
   mpm::NormalsAndPositionsMethodOption m_normalsAndPositionsMethod;
+  mpm::CohesiveSurfaceDisplacementUpdateOption m_czSurfaceDisplacementUpdate;
 };
 
 } /* namespace geos */

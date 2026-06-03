@@ -17,7 +17,6 @@ matdb = importlib.import_module('pfw_materials')
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = True
 stopTime = 2.0
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -54,6 +53,12 @@ pfw["zmin"] = -0.5*domainLength # mm
 pfw["zmax"] = 0.5*domainLength # mm
 
 pfw["outputType"] = "silo"
+pfw["gridFieldNames"] = [
+    "gridMass",
+    "gridVelocity",
+    "gridInternalForce",
+    "gridDamageGradient",
+]
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
@@ -77,8 +82,8 @@ pfw["maxParticleVelocity"] = 10.0
 pfw["minParticleJacobian"] = 0.01
 pfw["maxParticleJacobian"] = 10.0
 
-pfw["updateMethod"] = "XPIC"
-pfw["updateOrder"] = 2
+pfw["updateMethod"] = "FMPM"
+pfw["updateOrder"] = 4
 
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------
 
@@ -97,9 +102,8 @@ pfw["objects"] = [disk1,disk2]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 
-pfw["mWallTime"] = "12:00:00"
-pfw["mCores"] = pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"] = False
+pfw["mWallTime"] = "00:10:00"
+pfw["mSubmitJobs"] = True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 

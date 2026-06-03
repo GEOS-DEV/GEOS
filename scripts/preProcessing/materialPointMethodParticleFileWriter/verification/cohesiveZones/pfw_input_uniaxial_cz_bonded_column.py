@@ -95,7 +95,6 @@ pfw["materialPropertyString"] = f"""
 # BATCH PARAMETERS  --------------------------------------------------------
 pfw["mBatch"]=True
 pfw["mWallTime"] = "01:00:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 

@@ -94,7 +94,6 @@ pfw["sortObjects"] = True
 # Bank/account, GEOS executable, default run directory, and default Python command
 # are read from userDefs_$USER.py.
 pfw["mWallTime"] = "00:10:00"
-pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 pfw["mSubmitJobs"] = True
 
 # Keep this example simple: no automatic restart machinery.

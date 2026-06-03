@@ -82,6 +82,7 @@ public:
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto gridFieldNames = "gridFieldNames";
     static constexpr auto parallelThreadsString = "parallelThreads";
   } siloOutputViewKeys;
   /// @endcond
@@ -108,6 +109,9 @@ private:
 
   /// array of names of the fields to output
   string_array m_fieldNames;
+
+  /// array of background-grid field names to output in addition to the regular fields
+  string_array m_gridFieldNames;
 
   integer m_parallelThreads;
 };

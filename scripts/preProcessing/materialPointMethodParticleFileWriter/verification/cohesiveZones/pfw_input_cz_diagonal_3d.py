@@ -188,9 +188,8 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:15:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=True
-pfw["autoRestart"]=False
+pfw["autoRestart"]=True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 

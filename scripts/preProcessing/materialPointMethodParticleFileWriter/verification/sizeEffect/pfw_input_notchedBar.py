@@ -80,7 +80,6 @@ gap = 0.5*(domainY-sampleY)
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 

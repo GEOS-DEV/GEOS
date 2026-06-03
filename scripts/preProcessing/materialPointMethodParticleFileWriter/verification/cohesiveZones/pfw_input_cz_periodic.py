@@ -117,7 +117,6 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 pfw["mBank"]="MAHEM"
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:30:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 

@@ -1116,6 +1116,19 @@ public:
 
   void tagBinderCZSurfaces( ParticleManager & particleManager,
                             NodeManager & nodeManager );
+  bool shouldWriteTracers( real64 const outputTime,
+                           int const cycleNumber ) const;
+
+  void updateNextTracerWriteTime( real64 const outputTime );
+
+  void initializeTracerParticleIDs( ParticleManager & particleManager );
+
+  void initializeTracerFiles( ParticleManager & particleManager );
+
+  void computeAndWriteTracers( int const cycleNumber,
+                               real64 const time,
+                               real64 const dt,
+                               ParticleManager & particleManager );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -1229,6 +1242,7 @@ protected:
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
   real64 m_nextReactionWriteTime;
+  real64 m_nextTracerWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
@@ -1296,6 +1310,13 @@ protected:
   real64 m_surfaceTensionCoefficient;
   real64 m_thinFeatureDFGThreshold;
   mpm::TimeIntegrationOption m_timeIntegrationOption;
+  int m_tracerCycleInterval;
+  array2d< real64 > m_tracerCoordinates;
+  int m_tracerHistory;
+  string m_tracerOutputPrefix;
+  array1d< globalIndex > m_tracerParticleIDs;
+  string_array m_tracerVariables;
+  real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
   int m_treatFullyDamagedAsSingleField;
   mpm::UpdateMethodOption m_updateMethod;

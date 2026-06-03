@@ -58,7 +58,6 @@ pfw["zmax"] = 0.5 * DZ
 # this input only specifies problem-specific non-default run behavior.
 pfw["outputType"] = "silo"
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 pfw["mSubmitJobs"] = True
 pfw["endTime"] = stopTime
 pfw["plotInterval"] = stopTime

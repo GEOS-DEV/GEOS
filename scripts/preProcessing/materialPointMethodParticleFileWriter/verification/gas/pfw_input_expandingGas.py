@@ -40,7 +40,6 @@ dz = domainLength / (pfw["nK"]-1)
 
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------

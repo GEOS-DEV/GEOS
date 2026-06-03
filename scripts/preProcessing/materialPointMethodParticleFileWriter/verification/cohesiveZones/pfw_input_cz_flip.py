@@ -104,7 +104,6 @@ pfw["prescribedBoundaryFTable"]=0
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 

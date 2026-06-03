@@ -136,5 +136,4 @@ pfw["prescribedBoundaryFTable"]=0
 pfw["mBatch"]=True
 pfw["mBank"]="MAHEM"
 pfw["mWallTime"]="00:15:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]= True

@@ -40,8 +40,7 @@ pfw["planeStrain"] = 1
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 
 pfw["mBatch"]=True
-pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"] 
+pfw["mWallTime"] = "00:05:00" 
 pfw["mSubmitJobs"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------

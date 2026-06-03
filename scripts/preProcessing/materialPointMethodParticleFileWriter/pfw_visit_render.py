@@ -321,6 +321,17 @@ def _find_best_scalar(scalars, suffixes=(), contains=()):
     return sorted(matches, key=_derived_priority)[0]
 
 
+def _component_suffix_candidates(stem, label, legacy_index):
+    """Suffixes for grouped Silo component expressions and legacy flat components."""
+    return (
+        "particle{0}/{1}".format(stem, label),
+        "{0}/{1}".format(stem, label),
+        "particle{0}_{1}".format(stem, legacy_index),
+        "{0}_0_{1}".format(stem, legacy_index),
+        "{0}_{1}".format(stem, legacy_index),
+    )
+
+
 def _define_scalar_expression(name, expression):
     print("Defining expression {0} = {1}".format(name, expression))
     call_visit("DefineScalarExpression", name, expression)
@@ -328,11 +339,23 @@ def _define_scalar_expression(name, expression):
 
 
 def _derive_pressure(scalars):
-    # Prefer particle stress components.  GEOS-MPM Silo output commonly contains
-    # either particleStress_0/1/2 or material-specific stress_0_0/0_1/... fields.
-    sxx = _find_best_scalar(scalars, suffixes=("particleStress_0", "stress_0_0", "stress_11"), contains=("stress",))
-    syy = _find_best_scalar(scalars, suffixes=("particleStress_1", "stress_0_1", "stress_22", "stress_1_1"), contains=("stress",))
-    szz = _find_best_scalar(scalars, suffixes=("particleStress_2", "stress_0_2", "stress_33", "stress_2_2"), contains=("stress",))
+    # Prefer particle stress components.  Support both grouped Silo components
+    # such as particleStress/xx and legacy flat components such as particleStress_0.
+    sxx = _find_best_scalar(
+        scalars,
+        suffixes=_component_suffix_candidates("Stress", "xx", 0) + ("stress_11",),
+        contains=("stress",),
+    )
+    syy = _find_best_scalar(
+        scalars,
+        suffixes=_component_suffix_candidates("Stress", "yy", 1) + ("stress_22", "stress_1_1"),
+        contains=("stress",),
+    )
+    szz = _find_best_scalar(
+        scalars,
+        suffixes=_component_suffix_candidates("Stress", "zz", 2) + ("stress_33", "stress_2_2"),
+        contains=("stress",),
+    )
     if not (sxx and syy and szz):
         print("Could not derive pressure; missing stress components. sxx={0}, syy={1}, szz={2}".format(sxx, syy, szz))
         return None
@@ -342,9 +365,14 @@ def _derive_pressure(scalars):
 
 def _derive_plastic_strain_magnitude(scalars):
     components = []
-    # First try particlePlasticStrain_0...5, then material-specific plasticStrain_0_0...0_5.
-    for i in range(6):
-        comp = _find_best_scalar(scalars, suffixes=("particlePlasticStrain_{0}".format(i), "plasticStrain_0_{0}".format(i), "plasticStrain_{0}".format(i)), contains=("plasticStrain",))
+    # Support grouped particlePlasticStrain/xx-style component expressions and
+    # legacy particlePlasticStrain_0...5 or material-specific plasticStrain_0_0...0_5 fields.
+    for i, label in enumerate(("xx", "yy", "zz", "yz", "xz", "xy")):
+        comp = _find_best_scalar(
+            scalars,
+            suffixes=_component_suffix_candidates("PlasticStrain", label, i),
+            contains=("plasticStrain",),
+        )
         if comp:
             components.append(comp)
     if not components:

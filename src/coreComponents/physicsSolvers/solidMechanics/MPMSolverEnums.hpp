@@ -156,6 +156,18 @@ namespace mpm
     Polymer
   };
 
+  /**
+   * @enum CohesiveSurfaceDisplacementUpdateOption
+   *
+   * The options for updating the cohesive particle surface displacement.
+   */
+  enum struct CohesiveSurfaceDisplacementUpdateOption : integer
+  {
+    TypeA, //!< Surface displacement from the deformed stored surface-position vector, Fig. 4a.
+    TypeB, //!< Surface displacement from the deformed CPDI particle-face vector, Fig. 4b.
+    Nodal  //!< Bugfix nodal displacement update from the cohesive-node reference position.
+  };
+
   enum struct GPUSchemeOption : integer
   {
     Atomics,
@@ -228,6 +240,11 @@ ENUM_STRINGS( mpm::CohesiveLawOption,
               "Uncoupled",
               "NeedlemanXu",
               "Polymer" );
+
+ENUM_STRINGS( mpm::CohesiveSurfaceDisplacementUpdateOption,
+              "TypeA",
+              "TypeB",
+              "Nodal" );
 
 ENUM_STRINGS( mpm::GPUSchemeOption,
               "Atomics",

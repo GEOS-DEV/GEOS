@@ -70,7 +70,6 @@ pfw["ppc"]=1               # particles per cell in each direction
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:20:00"
 #in the 2023 code, mWall time is 00:10:00
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------

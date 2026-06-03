@@ -120,7 +120,6 @@ pfw["zmax"] = 0.5 * domainLength
 # immediately. The bank/account, GEOS executable, default run directory, and
 # Python command come from userDefs_$USER.py, not from this input file.
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 pfw["mSubmitJobs"] = True
 
 # This example is short enough that the wrapper can simply report failure rather

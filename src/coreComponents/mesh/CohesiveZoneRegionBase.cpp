@@ -30,6 +30,7 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
   m_czVolumeNormalization( 1 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( 0 ),
+  m_czSurfaceDisplacementUpdate( 2 ),
   m_tag( 0 ),
   m_fieldA( 0 ),
   m_fieldB( 1 ),
@@ -74,6 +75,12 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setApplyDefaultValue( m_normalsAndPositionsMethod ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Method for computing particle surface normals and positions");
+
+  registerWrapper( viewKeyStruct::czSurfaceDisplacementUpdateString(), &m_czSurfaceDisplacementUpdate ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_czSurfaceDisplacementUpdate ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Cohesive surface displacement update method: 0=TypeA, 1=TypeB, 2=Nodal" );
 
   registerWrapper( "tag", &m_tag ).
     setInputFlag( InputFlags::REQUIRED ).

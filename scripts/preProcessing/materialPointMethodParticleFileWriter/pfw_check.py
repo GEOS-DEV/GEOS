@@ -114,7 +114,7 @@ mBatch = pfw["mBatch"]
 mBank = pfw["mBank"]
 mWallTime = pfw["mWallTime"]
 
-mCores = pfw["mCores"]
+mCores = int(pfw["xpar"]*pfw["ypar"]*pfw["zpar"])
 # We used to set this manually, but coresPerNode changes with each machine.
 # This will ensure consistency since we now have that value for each platform.
 mNodes= int(np.ceil(float(mCores)/float(coresPerNode))) 

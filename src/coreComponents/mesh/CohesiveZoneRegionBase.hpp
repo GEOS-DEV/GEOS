@@ -140,10 +140,12 @@ public:
   void setCZVolumeNormalization( int const & czVolumeNormalization ) { m_czVolumeNormalization = czVolumeNormalization; }
   void setComputeParticleSurfaceNormalsAndPositions( int const & computeParticleSurfaceNormalsAndPositions ) { m_computeParticleSurfaceNormalsAndPositions = computeParticleSurfaceNormalsAndPositions; }
   void setNormalsAndPositionsMethod( int const & normalsAndPositionsMethod ) { m_normalsAndPositionsMethod = normalsAndPositionsMethod; }
+  void setCZSurfaceDisplacementUpdate( int const & czSurfaceDisplacementUpdate ) { m_czSurfaceDisplacementUpdate = czSurfaceDisplacementUpdate; }
 
   int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
   int getComputeNormalsAndPositions() const { return m_computeParticleSurfaceNormalsAndPositions; }
   int getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
+  int getCZSurfaceDisplacementUpdate() const { return m_czSurfaceDisplacementUpdate; }
 
   /**
    * @brief Get the reference partitioning surface normal of each cohesive zone node.
@@ -220,6 +222,9 @@ public:
     /// @return String key for the member level field for the cohesive zone node reference areas.
     static constexpr char const * referenceAreaString() { return "referenceArea"; }
 
+    /// @return String key for the cohesive-zone surface displacement update method.
+    static constexpr char const * czSurfaceDisplacementUpdateString() { return "czSurfaceDisplacementUpdate"; }
+
     /// @return String key for the member level field for the cohesive zone node reference position.
     static constexpr char const * referencePositionString() { return "referencePosition"; }
   };
@@ -234,6 +239,7 @@ private:
   int m_czVolumeNormalization;
   int m_computeParticleSurfaceNormalsAndPositions;
   int m_normalsAndPositionsMethod; // Should be the enum from SolidMechanicsMPM, but currently circular dependences that needs to be resolved
+  int m_czSurfaceDisplacementUpdate; // Stored as int to avoid a mesh-to-solver dependency cycle.
 
   string m_constitutiveModelName;
 

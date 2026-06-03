@@ -478,7 +478,7 @@ public:
    * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
-   * @param siloTensorRank <B>****** UNUSED IN THE IMPLEMENTATION ****** </B>
+   * @param siloTensorRank Silo tensor rank for the multicomponent field (DB_VARTYPE_VECTOR, etc.)
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
    * @param cycleNumber the current cycle number
    * @param problemTime the current problem time
@@ -607,6 +607,16 @@ public:
                                  string const & subDirectory );
 
   /**
+   * @brief Define scalar expressions for a native multicomponent variable's components.
+   * @param fieldName multicomponent field name
+   * @param subDirectory absolute Silo directory containing the multicomponent multivar
+   * @param componentNames names to use for the scalar component menu entries
+   */
+  void writeVectorComponentVarDefinitions( string const & fieldName,
+                                           string const & subDirectory,
+                                           string_array const & componentNames );
+
+  /**
    * find the silo mesh type that we are attempting to reference
    * @param meshName the name of the mesh object we are attaching data to
    * @return integer that results from a call to DBInqMeshtype()
@@ -729,6 +739,15 @@ public:
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
 
+  /**
+   * @brief Set the names of background-grid fields to output in addition to the regular Silo fields
+   * @param[in] gridFieldNames background-grid field names to output
+   */
+  void setGridFieldNames( string_array const & gridFieldNames )
+  {
+    m_gridFieldNames.insert( gridFieldNames.begin(), gridFieldNames.end() );
+  }
+
 private:
 
   /**
@@ -737,6 +756,20 @@ private:
    * @return true if this wrapper should be plot, false otherwise
    */
   bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
+
+  /**
+   * @brief Write requested background-grid fields to a separate Silo nodal-field directory.
+   * @param[in] nodeManager background-grid node manager containing requested fields
+   * @param[in] siloDirName Silo directory that will contain the requested grid fields
+   * @param[in] meshName name of the mesh to attach the fields to
+   * @param[in] cycleNum current cycle number
+   * @param[in] problemTime current problem time
+   */
+  void writeRequestedGridFields( NodeManager const & nodeManager,
+                                 string const & siloDirName,
+                                 string const & meshName,
+                                 int const cycleNum,
+                                 real64 const problemTime );
 
   /// pointer to the DBfile that this class is working on
   DBfile * m_dbFilePtr;
@@ -785,6 +818,9 @@ private:
 
   /// Names of the fields to output
   std::set< string > m_fieldNames;
+
+  /// Names of background-grid fields to output in addition to the regular field selection
+  std::set< string > m_gridFieldNames;
 
 
   bool m_ghostFlags;

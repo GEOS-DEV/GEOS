@@ -43,7 +43,6 @@ pfw["ppc"]=2   		        # particles per cell in each direction
 
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 

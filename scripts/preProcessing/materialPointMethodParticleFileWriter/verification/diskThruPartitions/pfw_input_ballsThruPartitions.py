@@ -35,7 +35,6 @@ pfw["zmax"] = 0.5*domainThickness  # m
 
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS ------------------------------------------------------------------
