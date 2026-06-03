@@ -17,6 +17,9 @@
  * @file DirichletFluxComputeKernel_impl.hpp
  */
 
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
+
 #include "DirichletFluxComputeKernel.hpp"
 
 namespace geos
@@ -327,3 +330,5 @@ complete( localIndex const iconn,
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 } // namespace geos
+
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
