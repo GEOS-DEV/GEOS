@@ -26,8 +26,15 @@
  * and at high pressures the shape converges on the von Mises yield surface. The damage
  * parameter results in softening of the deviatoric response i.e. causes the yield surface to
  * contract. Furthermore, damage is used to scale back tensile pressure: p = (1 - d) * pTrial.
- * pTrial is calculatd as pTrial = -k * log(J), where the Jacobian J of the material motion is
- * integrated and tracked by this model.
+ * pTrial is calculated as pTrial = -k * log(J), where J is the end-of-step Jacobian.
+ *
+ * Time-level convention for the Jacobian:
+ * - The smallStrainUpdate overload that returns stiffness is the original self-integrated path. It
+ *   expects m_jacobian to enter as the beginning-of-step value J_n and advances it internally to
+ *   J_{n+1} with exp(trace(strainIncrement)).
+ * - The stress-only MPM path is different: the MPM solver advances the particle deformation gradient
+ *   before the stress update and copies det(F_{n+1}) into this model's "jacobian" wrapper. Therefore
+ *   the stress-only overload expects m_jacobian to enter as J_{n+1} and must not advance it again.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP
@@ -58,7 +65,7 @@ public:
   /**
    * @brief Constructor
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
-   * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
+   * @param[in] jacobian The ArrayView holding the Jacobian state for each quadrature point.
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
    * @param[in] strengthScale The ArrayView holding the strength scale for each element/particle.
    * @param[in] tensileStrength The unconfined tensile strength.
@@ -280,7 +287,7 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
-  /// A reference to the ArrayView holding the jacobian for each quadrature point.
+  /// Jacobian state for each quadrature point. See the class comment for the time-level convention.
   arrayView2d< real64 > const m_jacobian;
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
@@ -357,7 +364,8 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & unrotatedStress )[6], // unrotated stress at start/end of step
                                               real64 ( & stiffness )[6][6] ) const
 {
-  // Elastic trial update (assume strainIncrement is all elastic)
+  // Elastic trial update over [t_n, t_{n+1}] assuming the full strain increment is elastic.
+  // On return, unrotatedStress contains the trial end-of-step stress before ceramic return/damage.
   ElasticIsotropicUpdates::smallStrainUpdate( k,
                                               q,
                                               timeIncrement,
@@ -365,15 +373,23 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               unrotatedStress, // this overwrites old stress with trial stress
                                               stiffness
                                               );
-  m_jacobian[k][q] *= LvArray::math::exp( unrotatedStrainIncrement[0] + unrotatedStrainIncrement[1] + unrotatedStrainIncrement[2] );
+
+  // Non-MPM/self-integrated convention for this overload:
+  //   - expected on entry: beginning-of-step J_n;
+  //   - expected on exit:  end-of-step J_{n+1}.
+  // This overload is not the path used by MPM's stress-only particle update.
+  m_jacobian[k][q] *= LvArray::math::exp( unrotatedStrainIncrement[0] +
+                                          unrotatedStrainIncrement[1] +
+                                          unrotatedStrainIncrement[2] );
 
   if( m_disableInelasticity )
   {
     return;
   }
 
-  // These rotations are just dummy values passed to the smallStrainUpdateHelper.
-  // MH: Why are we doing this when they are unused?
+  // This overload is already operating in an unrotated frame and does not receive objective
+  // rotations from the caller. Use identity rotations when updating history variables stored in
+  // the current particle/material frame.
   real64 beginningRotation[3][3] = { };
   beginningRotation[0][0] = 1.0;
   beginningRotation[1][1] = 1.0;
@@ -441,17 +457,22 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          real64 const ( &strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( beginningRotation );
-  GEOS_UNUSED_VAR( endRotation );
+  // The MPM hypo-elastic update passes beginningRotation from F_n and endRotation from F_{n+1}.
+  // strainIncrement is the unrotated step increment over [t_n, t_{n+1}].
 
-  // elastic predictor (assume strainIncrement is all elastic)
+  // Elastic predictor over [t_n, t_{n+1}] assuming the full strain increment is elastic.
+  // On return, stress contains the unrotated trial end-of-step stress before ceramic return/damage.
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k,
                                                          q,
                                                          timeIncrement,
                                                          strainIncrement,
                                                          stress );
 
-  m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  // MPM convention for this overload:
+  //   - expected on entry: end-of-step J_{n+1}, already copied from det(F_{n+1});
+  //   - expected on exit:  the same J_{n+1}, unchanged by this model.
+  // Do not multiply by exp(trace(strainIncrement)) here. In MPM, the particle deformation
+  // gradient has already received that volumetric increment before updateStress().
 
   if( m_disableInelasticity )
   {
@@ -476,16 +497,14 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     localIndex const q,
                                                     real64 const timeIncrement,
-                                                    real64 const ( &beginningRotation )[3][3],  //unused
-                                                    real64 const ( &endRotation )[3][3],  // unused
-                                                    real64 const ( &strainIncrement )[6],  // unrotated strain increment.
-                                                    real64 ( & stress )[6] // unrotated trial stress will be overwritten by new stress.
+                                                    real64 const ( &beginningRotation )[3][3],  // rotation from F_n
+                                                    real64 const ( &endRotation )[3][3],  // rotation from F_{n+1}
+                                                    real64 const ( &strainIncrement )[6],  // increment over [t_n, t_{n+1}]
+                                                    real64 ( & stress )[6] // entry: unrotated trial; exit: unrotated final
                                                     ) const
 {
-  GEOS_UNUSED_VAR( beginningRotation );
-  GEOS_UNUSED_VAR( endRotation );
-
-  // Copy the pre-computed hyper-elastic trial stress to trialStress. "stress" will now be the end-of-step stress.
+  // Copy the pre-computed trial end-of-step stress to trialStress. "stress" will be overwritten by
+  // the returned end-of-step stress after damage/plasticity and recomposition with p(J_{n+1}).
   real64 trialStress[6] = { };
   LvArray::tensorOps::copy< 6 >( trialStress, stress );
 
@@ -504,10 +523,13 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   Yt = LvArray::math::min( Yt, 0.999*Ytmax );
   Yc = LvArray::math::min( Yc, 0.999*Ycmax );
 
-  // get trial pressure
-  // Tensile cutoff pressure (negative value in tension) is scaled by damage.
+  // Get trial pressure from the end-of-step Jacobian. The two public update paths make this true
+  // in different ways: the non-MPM smallStrainUpdate overload advances m_jacobian from J_n to
+  // J_{n+1} before this helper is called, while the MPM stress-only overload receives m_jacobian
+  // already synchronized to det(F_{n+1}) by updateConstitutiveModelDependencies().
+  // Tensile cutoff pressure (negative value in tension) is scaled by damage,
   // so we also scale the bulk modulus in tension so unloading from a damaged vertex
-  // smoothly appraoches p=0 as J=1
+  // smoothly approaches p=0 as J=1.
   real64 bulk =  LvArray::math::max( 1.0e-9 * m_bulkModulus[k] , (m_jacobian[k][q] <= 1.0) ? m_bulkModulus[k] : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k] );
   real64 trialPressure = -bulk * LvArray::math::log( m_jacobian[k][q] );
 
@@ -1282,7 +1304,7 @@ protected:
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
 
-  /// State variable: The jacobian of the deformation
+  /// Jacobian of the deformation. See the class comment for the time-level convention.
   array2d< real64 > m_jacobian;
 
   /// Discretization-sized variable: The length scale for each element/particle

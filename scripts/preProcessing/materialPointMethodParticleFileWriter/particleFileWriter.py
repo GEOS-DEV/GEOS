@@ -1142,7 +1142,13 @@ parameters = { 'runDebug' : ( False, False ),
                'tracerOutputPrefix': ( None, True ),
                'updateMethod': ( None, True ),
                'updateOrder': ( None, True ),
-               'cflFactor': ( None, True ),
+               'cflFactor': ( None, True ),              
+               'profileHistory': ( None, True ),
+               'profileDirection': ( None, True ),
+               'profileNumSlices': ( None, True ),
+               'profileWriteInterval': ( None, True ),
+               'profileCycleInterval': ( None, True ),
+               'profileVariables': ( None, True ),
                'initialDt': ( None, True ),
                'solverProfiling': ( None, True ),
                'cpdiDomainScaling': ( None, True ),
@@ -2172,15 +2178,15 @@ if rank == 0:
     for j in range(numTypes):
       regionBlocksStr += "pb"+str(blockIndex)
       
-      if types[j] == 0: # Single point
+      if types[j] == 0: # Single point with linear (not currently supported)
         particleTypeString+="SinglePoint"
       if types[j] == 1: # Single point with B-splines
         particleTypeString+="SinglePointBSpline"
-      if types[j] == 2: # CPDI
+      if types[j] == 2: # CPDI with tri-linear shape functions
         particleTypeString+="CPDI"
-      if types[j] == 3: #CPTI
+      if types[j] == 3: #CPTI (not currently supported)
         particleTypeString+="CPTI"
-      if types[j] == 4: #CPDI2
+      if types[j] == 4: #CPDI2 (not currently supported)
         particleTypeString+="CPDI2"
       if types[j] < 0 or types[j] > 4:
         print("Unknown particle type!")

@@ -44,9 +44,9 @@ struct ParticleStateUpdateKernel
    * @tparam CONSTITUTIVE_WRAPPER the type of consitutive wrapper doing the constitutive updates
    * @param[in] dt The time step
    * @param[in] hyperelasticUpdate Flag to perform hyperelastic update (constitutive model dependent)
-   * @param[in] deformationGradient The deformation gradient
-   * @param[in] fDot The time derivative of the deformation gradient
-   * @param[in] velocityGradient The velocity gradient
+   * @param[in] deformationGradient The current/end-of-step particle deformation gradient F_{n+1}
+   * @param[in] fDot The step-averaged time derivative of the deformation gradient, used to recover F_n
+   * @param[in] velocityGradient The step velocity gradient used to build the strain increment over [t_n,t_{n+1}]
    * @param[out] particleStress The new particle stress, returned for plotting convenience
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
@@ -106,7 +106,8 @@ struct ParticleStateUpdateKernel
         strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
         strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
-        // Get old F by incrementing backwards
+        // deformationGradient[p] has already been advanced by updateDeformationGradient(), so it is F_{n+1}.
+        // Recover the beginning-of-step F_n from F_{n+1} - Fdot * dt for the objective stress update.
         real64 fOld[3][3] = {};
         real64 fNew[3][3] = {};
         LvArray::tensorOps::copy< 3, 3 >( fNew, deformationGradient[p] );
