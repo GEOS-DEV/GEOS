@@ -114,6 +114,65 @@ public:
                                integer & fractureState ) const override final;
 
 
+private:
+
+  /**
+   * @brief Classify fracture state from penalty-method trial traction.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  integer computeTrialFractureState( real64 const (& tractionTrial)[3],
+                                     real64 const tractionTrialNorm,
+                                     real64 const limitTau,
+                                     real64 const normalTractionTolerance,
+                                     real64 const tangentialTractionTolerance ) const;
+
+  /// Open state: zero normal traction, zero all tangential outputs.
+  GEOS_HOST_DEVICE
+  inline
+  void applyOpenTractionUpdate( real64 ( & dTraction_dDispJump )[3][3],
+                                 real64 ( & tractionNew )[3] ) const;
+
+  /// Stick state: copy trial tangential traction, compute derivatives.
+  GEOS_HOST_DEVICE
+  inline
+  void applyStickTractionUpdate( real64 const (& tractionTrial)[3],
+                                  real64 const tractionTrialNorm,
+                                  real64 const limitTau,
+                                  arraySlice1d< real64 const > const & penalty,
+                                  bool const symmetric,
+                                  real64 const tangentialTractionTolerance,
+                                  real64 ( & dTraction_dDispJump )[3][3],
+                                  real64 ( & tractionNew )[3] ) const;
+
+  /// Slip state: project tangential traction onto friction cone, compute derivatives.
+  GEOS_HOST_DEVICE
+  inline
+  void applySlipTractionUpdate( real64 const (& tractionTrial)[3],
+                                 real64 const tractionTrialNorm,
+                                 real64 const limitTau,
+                                 arraySlice1d< real64 const > const & penalty,
+                                 bool const symmetric,
+                                 bool const fixedLimitTau,
+                                 real64 const tangentialTractionTolerance,
+                                 real64 ( & dTraction_dDispJump )[3][3],
+                                 real64 ( & tractionNew )[3] ) const;
+
+  /// Shared kernel for the non-degenerate tangential update (used by both Stick and Slip).
+  GEOS_HOST_DEVICE
+  inline
+  void applyGeneralTangentialUpdate( real64 const psi,
+                                      real64 const dpsi,
+                                      real64 const (& tractionTrial)[3],
+                                      real64 const tractionTrialNorm,
+                                      real64 const limitTau,
+                                      arraySlice1d< real64 const > const & penalty,
+                                      bool const symmetric,
+                                      real64 ( & dTraction_dDispJump )[3][3],
+                                      real64 ( & tractionNew )[3] ) const;
+
+public:
+
   GEOS_HOST_DEVICE
   inline
   virtual void updateTractionOnly( arraySlice1d< real64 const > const & dispJump,
@@ -356,6 +415,144 @@ inline void CoulombFrictionUpdates::updateElasticSlip( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
+inline integer CoulombFrictionUpdates::computeTrialFractureState( real64 const (& tractionTrial)[3],
+                                                                   real64 const tractionTrialNorm,
+                                                                   real64 const limitTau,
+                                                                   real64 const normalTractionTolerance,
+                                                                   real64 const tangentialTractionTolerance ) const
+{
+  using namespace fields::contact;
+
+  if( tractionTrial[0] > normalTractionTolerance )
+    return FractureState::Open;
+  if( tractionTrialNorm <= tangentialTractionTolerance )
+    return FractureState::Stick;
+  if( limitTau <= tangentialTractionTolerance )
+    return FractureState::Slip;
+  return ( tractionTrialNorm > limitTau ) ? FractureState::Slip : FractureState::Stick;
+}
+
+GEOS_HOST_DEVICE
+inline void CoulombFrictionUpdates::applyOpenTractionUpdate( real64 ( & dTraction_dDispJump )[3][3],
+                                                              real64 ( & tractionNew )[3] ) const
+{
+  tractionNew[0] = 0.0;
+  tractionNew[1] = 0.0;
+  tractionNew[2] = 0.0;
+  dTraction_dDispJump[0][0] = 0.0;
+  dTraction_dDispJump[1][1] = 0.0;
+  dTraction_dDispJump[2][2] = 0.0;
+  dTraction_dDispJump[1][2] = 0.0;
+  dTraction_dDispJump[2][1] = 0.0;
+}
+
+GEOS_HOST_DEVICE
+inline void CoulombFrictionUpdates::applyStickTractionUpdate( real64 const (& tractionTrial)[3],
+                                                               real64 const tractionTrialNorm,
+                                                               real64 const limitTau,
+                                                               arraySlice1d< real64 const > const & penalty,
+                                                               bool const symmetric,
+                                                               real64 const tangentialTractionTolerance,
+                                                               real64 ( & dTraction_dDispJump )[3][3],
+                                                               real64 ( & tractionNew )[3] ) const
+{
+  if( tractionTrialNorm <= tangentialTractionTolerance )
+  {
+    // Degenerate case: both tractions and jumps are near zero (e.g. first iteration)
+    dTraction_dDispJump[1][1] = -penalty[1];
+    dTraction_dDispJump[2][2] = -penalty[1];
+    dTraction_dDispJump[1][2] = 0.0;
+    dTraction_dDispJump[2][1] = 0.0;
+    tractionNew[1] = tractionTrial[1];
+    tractionNew[2] = tractionTrial[2];
+  }
+  else
+  {
+    // General Stick: tractionTrialNorm <= limitTau, psi = tractionTrialNorm/limitTau < 1
+    real64 const psi  = tractionTrialNorm / limitTau;
+    real64 const dpsi = 1.0;
+    applyGeneralTangentialUpdate( psi, dpsi, tractionTrial, tractionTrialNorm,
+                                  limitTau, penalty, symmetric,
+                                  dTraction_dDispJump, tractionNew );
+  }
+}
+
+GEOS_HOST_DEVICE
+inline void CoulombFrictionUpdates::applySlipTractionUpdate( real64 const (& tractionTrial)[3],
+                                                              real64 const tractionTrialNorm,
+                                                              real64 const limitTau,
+                                                              arraySlice1d< real64 const > const & penalty,
+                                                              bool const symmetric,
+                                                              bool const fixedLimitTau,
+                                                              real64 const tangentialTractionTolerance,
+                                                              real64 ( & dTraction_dDispJump )[3][3],
+                                                              real64 ( & tractionNew )[3] ) const
+{
+  if( limitTau <= tangentialTractionTolerance )
+  {
+    // Degenerate case: friction cone has collapsed to zero radius
+    dTraction_dDispJump[1][1] = 0.0;
+    dTraction_dDispJump[2][2] = 0.0;
+    dTraction_dDispJump[1][2] = 0.0;
+    dTraction_dDispJump[2][1] = 0.0;
+    tractionNew[1] = fixedLimitTau ? tractionTrial[1] : 0.0;
+    tractionNew[2] = fixedLimitTau ? tractionTrial[2] : 0.0;
+  }
+  else
+  {
+    // General Slip: tractionTrialNorm > limitTau, psi = 1
+    real64 const psi  = 1.0;
+    real64 const dpsi = 0.0;
+    applyGeneralTangentialUpdate( psi, dpsi, tractionTrial, tractionTrialNorm,
+                                  limitTau, penalty, symmetric,
+                                  dTraction_dDispJump, tractionNew );
+  }
+}
+
+GEOS_HOST_DEVICE
+inline void CoulombFrictionUpdates::applyGeneralTangentialUpdate( real64 const psi,
+                                                                   real64 const dpsi,
+                                                                   real64 const (& tractionTrial)[3],
+                                                                   real64 const tractionTrialNorm,
+                                                                   real64 const limitTau,
+                                                                   arraySlice1d< real64 const > const & penalty,
+                                                                   bool const symmetric,
+                                                                   real64 ( & dTraction_dDispJump )[3][3],
+                                                                   real64 ( & tractionNew )[3] ) const
+{
+  // Two symmetric 2x2 matrices (Voigt-like storage: [t1t1, t2t2, t1t2])
+  real64 dNormTTdgT[ 3 ];
+  dNormTTdgT[ 0 ] = tractionTrial[ 1 ] * tractionTrial[ 1 ];
+  dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
+  dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
+
+  real64 dTdgT[ 3 ];
+  dTdgT[ 0 ] = tractionTrialNorm * tractionTrialNorm - dNormTTdgT[ 0 ];
+  dTdgT[ 1 ] = tractionTrialNorm * tractionTrialNorm - dNormTTdgT[ 1 ];
+  dTdgT[ 2 ] = -dNormTTdgT[ 2 ];
+
+  LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1.0 / std::pow( tractionTrialNorm, 2 ) );
+  LvArray::tensorOps::scale< 3 >( dTdgT,      1.0 / std::pow( tractionTrialNorm, 3 ) );
+
+  dTraction_dDispJump[1][1] = -penalty[1] * ( dpsi * dNormTTdgT[0] + psi * dTdgT[0] * limitTau );
+  dTraction_dDispJump[2][2] = -penalty[1] * ( dpsi * dNormTTdgT[1] + psi * dTdgT[1] * limitTau );
+  dTraction_dDispJump[1][2] = -penalty[1] * ( dpsi * dNormTTdgT[2] + psi * dTdgT[2] * limitTau );
+  dTraction_dDispJump[2][1] = dTraction_dDispJump[1][2];
+
+  if( !symmetric )
+  {
+    real64 const factor = psi / tractionTrialNorm - dpsi / limitTau;
+    dTraction_dDispJump[1][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient * tractionTrial[1] * factor;
+    dTraction_dDispJump[2][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient * tractionTrial[2] * factor;
+  }
+
+  real64 scaledTrial[3] = { tractionTrial[0], tractionTrial[1], tractionTrial[2] };
+  LvArray::tensorOps::scale< 3 >( scaledTrial, ( psi * limitTau ) / tractionTrialNorm );
+  tractionNew[1] = scaledTrial[1];
+  tractionNew[2] = scaledTrial[2];
+}
+
+GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const > const & oldDispJump,
                                                     arraySlice1d< real64 const > const & dispJump,
                                                     arraySlice1d< real64 const > const & penalty,
@@ -368,123 +565,57 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                     real64 ( & tractionNew ) [3],
                                                     integer & fractureState ) const
 {
-
   using namespace fields::contact;
-
-  real64 dLimitTangentialTractionNorm_dTraction = 0.0;
 
   // Compute the trial traction
   real64 tractionTrial[ 3 ];
   tractionTrial[ 0 ] = traction[0] + penalty[0] * dispJump[0];
-  tractionTrial[ 1 ] = traction[1] + penalty[1] * (dispJump[1] - oldDispJump[1]);
-  tractionTrial[ 2 ] = traction[2] + penalty[1] * (dispJump[2] - oldDispJump[2]);
+  tractionTrial[ 1 ] = traction[1] + penalty[1] * ( dispJump[1] - oldDispJump[1] );
+  tractionTrial[ 2 ] = traction[2] + penalty[1] * ( dispJump[2] - oldDispJump[2] );
 
   // Compute tangential trial traction norm
-  real64 const tau[2] = { tractionTrial[1],
-                          tractionTrial[2] };
+  real64 const tau[2] = { tractionTrial[1], tractionTrial[2] };
   real64 const tractionTrialNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
-  // normal treatment
-  // If normal tangential trial is positive (opening)
-  fractureState = FractureState::Stick;
-  if( tractionTrial[ 0 ] > normalTractionTolerance )
+  // Update normal traction and derivative
+  if( tractionTrial[0] > normalTractionTolerance )
   {
     tractionNew[0] = 0.0;
     dTraction_dDispJump[0][0] = 0.0;
-    fractureState = FractureState::Open;
   }
   else
   {
     tractionNew[0] = tractionTrial[0];
-    dTraction_dDispJump[0][0] = -penalty[ 0 ];
+    dTraction_dDispJump[0][0] = -penalty[0];
   }
 
-  // In plane treatment
-  // Compute limit Tau
-  if( fractureState != FractureState::Open ){
+  // Compute limit Tau using the appropriate normal traction
+  real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+  real64 const limitTau = computeLimitTangentialTractionNorm( fixedLimitTau ? traction[0] : tractionNew[0],
+                                                              dLimitTangentialTractionNorm_dTraction );
 
-  real64 limitTau = computeLimitTangentialTractionNorm( (fixedLimitTau) ? traction[0] : tractionNew[0],
-      dLimitTangentialTractionNorm_dTraction );
+  // Classify state and apply the corresponding tangential update
+  fractureState = computeTrialFractureState( tractionTrial, tractionTrialNorm, limitTau,
+                                             normalTractionTolerance, tangentialTractionTolerance );
 
-  /// logic trap ?
-  if( tractionTrialNorm <= tangentialTractionTolerance )//whatever tractionTrialNorm to limitTau is, the limitTau < tractionTrialNorm is --> Stick mode
+  switch( fractureState )
   {
-    // It is needed for the first iteration (both t and u are equal to zero)
-    dTraction_dDispJump[1][1] = -penalty[1];
-    dTraction_dDispJump[2][2] = -penalty[1];
-
-    tractionNew[1] = tractionTrial[1];
-    tractionNew[2] = tractionTrial[2];
-
-    fractureState =  FractureState::Stick;
+    case FractureState::Open:
+      applyOpenTractionUpdate( dTraction_dDispJump, tractionNew );
+      break;
+    case FractureState::Stick:
+      applyStickTractionUpdate( tractionTrial, tractionTrialNorm, limitTau,
+                                penalty, symmetric, tangentialTractionTolerance,
+                                dTraction_dDispJump, tractionNew );
+      break;
+    case FractureState::Slip:
+      applySlipTractionUpdate( tractionTrial, tractionTrialNorm, limitTau,
+                               penalty, symmetric, fixedLimitTau, tangentialTractionTolerance,
+                               dTraction_dDispJump, tractionNew );
+      break;
+    default:
+      break;
   }
-  else if(limitTau <= tangentialTractionTolerance )//tractionTrialNorm >= tangentialTractionTolerance >= limitTau  --> Slip
-  {
-    dTraction_dDispJump[1][1] = 0.0;
-    dTraction_dDispJump[2][2] = 0.0;
-
-    tractionNew[1] = (fixedLimitTau) ? tractionTrial[1] : 0.0;
-    tractionNew[2] = (fixedLimitTau) ? tractionTrial[2] : 0.0;
-
-    // if( fractureState != FractureState::Open )// FractureState::Slip | Fracture::Stick
-    // {
-      fractureState =  FractureState::Slip;
-    // }
-  }
-  else// (limitTau,tractionTrialNorm) >= tangentialTractionTolerance -> Either place on the cone and Slip (tractionTrialNorm > limitTau)
-  {
-    // Compute psi and dpsi
-    //real64 const psi = std::tanh( tractionTrialNorm/limitTau );
-    //real64 const dpsi = 1.0-std::pow(psi,2);
-    real64 const psi = min(1.0,tractionTrialNorm/limitTau);
-    real64 const dpsi = (tractionTrialNorm<=limitTau);
-
-    // if( fractureState != FractureState::Open )
-    // {
-    fractureState = ( tractionTrialNorm > limitTau) ? FractureState::Slip : FractureState::Stick;
-    // }
-
-    // Two symmetric 2x2 matrices
-    real64 dNormTTdgT[ 3 ];
-    dNormTTdgT[ 0 ] = tractionTrial[ 1 ] * tractionTrial[ 1 ];
-    dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
-    dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
-
-    real64 dTdgT[ 3 ];
-    dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]);
-    dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
-    dTdgT[ 2 ] = -dNormTTdgT[2];
-
-    LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow( tractionTrialNorm, 2 ) );
-    LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
-
-    // Compute dTdDispJump
-    dTraction_dDispJump[1][1] = -penalty[1] * (
-      dpsi * dNormTTdgT[0] +
-      psi * dTdgT[0] * limitTau );
-    dTraction_dDispJump[2][2] = -penalty[1] * (
-      dpsi * dNormTTdgT[1] +
-      psi * dTdgT[1] * limitTau );
-    dTraction_dDispJump[1][2] = -penalty[1] * (
-      dpsi * dNormTTdgT[2] +
-      psi * dTdgT[2] * limitTau );
-    dTraction_dDispJump[2][1] = dTraction_dDispJump[1][2];
-
-    if( !symmetric )
-    {
-      // Nonsymetric term
-      dTraction_dDispJump[1][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient *
-                                  tractionTrial[1] * (psi/tractionTrialNorm - dpsi/limitTau);
-      dTraction_dDispJump[2][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient  *
-                                  tractionTrial[2] * (psi/tractionTrialNorm - dpsi/limitTau);
-    }
-
-    LvArray::tensorOps::scale< 3 >( tractionTrial, (psi * limitTau)/tractionTrialNorm );
-    tractionNew[1] = tractionTrial[1];
-    tractionNew[2] = tractionTrial[2];
-  }
-}
-
 }
 
 GEOS_HOST_DEVICE
