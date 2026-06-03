@@ -34,7 +34,6 @@ lz = zmax - zmin
 
 # pfw flags
 planeStrain = 1
-useDamageAsSurfaceFlag = 1
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 # read in the default bank:

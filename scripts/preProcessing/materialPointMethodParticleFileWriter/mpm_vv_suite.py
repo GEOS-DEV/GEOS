@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +24,7 @@ class Case:
     output_prefix: str
     family: str
     title: str
+    run_script: str = ""
 
 
 def pfw_root() -> Path:
@@ -38,6 +40,11 @@ def case_id_for(suite_dir: Path, input_path: Path) -> str:
     family = "_".join(rel_dir.parts) if rel_dir.parts else input_path.parent.name
     stem = input_path.stem.replace("pfw_input_", "")
     return f"{family}__{stem}"
+
+
+def case_id_for_folder(suite_dir: Path, folder: Path) -> str:
+    rel_dir = folder.relative_to(suite_dir)
+    return "_".join(rel_dir.parts) if rel_dir.parts else folder.name
 
 
 def family_label(case_id: str) -> str:
@@ -60,6 +67,7 @@ def family_label(case_id: str) -> str:
         "geomechanics": "Geomechanics constitutive verification",
         "implicitFluid": "Implicit fluid/pressure",
         "materialSwap": "Material swap event",
+        "mmsVortex": "MMS vortex manufactured solution",
         "momentumTest": "Momentum conservation",
         "periodicBoundaries": "Periodic boundaries",
         "polymerCZ": "Polymer cohesive zone",
@@ -77,11 +85,33 @@ def family_label(case_id: str) -> str:
 
 def discover_cases(suite: str) -> list[Case]:
     root = suite_root(suite)
-    out = []
+    out: list[Case] = []
+    folder_cases: set[Path] = set()
+
+    # New-format verification tests are folder-scoped: a single runTest script
+    # owns all load cases/variants inside that folder and one postProcess*.py
+    # script aggregates the folder-level results.
+    for run_script in sorted(root.rglob("runTest")):
+        parts = set(run_script.parts)
+        if "output" in parts or "__pycache__" in parts or not run_script.is_file():
+            continue
+        folder = run_script.parent
+        folder_cases.add(folder.resolve())
+        inputs = sorted(p for p in folder.glob("pfw_input_*.py") if p.is_file())
+        input_file = inputs[0].name if inputs else ""
+        cid = case_id_for_folder(root, folder)
+        title = cid.replace("__", " / ").replace("_", " ")
+        out.append(Case(cid, folder, input_file, cid, family_label(cid), title, run_script=run_script.name))
+
+    # Legacy fallback: until each historical directory has been migrated to the
+    # folder-level contract, continue discovering standalone pfw inputs that are
+    # not in a folder already managed by runTest.
     for input_path in sorted(root.rglob("pfw_input_*.py")):
         parts = set(input_path.parts)
         name = input_path.name
         if "output" in parts or "__pycache__" in parts:
+            continue
+        if input_path.parent.resolve() in folder_cases:
             continue
         if any(tok in name for tok in ["XXXX", "YYYY", "template", "TEMPLATE"]):
             continue
@@ -118,8 +148,11 @@ def parse_args():
     p.add_argument("--no-wait", action="store_true")
     p.add_argument("--post-walltime", default='00:05:00')
     p.add_argument("--post-partition", default="pdebug")
-    p.add_argument("--walltime", default='00:05:00')
+    p.add_argument("--walltime", default=None)
     p.add_argument("--dispatch-timeout", type=float, default=None)
+    p.add_argument("--jobs", type=int, default=int(os.environ.get("PFW_SUITE_JOBS", "1")), help="Number of test-folder or legacy-case dispatches to run concurrently")
+    p.add_argument("--case-jobs", type=int, default=int(os.environ.get("PFW_CASE_JOBS", "1")), help="Number of subcases a folder-level runTest may dispatch concurrently")
+    p.add_argument("--ats-fast", action="store_true", help="Pass explicit ultra-fast ATS sizing overrides to each staged case")
     return p.parse_args()
 
 
@@ -140,6 +173,34 @@ def run_cmd(cmd: list[str], cwd: Path, timeout=None):
     return code, "".join(lines)
 
 
+def dispatch_one(args, runner: Path, c: Case, index: int, total: int) -> dict:
+    print(f"[{args.suite}] dispatching {index}/{total}: {c.case_id}", flush=True)
+    if c.run_script:
+        cmd = [str(c.source_dir / c.run_script), "--suite", args.suite, "--case-id", c.case_id, "--python", args.python_cmd, "--post-walltime", args.post_walltime, "--post-partition", args.post_partition, "--jobs", str(args.case_jobs)]
+    else:
+        cmd = [args.python_cmd, str(runner), "--suite", args.suite, "--case-id", c.case_id, "--input", c.input_file, "--source-dir", str(c.source_dir), "--output-prefix", c.output_prefix, "--python", args.python_cmd, "--post-walltime", args.post_walltime, "--post-partition", args.post_partition]
+    if args.force:
+        cmd.append("--force")
+    if args.prepare_only:
+        cmd.append("--prepare-only")
+    if args.no_visit:
+        cmd.append("--no-visit")
+    if args.ats_fast:
+        cmd.append("--ats-fast")
+    if args.walltime:
+        cmd += ["--walltime", args.walltime]
+    code, out = run_cmd(cmd, c.source_dir, timeout=args.dispatch_timeout)
+    rec = c.__dict__.copy()
+    rec["returncode"] = code
+    rec["runProblem_log_excerpt"] = out[-10000:]
+    outdir = c.source_dir / "output" / c.case_id
+    outdir.mkdir(parents=True, exist_ok=True)
+    (outdir / f"{c.output_prefix}_runTest.log").write_text(out)
+    if code != 0:
+        print(f"[{args.suite}] {c.case_id} failed with {code}", flush=True)
+    return rec
+
+
 def dispatch(args, cases: list[Case]) -> list[dict]:
     if cases and not args.force and not args.prepare_only:
         if not sys.stdin.isatty():
@@ -149,35 +210,26 @@ def dispatch(args, cases: list[Case]) -> list[dict]:
             raise SystemExit("cancelled")
     records = []
     runner = pfw_root() / "mpm_vv_case_runner.py"
-    for i, c in enumerate(cases, 1):
-        print(f"[{args.suite}] dispatching {i}/{len(cases)}: {c.case_id}", flush=True)
-        cmd = [args.python_cmd, str(runner), "--suite", args.suite, "--case-id", c.case_id, "--input", c.input_file, "--source-dir", str(c.source_dir), "--output-prefix", c.output_prefix, "--python", args.python_cmd, "--post-walltime", args.post_walltime, "--post-partition", args.post_partition]
-        if args.force:
-            cmd.append("--force")
-        if args.prepare_only:
-            cmd.append("--prepare-only")
-        if args.no_visit:
-            cmd.append("--no-visit")
-        if args.walltime:
-            cmd += ["--walltime", args.walltime]
-        code, out = run_cmd(cmd, c.source_dir, timeout=args.dispatch_timeout)
-        rec = c.__dict__.copy()
-        rec["returncode"] = code
-        rec["runProblem_log_excerpt"] = out[-10000:]
-        outdir = c.source_dir / "output" / c.case_id
-        outdir.mkdir(parents=True, exist_ok=True)
-        (outdir / f"{c.output_prefix}_runProblem.log").write_text(out)
-        if code != 0:
-            print(f"[{args.suite}] {c.case_id} failed with {code}", flush=True)
-            if args.stop_on_error:
-                records.append(rec)
+    jobs = max(1, int(args.jobs or 1))
+    if jobs == 1 or len(cases) <= 1:
+        for i, c in enumerate(cases, 1):
+            rec = dispatch_one(args, runner, c, i, len(cases))
+            records.append(rec)
+            if rec.get("returncode", 0) != 0 and args.stop_on_error:
                 break
-        records.append(rec)
+    else:
+        print(f"[{args.suite}] dispatching with {jobs} concurrent worker(s)", flush=True)
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            future_to_case = {pool.submit(dispatch_one, args, runner, c, i, len(cases)): c for i, c in enumerate(cases, 1)}
+            for future in as_completed(future_to_case):
+                rec = future.result()
+                records.append(rec)
+                if rec.get("returncode", 0) != 0 and args.stop_on_error:
+                    print(f"[{args.suite}] stop-on-error requested after {rec.get('case_id')}", flush=True)
     report_dir = suite_root(args.suite) / f"{args.suite}_suite_report"
     report_dir.mkdir(parents=True, exist_ok=True)
     (report_dir / f"{args.suite}_suite_dispatch_records.json").write_text(json.dumps(records, indent=2, default=str))
     return records
-
 
 def wait_for_posts(args, cases: list[Case]) -> None:
     if args.no_wait or shutil.which("squeue") is None:
@@ -218,6 +270,105 @@ def sacct_row(job_id: str) -> dict:
     return {k: cols[i] if i < len(cols) else "" for i, k in enumerate(keys)}
 
 
+def split_job_ids(value: object) -> list[str]:
+    """Extract scheduler job ids from a scalar or comma-separated metadata field."""
+    if value is None:
+        return []
+    return re.findall(r"\d+", str(value))
+
+
+def scheduler_failure_state(state: str) -> bool:
+    return str(state or "").startswith(("FAILED", "TIMEOUT", "CANCELLED", "NODE_FAIL", "OUT_OF_MEMORY"))
+
+
+def timing_rows_for_status(data: dict) -> list[dict]:
+    """Build one timing row per concrete GEOS subjob.
+
+    Folder-level tests, such as mmsVortex, have several subcases under one
+    report section. Legacy tests usually have a single GEOS job directly on the
+    case record. In both forms, GEOS wall/CPU data come from sacct when
+    available; dispatch_elapsed_seconds is local runner wall time for staging,
+    PFW generation, and scheduler submission.
+    """
+    rows: list[dict] = []
+    subcases = data.get("subcases", []) or []
+    if subcases:
+        for sub in subcases:
+            jobs = sub.get("jobs", {}) or {}
+            job_ids = split_job_ids(jobs.get("geos_job_id", ""))
+            geos_job_id = job_ids[0] if job_ids else str(jobs.get("geos_job_id", "") or "")
+            geos = sacct_row(geos_job_id) if geos_job_id else {}
+            rows.append(
+                {
+                    "case_id": data.get("case_id", ""),
+                    "subcase": sub.get("label") or sub.get("name") or sub.get("case_id", ""),
+                    "geos_job_id": geos_job_id,
+                    "geos_state": geos.get("State", ""),
+                    "geos_elapsed": geos.get("Elapsed", ""),
+                    "geos_total_cpu": geos.get("TotalCPU", ""),
+                    "geos_ncpus": geos.get("NCPUS", ""),
+                    "dispatch_elapsed_seconds": jobs.get("dispatch_elapsed_seconds", sub.get("dispatch_elapsed_seconds", "")),
+                    "returncode": sub.get("returncode", ""),
+                }
+            )
+        return rows
+
+    job_ids = split_job_ids(data.get("geos_job_id", ""))
+    geos_job_id = job_ids[0] if job_ids else str(data.get("geos_job_id", "") or "")
+    geos = sacct_row(geos_job_id) if geos_job_id else {}
+    rows.append(
+        {
+            "case_id": data.get("case_id", ""),
+            "subcase": "",
+            "geos_job_id": geos_job_id,
+            "geos_state": geos.get("State", ""),
+            "geos_elapsed": geos.get("Elapsed", ""),
+            "geos_total_cpu": geos.get("TotalCPU", ""),
+            "geos_ncpus": geos.get("NCPUS", ""),
+            "dispatch_elapsed_seconds": data.get("dispatch_elapsed_seconds", ""),
+            "returncode": data.get("returncode", ""),
+        }
+    )
+    return rows
+
+
+def case_job_summary(status: dict) -> str:
+    rows = status.get("timing_rows", []) or []
+    ids = [str(row.get("geos_job_id", "")) for row in rows if row.get("geos_job_id")]
+    if ids:
+        return ", ".join(ids)
+    return str(status.get("geos_job_id", "") or "")
+
+
+def case_state_summary(status: dict) -> str:
+    rows = status.get("timing_rows", []) or []
+    states = [str(row.get("geos_state", "")) for row in rows if row.get("geos_state")]
+    if states:
+        unique = []
+        for state in states:
+            if state not in unique:
+                unique.append(state)
+        return ", ".join(unique)
+    return str((status.get("geos_sacct", {}) or {}).get("State", ""))
+
+
+def case_elapsed_summary(status: dict) -> str:
+    rows = status.get("timing_rows", []) or []
+    elapsed = []
+    for row in rows:
+        wall = str(row.get("geos_elapsed", "") or "")
+        if wall:
+            label = str(row.get("subcase", "") or row.get("case_id", ""))
+            elapsed.append(f"{label}: {wall}" if label else wall)
+    if elapsed:
+        return "; ".join(elapsed)
+    dispatch = [str(row.get("dispatch_elapsed_seconds", "")) for row in rows if row.get("dispatch_elapsed_seconds") not in (None, "")]
+    if dispatch:
+        return "dispatch " + ", ".join(dispatch) + " s"
+    return ""
+
+
+
 
 
 
@@ -235,10 +386,13 @@ def collect_case_status(c: Case) -> dict:
         except Exception:
             pass
 
-    geos = sacct_row(str(data.get("geos_job_id", "")))
-    post = sacct_row(str(data.get("post_job_id", "")))
+    geos_job_ids = split_job_ids(data.get("geos_job_id", ""))
+    geos = sacct_row(geos_job_ids[0]) if len(geos_job_ids) == 1 else {}
+    post_job_ids = split_job_ids(data.get("post_job_id", ""))
+    post = sacct_row(post_job_ids[0]) if len(post_job_ids) == 1 else {}
     data["geos_sacct"] = geos
     data["post_sacct"] = post
+    data["timing_rows"] = timing_rows_for_status(data)
 
     logs = []
     for p in sorted(outdir.glob("*.log")):
@@ -251,6 +405,9 @@ def collect_case_status(c: Case) -> dict:
     pngs = list(outdir.glob("*.png"))
     csvs = list(outdir.glob("*.csv"))
     job_or_product_evidence = bool(pngs or csvs or data.get("geos_job_id") or data.get("post_job_id"))
+    subcases = data.get("subcases", []) or []
+    subcase_failures = [s for s in subcases if int(s.get("returncode", 0) or 0) != 0]
+    subcase_scheduler_failures = [row for row in data.get("timing_rows", []) if scheduler_failure_state(row.get("geos_state", ""))]
 
     hard_log_names = (
         "geos_slurm_check", "pfw", "runProblem", "particleFileWriter",
@@ -289,6 +446,15 @@ def collect_case_status(c: Case) -> dict:
     if expected_re.search(all_text):
         data["status"] = "expected-fail"
         data["issue"] = "ElasticCubic is not registered in this branch"
+    elif subcase_failures:
+        data["status"] = "failed"
+        data["issue"] = f"{len(subcase_failures)} subcase dispatch failure(s)"
+    elif subcase_scheduler_failures:
+        data["status"] = "failed"
+        data["issue"] = ", ".join(
+            f"{row.get('subcase') or row.get('case_id')}: {row.get('geos_state')}"
+            for row in subcase_scheduler_failures[:3]
+        )
     elif hard_fail_re.search(hard_text) or cancelled_re.search(hard_text):
         data["status"] = "failed"
         m = hard_fail_re.search(hard_text) or cancelled_re.search(hard_text)
@@ -404,22 +570,28 @@ def write_report(args, cases: list[Case]) -> None:
     tex = []
     tex.append(r"\documentclass[10pt]{article}")
     tex.append(r"\usepackage[margin=0.55in]{geometry}")
-    tex.append(r"\usepackage{graphicx,booktabs,longtable,tabularx,array,pdflscape,xcolor,hyperref,listings}")
+    tex.append(r"\usepackage{graphicx,booktabs,longtable,tabularx,array,pdflscape,xcolor,hyperref,listings,amsmath}")
     tex.append(r"\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}")
     tex.append(r"\setlength{\parindent}{0pt}")
     tex.append(r"\begin{document}")
     tex.append(r"\title{GEOS-MPM Verification Suite Report}")
-    tex.append(r"\author{Generated by verification/runVerificationSuite}")
+    tex.append(r"\author{Generated by verification/runSuite}")
     tex.append(r"\date{" + latex_escape(datetime.now().strftime("%B %d, %Y")) + "}")
     tex.append(r"\maketitle\tableofcontents\clearpage")
     tex.append(r"\section{Running and rerunning}")
     tex.append(r"Cases are staged under \texttt{testRunDirectory/verification/<case>}. The suite records failures and continues unless \texttt{--stop-on-error} is supplied. Use \texttt{--force} for noninteractive reruns.")
-    tex.append(r"\begin{lstlisting}[basicstyle=\small\ttfamily]" + "\ncd scripts/preProcessing/materialPointMethodParticleFileWriter/verification\n./runVerificationSuite all --python /usr/tce/bin/python3 --force\n./runVerificationSuite report --python /usr/tce/bin/python3\n" + r"\end{lstlisting}")
+    tex.append(r"\begin{lstlisting}[basicstyle=\small\ttfamily]" + "\ncd scripts/preProcessing/materialPointMethodParticleFileWriter\nverification/runSuite run --python /usr/tce/bin/python3 --force --jobs 4 --case-jobs 2\nverification/runSuite report --python /usr/tce/bin/python3\n" + r"\end{lstlisting}")
     tex.append(r"\section{Timing and dispatch summary}")
-    tex.append(r"\begin{landscape}{\tiny\begin{longtable}{p{0.26\linewidth}p{0.10\linewidth}p{0.20\linewidth}p{0.08\linewidth}p{0.11\linewidth}p{0.09\linewidth}p{0.13\linewidth}}\toprule Case & Status & Family & GEOS job & GEOS state & GEOS wall & Issue \\ \midrule\endhead")
+    tex.append(r"\begin{landscape}{\tiny\begin{longtable}{p{0.25\linewidth}p{0.10\linewidth}p{0.19\linewidth}p{0.15\linewidth}p{0.10\linewidth}p{0.11\linewidth}p{0.13\linewidth}}\toprule Case & Status & Family & GEOS job(s) & GEOS state & GEOS wall & Issue \\ \midrule\endhead")
     for st in statuses:
-        geos = st.get("geos_sacct", {}) or {}
-        tex.append(" & ".join(latex_escape(x) for x in [st.get("case_id", ""), st.get("status", ""), st.get("family", ""), st.get("geos_job_id", ""), geos.get("State", ""), geos.get("Elapsed", ""), st.get("issue", "")]) + r" \\")
+        tex.append(" & ".join(latex_escape(x) for x in [st.get("case_id", ""), st.get("status", ""), st.get("family", ""), case_job_summary(st), case_state_summary(st), case_elapsed_summary(st), st.get("issue", "")]) + r" \\")
+    tex.append(r"\bottomrule\end{longtable}}\end{landscape}")
+
+    tex.append(r"\paragraph{Subcase timing detail.} Dispatch time is local wall time spent staging inputs, running PFW, and submitting the GEOS job. GEOS wall and CPU columns are populated from \texttt{sacct} when available.")
+    tex.append(r"\begin{landscape}{\tiny\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.07\linewidth}p{0.09\linewidth}}\toprule Case & Subcase & GEOS job & State & GEOS wall & Total CPU & NCPUS & Dispatch (s) \\ \midrule\endhead")
+    for st in statuses:
+        for row in st.get("timing_rows", []) or []:
+            tex.append(" & ".join(latex_escape(x) for x in [row.get("case_id", ""), row.get("subcase", ""), row.get("geos_job_id", ""), row.get("geos_state", ""), row.get("geos_elapsed", ""), row.get("geos_total_cpu", ""), row.get("geos_ncpus", ""), row.get("dispatch_elapsed_seconds", "")]) + r" \\")
     tex.append(r"\bottomrule\end{longtable}}\end{landscape}")
     failures = [s for s in statuses if s.get("status") in {"failed", "expected-fail", "completed-no-figures"}]
     if failures:
@@ -433,6 +605,21 @@ def write_report(args, cases: list[Case]) -> None:
         outdir = c.source_dir / "output" / c.case_id
         prefix = c.output_prefix
         tex.append(r"\subsection{" + latex_escape(c.title) + "}")
+        case_tex = c.source_dir / "test.tex"
+        if case_tex.is_file():
+            rel_case_tex = Path(os.path.relpath(case_tex, report_dir))
+            rel_source_dir = Path(os.path.relpath(c.source_dir, report_dir))
+            rel_output_dir = Path(os.path.relpath(outdir, report_dir))
+            tex.append(r"\begingroup")
+            tex.append(r"\def\CaseId{" + latex_escape(c.case_id) + r"}")
+            tex.append(r"\def\CaseSourceDir{" + str(rel_source_dir).replace("\\", "/") + r"}")
+            tex.append(r"\def\CaseOutputDir{" + str(rel_output_dir).replace("\\", "/") + r"}")
+            tex.append(r"\input{" + str(rel_case_tex).replace("\\", "/") + r"}")
+            tex.append(r"\endgroup")
+            if st.get("status") in {"failed", "expected-fail", "completed-no-figures"}:
+                tex.append(diagnostics_latex(st, max_chars=3500))
+            tex.append(r"\clearpage")
+            continue
         tex.append(latex_escape(case_description(c)))
         schematic = write_schematic(c, report_dir)
         if schematic.is_file():
@@ -486,7 +673,7 @@ def main():
     print(f"[{args.suite}] {len(cases)} selected case(s)")
     if args.action == "list":
         for c in cases:
-            print(f"{c.case_id}\t{c.input_file}\t{c.source_dir}")
+            print(f"{c.case_id}\t{c.input_file}\t{c.source_dir}\t{c.run_script or 'legacy'}")
         return 0
     if args.action in {"all", "run"}:
         dispatch(args, cases)

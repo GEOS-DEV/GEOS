@@ -80,7 +80,6 @@ mSubmitJobs=False
 
 # GEOS MPM input parameters ---------------------------------------------------------------
 endTime="30.0"
-useDamageAsSurfaceFlag=1  # this is needed to determine whether to flag particles on creation.
 writePlot="1"
 writeRestart="1"
 plotInterval="0.25"
@@ -128,7 +127,6 @@ planeStrain="""+"\""+str(planeStrain)+"\""+"""
 
 neighborRadius="-1.01"
 needsNeighborList="1"
-useDamageAsSurfaceFlag="""+"\""+str(useDamageAsSurfaceFlag)+"\""+"""
 
 cpdiDomainScaling="1"
 
@@ -181,7 +179,6 @@ pfw = {
     "solverProfiling": 0,
     "neighborRadius": -1.01,
     "needsNeighborList": 1,
-    "useDamageAsSurfaceFlag": useDamageAsSurfaceFlag,
     "cpdiDomainScaling": 1,
     "damageFieldPartitioning": 1,
     "treatFullyDamagedAsSingleField": 1,

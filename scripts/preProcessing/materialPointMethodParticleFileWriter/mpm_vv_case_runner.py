@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -40,8 +41,10 @@ def parse_args():
     p.add_argument("--no-visit", action="store_true")
     p.add_argument("--post-walltime", default='00:05:00')
     p.add_argument("--post-partition", default="pdebug")
-    p.add_argument("--walltime", default='00:05:00', help="Optional GEOS walltime override; default preserves pfw_input mWallTime")
+    p.add_argument("--walltime", default=None, help="Optional GEOS walltime override; omitted means use the pfw_input value")
     p.add_argument("--no-submit", action="store_true")
+    p.add_argument("--no-post", action="store_true", help="Do not submit the generic per-case post-processing job")
+    p.add_argument("--ats-fast", action="store_true", help="Append explicit ultra-fast ATS sizing overrides to the staged input")
     return p.parse_args()
 
 
@@ -107,7 +110,7 @@ def copy_files(pfw_root: Path, source_dir: Path, input_file: str, run_dir: Path)
         if src.is_file():
             shutil.copy2(src, run_dir / src.name)
     shutil.copy2(source_dir / input_file, run_dir / input_file)
-    for pattern in ["*.csv", "*.txt", "*.dat", "*.png", "*.stl", "*.STL"]:
+    for pattern in ["*.csv", "*.txt", "*.dat", "*.png", "*.stl", "*.STL", "*.tex"]:
         for src in sorted(source_dir.glob(pattern)):
             if src.is_file():
                 shutil.copy2(src, run_dir / src.name)
@@ -126,71 +129,47 @@ def copy_files(pfw_root: Path, source_dir: Path, input_file: str, run_dir: Path)
                     shutil.copy2(preferred, alias)
 
 
-def append_overrides(path: Path, case: str, bank: str, walltime: str | None, submit: bool):
-    if not walltime:
-        walltime = "00:05:00"
-    wall = f'pfw["mWallTime"] = {walltime!r}\n'
+def append_overrides(path: Path, case: str, bank: str, walltime: str | None, submit: bool, ats_fast: bool = False):
+    """Append dispatch-only controls to the staged copy of a pfw input.
+
+    Verification source inputs own their physics, resolution, output cadence, and
+    schema-visible options. The suite runner should not silently repair obsolete
+    input syntax or rewrite the problem size. Use --ats-fast only for deliberately
+    tiny CI reductions.
+    """
+    wall = f'pfw["mWallTime"] = {walltime!r}\n' if walltime else ""
     block = f"""
 
 # -----------------------------------------------------------------------------
-# Runtime overrides appended by mpm_vv_case_runner.py in the copied Lustre run
-# directory only. The source verification input remains a copy-and-modify case.
+# Runtime dispatch controls appended by mpm_vv_case_runner.py to the staged copy
+# only. Keep source verification inputs current with the GEOS/PFW schema instead
+# of relying on runner compatibility rewrites.
 # -----------------------------------------------------------------------------
 pfw["mBatch"] = True
 pfw["mBank"] = {bank!r}
 {wall}pfw["mSubmitJobs"] = {bool(submit)!r}
 pfw["autoRestart"] = False
-pfw["outputType"] = "silo"
-try:
-    _vv_end_time = float(pfw.get("endTime", stopTime))
-except Exception:
-    _vv_end_time = float(pfw.get("endTime", 1.0)) if "endTime" in pfw else 1.0
-pfw["restartInterval"] = 2.0 * _vv_end_time
-# Keep source-defined plotInterval when present; otherwise request initial/final output.
-pfw.setdefault("plotInterval", _vv_end_time)
-# Current GEOS enum spellings.
-_interp = pfw.get("fTableInterpType", "Linear")
-if _interp == 0 or _interp == "0":
-    pfw["fTableInterpType"] = "Linear"
-elif _interp == 1 or _interp == "1":
-    pfw["fTableInterpType"] = "Cosine"
-elif _interp == 2 or _interp == "2":
-    pfw["fTableInterpType"] = "Smoothstep"
-elif _interp not in ("Linear", "Cosine", "Smoothstep"):
-    pfw["fTableInterpType"] = "Linear"
-_gap = pfw.get("contactGapCorrection", None)
-if _gap == 0 or _gap == "0":
-    pfw["contactGapCorrection"] = "Simple"
-elif _gap == 1 or _gap == "1":
-    pfw["contactGapCorrection"] = "Implicit"
-elif _gap == 2 or _gap == "2":
-    pfw["contactGapCorrection"] = "Softened"
-elif isinstance(_gap, str) and _gap.lower() in ("simple", "implicit", "softened"):
-    pfw["contactGapCorrection"] = _gap[:1].upper() + _gap[1:].lower()
-# Legacy typos/options that should not be written as solver attributes.
-if "planeSrain" in pfw:
-    pfw["planeStrain"] = pfw.pop("planeSrain")
-pfw.pop("useConstantTimeStep", None)
-# Fast debug resolution/cost caps appended by apply_verification_fast_debug_hardened.py.
+"""
+    if ats_fast:
+        block += """
+# -----------------------------------------------------------------------------
+# Optional ATS-fast reduction. This path is intentionally explicit; full
+# verification runs should use the resolution defined in the source input file.
+# -----------------------------------------------------------------------------
 def _vv_fast_int(_value, _default):
     try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
+        return int(float(str(_value).strip().strip('\"').strip("'")))
     except Exception:
         return int(_default)
-try:
-    refine = 1
-except Exception:
-    pass
+
 _vv_fast_plane = str(pfw.get("planeStrain", False)).strip().lower() in ("1", "true", "yes", "on")
-if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-    _vv_fast_plane = True
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
+_vv_fast_cpp_cap = 12 if _vv_fast_plane else 6
 _vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
 for _vv_key in ("xpar", "ypar", "zpar"):
     pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
 if _vv_fast_plane:
     pfw["zpar"] = 1
+
 def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
     _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
     _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
@@ -198,22 +177,24 @@ def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
         return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
     _cpp = max(1, (_n + _p - 1) // _p)
     return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
+
 pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
 pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
 if _vv_fast_plane:
     if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
+        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 6))
 else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
+    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 6)
 pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
+if "mWallTime" not in pfw:
+    pfw["mWallTime"] = "00:02:00"
 """
-    text = path.read_text()
-    if "Runtime overrides appended by mpm_vv_case_runner.py" not in text:
-        path.write_text(text.rstrip() + block + "\n")
-
+    text0 = path.read_text()
+    if "Runtime dispatch controls appended by mpm_vv_case_runner.py" not in text0:
+        path.write_text(text0.rstrip() + block + "\n")
 
 def run_pfw(args, run_dir: Path):
-    cmd = [args.python_cmd, "particleFileWriter.py", Path(args.input).stem]
+    cmd = [args.python_cmd, "particleFileWriter.py", Path(args.input).name]
     log(args.case_id, "running particleFileWriter in " + str(run_dir))
     proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     print(proc.stdout, end="")
@@ -285,7 +266,7 @@ def main():
     prompt(args.case_id, run_dir, output_dir, args.force)
     clean_case(run_dir, output_dir, args.force)
     copy_files(pfw_root, source_dir, args.input, run_dir)
-    append_overrides(run_dir / args.input, args.case_id, bank, args.walltime, not args.no_submit)
+    append_overrides(run_dir / args.input, args.case_id, bank, args.walltime, not args.no_submit, args.ats_fast)
     meta = {
         "case_id": args.case_id,
         "suite": args.suite,
@@ -296,8 +277,10 @@ def main():
         "userDefs": str(userdefs_path),
         "bank": bank,
     }
+    run_start = time.time()
     if args.prepare_only:
         meta["status"] = "prepared"
+        meta["dispatch_elapsed_seconds"] = round(time.time() - run_start, 3)
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"{args.output_prefix}_jobs.json").write_text(json.dumps(meta, indent=2))
         log(args.case_id, "prepared run directory: " + str(run_dir))
@@ -307,11 +290,12 @@ def main():
     meta["geos_job_id"] = geos_job
     if geos_job:
         log(args.case_id, "GEOS job id: " + geos_job)
-    post_job = submit_post(args, run_dir, output_dir, source_dir, bank, geos_job)
+    post_job = "" if args.no_post else submit_post(args, run_dir, output_dir, source_dir, bank, geos_job)
     meta["post_job_id"] = post_job
     if post_job:
         log(args.case_id, "post-process job id: " + post_job)
     meta["status"] = "submitted" if geos_job else "generated"
+    meta["dispatch_elapsed_seconds"] = round(time.time() - run_start, 3)
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / f"{args.output_prefix}_jobs.json").write_text(json.dumps(meta, indent=2))
     (run_dir / f"{args.output_prefix}_jobs.json").write_text(json.dumps(meta, indent=2))

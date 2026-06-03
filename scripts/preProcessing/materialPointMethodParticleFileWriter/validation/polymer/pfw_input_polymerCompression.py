@@ -55,7 +55,7 @@ pfw["reactionHistory"]=1
 pfw["reactionWriteInterval"]=stopTime/1000
 pfw["boxAverageHistory"]=1
 pfw["boxAverageWriteInterval"]=stopTime/1000
-pfw["useInteralForceAsFaceReaction"]=0
+pfw["useInternalForceAsFaceReaction"]=0
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 

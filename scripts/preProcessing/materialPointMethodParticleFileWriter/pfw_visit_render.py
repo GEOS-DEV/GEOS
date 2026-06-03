@@ -39,7 +39,7 @@ def parse_args(argv):
         help="Mesh overlay variable. Default 'auto' uses CellRegion1 when available; use 'none' to disable.",
     )
     parser.add_argument("--case-name", default=None, help="Prefix for PNG names")
-    parser.add_argument("--states", default="initial,final", help="Comma-list of initial, final, or integer state ids")
+    parser.add_argument("--states", default="initial,final", help="Comma-list of initial, middle, final, or integer state ids")
     parser.add_argument("--width", type=int, default=1600)
     parser.add_argument("--height", type=int, default=1200)
     parser.add_argument("--view", choices=("auto", "xy", "xz", "yz"), default="auto")
@@ -382,12 +382,79 @@ def _derive_plastic_strain_magnitude(scalars):
     return _define_scalar_expression("plasticStrainMagnitude", expression)
 
 
-def prepare_derived_requested_variable(scalars, requested):
+def _find_best_mesh(meshes, contains=()):
+    compact_contains = [_compact_name(c) for c in contains]
+    matches = []
+    for name in meshes:
+        cname = _compact_name(name)
+        if compact_contains and not all(c in cname for c in compact_contains):
+            continue
+        matches.append(name)
+    if not matches:
+        return None
+    return sorted(matches, key=_derived_priority)[0]
+
+
+def _component_scalar(scalars, stem, component, field_index=None):
+    label = ("x", "y", "z")[component]
+    suffixes = [
+        "{0}_{1}".format(stem, component),
+        "{0}/{1}".format(stem, label),
+        "{0}/{1}".format(stem, component),
+    ]
+    if field_index is not None:
+        suffixes = [
+            "{0}_{1}_{2}".format(stem, field_index, component),
+            "{0}_{1}_{2}".format(stem, component, field_index),
+        ] + suffixes
+    return _find_best_scalar(scalars, suffixes=tuple(suffixes), contains=(stem,))
+
+
+def _derive_grid_displacement_magnitude(scalars):
+    components = []
+    for component in range(3):
+        comp = _component_scalar(scalars, "gridDisplacement", component, field_index=0)
+        if comp:
+            components.append(comp)
+    if len(components) < 2:
+        print("Could not derive gridDisplacementMagnitude; missing gridDisplacement components: {0}".format(components))
+        return None
+    expression = _visit_square_sum_expression(components)
+    return _define_scalar_expression("gridDisplacementMagnitude", expression)
+
+
+def _derive_particle_displacement_magnitude(scalars, meshes):
+    refs = []
+    for component in range(3):
+        comp = _component_scalar(scalars, "particleReferencePosition", component)
+        if comp:
+            refs.append(comp)
+    if len(refs) < 2:
+        print("Could not derive particleDisplacementMagnitude; missing particleReferencePosition components: {0}".format(refs))
+        return None
+    mesh = _find_best_mesh(meshes, contains=("ParticleRegion", "ParticleDomains")) or _find_best_mesh(meshes, contains=("Particle",))
+    if not mesh:
+        print("Could not derive particleDisplacementMagnitude; particle mesh not found")
+        return None
+    terms = []
+    for component, ref in enumerate(refs):
+        coord = "coord({0})[{1}]".format(_quote_visit_var(mesh), component)
+        terms.append("(({0}) - ({1}))*(({0}) - ({1}))".format(coord, _quote_visit_var(ref)))
+    expression = "sqrt(" + " + ".join(terms) + ")"
+    return _define_scalar_expression("particleDisplacementMagnitude", expression)
+
+
+def prepare_derived_requested_variable(scalars, requested, meshes=None):
+    meshes = meshes or []
     key = _compact_name(requested or "")
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
         return _derive_plastic_strain_magnitude(scalars)
+    if key in ("griddisplacementmagnitude", "griddisplacement", "backgrounddisplacement"):
+        return _derive_grid_displacement_magnitude(scalars)
+    if key in ("particledisplacementmagnitude", "particledisplacement", "displacementmagnitude"):
+        return _derive_particle_displacement_magnitude(scalars, meshes)
     return None
 
 
@@ -796,6 +863,8 @@ def resolve_states(state_spec, n_states):
             out.append(("initial", 0))
         elif key == "final":
             out.append(("final", max(n_states - 1, 0)))
+        elif key in ("middle", "mid", "half"):
+            out.append(("middle", max(n_states - 1, 0) // 2))
         else:
             idx = int(raw)
             if idx < 0:
@@ -841,7 +910,7 @@ def main(argv=None):
     except Exception:
         pass
 
-    derived_variable = prepare_derived_requested_variable(scalars, args.variable)
+    derived_variable = prepare_derived_requested_variable(scalars, args.variable, meshes)
     candidates = []
     if derived_variable:
         candidates.append(derived_variable)

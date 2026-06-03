@@ -2387,8 +2387,12 @@ def _set_isotropic_wave_properties(material):
 
 ###################################################################################################
 # HYPERELASTIC MMS - GENERALIZED VORTEX VERIFICATION:
-# Exact parameter set from verification/generalizedVortex/pfw_input_generalizedVortexMMS.py.
-# This is a manufactured-solution verification material rather than a physical material card.
+# Manufactured-solution material used by the generalized-vortex MMS of Kamojjala et al.,
+# "Verification tests in solid mechanics," Engineering with Computers 31:193-213 (2015),
+# doi:10.1007/s00366-013-0342-x.  The paper lists rho=1000, E=1000, and nu=0.3,
+# corresponding to lambda=577 and mu=385 after rounding.  The values below preserve the
+# historical GEOS/PFW generalized-vortex input values used by this verification suite.
+# This is a verification material card rather than a physical material recommendation.
 #
 hyperelasticMMS = {}
 hyperelasticMMS['name'] = 'hyperelasticMMS'

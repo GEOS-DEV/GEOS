@@ -566,12 +566,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_treatFullyDamagedAsSingleField( 0 ),
   m_updateMethod( mpm::UpdateMethodOption::FLIP ),
   m_updateOrder( 2 ),
-  m_useAPIC( 0 ),
   m_useArtificialViscosity( 0 ),
   m_useCrackTipDetection( 0 ),
-  m_useDamageAsSurfaceFlag( 0 ),
   m_useEvents( 0 ),
-  m_useInteralForceAsFaceReaction( 0 ),
+  m_useInternalForceAsFaceReaction( 0 ),
   m_useNodePosForArea( 0 ),
   m_useReferenceVectorsForParticleUpdate( 0 ),
   m_useSurfacePositionForContact( 0 ),
@@ -1359,12 +1357,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Order for update method, only applies to XPIC and FMPM" );
 
-  registerWrapper( "useAPIC", &m_useAPIC ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_useAPIC ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Will use APIC in particle to grid mapping of momentum" );
-
   registerWrapper( "useArtificialViscosity", &m_useArtificialViscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_useArtificialViscosity ).
@@ -1377,21 +1369,15 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Set to activate crack-tip detection and distance calc" );
 
-  registerWrapper( "useDamageAsSurfaceFlag", &m_useDamageAsSurfaceFlag ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_useDamageAsSurfaceFlag ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
-
   registerWrapper( "useEvents", &m_useEvents ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_useEvents ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Enable events" );
 
-  registerWrapper( "useInteralForceAsFaceReaction", &m_useInteralForceAsFaceReaction ).
+  registerWrapper( "useInternalForceAsFaceReaction", &m_useInternalForceAsFaceReaction ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_useInteralForceAsFaceReaction ).
+    setApplyDefaultValue( m_useInternalForceAsFaceReaction ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Will use internal force component at boundary node as reaction" );
 
@@ -18369,7 +18355,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   // Tensor equation: boundaryFaceFrictionCoefficients = m_boundaryFaceFrictionCoefficients.
   LvArray::tensorOps::copy< 6 >( boundaryFaceFrictionCoefficients, m_boundaryFaceFrictionCoefficients );
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
-  int const useInteralForceAsFaceReaction = m_useInteralForceAsFaceReaction;
+  int const useInternalForceAsFaceReaction = m_useInternalForceAsFaceReaction;
 
   // Get grid fields
   arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
@@ -18556,7 +18542,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
               if( gridGhostRank[g] <= -1 && gridMass[g][fieldIndex] > smallMass ) // so we don't double count reactions at partition
                                                                                   // boundaries
               {
-                if( useInteralForceAsFaceReaction == 0 )
+                if( useInternalForceAsFaceReaction == 0 )
                 { // This computes the acceleration needed to bring the nodal velocity to the prescribed value, and the associated force.
                   // But in cases where there is a significant velocity change across the boundary grid cell, the mapped
                   // velocity

@@ -77,8 +77,7 @@ pfw["frictionCoefficient"]=0.25
 pfw["updateMethod"]="XPIC"
 pfw["updateOrder"]=2
 
-pfw["useAPIC"]=0
-pfw["useInteralForceAsFaceReaction"]=1
+pfw["useInternalForceAsFaceReaction"]=1
 
 # DEFORMATION -----------------------------------------------------------------------------
 

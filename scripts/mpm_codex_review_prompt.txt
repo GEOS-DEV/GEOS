@@ -1,0 +1,47 @@
+You are reviewing a GEOS MPM-scoped bundle.
+
+Start with these files, in this order:
+
+1. meta/README.txt
+2. meta/review-files.txt
+3. meta/diff-mpm.patch
+4. files/
+
+Review scope:
+
+- setupMPM and MPM-specific installation/build behavior.
+- MPM host-configs and MPM CMake/profile options.
+- MPM solid-mechanics solver code and kernels.
+- MPM events.
+- Particle mesh infrastructure, particle regions/subregions, particle generators,
+  and particle relations.
+- Constitutive models used by MPM, including solid, cohesive/contact, gas, and
+  external-material-model registration when present.
+- XML parsing, schema/docs, field specifications, and table/function inputs that
+  affect MPM cases.
+- Spatial partition and mesh communication paths that affect MPM particles or
+  distributed runs.
+- Silo, VTK, restart, and output code paths that affect MPM results.
+- Everything under scripts/preProcessing/materialPointMethodParticleFileWriter.
+
+Do not review unrelated GEOS subsystems unless one of these is true:
+
+- The file appears in meta/diff-mpm.patch.
+- The file is directly referenced by an MPM code path in files/.
+- The file is needed to explain a provided build error, runtime error, or test
+  failure.
+
+Ignore generated files and local build products unless the user explicitly asks
+about them.
+
+For each finding, provide:
+
+- Severity: blocker, high, medium, or low.
+- File path and line number when available.
+- What is wrong.
+- Why it matters for MPM.
+- A concrete fix or patch direction.
+
+Prefer focused, actionable review comments over broad style commentary. If a
+change is outside the MPM review scope, mention it only if it creates a direct
+risk for MPM builds, MPM input parsing, MPM output, or MPM solver correctness.

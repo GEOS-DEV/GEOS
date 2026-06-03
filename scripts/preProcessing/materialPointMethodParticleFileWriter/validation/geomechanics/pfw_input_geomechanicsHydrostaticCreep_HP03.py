@@ -71,8 +71,7 @@ pfw["frictionCoefficient"]=0.25
 pfw["updateMethod"]="PIC"
 pfw["updateOrder"]=2
 
-pfw["useAPIC"]=0
-pfw["useInteralForceAsFaceReaction"]=1
+pfw["useInternalForceAsFaceReaction"]=1
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
 

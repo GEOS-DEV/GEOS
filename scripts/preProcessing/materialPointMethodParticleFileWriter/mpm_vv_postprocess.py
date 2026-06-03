@@ -190,6 +190,46 @@ def run_visit(args, run_dir: Path, frame_dir: Path, geos_ok: bool):
         run_visit_one(args, run_dir, frame_dir, "final", final, final_range, logf)
 
 
+def run_case_post_script(args, run_dir: Path, source_dir: Path, output_dir: Path) -> bool:
+    """Run a case-local postProcess*.py script when present.
+
+    New verification cases should put all case-specific VisIt rendering, CSV
+    reduction, plot generation, and generated TeX snippets in one script. The
+    generic post-processor remains as a fallback for legacy folders.
+    """
+    candidates = sorted(run_dir.glob("postProcess*.py"))
+    candidates = [p for p in candidates if p.name != Path(__file__).name]
+    if not candidates:
+        return False
+    if len(candidates) > 1:
+        warn(args, "multiple postProcess*.py scripts found; using " + candidates[0].name)
+    script = candidates[0]
+    cmd = [
+        args.python_cmd,
+        str(script.name),
+        "--suite", args.suite,
+        "--run-dir", str(run_dir),
+        "--source-dir", str(source_dir),
+        "--output-dir", str(output_dir),
+        "--case-id", args.case_id,
+        "--output-prefix", args.output_prefix,
+        "--python", args.python_cmd,
+        "--visit-cmd", args.visit_cmd,
+    ]
+    if args.no_visit or args.skip_render:
+        cmd.append("--no-visit")
+    if args.force:
+        cmd.append("--force")
+    log(args, "running case post-processor: " + script.name)
+    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    log_file = run_dir / f"{args.output_prefix}_{script.stem}.log"
+    log_file.write_text(proc.stdout + f"\nreturncode={proc.returncode}\n")
+    print(proc.stdout, end="")
+    if proc.returncode != 0:
+        warn(args, f"case post-processor {script.name} exited with {proc.returncode}; copying available products")
+    return True
+
+
 def run_legacy_plot_scripts(args, run_dir: Path):
     env = os.environ.copy()
     env["MPLBACKEND"] = "Agg"
@@ -245,8 +285,10 @@ def main():
     frame_dir = run_dir / "visit_frames"
     geos_ok = check_geos_completed(args, run_dir)
     if not args.copy_only:
-        generate_plots(args, run_dir, source_dir)
-        run_visit(args, run_dir, frame_dir, geos_ok)
+        used_case_post = run_case_post_script(args, run_dir, source_dir, output_dir)
+        if not used_case_post:
+            generate_plots(args, run_dir, source_dir)
+            run_visit(args, run_dir, frame_dir, geos_ok)
     copy_products(args, run_dir, output_dir, frame_dir)
     return 0
 

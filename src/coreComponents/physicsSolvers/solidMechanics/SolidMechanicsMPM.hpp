@@ -1321,12 +1321,10 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   mpm::UpdateMethodOption m_updateMethod;
   int m_updateOrder;
-  int m_useAPIC;
   int m_useArtificialViscosity;
   int m_useCrackTipDetection;
-  int m_useDamageAsSurfaceFlag;
   int m_useEvents;                   // Events flag
-  int m_useInteralForceAsFaceReaction;
+  int m_useInternalForceAsFaceReaction;
   int m_useNodePosForArea;
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;

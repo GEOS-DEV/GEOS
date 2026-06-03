@@ -28,325 +28,18 @@ import pfw_geometryObjects as geom            # this contains all the geometry o
 import math
 import getpass
 import platform
-import difflib
 import argparse
 import re
-from typing import Any
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
 parser.add_argument('input_file', help="PFW input file", type=str)
 args = parser.parse_args()
 
-
 # ============================================================================================
 # BEGIN FUNCTION DEFINITIONS
 # ============================================================================================
 
-
-def _upgrade_mpm_event_attributes(text: str) -> str:
-  """Modernize legacy event attributes in PFW-supplied XML snippets.
-
-  Older MPM inputs used time/interval on event nodes. Current GEOS MPM events
-  use startTime/endTime. If the old form is found, map time -> startTime and
-  interval -> endTime. This preserves the common legacy meaning used by the old
-  PFW examples, where interval stored the end of the ramp/window.
-  """
-  if not text:
-    return text
-
-  def repl_tag(match):
-    tag = match.group(0)
-    if "startTime" not in tag:
-      m = re.search(r'\btime\s*=\s*(["\'])(.*?)\1', tag)
-      if m:
-        tag = tag[:m.start()] + f'startTime={m.group(1)}{m.group(2)}{m.group(1)}' + tag[m.end():]
-    if "endTime" not in tag:
-      m = re.search(r'\binterval\s*=\s*(["\'])(.*?)\1', tag)
-      if m:
-        tag = tag[:m.start()] + f'endTime={m.group(1)}{m.group(2)}{m.group(1)}' + tag[m.end():]
-    return tag
-
-  event_names = "Anneal|TemperatureProfile|InitializeStress|ConfiningPressure|BoreholePressure|BodyForceUpdate|MaterialSwap|FrictionCoefficientSwap|Heal|PolymerHeal|CrystalHeal|MachineSample|ResetDeformationGradient|TransformParticles|DeformationUpdate|ReferenceCohesiveZones"
-  text = re.sub(r'<(?:' + event_names + r')\b[^>]*?/?>', repl_tag, text)
-
-  text = re.sub(r'<\s*(?:CohesiveZoneReference|CohesiveZone)\b', '<ReferenceCohesiveZones', text)
-  text = re.sub(r'</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>', '</ReferenceCohesiveZones>', text)
-  return text
-
-
-def _xml_attr(attrs: str, name: str) -> str | None:
-  m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
-  return m.group(2) if m else None
-
-
-def _remove_xml_attr(attrs: str, name: str) -> str:
-  return re.sub(r"\s*\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", '', attrs, flags=re.S)
-
-
-def _add_missing_xml_attr(attrs: str, name: str, value: object) -> str:
-  if re.search(r'\b' + re.escape(name) + r'\s*=', attrs, flags=re.S):
-    return attrs
-  return attrs.rstrip() + f' {name}="{value}"'
-
-
-def _set_xml_attr(attrs: str, name: str, value: object) -> str:
-  if re.search(r"\b" + re.escape(name) + r"\s*=", attrs, flags=re.S):
-    return re.sub(r"\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", f'{name}="{value}"', attrs, flags=re.S)
-  return attrs.rstrip() + f' {name}="{value}"'
-
-
-def _split_braced_xml_array(value: str | None) -> list[str]:
-  if value is None:
-    return []
-  s = str(value).strip().strip("{}").strip()
-  if not s:
-    return []
-  return [x.strip() for x in s.split(",") if x.strip()]
-
-
-def _braced_xml_array(values) -> str:
-  vals = [str(v).strip() for v in values if str(v).strip()]
-  return "{ " + ", ".join(vals) + " }"
-
-
-def _normalize_cohesive_material_string(value: object) -> str:
-  """Update legacy cohesive constitutive XML to current model attributes."""
-  text = "" if value is None else str(value)
-  if "CohesiveZone" not in text:
-    return text
-
-  coupled_pat = re.compile(r"<(?P<tag>CoupledCohesiveZone|BicrystalCohesiveZone)\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
-
-  def _fix_coupled(match):
-    attrs = match.group("attrs")
-    end = match.group("end")
-    normal = _xml_attr(attrs, "maxNormalStress")
-    shear = _xml_attr(attrs, "maxShearStress")
-    if normal is not None:
-      attrs = _remove_xml_attr(attrs, "maxNormalStress")
-      attrs = _add_missing_xml_attr(attrs, "defaultMaxNormalStress", normal)
-    if shear is not None:
-      attrs = _remove_xml_attr(attrs, "maxShearStress")
-      attrs = _add_missing_xml_attr(attrs, "defaultMaxShearStress", shear)
-    return f"<{match.group('tag')}{attrs}{end}"
-
-  text = coupled_pat.sub(_fix_coupled, text)
-
-  polymer_pat = re.compile(r"<PolymerCohesiveZone\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
-  thermal_defaults = {
-    "bulkModulus": ("bulkModulusA", "bulkModulusB", "bulkModulusT0"),
-    "shearModulus": ("shearModulusA", "shearModulusB", "shearModulusT0"),
-    "yieldStrength0": ("yieldStrengthA", "yieldStrengthB", "yieldStrengthT0"),
-    "r0": ("r0A", "r0B", "r0T0"),
-    "Gr": ("GrA", "GrB", "GrT0"),
-    "maximumStretch": ("maximumStretchA", "maximumStretchB", "maximumStretchT0"),
-  }
-
-  def _fix_polymer(match):
-    attrs = match.group("attrs")
-    end = match.group("end")
-    old_max_stretch = _xml_attr(attrs, "maxStretch")
-    if old_max_stretch is not None:
-      attrs = _remove_xml_attr(attrs, "maxStretch")
-      attrs = _add_missing_xml_attr(attrs, "maximumStretch", old_max_stretch)
-    for required_attr, (a_attr, b_attr, t0_attr) in thermal_defaults.items():
-      if _xml_attr(attrs, required_attr) is not None:
-        attrs = _add_missing_xml_attr(attrs, a_attr, "0.0")
-        attrs = _add_missing_xml_attr(attrs, b_attr, "1.0")
-        attrs = _add_missing_xml_attr(attrs, t0_attr, "0.0")
-    return f"<PolymerCohesiveZone{attrs}{end}"
-
-  return polymer_pat.sub(_fix_polymer, text)
-
-
-def _extract_cohesive_model_names(material_text: object) -> list[str]:
-  text = "" if material_text is None else str(material_text)
-  return [name for _, name in re.findall(
-    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone|UncoupledCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
-    text,
-    flags=re.S,
-  )]
-
-
-def _normalize_cohesive_zone_regions(value: object, material_text: object, event_text: object) -> object:
-  """Build current CohesiveZoneRegion entries from explicit or legacy event input.
-
-  Current GEOS stores the constitutive model and particle CZ tag on
-  CohesiveZoneRegion nodes.  Older PFW examples kept this information on the
-  cohesive-zone event itself, so infer regions when an input has not supplied the
-  new block explicitly.
-  """
-  if value is not None and value != [] and str(value).strip():
-    return value
-
-  material_models = _extract_cohesive_model_names(material_text)
-  default_model = material_models[0] if material_models else "cz1"
-  regions: dict[str, tuple[str, str]] = {}
-  text = "" if event_text is None else str(event_text)
-
-  event_pat = re.compile(
-    r"<(?P<tag>ReferenceCohesiveZones|CohesiveZoneReference|CohesiveZone)\b(?P<attrs>[^>]*)>",
-    re.S,
-  )
-  for match in event_pat.finditer(text):
-    attrs = match.group("attrs")
-    singular_model = _xml_attr(attrs, "constitutiveModel")
-    models = _split_braced_xml_array(_xml_attr(attrs, "constitutiveModels"))
-    if singular_model is not None and not models:
-      models = [singular_model]
-    region_names = _split_braced_xml_array(_xml_attr(attrs, "regionNames"))
-    if not region_names:
-      region_names = models if models else [default_model]
-    if not models:
-      models = [r if r in material_models else default_model for r in region_names]
-    tags = _split_braced_xml_array(_xml_attr(attrs, "czTags"))
-    if not tags or len(tags) != len(region_names):
-      tags = [str(i) for i in range(len(region_names))] if len(region_names) > 1 else ["0"]
-    for i, region_name in enumerate(region_names):
-      model = models[i] if i < len(models) else models[-1]
-      tag = tags[i] if i < len(tags) else tags[-1]
-      regions.setdefault(region_name, (model, tag))
-
-  if not regions:
-    return ""
-
-  return "\n".join(
-    f'<CohesiveZoneRegion\n    name="{region}"\n    constitutiveModel="{model}"\n    tag="{tag}"/>'
-    for region, (model, tag) in regions.items()
-  )
-
-
-def _float_expr(value: str | None, default: str = "0.0") -> str:
-  if value is None or str(value).strip() == "":
-    return default
-  text = str(value).strip().strip('{} ')
-  try:
-    return repr(float(text))
-  except Exception:
-    return text
-
-
-def _sum_float_expr(a: str | None, b: str | None) -> str:
-  try:
-    return repr(float(str(a).strip().strip('{} ')) + float(str(b).strip().strip('{} ')))
-  except Exception:
-    return _float_expr(b, _float_expr(a, "0.0"))
-
-
-def _normalize_mpm_events_string(value: object, default_end_time: object = "1.0") -> str:
-  """Normalize legacy PFW event snippets for current GEOS MPMEvents.
-
-  Older PFW inputs commonly supplied a nested <MPMEvents>...</MPMEvents>
-  wrapper, used event attributes named time/interval instead of startTime/endTime,
-  used the old CohesiveZoneReference/CohesiveZone tags, or kept region/model/tag
-  data on cohesive-zone events.  Current GEOS expects only event child nodes
-  inside the solver's MPMEvents block, explicit startTime/endTime attributes,
-  ReferenceCohesiveZones event nodes, and explicit regionNames that refer to
-  CohesiveZoneRegion entries under the solver.
-  """
-  text = "" if value is None else str(value).strip()
-  if not text:
-    return ""
-
-  lower = text.lower().lstrip()
-  if lower.startswith("<mpmevents"):
-    first_close = text.find(">")
-    if first_close >= 0:
-      text = text[first_close + 1:].strip()
-  lower = text.lower().rstrip()
-  closing = "</mpmevents>"
-  if lower.endswith(closing):
-    cut = lower.rfind(closing)
-    text = text[:cut].strip()
-
-  text = re.sub(r"<\s*(?:CohesiveZoneReference|CohesiveZone)\b", "<ReferenceCohesiveZones", text)
-  text = re.sub(r"</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>", "</ReferenceCohesiveZones>", text)
-
-  event_names = (
-    "Anneal", "BodyForceUpdate", "BoreholePressure", "ReferenceCohesiveZones",
-    "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
-    "FrictionCoefficientSwap", "Heal", "InitializeStress",
-    "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
-    "PolymerHeal", "ResetDeformationGradient", "TemperatureProfile",
-    "TransformParticles",
-  )
-  event_pattern = re.compile(r"<(?P<tag>" + "|".join(event_names) + r")\b(?P<attrs>[^>]*)>", re.S)
-
-  def _attr(attrs: str, name: str):
-    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
-    return m.group(2) if m else None
-
-  def _strip_attr(attrs: str, name: str) -> str:
-    return re.sub(r"\s+" + re.escape(name) + r"\s*=\s*([\"']).*?\1", "", attrs, flags=re.S)
-
-  def _fix(match):
-    tag = match.group("tag")
-    attrs = match.group("attrs")
-    self_close = attrs.rstrip().endswith("/")
-    if self_close:
-      attrs = attrs.rstrip()[:-1]
-    old_time = _attr(attrs, "time")
-    old_interval = _attr(attrs, "interval")
-    attrs = _strip_attr(attrs, "time")
-    attrs = _strip_attr(attrs, "interval")
-    if _attr(attrs, "startTime") is None:
-      attrs += f' startTime="{old_time if old_time is not None else "0.0"}"'
-    if _attr(attrs, "endTime") is None:
-      attrs += f' endTime="{old_interval if old_interval is not None else default_end_time}"'
-    if tag == "ReferenceCohesiveZones":
-      singular_model = _attr(attrs, "constitutiveModel")
-      model_names = _split_braced_xml_array(_attr(attrs, "constitutiveModels"))
-      region_names = _split_braced_xml_array(_attr(attrs, "regionNames"))
-      if not region_names:
-        region_names = model_names if model_names else [singular_model or "cz1"]
-        attrs += f' regionNames="{_braced_xml_array(region_names)}"'
-      if _attr(attrs, "name") is None:
-        attrs += f' name="{region_names[0]}"'
-      attrs = _strip_attr(attrs, "constitutiveModel")
-      attrs = _strip_attr(attrs, "constitutiveModels")
-      attrs = _strip_attr(attrs, "czTags")
-      old_compute = _attr(attrs, "computeParticleSurfaceNormalsAndPositions")
-      if old_compute is not None and _attr(attrs, "computeNormalsAndPositions") is None:
-        attrs = _strip_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
-        attrs += f' computeNormalsAndPositions="{old_compute}"'
-    return f"<{tag}{attrs}{' /' if self_close else ''}>"
-
-  text = event_pattern.sub(_fix, text)
-  return text
-
-
-def _normalize_geomechanics_material_string(value: object) -> str:
-  """Add current required Geomechanics attributes to legacy inline material XML."""
-  text = "" if value is None else str(value)
-  if "<Geomechanics" not in text:
-    return text
-
-  geom_pat = re.compile(r"<Geomechanics\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
-
-  def _attr(attrs: str, name: str):
-    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
-    return m.group(2) if m else None
-
-  def _append(attrs: str, name: str, value: str) -> str:
-    if _attr(attrs, name) is None:
-      attrs += f'\n   {name}="{value}"'
-    return attrs
-
-  def _fix(match):
-    attrs = match.group("attrs")
-    end = match.group("end")
-    fslope = _attr(attrs, "fSlope") or "0.0"
-    attrs = _append(attrs, "dstrendh", "1.0")
-    attrs = _append(attrs, "dfslopedh", "0.0")
-    attrs = _append(attrs, "dpeakI1dh", "0.0")
-    attrs = _append(attrs, "dcrdh", "0.0")
-    attrs = _append(attrs, "fSlopeFailed", fslope)
-    attrs = _append(attrs, "creepG", "1.0")
-    return f"<Geomechanics{attrs}{end}"
-
-  return geom_pat.sub(_fix, text)
-
-# Silo grid-field presets for pfw_input convenience.  These are output-only
+# Silo grid-field presets for pfw_input convenience. These are output-only
 # controls for the Silo block generated by PFW; they are deliberately separate
 # from the SolidMechanics_MPM solver attributes.
 _PFW_SILO_COMMON_GRID_FIELDS = [
@@ -409,18 +102,12 @@ _PFW_SILO_GRID_FIELD_PRESETS = {
 }
 
 
-def _split_geos_name_list_string(value: str) -> list[str]:
-  """Split a PFW/GEOS name list string into names.
-
-  Accepts GEOS-style braced lists, Python-list-looking strings, comma-separated
-  strings, and whitespace-separated strings.  Quotes around individual names are
-  ignored so users can paste either Python or XML-like values into pfw_input.
-  """
+def _split_geos_name_list_string(value):
+  """Split a PFW/GEOS name-list string into names."""
   text = str(value).strip()
   if not text:
     return []
 
-  # Remove one layer of common list delimiters without trying to parse Python.
   if ( text.startswith("{") and text.endswith("}") ) or \
      ( text.startswith("[") and text.endswith("]") ) or \
      ( text.startswith("(") and text.endswith(")") ):
@@ -429,11 +116,11 @@ def _split_geos_name_list_string(value: str) -> list[str]:
   if not text:
     return []
 
-  raw_tokens = text.split(",") if "," in text else text.split()
-  return [ token.strip().strip("'\"") for token in raw_tokens if token.strip().strip("'\"") ]
+  rawTokens = text.split(",") if "," in text else text.split()
+  return [ token.strip().strip("'\"") for token in rawTokens if token.strip().strip("'\"") ]
 
 
-def _dedupe_preserving_order(values) -> list[str]:
+def _dedupe_preserving_order(values):
   seen = set()
   result = []
   for value in values:
@@ -443,22 +130,20 @@ def _dedupe_preserving_order(values) -> list[str]:
   return result
 
 
-def _normalize_silo_grid_field_names(value: object) -> list[str]:
+def _normalize_silo_grid_field_names(value):
   """Normalize a pfw_input Silo grid-field request to wrapper names.
 
-  Supported user forms include:
+  Supported current PFW forms include:
     pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
-    pfw["siloGridFields"] = "gridMass, gridVelocity"
-    pfw["siloGridFields"] = "common"   # four common MPM diagnostics
-    pfw["siloGridFields"] = True       # same as "common"
-    pfw["siloGridFields"] = "all"      # every registered MPM grid field known to PFW
+    pfw["siloGridFieldNames"] = "{ gridMass, gridVelocity }"
+    pfw["siloGridFields"] = "common" or True
+    pfw["siloGridFields"] = "all"
   """
   if value is None or value is False:
     return []
   if value is True:
     return list(_PFW_SILO_COMMON_GRID_FIELDS)
 
-  values = []
   if isinstance(value, str):
     tokens = _split_geos_name_list_string(value)
   elif isinstance(value, (list, tuple, set)):
@@ -466,6 +151,7 @@ def _normalize_silo_grid_field_names(value: object) -> list[str]:
   else:
     tokens = [value]
 
+  values = []
   for token in tokens:
     if token is None or token is False:
       continue
@@ -477,65 +163,54 @@ def _normalize_silo_grid_field_names(value: object) -> list[str]:
     if not text:
       continue
 
-    # A nested string in a Python list may itself be a braced/comma list.
-    nested_tokens = _split_geos_name_list_string(text)
-    if len(nested_tokens) > 1:
-      values.extend(_normalize_silo_grid_field_names(nested_tokens))
+    nestedTokens = _split_geos_name_list_string(text)
+    if len(nestedTokens) > 1:
+      values.extend(_normalize_silo_grid_field_names(nestedTokens))
       continue
 
-    lookup = text.lower()
-    if lookup in _PFW_SILO_GRID_FIELD_PRESETS:
-      values.extend(_PFW_SILO_GRID_FIELD_PRESETS[lookup])
+    preset = text.lower()
+    if preset in _PFW_SILO_GRID_FIELD_PRESETS:
+      values.extend(_PFW_SILO_GRID_FIELD_PRESETS[preset])
     else:
       values.append(text)
 
   return _dedupe_preserving_order(values)
 
 
-def _resolve_pfw_silo_grid_field_names(pfw_dict: dict) -> list[str]:
+def _resolve_pfw_silo_grid_field_names(pfwDict):
   """Resolve all supported PFW aliases for requested Silo grid fields."""
-  alias_keys = ("gridFieldNames", "siloGridFieldNames", "siloGridFields")
+  aliasKeys = ("gridFieldNames", "siloGridFieldNames", "siloGridFields")
   requested = []
-  used_aliases = []
+  usedAliases = []
 
-  for key in alias_keys:
-    if key in pfw_dict:
-      field_names = _normalize_silo_grid_field_names(pfw_dict[key])
-      if field_names:
-        requested.extend(field_names)
-        used_aliases.append(key)
+  for key in aliasKeys:
+    if key in pfwDict:
+      fieldNames = _normalize_silo_grid_field_names(pfwDict[key])
+      if fieldNames:
+        requested.extend(fieldNames)
+        usedAliases.append(key)
 
   requested = _dedupe_preserving_order(requested)
   if requested:
-    print("Silo grid-field output requested from pfw_input using " + ", ".join(used_aliases) + ":")
+    print("Silo grid-field output requested from pfw_input using " + ", ".join(usedAliases) + ":")
     print("  " + ", ".join(requested))
   return requested
 
 
-def _format_geos_name_array(values) -> str:
+def _format_geos_name_array(values):
   """Format names as a GEOS XML groupNameRef_array value."""
   names = _dedupe_preserving_order([ str(value).strip() for value in values if str(value).strip() ])
+  if any(not name for name in names):
+    raise ValueError('GEOS name array contains an empty name')
   return "{ " + ", ".join(names) + " }" if names else "{}"
 
 
-#This code calculates the similarity between two strings using the ndiff method from the difflib library. 
-def compute_similarity(input_string, reference_string):
-#The ndiff method returns a list of strings representing the differences between the two input strings.
-    diff = difflib.ndiff(input_string, reference_string)
-    diff_count = 0
-    for line in diff:
-      # a "-", indicating that it is a deleted character from the input string.
-        if line.startswith("-"):
-            diff_count += 1
-# calculates the similarity by subtracting the ratio of the number of deleted characters to the length of the input string from 1
-    return 1 - (diff_count / len(input_string))
+def _format_solver_child_xml_block(tagName, value, indent="\t\t\t"):
+  """Format an explicit user-provided XML child block under SolidMechanics_MPM.
 
-
-def _format_solver_child_xml_block(tag_name, value, indent="\t\t\t"):
-  """Format a user-provided XML child block under SolidMechanics_MPM.
-
-  The value may be a string containing XML lines or a list/tuple of XML snippets.
-  Empty values produce an empty string.
+  This is intentionally a formatter only: particleFileWriter.py assumes the
+  supplied XML is current and does not perform legacy schema migrations here.
+  Use pfw_inputFixer.py to modernize obsolete inputs before running PFW.
   """
   if value is None or value == [] or value == "":
     return ""
@@ -546,204 +221,19 @@ def _format_solver_child_xml_block(tag_name, value, indent="\t\t\t"):
   if not body:
     return ""
 
-  # Accept either raw child entries or an already-wrapped block, e.g.
-  # <CohesiveZoneRegions> ... </CohesiveZoneRegions>.
-  body = re.sub(r"^\s*<" + re.escape(tag_name) + r"\b[^>]*>\s*", "", body, flags=re.S)
-  body = re.sub(r"\s*</" + re.escape(tag_name) + r">\s*$", "", body, flags=re.S)
+  body = re.sub(r"^\s*<" + re.escape(tagName) + r"\b[^>]*>\s*", "", body, flags=re.S)
+  body = re.sub(r"\s*</" + re.escape(tagName) + r">\s*$", "", body, flags=re.S)
   body = body.strip()
   if not body:
     return ""
 
-  child_indent = indent + "\t"
-  return "\n" + indent + f"<{tag_name}>\n" + child_indent + ("\n" + child_indent).join(body.splitlines()) + "\n" + indent + f"</{tag_name}>\n"
-
-
-def _normalize_generated_geos_xml(text: str) -> str:
-  """Final compatibility pass over the generated GEOS XML string.
-
-  This is deliberately conservative: it only modernizes legacy PFW output patterns
-  that are known to be invalid in current GEOS-MPM, and it avoids changing source
-  inputs.  The goal is to let old verification inputs stage/run while the source
-  examples are cleaned up case by case.
-  """
-  if not text:
-    return text
-
-  # Common legacy typos that used to be accepted by old examples but are now
-  # unused SolidMechanics_MPM attributes.
-  text = text.replace("planeSrain", "planeStrain")
-  text = text.replace("planeStrian", "planeStrain")
-
-  def _get_attr(attrs: str, name: str):
-    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
-    return m.group(2) if m else None
-
-  def _set_attr(attrs: str, name: str, value: str) -> str:
-    if _get_attr(attrs, name) is None:
-      return attrs.rstrip() + f' {name}="{value}"'
-    return re.sub(r"\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", f'{name}="{value}"', attrs, flags=re.S)
-
-  def _remove_attr(attrs: str, name: str) -> str:
-    return re.sub(r"\s*\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", "", attrs, flags=re.S)
-
-  def _split_braced(value: str | None) -> list[str]:
-    if value is None:
-      return []
-    s = value.strip().strip("{}").strip()
-    if not s:
-      return []
-    return [x.strip() for x in s.split(",") if x.strip()]
-
-  def _braced(values) -> str:
-    vals = [str(v).strip() for v in values if str(v).strip()]
-    return "{ " + ", ".join(vals) + " }"
-
-  enum_ftable = {"0": "Linear", "1": "Cosine", "2": "Smoothstep"}
-  enum_gap = {"0": "Simple", "1": "Implicit", "2": "Softened"}
-
-  # Remove workflow/obsolete attributes and update integer enums on the solver.
-  solver_pat = re.compile(r"<SolidMechanics_MPM\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
-
-  def _fix_solver(match):
-    attrs = match.group("attrs")
-    end = match.group("end")
-    for bad in (
-      "geosPath", "pfwPath", "dependencies", "caseName", "runDirectory",
-      "outputDirectory", "outputDir", "pythonCommand", "defaultPython",
-      "defaultPythonCommand", "useConstantTimeStep", "constantTimeStepValue",
-    ):
-      attrs = _remove_attr(attrs, bad)
-    val = _get_attr(attrs, "fTableInterpType")
-    if val in enum_ftable:
-      attrs = _set_attr(attrs, "fTableInterpType", enum_ftable[val])
-    val = _get_attr(attrs, "contactGapCorrection")
-    if val in enum_gap:
-      attrs = _set_attr(attrs, "contactGapCorrection", enum_gap[val])
-    return f"<SolidMechanics_MPM{attrs}{end}"
-
-  text = solver_pat.sub(_fix_solver, text)
-
-  # Determine a default cohesive constitutive model from the Constitutive block.
-  cz_model_names = re.findall(
-    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone|UncoupledCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
-    text,
-    flags=re.S,
-  )
-  first_cz_model = cz_model_names[0][1] if cz_model_names else "cz1"
-
-  # Normalize Geomechanics inline material strings.  This catches stale copied
-  # inputs that did not yet use matdb.ghareb.
-  try:
-    text = _normalize_geomechanics_material_string(text)
-  except NameError:
-    pass
-  text = _normalize_cohesive_material_string(text)
-
-  # Convert nested/legacy event tags inside the generated XML.
-  text = re.sub(r"<\s*(?:CohesiveZoneReference|CohesiveZone)\b", "<ReferenceCohesiveZones", text)
-  text = re.sub(r"</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>", "</ReferenceCohesiveZones>", text)
-
-  event_names = (
-    "Anneal", "BodyForceUpdate", "BoreholePressure", "ReferenceCohesiveZones",
-    "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
-    "FrictionCoefficientSwap", "Heal", "InitializeStress",
-    "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
-    "PolymerHeal", "ResetDeformationGradient", "TemperatureProfile",
-    "TransformParticles",
-  )
-  event_pat = re.compile(r"<(?P<tag>" + "|".join(event_names) + r")\b(?P<attrs>[^>]*)>", re.S)
-
-  def _fix_event(match):
-    tag = match.group("tag")
-    attrs = match.group("attrs")
-    self_close = attrs.rstrip().endswith("/")
-    if self_close:
-      attrs = attrs.rstrip()[:-1]
-
-    old_time = _get_attr(attrs, "time")
-    old_interval = _get_attr(attrs, "interval")
-    attrs = _remove_attr(attrs, "time")
-    attrs = _remove_attr(attrs, "interval")
-    if _get_attr(attrs, "startTime") is None:
-      attrs = _set_attr(attrs, "startTime", old_time if old_time is not None else "0.0")
-    if _get_attr(attrs, "endTime") is None:
-      attrs = _set_attr(attrs, "endTime", old_interval if old_interval is not None else "1.0e99")
-
-    if tag in {"Anneal", "InitializeStress", "Heal", "PolymerHeal", "CrystalHeal"}:
-      if _get_attr(attrs, "targetRegion") is None:
-        attrs = _set_attr(attrs, "targetRegion", "all")
-
-    if tag == "ReferenceCohesiveZones":
-      singular = _get_attr(attrs, "constitutiveModel")
-      if singular is not None:
-        attrs = _remove_attr(attrs, "constitutiveModel")
-      models = _split_braced(_get_attr(attrs, "constitutiveModels"))
-      regions = _split_braced(_get_attr(attrs, "regionNames"))
-      if not regions:
-        # Historical inputs usually used a single CZ material named cz1 and the
-        # event name also cz1.  Using the model names as the CZ region names is
-        # the closest current-schema equivalent and preserves multi-cz inputs.
-        regions = models if models else [singular or first_cz_model]
-        attrs = _set_attr(attrs, "regionNames", _braced(regions))
-      if _get_attr(attrs, "name") is None:
-        attrs = _set_attr(attrs, "name", regions[0])
-      attrs = _remove_attr(attrs, "constitutiveModels")
-      attrs = _remove_attr(attrs, "czTags")
-      old_compute = _get_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
-      if old_compute is not None:
-        attrs = _remove_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
-        if _get_attr(attrs, "computeNormalsAndPositions") is None:
-          attrs = _set_attr(attrs, "computeNormalsAndPositions", old_compute)
-    return f"<{tag}{attrs}{' /' if self_close else ''}>"
-
-  text = event_pat.sub(_fix_event, text)
-
-  # ParticleMesh/ParticleRegion cleanup.  Empty particle block entries can be
-  # produced when legacy inputs list materials that have no particles.
-  removed_regions: set[str] = set()
-
-  def _fix_particle_region(match):
-    tag = match.group(0)
-    name = _get_attr(tag, "name")
-    blocks = _split_braced(_get_attr(tag, "particleBlocks"))
-    if name and not blocks:
-      removed_regions.add(name)
-      return ""
-    if blocks:
-      tag = re.sub(r"particleBlocks\s*=\s*([\"']).*?\1", f'particleBlocks="{_braced(blocks)}"', tag, flags=re.S)
-    return tag
-
-  text = re.sub(r"\s*<ParticleRegion\b[^>]*/>", _fix_particle_region, text, flags=re.S)
-
-  def _fix_particle_mesh(match):
-    tag = match.group(0)
-    blocks = _split_braced(_get_attr(tag, "particleBlockNames"))
-    ptypes = _split_braced(_get_attr(tag, "particleTypes"))
-    if blocks:
-      tag = re.sub(r"particleBlockNames\s*=\s*([\"']).*?\1", f'particleBlockNames="{_braced(blocks)}"', tag, flags=re.S)
-    if ptypes:
-      if len(ptypes) > len(blocks):
-        ptypes = ptypes[:len(blocks)]
-      tag = re.sub(r"particleTypes\s*=\s*([\"']).*?\1", f'particleTypes="{_braced(ptypes)}"', tag, flags=re.S)
-    return tag
-
-  text = re.sub(r"<ParticleMesh\b[^>]*/>", _fix_particle_mesh, text, flags=re.S)
-
-  if removed_regions:
-    def _fix_target_regions(match):
-      value = match.group(1)
-      targets = _split_braced(value)
-      targets = [t for t in targets if t.split("/")[-1] not in removed_regions]
-      return 'targetRegions="' + _braced(targets) + '"'
-    text = re.sub(r'targetRegions\s*=\s*"(\{.*?\})"', _fix_target_regions, text, flags=re.S)
-
-  return text
+  childIndent = indent + "\t"
+  return "\n" + indent + f"<{tagName}>\n" + childIndent + ("\n" + childIndent).join(body.splitlines()) + "\n" + indent + f"</{tagName}>\n"
 
 
 # ============================================================================================
 # END FUNCTION DEFINITIONS
 # ============================================================================================
-
 
 # ============================================================================================
 # MACHINE-SPECIFIC Calculations.
@@ -838,32 +328,19 @@ def _expand_user_path(value):
 
 
 def _resolve_input_file_arg(inputFileArg):
-  """Return the concrete PFW input file path for a user-supplied argument."""
+  """Return the concrete PFW input path supplied on the command line."""
   rawArg = str(inputFileArg).strip()
   if not rawArg:
     raise ValueError("PFW input file argument is empty")
-
-  rawPath = pathlib.Path(os.path.expandvars(os.path.expanduser(rawArg)))
-  candidates = []
-
-  if rawPath.suffix == ".py":
-    candidates.append(rawPath)
-  else:
-    candidates.append(rawPath.with_suffix(".py"))
-    if not rawPath.name.startswith("pfw_input_"):
-      candidates.append(rawPath.with_name("pfw_input_" + rawPath.name).with_suffix(".py"))
-
-  tried = []
-  for candidate in candidates:
-    candidatePath = candidate if candidate.is_absolute() else pathlib.Path.cwd() / candidate
-    candidatePath = candidatePath.resolve()
-    tried.append(str(candidatePath))
-    if candidatePath.is_file():
-      return candidatePath
-
-  raise FileNotFoundError(
-    "Could not find PFW input file for argument '" + rawArg + "'. Tried:\n  " +
-    "\n  ".join(tried))
+  inputPath = pathlib.Path(os.path.expandvars(os.path.expanduser(rawArg)))
+  if not inputPath.is_absolute():
+    inputPath = pathlib.Path.cwd() / inputPath
+  inputPath = inputPath.resolve()
+  if inputPath.suffix != ".py":
+    raise ValueError("PFW input file must be a Python file ending in .py: " + str(inputPath))
+  if not inputPath.is_file():
+    raise FileNotFoundError("PFW input file not found: " + str(inputPath))
+  return inputPath
 
 
 def _read_input_source_dir(defaultInputDir):
@@ -931,41 +408,31 @@ def _unique_paths(paths):
 
 
 def _resolve_dependency_source(sourceSpec, inputSourceDir, pfwPath):
-  """Resolve a dependency path using input-relative paths before pfwPath.
+  """Resolve a dependency declared by a #[pfw_dependency] source line.
 
-  Relative paths now resolve relative to the original input-file directory first.
-  The old behavior is retained as a fallback by also checking pfwPath.  Users can
-  force one base directory with input:<path> or pfw:<path>.  True absolute paths
-  are also accepted.
+  Relative paths are interpreted relative to the pfw_input file.  Prefix a path
+  with input: or pfw: to choose the input directory or PFW support directory
+  explicitly.  Absolute paths are used as written.
   """
   expanded = os.path.expandvars(os.path.expanduser(str(sourceSpec).strip()))
   inputBase = pathlib.Path(inputSourceDir)
   pfwBase = pathlib.Path(pfwPath)
 
-  candidates = []
   if expanded.startswith("input:"):
-    relativePath = expanded[len("input:"):].lstrip("/")
-    candidates.append(inputBase / relativePath)
+    candidate = inputBase / expanded[len("input:"):].lstrip("/")
   elif expanded.startswith("pfw:"):
-    relativePath = expanded[len("pfw:"):].lstrip("/")
-    candidates.append(pfwBase / relativePath)
+    candidate = pfwBase / expanded[len("pfw:"):].lstrip("/")
   elif os.path.isabs(expanded):
-    candidates.append(pathlib.Path(expanded))
-    # Backward compatibility for legacy tags such as #[pfw_dependency] /foo.py.
-    # If /foo.py is not a real file, fall back to pfwPath/foo.py.
-    candidates.append(pfwBase / expanded.lstrip("/"))
+    candidate = pathlib.Path(expanded)
   else:
-    candidates.append(inputBase / expanded)
-    candidates.append(pfwBase / expanded)
+    candidate = inputBase / expanded
 
-  candidates = _unique_paths([pathlib.Path(_expand_user_path(path)) for path in candidates])
-  for candidate in candidates:
-    if candidate.is_file():
-      return candidate.resolve()
+  candidate = pathlib.Path(_expand_user_path(candidate)).resolve()
+  if candidate.is_file():
+    return candidate
 
   raise FileNotFoundError(
-    "Could not resolve #[pfw_dependency] entry '" + str(sourceSpec) + "'. Tried:\n  " +
-    "\n  ".join(str(path) for path in candidates))
+    "Could not resolve #[pfw_dependency] entry '" + str(sourceSpec) + "'. Tried:\n  " + str(candidate))
 
 
 def _safe_dependency_destination(sourceSpec, destSpec):
@@ -1009,9 +476,9 @@ geosPath = _expand_user_path(userDefs.geosPath)
 pfwPath = _expand_user_path(userDefs.pfwPath)
 
 
-# inputFile is the importable module name. inputFilePath is the concrete file to scan.
+# inputFile is a filesystem-safe label derived from the provided file path.
 inputFilePath = _resolve_input_file_arg(args.input_file)
-inputFile = inputFilePath.stem
+inputFile = inputFilePath.stem.replace('.', '_')
 
 # Make both the run directory and the input-file directory importable.  The run
 # directory is kept first so staged dependencies override files from the source
@@ -1074,8 +541,13 @@ if not flux:
 importlib.invalidate_caches()
 
 
-#import inputFile as job    # Input parameters in separate file.
-job = importlib.import_module(inputFile)
+# Import the exact input file that was passed on the command line.
+spec = importlib.util.spec_from_file_location(inputFile, str(inputFilePath))
+if spec is None or spec.loader is None:
+  raise ImportError("Could not load PFW input file: " + str(inputFilePath))
+job = importlib.util.module_from_spec(spec)
+sys.modules[inputFile] = job
+spec.loader.exec_module(job)
 
 # file name prefix is date stamped
 now = datetime.datetime.now()
@@ -1094,132 +566,185 @@ PWD = os.getcwd()
 
 # If a specific variable needs a check before being written to solver string a handle to that function is added as a value in the dictionary below
 # Value contains ( default value, flag to include in xml mpm solver parameter string if not specified or not )
-parameters = { 'runDebug' : ( False, False ),
-               'runCheckTime' : ( "00:02:00", False ),
-               'outputType' : ("vtk", False),
-               'mCores' : (1, False), 
-               # Output-only Silo grid-field controls. These become attributes
-               # on the generated <Silo> block, not on SolidMechanics_MPM.
-               'gridFieldNames' : ( [], False ),
-               'siloGridFieldNames' : ( None, False ),
-               'siloGridFields' : ( None, False ),
-               'generateParticleFile': ( True, False ),
-               'runContinuation': (False, False ),
-               'restartJobDir': ('.', False),
-               'restartCycleNum': ( 0, False ),
-               'mBank' : ( None, False ),
-               'mWallTime' : ( "00:30:00", False ),
-               'mBatch' : ( True, False ),
-               'mSubmitJobs' : ( False, False ),
-               'autoRestart' : ( False, False ),
-               'mPartition' : ( "pbatch", False ),
-               'periodic' : ( [False, False, False], False ),
-               'xpar' : ( 1, False ),
-               'ypar' : ( 1, False ),
-               'zpar' : ( 1, False ),
-               'nI' : ( 5, False ),
-               'nJ' : ( 5, False ),
-               'nK' : ( 5, False ),
-               'ppc' : ( 2, False ),
-               'ppcx' : ( None, False ),
-               'ppcy' : ( None, False ),
-               'ppcz' : ( None, False ),
-               'xmin' : ( -0.5, False ),
-               'xmax' : ( 0.5, False ),
-               'ymin' : ( 0.0, False ),
-               'ymax' : ( 1.0, False ),
-               'zmin' : ( -0.5, False ),
-               'zmax' : ( 0.5, False ),
-               'lastRestartBufferInSeconds' : ( 10, False ),
-               'objects' : ( None, False ),
-               'sortObjects' : ( False, False ),
-               'timeIntegrationOption': ( None, True ),
-               'tracerHistory': ( None, True ),
-               'tracerCoordinates': ( None, True ),
-               'tracerVariables': ( None, True ),
-               'tracerWriteInterval': ( None, True ),
-               'tracerCycleInterval': ( None, True ),
-               'tracerOutputPrefix': ( None, True ),
-               'updateMethod': ( None, True ),
-               'updateOrder': ( None, True ),
-               'cflFactor': ( None, True ),              
-               'profileHistory': ( None, True ),
-               'profileDirection': ( None, True ),
-               'profileNumSlices': ( None, True ),
-               'profileWriteInterval': ( None, True ),
-               'profileCycleInterval': ( None, True ),
-               'profileVariables': ( None, True ),
-               'initialDt': ( None, True ),
-               'solverProfiling': ( None, True ),
-               'cpdiDomainScaling': ( None, True ),
-               'damageFieldPartitioning': ( None, True ), 
-               'planeStrain': ( False, True ),
-               'needsNeighborList': ( None, True ),
-               'reactionHistory': ( None, True ),
-               'reactionWriteInterval': ( None, True ),
-               'boxAverageHistory': ( None, True ),
-               'boxAverageWriteInterval': ( None, True ),
-               'prescribedBcTable': ( None, True ),
-               'prescribedFTable': ( None, True ),
-               'prescribedBoundaryFTable': ( None, True ),
-               'fTable': ( None, True ),
-               'fTableInterpType': ( None, True ),
-               'FSubcycles': (None, False),
-               'resetDefGradForFullyDamagedParticles': (None, True),
-               'treatFullyDamagedAsSingleField': (None, True),
-               'plotUnscaledParticles': (None, True),
-               'plotGridFields': (None, True),
-               'contactGapCorrection': (None, True),
-               'explicitSurfaceNormalInfluence': (None, True),
-               'useSurfacePositionForContact': (None, True),
-               'disableSurfaceNormalsAndPositionsOnCPDIScaling': (None, True),
-               'separabilityMinDamage': ( 0.5, True ),
-               'stressControl': ( None, True ),
-               'stressTable': ( None, True ),
-               'stressControlKp': ( None, True ),
-               'stressControlKi': ( None, True ),
-               'stressControlKd': ( None, True ),
-               'stressTableInterpType': ( None, True ),
-               'boundaryConditionTypes': ( None, True ),
-               'bcTable': ( None, True ),
-               'useEvents': ( None, True ),
-               'bodyForce' : ( None, True ),
-               'generalizedVortexMMS' : ( None, True ),
-               'frictionCoefficient' : ( None, True ),
-               'frictionCoefficientTable' : ( None, True ),
-               'frictionCoefficientRuleOfMixtures' : ( None, True ),
-               'useDamageAsSurfaceFlag' : ( False, True ),
-               'neighborRadius' : ( None, True ),
-               'minParticleJacobian' : ( None, True ),
-               'maxParticleJacobian' : ( None, True ), 
-               'logLevel' : ( None, True ),
-               'materials' : ( None, False ),
-               'materialPropertyString' : ( None, False ),
-               'endTime' : ( 1.0, False ),
-               'plotInterval' : ( None, False ),
-               'restartInterval' : ( None, False ),
-               'plotGridFields' : ( None, True ),
-               'useSinusoidalDamageField' : ( False, False),
-               'wavyCrack' : ( False, False),
-               'particleRefinement' : ( None, False ),
-               'mpmEventsString' : ( '', False ),
-               'maxParticleVelocity' : ( 10.0, True ),
-               'cohesiveFieldPartitioning' : ( 0, False),
-               'enableCohesiveFailure' : ( 0, False ),
-               'cohesiveLaw' : ( None, False ),
-               'maxCohesiveNormalStress' : ( 0.01, False ),
-               'maxCohesiveShearStress' : ( 0.01, False ),
-               'characteristicNormalDisplacement' : ( 0.01, False ),
-               'characteristicTangentialDisplacement' : ( 0.01, False ),
-               'maxCohesiveNormalDisplacement' : ( 0.01, False ),
-               'maxCohesiveTangentialDisplacement' : ( 0.01, False ),
-               'prescribedBoundaryTransverseVelocities' : ( [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], True ),
-               'cohesiveZoneRegions' : ( [], False ),
-               'particleFileFields' : (["Velocity",  # +3
-                                        "MaterialType", # +1
-                                        "ContactGroup", # +1
-                                        "SurfaceFlag", # +1
-                                        "RVector"] , False) } # +9
+parameters = {
+               'allowNonConvergedLinearSolverSolution': ( None, True ),  # MPM: accept failed linear solve solution instead of cutting dt.
+               'areaIntegrationMethod': ( None, True ),  # MPM: method for nodal area integration.
+               'artificialViscosityQ0': ( None, True ),  # MPM: artificial-viscosity linear coefficient.
+               'artificialViscosityQ1': ( None, True ),  # MPM: artificial-viscosity quadratic coefficient.
+               'autoRestart': ( False, False ),  # PFW: generate auto-restart job logic.
+               'bcTable': ( None, True ),  # MPM: time-dependent boundary-condition type table.
+               'binSizeMultiplier': ( None, True ),  # MPM: neighbor/bin size multiplier.
+               'bodyForce': ( None, True ),  # MPM: uniform body-force vector.
+               'boundaryConditionTypes': ( None, True ),  # MPM: boundary condition type on each domain face.
+               'boundaryFaceCoefficientsOfRestitution': ( None, True ),  # MPM: wall restitution coefficients by face.
+               'boundaryFaceFrictionCoefficients': ( None, True ),  # MPM: wall friction coefficients by face.
+               'boxAverageHistory': ( None, True ),  # MPM: enable box-average history output.
+               'boxAverageMax': ( None, True ),  # MPM: box-average maximum corner.
+               'boxAverageMin': ( None, True ),  # MPM: box-average minimum corner.
+               'boxAverageResizeWithDomain': ( None, True ),  # MPM: resize box-average region with domain deformation.
+               'boxAverageWriteInterval': ( None, True ),  # MPM: box-average write interval.
+               'caseName': ( '', False ),  # PFW: case/job name override.
+               'cflFactor': ( None, True ),  # MPM: CFL time-step factor.
+               'computeInternalEnergyAndTemperature': ( None, True ),  # MPM: thermal-state update compatibility flag.
+               'computeNodalArea': ( None, True ),  # MPM: compute nodal areas from surface geometry.
+               'computeParticleSurfaceNormalsAndPositions': ( None, True ),  # MPM: compute particle surface normals/positions.
+               'computeSPHJacobian': ( None, True ),  # MPM: compute SPH Jacobian for overlap correction.
+               'cohesiveFieldPartitioning': ( None, False ),  # PFW/CZ legacy convenience key; not a solver XML attribute.
+               'cohesiveLaw': ( None, False ),  # PFW/CZ legacy convenience key; not a solver XML attribute.
+               'contactGapCorrection': ( None, True ),  # MPM: enable contact-gap mitigation.
+               'contactNormalExponent': ( None, True ),  # MPM: exponent for weighted contact normals.
+               'contactNormalType': ( None, True ),  # MPM: contact-normal construction mode.
+               'cpdiDomainScaling': ( None, True ),  # MPM: CPDI domain-scaling option.
+               'crackTipDetectionThreshold': ( None, True ),  # MPM: crack-tip detection threshold.
+               'damageFieldPartitioning': ( None, True ),  # MPM: partition velocity fields using damage gradients.
+               'dependencies': ( [], False ),  # PFW: files to stage beside generated input.
+               'directionalOverlapCorrection': ( None, True ),  # MPM: directional correction for particle pile-up.
+               'disableSurfaceNormalsAndPositionsOnCPDIScaling': ( None, True ),  # MPM: drop explicit surfaces after CPDI scaling.
+               'disableSurfaceNormalsAndPositionsOnDamage': ( None, True ),  # MPM: drop explicit surfaces after damage.
+               'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
+               'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
+               'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
+               'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
+               'exactJIntegration': ( None, True ),  # MPM: enforce exact J integration for F updates.
+               'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: weight explicit vs implicit surface normals.
+               'frictionCoefficient': ( None, True ),  # MPM: global friction coefficient.
+               'frictionCoefficientTable': ( None, True ),  # MPM: friction coefficients by contact group.
+               'frictionCoefficientRuleOfMixtures': ( None, True ),  # MPM: rule of mixtures for friction coefficient.
+               'FSubcycles': ( None, True ),  # MPM: deformation-gradient integration subcycles.
+               'fTable': ( None, True ),  # MPM: time-dependent global stretch/deformation table.
+               'fTableInterpType': ( None, True ),  # MPM: interpolation type for fTable.
+               'generalizedVortexMMS': ( None, True ),  # MPM: generalized-vortex MMS option.
+               'generateParticleFile': ( True, False ),  # PFW: write particle file when true.
+               'gpuScheme': ( None, True ),  # MPM: GPU execution scheme.
+               'gridFieldNames': ( [], False ),  # PFW: Silo grid fields to write.
+               'siloGridFieldNames': ( None, False ),  # PFW: alias for Silo grid fields to write.
+               'siloGridFields': ( None, False ),  # PFW: Silo grid-field preset/list alias.
+               'initialDt': ( None, True ),  # MPM: initial solver time step.
+               'lastRestartBufferInSeconds': ( 10, False ),  # PFW: wall-clock buffer before final restart.
+               'LBar': ( None, True ),  # MPM: L-bar stabilization mode.
+               'LBarScale': ( None, True ),  # MPM: L-bar stabilization scale.
+               'logLevel': ( None, True ),  # GEOS: solver log-level override.
+               'logMomentum': ( None, True ),  # MPM: log momentum balance diagnostics.
+               'logStartCycle': ( None, True ),  # MPM: first cycle for diagnostic logging.
+               'LRtolerance': ( None, True ),  # MPM: logistic-regression tolerance.
+               'materialPropertyString': ( None, False ),  # PFW: explicit material XML string.
+               'materials': ( None, False ),  # PFW: material dictionaries/objects for particle assignment.
+               'maxLRIterations': ( None, True ),  # MPM: max logistic-regression iterations.
+               'maxParticleJacobian': ( None, True ),  # MPM: delete particles above this Jacobian.
+               'maxParticleVelocity': ( 10.0, True ),  # MPM: delete particles above this velocity.
+               'mBank': ( None, False ),  # PFW: batch-account/bank name.
+               'mBatch': ( True, False ),  # PFW: generate a batch script.
+               'mCores': ( 1, False ),  # PFW: requested cores/ranks.
+               'minParticleJacobian': ( None, True ),  # MPM: delete particles below this Jacobian.
+               'mPartition': ( 'pbatch', False ),  # PFW: batch partition/queue.
+               'mpmEventsString': ( '', False ),  # PFW: extra MPM event XML.
+               'cohesiveZoneRegions': ( [], False ),  # PFW: explicit CohesiveZoneRegions child XML.
+               'mSubmitJobs': ( False, False ),  # PFW: submit generated batch job.
+               'mWallTime': ( '00:30:00', False ),  # PFW: batch wall time.
+               'needsNeighborList': ( None, True ),  # MPM: build particle neighbor list.
+               'needsNodalNeighborList': ( None, True ),  # MPM: build nodal neighbor list.
+               'neighborRadius': ( None, True ),  # MPM: SPH/contact neighbor radius.
+               'nI': ( 5, False ),  # PFW: interior cell count in x.
+               'nJ': ( 5, False ),  # PFW: interior cell count in y.
+               'nK': ( 5, False ),  # PFW: interior cell count in z.
+               'normalAndPositionMethod': ( None, True ),  # MPM: surface normal/position method.
+               'numSurfaceIntegrationPoints': ( None, True ),  # MPM: surface integration points per cohesive node.
+               'objects': ( None, False ),  # PFW: geometric objects used to create particles.
+               'outputType': ( 'vtk', False ),  # PFW: plot-file backend.
+               'overlapCorrection': ( None, True ),  # MPM: overlap-correction mode.
+               'overlapThreshold1': ( None, True ),  # MPM: first overlap-correction threshold.
+               'overlapThreshold2': ( None, True ),  # MPM: second overlap-correction threshold.
+               'overwriteExistingNormalsAndPositions': ( None, True ),  # MPM: overwrite supplied surface geometry.
+               'parallelThreads': ( None, False ),  # PFW: writer-side parallel particle generation threads.
+               'particleDataWriteInterval': ( None, True ),  # MPM: particle-data write interval.
+               'particleFileFields': ( [ 'Velocity', 'MaterialType', 'ContactGroup', 'SurfaceFlag', 'RVector' ], False ),  # PFW: particle columns to write.
+               'particleRefinement': ( None, False ),  # PFW: particle refinement settings.
+               'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
+               'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
+               'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
+               'plotInterval': ( None, False ),  # PFW: output event interval.
+               'plottableFields': ( None, True ),  # MPM: explicit particle-field output list.
+               'plotUnscaledParticles': ( None, True ),  # MPM: plot particles without CPDI scaling.
+               'ppc': ( 2, False ),  # PFW: particles per cell in all directions.
+               'ppcx': ( None, False ),  # PFW: particles per cell in x.
+               'ppcy': ( None, False ),  # PFW: particles per cell in y.
+               'ppcz': ( None, False ),  # PFW: particles per cell in z.
+               'prescribedBcTable': ( None, True ),  # MPM: enable time-dependent BC type table.
+               'prescribedBoundaryFTable': ( None, True ),  # MPM: enable boundary deformation table.
+               'prescribedBoundaryTransverseVelocities': ( [ [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ] ], True ),  # MPM: transverse velocities on each face.
+               'prescribedFTable': ( None, True ),  # MPM: enable prescribed deformation-gradient table.
+               'preventCZInterpenetration': ( None, True ),  # MPM: prevent cohesive-zone interpenetration.
+               'profileCycleInterval': ( None, True ),  # MPM: profile-history cycle interval.
+               'profileDirection': ( None, True ),  # MPM: profile-history direction.
+               'profileHistory': ( None, True ),  # MPM: enable profile-history CSV output.
+               'profileNumSlices': ( None, True ),  # MPM: number of profile-history slices.
+               'profileVariables': ( None, True ),  # MPM: profile-history variables.
+               'profileWriteInterval': ( None, True ),  # MPM: profile-history time interval.
+               'reactionHistory': ( None, True ),  # MPM: enable boundary reaction history.
+               'reactionWriteInterval': ( None, True ),  # MPM: reaction-history write interval.
+               'resetDefGradForFullyDamagedParticles': ( None, True ),  # MPM: reset F for fully damaged particles.
+               'resetDefGradForScaledSurfaceParticles': ( None, True ),  # MPM: reset F for CPDI-scaled surface particles.
+               'restartCycleNum': ( 0, False ),  # PFW: restart cycle number.
+               'restartInterval': ( None, False ),  # PFW: restart event interval.
+               'restartJobDir': ( '.', False ),  # PFW: restart source directory.
+               'runCheckTime': ( '00:02:00', False ),  # PFW: short check-run wall time.
+               'runContinuation': ( False, False ),  # PFW: generate continuation run.
+               'runDebug': ( False, False ),  # PFW: enable writer debug output.
+               'separabilityMinDamage': ( 0.5, True ),  # MPM: damage threshold for field separability.
+               'setDomainTemperature': ( None, True ),  # MPM: enable domain temperature table.
+               'setDomainTemperatureRate': ( None, True ),  # MPM: enable domain temperature-rate table.
+               'shockHeating': ( None, True ),  # MPM: enable shock-heating diagnostics/update.
+               'smallMass': ( None, True ),  # MPM: low-mass cutoff for nodes.
+               'solverProfiling': ( None, True ),  # MPM: time solver subroutines.
+               'sortObjects': ( False, False ),  # PFW: spatially sort geometry objects while writing particles.
+               'stressControl': ( None, True ),  # MPM: enable stress-control driver.
+               'stressControlKd': ( None, True ),  # MPM: stress-control derivative gain.
+               'stressControlKi': ( None, True ),  # MPM: stress-control integral gain.
+               'stressControlKp': ( None, True ),  # MPM: stress-control proportional gain.
+               'stressTable': ( None, True ),  # MPM: time-dependent stress table.
+               'stressTableInterpType': ( None, True ),  # MPM: interpolation type for stressTable.
+               'subdivideParticles': ( None, True ),  # MPM: split particles spanning too much of a cell.
+               'surfaceDetection': ( None, True ),  # MPM: automatic initial surface detection.
+               'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
+               'surfaceQualityThreshold': ( None, True ),  # MPM: DFG alignment quality threshold.
+               'surfaceTensionCoefficient': ( None, True ),  # MPM: surface-tension coefficient.
+               'temperatureTable': ( None, True ),  # MPM: time-dependent domain-temperature table.
+               'temperatureTableInterpType': ( None, True ),  # MPM: interpolation type for temperatureTable.
+               'thinFeatureDFGThreshold': ( None, True ),  # MPM: thin-feature damage threshold.
+               'timeIntegrationOption': ( None, True ),  # MPM: time-integration method.
+               'totalBinderVolume': ( None, True ),  # MPM: total binder volume.
+               'tracerCoordinates': ( None, True ),  # MPM: initial tracer coordinates.
+               'tracerCycleInterval': ( None, True ),  # MPM: tracer-history cycle interval.
+               'tracerHistory': ( None, True ),  # MPM: enable tracer-history CSV output.
+               'tracerOutputPrefix': ( None, True ),  # MPM: tracer-history filename prefix.
+               'tracerVariables': ( None, True ),  # MPM: tracer-history variables.
+               'tracerWriteInterval': ( None, True ),  # MPM: tracer-history time interval.
+               'treatFullyDamagedAsSingleField': ( None, True ),  # MPM: merge fully damaged fields.
+               'updateMethod': ( None, True ),  # MPM: particle/grid update method.
+               'updateOrder': ( None, True ),  # MPM: update order for XPIC/FMPM.
+               'useArtificialViscosity': ( None, True ),  # MPM: enable artificial viscosity.
+               'useCrackTipDetection': ( None, True ),  # MPM: enable crack-tip detection.
+               'useEvents': ( None, True ),  # MPM: enable MPM event manager actions.
+               'useInternalForceAsFaceReaction': ( None, True ),  # MPM: use internal force for face reactions.
+               'useNodePosForArea': ( None, True ),  # MPM: use node positions for nodal areas.
+               'usePhysicsScaling': ( None, True ),  # MPM: enable physics scaling of linear systems.
+               'useReferenceVectorsForParticleUpdate': ( None, True ),  # MPM: use reference vectors in particle updates.
+               'useSinusoidalDamageField': ( False, False ),  # PFW: initialize sinusoidal damage field.
+               'useSurfacePositionForContact': ( None, True ),  # MPM: use particle surface positions for contact.
+               'wavyCrack': ( False, False ),  # PFW: initialize wavy-crack geometry/damage.
+               'writeLinearSystem': ( None, True ),  # MPM: write linear system data.
+               'writeParticleData': ( None, True ),  # MPM: write particle data files.
+               'writeStatistics': ( None, True ),  # MPM: write solver statistics CSV.
+               'xmax': ( 0.5, False ),  # PFW: physical-domain maximum x.
+               'xmin': ( -0.5, False ),  # PFW: physical-domain minimum x.
+               'xpar': ( 1, False ),  # PFW: partition count in x.
+               'ymax': ( 1.0, False ),  # PFW: physical-domain maximum y.
+               'ymin': ( 0.0, False ),  # PFW: physical-domain minimum y.
+               'ypar': ( 1, False ),  # PFW: partition count in y.
+               'zmax': ( 0.5, False ),  # PFW: physical-domain maximum z.
+               'zmin': ( -0.5, False ),  # PFW: physical-domain minimum z.
+               'zpar': ( 1, False ),  # PFW: partition count in z.
+             }
 
 # This must correspond to the order in which fields are written in the particle file below
 particleFieldOrder=["Velocity",
@@ -1238,247 +763,71 @@ particleFieldOrder=["Velocity",
                     "SurfaceTraction",
                     "ShrinkageFlag"]
 
-# New dictionary input approach
+# New dictionary input approach.  Inputs are expected to use current PFW keys
+# directly.  Use pfw_inputFixer.py on obsolete inputs before running this writer.
 pfw = job.pfw if hasattr(job, 'pfw') else {}
+if not isinstance(pfw, dict):
+  raise TypeError('The input file must define pfw as a dictionary')
 
-"""
-Normalize a nested dict (pfw) so that converting it to a string does not show
-NumPy dtype wrappers like "float64(...)", "int32(...)", etc.
+unknownPfwKeys = sorted(key for key in pfw if key not in parameters)
+if unknownPfwKeys:
+  raise KeyError(
+    'Unknown pfw key(s): ' + ', '.join(unknownPfwKeys) +
+    '. Update the pfw_input file or run pfw_inputFixer.py to create a .fixed version.'
+  )
 
-- Walks dicts, lists/tuples, and NumPy arrays.
-- Converts NumPy scalars (np.generic) to native Python scalars via .item().
-- For object arrays, converts each element similarly.
-- For non-object arrays, converts to nested Python lists of Python scalars.
-- Leaves plain str/int/float/bool/None unchanged.
-"""
-def to_python_scalar(x: Any) -> Any:
-    # NumPy scalar types: np.float64, np.int32, np.bool_, np.str_, etc.
-    if isinstance(x, np.generic):
-        return x.item()
-    return x
-
-
-def normalize_ndarray(a: np.ndarray) -> Any:
-    # If this is an object array, normalize each element recursively
-    if a.dtype == object:
-        out = np.empty(a.shape, dtype=object)
-        it = np.nditer(a, flags=["multi_index", "refs_ok", "zerosize_ok"], op_flags=["readonly"])
-        for x in it:
-            out[it.multi_index] = normalize_no_numpy_wrappers(x.item())
-        return out.tolist()
-
-    # For numeric (or other non-object) arrays, convert to nested lists of Python scalars
-    # .tolist() will produce Python scalars for typical numeric dtypes
-    return a.tolist()
-
-
-def normalize_no_numpy_wrappers(obj: Any) -> Any:
-    """
-    Return a deep-normalized copy of obj, converting NumPy scalars/arrays into
-    Python-native types so str()/repr() won't show numpy dtype constructors.
-    """
-    # Dict
-    if isinstance(obj, dict):
-        return {normalize_no_numpy_wrappers(k): normalize_no_numpy_wrappers(v) for k, v in obj.items()}
-
-    # List / tuple
-    if isinstance(obj, list):
-        return [normalize_no_numpy_wrappers(x) for x in obj]
-    if isinstance(obj, tuple):
-        return tuple(normalize_no_numpy_wrappers(x) for x in obj)
-
-    # NumPy ndarray
-    if isinstance(obj, np.ndarray):
-        return normalize_ndarray(obj)
-
-    # NumPy scalar
-    obj2 = to_python_scalar(obj)
-    if obj2 is not obj:
-        return normalize_no_numpy_wrappers(obj2)
-
-    # Everything else (str/int/float/bool/None, and unknown objects)
-    return obj
-
-
-
-
-def normalize_geos_enum_inputs(pfw_dict: dict) -> None:
-    """Normalize legacy integer enum values to current GEOS string enums."""
-
-    def normalize_one(key: str, mapping: dict, valid: tuple[str, ...]) -> None:
-        if key not in pfw_dict or pfw_dict[key] is None:
-            return
-        value = pfw_dict[key]
-        raw = str(value).strip() if isinstance(value, str) else value
-        if raw in mapping:
-            pfw_dict[key] = mapping[raw]
-            print(f"Normalized legacy {key}={value!r} to {pfw_dict[key]!r}")
-            return
-        if isinstance(raw, str):
-            by_lower = {v.lower(): v for v in valid}
-            lowered = raw.lower()
-            if lowered in by_lower:
-                pfw_dict[key] = by_lower[lowered]
-                return
-        if pfw_dict[key] not in valid:
-            raise ValueError(
-                f"pfw[{key!r}]={value!r} is not valid for current GEOS; "
-                f"expected one of {valid}"
-            )
-
-    normalize_one(
-        "contactGapCorrection",
-        {0: "Simple", "0": "Simple", 1: "Implicit", "1": "Implicit", 2: "Softened", "2": "Softened"},
-        ("Simple", "Implicit", "Softened"),
-    )
-    normalize_one(
-        "fTableInterpType",
-        {0: "Linear", "0": "Linear", 1: "Cosine", "1": "Cosine", 2: "Smoothstep", "2": "Smoothstep"},
-        ("Linear", "Cosine", "Smoothstep"),
-    )
-
-def find_numpy_wrappers(obj: Any, path: str = "pfw") -> list[str]:
-    """
-    Scan for NumPy scalars/arrays that are likely to stringify with dtype wrappers
-    (or otherwise indicate NumPy-typed content). Returns paths to hits.
-    """
-    hits: list[str] = []
-
-    if isinstance(obj, np.generic):
-        hits.append(f"{path} (numpy scalar: {type(obj).__name__})")
-        return hits
-
-    if isinstance(obj, np.ndarray):
-        hits.append(f"{path} (ndarray dtype={obj.dtype}, shape={obj.shape})")
-        # If object array, also scan elements
-        if obj.dtype == object:
-            it = np.nditer(obj, flags=["multi_index", "refs_ok", "zerosize_ok"], op_flags=["readonly"])
-            for x in it:
-                idx = it.multi_index
-                hits.extend(find_numpy_wrappers(x.item(), f"{path}[{idx}]"))
-        return hits
-
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            hits.extend(find_numpy_wrappers(k, f"{path}.<key>"))
-            hits.extend(find_numpy_wrappers(v, f"{path}[{k!r}]"))
-        return hits
-
-    if isinstance(obj, list):
-        for i, x in enumerate(obj):
-            hits.extend(find_numpy_wrappers(x, f"{path}[{i}]"))
-        return hits
-
-    if isinstance(obj, tuple):
-        for i, x in enumerate(obj):
-            hits.extend(find_numpy_wrappers(x, f"{path}[{i}]"))
-        return hits
-
-    return hits
-
-numpy_wrappers = find_numpy_wrappers(pfw)
-has_numpy_wrappers = len(numpy_wrappers) > 0
-if rank == 0 and has_numpy_wrappers:
-  print("The pfw dictionary defined in this input file has NumPy dtype wrappers that will be removed")
-  for h in numpy_wrappers:
-      print(" -", h)
-
-pfw = normalize_no_numpy_wrappers(pfw)
-normalize_geos_enum_inputs(pfw)
-
-if rank == 0 and has_numpy_wrappers:
-  print("\nAfter editing the following wrappers remain. ")
-  for h in find_numpy_wrappers(pfw):
-      print(" -", h)
-
-  print("\nHopefully that looks ok.")
-
-# Normalize legacy PFW input keys that should not become solver XML attributes.
-# Keep planeStrain in pfw: PFW uses it to generate the reduced particle layer,
-# and the solver receives the same flag in the SolidMechanics_MPM XML node.
-for _legacyPlaneStrainKey in ("planeSrain", "planeStrian"):
-  if _legacyPlaneStrainKey in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop( _legacyPlaneStrainKey )
-  else:
-    pfw.pop( _legacyPlaneStrainKey, None )
-pfw.pop("useConstantTimeStep", None)
-
-tabIndent = 3*"  "  
+tabIndent = 3*"  "
 parameterStrings = []
 for paramName, paramTuple in parameters.items():
-  # Check if param is passed from input script, if not assign default value
-  paramValue = paramTuple[0]
-  if paramName in pfw:
-    paramValue = pfw[paramName] 
-    if paramValue != None and paramTuple[1]:
-      parameterStrings.append(tabIndent + paramName + '="' + str(paramValue).replace('[','{').replace(']','}') + '"' + '\n')
+  # Check if param is passed from input script, if not assign default value.
+  paramValue = pfw[paramName] if paramName in pfw else paramTuple[0]
 
-  # Add global variable to be used by particle file writer
-  globals()[paramName] = paramValue 
+  # Add solver XML attributes only for parameters marked as solver attributes.
+  if paramValue != None and paramTuple[1]:
+    parameterStrings.append(tabIndent + paramName + '="' + str(paramValue).replace('[','{').replace(']','}').replace("'","") + '"' + '\n')
 
+  # Add global variable to be used by particle file writer.
+  globals()[paramName] = paramValue
 
-# Keys below are used by wrappers, reports, or local workflow tooling.  They are
-# intentionally not SolidMechanics_MPM XML attributes.  particleFileWriter.py
-# writes unknown pfw keys as solver attributes so that new GEOS solver options
-# can be exercised without editing this table, but these workflow-only keys must
-# be filtered to avoid invalid XML such as geosPath="..." on the solver node.
-pfwMetadataKeys = {
-    "geosPath",
-    "pfwPath",
-    "dependencies",
-    "caseName",
-    "runDirectory",
-    "outputDirectory",
-    "outputDir",
-    "pythonCommand",
-    "defaultPython",
-    "defaultPythonCommand",
-}
-
-# Add all remaining variables to mpmSolverParameterString that aren't specified here, but don't add them as global variables for script
-for paramName, paramValue in pfw.items():
-  if paramName in pfwMetadataKeys:
-    continue
-  if paramName not in parameters:
-
-    maxDiff = 0.0
-    closestParam = ""
-    for p, paramTuple in parameters.items():
-      newDiff = compute_similarity( paramName, p )
-      if newDiff > 0.5 and newDiff > maxDiff:
-        maxDiff = newDiff
-        closestParam = p
-
-    if maxDiff != 0.0:
-      print( paramName + " parameter not found, did you mean " + closestParam +  "?")
-    else:
-      print( paramName + " parameter not found")
-
-    parameterStrings.append(tabIndent + paramName + '="' + str(paramValue).replace('[','{').replace(']','}').replace('\'','') + '"' + '\n')
-
-if "dependencies" not in pfw:
-  pfw["dependencies"] = []
-
+if dependencies is None:
+  dependencies = []
+elif isinstance(dependencies, tuple):
+  dependencies = list(dependencies)
+elif not isinstance(dependencies, list):
+  raise TypeError('pfw["dependencies"] must be a list or tuple of staged dependency names')
 for sourcePath, destinationPath in dependencyCopies:
-  pfw["dependencies"].append(str(destinationPath))
+  dep = str(destinationPath)
+  if dep not in dependencies:
+    dependencies.append(dep)
+pfw["dependencies"] = dependencies
+globals()["dependencies"] = dependencies
+print("Dependency files: ", dependencies)
 
-if rank == 0:
-  print("Dependency files: ",pfw["dependencies"] )
+jobName = caseName if caseName else inputFile.replace('pfw_input_', '')
 
-def _has_cohesive_zone_event(event_text: object) -> bool:
-  text = "" if event_text is None else str(event_text)
-  return bool(re.search(r"<\s*(?:ReferenceCohesiveZones|CohesiveZoneReference|CohesiveZone)\b", text))
+def _truthy_pfw_flag(value):
+  if value is None or value is False or value == 0:
+    return False
+  if isinstance(value, str) and value.strip().lower() in ('', '0', 'false', 'none', 'off', 'no'):
+    return False
+  return True
 
-# Check if particleFields contains all necessary particle fields based on specified pfw parameters
-if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in pfw or _has_cohesive_zone_event(pfw.get("mpmEventsString", "")):
-  if 'SurfaceNormal' not in particleFileFields:
-    particleFileFields.append('SurfaceNormal')
-    print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface normals were not included in particleFileFields. Surface normals are added automatically.')
-  if 'SurfacePosition' not in particleFileFields:
-    particleFileFields.append('SurfacePosition')
-    print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface positions were not included in particleFileFields. Surface positions are added automatically.')
+# Explicit contact and cohesive-zone inputs require matching particle fields.
+requiresSurfaceContactFields = (
+  _truthy_pfw_flag(pfw.get('explicitSurfaceNormalInfluence')) or
+  _truthy_pfw_flag(pfw.get('useSurfacePositionForContact')) or
+  ('mpmEventsString' in pfw and 'CohesiveZone' in str(pfw['mpmEventsString']))
+)
+if requiresSurfaceContactFields:
+  missingFields = [f for f in ('SurfaceNormal', 'SurfacePosition') if f not in particleFileFields]
+  if missingFields:
+    raise ValueError(
+      'Explicit contact or cohesive-zone events require particleFileFields to include: ' +
+      ', '.join(missingFields)
+    )
 
-# Remove new line from last parameter to be added (for xml formatting)
+# Remove new line from last parameter to be added (for XML formatting).
+
 if parameterStrings:
   parameterStrings[-1] = parameterStrings[-1].replace('\n','')
 mpmSolverParameterString = ''.join(parameterStrings)
@@ -1513,7 +862,7 @@ ppcz = ppcz if ppcz != None else ppc
 # # voronoi tesselations.  If there are a large number of objects, like for granular
 # # systems, it is useful for each rank to only generate the objects it will contain.
 # # For this, the user can define a job.make_objects(rankxmin,rankxmax) based on
-# # x slices.  TODO: make objects have a construc() method that can be called by
+# # x slices.  TODO: make objects have a construct() method that can be called by
 # # pfw, so the list of objects can be generated cheaply and the user doesn't have
 # # to worry about rank slicing.
 if ('objects' in pfw):
@@ -2110,44 +1459,39 @@ if runContinuation:
   # Copy particle file and rename even though it will no tbe used since we are reading from restart file
   shutil.copy(os.path.join(path, 'mpmParticleFile_' + jobName), particleFileName )
 
-# Select between default vtk or new silo output option.
-# Extra Silo background-grid fields can be requested directly in pfw_input.py with
-# any of these equivalent keys:
-#   pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
-#   pfw["siloGridFieldNames"] = "{ gridMass, gridVelocity }"
-#   pfw["siloGridFields"] = "common"  # or True
-# The default remains empty, so no extra Silo grid fields are written unless a
-# pfw_input explicitly asks for them.
+# Select between VTK and Silo output. Extra Silo grid fields may be requested
+# with pfw["gridFieldNames"], pfw["siloGridFieldNames"], or pfw["siloGridFields"].
 siloGridFieldNamesForOutput = _resolve_pfw_silo_grid_field_names(pfw)
 siloGridFieldNamesAttribute = ""
 if siloGridFieldNamesForOutput:
+  if outputType != 'silo':
+    raise ValueError('PFW Silo grid-field keys are only valid when pfw["outputType"] == "silo"')
   siloGridFieldNamesAttribute = f'\n    gridFieldNames="{_format_geos_name_array(siloGridFieldNamesForOutput)}"'
 
 if outputType == 'vtk':
-  if siloGridFieldNamesForOutput:
-    print( 'WARNING! pfw Silo grid fields were requested, but outputType is "vtk". Ignoring gridFieldNames for the VTK output block.' )
   periodicEventOutputString = 'vtkOutput'
   outputBlockOutputString="""<VTK
     name="vtkOutput"
     format="ascii"/>"""
 elif outputType == 'silo':
-  if "parallelThreads" not in pfw:
-    pfw["parallelThreads"] = min( mCores , coresPerNode ) 
+  if parallelThreads is None:
+    parallelThreads = min( mCores , coresPerNode )
   periodicEventOutputString = 'siloOutput'
   outputBlockOutputString=f"""<Silo
     name="siloOutput"
     plotFileRoot="mpm_cpdi"
     plotLevel="1"
-    parallelThreads="{pfw["parallelThreads"]}"
+    parallelThreads="{parallelThreads}"
     writeCellElementMesh="1"
     writeFaceElementMesh="0"
     writeEdgeMesh="0"
     writeFEMFaces="0"{siloGridFieldNamesAttribute}/>"""
 else:
-  print( 'pfw["outputType"] should be "vtk" or "silo"' )
+  raise ValueError('pfw["outputType"] must be either "vtk" or "silo"')
 
 # ===========================================
 # CREATE INPUT FILE
+
 # ===========================================
 
 # # Gather particleTypesPerMat from each process
@@ -2178,15 +1522,15 @@ if rank == 0:
     for j in range(numTypes):
       regionBlocksStr += "pb"+str(blockIndex)
       
-      if types[j] == 0: # Single point with linear (not currently supported)
+      if types[j] == 0: # Single point
         particleTypeString+="SinglePoint"
       if types[j] == 1: # Single point with B-splines
         particleTypeString+="SinglePointBSpline"
-      if types[j] == 2: # CPDI with tri-linear shape functions
+      if types[j] == 2: # CPDI
         particleTypeString+="CPDI"
-      if types[j] == 3: #CPTI (not currently supported)
+      if types[j] == 3: #CPTI
         particleTypeString+="CPTI"
-      if types[j] == 4: #CPDI2 (not currently supported)
+      if types[j] == 4: #CPDI2
         particleTypeString+="CPDI2"
       if types[j] < 0 or types[j] > 4:
         print("Unknown particle type!")
@@ -2212,24 +1556,18 @@ if rank == 0:
         materialList="{{ {matsOrig[i]} }}"/>"""
 
 
-  # Normalize legacy inline XML snippets after defaults have been resolved.
-  materialPropertyString = _normalize_geomechanics_material_string(materialPropertyString)
-  materialPropertyString = _normalize_cohesive_material_string(materialPropertyString)
-  cohesiveZoneRegions = _normalize_cohesive_zone_regions(
-    cohesiveZoneRegions,
-    materialPropertyString,
-    mpmEventsString
-  )
+  # Format explicit solver child XML blocks after defaults have been resolved.
+  # Legacy event/material migrations belong in pfw_inputFixer.py, not here.
   cohesiveZoneRegionString = _format_solver_child_xml_block(
     "CohesiveZoneRegions",
     cohesiveZoneRegions
   )
-  mpmEventsString = _normalize_mpm_events_string(mpmEventsString, default_end_time=endTime)
-  mpmEventsBlock = f"""
-      <MPMEvents>
-      {mpmEventsString}
-      </MPMEvents>""" if mpmEventsString else ""
-  geosInputFileName = f"mpm_{inputFile.replace('pfw_input_', '')}.xml"
+  mpmEventsBlock = _format_solver_child_xml_block(
+    "MPMEvents",
+    mpmEventsString
+  )
+  geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
+
   geosInputFile = open(geosInputFileName, 'w')
 
   geosInputFileString = f"""<?xml version="1.0" ?>
@@ -2321,7 +1659,6 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 
 </Problem>"""
 
-  geosInputFileString = _normalize_generated_geos_xml(geosInputFileString)
   geosInputFile.write(geosInputFileString)
   geosInputFile.close()
 

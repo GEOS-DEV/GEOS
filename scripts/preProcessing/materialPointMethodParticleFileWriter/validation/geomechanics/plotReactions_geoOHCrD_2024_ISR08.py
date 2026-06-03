@@ -53,9 +53,6 @@ crackSpeed = 1.8
 youngsModulus = (9.*bulk*shear)/(3.*bulk+shear)
 strainToFailure = sigmaFail/youngsModulus
 stretch = np.exp(2.0*strainToFailure) # stretch to 50% past the strain to failure.
-
-# useDamageAsInitialStrength must be enabled for the painted damage field to be used as strengthScale 
-useDamageAsInitialStrength=0               
 weibullSeed=1
 weibullModulus=6.0
 weibullVolume=1.0

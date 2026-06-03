@@ -97,10 +97,9 @@ pfw["updateOrder"]=2
 pfw["useEvents"]=1
 #ISR08 temperature was 20.3 Celsius
 initialTemperature = 20.3+273.15
-pfw["initialTemperature"]=initialTemperature
 
-pfw["useAPIC"]=0
-pfw["useInteralForceAsFaceReaction"]=1
+
+pfw["useInternalForceAsFaceReaction"]=1
 
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -190,7 +189,6 @@ stressControlKi = 0.0
 stressControlKd = 0.001
 
 initialTemperature = 20.3 + 273.15 #in celsius put to kelvin
-pfw["initialTemperature"]=initialTemperature
 
 Q = 2200. #activation energy in J/mol
 
