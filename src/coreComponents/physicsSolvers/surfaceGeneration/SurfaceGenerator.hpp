@@ -37,7 +37,7 @@ class ElementRegionBase;
 
 /**
  * @brief Comparator for (CellElementSubRegion const *, localIndex) pairs that
- * provides deterministic ordering based on region/subregion indices
+ * provides deterministic ordering based on localIndex/region/subregion indices in that precedence
  */
 struct ElemLocComparator
 {
