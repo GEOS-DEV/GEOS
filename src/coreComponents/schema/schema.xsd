@@ -6737,7 +6737,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
 		<xsd:attribute name="material" type="groupNameRef" use="required" />
-		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
+		<!--mode => Test mode. Valid options:
+* mixedControl
+* strainControl
+* stressControl-->
 		<xsd:attribute name="mode" type="geos_TriaxialDriver_Mode" use="required" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="" />

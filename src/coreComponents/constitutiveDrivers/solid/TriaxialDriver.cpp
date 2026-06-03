@@ -35,7 +35,6 @@ TriaxialDriver::TriaxialDriver( const string & name,
                                 Group * const parent ):
   ConstitutiveDriver( name, parent )
 {
-
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -43,7 +42,7 @@ TriaxialDriver::TriaxialDriver( const string & name,
 
   registerWrapper( viewKeyStruct::modeString(), &m_mode ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Test mode [stressControl, strainControl, mixedControl]" );
+    setDescription( "Test mode. Valid options:\n* " + EnumStrings< Mode >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::axialFunctionString(), &m_axialFunctionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -286,7 +285,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
     for( integer n = 1; n <= numSteps; ++n )
     {
-      //   std::cout<<"time step="<<n<<std::endl;
       strainIncrement[0] = 0;
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
@@ -305,8 +303,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
         resid[1] = scale * (stress[1]-table( n, SIG1 ));
 
         norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
-        //  std::cout<<"k= "<<k<<std::endl;
-        // std::cout<<"norm ="<<norm<<std::endl;
 
         if( k == 0 )
         {
@@ -325,7 +321,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
           strainIncrement[0] += deltaStrainIncrement[0];
           strainIncrement[1] += deltaStrainIncrement[1];
           strainIncrement[2]  = strainIncrement[1];
-          //  std::cout<<"k="<<k<<" , cuts="<<cuts<<std::endl;
         }
         else // newton update
         {
@@ -348,8 +343,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, EPS0 ) = table( n-1, EPS0 )+strainIncrement[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
+      table( n, EPS0 ) = table( n-1, EPS0 ) + strainIncrement[0];
+      table( n, EPS1 ) = table( n-1, EPS1 ) + strainIncrement[1];
       table( n, EPS2 ) = table( n, EPS1 );
 
       table( n, ITER ) = k;
@@ -461,42 +456,6 @@ bool TriaxialDriver::validateResults()
   }
   return true;
 }
-
-#if 0
-void TriaxialDriver::outputResults()
-{
-  // TODO: improve file path output to grab command line -o directory
-  //       for the moment, we just use the specified m_outputFile directly
-
-  FILE * fp = fopen( m_outputFile.c_str(), "w" );
-
-  /*
-     string const outputDir = OutputBase::getOutputDirectory();
-     string const outputPath = joinPath( outputDir, m_outputFile );
-     FILE * fp = fopen( outputPath.c_str(), "w" );
-   */
-
-  fprintf( fp, "# column 1 = time\n" );
-  fprintf( fp, "# column 2 = axial_strain\n" );
-  fprintf( fp, "# column 3 = radial_strain_1\n" );
-  fprintf( fp, "# column 4 = radial_strain_2\n" );
-  fprintf( fp, "# column 5 = axial_stress\n" );
-  fprintf( fp, "# column 6 = radial_stress_1\n" );
-  fprintf( fp, "# column 7 = radial_stress_2\n" );
-  fprintf( fp, "# column 8 = newton_iter\n" );
-  fprintf( fp, "# column 9 = residual_norm\n" );
-
-  for( integer n=0; n<=m_numSteps; ++n )
-  {
-    for( integer col=0; col<m_numColumns; ++col )
-    {
-      fprintf( fp, "%.4e ", m_table( n, col ) );
-    }
-    fprintf( fp, "\n" );
-  }
-  fclose( fp );
-}
-#endif
 
 SolidBase & TriaxialDriver::getSolid()
 {
