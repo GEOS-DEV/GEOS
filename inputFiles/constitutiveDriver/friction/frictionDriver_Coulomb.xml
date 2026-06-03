@@ -1,6 +1,34 @@
 <?xml version="1.0" ?>
 
 <Problem>
+<!-- 
+  <Solvers>
+  <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="1"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="1.0e0"
+      iterPenaltyT="1.0e-1"
+      tolTauLimit="1.e-05"
+      tolJumpN="1.e-7"
+      tolJumpT="1.e-3"
+      tolNormalTrac="1e-5"
+      targetRegions="{}" 
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"/>
+  </Solvers> -->
+
+  <!-- <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"
+        useHighOrderQuadratureRule="1"/>
+    </FiniteElements>
+  </NumericalMethods> -->
+
+
   <!-- SPHINX_TASK -->
   <Tasks>
     <FrictionDriver

@@ -43,7 +43,7 @@
       voxelFile="tables/jumps.geos"/>
 
     <TableFunction
-      name="jDFunction"
+      name="djFunction"
       inputVarNames="{ time }"
       coordinateFiles="{ tables/time.geos }"
       voxelFile="tables/djumps.geos"/>

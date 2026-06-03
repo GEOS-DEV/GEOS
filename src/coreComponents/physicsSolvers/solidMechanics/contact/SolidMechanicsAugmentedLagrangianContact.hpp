@@ -217,8 +217,11 @@ public:
   void createBubbleCellList( DomainPartition & domain ) const;
 
 
+  static
   std::tuple< array2d<real64>, array1d<int>> updateTractionAndConstraintCheck(std::ptrdiff_t const rsize,
     constitutive::FrictionBase const& frictionLaw,
+    bool isSimultaneous,
+    real64 const slidingCheckTolerance,
     arrayView1d< real64 const > const& normalDisplacementTolerance,
     arrayView1d< real64 const > const& normalTractionTolerance,
     arrayView1d< real64 const > const& slidingTolerance,

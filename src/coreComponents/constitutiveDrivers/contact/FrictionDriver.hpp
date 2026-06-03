@@ -18,7 +18,7 @@
 
 #include "constitutiveDrivers/ConstitutiveDriver.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
-#include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
+// #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 
 namespace geos
 {
@@ -42,10 +42,10 @@ public:
 
   void getColumnNames( string_array & columnNames ) const override;
 
-  template< typename FRICTION_TYPE, typename CONTACT_SOLVER >
+  template< typename FRICTION_TYPE >
   void
   runTest( FRICTION_TYPE & friction,
-            CONTACT_SOLVER& contact,
+            // CONTACT_SOLVER& contact,
            const arrayView2d< real64, 1 > & table );
 
 private:
@@ -55,8 +55,8 @@ private:
   constitutive::FrictionBase & getFriction();
   constitutive::FrictionBase const & getFriction() const;
 
-  ContactSolverBase & getContact();
-  ContactSolverBase const & getContact() const;
+  // ContactSolverBase & getContact();
+  // ContactSolverBase const & getContact() const;
 
   void initializeTable();
 
@@ -98,7 +98,7 @@ private:
   real64 m_phi{0.0};  ///< y-tilt of fault
 
   string m_frictionName;               ///< frictionType identifier
-  string m_contactName;               ///< ContactSolver identifier
+  // string m_contactName;               ///< ContactSolver identifier
 };
 
 }

@@ -1073,6 +1073,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
 std::tuple< array2d<real64>, array1d<int>> SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(
 std::ptrdiff_t const rsize,
 FrictionBase const& frictionLaw,
+bool isSimultaneous,
+real64 const slidingCheckTolerance,
 arrayView1d< real64 const > const& normalDisplacementTolerance,
 arrayView1d< real64 const > const& normalTractionTolerance,
 arrayView1d< real64 const > const& slidingTolerance,
@@ -1087,6 +1089,7 @@ arrayView2d<real64> const & traction )
         std::ptrdiff_t const sizes[2] = {rsize, 3};
         traction_new.resize(2, sizes);
         array1d< int > condConv;
+        condConv.resize(rsize);
 
         // Update the traction field based on the displacement results from the nonlinear solve
       constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
@@ -1094,7 +1097,7 @@ arrayView2d<real64> const & traction )
         using FrictionType = TYPEOFREF( castedFrictionLaw );
         typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        if( m_simultaneous )
+        if( isSimultaneous )
         {
           solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
             launch< parallelDevicePolicy<> >( rsize,
@@ -1117,7 +1120,7 @@ arrayView2d<real64> const & traction )
         }
       } );
 
-      real64 const slidingCheckTolerance = m_slidingCheckTolerance;
+      // real64 const slidingCheckTolerance = m_slidingCheckTolerance;
 
       constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
@@ -1191,6 +1194,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       std::tie(traction_new, condConv) = updateTractionAndConstraintCheck(
         subRegion.size(),
         frictionLaw,
+        m_simultaneous,
+        m_slidingCheckTolerance,
         normalDisplacementTolerance,
         normalTractionTolerance,
         slidingTolerance,

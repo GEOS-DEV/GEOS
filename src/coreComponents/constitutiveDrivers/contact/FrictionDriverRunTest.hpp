@@ -18,25 +18,20 @@
 
 #include "constitutiveDrivers/contact/FrictionDriver.hpp"
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 
-#include "mesh/DomainPartition.hpp"
 #include <conduit.hpp>
 
 namespace geos
 {
 
-template< typename FRICTION_TYPE, typename CONTACT_SOLVER >
+template< typename FRICTION_TYPE>
 void
 FrictionDriver::runTest( FRICTION_TYPE & friction,
-                         CONTACT_SOLVER & contact,
+                        //  CONTACT_SOLVER & contact,
                          const arrayView2d< real64 > & table )
 {
-  // Create kernel wrapper and trigger solver configuration update.
-  // conduit::Node dummyRoot;
-  // DomainPartition dummyDomain( "FrictionDriverRunTestDomain", dummyRoot );
-  // CONTACT_SOLVER const solver( "FrictionDriverRunTestSolver", &dummyDomain );
-  // solver.updateConfiguration( dummyDomain, 0 );
 
   array1d< integer > const ghostRank(1); ghostRank[0] = -1;
   array1d< real64  > const normalDisplacementTol(1);normalDisplacementTol[0]=10;
@@ -60,14 +55,15 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
 
   integer const numRows = m_table.size( 0 );
   forAll< parallelDevicePolicy<> >( numRows,
-                                    [&friction, &table, &contact,
+                                    [&friction, &table,
                                     &ghostRank,&normalDisplacementTol, &normalTractionTol, & slidingTol, &iterPen,
                                     &jump, &djump,
                                     &fractureState, &traction ]
                                     GEOS_HOST_DEVICE ( integer const ei )
   {
-    // stackArray1d< real64, 3 > jump( 3 );
-    // stackArray1d< real64, 3 > djump( 3 );
+
+    GEOS_LOG_RANK("[debug] Table Evaluation");
+    GEOS_LOG_RANK(GEOS_FMT(" jump [{}x{}]", jump.size(0),jump.size(1)));
 
     jump[0][0] = table( ei, NJUMP );
     jump[0][1] = table( ei, SLIP0 );
@@ -82,8 +78,10 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     traction[0][2] = table( ei, STRAC1 );
 
     
-    contact.updateTractionAndConstraintCheck(1,
+    SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(1,
         friction,
+        true,//simultaneous
+        0.05,//slidingCheckTolerance
         normalDisplacementTol,
         normalTractionTol,
         slidingTol,
