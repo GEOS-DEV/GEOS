@@ -1,46 +1,116 @@
-=======
 Density
 =======
 
 The accurate determination of phase density is critical for modelling fluid flow, as it directly impacts volumetric calculations, gravity drainage, and phase mobilities.
 
-Compositional Density Model
+Compositional density model
 ---------------------------
 
-The compositional density model derives the molar volume of a phase using the compressibility factor, :math:`Z`, computed directly from the cubic Equation of State (e.g., Peng-Robinson). The molar density, :math:`\rho_{molar}`, is given by:
+The compositional density model first calculates the uncorrected molar volume, :math:`v_{EOS}`, of a phase using the compressibility factor, :math:`Z`, obtained from the cubic Equation of State:
 
 .. math::
-    \rho_{molar} = \frac{P}{Z R T}
+    v_{EOS} = \frac{Z R T}{P}
 
-Because standard cubic equations of state notoriously under-predict liquid phase densities, a Peneloux volume shift correction is mathematically applied. The corrected molar volume, :math:`v_{corrected}`, is adjusted by a sum of component-specific volume shift parameters, :math:`c_i`, weighted by the phase composition:
+To improve the accuracy of liquid phase densities, a Peneloux volume shift s described by Péneloux et al. (1982). correction is applied. The corrected molar volume, :math:`v`, is calculated by subtracting a composition-weighted sum of component-specific dimensional volume shifts, :math:`c_i`, from the EOS molar volume:
 
 .. math::
-    v_{corrected} = v_{EOS} - \sum_{i=1}^{N_c} x_i c_i
+    v = v_{EOS} - \sum_{i=1}^{N_c} x_i c_i
 
-The molar density is then inverted to mass density using the molecular weight of the phase mixture. This model is recommended for all hydrocarbon phases.
+where :math:`x_i` is the mole fraction of component :math:`i` in the phase. 
 
-* **Catalog Name:** ``CompositionalDensity``
-* **Parameters:** * ``componentVolumeShift``: Component-specific volume shift parameters.
+The dimensional volume shifts, :math:`c_i`, are computed from the user-provided non-dimensional volume shift parameters, :math:`s_i` (specified as ``componentVolumeShift``), along with the critical temperature, :math:`T_{c,i}`, and critical pressure, :math:`P_{c,i}`, of each component:
 
-Phillips Brine Density Model
+.. math::
+    c_i = s_i \Omega_B R \frac{T_{c,i}}{P_{c,i}}
+
+The EOS-specific constant :math:`\Omega_B` takes the value :math:`0.077796074` for the Peng-Robinson equation of state and :math:`0.08664` for the Soave-Redlich-Kwong equation of state.
+
+The molar density of the phase, :math:`\rho_{molar}`, is the inverse of the corrected molar volume:
+
+.. math::
+    \rho_{molar} = \frac{1}{v}
+
+Finally, the mass density of the phase, :math:`\rho_{mass}`, is obtained by multiplying the molar density by the apparent molecular weight of the mixture:
+
+.. math::
+    \rho_{mass} = \rho_{molar} \sum_{i=1}^{N_c} x_i MW_i
+
+where :math:`MW_i` is the molecular weight of component :math:`i`. This model is recommended for all hydrocarbon phases.
+
+Parameters:
+
+* ``componentVolumeShift``: Component-specific volume shift parameters (dimensionless).
+
+Phillips brine density model
 ----------------------------
 
-For aqueous phases containing dissolved salts, cubic equations of state often struggle to capture the complex ionic interactions. The Phillips Brine Density model employs a robust empirical correlation developed by Phillips et al. (1981).
+For aqueous phases containing dissolved salts, cubic equations of state often struggle to capture complex ionic interactions. To address this, the Phillips brine density model utilizes the empirical correlation developed by Phillips et al. (1981) to pre-compute a 2D lookup table of volume shifts specifically for the water component as a function of pressure and temperature.
 
-This model calculates the mass density of the brine as a direct polynomial and exponential function of pressure, temperature, and salinity (molality of dissolved salts). For low salinities, the model interpolates smoothly towards pure water properties to maintain physical continuity. This is highly recommended for geothermal reservoirs or saline aquifers.
+First, the apparent molar weight of the brine, :math:`MW_{brine}`, is calculated from the salinity, :math:`S` (molality), the salt molar weight, :math:`MW_{salt}`, and the water molar weight, :math:`MW_{H2O}`:
 
-* **Catalog Name:** ``PhillipsBrineDensity``
-* **Parameters:**
-  * ``salinity``: Brine salinity.
-  * ``saltMolarWeight``: The molar weight of the salt component.
+.. math::
+    MW_{brine} = \frac{1}{S + \frac{1 - S \cdot MW_{salt}}{MW_{H2O}}}
 
-Immiscible Water Density
+The target mass density of the brine, :math:`\rho_{brine}`, is then evaluated. The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal. The temperature must be in Kelvin and must be between :math:`283.15` and :math:`623.15` Kelvin. Using these parameters, a preprocessing step constructs a two-dimensional table storing the brine density for the specified salinity as a function of pressure and temperature. For salinities above a threshold of :math:`0.25` mol/kg, the density is calculated directly using the Phillips correlation, :math:`\rho_{Phillips}(P, T, S)`, using the expression:
+
+.. math::
+    \rho_{Phillips}(P, T, S) = A + Bx + Cx^2 + Dx^3
+
+.. math::
+    x = c_1 \exp(a_1 S) + c_2 \exp(a_2 T) + c_3 \exp(a_3 P)
+
+We refer the reader to Phillips et al. (1981), equations (4) and (5), pages 14 and 15 for the definition of the coefficients involved in the previous equation. For low salinities (:math:`S < 0.25`), the model linearly interpolates between the pure water density, :math:`\rho_{pure}(P, T)`, and the Phillips correlation to maintain physical continuity towards the pure water limit:
+
+.. math::
+    \rho_{brine}(P, T) = \begin{cases} 
+    \rho_{Phillips}(P, T, S) & \text{if } S \ge 0.25 \\ 
+    \frac{S}{0.25} \rho_{Phillips}(P, T, S) + \left(1 - \frac{S}{0.25}\right) \rho_{pure}(P, T) & \text{if } S < 0.25 
+    \end{cases}
+
+The 2D table of dimensional volume shifts for water, :math:`c_{H2O}(P, T)`, is generated by taking the difference between the target molar volume of the brine and the molar volume of pure water predicted by the chosen Equation of State, :math:`v_{EOS,H2O}`:
+
+.. math::
+    c_{H2O}(P, T) = \frac{MW_{brine}}{\rho_{brine}(P, T)} - v_{EOS,H2O}(P, T)
+
+During the simulation, this pre-computed volume shift couples the empirical correlation to the overall phase EOS density calculation. The corrected molar volume of the aqueous phase, :math:`v`, is obtained by adding the water component's volume shift weighted by its mole fraction, :math:`x_{H2O}`, to the uncorrected phase EOS molar volume, :math:`v_{EOS}`:
+
+.. math::
+    v = v_{EOS} + x_{H2O} c_{H2O}(P, T)
+
+The phase molar density, :math:`\rho_{molar}`, is calculated as the inverse of the corrected molar volume:
+
+.. math::
+    \rho_{molar} = \frac{1}{v}
+
+The phase mass density, :math:`\rho_{mass}`, is then computed by multiplying the phase molar density by the apparent molar weight of the phase mixture:
+
+.. math::
+    \rho_{mass} = \rho_{molar} \left( x_{H2O} MW_{brine} + \sum_{i \neq H2O} x_i MW_i \right)
+
+*(Note: While the volume shift tightly couples the Phillips correlation to the EOS density, the brine viscosity is not derived from this density. Instead, the phase viscosity is modelled independently using a distinct temperature- and salinity-dependent multiplier applied to the pure water viscosity).*
+
+Parameters:
+
+* ``salinity``: Brine salinity (mol/kg).
+* ``saltMolarWeight``: The molar weight of the salt component (kg/mol).
+
+Immiscible water density
 ------------------------
 
-A simplified exponential density model is available for pure, immiscible water phases. It evaluates density based on isothermal compressibility and thermal expansion from a reference state:
+A simplified exponential density model is available for pure, immiscible water phases. It evaluates the mass density, :math:`\rho`, based on isothermal compressibility and thermal expansion from a reference state:
 
 .. math::
     \rho = \rho_{ref} \exp(c_w (P - P_{ref})) \exp(-\alpha_w (T - T_{ref}))
 
-* **Catalog Name:** ``ImmiscibleWaterDensity``
-* **Parameters:** ``waterReferencePressure``, ``waterReferenceTemperature``, ``waterDensity``, ``waterCompressibility``, ``waterExpansionCoefficient``.
+The phase molar density, :math:`\rho_{molar}`, is then calculated by dividing the mass density by the molecular weight of water, :math:`MW_{H2O}`:
+
+.. math::
+    \rho_{molar} = \frac{\rho}{MW_{H2O}}
+
+Parameters:
+
+* ``waterReferencePressure``: Reference pressure for the water density calculation (Pa).
+* ``waterReferenceTemperature``: Reference temperature for the water density calculation (K).
+* ``waterDensity``: Water mass density at the reference pressure and temperature (kg/m^3).
+* ``waterCompressibility``: Isothermal compressibility of water (1/Pa).
+* ``waterExpansionCoefficient``: Volumetric coefficient of thermal expansion of water (1/K).

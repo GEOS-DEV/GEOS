@@ -7,7 +7,7 @@ Compositional multiphase fluid model
 Some text
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    Overview
 
