@@ -104,8 +104,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::allowNonConvergedString(), &m_allowNonConverged ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Allow non-converged solution to be accepted. "
-                    "(i.e. exit from the Newton loop without achieving the desired tolerance)" );
+    setDescription( "Allow non-converged solution to be accepted "
+                    "(i.e. exit from the Newton loop without achieving the desired tolerance). "
+                    "With this parameter enabledthus timestep cuts never occur" );
 
   registerWrapper( viewKeysStruct::timeStepDecreaseIterLimString(), &m_timeStepDecreaseIterLimit ).
     setApplyDefaultValue( 0.7 ).

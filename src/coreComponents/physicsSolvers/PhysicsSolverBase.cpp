@@ -917,7 +917,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     }  // end of configuration loop
 
-    if( isConfigurationLoopConverged )
+    if( isConfigurationLoopConverged || allowNonConverged )
     {
       // get out of outer loop
       break;
