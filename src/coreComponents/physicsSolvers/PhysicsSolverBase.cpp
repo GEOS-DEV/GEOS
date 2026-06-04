@@ -370,13 +370,13 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   if( m_nonlinearSolverParameters.m_allowNonConverged )
   {
-    GEOS_WARNING_IF( dtRemaining > 0.0,
+    GEOS_WARNING_IF( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
                      "Maximum allowed number of sub-steps reached, non-converged solutions are allowed so the simulation continues with innacurate results.",
                      getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
   }
   else
   {
-    GEOS_ERROR_IF( dtRemaining > 0.0,
+    GEOS_ERROR_IF( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
                    "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
                    getDataContext() );
   }
