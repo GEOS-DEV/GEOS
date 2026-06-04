@@ -85,15 +85,16 @@
       temperatureInterval="10"
       salinity="1.0" />
 
-    <CompositionalMultiphaseFluid
+    <CompositionalTwoPhaseFluid
       name="hydrogenMixture"
       phaseNames="{ oil, gas }"
-      equationsOfState="{ SRK, SRK }"
+      equationsOfState="{ SoaveRedlichKwong, SoaveRedlichKwong }"
       componentNames="{ H2, CH4 }"
       componentCriticalPressure="{ 12.96e5, 45.99e5 }"
       componentCriticalTemperature="{ 33.15, 190.6 }"
       componentAcentricFactor="{ -0.219, 0.0114 }"
-      componentMolarWeight="{ 2.0159e-3, 16.043e-3 }"/>
+      componentMolarWeight="{ 2.0159e-3, 16.043e-3 }"
+      constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
   </Constitutive>
 
   <Functions>
