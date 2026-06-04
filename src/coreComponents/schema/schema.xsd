@@ -2452,7 +2452,8 @@ Information output from lower logLevels is added with the desired log level
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="NonlinearSolverParametersType">
-		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
+		<!--allowNonConverged => When enabled, the simulation can continue even with a non-converged solution (residuals exceeding the tolerance during the newton loops) at the deepest level of sub-timesteps (maxSubSteps).
+When disabled, the simulation will stop with an error when no converged solution has been found at the last sub-step level.-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
 		<!--configurationTolerance => Configuration tolerance-->
 		<xsd:attribute name="configurationTolerance" type="real64" default="0" />
