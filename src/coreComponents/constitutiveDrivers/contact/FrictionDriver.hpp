@@ -81,6 +81,20 @@ private:
 
     constexpr static char const * phiString()
     { return "yTiltAngle";}
+
+    constexpr static char const * normalDispTol()
+    { return "tolJumpN"; }
+
+    constexpr static char const * normalTractionTol()
+    { return "tolNormalTrac"; }
+
+    constexpr static char const * slidingTol()
+    { return "tolJumpT"; }
+
+    constexpr static char const * simultaneous()
+    { return "simultaneous"; }
+
+
   };
 
   // Time is defined in base class
@@ -92,6 +106,12 @@ private:
 
   real64 m_theta{0.0}; ///< x-tilt of fault
   real64 m_phi{0.0};  ///< y-tilt of fault
+
+  real64 m_normalDispTol{1.e-8};
+  real64 m_normalTracTol{100.};
+  real64 m_slidingTol{1e-5};
+
+  integer m_isSimultaneous{1};
 
   string m_frictionName;               ///< frictionType identifier
 };

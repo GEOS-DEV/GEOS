@@ -33,11 +33,11 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
 {
 
   array1d< integer > const ghostRank( 1 ); ghostRank[0] = -1;
-  array1d< real64 > const normalDisplacementTol( 1 ); normalDisplacementTol[0]=10;
-  array1d< real64 > const normalTractionTol( 1 ); normalTractionTol[0]=1.;
-  array1d< real64 > const slidingTol( 1 ); slidingTol[0]=.1;//normalDispTol should scale as 1/E
+  array1d< real64 > const normalDisplacementTol( 1 ); normalDisplacementTol[0]=m_normalDispTol;//normalDispTol should scale as 1/E
+  array1d< real64 > const normalTractionTol( 1 ); normalTractionTol[0]=m_normalTracTol;
+  array1d< real64 > const slidingTol( 1 ); slidingTol[0]=m_slidingTol;
 
-  real64 kt = 1.;
+  real64 kt = 1e7;
   array2d< real64 > const iterPen( 1, 5 );
   iterPen[0][0] = 100*kt;
   iterPen[0][1] = kt;
@@ -49,7 +49,7 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   array2d< real64 > jump( 1, 3 );
   array2d< real64 > djump( 1, 3 );
 
-  bool isSimultaneous = true;
+  bool isSimultaneous = m_isSimultaneous;
   real64 const slidingCheckTol = .05; //default
 
   //TODO computeTolerance eleme to Elem

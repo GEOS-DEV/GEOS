@@ -11,6 +11,10 @@
       xTiltAngle="80"
       tractionControl="tFunction"
       steps="10"
+      simultaneous="1"
+      tolJumpN="1e-10"
+      tolJumpT="1e-5"
+      tolNormalTrac="1e2"
       output="frictionDriver_Coulomb.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->

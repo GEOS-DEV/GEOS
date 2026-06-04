@@ -55,11 +55,30 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Number of increment step to take in both jumps and traction increments" );
+    setDescription( "x-Tilt angle in degree" );
 
   registerWrapper( viewKeyStruct::phiString(), &m_phi ).
     setInputFlag( InputFlags::INVALID ).
-    setDescription( "Number of increment step to take in both jumps and traction increments" );
+    setDescription( "y-Tilt angle in degree" );
+
+  //first batch of parameters
+  registerWrapper( viewKeyStruct::normalDispTol(), &m_normalDispTol ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "normal Displacement Tolerance (scale as inverse of average Young modulus)." );
+
+  registerWrapper( viewKeyStruct::normalTractionTol(), &m_normalTracTol ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "normal Traction Tolerance" );
+
+  registerWrapper( viewKeyStruct::slidingTol(), &m_slidingTol ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "tangential Displacement Tolerance" );
+
+  registerWrapper( viewKeyStruct::simultaneous(), &m_isSimultaneous ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "isSimultaneous" );
+
+
 
   addLogLevel< logInfo::LogOutput >();
 }
