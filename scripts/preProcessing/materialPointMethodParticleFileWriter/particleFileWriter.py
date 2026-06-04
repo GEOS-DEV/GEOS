@@ -569,8 +569,6 @@ PWD = os.getcwd()
 parameters = {
                'allowNonConvergedLinearSolverSolution': ( None, True ),  # MPM: accept failed linear solve solution instead of cutting dt.
                'areaIntegrationMethod': ( None, True ),  # MPM: method for nodal area integration.
-               'artificialViscosityQ0': ( None, True ),  # MPM: artificial-viscosity linear coefficient.
-               'artificialViscosityQ1': ( None, True ),  # MPM: artificial-viscosity quadratic coefficient.
                'autoRestart': ( False, False ),  # PFW: generate auto-restart job logic.
                'bcTable': ( None, True ),  # MPM: time-dependent boundary-condition type table.
                'binSizeMultiplier': ( None, True ),  # MPM: neighbor/bin size multiplier.
@@ -693,7 +691,6 @@ parameters = {
                'separabilityMinDamage': ( 0.5, True ),  # MPM: damage threshold for field separability.
                'setDomainTemperature': ( None, True ),  # MPM: enable domain temperature table.
                'setDomainTemperatureRate': ( None, True ),  # MPM: enable domain temperature-rate table.
-               'shockHeating': ( None, True ),  # MPM: enable shock-heating diagnostics/update.
                'smallMass': ( None, True ),  # MPM: low-mass cutoff for nodes.
                'solverProfiling': ( None, True ),  # MPM: time solver subroutines.
                'sortObjects': ( False, False ),  # PFW: spatially sort geometry objects while writing particles.
@@ -722,7 +719,6 @@ parameters = {
                'treatFullyDamagedAsSingleField': ( None, True ),  # MPM: merge fully damaged fields.
                'updateMethod': ( None, True ),  # MPM: particle/grid update method.
                'updateOrder': ( None, True ),  # MPM: update order for XPIC/FMPM.
-               'useArtificialViscosity': ( None, True ),  # MPM: enable artificial viscosity.
                'useCrackTipDetection': ( None, True ),  # MPM: enable crack-tip detection.
                'useEvents': ( None, True ),  # MPM: enable MPM event manager actions.
                'useInternalForceAsFaceReaction': ( None, True ),  # MPM: use internal force for face reactions.

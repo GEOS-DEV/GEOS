@@ -1599,7 +1599,7 @@ At runtime, particles carry mass, volume, position, velocity, deformation inform
 
 \section{Current time integration status}
 \index{time integration}
-The solver enumerates quasi-static, implicit-dynamic, and explicit-dynamic modes, but the implemented \texttt{solverStep} path in the reviewed source accepts the explicit-dynamic mode.  The explicit path controls the stable time step from the CFL factor, material wave speeds, particle/grid geometry, and additional solver limits such as maximum particle velocity and optional artificial viscosity.
+The solver enumerates quasi-static, implicit-dynamic, and explicit-dynamic modes, but the implemented \texttt{solverStep} path in the reviewed source accepts the explicit-dynamic mode.  The explicit path controls the stable time step from the CFL factor, material wave speeds, particle/grid geometry, and additional solver limits such as maximum particle velocity and optional supplemental pressure.
 
 \section{Governing equations at solver level}
 \index{momentum balance}
@@ -1983,10 +1983,10 @@ The particle-to-grid transfer is the discrete weak-form assembly for the explici
 The force assembly is
 \begin{align}
   \mathbf{f}^{\mathrm{ext}}_I &= \sum_p \mathbf{f}_{p}^{\mathrm{load}} N_{Ip}, \\
-  \mathbf{f}^{\mathrm{int}}_I &= -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}_{p}^{\mathrm{bg}}-q_p\mathbf{I}\right)\nabla N_{Ip},
+  \mathbf{f}^{\mathrm{int}}_I &= -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}_{p}^{\mathrm{bg}}-p_{\mathrm{sup},p}\mathbf{I}\right)\nabla N_{Ip},
   \label{eq:p2g-internal-force}
 \end{align}
-where $q_p$ denotes the artificial-viscosity pressure-like term when enabled.  Equation~\eqref{eq:p2g-internal-force} is the MPM quadrature form of the stress-divergence contribution in the weak momentum balance.  It is the same fundamental particle quadrature used in classical MPM, GIMP, and CPDI, with differences only in the definition of $N_{Ip}$ and $\nabla N_{Ip}$~\cite{sulsky1994history,bardenhagen2004gimp,sadeghirad2011cpdi,steffen2008quadrature}.
+where $p_{\mathrm{sup},p}$ denotes the supplemental pressure supplied by a material model when active.  Equation~\eqref{eq:p2g-internal-force} is the MPM quadrature form of the stress-divergence contribution in the weak momentum balance.  It is the same fundamental particle quadrature used in classical MPM, GIMP, and CPDI, with differences only in the definition of $N_{Ip}$ and $\nabla N_{Ip}$~\cite{sulsky1994history,bardenhagen2004gimp,sadeghirad2011cpdi,steffen2008quadrature}.
 
 The solver additionally maps surface normals, surface positions, maximum damage, centers of mass, and centers of volume.  In parallel/GPU execution, these are accumulated with atomic additions or reductions.  If compact coalesced support arrays are enabled, duplicate particle-node contributions are summed first to reduce redundant atomic operations.
 
@@ -2205,7 +2205,7 @@ update particle volume, density, CPDI vectors, material directions,
 \label{subsec:solver-step-16}
 \index{solverSteps!constitutive update}
 \index{temperature update}
-The constitutive update dispatches through GEOS material models assigned to particle regions.  Artificial viscosity, when enabled, is computed before stress update and enters Step~9 as an isotropic stress-like contribution in the next cycle.  Constitutive dependencies are synchronized into model-specific views, and each material updates stress and internal variables from the particle kinematic state:
+The constitutive update dispatches through GEOS material models assigned to particle regions.  Constitutive dependencies are synchronized into model-specific views, and each material updates stress and internal variables from the particle kinematic state.  If a material exports supplemental pressure, the solver uses that pressure-like scalar only in force assembly:
 \begin{equation}
   \left(\boldsymbol{\sigma}_p^{n+1},\boldsymbol{\kappa}_p^{n+1},c_p^{n+1}\right)
   = \mathcal{M}\left(\boldsymbol{\sigma}_p^{n},\boldsymbol{\kappa}_p^{n},\mathbf{F}_p^{n+1},\dot{\mathbf{F}}_p,\mathbf{L}_p,\Delta t,T_p^n,\ldots\right),
@@ -2221,8 +2221,6 @@ When a material model does not own the internal-energy/temperature update, the s
 where $\bar{\boldsymbol{\sigma}}_p$ is an average stress over the step and $C_{v,p}$ is heat capacity.  After the material update, solver dependency arrays such as damage, plastic strain, temperature, temperature rate, heat capacity, update flags, and wave speed are refreshed from the constitutive model views.
 
 \begin{lstlisting}[caption={Constitutive and thermal update.},basicstyle=\ttfamily\small]
-if artificial_viscosity_enabled:
-  compute_particle_artificial_viscosity()
 update_constitutive_dependencies_before_stress_update()
 for each particle region and material model:
   call material stress/update kernel with F, Fdot, L, stress, dt, state
@@ -3337,10 +3335,10 @@ During the grid-background-stress update, every grid node satisfying
 receives this background stress.  The internal-force projection then uses the background-stress-corrected stress.  In abstract notation,
 \begin{equation}
   \mathbf{f}^{\mathrm{int}}_I
-  = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-q_p\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
+  = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-p_{\mathrm{sup},p}\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
   \label{eq:background-stress-force}
 \end{equation}
-where $q_p$ denotes the particle-level artificial viscosity or pressure-like correction where active.  This converts a prescribed pressure region into the same weak-form force balance used by the standard MPM update, avoiding explicit surface tracking for this pressure boundary.  The approach is algorithmic rather than a general immersed-boundary formulation, but it fits the particle-grid balance framework of MPM \cite{sulsky1994history,sulsky1995solid}.
+where $p_{\mathrm{sup},p}$ denotes the particle-level supplemental pressure where active.  This converts a prescribed pressure region into the same weak-form force balance used by the standard MPM update, avoiding explicit surface tracking for this pressure boundary.  The approach is algorithmic rather than a general immersed-boundary formulation, but it fits the particle-grid balance framework of MPM \cite{sulsky1994history,sulsky1995solid}.
 
 \begin{lstlisting}[caption={BoreholePressure event pseudocode.}]
 if event active:
@@ -4891,7 +4889,7 @@ Each accepted particle receives three core classification values:
 \begin{align}
   m_p^{\mathrm{PFW}} &= \texttt{MaterialType},\\
   g_p^{\mathrm{PFW}} &= \texttt{ContactGroup},\\
-  q_p^{\mathrm{PFW}} &= \texttt{ParticleType}.
+  \tau_p^{\mathrm{PFW}} &= \texttt{ParticleType}.
 \end{align}
 The first two are ordinary particle-file columns when \texttt{MaterialType} and \texttt{ContactGroup} are present in \texttt{particleFileFields}; the particle type is used by PFW while building particle blocks and by the generated \texttt{ParticleMesh} XML entry.  In the reviewed PFW code, the standard particle-type integers are
 \begin{center}

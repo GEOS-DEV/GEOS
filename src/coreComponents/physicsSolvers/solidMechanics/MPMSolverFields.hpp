@@ -132,13 +132,13 @@ DECLARE_FIELD( particleKineticEnergy,
                WRITE_AND_READ,
                "An array that stores particle kinetic energy." );
 
-DECLARE_FIELD( particleArtificialViscosity,
-               "particleArtificialViscosity",
+DECLARE_FIELD( particleSupplementalPressure,
+               "particleSupplementalPressure",
                array1d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that stores particle internal energy." );
+               "Positive-compressive scalar pressure supplement used by MPM force assembly; not included in particleStress." );
 
 DECLARE_FIELD( particleSPHJacobian,
                "particleSPHJacobian",

@@ -101,6 +101,11 @@ string canonicalProfileVariableName( string const & input )
   {
     return "internalEnergy";
   }
+  if( name == "supplementalpressure" || name == "supplementalpress" || name == "supppressure" ||
+      name == "suppp" || name == "pressurecorrection" || name == "forcesupplement" )
+  {
+    return "supplementalPressure";
+  }
   if( name == "kineticenergy" || name == "ke" )
   {
     return "kineticEnergy";
@@ -179,9 +184,9 @@ string canonicalProfileVariableName( string const & input )
   }
 
   GEOS_ERROR( "Unsupported MPM profile variable '" << input << "'. Supported variables are density, damage, "
-              "temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, "
-              "plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and "
-              "plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+              "temperature, internalEnergy, supplementalPressure, kineticEnergy, velocityX, velocityY, velocityZ, "
+              "volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, "
+              "stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
   return "";
 }
 
@@ -224,7 +229,8 @@ bool profileVariableUsesSliceVolume( string const & variableName )
          variableName == "stressZZ" ||
          variableName == "stressYZ" ||
          variableName == "stressXZ" ||
-         variableName == "stressXY";
+         variableName == "stressXY" ||
+         variableName == "supplementalPressure";
 }
 
 bool profileVariableUsesMass( string const & variableName )
@@ -422,8 +428,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   PhysicsSolverBase( name, parent ),
   m_areaIntegrationMethod( mpm::AreaIntegrationOption::BruteForce ),
-  m_artificialViscosityQ0( 0.0 ),
-  m_artificialViscosityQ1( 0.0 ),
   m_bcTable(),
   m_binSizeMultiplier( 1 ),
   m_bodyForce(),
@@ -547,7 +551,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_separabilityMinDamage( 0.5 ),
   m_setDomainTemperature(),
   m_setDomainTemperatureRate(),
-  m_shockHeating( 0 ),
   m_smallMass( DBL_MAX ),
   m_solverProfiling( 0 ),
   m_stressControl(),
@@ -570,7 +573,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_treatFullyDamagedAsSingleField( 0 ),
   m_updateMethod( mpm::UpdateMethodOption::FLIP ),
   m_updateOrder( 2 ),
-  m_useArtificialViscosity( 0 ),
   m_useCrackTipDetection( 0 ),
   m_useEvents( 0 ),
   m_useInternalForceAsFaceReaction( 0 ),
@@ -590,12 +592,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_areaIntegrationMethod ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Method for performing nodal area integration" );
-
-  registerWrapper( "artificialViscosityQ0", &m_artificialViscosityQ0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_artificialViscosityQ0 ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Artificial viscosity q0 parameter" );
 
   registerWrapper( "bcTable", &m_bcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1134,7 +1130,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "profileVariables", &m_profileVariables ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+    setDescription( "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, supplementalPressure, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
 
   registerWrapper( "profileWriteInterval", &m_profileWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1241,12 +1237,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag that activates domain temperature rateinterpolation from table." );
-
-  registerWrapper( "shockHeating", &m_shockHeating ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_shockHeating ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag to enable shock heating" );
 
   registerWrapper( "smallMass", &m_smallMass ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1360,12 +1350,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_updateOrder ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Order for update method, only applies to XPIC and FMPM" );
-
-  registerWrapper( "useArtificialViscosity", &m_useArtificialViscosity ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_useArtificialViscosity ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag to enable artificial viscosity" );
 
   registerWrapper( "useCrackTipDetection", &m_useCrackTipDetection ).
     setApplyDefaultValue( m_useCrackTipDetection ).
@@ -1848,9 +1832,6 @@ void SolidMechanicsMPM::postInputInitialization()
     }
     m_profileVariables = canonicalVariables;
 
-    GEOS_ERROR_IF( std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end() &&
-                   m_computeInternalEnergyAndTemperature != 1,
-                   "The internalEnergy profile variable requires computeInternalEnergyAndTemperature=1." );
   }
 
   // Sort the grid indices and move any duplicates to the end.
@@ -1922,6 +1903,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleDeleteFlag >( getName() );
         subRegion.registerField< particleWavespeed >( getName() );
         subRegion.registerField< particleKineticEnergy >( getName() );
+        subRegion.registerField< particleInternalEnergy >( getName() );
+        subRegion.registerField< particleSupplementalPressure >( getName() );
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
         subRegion.registerField< particleColor >( getName() );
 
@@ -1988,13 +1971,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         if( m_computeInternalEnergyAndTemperature == 1 )
         {
           subRegion.registerField< particleHeatCapacity >( getName() );
-          subRegion.registerField< particleInternalEnergy >( getName() );
         }
 
-        if( m_shockHeating == 1 || m_useArtificialViscosity == 1 || m_computeInternalEnergyAndTemperature == 1 )
-        {
-          subRegion.registerField< particleArtificialViscosity >( getName() );
-        }
 
         if( m_enableSurfaceTension == 1 )
         {
@@ -2661,7 +2639,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume, Temperature, F00, F11, F22" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume, Temperature, Supplemental Pressure, F00, F11, F22" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOS ); // wait for the header to be written
 
@@ -3018,8 +2996,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    * ------------------------------------------------------------------------------------------------------------
    * 16. Update constitutive and thermal state.
    *
-   * Compute optional artificial viscosity/internal-energy terms, update constitutive dependencies, update stress, and
-   * refresh solver dependencies that depend on the new constitutive state.
+   * Update optional generic internal-energy terms, constitutive dependencies, stress, and solver dependencies that
+   * depend on the new constitutive state.
    * ------------------------------------------------------------------------------------------------------------
    */
   logAndProfile( "16. Update constitutive and thermal state", particleManager, nodeManager );
@@ -3736,15 +3714,11 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
 }
 
 /**
- * @brief Updates optional thermal/artificial-viscosity state and the constitutive stress state.
+ * @brief Updates optional thermal state and the constitutive stress state.
  */
 void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
                                                                          ParticleManager & particleManager )
 {
-  if( m_useArtificialViscosity == 1 )
-  {
-    computeArtificialViscosity( particleManager );
-  }
   if( m_computeInternalEnergyAndTemperature == 1 )
   {
     computeInternalEnergyAndTemperature( dt,
@@ -6522,8 +6496,6 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
   int const subdivideParticles = m_subdivideParticles;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
   int const computeInternalEnergyAndTemperature = m_computeInternalEnergyAndTemperature;
-  int const shockHeating = m_shockHeating;
-  int const useArtificialViscosity = m_useArtificialViscosity;
   int const enableSurfaceTension = m_enableSurfaceTension;
 
   RAJA::ReduceMin< parallelDeviceReduce, real64 > minMassLocal( LvArray::NumericLimits< real64 >::max );
@@ -6609,17 +6581,10 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
     }
 
-    arrayView1d< real64 > particleInternalEnergy;
-    if( computeInternalEnergyAndTemperature == 1 )
-    {
-      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
-    }
-
-    arrayView1d< real64 > particleArtificialViscosity;
-    if( shockHeating == 1 || useArtificialViscosity == 1 || computeInternalEnergyAndTemperature == 1 )
-    {
-      particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
-    }
+    arrayView1d< real64 > const particleInternalEnergy =
+      subRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 > const particleSupplementalPressure =
+      subRegion.getField< fields::mpm::particleSupplementalPressure >();
 
     arrayView1d< real64 > particleSurfaceCurvature;
     if( enableSurfaceTension == 1 )
@@ -6659,15 +6624,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       }
 
       // Should already be initialized by default value from DECLARE_FIELD, these might be redundant
-      if( computeInternalEnergyAndTemperature == 1 )
-      {
-        particleInternalEnergy[p] = 0.0;
-      }
-
-      if( shockHeating == 1 || useArtificialViscosity == 1 || computeInternalEnergyAndTemperature == 1 )
-      {
-        particleArtificialViscosity[p] = 0.0;
-      }
+      particleInternalEnergy[p] = 0.0;
+      particleSupplementalPressure[p] = 0.0;
 
       if( computeSPHJacobian > 1 )
       {
@@ -15033,7 +14991,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
    *   grad N_Ip         shape-function gradient
    *   sigma_p           particle stress
    *   sigma_bg_I        background grid stress
-   *   q_p               artificial viscosity
+   *   p_supp            supplemental pressure used only by force assembly
    *
    * The basic particle-to-grid updates are:
    *
@@ -15052,7 +15010,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
    *
    *   gridInternalForce[I,alpha,i] +=
    *     - V_p sum_k
-   *       ( sigma_p[k,i] - sigma_bg_I[k,i] - q_p delta_ki )
+   *       ( sigma_p[k,i] - sigma_bg_I[k,i] - p_supp delta_ki )
    *       dN_Ip/dx_k
    *
    *   gridCenterOfMass[I,alpha,i] +=
@@ -15134,7 +15092,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex const numDims = m_numDims;
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
-  int const useArtificialViscosity = m_useArtificialViscosity;
 #ifndef GEOS_USE_DEVICE
   GEOS_UNUSED_VAR( numContactGroups );
   GEOS_UNUSED_VAR( damageFieldPartitioning );
@@ -15289,14 +15246,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
     arrayView3d< real64 const > const particleRVectors =
       subRegion.getParticleRVectors();
-
-    // Artificial viscosity is optional. The view is only initialized when used.
-    arrayView1d< real64 const > particleArtificialViscosity;
-    if( useArtificialViscosity == 1 )
-    {
-      particleArtificialViscosity =
-        subRegion.getField< fields::mpm::particleArtificialViscosity >();
-    }
+    arrayView1d< real64 const > const particleSupplementalPressure =
+      subRegion.getField< fields::mpm::particleSupplementalPressure >();
 
     arrayView1d< int const > const particleCohesiveZoneFlag =
       subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
@@ -15525,10 +15476,7 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
       real64 const pStress5 =
         particleStress[p][5];
 
-      real64 const artificialViscosity =
-        useArtificialViscosity == 1
-        ? particleArtificialViscosity[p]
-        : 0.0;
+      real64 const supplementalPressure = particleSupplementalPressure[p];
 
       // External force before shape-function weighting.
       //
@@ -15933,7 +15881,7 @@ localIndex const mappedNode =
         // every (i,k) pair:
         //
         //   f_int,I,i +=
-        //     - V_p ( sigma[k,i] - sigma_bg[k,i] - q delta_ki )
+        //     - V_p ( sigma[k,i] - sigma_bg[k,i] - p_supp delta_ki )
         //       dN/dx_k
         //
         // In 3D that was 9 atomic adds per mapped node.
@@ -15963,16 +15911,16 @@ localIndex const mappedNode =
 
           // Effective stress components for internal force.
           //
-          // Artificial viscosity is isotropic, so it only modifies diagonal
-          // components.
+          // The supplemental pressure is isotropic, so it only modifies diagonal
+          // components used by the force calculation.
           real64 const sigma0 =
-            pStress0 - bg0 - artificialViscosity;
+            pStress0 - bg0 - supplementalPressure;
 
           real64 const sigma1 =
-            pStress1 - bg1 - artificialViscosity;
+            pStress1 - bg1 - supplementalPressure;
 
           real64 const sigma2 =
-            pStress2 - bg2 - artificialViscosity;
+            pStress2 - bg2 - supplementalPressure;
 
           real64 const sigma3 =
             pStress3 - bg3;
@@ -16035,10 +15983,10 @@ localIndex const mappedNode =
             gridBackgroundStress[mappedNode][5];
 
           real64 const sigma0 =
-            pStress0 - bg0 - artificialViscosity;
+            pStress0 - bg0 - supplementalPressure;
 
           real64 const sigma1 =
-            pStress1 - bg1 - artificialViscosity;
+            pStress1 - bg1 - supplementalPressure;
 
           real64 const sigma5 =
             pStress5 - bg5;
@@ -16066,7 +16014,7 @@ localIndex const mappedNode =
             gridBackgroundStress[mappedNode][0];
 
           real64 const sigma0 =
-            pStress0 - bg0 - artificialViscosity;
+            pStress0 - bg0 - supplementalPressure;
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridInternalForce[mappedNode][fieldIndex][0],
@@ -18934,6 +18882,8 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
 
   bool const needInternalEnergy =
     std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end();
+  bool const needSupplementalPressure =
+    std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "supplementalPressure" ) ) != m_profileVariables.end();
 
   real64 const coordinateTolerance = 1.0e-8 * LvArray::math::max( LvArray::math::abs( profileLength ), m_hEl[direction] );
 
@@ -19016,6 +18966,12 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
     arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+
+    arrayView1d< real64 const > particleSupplementalPressure;
+    if( needSupplementalPressure )
+    {
+      particleSupplementalPressure = subRegion.getField< fields::mpm::particleSupplementalPressure >();
+    }
 
     arrayView1d< real64 const > particleInternalEnergy;
     if( needInternalEnergy )
@@ -19103,6 +19059,11 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
           {
             value = particleInternalEnergy[p];
             weight = massWeight;
+          }
+          else if( variableName == "supplementalPressure" )
+          {
+            value = particleSupplementalPressure[p];
+            weight = volumeWeight;
           }
           else if( variableName == "kineticEnergy" )
           {
@@ -22065,74 +22026,27 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 }
 
 /**
- * @brief Computes artificial viscosity.
+ * @brief Computes generic stress-power internal energy and temperature.
  *
- * Executable statements are unchanged; comments document intent where practical.
- */
-void SolidMechanicsMPM::computeArtificialViscosity( ParticleManager & particleManager )
-{
-  GEOS_MARK_FUNCTION;
-
-  real64 length = m_planeStrain == 1 ? LvArray::math::min( m_hEl[0], m_hEl[1] ) : LvArray::math::min( m_hEl[0], LvArray::math::min( m_hEl[1], m_hEl[2] ) );
-
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    arrayView1d< real64 > const particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
-    arrayView1d< real64 const > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
-    arrayView1d< real64 const > const particleWavespeed = subRegion.getField< fields::mpm::particleWavespeed >();
-    arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
-
-    real64 const artificialViscosityQ0 = m_artificialViscosityQ0;
-    real64 const artificialViscosityQ1 = m_artificialViscosityQ1;
-
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-    {
-      localIndex const p = activeParticleIndices[pp];
-
-      // This is computed for du/dx = tr(D) = tr(L);
-      // Tensor equation: trD = tr(particleVelocityGradient[p]).
-      real64 trD = LvArray::tensorOps::trace< 3 >( particleVelocityGradient[p] ); // characteristic increment = dx*(du/dx), where du/dx is
-                                                                                  // the characteristic velocity
-                                                                                  // gradient.
-      if( trD < 0.0 )
-      {
-        particleArtificialViscosity[p] = particleDensity[p] * ( artificialViscosityQ1 * ( trD * length ) * ( trD * length )
-                                                                + artificialViscosityQ0 * LvArray::math::abs( particleWavespeed[p] * trD * length ) );
-      }
-      else
-      {
-        particleArtificialViscosity[p] = 0.0;
-      }
-    } );
-  } );
-}
-
-/**
- * @brief Computes internal energy and temperature.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * Material models that own specificInternalEnergy perform their thermal update internally.
  */
 void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
                                                              ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
-  int numDims = m_numDims;
-  int shockHeating = m_shockHeating;
+  int const numDims = m_numDims;
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // Get constitutive model reference
-    // string const & solidMaterialName = subRegion.template getReference< string >(
-    // viewKeyStruct::solidMaterialNamesString() );
-    // ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
-    // if( constitutiveModel.hasWrapper( "strengthScale" ) )
-    // {
-    // arrayView1d< real64 > const constitutiveStrengthScale = constitutiveModel.getReference< array1d< real64 > >(
-    // "strengthScale" );
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
 
-    arrayView1d< real64 const > const particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
+    if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) )
+    {
+      return;
+    }
+
     arrayView1d< real64 const > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 const > const particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
     arrayView1d< real64 > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
@@ -22145,85 +22059,20 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
     {
       localIndex const p = activeParticleIndices[pp];
 
-      //  ========================================================================
-      //  Update internal energy with stress power, where Fdot and PK1 stress are a work-
-      //  Compute Stress and strain measure The rate of internal energy: udot = (1/rho0)*PK1:Fdot
-      //  use L=Fdot*Finv, rho*J=rho0, and PK1=J*sigma(i,k)*Finv(j,k)
-      //          udot = (1/rho0)*PK1:Fdot
-      //          udot = (1/rho0)*(J*sigma(i,k)*Finv(j,k))*Fdot(i,j)
-      //          udot = (1/rho0)*J*sigma(i,k)*L(i,k)
-      //          udot = (1/rho)*sigma(i,k)*L(i,k)
-      //
-      // To compute the temperature it will be necessary to partition the energy into a thermal part
-      // and to use some model for the heat capacity.
-
       real64 energyIncrement = 0.0;
-
-      // 1st half-step internal energy update
       localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
       for( int i = 0; i < numDims; ++i )
       {
         for( int j = 0; j < numDims; ++j )
         {
-          energyIncrement += 0.5 * dt * particleStress[p][voigtMap[i][j]] * particleVelocityGradient[p][i][j] / particleDensity[p];   //  General
-                                                                                                                                      // case
-                                                                                                                                      // for
-                                                                                                                                      // increment
-                                                                                                                                      // in
-                                                                                                                                      // internal
-                                                                                                                                      // energy
+          energyIncrement += 0.5 * dt * particleStress[p][voigtMap[i][j]] * particleVelocityGradient[p][i][j] / particleDensity[p];
         }
-        energyIncrement -= shockHeating * 0.5 * dt * particleArtificialViscosity[p] * particleVelocityGradient[p]( i, i ) / particleDensity[p];   // Artificial
-                                                                                                                                                  // viscosity
-                                                                                                                                                  // contribution
       }
 
       particleTemperature[p] += energyIncrement / particleHeatCapacity[p];
       particleInternalEnergy[p] += energyIncrement;
-
-      //      // 1st half-step internal energy update
-      //      for( int i = 0 ; i < m_ndim ; ++i )
-      //      {
-      //        for( int j = 0 ; j < m_ndim ; ++j )
-      //        {
-      //          p_internalEnergy[pp] += 0.5 * dt * p_stress[pp]( i, j ) * p_L[pp]( i, j ) / p_rho[pp]; //  General
-      // case for increment in
-      // internal energy
-      //        }
-      //        p_internalEnergy[pp] -= m_shock_heating * 0.5 * dt * p_q[pp] * p_L[pp]( i, i ) / p_rho[pp]; //
-      // Artificial viscosity
-      // contribution
-      //      }
-
-      // Prevent non-physical negative internal energy from integration error.
       particleInternalEnergy[p] = ( particleInternalEnergy[p] < 0 ) ? 0 : particleInternalEnergy[p];
-
-      // ***************************************************************************
-      // TODO: This is the internal energy calculation from Uintah:
-      // We need to consider whether to include the artificial viscosity heating.
-      //
-      //    R2Tensor avgStress = (pStress_new[idx] + pStress[idx])*0.5;
-      //    double avgVolume  = (pVolume_deformed[idx]+pVolume[idx])*0.5;
-      //
-      //    double pSpecificStrainEnergy = (tensorD(0,0)*avgStress(0,0) +
-      //                                    tensorD(1,1)*avgStress(1,1) +
-      //                                    tensorD(2,2)*avgStress(2,2) +
-      //                               2.0*(tensorD(0,1)*avgStress(0,1) +
-      //                                    tensorD(0,2)*avgStress(0,2) +
-      //                                    tensorD(1,2)*avgStress(1,2)))*
-      //                                    avgVolume*delT/pMass[idx];
-      //
-      //    // Compute rate of change of specific volume
-      //    double Vdot = (pVolume_deformed[idx] - pVolume[idx])/(pMass[idx]*delT);
-      //
-      //    pEnergy_new[idx] = pEnergy[idx] + pSpecificStrainEnergy
-      //                                    - p_q[idx]*Vdot*delT*include_AV_heating;
-      //
-      //    totalStrainEnergy += pSpecificStrainEnergy*pMass[idx];
-      // ***************************************************************************
-
     } );
-    // }
   } );
 }
 
@@ -23042,6 +22891,42 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
+    if( constitutiveModel.hasWrapper( "supplementalPressure" ) )
+    {
+      arrayView1d< real64 const > const constitutiveSupplementalPressure =
+        constitutiveModel.getReference< array1d< real64 > >( "supplementalPressure" );
+      arrayView1d< real64 > const particleSupplementalPressure =
+        subRegion.getField< fields::mpm::particleSupplementalPressure >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleSupplementalPressure[p] = constitutiveSupplementalPressure[p];
+      } );
+    }
+    else
+    {
+      arrayView1d< real64 > const particleSupplementalPressure =
+        subRegion.getField< fields::mpm::particleSupplementalPressure >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleSupplementalPressure[p] = 0.0;
+      } );
+    }
+
+    if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) )
+    {
+      arrayView1d< real64 const > const constitutiveSpecificInternalEnergy =
+        constitutiveModel.getReference< array1d< real64 > >( "specificInternalEnergy" );
+      arrayView1d< real64 > const particleInternalEnergy =
+        subRegion.getField< fields::mpm::particleInternalEnergy >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleInternalEnergy[p] = constitutiveSpecificInternalEnergy[p];
+      } );
+    }
+
     // crack tip distance shouldn't be changed in the constitutive model.
     // if(  constitutiveModel.hasWrapper( "crackTipDistance" ) )
     // {
@@ -23081,8 +22966,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-  int const computeInternalEnergyAndTemperature = m_computeInternalEnergyAndTemperature;
-
   RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > boxPlasticStrain( 6, 0.0 );
   RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > boxStress( 6, 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxMass( 0.0 );
@@ -23091,6 +22974,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxInternalEnergy( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxKineticEnergy( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxTemperature( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > boxSupplementalPressure( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxMatVolume( 0.0 );
 
   real64 boxAverageMin[3] = {};
@@ -23107,16 +22991,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView1d< real64 const > const particleSupplementalPressure = subRegion.getField< fields::mpm::particleSupplementalPressure >();
     arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
-    arrayView1d< real64 const > particleInternalEnergy;
-    if( computeInternalEnergyAndTemperature == 1 )
-    {
-      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
-    }
+    arrayView1d< real64 const > const particleInternalEnergy =
+      subRegion.getField< fields::mpm::particleInternalEnergy >();
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -23131,6 +23013,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
                              &boxInternalEnergy,
                              &boxKineticEnergy,
                              &boxTemperature,
+                             &boxSupplementalPressure,
                              &boxMatVolume] GEOS_HOST ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -23146,13 +23029,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxParticleReferenceVolume += particleReferenceVolume[p];
           boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];  // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
 
-          if( computeInternalEnergyAndTemperature == 1 )
-          {
-            // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
-            boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
-          }
+          // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
+          boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
 
           boxTemperature += particleTemperature[p] * particleMass[p];
+          boxSupplementalPressure += particleSupplementalPressure[p] * particleVolume[p];
 
           for( int i=0; i<6; ++i )
           {
@@ -23165,7 +23046,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   } );
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
-  real64 boxSums[19];
+  real64 boxSums[20];
   boxSums[0] = boxStress[0].get();         // sig_xx * volume
   boxSums[1] = boxStress[1].get();         // sig_yy * volume
   boxSums[2] = boxStress[2].get();         // sig_zz * volume
@@ -23186,10 +23067,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[16] = boxPlasticStrain[5].get(); // plasticStrain_xy
   boxSums[17] = boxMatVolume.get();
   boxSums[18] = boxTemperature.get();      // temperature * mass (this is an abitrary choice, could be volume weighted)
+  boxSums[19] = boxSupplementalPressure.get(); // supplemental pressure * volume
 
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 19; ++i )
+  for( localIndex i = 0; i < 20; ++i )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
@@ -23219,7 +23101,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
     // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy
-    // | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
+    // | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | supplemental pressure | F00 | F11 | F22
     file << time_n + dt           // Time
          << ","
          << boxSums[0] / boxVolume // sig_xx
@@ -23257,6 +23139,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << boxSums[17] // material volume
          << ", "
          << boxSums[18] / boxSums[6]
+         << ", "
+         << boxSums[19] / boxVolume
          << ", "
          << m_domainF[0]
          << ", "

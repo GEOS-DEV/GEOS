@@ -153,10 +153,10 @@ During the grid-background-stress update, every grid node satisfying
 receives this background stress.  The internal-force projection then uses the background-stress-corrected stress.  In abstract notation,
 \begin{equation}
   \mathbf{f}^{\mathrm{int}}_I
-  = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-q_p\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
+  = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-p_{\mathrm{sup},p}\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
   \label{eq:background-stress-force}
 \end{equation}
-where $q_p$ denotes the particle-level artificial viscosity or pressure-like correction where active.  This converts a prescribed pressure region into the same weak-form force balance used by the standard MPM update, avoiding explicit surface tracking for this pressure boundary.  The approach is algorithmic rather than a general immersed-boundary formulation, but it fits the particle-grid balance framework of MPM \cite{sulsky1994history,sulsky1995solid}.
+where $p_{\mathrm{sup},p}$ denotes the particle-level supplemental pressure where active.  This converts a prescribed pressure region into the same weak-form force balance used by the standard MPM update, avoiding explicit surface tracking for this pressure boundary.  The approach is algorithmic rather than a general immersed-boundary formulation, but it fits the particle-grid balance framework of MPM \cite{sulsky1994history,sulsky1995solid}.
 
 \begin{lstlisting}[caption={BoreholePressure event pseudocode.}]
 if event active:

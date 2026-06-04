@@ -11,24 +11,6 @@
       "line": 758
     },
     {
-      "name": "artificialViscosityQ0",
-      "flag": "OPTIONAL",
-      "default": "m_artificialViscosityQ0",
-      "restart": "NO_WRITE",
-      "description": "Artificial viscosity q0 parameter",
-      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 764
-    },
-    {
-      "name": "artificialViscosityQ1",
-      "flag": "OPTIONAL",
-      "default": "m_artificialViscosityQ1",
-      "restart": "NO_WRITE",
-      "description": "Artificial viscosity q1 parameter",
-      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 770
-    },
-    {
       "name": "bcTable",
       "flag": "OPTIONAL",
       "default": "",
@@ -1260,15 +1242,6 @@
       "description": "Will use APIC in particle to grid mapping of momentum",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 1544
-    },
-    {
-      "name": "useArtificialViscosity",
-      "flag": "OPTIONAL",
-      "default": "m_useArtificialViscosity",
-      "restart": "NO_WRITE",
-      "description": "Flag to enable artificial viscosity",
-      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1550
     },
     {
       "name": "useCrackTipDetection",

@@ -1068,8 +1068,6 @@ public:
 
   void computeBodyForce( ParticleManager & particleManager );
 
-  void computeArtificialViscosity( ParticleManager & particleManager );
-
   void computeSPHJacobian( ParticleManager & particleManager );
 
   void sphOverlapCorrection( real64 const dt,
@@ -1159,8 +1157,6 @@ protected:
 
   // Member fields are ordered alphabetically by member name to match the constructor initializer list.
   mpm::AreaIntegrationOption m_areaIntegrationMethod;
-  real64 m_artificialViscosityQ0;
-  real64 m_artificialViscosityQ1;
   array2d< real64 > m_bcTable;
   int m_binSizeMultiplier;
   array1d< real64 > m_bodyForce;
@@ -1295,7 +1291,6 @@ protected:
   stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
                                                         // subregions, # of particles, # of nodes a particle on the
                                                         // subregion maps to}
-  int m_shockHeating;
   real64 m_smallMass;
   int m_solverProfiling;
   array1d< int > m_stressControl;
@@ -1325,7 +1320,6 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   mpm::UpdateMethodOption m_updateMethod;
   int m_updateOrder;
-  int m_useArtificialViscosity;
   int m_useCrackTipDetection;
   int m_useEvents;                   // Events flag
   int m_useInternalForceAsFaceReaction;

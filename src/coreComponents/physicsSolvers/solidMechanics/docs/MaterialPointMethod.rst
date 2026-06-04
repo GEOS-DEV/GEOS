@@ -67,9 +67,9 @@ The internal and external force (neglecting surface tractions) at the :math:'i^{
    f_{i}^{ext,(n)}  = \sum_p S_{i,p} b_p^{(n)} m_{p}^{(n)},
 
 .. math::
-   f_{i}^{int,(n)}  = -\sum_p \nabla S_{i,p} ( \textbf{\sigma}_p^{(n-1/2)} - q_{p}^{(n-1/2)} \textbf{I} ) V_p^{(n-1/2)},
+   f_{i}^{int,(n)}  = -\sum_p \nabla S_{i,p} ( \textbf{\sigma}_p^{(n-1/2)} - p_{\mathrm{sup},p}^{(n-1/2)} \textbf{I} ) V_p^{(n-1/2)},
    
-where :math:'b_p' is the body force acting on the :math:'p^{th}' particle, :math:'V_p' is the particle volume, :math:'\textbf{\sigma}_p' is the Cauchy stress at the particle, and :math:'\bar{\nabla S_{i,p}}' is the average of the gradient of the :math:'i^{th}' grid shape function over the :math:'p^{th}' particle domain and :math:'q_p' is the artificial viscosity.
+where :math:'b_p' is the body force acting on the :math:'p^{th}' particle, :math:'V_p' is the particle volume, :math:'\textbf{\sigma}_p' is the Cauchy stress at the particle, and :math:'\bar{\nabla S_{i,p}}' is the average of the gradient of the :math:'i^{th}' grid shape function over the :math:'p^{th}' particle domain and :math:`p_{\mathrm{sup},p}` is the supplemental pressure used only by force assembly.
 
 Trial Grid Velocity and Acceleration
 ------------------------------------
@@ -130,9 +130,6 @@ Here, if using :code-block:'overlapCorrection="2"', we apply overlap correction 
 
 .. math::
    \rho_{p}^{(n+1/2)} = m_{p}/V_{p}^{(n+1/2)}
-
-Artificial Viscosity
---------------------------
 
 Internal Energy (Part 1)
 --------------------------
@@ -557,24 +554,6 @@ This solver has many solver specific variables. The following list describes eac
      - will treat regions of full damage as a single field (recommended)
 
 
-.. list-table:: Artificial Viscosity
-
-   * - type
-     - input
-     - default
-     - description
-   * - bool
-     - useArtificialViscosity
-     - 0
-     - Enables use of artificial viscosity
-   * - real
-     - artificialViscosityQ0
-     - 0.0
-     - Linear term, 1.5 is a common value
-   * - real
-     - artificialViscosityQ1
-     - 0.0
-     - Quadratic term, 0.5 is a common value
 
 .. list-table:: Boundary Conditions
 

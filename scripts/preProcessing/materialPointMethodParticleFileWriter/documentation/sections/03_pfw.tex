@@ -445,7 +445,7 @@ Each accepted particle receives three core classification values:
 \begin{align}
   m_p^{\mathrm{PFW}} &= \texttt{MaterialType},\\
   g_p^{\mathrm{PFW}} &= \texttt{ContactGroup},\\
-  q_p^{\mathrm{PFW}} &= \texttt{ParticleType}.
+  \tau_p^{\mathrm{PFW}} &= \texttt{ParticleType}.
 \end{align}
 The first two are ordinary particle-file columns when \texttt{MaterialType} and \texttt{ContactGroup} are present in \texttt{particleFileFields}; the particle type is used by PFW while building particle blocks and by the generated \texttt{ParticleMesh} XML entry.  In the reviewed PFW code, the standard particle-type integers are
 \begin{center}
