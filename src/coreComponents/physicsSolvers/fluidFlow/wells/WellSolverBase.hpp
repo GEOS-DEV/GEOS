@@ -166,9 +166,9 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
 
-  virtual void implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                     real64 const & GEOS_UNUSED_PARAM( dt ),
-                                     DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override {}
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & d,
+                                     DomainPartition & domain ) override;
 
   virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
                                         real64 const GEOS_UNUSED_PARAM( dt ),

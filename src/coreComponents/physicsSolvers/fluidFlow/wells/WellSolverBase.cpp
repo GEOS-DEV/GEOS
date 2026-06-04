@@ -23,6 +23,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -286,6 +287,7 @@ void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartitio
 
   } );
 }
+
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
@@ -297,6 +299,13 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n );
+}
+
+void WellSolverBase::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           DomainPartition & GEOS_UNUSED_PARAM( domain )  )
+{
+  outputConvergenceReports();
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )

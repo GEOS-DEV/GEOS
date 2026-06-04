@@ -21,6 +21,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
@@ -1737,5 +1738,32 @@ bool PhysicsSolverBase::detectOscillations() const
 PyTypeObject * PhysicsSolverBase::getPythonType() const
 { return python::getPySolverType(); }
 #endif
+
+ElementReporterOutput & PhysicsSolverBase::storeConvergenceReport( ElementReportsKeys reportKey,
+                                                                   ElementReporterBuffer && rankBuffer,
+                                                                   std::optional< real64 > rankMinValue,
+                                                                   std::optional< real64 > rankMaxValue )
+{
+  ElementReporterOutput & report = m_elementReports.at( reportKey );
+
+  report.setValues( std::move( rankBuffer ), rankMinValue, rankMaxValue );
+
+  // if loglevel is high enough, we report incoherent values even if we are in the process of convergence.
+  if( isLogLevelActive< logInfo::ConvergenceDetails >( getLogLevel() ) )
+  {
+    report.outputReport( "During Convergence:" );
+  }
+
+  return report;
+}
+
+void PhysicsSolverBase::outputConvergenceReports()
+{
+  for( auto & report : m_elementReports )
+  {
+    report.second.outputReport( "Convergence Results:" );
+    report.second.clear();
+  }
+}
 
 } // namespace geos

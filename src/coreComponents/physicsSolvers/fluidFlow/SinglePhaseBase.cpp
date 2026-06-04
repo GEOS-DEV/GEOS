@@ -40,7 +40,7 @@
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/SolutionCheckHelpers.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
@@ -74,6 +74,11 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
                                  "For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
+
+  m_elementReports.emplace( ElementReportsKeys::NegPres, ElementReporterOutput() ).first->second.
+    setValueMetadata( "negative pressure", units::Unit::Pressure ).
+    setRanges( 0.0, {} ).
+    setLogPrefix( GEOS_FMT( "        {}: ", getName() ) );
 
   addLogLevel< logInfo::BoundaryConditions >();
 }
@@ -795,7 +800,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     } );
   } );
 
-  // Hey mel
+  outputConvergenceReports();
 }
 
 
@@ -1338,8 +1343,8 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+  ElementReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                            isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minPressure = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1369,9 +1374,9 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
     } );
   } );
 
-  ElementsReporterOutput const negPressureIds = rankNegPressureIds.createOutput();
-  negPressureIds.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                     "negative pressure", minPressure, units::Unit::Pressure );
+  ElementReporterOutput & negPressureIds = storeConvergenceReport( ElementReportsKeys::NegPres,
+                                                                   std::move( rankNegPressureIds ),
+                                                                   minPressure, {} );
 
   return (m_allowNegativePressure || negPressureIds.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }

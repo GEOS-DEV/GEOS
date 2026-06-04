@@ -37,6 +37,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -270,6 +271,21 @@ void CompositionalMultiphaseBase::postInputInitialization()
                             formulationName ), getDataContext() );
     }
   }
+
+  m_elementReports.emplace( ElementReportsKeys::NegPres, ElementReporterOutput() ).first->second.
+    setValueMetadata( "negative pressure", units::Unit::Pressure ).
+    setRanges( 0.0, {} ).
+    setLogPrefix( GEOS_FMT( "        {}: ", getName() ) );
+
+  units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
+  m_elementReports.emplace( ElementReportsKeys::NegCompDens, ElementReporterOutput() ).first->second.
+    setValueMetadata( "negative component density", massUnit ).
+    setRanges( 0.0, {} ).
+    setLogPrefix( GEOS_FMT( "        {}: ", getName() ) );
+  m_elementReports.emplace( ElementReportsKeys::NegTotalCompDens, ElementReporterOutput() ).first->second.
+    setValueMetadata( "negative component total density", massUnit ).
+    setRanges( 0.0, {} ).
+    setLogPrefix( GEOS_FMT( "        {}: ", getName() ) );
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
@@ -2901,6 +2917,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+
+  outputConvergenceReports();
 }
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const

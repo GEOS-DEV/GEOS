@@ -14,25 +14,25 @@
  */
 
 /**
- * @file SolutionCheckKernelsHelpers.hpp
+ * @file ElementReporterKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKKERNELSHELPERS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKKERNELSHELPERS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_ELEMENTREPORTERKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_ELEMENTREPORTERKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 
 namespace geos
 {
 
-class ElementsReporterBuffer;
+class ElementReporterBuffer;
 
 struct ElementReport
 {
   /// the global id of the reported element
   globalIndex m_id;
-  /// a value to report for the given element (i.e. a negative pressure, a density... Or if needed could be of a templated type for
-  /// composite values)
+  /// a value to report for the given element (i.e. a negative pressure, a density... Or if needed
+  /// could be of a templated type for composite values)
   real64 m_value;
 };
 
@@ -44,7 +44,7 @@ struct ElementReport
  */
 class ElementsReporterCollector
 {
-  friend class ElementsReporterBuffer;
+  friend class ElementReporterBuffer;
 public:
 
   using ElementCount = int32_t;
@@ -134,4 +134,4 @@ private:
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKKERNELSHELPERS_HPP
+#endif //GEOS_PHYSICSSOLVERS_ELEMENTREPORTERKERNELS_HPP

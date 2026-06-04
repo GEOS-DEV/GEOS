@@ -97,6 +97,12 @@ struct SolutionDetails
   static constexpr std::string_view getDescription() { return "Solution details (incoherent negative values ids)"; }
 };
 
+struct ConvergenceDetails
+{
+  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Convergence details (incoherent negative values ids)"; }
+};
+
 struct SolverInitialization
 {
   static constexpr int getMinLogLevel() { return 1; }

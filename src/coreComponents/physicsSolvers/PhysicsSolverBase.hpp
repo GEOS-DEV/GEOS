@@ -39,6 +39,8 @@ namespace geos
 {
 
 class DomainPartition;
+class ElementReporterBuffer;
+class ElementReporterOutput;
 
 /**
  * @class PhysicsSolverBase
@@ -1014,6 +1016,12 @@ public:
 
 protected:
 
+  /**
+   * @brief types of reports keys
+   */
+  enum class ElementReportsKeys
+  { NegPres, NegCompDens, NegTotalCompDens };
+
   virtual void postInputInitialization() override;
 
   /**
@@ -1044,6 +1052,24 @@ protected:
   real64 eisenstatWalker( real64 const newNewtonNorm,
                           real64 const oldNewtonNorm,
                           LinearSolverParameters::Krylov const & krylovParams );
+
+  /**
+   * @brief Store a report in the m_elementReports map for a given quantity.
+   * @param valuesNaming the unique storage key, describing the reported values
+   * @param buffer The buffer which contains the number and values to show from this rank.
+   * @param rankMinValue Optionally store the minimum encountered value of this rank.
+   * @param rankMaxValue Optionally store the maximum encountered value of this rank.
+   */
+  ElementReporterOutput & storeConvergenceReport( ElementReportsKeys reportKey,
+                                                  ElementReporterBuffer && rankBuffer,
+                                                  std::optional< real64 > rankMinValue,
+                                                  std::optional< real64 > rankMaxValue );
+
+                                                  /**
+   * @brief Output the elements which have been reported, potentially signaling underflow/overflow or
+   *        numerical instability.
+   */
+  void outputConvergenceReports();
 
   /**
    * @brief Get the Constitutive Name object
@@ -1195,6 +1221,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   stdMap< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// Timers for the aggregate profiling of the solver
+  stdMap< ElementReportsKeys, ElementReporterOutput > m_elementReports;
 
   /// History of the solution vector, used for oscillation detection
   ArrayOfArrays< real64 > m_solutionHistory;

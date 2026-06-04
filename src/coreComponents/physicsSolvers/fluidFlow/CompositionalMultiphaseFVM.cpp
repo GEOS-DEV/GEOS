@@ -35,9 +35,9 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
@@ -849,12 +849,12 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     integer localCheck = 1;
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
-    ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                               isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
-    ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                              isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
+    ElementReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                              isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+    ElementReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                             isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
     // output only total density sum, not cell details
-    ElementsReporterBuffer rankTotalNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ), 0 };
+    ElementReporterBuffer rankTotalNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ), 0 };
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -930,18 +930,15 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
       } );
     } );
 
-    minPres  = MpiWrapper::min( minPres );
-    minDens = MpiWrapper::min( minDens );
-    minTotalDens = MpiWrapper::min( minTotalDens );
-
-    rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                          "negative pressure", minPres, units::Unit::Pressure );
-
-    units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
-    rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                         "negative component density", minDens, massUnit );
-    rankTotalNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                              "negative component total density", minTotalDens, massUnit );
+    storeConvergenceReport( ElementReportsKeys::NegPres,
+                            std::move( rankNegPressureIds ),
+                            minPres, {} );
+    storeConvergenceReport( ElementReportsKeys::NegCompDens,
+                            std::move( rankNegDensityIds ),
+                            minDens, {} );
+    storeConvergenceReport( ElementReportsKeys::NegTotalCompDens,
+                            std::move( rankTotalNegDensityIds ),
+                            minTotalDens, {} );
 
     return MpiWrapper::min( localCheck );
   }

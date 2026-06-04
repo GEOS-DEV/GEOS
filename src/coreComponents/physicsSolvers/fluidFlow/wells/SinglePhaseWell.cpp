@@ -33,7 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/SolutionCheckHelpers.hpp"
+#include "physicsSolvers/ElementReporter.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -67,6 +67,11 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
     setApplyDefaultValue( 1 ). // negative pressure is allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
+
+  m_elementReports.emplace( ElementReportsKeys::NegPres, ElementReporterOutput() ).first->second.
+    setValueMetadata( "negative pressure", units::Unit::Pressure ).
+    setRanges( 0.0, {} ).
+    setLogPrefix( GEOS_FMT( "        {}: ", getName() ) );
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -1017,8 +1022,8 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+  ElementReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                            isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minNegPres = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1058,11 +1063,11 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
     } );
   } );
 
-  ElementsReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
-  rankNegPressureIdsOutput.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                               "negative pressure", minNegPres, units::Unit::Pressure );
+  ElementReporterOutput & negPressureIds = storeConvergenceReport( ElementReportsKeys::NegPres,
+                                                                   std::move( rankNegPressureIds ),
+                                                                   minNegPres, {} );
 
-  return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;
+  return (m_allowNegativePressure || negPressureIds.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }
 
 void
