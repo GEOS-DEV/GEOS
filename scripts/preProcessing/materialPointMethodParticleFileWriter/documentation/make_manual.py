@@ -7621,7 +7621,7 @@ Randy Settgast, Josh White, Matteo Cusini, Ben Corbett, Chris Sherman, Thomas Ga
 Eric Herbold, Alan DeHope, Andrew Saab, Kyle Sullivan\par
 \end{minipage}
 \vfill
-{\large Designed for regeneration and future Sphinx conversion\par}
+{\large Prepared by LLNL under Contract DE-AC52-07NA27344.\par}
 \end{titlepage}
 
 \pagenumbering{roman}
