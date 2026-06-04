@@ -1,0 +1,205 @@
+\chapter{Generated geometry and material catalogue}
+\label{app:geometry-materials}
+\index{geometry catalogue}
+\index{material catalogue}
+
+{\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{longtable}{@{}p{0.26\linewidth}p{0.67\linewidth}@{}}
+\caption{Geometry objects discovered in pfw\_geometryObjects.py.}\label{tab:geometry-objects}\\
+\toprule
+\textbf{Geometry object} & \textbf{Docstring summary}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Geometry object} & \textbf{Docstring summary}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily shell} & Spherical shell between inner and outer radii, with surface information on both spherical boundaries.\\
+{\ttfamily sphere} & Sphere defined by center and radius, with surface flags, normals, and surface positions near the boundary.\\
+{\ttfamily spherical\allowbreak{}Inclusion} & Sphere-like inclusion helper that assigns material/group data while suppressing ordinary surface flagging.\\
+{\ttfamily cz\allowbreak{}Spherical\allowbreak{}Prill} & Spherical prill with Voronoi-like crystals and cohesive-zone interfaces between neighboring grains.\\
+{\ttfamily explicit\allowbreak{}Binder\allowbreak{}Spherical\allowbreak{}Prill} & Spherical prill with explicit grain and binder regions, mainly for two-dimensional prill/binder mesostructures.\\
+{\ttfamily cz\allowbreak{}Cylindrical\allowbreak{}Prill} & Cylindrical prill with Voronoi-like internal crystals and cohesive-zone surfaces.\\
+{\ttfamily cz\allowbreak{}Prill} & Box-shaped prill with Voronoi crystals, cohesive-zone tags, and configurable bonded/neat surfaces.\\
+{\ttfamily ellipsoid} & Grid-aligned ellipsoid defined by center and three semi-axis lengths.\\
+{\ttfamily crystal} & Faceted crystal analogue defined by center, axis, height, and face-offset controls.\\
+{\ttfamily indentor} & Faceted indentation tool parameterized by number of facets and angle.\\
+{\ttfamily spherical\_\allowbreak{}indenter} & Indentation tool with a spherical tip.\\
+{\ttfamily flatpunch\_\allowbreak{}indenter} & Flat-punch indentation tool with a specified radius and orientation angle.\\
+{\ttfamily simple\_\allowbreak{}tensile\_\allowbreak{}gripper} & Single gripper-claw geometry for micromechanical tensile examples.\\
+{\ttfamily tensile\_\allowbreak{}gripper} & Detailed micromechanical tensile gripper geometry.\\
+{\ttfamily box} & Axis-aligned rectangular solid defined by two opposite corners.\\
+{\ttfamily notched\allowbreak{}Bar} & Axis-aligned bar with a 45-degree edge notch in the positive-y face.\\
+{\ttfamily box2} & Box variant with mixed corner-normal behavior for contact testing.\\
+{\ttfamily polygon} & Two-dimensional polygon from ordered vertices, typically used in plane strain.\\
+{\ttfamily foam} & Box with user-specified spherical pores.\\
+{\ttfamily poisson\allowbreak{}Disk\allowbreak{}Foam} & Box with Poisson-disk sampled pores, including surface-normal and position reconstruction.\\
+{\ttfamily packed\allowbreak{}Spherical\allowbreak{}Bed} & Packed bed of spherical grains with cell-list queries and per-grain material/group/type data.\\
+{\ttfamily two\allowbreak{}Material\allowbreak{}Box} & Box that randomly assigns accepted particles to one of two material indices.\\
+{\ttfamily two\allowbreak{}Field\allowbreak{}Box} & Legacy/test box intended for two-group or two-field contact testing.\\
+{\ttfamily cone} & Cone defined by two axis points and a base radius.\\
+{\ttfamily stl} & Closed triangulated STL import with ray-casting inside/outside tests and nearest-triangle surface projection.\\
+{\ttfamily cylinder} & Solid or hollow cylinder defined by axis endpoints and radii, with configurable face/wall surface flags.\\
+{\ttfamily pillar} & Micropillar compression specimen with cylindrical gauge region and wider base.\\
+{\ttfamily pillar\allowbreak{}Base} & Base/substrate companion geometry for pillar simulations.\\
+{\ttfamily whiskers} & Whisker or fiber-like inclusion geometry.\\
+{\ttfamily toroid} & Toroidal annulus/ring geometry.\\
+{\ttfamily spinodal} & Implicit spinodal-like porous or bicontinuous architecture.\\
+{\ttfamily tpms} & Triply periodic minimal-surface or related periodic architecture object.\\
+{\ttfamily polygon\allowbreak{}Inclusions} & Two-dimensional polygonal inclusions embedded in a fill group.\\
+{\ttfamily fill} & Accepts all candidate particle points to fill the background domain.\\
+{\ttfamily VCCTL} & Voxelized VCCTL-style phase dataset mapped to material indices.\\
+{\ttfamily Grain\allowbreak{}Stack} & Stacked voxel or labeled-array grain geometry.\\
+{\ttfamily CT} & Computed-tomography voxel dataset mapped to material indices.\\
+{\ttfamily bitmap} & Two-dimensional image or label map converted to particles and materials.\\
+{\ttfamily porous\allowbreak{}Polygon} & Polygon with randomly generated two-dimensional pores.\\
+{\ttfamily union} & Boolean union of two geometry objects.\\
+{\ttfamily intersection} & Boolean intersection of two geometry objects.\\
+{\ttfamily difference} & Boolean set difference A minus B, including surface data for cut boundaries.\\
+\end{longtable}
+}
+
+
+{\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{longtable}{@{}p{0.28\linewidth}p{0.65\linewidth}@{}}
+\caption{Geometry wrappers discovered in pfw\_geometryObjects.py.}\label{tab:geometry-wrappers}\\
+\toprule
+\textbf{Wrapper} & \textbf{Docstring summary}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wrapper} & \textbf{Docstring summary}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily material\allowbreak{}Direction\allowbreak{}Wrapper} & Overrides or assigns the local material-direction triad.\\
+{\ttfamily surface\allowbreak{}Flag\allowbreak{}Wrapper} & Overrides surface-flag response for the wrapped object.\\
+{\ttfamily cz\allowbreak{}Tag\allowbreak{}Wrapper} & Assigns cohesive-zone tags to cohesive surface particles.\\
+{\ttfamily functional\allowbreak{}Deletion\allowbreak{}Wrapper} & Rejects points according to a user-supplied deletion/masking function.\\
+{\ttfamily surface\allowbreak{}Normal\allowbreak{}Wrapper} & Assigns explicit surface normals.\\
+{\ttfamily surface\allowbreak{}Position\allowbreak{}Wrapper} & Assigns explicit vectors from particles to surface positions.\\
+{\ttfamily shrinkage\allowbreak{}Flag\allowbreak{}Wrapper} & Assigns shrinkage flags for compatible workflows.\\
+{\ttfamily strength\allowbreak{}Scale\allowbreak{}Wrapper} & Assigns strength-scale values.\\
+{\ttfamily damage\allowbreak{}Wrapper} & Assigns initial damage values.\\
+{\ttfamily porosity\allowbreak{}Wrapper} & Assigns initial porosity values.\\
+{\ttfamily temperature\allowbreak{}Wrapper} & Assigns initial temperature values.\\
+{\ttfamily voronoi\allowbreak{}Wrapper\allowbreak{}With\allowbreak{}Layered\allowbreak{}Strength\allowbreak{}Scale} & Voronoi and layered-strength wrapper for grain-scale heterogeneity.\\
+{\ttfamily layered\allowbreak{}Voronoi\allowbreak{}Weibull\allowbreak{}Wrapper} & Voronoi-layered Weibull strength-scale wrapper.\\
+{\ttfamily voronoi\allowbreak{}Weibull\allowbreak{}Box\allowbreak{}Wrapper} & Box-local Voronoi Weibull strength wrapper.\\
+{\ttfamily pointwise\allowbreak{}Porosity\allowbreak{}Wrapper} & Random pointwise porosity mask without deterministic pore surfaces.\\
+{\ttfamily voronoi\allowbreak{}Mat\allowbreak{}Dir\allowbreak{}Box\allowbreak{}Wrapper} & Box-local Voronoi material-direction assignment.\\
+{\ttfamily size\allowbreak{}Effect\allowbreak{}Voronoi\allowbreak{}Weibull\allowbreak{}Box\allowbreak{}Wrapper} & Size-effect and flaw-field strength wrapper.\\
+{\ttfamily surface\allowbreak{}Flag\allowbreak{}Box\allowbreak{}Wrapper} & Overrides surface flags inside a box.\\
+{\ttfamily damage\allowbreak{}Box\allowbreak{}Wrapper} & Overrides damage inside a box.\\
+{\ttfamily penny\allowbreak{}Shaped\allowbreak{}Crack\allowbreak{}Wrapper} & Paints a penny-shaped damaged/cracked region.\\
+{\ttfamily layered\allowbreak{}Strength\allowbreak{}Scale\allowbreak{}Box\allowbreak{}Wrapper} & Assigns layered strength-scale fields inside a box.\\
+{\ttfamily transform} & Applies coordinate transformations before delegating to a sub-object.\\
+\end{longtable}
+}
+
+
+{\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{longtable}{@{}p{0.30\linewidth}p{0.63\linewidth}@{}}
+\caption{Selected geometry utility functions discovered in pfw\_geometryObjects.py.}\label{tab:geometry-utils}\\
+\toprule
+\textbf{Utility} & \textbf{Docstring summary}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Utility} & \textbf{Docstring summary}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily max\allowbreak{}Flaw\allowbreak{}Radius} & \\
+{\ttfamily max\allowbreak{}Flaw\allowbreak{}Radius2\allowbreak{}D} & \\
+{\ttfamily Grid} & \\
+{\ttfamily Geometry} & Base class and interface for PFW geometry objects.\\
+{\ttfamily Base\allowbreak{}Wrapper} & Base forwarding wrapper for geometry-object field overrides.\\
+{\ttfamily Set\allowbreak{}Operation} & Base class for Boolean geometry operations.\\
+\end{longtable}
+}
+
+
+{\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{longtable}{@{}p{0.30\linewidth}p{0.63\linewidth}@{}}
+\caption{Material helper functions discovered in pfw\_materials.py.}\label{tab:material-helpers}\\
+\toprule
+\textbf{Material helper} & \textbf{Docstring summary}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Material helper} & \textbf{Docstring summary}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily Bicrystal\allowbreak{}Cohesive\allowbreak{}Zone} & \\
+{\ttfamily Ceramic\allowbreak{}Damage} & \\
+{\ttfamily Chiumenti} & \\
+{\ttfamily Coupled\allowbreak{}Cohesive\allowbreak{}Zone} & \\
+{\ttfamily Elastic\allowbreak{}Isotropic} & \\
+{\ttfamily Elastic\allowbreak{}Transverse\allowbreak{}Isotropic} & \\
+{\ttfamily Elastic\allowbreak{}Transverse\allowbreak{}Isotropic\allowbreak{}Pressure\allowbreak{}Dependent} & \\
+{\ttfamily Geomechanics} & \\
+{\ttfamily Graphite} & \\
+{\ttfamily Hyperelastic} & \\
+{\ttfamily Hyperelastic\allowbreak{}MMS} & \\
+{\ttfamily Perfectly\allowbreak{}Plastic} & \\
+{\ttfamily Polymer\allowbreak{}Cohesive\allowbreak{}Zone} & \\
+{\ttfamily Strain\allowbreak{}Hardening\allowbreak{}Polymer} & \\
+{\ttfamily Von\allowbreak{}Mises\allowbreak{}J} & \\
+\end{longtable}
+}
+
+
+{\renewcommand{\arraystretch}{1.15}
+\small
+\begin{longtable}{@{}p{0.55\linewidth}p{0.25\linewidth}@{}}
+\caption{Material preset dictionary counts in pfw\_materials.py.}\label{tab:material-presets}\\
+\toprule
+\textbf{PFW material preset family} & \textbf{Preset count}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{PFW material preset family} & \textbf{Preset count}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily Ceramic\allowbreak{}Damage} & 21\\
+{\ttfamily Chiumenti} & 3\\
+{\ttfamily Elastic\allowbreak{}Isotropic} & 3\\
+{\ttfamily Elastic\allowbreak{}Transverse\allowbreak{}Isotropic} & 1\\
+{\ttfamily Geomechanics} & 1\\
+{\ttfamily Graphite} & 3\\
+{\ttfamily Hyperelastic} & 1\\
+{\ttfamily Hyperelastic\allowbreak{}MMS} & 1\\
+{\ttfamily Perfectly\allowbreak{}Plastic} & 1\\
+{\ttfamily Strain\allowbreak{}Hardening\allowbreak{}Polymer} & 8\\
+{\ttfamily Von\allowbreak{}Mises\allowbreak{}J} & 30\\
+\end{longtable}
+}
+

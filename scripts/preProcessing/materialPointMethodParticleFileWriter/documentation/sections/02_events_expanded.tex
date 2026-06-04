@@ -1,0 +1,800 @@
+\section{Events}
+\label{sec:events}
+\index{events}
+\index{MPMEvents}
+
+MPM events are time-windowed run-time operations parsed under the solver's \texttt{MPMEvents} block.  In the current implementation, the event manager is visited near the beginning of each explicit time step, before particle subdivision, particle-map refresh, ghost construction, and active-particle index reconstruction.  Most events therefore modify particle topology, particle state, solver controls, or auxiliary managers before the particle-to-grid stage of the same step.  The exception is \texttt{TransformParticles}, which is handled by a later event pass after the deformation-gradient update.
+
+\subsection{Event-manager semantics and common inputs}
+\label{subsec:event-manager-semantics}
+\index{MPMEvents!startTime}
+\index{MPMEvents!endTime}
+\index{MPMEvents!isComplete}
+
+Every event type derives from \texttt{MPMEventBase}.  The base class registers the required start time, an optional end time, and an internal completion flag:
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required input.}] \texttt{startTime}: time at which the event first becomes eligible for execution.
+\item[\textbf{Optional input.}] \texttt{endTime}: time at which the event window closes; the default is \texttt{DBL\_MAX}.  The base class rejects input for which \texttt{startTime > endTime}.
+\item[\textbf{Internal state.}] \texttt{isComplete}: a non-input flag used to prevent one-shot events from firing repeatedly.
+\end{description}
+At time step $n$, with step size $\Delta t$ and solver time $t^n$, a non-complete event is considered active if
+\begin{equation}
+  t_s - \frac{\Delta t}{2} \le t^n \le t_e + \frac{\Delta t}{2},
+  \label{eq:event-active-window}
+\end{equation}
+where $t_s$ and $t_e$ are the event's \texttt{startTime} and \texttt{endTime}.  The half-step tolerance makes event activation robust to time-step discretization and roundoff.  In algorithmic form, the event loop is
+\begin{lstlisting}[caption={Generic MPM event-manager loop.}]
+for event in MPMEvents:
+  start = event.startTime
+  end   = event.endTime
+  if start - 0.5*dt <= time_n <= end + 0.5*dt and not event.isComplete:
+    dispatch event by catalogName
+    if event is a one-shot operation:
+      event.isComplete = true
+\end{lstlisting}
+This structure is consistent with the MPM view that material history variables, damage variables, contact state, and boundary data are carried by particles and grid fields and may be changed between time steps before the next particle-grid projection \cite{sulsky1994history,sulsky1995solid,steffen2008choices}.  Event-specific inputs and generated schema tables are listed in Appendix~\ref{app:events}; the subsections below describe the algorithms implemented by each registered event.
+
+For several ramp-like events, GEOS-MPM uses a scalar interpolation helper.  Given a scalar input $x$, interval $[x_0,x_1]$, endpoint values $y_0,y_1$, and $\lambda=(x-x_0)/(x_1-x_0)$, the returned value is
+\begin{equation}
+  I(x)=
+  \begin{cases}
+  y_0, & x<x_0\ \text{or}\ x_1\le x_0,\\
+  y_1, & x>x_1,\\
+  y_0(1-\lambda)+y_1\lambda, & \text{linear},\\
+  y_0 - \dfrac{1}{2}(y_1-y_0)\left[\cos(\pi\lambda)-1\right], & \text{cosine},\\
+  y_0 + (y_1-y_0)\left(10\lambda^3-15\lambda^4+6\lambda^5\right), & \text{smoothstep}.
+  \end{cases}
+  \label{eq:event-interpolation}
+\end{equation}
+The cosine and smoothstep options are useful when an event should avoid an impulsive endpoint derivative.
+
+\subsection{\texttt{Anneal}}
+\label{subsec:event-anneal}
+\index{events!Anneal}
+\index{annealing}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{targetRegion}, the particle region name to anneal, or \texttt{all}.
+\item[\textbf{Optional.}] \texttt{endTime}; inherited default \texttt{DBL\_MAX}.
+\end{description}
+
+\paragraph{Algorithm.}
+The \texttt{Anneal} event reduces the deviatoric part of the constitutive-model history stress in selected particle regions while preserving the hydrostatic component.  For each matching \texttt{ParticleRegion}, the event obtains the material model associated with each subregion and requires that it expose an \texttt{oldStress} wrapper.  The event then visits every constitutive point, decomposes the stored stress into mean and deviatoric invariants, scales only the $J_2$ magnitude, and recomposes the stress.  In Voigt notation, let
+\begin{equation}
+  p = \frac{1}{3}\operatorname{tr}\boldsymbol{\sigma},\qquad
+  \mathbf{s}=\boldsymbol{\sigma}-p\mathbf{I},\qquad
+  q=\sqrt{\frac{3}{2}\mathbf{s}:\mathbf{s}}.
+\end{equation}
+The code computes a knockdown factor
+\begin{equation}
+  k^n =
+  \begin{cases}
+  0, & t^n-\Delta t/2\le t_e < t^n+\Delta t/2,\\
+  \max\left(0,1-\dfrac{20\Delta t(t^n-t_s)}{(t_e-t_s)^2}\right), & \text{otherwise},
+  \end{cases}
+  \label{eq:anneal-knockdown}
+\end{equation}
+then writes
+\begin{equation}
+  \boldsymbol{\sigma}_{\mathrm{old}}^{\mathrm{new}}
+  = p\mathbf{I}+k^n\mathbf{s}.
+  \label{eq:anneal-stress-update}
+\end{equation}
+The implementation describes this as a gradual annealing of deviatoric stress.  Because it acts on a history variable rather than solving a thermal relaxation equation, it should be interpreted as an algorithmic material-state operation.  This is compatible with history-dependent MPM formulations in which particles carry constitutive state variables between grid projection phases \cite{sulsky1994history,sulsky1995solid}.
+
+\begin{lstlisting}[caption={Anneal event pseudocode.}]
+for region in particleRegions:
+  if region.name == targetRegion or targetRegion == "all":
+    for subRegion in region.subRegions:
+      material = subRegion.solidMaterial
+      require material.has("oldStress")
+      for p in material.points:
+        sigma = material.oldStress[p]
+        (meanStress, q, deviator) = stressDecomposition(sigma)
+        k = annealKnockdown(time_n, dt, startTime, endTime)
+        material.oldStress[p] = stressRecomposition(meanStress, k*q, deviator)
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+The current runtime branch does not explicitly set \texttt{isComplete} for \texttt{Anneal}; the event naturally stops being active after its time window.  A future implementation may choose to mark it complete at the final event step for restart clarity.
+
+\subsection{\texttt{BodyForceUpdate}}
+\label{subsec:event-body-force-update}
+\index{events!BodyForceUpdate}
+\index{body force}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{bodyForce}, a length-three vector.  If omitted, the vector is initialized to zero.
+\end{description}
+
+\paragraph{Algorithm.}
+This one-shot event overwrites the solver-level body-force vector \texttt{m\_bodyForce}.  Subsequent particle force construction assigns this vector to each particle, limited by the active spatial dimension.  In the semidiscrete balance of momentum, the event changes the body-force contribution
+\begin{equation}
+  \mathbf{f}^{\mathrm{body}}_I
+  = \sum_p m_p N_I(\mathbf{x}_p)\,\mathbf{b},
+  \label{eq:body-force-p2g}
+\end{equation}
+where $N_I$ is the grid basis function and $\mathbf{b}$ is the updated acceleration-like body-force vector.  This is the usual MPM weak-form load projection from material points to the background grid \cite{sulsky1994history,sulsky1995solid}.
+
+\begin{lstlisting}[caption={BodyForceUpdate event pseudocode.}]
+if event active:
+  solver.bodyForce = event.bodyForce
+  event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{BoreholePressure}}
+\label{subsec:event-borehole-pressure}
+\index{events!BoreholePressure}
+\index{borehole pressure}
+\index{background stress}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{boreholeRadius}; \texttt{startPressure}; \texttt{endPressure}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is the event's initialized interpolation type, which is cosine in the current source.  The radius must be non-negative.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{BoreholePressure} imposes a virtual fluid pressure in void space inside an infinite cylinder aligned with the $z$ axis and centered at the origin in the $x$-$y$ plane.  At every active step, the event evaluates
+\begin{equation}
+  p_b(t^n)=I(t^n;t_s,t_e,p_s,p_e),
+\end{equation}
+using Eq.~\eqref{eq:event-interpolation}, enables the borehole-pressure flag, stores the radius, and writes the background stress
+\begin{equation}
+  \boldsymbol{\sigma}^{\mathrm{bg}}_b = -p_b\mathbf{I}.
+\end{equation}
+During the grid-background-stress update, every grid node satisfying
+\begin{equation}
+  X_I^2+Y_I^2 < R_b^2
+\end{equation}
+receives this background stress.  The internal-force projection then uses the background-stress-corrected stress.  In abstract notation,
+\begin{equation}
+  \mathbf{f}^{\mathrm{int}}_I
+  = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-q_p\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
+  \label{eq:background-stress-force}
+\end{equation}
+where $q_p$ denotes the particle-level artificial viscosity or pressure-like correction where active.  This converts a prescribed pressure region into the same weak-form force balance used by the standard MPM update, avoiding explicit surface tracking for this pressure boundary.  The approach is algorithmic rather than a general immersed-boundary formulation, but it fits the particle-grid balance framework of MPM \cite{sulsky1994history,sulsky1995solid}.
+
+\begin{lstlisting}[caption={BoreholePressure event pseudocode.}]
+if event active:
+  p = interpolate(time_n, startTime, endTime, startPressure, endPressure, interpType)
+  solver.enableBoreholePressure = true
+  solver.boreholeRadius = boreholeRadius
+  solver.boreholeStress = [-p, -p, -p, 0, 0, 0]
+
+for grid node I:
+  if X[I]^2 + Y[I]^2 < boreholeRadius^2:
+    gridBackgroundStress[I] = solver.boreholeStress
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+The current event does not reset the borehole-pressure flag or stress after \texttt{endTime}; after the event window closes, the most recently assigned background stress remains in the solver state unless a later event or solver initialization changes it.
+
+\subsection{\texttt{CohesiveZone}}
+\label{sec:event-cohesivezone}
+\label{subsec:event-cohesive-zone}
+\index{events!CohesiveZone}
+\index{cohesive zone}
+\index{fracture}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{regionNames}; \texttt{constitutiveModels}; \texttt{czTags}.  The three arrays must be non-empty and must have identical lengths.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{czVolumeNormalization}, default \texttt{1}; \texttt{computeNormalsAndPositions}, default \texttt{0}; \texttt{normalsAndPositionsMethod}, default \texttt{LogisticRegression}; \texttt{czSurfaceDisplacementUpdate}, default \texttt{TypeB}.  The two Boolean-like flags \texttt{czVolumeNormalization} and \texttt{computeNormalsAndPositions} must be either \texttt{0} or \texttt{1}.
+\end{description}
+
+\paragraph{Algorithm.}
+The \texttt{CohesiveZone} event dynamically creates and later removes cohesive-zone regions.  Each entry of the input arrays defines one cohesive-zone region name, one cohesive constitutive model, and one tag identifying the particle/interface set.  At the start of the event window, the global particle-surface normal and position computation controls are copied from the event to the solver.  For each requested cohesive-zone region not already present, the event creates a \texttt{CohesiveZoneRegion}, stores its tag and algorithmic controls, clones the named cohesive constitutive relation from the domain constitutive manager, allocates one quadrature point per cohesive-zone entry, and registers the material model on the new region.  When $t^n \ge t_e-\Delta t/2$, the region is removed and the event is marked complete.
+
+The event is coupled to the dedicated cohesive-zone update in the solver step sequence.  When a newly created cohesive-zone region is detected, the solver resets cohesive surface flags, projects surface normals to the grid, and initializes the cohesive reference configuration.  During active cohesive-zone evolution, the solver forms a displacement jump across tagged surfaces and evaluates the cohesive traction through the region's constitutive model.  In generic notation,
+\begin{equation}
+  \llbracket\mathbf{u}\rrbracket = \mathbf{u}^{+}-\mathbf{u}^{-},\qquad
+  \mathbf{t}_{\mathrm{cz}} = \mathcal{T}(\llbracket\mathbf{u}\rrbracket,\mathbf{n}_0,\boldsymbol{\alpha}),
+  \label{eq:cz-traction}
+\end{equation}
+where $\mathbf{n}_0$ is the reference surface normal and $\boldsymbol{\alpha}$ denotes cohesive history variables.  The resulting cohesive force is mapped back to particles/nodes by the same particle-grid machinery used elsewhere in the solver.  The use of explicitly tracked surface/interface state is closely related to MPM treatments of contact, cracks, and field-gradient partitioning by Bardenhagen, Nairn, and Homel, where material discontinuities are represented without conforming remeshing of a Lagrangian mesh \cite{bardenhagen2001contact,nairn2003cramp,homel2016dfg}.
+
+\begin{lstlisting}[caption={CohesiveZone event pseudocode.}]
+if active near startTime:
+  solver.computeNormalsAndPositions = event.computeNormalsAndPositions
+  solver.normalsAndPositionsMethod  = event.normalsAndPositionsMethod
+
+for k in range(numberOfCohesiveZones):
+  name  = regionNames[k]
+  model = constitutiveModels[k]
+  tag   = czTags[k]
+  if not cohesiveZoneManager.hasRegion(name):
+    region = cohesiveZoneManager.addRegion(name)
+    region.tag = tag
+    region.czVolumeNormalization = czVolumeNormalization
+    region.surfaceDisplacementUpdate = czSurfaceDisplacementUpdate
+    region.material = cloneConstitutiveModel(model)
+    region.material.allocateConstitutiveData(region, oneQuadraturePoint)
+  if time_n >= endTime - 0.5*dt:
+    cohesiveZoneManager.removeRegion(name)
+    event.isComplete = true
+\end{lstlisting}
+
+\paragraph{Publication note.}
+A paper-level description should separate the event, which creates/removes cohesive-zone regions, from the cohesive-zone constitutive law, which supplies $\mathcal{T}$ in Eq.~\eqref{eq:cz-traction}.  The latter belongs in the constitutive-model chapter or linked material-model report.
+
+\subsection{\texttt{ConfiningPressure}}
+\label{subsec:event-confining-pressure}
+\index{events!ConfiningPressure}
+\index{confining pressure}
+\index{background stress}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{confiningPressureBoxMin}, a length-three vector; \texttt{confiningPressureBoxMax}, a length-three vector; \texttt{startPressure}; \texttt{endPressure}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is the event's initialized interpolation type, which is cosine in the current source.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{ConfiningPressure} applies a virtual hydrostatic pressure to grid nodes outside a user-specified axis-aligned box.  Let $\mathbf{X}^{\min}$ and $\mathbf{X}^{\max}$ denote the two box corners.  During each active event step, the pressure
+\begin{equation}
+  p_c(t^n)=I(t^n;t_s,t_e,p_s,p_e)
+\end{equation}
+sets
+\begin{equation}
+  \boldsymbol{\sigma}^{\mathrm{bg}}_c=-p_c\mathbf{I}.
+\end{equation}
+A grid node is assigned this stress if any coordinate lies outside the box,
+\begin{equation}
+  X_{I,j}<X^{\min}_j\quad \text{or}\quad X_{I,j}>X^{\max}_j
+  \quad \text{for at least one } j\in\{1,2,3\}.
+\end{equation}
+The background stress then enters the internal-force calculation through Eq.~\eqref{eq:background-stress-force}.  This event is useful for triaxial-type calculations and pressure initialization workflows because it can impose a pressure-like exterior traction without explicit contact facets.
+
+\begin{lstlisting}[caption={ConfiningPressure event pseudocode.}]
+if event active:
+  p = interpolate(time_n, startTime, endTime, startPressure, endPressure, interpType)
+  solver.enableConfiningPressure = true
+  solver.confiningPressureBoxMin = event.confiningPressureBoxMin
+  solver.confiningPressureBoxMax = event.confiningPressureBoxMax
+  solver.confiningStress = [-p, -p, -p, 0, 0, 0]
+
+for grid node I:
+  if any_coordinate_outside_box(X[I], boxMin, boxMax):
+    gridBackgroundStress[I] = solver.confiningStress
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+Like \texttt{BoreholePressure}, this event is not marked complete at \texttt{endTime} in the current runtime branch and does not explicitly reset the confining-pressure flag.
+
+\subsection{\texttt{CrystalHeal}}
+\label{subsec:event-crystal-heal}
+\index{events!CrystalHeal}
+\index{healing!crystal}
+\index{damage}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{targetRegion}, a particle region name or \texttt{all}; \texttt{healType}, an integer selecting the healing rule.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\item[\textbf{Internal state.}] \texttt{markedParticlesToHeal}, a non-input flag used to indicate that candidate particles have been identified.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{CrystalHeal} is a damage-state event for regions containing particle damage, particle damage gradients, particle stresses, deformation gradients, and CPDI particle vectors.  It first identifies candidate particles to heal and then gradually reduces their damage over the event window.  If the constitutive model exposes \texttt{crackSpeed}, the code multiplies it by $10^{-100}$ while the healing process is active and restores it by multiplying by $10^{100}$ after completion.
+
+For a particle with damage $d_p$, damage-gradient vector $\mathbf{g}_p$, stress $\boldsymbol{\sigma}_p$, and deformation gradient $\mathbf{F}_p$, the event computes
+\begin{equation}
+  \sigma_{n,p} = \mathbf{g}_p\cdot\operatorname{sym}(\boldsymbol{\sigma}_p)\mathbf{g}_p,
+  \qquad J_p = \det\mathbf{F}_p.
+  \label{eq:crystal-heal-indicators}
+\end{equation}
+A particle is marked if $d_p>0$ and one of the following conditions holds: \texttt{healType} is \texttt{1}; \texttt{healType} is \texttt{3}; or \texttt{healType} is \texttt{0} and either $\sigma_{n,p}<0$ or $J_p<1$.  If \texttt{healType} is \texttt{3} and $J_p>1$, the code also rescales the deformation gradient and CPDI domain vectors.  Let
+\begin{equation}
+  a_p = J_p^\beta,
+  \qquad
+  \beta=\begin{cases}1/2, & \text{plane strain},\\1/3, & \text{three dimensions}.
+  \end{cases}
+\end{equation}
+The event applies
+\begin{equation}
+  \mathbf{F}_p \leftarrow a_p^{-1}\mathbf{F}_p,
+  \qquad
+  \mathbf{r}_{p,i}\leftarrow a_p\mathbf{r}_{p,i},
+  \qquad
+  V^0_p \leftarrow J_p V^0_p,
+  \label{eq:crystal-heal-volume-scaling}
+\end{equation}
+with the third CPDI vector omitted in plane strain.  On subsequent active steps, marked particles have their damage reduced recursively as
+\begin{equation}
+  d_p^{n+1}=d_p^n\max\left(0,1-\dfrac{20\Delta t(t^n-t_s)}{(t_e-t_s)^2}\right),
+  \label{eq:crystal-heal-damage-decay}
+\end{equation}
+with exact zero enforced when the step crosses \texttt{endTime}.  This event is algorithmically connected to MPM fracture and discontinuity treatments in which cracks, damage, and material state are particle data rather than mesh data \cite{nairn2003cramp,homel2016dfg,homel2016domaindef}.
+
+\begin{lstlisting}[caption={CrystalHeal event pseudocode.}]
+for p in target particles:
+  if not markedParticlesToHeal:
+    if material.has("crackSpeed"):
+      material.crackSpeed *= 1e-100
+    normalStress = damageGradient[p] dot sym(stress[p]) damageGradient[p]
+    J = det(F[p])
+    if damage[p] > 0 and healingCriterion(healType, normalStress, J):
+      crystalHealFlag[p] = 1
+      if healType == 3 and J > 1:
+        scale F[p], CPDI r-vectors, and reference volume
+    else:
+      crystalHealFlag[p] = 0
+  else:
+    if crossing endTime:
+      damage[p] = 0 for flagged particles
+      event.isComplete = true
+    else:
+      damage[p] *= recursiveKnockdown(time_n, dt, startTime, endTime)
+\end{lstlisting}
+
+\subsection{\texttt{DeformationUpdate}}
+\label{subsec:event-deformation-update}
+\index{events!DeformationUpdate}
+\index{Ftable}
+\index{stress control}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{prescribedFTable}, default \texttt{0}; intended \texttt{prescribedBoundaryFTable}, default \texttt{0}; \texttt{stressControl}, a length-three integer vector with one flag per coordinate direction.  If \texttt{stressControl} is supplied, it must have length three.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{DeformationUpdate} switches global deformation and stress-control modes during a run.  When active, it copies the event's flags to the solver:
+\begin{equation}
+  \texttt{m\_prescribedFTable}\leftarrow\texttt{prescribedFTable},\qquad
+  \texttt{m\_prescribedBoundaryFTable}\leftarrow\texttt{prescribedBoundaryFTable},\qquad
+  \texttt{m\_stressControl}\leftarrow\texttt{stressControl}.
+\end{equation}
+These flags are consumed by the solver's prescribed-deformation and stress-control logic, including the update of domain deformation measures and, where enabled, background-grid resizing and boundary kinematics.  In publication notation, the event modifies which components of the macroscopic deformation gradient $\overline{\mathbf{F}}$ are prescribed and which components are adjusted by stress-control feedback, but the feedback law and the time-table interpolation remain solver-level controls rather than event-specific algorithms.
+
+\begin{lstlisting}[caption={DeformationUpdate event pseudocode.}]
+if event active:
+  solver.prescribedFTable = event.prescribedFTable
+  solver.prescribedBoundaryFTable = event.prescribedBoundaryFTable
+  solver.stressControl = event.stressControl
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+In the reviewed source, both \texttt{prescribedFTableString()} and \texttt{prescribedBoundaryFTableString()} return the XML key \texttt{prescribedFTable}.  The generated schema therefore shows two optional entries with the same key.  This appears to be an implementation typo; the intended second key is documented here as \texttt{prescribedBoundaryFTable} so the manual can flag the ambiguity for code maintenance.
+
+\subsection{\texttt{FrictionCoefficientSwap}}
+\label{subsec:event-friction-coefficient-swap}
+\index{events!FrictionCoefficientSwap}
+\index{friction coefficient}
+\index{contact}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{frictionCoefficient}, default \texttt{-1}; \texttt{frictionCoefficientTable}, a table for group-dependent friction coefficients.
+\end{description}
+
+\paragraph{Algorithm.}
+This one-shot event updates the global friction coefficient and optional coefficient table, then calls the solver's friction-coefficient initialization routine.  The resulting coefficients are subsequently used by contact and boundary algorithms.  A scalar Coulomb-type coefficient enters contact algorithms through a tangential slip limit of the form
+\begin{equation}
+  \|\mathbf{t}_T\| \le \mu\,\max(0,-t_N),
+  \label{eq:coulomb-limit}
+\end{equation}
+where $t_N$ and $\mathbf{t}_T$ are normal and tangential contact tractions.  The exact contact update belongs to the contact section; the event's role is to change the coefficients used by that update.  The event is related to the family of multi-material MPM contact methods described by Bardenhagen and co-workers \cite{bardenhagen2001contact,bardenhagen2000granular}.
+
+\begin{lstlisting}[caption={FrictionCoefficientSwap event pseudocode.}]
+if event active:
+  solver.frictionCoefficient = event.frictionCoefficient
+  solver.frictionCoefficientTable = event.frictionCoefficientTable
+  solver.initializeFrictionCoefficients()
+  event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{Heal}}
+\label{subsec:event-heal}
+\index{events!Heal}
+\index{healing!surface}
+\index{surface flags}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{targetRegion}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{Heal} is a one-shot surface-state reset.  It sets the solver's surface-healing flag and visits all particle subregions.  For each active particle, if the surface flag is less than \texttt{3}, it resets the flag to zero.  Flags \texttt{3} and \texttt{4}, which denote cohesive surface states in the current code comments, are intentionally preserved.  The operation can be interpreted as removing ordinary free-surface/contact classifications while leaving cohesive interfaces intact.
+
+\begin{lstlisting}[caption={Heal event pseudocode.}]
+if event active:
+  solver.surfaceHealing = true
+  for subRegion in allParticleSubRegions:
+    for p in activeParticles(subRegion):
+      if particleSurfaceFlag[p] < 3:
+        particleSurfaceFlag[p] = 0
+  event.isComplete = true
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+Although \texttt{targetRegion} is registered as a required input, the dynamic cast to \texttt{HealMPMEvent} is commented out in the reviewed runtime branch.  The current event therefore applies to all particle subregions, not only to the named target region.
+
+\subsection{\texttt{InitializeStress}}
+\label{subsec:event-initialize-stress}
+\index{events!InitializeStress}
+\index{initial stress}
+\index{hydrostatic stress}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{pressure}; \texttt{targetRegion}, a particle region name or \texttt{all}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+This one-shot event initializes a hydrostatic particle stress and the matching constitutive-model history stress.  The code uses compression-negative stress convention,
+\begin{equation}
+  \sigma_0=-p_0,
+  \qquad
+  \boldsymbol{\sigma}_p=\sigma_0\mathbf{I}.
+  \label{eq:initialize-stress}
+\end{equation}
+For each selected particle subregion, the event writes \texttt{particleStress} to $[\sigma_0,\sigma_0,\sigma_0,0,0,0]$ in Voigt order.  It then obtains the subregion's constitutive model and requires the \texttt{oldStress} wrapper; that wrapper is initialized to the same hydrostatic state at all constitutive points.  Consistently initializing both particle stress and material history is important in MPM because particles carry history data between grid solves \cite{sulsky1994history,sulsky1995solid}.
+
+\begin{lstlisting}[caption={InitializeStress event pseudocode.}]
+initialMeanStress = -pressure
+for region in particleRegions:
+  if region.name == targetRegion or targetRegion == "all":
+    for subRegion in region.subRegions:
+      for p in activeParticles(subRegion):
+        particleStress[p] = [initialMeanStress, initialMeanStress,
+                             initialMeanStress, 0, 0, 0]
+      material = subRegion.solidMaterial
+      require material.has("oldStress")
+      for q in material.points:
+        material.oldStress[q] = [initialMeanStress, initialMeanStress,
+                                 initialMeanStress, 0, 0, 0]
+  event.isComplete = true
+\end{lstlisting}
+
+\paragraph{Modeling note.}
+The source comments emphasize that this is a simple hydrostatic initialization.  A general nonhydrostatic state, an inelastic state, or a hyperelastic state may require additional constitutive variables and equilibrium boundary conditions to be initialized consistently.
+
+\subsection{\texttt{InsertPeriodicContactSurfaces}}
+\label{subsec:event-insert-periodic-contact-surfaces}
+\index{events!InsertPeriodicContactSurfaces}
+\index{periodic boundaries}
+\index{surface flags}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+This one-shot event tags particles near periodic domain faces as contact surfaces.  It reads periodicity flags from the spatial partition, grid cell sizes $h_j$, and global bounds $X_j^{\min},X_j^{\max}$.  A particle is tagged if, in at least one periodic coordinate direction,
+\begin{equation}
+  x_{p,j}-X_j^{\min}<h_j
+  \quad\text{or}\quad
+  X_j^{\max}-x_{p,j}<h_j.
+\end{equation}
+When this condition is met, \texttt{particleSurfaceFlag[p]} is set to \texttt{2}.  This provides a simple way to seed surface/contact information on particles adjacent to periodic faces before subsequent contact and neighborhood updates.
+
+\begin{lstlisting}[caption={InsertPeriodicContactSurfaces event pseudocode.}]
+periodic = partition.periodicFlags()
+for p in all active particles:
+  for direction j in 0,1,2:
+    nearLower = particlePosition[p][j] - globalMin[j] < h[j]
+    nearUpper = globalMax[j] - particlePosition[p][j] < h[j]
+    if periodic[j] and (nearLower or nearUpper):
+      particleSurfaceFlag[p] = 2
+      break
+if event active:
+  event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{MachineSample}}
+\label{subsec:event-machine-sample}
+\index{events!MachineSample}
+\index{sample machining}
+\index{particle deletion}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{sampleType}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{filletRadius}, default \texttt{-1}; \texttt{gaugeLength}, default \texttt{-1}; \texttt{gaugeRadius}, default \texttt{-1}; \texttt{diskRadius}, default \texttt{-1}.
+\item[\textbf{Conditional requirements.}] \texttt{sampleType="dogbone"} requires non-negative \texttt{filletRadius}, \texttt{gaugeLength}, and \texttt{gaugeRadius}; \texttt{sampleType="brazilianDisk"} requires non-negative \texttt{diskRadius}; \texttt{sampleType="cylinder"} requires non-negative \texttt{gaugeRadius}.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{MachineSample} flags particles for deletion to machine a generated particle block into a common test-specimen shape.  The event computes the domain center
+\begin{equation}
+  \mathbf{c}=\frac{1}{2}\left(\mathbf{X}^{\min}+\mathbf{X}^{\max}\right)
+\end{equation}
+and uses geometric tests to set \texttt{particleDeleteFlag[p] = 1}.  The actual compaction/deletion of flagged particles occurs later in the explicit-step cleanup logic.
+
+For \texttt{sampleType="dogbone"}, machining is aligned with the $y$ direction.  Let $L_g$ be the gauge length, $R_g$ the gauge radius, $R_f$ the fillet radius, and $L_m=2R_f+L_g$ the machined-zone length.  Inside the central machined span, the radial distance is
+\begin{equation}
+  r_{xz}^2=(x_p-c_x)^2+(z_p-c_z)^2.
+\end{equation}
+Particles inside the gauge section are deleted if $r_{xz}>R_g$.  In the fillet sections, with
+\begin{equation}
+  y_f = |y_p-c_y|-\frac{L_g}{2},
+  \qquad
+  R(y_f)=R_f-\sqrt{R_f^2-y_f^2}+R_g,
+\end{equation}
+particles are deleted if $r_{xz}>R(y_f)$.  For \texttt{sampleType="brazilianDisk"}, particles outside the sphere of radius \texttt{diskRadius} centered at $\mathbf{c}$ are deleted.  For \texttt{sampleType="cylinder"}, particles with $r_{xz}>R_g$ are deleted.
+
+\begin{lstlisting}[caption={MachineSample event pseudocode.}]
+center = 0.5*(globalMin + globalMax)
+for p in active particles:
+  if sampleType == "dogbone":
+    if p is within machined y-span:
+      r2 = (x[p]-center.x)^2 + (z[p]-center.z)^2
+      if p is within gauge section:
+        delete if r2 > gaugeRadius^2
+      else:
+        y = abs(y[p]-center.y) - 0.5*gaugeLength
+        radius = filletRadius - sqrt(filletRadius^2 - y^2) + gaugeRadius
+        delete if r2 > radius^2
+  if sampleType == "brazilianDisk":
+    delete if norm(x[p]-center)^2 > diskRadius^2
+  if sampleType == "cylinder":
+    delete if (x[p]-center.x)^2 + (z[p]-center.z)^2 > gaugeRadius^2
+event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{MaterialSwap}}
+\label{subsec:event-material-swap}
+\index{events!MaterialSwap}
+\index{material swap}
+\index{particle regions}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{sourceRegion}; \texttt{destinationRegion}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{MaterialSwap} moves all particles and particle-carried state from one particle region to another.  It assumes that the source and destination particle regions have aligned subregion lists representing corresponding particle types.  For each subregion pair, the destination is resized to the source size, particle wrappers whose names begin with \texttt{particle} are copied, and the source subregion is subsequently resized to zero.  Most particle fields are copied directly.  Two fields are recomputed from the destination constitutive-model reference density $\rho^0_{\mathrm{dst}}$:
+\begin{equation}
+  m^{\mathrm{dst}}_p = \rho^0_{\mathrm{dst}} V^0_{p,\mathrm{src}},
+  \qquad
+  \rho^{\mathrm{dst}}_p = \frac{\rho^0_{\mathrm{dst}}V^0_{p,\mathrm{src}}}{V_{p,\mathrm{src}}}.
+\end{equation}
+The event also copies the source constitutive \texttt{oldStress} into the destination constitutive \texttt{oldStress}.  After the swap, active particle indices are refreshed.  Because MPM material history is particle-resident, the event can be viewed as changing the material assignment while preserving or reconstructing selected history variables \cite{sulsky1994history,steffen2008choices}.
+
+\begin{lstlisting}[caption={MaterialSwap event pseudocode.}]
+source = particleManager.region(sourceRegion)
+destination = particleManager.region(destinationRegion)
+for each corresponding sourceSubRegion, destinationSubRegion:
+  destinationSubRegion.resize(sourceSubRegion.size)
+  for wrapper in sourceSubRegion.wrappers:
+    if wrapper.name starts with "particle":
+      if wrapper.name in {particleMass, particleDensity}:
+        recompute using destination reference density
+      else:
+        copy source wrapper to destination wrapper
+  copy sourceMaterial.oldStress to destinationMaterial.oldStress
+  sourceSubRegion.resize(0)
+refresh active particle indices
+event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{PolymerHeal}}
+\label{subsec:event-polymer-heal}
+\index{events!PolymerHeal}
+\index{healing!polymer}
+\index{StrainHardeningPolymer}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{targetRegion}, a particle region name or \texttt{all}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{PolymerHeal} is a one-shot state reset for subregions whose constitutive catalog name is \texttt{StrainHardeningPolymer}.  For each selected particle with \texttt{particleDamage} equal to one within a tolerance of $10^{-16}$, the event sets the damage to zero, resets the particle deformation gradient to the identity, sets the particle reference volume equal to its current volume, and copies current CPDI particle vectors to reference CPDI particle vectors:
+\begin{equation}
+  d_p\leftarrow 0,
+  \qquad
+  \mathbf{F}_p\leftarrow\mathbf{I},
+  \qquad
+  V^0_p\leftarrow V_p,
+  \qquad
+  \mathbf{r}^0_{p,i}\leftarrow\mathbf{r}_{p,i}.
+  \label{eq:polymer-heal-reset}
+\end{equation}
+The code comments mention retaining rotation as a possible future refinement, but the current implementation resets $\mathbf{F}_p$ exactly to the identity.  The event is material-model-specific and should be documented together with the strain-hardening polymer law in the LLNL-specific or material-model reports.
+
+\begin{lstlisting}[caption={PolymerHeal event pseudocode.}]
+for region in particleRegions:
+  if region.name == targetRegion or targetRegion == "all":
+    for subRegion in region.subRegions:
+      material = subRegion.solidMaterial
+      if material.catalogName == "StrainHardeningPolymer":
+        for p in activeParticles(subRegion):
+          if abs(particleDamage[p] - 1.0) <= 1e-16:
+            particleDamage[p] = 0
+            F[p] = identity
+            referenceVolume[p] = volume[p]
+            referenceRVectors[p] = rVectors[p]
+event.isComplete = true
+\end{lstlisting}
+
+\subsection{\texttt{ResetDeformationGradient}}
+\label{subsec:event-reset-deformation-gradient}
+\index{events!ResetDeformationGradient}
+\index{deformation gradient!reset}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+This one-shot event does not directly loop over particles in the event manager.  Instead, it sets the solver flag \texttt{m\_resetDefGradForScaledSurfaceParticles = 1} and marks the event complete.  The explicit-step cleanup and grid-resize phase later checks this flag and resets selected deformation gradients associated with scaled surface particles.  The separation is important: the event schedules a reset, but the reset is applied after the solver has completed the output, resize, and particle-cleanup logic for the step.
+
+\begin{lstlisting}[caption={ResetDeformationGradient event pseudocode.}]
+if event active:
+  solver.resetDefGradForScaledSurfaceParticles = true
+  event.isComplete = true
+
+later in cleanup step:
+  if solver.resetDefGradForScaledSurfaceParticles:
+    reset selected deformation gradients for scaled surface particles
+\end{lstlisting}
+
+\subsection{\texttt{TemperatureProfile}}
+\label{subsec:event-temperature-profile}
+\index{events!TemperatureProfile}
+\index{temperature table}
+\index{thermal loading}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\item[\textbf{Solver-level dependencies.}] The event has no event-specific temperature values.  It uses the solver's \texttt{temperatureTable} and \texttt{temperatureTableInterpType} controls.
+\end{description}
+
+\paragraph{Algorithm.}
+When active, \texttt{TemperatureProfile} interpolates the solver-level temperature table to obtain a domain temperature $T(t^n)$ and temperature rate $\dot{T}(t^n)$.  It then assigns these values to every active particle and writes the temperature to every cohesive-zone entry:
+\begin{equation}
+  T_p\leftarrow T(t^n),
+  \qquad
+  \dot{T}_p\leftarrow \dot{T}(t^n),
+  \qquad
+  T_{\mathrm{cz}}\leftarrow T(t^n).
+  \label{eq:temperature-profile-update}
+\end{equation}
+This is a spatially uniform thermal loading event; any spatially varying thermal field would require a different event or constitutive coupling.
+
+\begin{lstlisting}[caption={TemperatureProfile event pseudocode.}]
+if event active:
+  (domainTemperature, domainTemperatureRate) = interpolateTemperatureTable(time_n, dt)
+  for p in all active particles:
+    particleTemperature[p] = domainTemperature
+    particleTemperatureRate[p] = domainTemperatureRate
+  for cz in all cohesive-zone entries:
+    czTemperature[cz] = domainTemperature
+\end{lstlisting}
+
+\paragraph{Implementation note.}
+The current branch does not set \texttt{isComplete} for \texttt{TemperatureProfile}; it remains active only while the event time window is satisfied.
+
+\subsection{\texttt{TemperatureRamp}}
+\label{subsec:event-temperature-ramp}
+\index{events!TemperatureRamp}
+\index{temperature ramp}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{startTemperature}; \texttt{endTemperature}.  The two temperatures must be non-negative.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep/sigmoid according to the source description.  The default is the event's initialized interpolation type.
+\end{description}
+
+\paragraph{Registered behavior and current runtime status.}
+\texttt{TemperatureRamp} is registered as an event input class and validates the start/end temperatures and interpolation type, but the reviewed solver's \texttt{triggerEvents} dispatch does not contain a \texttt{TemperatureRamp} branch.  Therefore, in the current codebase, a \texttt{TemperatureRamp} block can be parsed but does not change particle or cohesive-zone temperatures during a run.  Users should use \texttt{TemperatureProfile} with a solver-level \texttt{temperatureTable} for executable temperature histories unless the runtime dispatch is extended.
+
+\paragraph{Intended algorithm if activated.}
+The natural event-level ramp would evaluate
+\begin{equation}
+  T(t^n)=I(t^n;t_s,t_e,T_s,T_e)
+\end{equation}
+and then assign $T_p$ and possibly $\dot{T}_p$ analogously to Eq.~\eqref{eq:temperature-profile-update}.  This is not performed by the current solver branch.
+
+\begin{lstlisting}[caption={TemperatureRamp registered-input pseudocode.}]
+# Current source:
+#   parse startTemperature, endTemperature, interpType
+#   validate temperatures are non-negative
+#   no triggerEvents dispatch branch is present
+\end{lstlisting}
+
+\subsection{\texttt{TransformParticles}}
+\label{subsec:event-transform-particles}
+\index{events!TransformParticles}
+\index{particle transform}
+\index{deformation gradient!transform}
+
+\paragraph{Inputs.}
+\begin{description}[leftmargin=*,style=nextline]
+\item[\textbf{Required.}] \texttt{startTime}.
+\item[\textbf{Optional.}] \texttt{endTime}.
+\end{description}
+
+\paragraph{Algorithm.}
+\texttt{TransformParticles} is handled by a separate event pass after the deformation-gradient update.  In the current source, it applies a fixed rotation of angle $\pi$ about the $z$ axis to every active particle position and deformation gradient:
+\begin{equation}
+  \mathbf{R}_z(\pi)=
+  \begin{bmatrix}
+  -1 & 0 & 0\\
+   0 &-1 & 0\\
+   0 & 0 & 1
+  \end{bmatrix},
+  \qquad
+  \mathbf{x}_p\leftarrow\mathbf{R}_z(\pi)\mathbf{x}_p,
+  \qquad
+  \mathbf{F}_p\leftarrow\mathbf{R}_z(\pi)\mathbf{F}_p.
+  \label{eq:transform-particles-rotation}
+\end{equation}
+The event is one-shot and is marked complete after the transform.  It currently has no inputs for target region, rotation angle, rotation axis, or translation; those would be natural extensions if the event is generalized.
+
+\begin{lstlisting}[caption={TransformParticles event pseudocode.}]
+if event active in post-deformation-gradient event pass:
+  R = rotation matrix for angle pi about z-axis
+  for p in all active particles:
+    particlePosition[p] = R * particlePosition[p]
+    particleDeformationGradient[p] = R * particleDeformationGradient[p]
+  event.isComplete = true
+\end{lstlisting}
+
+\subsection{Event-input summary}
+\label{subsec:event-input-summary}
+\index{events!input summary}
+
+Table~\ref{tab:events-manual-summary} summarizes the user-facing inputs discussed above.  Appendix~\ref{app:events} remains the code-derived source of truth for attribute names discovered directly from the source archive.
+
+{\footnotesize
+\newcommand{\eventtwoline}[2]{\begin{tabular}[t]{@{}l@{}}\texttt{#1}\\\texttt{#2}\end{tabular}}
+\newcommand{\eventthreeline}[3]{\begin{tabular}[t]{@{}l@{}}\texttt{#1}\\\texttt{#2}\\\texttt{#3}\end{tabular}}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.24\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}>{\raggedright\arraybackslash}p{0.38\linewidth}@{}}
+\caption{Manual summary of event inputs and execution status.}\label{tab:events-manual-summary}\\
+\toprule
+\textbf{Event} & \textbf{Required inputs beyond inherited fields} & \textbf{Optional inputs and notes}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Event} & \textbf{Required inputs beyond inherited fields} & \textbf{Optional inputs and notes}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{Anneal} & \texttt{targetRegion} & Active-window deviatoric-stress knockdown; does not explicitly mark complete.\\
+\eventtwoline{BodyForce}{Update} & None & \texttt{bodyForce}; one-shot.\\
+\eventtwoline{Borehole}{Pressure} & \texttt{boreholeRadius}, \texttt{startPressure}, \texttt{endPressure} & \texttt{interpType}; active-window pressure update; leaves last value in solver state.\\
+\eventtwoline{Cohesive}{Zone} & \texttt{regionNames}, \texttt{constitutiveModels}, \texttt{czTags} & \texttt{czVolumeNormalization}, \texttt{computeNormalsAndPositions}, \texttt{normalsAndPositionsMethod}, \texttt{czSurfaceDisplacementUpdate}.\\
+\eventtwoline{Confining}{Pressure} & \texttt{confiningPressureBoxMin}, \texttt{confiningPressureBoxMax}, \texttt{startPressure}, \texttt{endPressure} & \texttt{interpType}; active-window pressure update.\\
+\eventtwoline{Crystal}{Heal} & \texttt{targetRegion}, \texttt{healType} & Internal \texttt{markedParticlesToHeal}; damage decay until complete.\\
+\eventtwoline{Deformation}{Update} & None & \texttt{prescribedFTable}, intended \texttt{prescribedBoundaryFTable}, \texttt{stressControl}.\\
+\eventthreeline{Friction}{Coefficient}{Swap} & None & \texttt{frictionCoefficient}, \texttt{frictionCoefficientTable}; one-shot.\\
+\texttt{Heal} & \texttt{targetRegion} & Current runtime applies to all subregions; one-shot.\\
+\eventtwoline{Initialize}{Stress} & \texttt{pressure}, \texttt{targetRegion} & One-shot hydrostatic stress initialization.\\
+\eventthreeline{InsertPeriodic}{Contact}{Surfaces} & None & One-shot periodic-face surface tagging.\\
+\eventtwoline{Machine}{Sample} & \texttt{sampleType} & Shape-dependent radii/lengths: \texttt{filletRadius}, \texttt{gaugeLength}, \texttt{gaugeRadius}, \texttt{diskRadius}.\\
+\eventtwoline{Material}{Swap} & \texttt{sourceRegion}, \texttt{destinationRegion} & One-shot particle/material-state transfer.\\
+\eventtwoline{Polymer}{Heal} & \texttt{targetRegion} & One-shot reset for \texttt{StrainHardeningPolymer} damaged particles.\\
+\eventthreeline{Reset}{Deformation}{Gradient} & None & Schedules later deformation-gradient reset; one-shot.\\
+\eventtwoline{Temperature}{Profile} & None & Uses solver-level \texttt{temperatureTable}; active-window uniform temperature update.\\
+\eventtwoline{Temperature}{Ramp} & \texttt{startTemperature}, \texttt{endTemperature} & \texttt{interpType}; registered but not triggered in current solver dispatch.\\
+\eventtwoline{Transform}{Particles} & None & Fixed $\pi$ rotation about $z$; handled in later event pass; one-shot.\\
+\end{longtable}
+}
+
+PFW can generate the XML \texttt{MPMEvents} block from \texttt{pfw["mpmEventsString"]}.  The PFW layer also contains compatibility normalization for several legacy cohesive-zone snippets; however, event semantics at run time are governed by the solver dispatch described in this section.
+

@@ -1,0 +1,5384 @@
+{
+  "version": "VERSION_ID = v1.1.0",
+  "solver_wrappers": [
+    {
+      "name": "areaIntegrationMethod",
+      "flag": "OPTIONAL",
+      "default": "m_areaIntegrationMethod",
+      "restart": "NO_WRITE",
+      "description": "Method for performing nodal area integration",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 758
+    },
+    {
+      "name": "artificialViscosityQ0",
+      "flag": "OPTIONAL",
+      "default": "m_artificialViscosityQ0",
+      "restart": "NO_WRITE",
+      "description": "Artificial viscosity q0 parameter",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 764
+    },
+    {
+      "name": "artificialViscosityQ1",
+      "flag": "OPTIONAL",
+      "default": "m_artificialViscosityQ1",
+      "restart": "NO_WRITE",
+      "description": "Artificial viscosity q1 parameter",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 770
+    },
+    {
+      "name": "bcTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 776
+    },
+    {
+      "name": "binSizeMultiplier",
+      "flag": "OPTIONAL",
+      "default": "m_binSizeMultiplier",
+      "restart": "NO_WRITE",
+      "description": "Multiplier for setting bin size, used to speed up particle neighbor sorting",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 781
+    },
+    {
+      "name": "bodyForce",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores uniform body force",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 787
+    },
+    {
+      "name": "boreholeRadius",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Radius of borehole",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 792
+    },
+    {
+      "name": "boreholeStress",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores borehole stress state",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 797
+    },
+    {
+      "name": "boundaryConditionTypes",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:; * ; *",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 802
+    },
+    {
+      "name": "boundaryFaceCoefficientsOfRestitution",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Boundary face coefficients of restitution for BC type = 3 on x-, x+, y-, y+, z- and z+ faces.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 807
+    },
+    {
+      "name": "boundaryFaceFrictionCoefficients",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Boundary face fricition coefficients for BC type = 3 on x-, x+, y-, y+, z- and z+ faces.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 812
+    },
+    {
+      "name": "boxAverageHistory",
+      "flag": "OPTIONAL",
+      "default": "m_boxAverageHistory",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to output box average history",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 817
+    },
+    {
+      "name": "boxAverageMax",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Maximum corner position of box average",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 823
+    },
+    {
+      "name": "boxAverageMin",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Minimum corner position of box average",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 828
+    },
+    {
+      "name": "boxAverageResizeWithDomain",
+      "flag": "OPTIONAL",
+      "default": "m_boxAverageResizeWithDomain",
+      "restart": "WRITE_AND_READ",
+      "description": "Flag for whether to output box average integration domain updates with domainL",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 833
+    },
+    {
+      "name": "boxAverageWriteInterval",
+      "flag": "OPTIONAL",
+      "default": "m_boxAverageWriteInterval",
+      "restart": "NO_WRITE",
+      "description": "Interval between writing box averages to files",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 839
+    },
+    {
+      "name": "computeInternalEnergyAndTemperature",
+      "flag": "OPTIONAL",
+      "default": "m_computeInternalEnergyAndTemperature",
+      "restart": "NO_WRITE",
+      "description": "Deprecated compatibility flag. MPM particle thermal state is updated during the constitutive stress update.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 845
+    },
+    {
+      "name": "computeNodalArea",
+      "flag": "OPTIONAL",
+      "default": "m_computeNodalArea",
+      "restart": "NO_WRITE",
+      "description": "Option to compute nodal area from grid surface normals and positions (results may be inaccurate if implicit surface normals and positiosn are used)",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 851
+    },
+    {
+      "name": "computeParticleSurfaceNormalsAndPositions",
+      "flag": "OPTIONAL",
+      "default": "m_computeParticleSurfaceNormalsAndPositions",
+      "restart": "NO_WRITE",
+      "description": "Flag to compute particle surface normals and positions",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 857
+    },
+    {
+      "name": "computeSPHJacobian",
+      "flag": "OPTIONAL",
+      "default": "m_computeSPHJacobian",
+      "restart": "NO_WRITE",
+      "description": "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 863
+    },
+    {
+      "name": "confiningPressureBoxMax",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "xyz coordinate of confining pressure box max corner",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 870
+    },
+    {
+      "name": "confiningPressureBoxMin",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "xyz coordinate of confining pressure box min corner",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 875
+    },
+    {
+      "name": "confiningStress",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores confining stress state",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 880
+    },
+    {
+      "name": "contactGapCorrection",
+      "flag": "OPTIONAL",
+      "default": "m_contactGapCorrection",
+      "restart": "NO_WRITE",
+      "description": "Flag for mitigating contact gaps",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 885
+    },
+    {
+      "name": "contactNormalExponent",
+      "flag": "OPTIONAL",
+      "default": "m_contactNormalExponent",
+      "restart": "NO_WRITE",
+      "description": "Exponent value for surface normal weights in contact normal type aligned",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 891
+    },
+    {
+      "name": "contactNormalType",
+      "flag": "OPTIONAL",
+      "default": "m_contactNormalType",
+      "restart": "NO_WRITE",
+      "description": "Flag for contact normal type",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 897
+    },
+    {
+      "name": "cpdiDomainScaling",
+      "flag": "OPTIONAL",
+      "default": "m_cpdiDomainScaling",
+      "restart": "NO_WRITE",
+      "description": "Option for CPDI domain scaling",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 903
+    },
+    {
+      "name": "crackTipDetectionThreshold",
+      "flag": "OPTIONAL",
+      "default": "m_crackTipDetectionThreshold",
+      "restart": "NO_WRITE",
+      "description": "Set threshold for crack-tip detection",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 909
+    },
+    {
+      "name": "damageFieldPartitioning",
+      "flag": "OPTIONAL",
+      "default": "m_damageFieldPartitioning",
+      "restart": "NO_WRITE",
+      "description": "Flag for using the gradient of the particle damage field to partition material into separate velocity fields",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 915
+    },
+    {
+      "name": "directionalOverlapCorrection",
+      "flag": "OPTIONAL",
+      "default": "m_directionalOverlapCorrection",
+      "restart": "NO_WRITE",
+      "description": "Flag for mitigating pile-up of particles at contact interfaces",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 921
+    },
+    {
+      "name": "disableSurfaceNormalsAndPositionsOnCPDIScaling",
+      "flag": "OPTIONAL",
+      "default": "m_disableSurfaceNormalsAndPositionsOnCPDIScaling",
+      "restart": "NO_WRITE",
+      "description": "Option for disabling explicit surface normals and positions when a particle has severely deformed",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 927
+    },
+    {
+      "name": "disableSurfaceNormalsAndPositionsOnDamage",
+      "flag": "OPTIONAL",
+      "default": "m_disableSurfaceNormalsAndPositionsOnDamage",
+      "restart": "NO_WRITE",
+      "description": "Option for disabling explicit surface normals and positions when a particle has been severely damaged",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 933
+    },
+    {
+      "name": "domainExtent",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "domain extent",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 939
+    },
+    {
+      "name": "domainF",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "domain deformation gradient",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 944
+    },
+    {
+      "name": "domainL",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "domain L",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 949
+    },
+    {
+      "name": "domainStress",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stores current target domain stress as driven by stress control",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 954
+    },
+    {
+      "name": "domainTemperature",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stores current target domain temperature as driven by temp table or other event",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 959
+    },
+    {
+      "name": "domainTemperatureRate",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stores current target domain temperature rate as driven by temp table or other event",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 964
+    },
+    {
+      "name": "elementSize",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Minimum element size in x, y and z",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 969
+    },
+    {
+      "name": "enableBoreholePressure",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable borehole pressure",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 974
+    },
+    {
+      "name": "enableConfiningPressure",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable confining pressure",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 979
+    },
+    {
+      "name": "enableContact",
+      "flag": "OPTIONAL",
+      "default": "m_enableContact",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable contact between velocity fields",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 984
+    },
+    {
+      "name": "enablePrescribedBoundaryTransverseVelocities",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array storing a flag to enable transverse velocity boundary conditions for each face of domain",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 990
+    },
+    {
+      "name": "enableSurfaceTension",
+      "flag": "OPTIONAL",
+      "default": "m_enableSurfaceTension",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable surface tension forces on particles",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 995
+    },
+    {
+      "name": "exactJIntegration",
+      "flag": "OPTIONAL",
+      "default": "m_exactJIntegration",
+      "restart": "NO_WRITE",
+      "description": "Will force integration of F to have an exact integral of J.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1001
+    },
+    {
+      "name": "explicitSurfaceNormalInfluence",
+      "flag": "OPTIONAL",
+      "default": "m_explicitSurfaceNormalInfluence",
+      "restart": "NO_WRITE",
+      "description": "Determines the relative weighting for implicit and explicit surface normals",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1007
+    },
+    {
+      "name": "frictionCoefficient",
+      "flag": "OPTIONAL",
+      "default": "m_frictionCoefficient",
+      "restart": "NO_WRITE",
+      "description": "Coefficient of friction, currently assumed to be the same everywhere",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1013
+    },
+    {
+      "name": "frictionCoefficientTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Friction coefficient table for different groups",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1019
+    },
+    {
+      "name": "FSubcycles",
+      "flag": "OPTIONAL",
+      "default": "m_FSubcycles",
+      "restart": "NO_WRITE",
+      "description": "Number of sub cycles to more accurately integrate the deformation gradient",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1024
+    },
+    {
+      "name": "fTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1030
+    },
+    {
+      "name": "fTableInterpType",
+      "flag": "OPTIONAL",
+      "default": "m_fTableInterpType",
+      "restart": "NO_WRITE",
+      "description": "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1035
+    },
+    {
+      "name": "generalizedVortexMMS",
+      "flag": "OPTIONAL",
+      "default": "m_generalizedVortexMMS",
+      "restart": "NO_WRITE",
+      "description": "Option for CPDI domain scaling",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1041
+    },
+    {
+      "name": "globalFaceReactions",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stores the global face reactions for stress control between timesteps",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1047
+    },
+    {
+      "name": "globalMaximum",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "global maximum",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1052
+    },
+    {
+      "name": "globalMinimum",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "global minimum",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1057
+    },
+    {
+      "name": "gpuScheme",
+      "flag": "OPTIONAL",
+      "default": "m_gpuScheme",
+      "restart": "NO_WRITE",
+      "description": "GPU Scheme (Atomics, No atomics, Random shuffling, Minimal atomics)",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1062
+    },
+    {
+      "name": "LBar",
+      "flag": "OPTIONAL",
+      "default": "m_LBar",
+      "restart": "NO_WRITE",
+      "description": "Used to choose the Lbar method. 0 = do nothing, 1 = run trD through the SPH kernel, 2 = straight-up volume average",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1068
+    },
+    {
+      "name": "LBarScale",
+      "flag": "OPTIONAL",
+      "default": "m_LBarScale",
+      "restart": "NO_WRITE",
+      "description": "Scales the contribution of volume-averaged trD to particle L, alleviates checkerboarding",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1074
+    },
+    {
+      "name": "localMaximum",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "local maximum",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1080
+    },
+    {
+      "name": "localMaximumNoGhost",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "local maximum without ghost cells",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1085
+    },
+    {
+      "name": "localMinimum",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "local minimum",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1090
+    },
+    {
+      "name": "localMinimumNoGhost",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "local minimum without ghost cells",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1095
+    },
+    {
+      "name": "logMomentum",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag for logging momentum balance.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1100
+    },
+    {
+      "name": "logStartCycle",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Cycle to start logging output for debugging",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1105
+    },
+    {
+      "name": "LRtolerance",
+      "flag": "OPTIONAL",
+      "default": "m_LRtolerance",
+      "restart": "NO_WRITE",
+      "description": "Tolerance for logistic regression calculations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1110
+    },
+    {
+      "name": "m_ijkMap",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Map from indices in each spatial dimension to local node ID",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1116
+    },
+    {
+      "name": "maxLRIterations",
+      "flag": "OPTIONAL",
+      "default": "m_maxLRIterations",
+      "restart": "NO_WRITE",
+      "description": "Maximum number of iterations for logistic regression calculations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1121
+    },
+    {
+      "name": "maxNodalNeighbors",
+      "flag": "FALSE",
+      "default": "m_maxNodalNeighbors",
+      "restart": "NO_WRITE",
+      "description": "Stores that maximum number of particles mapping to one node",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1127
+    },
+    {
+      "name": "maxParticleJacobian",
+      "flag": "OPTIONAL",
+      "default": "m_maxParticleJacobian",
+      "restart": "NO_WRITE",
+      "description": "Jacobian value above which particles are deleted",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1133
+    },
+    {
+      "name": "maxParticleVelocity",
+      "flag": "OPTIONAL",
+      "default": "m_maxParticleVelocity",
+      "restart": "NO_WRITE",
+      "description": "Velocity above which particles are deleted",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1139
+    },
+    {
+      "name": "maxParticleVelocitySquared",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Square of the max particle velocity",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1145
+    },
+    {
+      "name": "minParticleJacobian",
+      "flag": "OPTIONAL",
+      "default": "m_minParticleJacobian",
+      "restart": "NO_WRITE",
+      "description": "Jacobian value below which particles are deleted",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1150
+    },
+    {
+      "name": "needsNeighborList",
+      "flag": "OPTIONAL",
+      "default": "m_needsNeighborList",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to construct neighbor list",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1156
+    },
+    {
+      "name": "needsNodalNeighborList",
+      "flag": "OPTIONAL",
+      "default": "m_needsNodalNeighborList",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to construct nodal neighbor list",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1162
+    },
+    {
+      "name": "neighborRadius",
+      "flag": "OPTIONAL",
+      "default": "m_neighborRadius",
+      "restart": "WRITE_AND_READ",
+      "description": "Neighbor radius for SPH-type calculations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1168
+    },
+    {
+      "name": "nextBoxAverageWriteTime",
+      "flag": "FALSE",
+      "default": "0",
+      "restart": "WRITE_AND_READ",
+      "description": "Next time to write box averages",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1174
+    },
+    {
+      "name": "nextParticleDataWriteTime",
+      "flag": "FALSE",
+      "default": "0.0",
+      "restart": "NO_WRITE",
+      "description": "Next time to write particle data",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1180
+    },
+    {
+      "name": "nextProfileWriteTime",
+      "flag": "FALSE",
+      "default": "0.0",
+      "restart": "WRITE_AND_READ",
+      "description": "Next time to write MPM profile output when using a time-based profile interval",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1186
+    },
+    {
+      "name": "nextReactionWriteTime",
+      "flag": "FALSE",
+      "default": "0",
+      "restart": "WRITE_AND_READ",
+      "description": "Next time to write reactions",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1192
+    },
+    {
+      "name": "nextTracerWriteTime",
+      "flag": "FALSE",
+      "default": "0.0",
+      "restart": "WRITE_AND_READ",
+      "description": "Next time to write MPM lagrangian tracer output when using a time-based tracer interval",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1198
+    },
+    {
+      "name": "normalAndPositionMethod",
+      "flag": "OPTIONAL",
+      "default": "m_normalAndPositionMethod",
+      "restart": "NO_WRITE",
+      "description": "Method for computing particle surface normals and positions",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1204
+    },
+    {
+      "name": "numberOfSubRegions",
+      "flag": "FALSE",
+      "default": "m_numberOfSubRegions",
+      "restart": "WRITE_AND_READ",
+      "description": "Stores the total number of subregions",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1210
+    },
+    {
+      "name": "numContactFlags",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Number of contact flags that can appear due to damage",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1216
+    },
+    {
+      "name": "numContactGroups",
+      "flag": "FALSE",
+      "default": "m_numContactGroups",
+      "restart": "WRITE_AND_READ",
+      "description": "Number of prescribed contact groups",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1221
+    },
+    {
+      "name": "numDims",
+      "flag": "FALSE",
+      "default": "m_numDims",
+      "restart": "WRITE_AND_READ",
+      "description": "The number of active spatial dimensions, 2 for plane strain, 3 otherwise",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1227
+    },
+    {
+      "name": "numElements",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "number of elements along partition directions",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1233
+    },
+    {
+      "name": "numSurfaceIntegrationPoints",
+      "flag": "OPTIONAL",
+      "default": "m_numSurfaceIntegrationPoints",
+      "restart": "NO_WRITE",
+      "description": "Number of surface integration points for cohesive grid nodes",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1238
+    },
+    {
+      "name": "numVelocityFields",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Number of velocity fields",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1244
+    },
+    {
+      "name": "overlapCorrection",
+      "flag": "OPTIONAL",
+      "default": "m_overlapCorrection",
+      "restart": "NO_WRITE",
+      "description": "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1249
+    },
+    {
+      "name": "overlapThreshold1",
+      "flag": "OPTIONAL",
+      "default": "m_overlapThreshold1",
+      "restart": "NO_WRITE",
+      "description": "Overlap correction threshold 1",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1256
+    },
+    {
+      "name": "overlapThreshold2",
+      "flag": "OPTIONAL",
+      "default": "m_overlapThreshold2",
+      "restart": "NO_WRITE",
+      "description": "Overlap correction threshold 2",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1262
+    },
+    {
+      "name": "overwriteExistingNormalsAndPositions",
+      "flag": "OPTIONAL",
+      "default": "m_overwriteExistingNormalsAndPositions",
+      "restart": "NO_WRITE",
+      "description": "Flag to that determines if existing particle normals and positions are overriden",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1268
+    },
+    {
+      "name": "particleDataWriteInterval",
+      "flag": "OPTIONAL",
+      "default": "m_particleDataWriteInterval",
+      "restart": "NO_WRITE",
+      "description": "Interval to write particle data to file",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1274
+    },
+    {
+      "name": "profileDirection",
+      "flag": "OPTIONAL",
+      "default": "m_profileDirection",
+      "restart": "NO_WRITE",
+      "description": "Direction for MPM profile output. Valid values are x, y, and z.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1280
+    },
+    {
+      "name": "profileCycleInterval",
+      "flag": "OPTIONAL",
+      "default": "m_profileCycleInterval",
+      "restart": "NO_WRITE",
+      "description": "Cycle interval for MPM profile output. Use either profileCycleInterval or profileWriteInterval. A value of 0 means no cycle-based interval.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1286
+    },
+    {
+      "name": "profileHistory",
+      "flag": "OPTIONAL",
+      "default": "m_profileHistory",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable MPM profile CSV output. One CSV file is written per requested profile variable.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1292
+    },
+    {
+      "name": "profileNumSlices",
+      "flag": "OPTIONAL",
+      "default": "m_profileNumSlices",
+      "restart": "NO_WRITE",
+      "description": "Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1298
+    },
+    {
+      "name": "profileVariables",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1304
+    },
+    {
+      "name": "profileWriteInterval",
+      "flag": "OPTIONAL",
+      "default": "m_profileWriteInterval",
+      "restart": "NO_WRITE",
+      "description": "Time interval for MPM profile output. Use either profileWriteInterval or profileCycleInterval. A value of 0 means no time-based interval.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1309
+    },
+    {
+      "name": "partitionExtent",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "parititon extent",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1315
+    },
+    {
+      "name": "planeStrain",
+      "flag": "OPTIONAL",
+      "default": "m_planeStrain",
+      "restart": "WRITE_AND_READ",
+      "description": "Flag for performing plane strain calculations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1320
+    },
+    {
+      "name": "plotGridFields",
+      "flag": "OPTIONAL",
+      "default": "m_plotGridFields",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable plotting of grid fields in vtk output",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1326
+    },
+    {
+      "name": "plottableFields",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "If specified, determines which fields are written to vtk. Helpful for reducing the vtk output file sizes",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1332
+    },
+    {
+      "name": "plottableFieldsSorted",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Sorted array of plottable fields",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1337
+    },
+    {
+      "name": "plotUnscaledParticles",
+      "flag": "OPTIONAL",
+      "default": "m_plotUnscaledParticles",
+      "restart": "NO_WRITE",
+      "description": "Flag for plotting particles without CPDI domain scaling",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1342
+    },
+    {
+      "name": "prescribedBcTable",
+      "flag": "OPTIONAL",
+      "default": "m_prescribedBcTable",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to have time-dependent boundary condition types",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1348
+    },
+    {
+      "name": "prescribedBoundaryFTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to have time-dependent boundary conditions described by a global background grid F",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1354
+    },
+    {
+      "name": "prescribedBoundaryTransverseVelocities",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array storing the transverse velocity boundary conditions for each face of domain",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1359
+    },
+    {
+      "name": "prescribedFTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1364
+    },
+    {
+      "name": "preventCZInterpenetration",
+      "flag": "OPTIONAL",
+      "default": "m_preventCZInterpenetration",
+      "restart": "NO_WRITE",
+      "description": "Flag to use contact normal forces instead of CZ forces in compression",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1369
+    },
+    {
+      "name": "reactionHistory",
+      "flag": "OPTIONAL",
+      "default": "0",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether to output face reaction history",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1375
+    },
+    {
+      "name": "reactionWriteInterval",
+      "flag": "OPTIONAL",
+      "default": "m_reactionWriteInterval",
+      "restart": "NO_WRITE",
+      "description": "Interval between writing reactions to files",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1381
+    },
+    {
+      "name": "resetDefGradForFullyDamagedParticles",
+      "flag": "OPTIONAL",
+      "default": "m_resetDefGradForFullyDamagedParticles",
+      "restart": "NO_WRITE",
+      "description": "Flag for resetting deformation gradient of fully damaged particles",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1387
+    },
+    {
+      "name": "resetDefGradForScaledSurfaceParticles",
+      "flag": "OPTIONAL",
+      "default": "m_resetDefGradForScaledSurfaceParticles",
+      "restart": "NO_WRITE",
+      "description": "Flag for resetting deformation gradient of CPDI scaled surface particles",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1393
+    },
+    {
+      "name": "separabilityMinDamage",
+      "flag": "OPTIONAL",
+      "default": "m_separabilityMinDamage",
+      "restart": "NO_WRITE",
+      "description": "Damage threshold for field separability",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1399
+    },
+    {
+      "name": "setDomainTemperature",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag that activates domain temperature interpolation from table.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1405
+    },
+    {
+      "name": "setDomainTemperatureRate",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag that activates domain temperature rateinterpolation from table.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1410
+    },
+    {
+      "name": "smallMass",
+      "flag": "OPTIONAL",
+      "default": "m_smallMass",
+      "restart": "WRITE_AND_READ",
+      "description": "Optional small mass threshold for ignoring extremely low-mass nodes. If omitted, an automatic threshold is computed from the global minimum particle mass.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1420
+    },
+    {
+      "name": "solverProfiling",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag for timing subroutines in the solver",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1427
+    },
+    {
+      "name": "stressControl",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Flag for whether stress control using box averages is enabled",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1432
+    },
+    {
+      "name": "stressControlITerm",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stress control integral term",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1437
+    },
+    {
+      "name": "stressControlKd",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Derivative gain of stress PID controller",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1442
+    },
+    {
+      "name": "stressControlKi",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Integral gain of stress PID controller",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1447
+    },
+    {
+      "name": "stressControlKp",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Proportional gain of stress PID controller",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1452
+    },
+    {
+      "name": "stressControlLastError",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Stress control error from previous timestep",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1457
+    },
+    {
+      "name": "stressTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores the time-depended grid aligned stresses",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1462
+    },
+    {
+      "name": "stressTableInterpType",
+      "flag": "OPTIONAL",
+      "default": "m_stressTableInterpType",
+      "restart": "NO_WRITE",
+      "description": "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1467
+    },
+    {
+      "name": "subdivideParticles",
+      "flag": "OPTIONAL",
+      "default": "m_subdivideParticles",
+      "restart": "NO_WRITE",
+      "description": "Option for splitting particles when they span more than a grid cell (prevents numerical fracture)",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1473
+    },
+    {
+      "name": "surfaceDetection",
+      "flag": "OPTIONAL",
+      "default": "m_surfaceDetection",
+      "restart": "NO_WRITE",
+      "description": "Flag for automatic surface detection on the 1st cycle",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1479
+    },
+    {
+      "name": "surfaceNormalAndPositionDamageThreshold",
+      "flag": "OPTIONAL",
+      "default": "m_surfaceNormalAndPositionDamageThreshold",
+      "restart": "NO_WRITE",
+      "description": "Sets the damage threshold at which explicit particle surface normals and positions are disabled",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1485
+    },
+    {
+      "name": "surfaceQualityThreshold",
+      "flag": "OPTIONAL",
+      "default": "m_surfaceQualityThreshold",
+      "restart": "NO_WRITE",
+      "description": "Particle-Grid DFG alignment threshold for separability",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1491
+    },
+    {
+      "name": "surfaceTensionCoefficient",
+      "flag": "OPTIONAL",
+      "default": "m_surfaceTensionCoefficient",
+      "restart": "NO_WRITE",
+      "description": "Stores the value of the surface tension coefficient",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1497
+    },
+    {
+      "name": "temperatureTable",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Array that stores the time-dependent domain temperature",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1503
+    },
+    {
+      "name": "temperatureTableInterpType",
+      "flag": "OPTIONAL",
+      "default": "m_temperatureTableInterpType",
+      "restart": "NO_WRITE",
+      "description": "The type of temperature table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1508
+    },
+    {
+      "name": "thinFeatureDFGThreshold",
+      "flag": "OPTIONAL",
+      "default": "m_thinFeatureDFGThreshold",
+      "restart": "NO_WRITE",
+      "description": "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1514
+    },
+    {
+      "name": "totalBinderVolume",
+      "flag": "OPTIONAL",
+      "default": "m_totalBinderVolume",
+      "restart": "NO_WRITE",
+      "description": "Total volume of binder",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1520
+    },
+    {
+      "name": "treatFullyDamagedAsSingleField",
+      "flag": "OPTIONAL",
+      "default": "m_treatFullyDamagedAsSingleField",
+      "restart": "NO_WRITE",
+      "description": "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1526
+    },
+    {
+      "name": "updateMethod",
+      "flag": "OPTIONAL",
+      "default": "m_updateMethod",
+      "restart": "WRITE_AND_READ",
+      "description": "Update method. Options are:; * ; *",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1532
+    },
+    {
+      "name": "updateOrder",
+      "flag": "OPTIONAL",
+      "default": "m_updateOrder",
+      "restart": "WRITE_AND_READ",
+      "description": "Order for update method, only applies to XPIC and FMPM",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1538
+    },
+    {
+      "name": "useAPIC",
+      "flag": "OPTIONAL",
+      "default": "m_useAPIC",
+      "restart": "NO_WRITE",
+      "description": "Will use APIC in particle to grid mapping of momentum",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1544
+    },
+    {
+      "name": "useArtificialViscosity",
+      "flag": "OPTIONAL",
+      "default": "m_useArtificialViscosity",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable artificial viscosity",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1550
+    },
+    {
+      "name": "useCrackTipDetection",
+      "flag": "OPTIONAL",
+      "default": "m_useCrackTipDetection",
+      "restart": "NO_WRITE",
+      "description": "Set to activate crack-tip detection and distance calc",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1556
+    },
+    {
+      "name": "useDamageAsSurfaceFlag",
+      "flag": "OPTIONAL",
+      "default": "m_useDamageAsSurfaceFlag",
+      "restart": "NO_WRITE",
+      "description": "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1562
+    },
+    {
+      "name": "useEvents",
+      "flag": "OPTIONAL",
+      "default": "m_useEvents",
+      "restart": "NO_WRITE",
+      "description": "Enable events",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1568
+    },
+    {
+      "name": "useInteralForceAsFaceReaction",
+      "flag": "OPTIONAL",
+      "default": "m_useInteralForceAsFaceReaction",
+      "restart": "NO_WRITE",
+      "description": "Will use internal force component at boundary node as reaction",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1574
+    },
+    {
+      "name": "useNodePosForArea",
+      "flag": "OPTIONAL",
+      "default": "m_useNodePosForArea",
+      "restart": "NO_WRITE",
+      "description": "Option to compute nodal area from grid surface normals and positions (results may be inaccurate if implicit surface normals and positiosn are used)",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1580
+    },
+    {
+      "name": "useReferenceVectorsForParticleUpdate",
+      "flag": "OPTIONAL",
+      "default": "m_useReferenceVectorsForParticleUpdate",
+      "restart": "NO_WRITE",
+      "description": "Flag for determining the integration scheme of particle vector attributes",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1586
+    },
+    {
+      "name": "useSurfacePositionForContact",
+      "flag": "OPTIONAL",
+      "default": "m_useSurfacePositionForContact",
+      "restart": "NO_WRITE",
+      "description": "Flag for to use particle mapped surface positions in contact calculations",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1592
+    },
+    {
+      "name": "timeIntegrationOption",
+      "flag": "OPTIONAL",
+      "default": "m_timeIntegrationOption",
+      "restart": "WRITE_AND_READ",
+      "description": "Time integration method. Options are:; * ; *",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1598
+    },
+    {
+      "name": "tracerCoordinates",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Coordinates used to initialize MPM lagrangian tracers. Each row is x,y,z; each tracer follows the nearest particle selected during initialization.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1604
+    },
+    {
+      "name": "tracerCycleInterval",
+      "flag": "OPTIONAL",
+      "default": "m_tracerCycleInterval",
+      "restart": "NO_WRITE",
+      "description": "Cycle interval for MPM lagrangian tracer CSV output. Use either tracerCycleInterval or tracerWriteInterval. A value of 0 means no cycle-based interval.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1609
+    },
+    {
+      "name": "tracerHistory",
+      "flag": "OPTIONAL",
+      "default": "m_tracerHistory",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable MPM lagrangian tracer CSV output. One CSV file is written per tracer point.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1615
+    },
+    {
+      "name": "tracerOutputPrefix",
+      "flag": "OPTIONAL",
+      "default": "m_tracerOutputPrefix",
+      "restart": "NO_WRITE",
+      "description": "Filename prefix for MPM lagrangian tracer CSV files.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1621
+    },
+    {
+      "name": "tracerParticleIDs",
+      "flag": "FALSE",
+      "default": "",
+      "restart": "WRITE_AND_READ",
+      "description": "Particle global IDs selected for MPM lagrangian tracers.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1627
+    },
+    {
+      "name": "tracerVariables",
+      "flag": "OPTIONAL",
+      "default": "",
+      "restart": "NO_WRITE",
+      "description": "Particle variables to write to each MPM lagrangian tracer CSV file. Supported names include particleID, mass, volume, materialType, porosity, density, damage, temperature, internalEnergy, kineticEnergy, speed, velocityX, velocityY, velocityZ, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1632
+    },
+    {
+      "name": "tracerWriteInterval",
+      "flag": "OPTIONAL",
+      "default": "m_tracerWriteInterval",
+      "restart": "NO_WRITE",
+      "description": "Time interval for MPM lagrangian tracer CSV output. Use either tracerWriteInterval or tracerCycleInterval. A value of 0 means no time-based interval.",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1637
+    },
+    {
+      "name": "writeParticleData",
+      "flag": "OPTIONAL",
+      "default": "m_writeParticleData",
+      "restart": "NO_WRITE",
+      "description": "Flag to enable writing particle data to file",
+      "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
+      "line": 1643
+    }
+  ],
+  "event_data": [
+    {
+      "name": "Anneal",
+      "class": "AnnealMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "targetRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to perform anneal on",
+          "source": "src/coreComponents/events/mpmEvents/AnnealMPMEvent.cpp",
+          "line": 31
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/AnnealMPMEvent.hpp"
+    },
+    {
+      "name": "BodyForceUpdate",
+      "class": "BodyForceUpdateMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "bodyForce",
+          "flag": "OPTIONAL",
+          "default": "",
+          "restart": "",
+          "description": "Body force vector",
+          "source": "src/coreComponents/events/mpmEvents/BodyForceUpdateMPMEvent.cpp",
+          "line": 32
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/BodyForceUpdateMPMEvent.hpp"
+    },
+    {
+      "name": "BoreholePressure",
+      "class": "BoreholePressureMPMEvent",
+      "description": "This class implements a virtual fluid boundary condition for a region in the X-Y plane defined by a borehole radius.",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "boreholeRadius",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Starting temperature to ramp from",
+          "source": "src/coreComponents/events/mpmEvents/BoreholePressureMPMEvent.cpp",
+          "line": 34
+        },
+        {
+          "name": "startPressure",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Starting temperature to ramp from",
+          "source": "src/coreComponents/events/mpmEvents/BoreholePressureMPMEvent.cpp",
+          "line": 38
+        },
+        {
+          "name": "endPressure",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "End temperature to ramp to",
+          "source": "src/coreComponents/events/mpmEvents/BoreholePressureMPMEvent.cpp",
+          "line": 42
+        },
+        {
+          "name": "interpType",
+          "flag": "OPTIONAL",
+          "default": "m_interpType",
+          "restart": "",
+          "description": "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Smooth-step)",
+          "source": "src/coreComponents/events/mpmEvents/BoreholePressureMPMEvent.cpp",
+          "line": 46
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/BoreholePressureMPMEvent.hpp"
+    },
+    {
+      "name": "CohesiveZone",
+      "class": "CohesiveZoneMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "regionNames",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "WRITE_AND_READ",
+          "description": "Region names for cohesive zones",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 36
+        },
+        {
+          "name": "constitutiveModels",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "WRITE_AND_READ",
+          "description": "Constitutive model names for cohesive zones",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 41
+        },
+        {
+          "name": "czTags",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "WRITE_AND_READ",
+          "description": "Tag IDs for cohesive zones",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 46
+        },
+        {
+          "name": "czVolumeNormalization",
+          "flag": "OPTIONAL",
+          "default": "m_czVolumeNormalization",
+          "restart": "WRITE_AND_READ",
+          "description": "Flag to perform volume normalization of cohesive nodal area for partially filled grid cells",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 51
+        },
+        {
+          "name": "computeNormalsAndPositions",
+          "flag": "OPTIONAL",
+          "default": "m_computeNormalsAndPositions",
+          "restart": "WRITE_AND_READ",
+          "description": "Flag to automicatlly compute particle surface normals and positions",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 57
+        },
+        {
+          "name": "normalsAndPositionsMethod",
+          "flag": "OPTIONAL",
+          "default": "m_normalsAndPositionsMethod",
+          "restart": "WRITE_AND_READ",
+          "description": "Method for computing particle surface normals and positions",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 63
+        },
+        {
+          "name": "czSurfaceDisplacementUpdate",
+          "flag": "OPTIONAL",
+          "default": "m_czSurfaceDisplacementUpdate",
+          "restart": "WRITE_AND_READ",
+          "description": "Cohesive surface displacement update method. TypeA uses the stored surface-position vector; TypeB uses the CPDI particle-face vector. Options are:; * ; *",
+          "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.cpp",
+          "line": 69
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/CohesiveZoneMPMEvent.hpp"
+    },
+    {
+      "name": "ConfiningPressure",
+      "class": "ConfiningPressureMPMEvent",
+      "description": "This class implements a virtual fluid boundary condition for a region in the X-Y plane defined by a borehole radius.",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "confiningPressureBoxMin",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Min corner of box defining confining pressure region",
+          "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.cpp",
+          "line": 35
+        },
+        {
+          "name": "confiningPressureBoxMax",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Max corner of box defining confining pressure region",
+          "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.cpp",
+          "line": 39
+        },
+        {
+          "name": "startPressure",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Starting pressure to ramp from",
+          "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.cpp",
+          "line": 43
+        },
+        {
+          "name": "endPressure",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "End pressure to ramp to",
+          "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.cpp",
+          "line": 47
+        },
+        {
+          "name": "interpType",
+          "flag": "OPTIONAL",
+          "default": "m_interpType",
+          "restart": "",
+          "description": "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Smooth-step)",
+          "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.cpp",
+          "line": 51
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/ConfiningPressureMPMEvent.hpp"
+    },
+    {
+      "name": "CrystalHeal",
+      "class": "CrystalHealMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "targetRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to perform heal on",
+          "source": "src/coreComponents/events/mpmEvents/CrystalHealMPMEvent.cpp",
+          "line": 33
+        },
+        {
+          "name": "healType",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Type of heal algorithm to perform",
+          "source": "src/coreComponents/events/mpmEvents/CrystalHealMPMEvent.cpp",
+          "line": 37
+        },
+        {
+          "name": "markedParticlesToHeal",
+          "flag": "FALSE",
+          "default": "m_markedParticlesToHeal",
+          "restart": "",
+          "description": "Flag whether identification of particles to heal has been performed",
+          "source": "src/coreComponents/events/mpmEvents/CrystalHealMPMEvent.cpp",
+          "line": 41
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/CrystalHealMPMEvent.hpp"
+    },
+    {
+      "name": "DeformationUpdate",
+      "class": "DeformationUpdateMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "prescribedFTable",
+          "flag": "OPTIONAL",
+          "default": "0",
+          "restart": "",
+          "description": "Flag to enable prescribed F table",
+          "source": "src/coreComponents/events/mpmEvents/DeformationUpdateMPMEvent.cpp",
+          "line": 34
+        },
+        {
+          "name": "prescribedFTable",
+          "flag": "OPTIONAL",
+          "default": "0",
+          "restart": "",
+          "description": "Flag to enable prescribed boundary F table",
+          "source": "src/coreComponents/events/mpmEvents/DeformationUpdateMPMEvent.cpp",
+          "line": 39
+        },
+        {
+          "name": "stressControl",
+          "flag": "OPTIONAL",
+          "default": "",
+          "restart": "",
+          "description": "Flags to enable stress control in x, y and z directions",
+          "source": "src/coreComponents/events/mpmEvents/DeformationUpdateMPMEvent.cpp",
+          "line": 44
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/DeformationUpdateMPMEvent.hpp"
+    },
+    {
+      "name": "FrictionCoefficientSwap",
+      "class": "FrictionCoefficientSwapMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "frictionCoefficient",
+          "flag": "OPTIONAL",
+          "default": "-1",
+          "restart": "",
+          "description": "Coefficient of friction, currently assumed to be the same everywhere",
+          "source": "src/coreComponents/events/mpmEvents/FrictionCoefficientSwapMPMEvent.cpp",
+          "line": 32
+        },
+        {
+          "name": "frictionCoefficientTable",
+          "flag": "OPTIONAL",
+          "default": "",
+          "restart": "",
+          "description": "Friction coefficient table for different groups",
+          "source": "src/coreComponents/events/mpmEvents/FrictionCoefficientSwapMPMEvent.cpp",
+          "line": 37
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/FrictionCoefficientSwapMPMEvent.hpp"
+    },
+    {
+      "name": "Heal",
+      "class": "HealMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "targetRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to perform heal on",
+          "source": "src/coreComponents/events/mpmEvents/HealMPMEvent.cpp",
+          "line": 31
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/HealMPMEvent.hpp"
+    },
+    {
+      "name": "InitializeStress",
+      "class": "InitializeStressMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "pressure",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Starting temperature to ramp from",
+          "source": "src/coreComponents/events/mpmEvents/InitializeStressMPMEvent.cpp",
+          "line": 32
+        },
+        {
+          "name": "targetRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to perform anneal on",
+          "source": "src/coreComponents/events/mpmEvents/InitializeStressMPMEvent.cpp",
+          "line": 36
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/InitializeStressMPMEvent.hpp"
+    },
+    {
+      "name": "InsertPeriodicContactSurfaces",
+      "class": "InsertPeriodicContactSurfacesMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
+    },
+    {
+      "name": "MachineSample",
+      "class": "MachineSampleMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "sampleType",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Type of sample to machine",
+          "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.cpp",
+          "line": 36
+        },
+        {
+          "name": "filletRadius",
+          "flag": "OPTIONAL",
+          "default": "-1",
+          "restart": "",
+          "description": "Fillet radius for machining dogbone sample",
+          "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.cpp",
+          "line": 40
+        },
+        {
+          "name": "gaugeLength",
+          "flag": "OPTIONAL",
+          "default": "-1",
+          "restart": "",
+          "description": "Gauge length for machining dogbone sample",
+          "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.cpp",
+          "line": 45
+        },
+        {
+          "name": "gaugeRadius",
+          "flag": "OPTIONAL",
+          "default": "-1",
+          "restart": "",
+          "description": "Gauge radius for machining dogbone sample",
+          "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.cpp",
+          "line": 50
+        },
+        {
+          "name": "diskRadius",
+          "flag": "OPTIONAL",
+          "default": "-1",
+          "restart": "",
+          "description": "Disk radius for machining brazil disk sample",
+          "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.cpp",
+          "line": 55
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/MachineSampleMPMEvent.hpp"
+    },
+    {
+      "name": "MaterialSwap",
+      "class": "MaterialSwapMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "sourceRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to transfer particles from",
+          "source": "src/coreComponents/events/mpmEvents/MaterialSwapMPMEvent.cpp",
+          "line": 32
+        },
+        {
+          "name": "destinationRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Particle region to transfer particles to",
+          "source": "src/coreComponents/events/mpmEvents/MaterialSwapMPMEvent.cpp",
+          "line": 36
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/MaterialSwapMPMEvent.hpp"
+    },
+    {
+      "name": "PolymerHeal",
+      "class": "PolymerHealMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "targetRegion",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "NO_WRITE",
+          "description": "Particle region to perform polymer heal on",
+          "source": "src/coreComponents/events/mpmEvents/PolymerHealMPMEvent.cpp",
+          "line": 31
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/PolymerHealMPMEvent.hpp"
+    },
+    {
+      "name": "ResetDeformationGradient",
+      "class": "ResetDeformationGradientMPMEvent",
+      "description": "This class resets the deformation gradient of cpid scaled particles regardless of damage",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/ResetDeformationGradientMPMEvent.hpp"
+    },
+    {
+      "name": "TemperatureProfile",
+      "class": "TemperatureProfileMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/TemperatureProfileMPMEvent.hpp"
+    },
+    {
+      "name": "TemperatureRamp",
+      "class": "TemperatureRampMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        },
+        {
+          "name": "startTemperature",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Starting temperature to ramp from",
+          "source": "src/coreComponents/events/mpmEvents/TemperatureRampMPMEvent.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTemperature",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "End temperature to ramp to",
+          "source": "src/coreComponents/events/mpmEvents/TemperatureRampMPMEvent.cpp",
+          "line": 37
+        },
+        {
+          "name": "interpType",
+          "flag": "OPTIONAL",
+          "default": "m_interpType",
+          "restart": "",
+          "description": "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Sigmoid)",
+          "source": "src/coreComponents/events/mpmEvents/TemperatureRampMPMEvent.cpp",
+          "line": 41
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/TemperatureRampMPMEvent.hpp"
+    },
+    {
+      "name": "TransformParticles",
+      "class": "TransformParticlesMPMEvent",
+      "description": "This class implements the material swap mpm event for the solid mechanics material point method solver",
+      "attributes": [
+        {
+          "name": "startTime",
+          "flag": "REQUIRED",
+          "default": "",
+          "restart": "",
+          "description": "Time at which event starts",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 33
+        },
+        {
+          "name": "endTime",
+          "flag": "OPTIONAL",
+          "default": "DBL_MAX",
+          "restart": "",
+          "description": "Time at which event ends",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 37
+        },
+        {
+          "name": "isComplete",
+          "flag": "FALSE",
+          "default": "",
+          "restart": "",
+          "description": "Flag for whether event has been completed",
+          "source": "src/coreComponents/events/mpmEvents/MPMEventBase.cpp",
+          "line": 42
+        }
+      ],
+      "source": "src/coreComponents/events/mpmEvents/TransformParticlesMPMEvent.hpp"
+    }
+  ],
+  "particle_types": [
+    "SinglePoint",
+    "SinglePointBSpline",
+    "CPDI",
+    "CPTI",
+    "CPDI2"
+  ],
+  "particle_columns": [
+    {
+      "name": "ID",
+      "default": "required"
+    },
+    {
+      "name": "PositionX",
+      "default": "required"
+    },
+    {
+      "name": "PositionY",
+      "default": "required"
+    },
+    {
+      "name": "PositionZ",
+      "default": "required"
+    },
+    {
+      "name": "VelocityX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "VelocityY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "VelocityZ",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialType",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "ParticleType",
+      "default": "2.0 (CPDI) if omitted"
+    },
+    {
+      "name": "ContactGroup",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceFlag",
+      "default": "required"
+    },
+    {
+      "name": "Damage",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "Porosity",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "Temperature",
+      "default": "300.0 if omitted"
+    },
+    {
+      "name": "TemperatureRate",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "StrengthScale",
+      "default": "1.0 if omitted"
+    },
+    {
+      "name": "CZTag",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "RVectorXX",
+      "default": "required"
+    },
+    {
+      "name": "RVectorXY",
+      "default": "required"
+    },
+    {
+      "name": "RVectorXZ",
+      "default": "required"
+    },
+    {
+      "name": "RVectorYX",
+      "default": "required"
+    },
+    {
+      "name": "RVectorYY",
+      "default": "required"
+    },
+    {
+      "name": "RVectorYZ",
+      "default": "required"
+    },
+    {
+      "name": "RVectorZX",
+      "default": "required"
+    },
+    {
+      "name": "RVectorZY",
+      "default": "required"
+    },
+    {
+      "name": "RVectorZZ",
+      "default": "required"
+    },
+    {
+      "name": "MaterialDirectionXX",
+      "default": "1.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionXY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionXZ",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionYX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionYY",
+      "default": "1.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionYZ",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionZX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionZY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "MaterialDirectionZZ",
+      "default": "1.0 if omitted"
+    },
+    {
+      "name": "SurfaceNormalX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceNormalY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceNormalZ",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfacePositionX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfacePositionY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfacePositionZ",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceTractionX",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceTractionY",
+      "default": "0.0 if omitted"
+    },
+    {
+      "name": "SurfaceTractionZ",
+      "default": "0.0 if omitted"
+    }
+  ],
+  "solver_enums": [
+    {
+      "name": "TimeIntegrationOption",
+      "values": [
+        "QuasiStatic",
+        "ImplicitDynamic",
+        "ExplicitDynamic"
+      ]
+    },
+    {
+      "name": "UpdateMethodOption",
+      "values": [
+        "FLIP",
+        "PIC",
+        "XPIC",
+        "FMPM"
+      ]
+    },
+    {
+      "name": "BoundaryConditionOption",
+      "values": [
+        "Outflow",
+        "Symmetry",
+        "Moving",
+        "Contact"
+      ]
+    },
+    {
+      "name": "SurfaceFlag",
+      "values": [
+        "Interior",
+        "FullyDamaged",
+        "Surface",
+        "Cohesive",
+        "DamagedCohesive"
+      ]
+    },
+    {
+      "name": "InterpolationOption",
+      "values": [
+        "Linear",
+        "Cosine",
+        "Smoothstep"
+      ]
+    },
+    {
+      "name": "ContactNormalTypeOption",
+      "values": [
+        "Difference",
+        "MassWeighted",
+        "LargerMass",
+        "Mixed",
+        "Aligned",
+        "LogisticRegression"
+      ]
+    },
+    {
+      "name": "ContactGapCorrectionOption",
+      "values": [
+        "Simple",
+        "Implicit",
+        "Softened"
+      ]
+    },
+    {
+      "name": "AreaIntegrationOption",
+      "values": [
+        "BruteForce",
+        "Mesh"
+      ]
+    },
+    {
+      "name": "OverlapCorrectionOption",
+      "values": [
+        "Off",
+        "NormalForce",
+        "SPH",
+        "Volume"
+      ]
+    },
+    {
+      "name": "CohesiveLawOption",
+      "values": [
+        "Uncoupled",
+        "NeedlemanXu",
+        "Polymer"
+      ]
+    },
+    {
+      "name": "CohesiveSurfaceDisplacementUpdateOption",
+      "values": [
+        "TypeA",
+        "TypeB"
+      ]
+    },
+    {
+      "name": "GPUSchemeOption",
+      "values": [
+        "Atomics",
+        "NoAtomics",
+        "RandomMix",
+        "MinimalAtomics",
+        "Reduction",
+        "Colors"
+      ]
+    },
+    {
+      "name": "NormalsAndPositionsMethodOption",
+      "values": [
+        "LogisticRegression",
+        "DFGAndVolumeIntegration"
+      ]
+    }
+  ],
+  "pfw_params": [
+    {
+      "name": "runDebug",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "runCheckTime",
+      "default": "'00:02:00'",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "outputType",
+      "default": "'vtk'",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "gridFieldNames",
+      "default": "[]",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "siloGridFieldNames",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "siloGridFields",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "generateParticleFile",
+      "default": "True",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "runContinuation",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "restartJobDir",
+      "default": "'.'",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "restartCycleNum",
+      "default": "0",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mCores",
+      "default": "1",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mNodes",
+      "default": "1",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mBank",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mWallTime",
+      "default": "'00:30:00'",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mBatch",
+      "default": "True",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mSubmitJobs",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "autoRestart",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mPartition",
+      "default": "'pbatch'",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "periodic",
+      "default": "[False, False, False]",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "xpar",
+      "default": "1",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ypar",
+      "default": "1",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "zpar",
+      "default": "1",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "nI",
+      "default": "5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "nJ",
+      "default": "5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "nK",
+      "default": "5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ppc",
+      "default": "2",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ppcx",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ppcy",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ppcz",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "xmin",
+      "default": "-0.5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "xmax",
+      "default": "0.5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ymin",
+      "default": "0.0",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "ymax",
+      "default": "1.0",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "zmin",
+      "default": "-0.5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "zmax",
+      "default": "0.5",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "lastRestartBufferInSeconds",
+      "default": "10",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "objects",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "sortObjects",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "timeIntegrationOption",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerHistory",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerCoordinates",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerVariables",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerWriteInterval",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerCycleInterval",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "tracerOutputPrefix",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "updateMethod",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "updateOrder",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "cflFactor",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "initialDt",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "solverProfiling",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "cpdiDomainScaling",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "damageFieldPartitioning",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "planeStrain",
+      "default": "False",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "needsNeighborList",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "reactionHistory",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "reactionWriteInterval",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "boxAverageHistory",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "boxAverageWriteInterval",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "prescribedBcTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "prescribedFTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "prescribedBoundaryFTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "fTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "fTableInterpType",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "FSubcycles",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "resetDefGradForFullyDamagedParticles",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "treatFullyDamagedAsSingleField",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "plotUnscaledParticles",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "contactGapCorrection",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "explicitSurfaceNormalInfluence",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "useSurfacePositionForContact",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "disableSurfaceNormalsAndPositionsOnCPDIScaling",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "separabilityMinDamage",
+      "default": "0.5",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressControl",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressControlKp",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressControlKi",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressControlKd",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "stressTableInterpType",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "boundaryConditionTypes",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "bcTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "useEvents",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "bodyForce",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "generalizedVortexMMS",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "frictionCoefficient",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "frictionCoefficientTable",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "frictionCoefficientRuleOfMixtures",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "useDamageAsSurfaceFlag",
+      "default": "False",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "neighborRadius",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "minParticleJacobian",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "maxParticleJacobian",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "logLevel",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "materials",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "materialPropertyString",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "endTime",
+      "default": "1.0",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "plotInterval",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "restartInterval",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "plotGridFields",
+      "default": "None",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "useSinusoidalDamageField",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "wavyCrack",
+      "default": "False",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "particleRefinement",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "mpmEventsString",
+      "default": "''",
+      "emitsSolverAttribute": false
+    },
+    {
+      "name": "maxParticleVelocity",
+      "default": "10.0",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "cohesiveFieldPartitioning",
+      "default": "0",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "enableCohesiveFailure",
+      "default": "0",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "maxCohesiveNormalStress",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "maxCohesiveShearStress",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "characteristicNormalDisplacement",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "characteristicTangentialDisplacement",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "maxCohesiveNormalDisplacement",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "maxCohesiveTangentialDisplacement",
+      "default": "0.01",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "prescribedBoundaryTransverseVelocities",
+      "default": "[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]",
+      "emitsSolverAttribute": true
+    },
+    {
+      "name": "particleFileFields",
+      "default": "['Velocity', 'MaterialType', 'ContactGroup', 'SurfaceFlag', 'RVector']",
+      "emitsSolverAttribute": false
+    }
+  ],
+  "pfw_silo_common": [
+    "gridMass",
+    "gridVelocity",
+    "gridInternalForce",
+    "gridDamageGradient"
+  ],
+  "pfw_silo_all": [
+    "gridCohesiveNode",
+    "gridSurfaceMass",
+    "gridSurfaceFieldMass",
+    "gridExplicitSurfaceNormal",
+    "gridPrincipalExplicitSurfaceNormal",
+    "gridCohesiveFieldFlag",
+    "gridMaxMappedParticleID",
+    "gridCohesiveArea",
+    "gridCohesiveForce",
+    "gridReferenceSurfacePosition",
+    "gridReferenceMaterialVolume",
+    "gridReferenceAreaVector",
+    "gridDisplacement",
+    "gridCenterOfVolume",
+    "gridParticleMappedSurfaceNormal",
+    "gridMass",
+    "gridActive",
+    "gridMaterialVolume",
+    "gridUncontactedVelocity",
+    "gridVelocity",
+    "gridDVelocity",
+    "gridMomentum",
+    "gridAcceleration",
+    "gridExternalForce",
+    "gridSurfaceTensionForce",
+    "gridInternalForce",
+    "gridContactForce",
+    "gridDamage",
+    "gridDamageGradient",
+    "gridMaxDamage",
+    "gridFieldGradientAlignment"
+  ],
+  "geometry_objects": [
+    {
+      "name": "shell",
+      "bases": "Geometry",
+      "line": 2425,
+      "description": "Spherical shell between inner and outer radii, with surface information on both spherical boundaries."
+    },
+    {
+      "name": "sphere",
+      "bases": "Geometry",
+      "line": 2490,
+      "description": "Sphere defined by center and radius, with surface flags, normals, and surface positions near the boundary."
+    },
+    {
+      "name": "sphericalInclusion",
+      "bases": "Geometry",
+      "line": 2538,
+      "description": "Sphere-like inclusion helper that assigns material/group data while suppressing ordinary surface flagging."
+    },
+    {
+      "name": "czSphericalPrill",
+      "bases": "Geometry",
+      "line": 2580,
+      "description": "Spherical prill with Voronoi-like crystals and cohesive-zone interfaces between neighboring grains."
+    },
+    {
+      "name": "explicitBinderSphericalPrill",
+      "bases": "Geometry",
+      "line": 2807,
+      "description": "Spherical prill with explicit grain and binder regions, mainly for two-dimensional prill/binder mesostructures."
+    },
+    {
+      "name": "czCylindricalPrill",
+      "bases": "Geometry",
+      "line": 3074,
+      "description": "Cylindrical prill with Voronoi-like internal crystals and cohesive-zone surfaces."
+    },
+    {
+      "name": "czPrill",
+      "bases": "Geometry",
+      "line": 3315,
+      "description": "Box-shaped prill with Voronoi crystals, cohesive-zone tags, and configurable bonded/neat surfaces."
+    },
+    {
+      "name": "ellipsoid",
+      "bases": "Geometry",
+      "line": 3572,
+      "description": "Grid-aligned ellipsoid defined by center and three semi-axis lengths."
+    },
+    {
+      "name": "crystal",
+      "bases": "Geometry",
+      "line": 3651,
+      "description": "Faceted crystal analogue defined by center, axis, height, and face-offset controls."
+    },
+    {
+      "name": "indentor",
+      "bases": "Geometry",
+      "line": 3766,
+      "description": "Faceted indentation tool parameterized by number of facets and angle."
+    },
+    {
+      "name": "spherical_indenter",
+      "bases": "Geometry",
+      "line": 3848,
+      "description": "Indentation tool with a spherical tip."
+    },
+    {
+      "name": "flatpunch_indenter",
+      "bases": "Geometry",
+      "line": 3940,
+      "description": "Flat-punch indentation tool with a specified radius and orientation angle."
+    },
+    {
+      "name": "simple_tensile_gripper",
+      "bases": "Geometry",
+      "line": 4022,
+      "description": "Single gripper-claw geometry for micromechanical tensile examples."
+    },
+    {
+      "name": "tensile_gripper",
+      "bases": "Geometry",
+      "line": 4205,
+      "description": "Detailed micromechanical tensile gripper geometry."
+    },
+    {
+      "name": "box",
+      "bases": "Geometry",
+      "line": 4306,
+      "description": "Axis-aligned rectangular solid defined by two opposite corners."
+    },
+    {
+      "name": "notchedBar",
+      "bases": "Geometry",
+      "line": 4399,
+      "description": "Axis-aligned bar with a 45-degree edge notch in the positive-y face."
+    },
+    {
+      "name": "box2",
+      "bases": "Geometry",
+      "line": 4492,
+      "description": "Box variant with mixed corner-normal behavior for contact testing."
+    },
+    {
+      "name": "polygon",
+      "bases": "Geometry",
+      "line": 4566,
+      "description": "Two-dimensional polygon from ordered vertices, typically used in plane strain."
+    },
+    {
+      "name": "foam",
+      "bases": "Geometry",
+      "line": 4735,
+      "description": "Box with user-specified spherical pores."
+    },
+    {
+      "name": "poissonDiskFoam",
+      "bases": "Geometry",
+      "line": 4800,
+      "description": "Box with Poisson-disk sampled pores, including surface-normal and position reconstruction."
+    },
+    {
+      "name": "packedSphericalBed",
+      "bases": "Geometry",
+      "line": 5140,
+      "description": "Packed bed of spherical grains with cell-list queries and per-grain material/group/type data."
+    },
+    {
+      "name": "twoMaterialBox",
+      "bases": "Geometry",
+      "line": 6308,
+      "description": "Box that randomly assigns accepted particles to one of two material indices."
+    },
+    {
+      "name": "twoFieldBox",
+      "bases": "Geometry",
+      "line": 6364,
+      "description": "Legacy/test box intended for two-group or two-field contact testing."
+    },
+    {
+      "name": "cone",
+      "bases": "Geometry",
+      "line": 6414,
+      "description": "Cone defined by two axis points and a base radius."
+    },
+    {
+      "name": "stl",
+      "bases": "Geometry",
+      "line": 6510,
+      "description": "Closed triangulated STL import with ray-casting inside/outside tests and nearest-triangle surface projection."
+    },
+    {
+      "name": "cylinder",
+      "bases": "Geometry",
+      "line": 6915,
+      "description": "Solid or hollow cylinder defined by axis endpoints and radii, with configurable face/wall surface flags."
+    },
+    {
+      "name": "pillar",
+      "bases": "Geometry",
+      "line": 7048,
+      "description": "Micropillar compression specimen with cylindrical gauge region and wider base."
+    },
+    {
+      "name": "pillarBase",
+      "bases": "Geometry",
+      "line": 7206,
+      "description": "Base/substrate companion geometry for pillar simulations."
+    },
+    {
+      "name": "whiskers",
+      "bases": "Geometry",
+      "line": 7460,
+      "description": "Whisker or fiber-like inclusion geometry."
+    },
+    {
+      "name": "toroid",
+      "bases": "Geometry",
+      "line": 7523,
+      "description": "Toroidal annulus/ring geometry."
+    },
+    {
+      "name": "spinodal",
+      "bases": "Geometry",
+      "line": 7602,
+      "description": "Implicit spinodal-like porous or bicontinuous architecture."
+    },
+    {
+      "name": "tpms",
+      "bases": "Geometry",
+      "line": 7735,
+      "description": "Triply periodic minimal-surface or related periodic architecture object."
+    },
+    {
+      "name": "polygonInclusions",
+      "bases": "Geometry",
+      "line": 7858,
+      "description": "Two-dimensional polygonal inclusions embedded in a fill group."
+    },
+    {
+      "name": "fill",
+      "bases": "Geometry",
+      "line": 7899,
+      "description": "Accepts all candidate particle points to fill the background domain."
+    },
+    {
+      "name": "VCCTL",
+      "bases": "Geometry",
+      "line": 7923,
+      "description": "Voxelized VCCTL-style phase dataset mapped to material indices."
+    },
+    {
+      "name": "GrainStack",
+      "bases": "Geometry",
+      "line": 8022,
+      "description": "Stacked voxel or labeled-array grain geometry."
+    },
+    {
+      "name": "CT",
+      "bases": "Geometry",
+      "line": 8113,
+      "description": "Computed-tomography voxel dataset mapped to material indices."
+    },
+    {
+      "name": "bitmap",
+      "bases": "Geometry",
+      "line": 8233,
+      "description": "Two-dimensional image or label map converted to particles and materials."
+    },
+    {
+      "name": "porousPolygon",
+      "bases": "Geometry",
+      "line": 9016,
+      "description": "Polygon with randomly generated two-dimensional pores."
+    },
+    {
+      "name": "union",
+      "bases": "SetOperation",
+      "line": 10836,
+      "description": "Boolean union of two geometry objects."
+    },
+    {
+      "name": "intersection",
+      "bases": "SetOperation",
+      "line": 10900,
+      "description": "Boolean intersection of two geometry objects."
+    },
+    {
+      "name": "difference",
+      "bases": "SetOperation",
+      "line": 10950,
+      "description": "Boolean set difference A minus B, including surface data for cut boundaries."
+    }
+  ],
+  "geometry_wrappers": [
+    {
+      "name": "materialDirectionWrapper",
+      "bases": "BaseWrapper",
+      "line": 8487,
+      "description": "Overrides or assigns the local material-direction triad."
+    },
+    {
+      "name": "surfaceFlagWrapper",
+      "bases": "BaseWrapper",
+      "line": 8507,
+      "description": "Overrides surface-flag response for the wrapped object."
+    },
+    {
+      "name": "czTagWrapper",
+      "bases": "BaseWrapper",
+      "line": 8526,
+      "description": "Assigns cohesive-zone tags to cohesive surface particles."
+    },
+    {
+      "name": "functionalDeletionWrapper",
+      "bases": "BaseWrapper",
+      "line": 8539,
+      "description": "Rejects points according to a user-supplied deletion/masking function."
+    },
+    {
+      "name": "surfaceNormalWrapper",
+      "bases": "BaseWrapper",
+      "line": 8558,
+      "description": "Assigns explicit surface normals."
+    },
+    {
+      "name": "surfacePositionWrapper",
+      "bases": "BaseWrapper",
+      "line": 8569,
+      "description": "Assigns explicit vectors from particles to surface positions."
+    },
+    {
+      "name": "shrinkageFlagWrapper",
+      "bases": "BaseWrapper",
+      "line": 8580,
+      "description": "Assigns shrinkage flags for compatible workflows."
+    },
+    {
+      "name": "strengthScaleWrapper",
+      "bases": "BaseWrapper",
+      "line": 8591,
+      "description": "Assigns strength-scale values."
+    },
+    {
+      "name": "damageWrapper",
+      "bases": "BaseWrapper",
+      "line": 8602,
+      "description": "Assigns initial damage values."
+    },
+    {
+      "name": "porosityWrapper",
+      "bases": "BaseWrapper",
+      "line": 8613,
+      "description": "Assigns initial porosity values."
+    },
+    {
+      "name": "temperatureWrapper",
+      "bases": "BaseWrapper",
+      "line": 8624,
+      "description": "Assigns initial temperature values."
+    },
+    {
+      "name": "voronoiWrapperWithLayeredStrengthScale",
+      "bases": "BaseWrapper",
+      "line": 8634,
+      "description": "Voronoi and layered-strength wrapper for grain-scale heterogeneity."
+    },
+    {
+      "name": "layeredVoronoiWeibullWrapper",
+      "bases": "BaseWrapper",
+      "line": 9237,
+      "description": "Voronoi-layered Weibull strength-scale wrapper."
+    },
+    {
+      "name": "voronoiWeibullBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 9591,
+      "description": "Box-local Voronoi Weibull strength wrapper."
+    },
+    {
+      "name": "pointwisePorosityWrapper",
+      "bases": "BaseWrapper",
+      "line": 9702,
+      "description": "Random pointwise porosity mask without deterministic pore surfaces."
+    },
+    {
+      "name": "voronoiMatDirBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 9727,
+      "description": "Box-local Voronoi material-direction assignment."
+    },
+    {
+      "name": "sizeEffectVoronoiWeibullBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 9771,
+      "description": "Size-effect and flaw-field strength wrapper."
+    },
+    {
+      "name": "surfaceFlagBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 9983,
+      "description": "Overrides surface flags inside a box."
+    },
+    {
+      "name": "damageBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 10007,
+      "description": "Overrides damage inside a box."
+    },
+    {
+      "name": "pennyShapedCrackWrapper",
+      "bases": "BaseWrapper",
+      "line": 10036,
+      "description": "Paints a penny-shaped damaged/cracked region."
+    },
+    {
+      "name": "layeredStrengthScaleBoxWrapper",
+      "bases": "BaseWrapper",
+      "line": 10069,
+      "description": "Assigns layered strength-scale fields inside a box."
+    },
+    {
+      "name": "transform",
+      "bases": "BaseWrapper",
+      "line": 10634,
+      "description": "Applies coordinate transformations before delegating to a sub-object."
+    }
+  ],
+  "geometry_utilities": [
+    {
+      "name": "maxFlawRadius",
+      "bases": "",
+      "line": 558
+    },
+    {
+      "name": "maxFlawRadius2D",
+      "bases": "",
+      "line": 1036
+    },
+    {
+      "name": "Grid",
+      "bases": "",
+      "line": 1461
+    },
+    {
+      "name": "Geometry",
+      "bases": "",
+      "line": 2362,
+      "description": "Base class and interface for PFW geometry objects."
+    },
+    {
+      "name": "BaseWrapper",
+      "bases": "",
+      "line": 8321,
+      "description": "Base forwarding wrapper for geometry-object field overrides."
+    },
+    {
+      "name": "SetOperation",
+      "bases": "Geometry",
+      "line": 10700,
+      "description": "Base class for Boolean geometry operations."
+    }
+  ],
+  "material_docs": [
+    {
+      "name": "BicrystalCohesiveZone",
+      "preset_count": 0,
+      "attributes": [],
+      "attribute_count": 0,
+      "source": ""
+    },
+    {
+      "name": "CeramicDamage",
+      "preset_count": 21,
+      "attributes": [
+        {
+          "name": "compressiveStrength",
+          "type": "real64",
+          "default": "required Compressive strength",
+          "description": ""
+        },
+        {
+          "name": "crackSpeed",
+          "type": "real64",
+          "default": "required Crack speed",
+          "description": ""
+        },
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Shear Modulus Parameter"
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        },
+        {
+          "name": "maximumStrength",
+          "type": "real64",
+          "default": "required Maximum theoretical strength",
+          "description": ""
+        },
+        {
+          "name": "tensileStrength",
+          "type": "real64",
+          "default": "required Tensile strength",
+          "description": ""
+        }
+      ],
+      "attribute_count": 10,
+      "source": "src/coreComponents/schema/docs/CeramicDamage.rst"
+    },
+    {
+      "name": "Chiumenti",
+      "preset_count": 3,
+      "attributes": [
+        {
+          "name": "criticalLength",
+          "type": "real64",
+          "default": "1",
+          "description": "Critical length"
+        },
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultLambda",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default shear modulus"
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        },
+        {
+          "name": "energyReleaseRate",
+          "type": "real64",
+          "default": "required Energy release rate",
+          "description": ""
+        },
+        {
+          "name": "failureStrength",
+          "type": "real64",
+          "default": "required Failure strength",
+          "description": ""
+        }
+      ],
+      "attribute_count": 10,
+      "source": "src/coreComponents/schema/docs/Chiumenti.rst"
+    },
+    {
+      "name": "CoupledCohesiveZone",
+      "preset_count": 0,
+      "attributes": [],
+      "attribute_count": 0,
+      "source": ""
+    },
+    {
+      "name": "ElasticIsotropic",
+      "preset_count": 3,
+      "attributes": [],
+      "attribute_count": 0,
+      "source": ""
+    },
+    {
+      "name": "ElasticTransverseIsotropic",
+      "preset_count": 1,
+      "attributes": [],
+      "attribute_count": 0,
+      "source": ""
+    },
+    {
+      "name": "ElasticTransverseIsotropicPressureDependent",
+      "preset_count": 0,
+      "attributes": [
+        {
+          "name": "defaultC11",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Stiffness Parameter C11"
+        },
+        {
+          "name": "defaultC13",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Stiffness Parameter C13"
+        },
+        {
+          "name": "defaultC33",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Stiffness Parameter C33"
+        },
+        {
+          "name": "defaultC44",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Stiffness Parameter C44"
+        },
+        {
+          "name": "defaultC66",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Stiffness Parameter C66"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC",
+          "type": "real64",
+          "default": "0",
+          "description": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame"
+        },
+        {
+          "name": "defaultPoissonRatioAxialTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Axial-Transverse Poisson's Ratio"
+        },
+        {
+          "name": "defaultPoissonRatioTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Transverse Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulusAxialTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Axial-Transverse Shear Modulus"
+        },
+        {
+          "name": "defaultShearModulusAxialTransversePressureDerivative real64",
+          "type": "-1",
+          "default": "Axial transverse shear modulus pressure derivative",
+          "description": ""
+        },
+        {
+          "name": "defaultYoungModulusAxial",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Axial Young's Modulus"
+        }
+      ],
+      "attribute_count": 20,
+      "source": "src/coreComponents/schema/docs/ElasticTransverseIsotropicPressureDependent.rst"
+    },
+    {
+      "name": "Geomechanics",
+      "preset_count": 1,
+      "attributes": [
+        {
+          "name": "b0",
+          "type": "real64",
+          "default": "required Default tangent elastic bulk modulus parameter 0",
+          "description": ""
+        },
+        {
+          "name": "b1",
+          "type": "real64",
+          "default": "required Default tangent elastic bulk modulus parameter 1",
+          "description": ""
+        },
+        {
+          "name": "b2",
+          "type": "real64",
+          "default": "required Default tangent elastic bulk modulus parameter 2",
+          "description": ""
+        },
+        {
+          "name": "b3",
+          "type": "real64",
+          "default": "required Default tangent elastic bulk modulus parameter 3",
+          "description": ""
+        },
+        {
+          "name": "b4",
+          "type": "real64",
+          "default": "required Default tangent elastic bulk modulus parameter 4",
+          "description": ""
+        },
+        {
+          "name": "beta",
+          "type": "real64",
+          "default": "required Nonassociativity parameter",
+          "description": ""
+        },
+        {
+          "name": "cr",
+          "type": "real64",
+          "default": "required Cap shape parameter",
+          "description": ""
+        },
+        {
+          "name": "creepA",
+          "type": "real64",
+          "default": "0",
+          "description": "Creep A parameter"
+        },
+        {
+          "name": "creepB",
+          "type": "real64",
+          "default": "0",
+          "description": "Creep B parameter"
+        },
+        {
+          "name": "creepC",
+          "type": "real64",
+          "default": "0",
+          "description": "Creep C parameter"
+        },
+        {
+          "name": "creepC0",
+          "type": "real64",
+          "default": "0",
+          "description": "Creep C0 parameter"
+        },
+        {
+          "name": "creepC1",
+          "type": "real64",
+          "default": "0",
+          "description": "Creep C1 parameter"
+        }
+      ],
+      "attribute_count": 35,
+      "source": "src/coreComponents/schema/docs/Geomechanics.rst"
+    },
+    {
+      "name": "Graphite",
+      "preset_count": 3,
+      "attributes": [
+        {
+          "name": "coupledShearResponseM1",
+          "type": "real64",
+          "default": "required Coupled Shear Response M1",
+          "description": ""
+        },
+        {
+          "name": "coupledShearResponseX2",
+          "type": "real64",
+          "default": "required Coupled Shear Response X2",
+          "description": ""
+        },
+        {
+          "name": "coupledShearResponseY1",
+          "type": "real64",
+          "default": "required Coupled Shear Response Y1",
+          "description": ""
+        },
+        {
+          "name": "coupledShearResponseY2",
+          "type": "real64",
+          "default": "required Coupled Shear Response Y2",
+          "description": ""
+        },
+        {
+          "name": "crackSpeed",
+          "type": "real64",
+          "default": "required Crack speed",
+          "description": ""
+        },
+        {
+          "name": "damagedMaterialFrictionalSlope",
+          "type": "real64",
+          "default": "required Damaged material frictional slope",
+          "description": ""
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC",
+          "type": "real64",
+          "default": "0",
+          "description": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame"
+        },
+        {
+          "name": "defaultPoissonRatioAxialTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Axial-Transverse Poisson's Ratio"
+        },
+        {
+          "name": "defaultPoissonRatioTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Transverse Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulusAxialTransverse",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Axial-Transverse Shear Modulus"
+        },
+        {
+          "name": "defaultShearModulusAxialTransversePressureDerivative real64",
+          "type": "-1",
+          "default": "Axial transverse shear modulus pressure derivative",
+          "description": ""
+        }
+      ],
+      "attribute_count": 26,
+      "source": "src/coreComponents/schema/docs/Graphite.rst"
+    },
+    {
+      "name": "Hyperelastic",
+      "preset_count": 1,
+      "attributes": [
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default bulk modulus"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultLambda",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default First Lame Parameter"
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default shear modulus"
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        }
+      ],
+      "attribute_count": 7,
+      "source": "src/coreComponents/schema/docs/Hyperelastic.rst"
+    },
+    {
+      "name": "HyperelasticMMS",
+      "preset_count": 1,
+      "attributes": [
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultLambda",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default shear modulus"
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        }
+      ],
+      "attribute_count": 7,
+      "source": "src/coreComponents/schema/docs/HyperelasticMMS.rst"
+    },
+    {
+      "name": "PerfectlyPlastic",
+      "preset_count": 1,
+      "attributes": [
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required",
+          "description": "Default Material Density"
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Shear Modulus Parameter"
+        },
+        {
+          "name": "defaultYieldStress",
+          "type": "real64",
+          "default": "1.79769e+308 Default yield stress",
+          "description": ""
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        },
+        {
+          "name": "name",
+          "type": "groupName required",
+          "default": "A name is required for any non-unique nodes",
+          "description": ""
+        }
+      ],
+      "attribute_count": 8,
+      "source": "src/coreComponents/schema/docs/PerfectlyPlastic.rst"
+    },
+    {
+      "name": "PolymerCohesiveZone",
+      "preset_count": 0,
+      "attributes": [],
+      "attribute_count": 0,
+      "source": ""
+    },
+    {
+      "name": "StrainHardeningPolymer",
+      "preset_count": 8,
+      "attributes": [
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required",
+          "description": "Default Material Density"
+        },
+        {
+          "name": "defaultDrainedLinearTEC",
+          "type": "real64",
+          "default": "0",
+          "description": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame"
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Shear Modulus Parameter"
+        },
+        {
+          "name": "defaultYieldStrength",
+          "type": "real64",
+          "default": "1.79769e+308 Default yield strength",
+          "description": ""
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        },
+        {
+          "name": "maximumStretch",
+          "type": "real64",
+          "default": "1.79769e+308 Maximum stretch",
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "groupName required",
+          "default": "A name is required for any non-unique nodes",
+          "description": ""
+        },
+        {
+          "name": "shearSofteningMagnitude",
+          "type": "real64",
+          "default": "required",
+          "description": "Shear softening magnitude"
+        },
+        {
+          "name": "shearSofteningShapeParameter1 real64",
+          "type": "required",
+          "default": "Shear softening shape parameter 1",
+          "description": ""
+        },
+        {
+          "name": "shearSofteningShapeParameter2 real64",
+          "type": "required",
+          "default": "Shear softening shape parameter 2",
+          "description": ""
+        }
+      ],
+      "attribute_count": 13,
+      "source": "src/coreComponents/schema/docs/StrainHardeningPolymer.rst"
+    },
+    {
+      "name": "VonMisesJ",
+      "preset_count": 30,
+      "attributes": [
+        {
+          "name": "defaultBulkModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Bulk Modulus Parameter"
+        },
+        {
+          "name": "defaultDensity",
+          "type": "real64",
+          "default": "required Default Material Density",
+          "description": ""
+        },
+        {
+          "name": "defaultDrainedLinearTEC real64",
+          "type": "0",
+          "default": "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame",
+          "description": ""
+        },
+        {
+          "name": "defaultPoissonRatio",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Poisson's Ratio"
+        },
+        {
+          "name": "defaultShearModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Shear Modulus Parameter"
+        },
+        {
+          "name": "defaultYieldStrength",
+          "type": "real64",
+          "default": "required Default yield strength parameter",
+          "description": ""
+        },
+        {
+          "name": "defaultYoungModulus",
+          "type": "real64",
+          "default": "-1",
+          "description": "Default Young's Modulus"
+        }
+      ],
+      "attribute_count": 7,
+      "source": "src/coreComponents/schema/docs/VonMisesJ.rst"
+    }
+  ],
+  "material_preset_counts": {
+    "VonMisesJ": 30,
+    "CeramicDamage": 21,
+    "Graphite": 3,
+    "StrainHardeningPolymer": 8,
+    "HyperelasticMMS": 1,
+    "Chiumenti": 3,
+    "Hyperelastic": 1,
+    "PerfectlyPlastic": 1,
+    "ElasticTransverseIsotropic": 1,
+    "ElasticIsotropic": 3,
+    "Geomechanics": 1
+  },
+  "schema_tables": {
+    "SolidMechanics_MPM": [
+      {
+        "name": "boundaryConditionTypes",
+        "type": "integer_array",
+        "default": "{0}",
+        "description": "| Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:"
+      },
+      {
+        "name": "boxAverageHistory",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for whether to output box average history"
+      },
+      {
+        "name": "cflFactor",
+        "type": "real64",
+        "default": "0.5",
+        "description": "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1]"
+      },
+      {
+        "name": "contactGapCorrection",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for mitigating contact gaps"
+      },
+      {
+        "name": "cpdiDomainScaling",
+        "type": "integer",
+        "default": "0",
+        "description": "Option for CPDI domain scaling"
+      },
+      {
+        "name": "damageFieldPartitioning",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for using the gradient of the particle damage field to partition material into separate velocity fields"
+      },
+      {
+        "name": "discretization",
+        "type": "groupNameRef",
+        "default": "required",
+        "description": "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified."
+      },
+      {
+        "name": "fTableInterpType",
+        "type": "integer",
+        "default": "0",
+        "description": "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)."
+      },
+      {
+        "name": "fTablePath",
+        "type": "path",
+        "default": "Path to f-table",
+        "description": ""
+      },
+      {
+        "name": "frictionCoefficient",
+        "type": "real64",
+        "default": "0",
+        "description": "Coefficient of friction, currently assumed to be the same everywhere"
+      },
+      {
+        "name": "initialDt",
+        "type": "real64",
+        "default": "1e+99",
+        "description": "Initial time-step value required by the solver to the event manager."
+      },
+      {
+        "name": "logLevel",
+        "type": "integer",
+        "default": "0",
+        "description": "Log level"
+      },
+      {
+        "name": "name",
+        "type": "groupName",
+        "default": "required",
+        "description": "A name is required for any non-unique nodes"
+      },
+      {
+        "name": "needsNeighborList",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for whether to construct neighbor list"
+      },
+      {
+        "name": "neighborRadius",
+        "type": "real64",
+        "default": "-1",
+        "description": "Neighbor radius for SPH-type calculations"
+      },
+      {
+        "name": "planeStrain",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for performing plane strain calculations"
+      },
+      {
+        "name": "prescribedBcTable",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for whether to have time-dependent boundary condition types"
+      },
+      {
+        "name": "prescribedBoundaryFTable",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for whether to have time-dependent boundary conditions described by a global background grid F"
+      },
+      {
+        "name": "profileDirection",
+        "type": "string",
+        "default": "x",
+        "description": "Direction for MPM profile output. Valid values are x, y, and z."
+      },
+      {
+        "name": "profileCycleInterval",
+        "type": "integer",
+        "default": "0",
+        "description": "Cycle interval for MPM profile output. Use either profileCycleInterval or profileWriteInterval. A value of 0 means no cycle-based interval."
+      },
+      {
+        "name": "profileHistory",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag to enable MPM profile CSV output. One CSV file is written per requested profile variable."
+      },
+      {
+        "name": "profileNumSlices",
+        "type": "integer",
+        "default": "0",
+        "description": "Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection."
+      },
+      {
+        "name": "profileVariables",
+        "type": "string_array",
+        "default": "{}",
+        "description": "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY."
+      },
+      {
+        "name": "profileWriteInterval",
+        "type": "real64",
+        "default": "0",
+        "description": "Time interval for MPM profile output. Use either profileWriteInterval or profileCycleInterval. A value of 0 means no time-based interval."
+      },
+      {
+        "name": "reactionHistory",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for whether to output face reaction history"
+      },
+      {
+        "name": "separabilityMinDamage",
+        "type": "real64",
+        "default": "0.5",
+        "description": "Damage threshold for field separability"
+      },
+      {
+        "name": "solverProfiling",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for timing subroutines in the solver"
+      },
+      {
+        "name": "surfaceDetection",
+        "type": "integer",
+        "default": "0",
+        "description": "Flag for automatic surface detection on the 1st cycle"
+      },
+      {
+        "name": "targetRegions",
+        "type": "groupNameRef_array",
+        "default": "required",
+        "description": "Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager."
+      },
+      {
+        "name": "treatFullyDamagedAsSingleField integer",
+        "type": "1",
+        "default": "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.",
+        "description": ""
+      },
+      {
+        "name": "useDamageAsSurfaceFlag",
+        "type": "integer",
+        "default": "0",
+        "description": "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag"
+      },
+      {
+        "name": "writeLinearSystem",
+        "type": "integer",
+        "default": "0",
+        "description": "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)."
+      },
+      {
+        "name": "LinearSolverParameters",
+        "type": "node",
+        "default": "unique",
+        "description": ":ref:`XML_LinearSolverParameters`"
+      },
+      {
+        "name": "NonlinearSolverParameters",
+        "type": "node",
+        "default": "unique",
+        "description": ":ref:`XML_NonlinearSolverParameters`"
+      }
+    ],
+    "ParticleMesh": [
+      {
+        "name": "headerFile",
+        "type": "path",
+        "default": "required path to the header file",
+        "description": ""
+      },
+      {
+        "name": "name",
+        "type": "groupName",
+        "default": "required A name is required for any non-unique nodes",
+        "description": ""
+      },
+      {
+        "name": "particleFile",
+        "type": "path",
+        "default": "required path to the particle file",
+        "description": ""
+      }
+    ],
+    "ParticleRegion": [
+      {
+        "name": "meshBody",
+        "type": "string",
+        "default": "Mesh body that contains this region",
+        "description": ""
+      },
+      {
+        "name": "name",
+        "type": "groupName",
+        "default": "required A name is required for any non-unique nodes",
+        "description": ""
+      }
+    ],
+    "MPMEvents": []
+  },
+  "suite_cases": {
+    "examples": [
+      {
+        "family": "benchy",
+        "case": "benchy/benchy",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/pfw_input_benchy.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: STL import and prescribed multi-field contact demonstration."
+      },
+      {
+        "family": "borehole",
+        "case": "borehole/boreholeCollapse2D_Ghareb_borehole",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/pfw_input_boreholeCollapse2D_Ghareb_borehole.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Plane-strain borehole collapse using the Ghareb Geomechanics material dictionary entry."
+      },
+      {
+        "family": "brazilianDisk_BSpline",
+        "case": "brazilianDisk_BSpline/brazilianDisk_BSpline",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/pfw_input_brazilianDisk_BSpline.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Brazilian disk compression using the single-point B-spline particle type."
+      },
+      {
+        "family": "brazilianDisk_FLIP",
+        "case": "brazilianDisk_FLIP/brazilianDisk_FLIP",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/pfw_input_brazilianDisk_FLIP.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Brazilian disk compression with FLIP velocity update."
+      },
+      {
+        "family": "brazilianDisk_FMPM",
+        "case": "brazilianDisk_FMPM/brazilianDisk_FMPM",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/pfw_input_brazilianDisk_FMPM.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Brazilian disk compression with FMPM velocity update."
+      },
+      {
+        "family": "brazilianDisk_PIC",
+        "case": "brazilianDisk_PIC/brazilianDisk_PIC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/pfw_input_brazilianDisk_PIC.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Brazilian disk compression with PIC velocity update."
+      },
+      {
+        "family": "brazilianDisk_XPIC",
+        "case": "brazilianDisk_XPIC/brazilianDisk_XPIC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/pfw_input_brazilianDisk_XPIC.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Brazilian disk compression with XPIC velocity update."
+      },
+      {
+        "family": "collidingDisks",
+        "case": "collidingDisks/collidingDisks",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/pfw_input_collidingDisks.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Two-disk collision example."
+      },
+      {
+        "family": "copperFoamCompression",
+        "case": "copperFoamCompression/copperFoamCompression",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/pfw_input_copperFoamCompression.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Dynamic reverse-ballistic uniaxial compression of 3D copper foam."
+      },
+      {
+        "family": "copperFoamCompression",
+        "case": "copperFoamCompression/copperFoamCompression2D",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/pfw_input_copperFoamCompression2D.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Plane-strain reverse-ballistic uniaxial compression of copper foam."
+      },
+      {
+        "family": "elasticDisk",
+        "case": "elasticDisk/elasticDisk",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/pfw_input_elasticDisk.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Compressed elastic disk example."
+      },
+      {
+        "family": "pdc",
+        "case": "pdc/pdc",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/pfw_input_pdc.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: PDC cutter interaction with a damageable substrate."
+      },
+      {
+        "family": "powderCompression",
+        "case": "powderCompression/mixedPowderCompression2D",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/powderCompression/pfw_input_mixedPowderCompression2D.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Plane-strain reverse-ballistic uniaxial compression of copper foam."
+      },
+      {
+        "family": "powderCompression",
+        "case": "powderCompression/mixedPowderCompression3D",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/powderCompression/pfw_input_mixedPowderCompression3D.py",
+        "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: 3D reverse-ballistic uniaxial compression of a packed spherical granular bed."
+      }
+    ],
+    "verification": [
+      {
+        "family": "Ftable",
+        "case": "Ftable/elasticBlockUni",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/Ftable/pfw_input_elasticBlockUni.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "anneal",
+        "case": "anneal/annealCompression",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/anneal/pfw_input_annealCompression.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "anneal",
+        "case": "anneal/annealTension",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/anneal/pfw_input_annealTension.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "bcCheck",
+        "case": "bcCheck/bcCheck",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/bcCheck/pfw_input_bcCheck.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "ceramic",
+        "case": "ceramic/ceramicSmoke",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/ceramic/pfw_input_ceramicSmoke.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "ceramic",
+        "case": "ceramic/ceramicTXC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/ceramic/pfw_input_ceramicTXC.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "ceramic",
+        "case": "ceramic/ceramicTXE",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/ceramic/pfw_input_ceramicTXE.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal_0deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal_0deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal_15deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal_15deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal_45deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal_45deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal_7p5deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal_7p5deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones/bicrystal",
+        "case": "cohesiveZones/bicrystal/cz_bicrystal_90deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/bicrystal/pfw_input_cz_bicrystal_90deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/cz_45deg",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_cz_45deg.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/cz_flip",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_cz_flip.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/cz_gridAligned",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_cz_gridAligned.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/cz_overlapStart",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_cz_overlapStart.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/cz_reinitialize",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_cz_reinitialize.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/multi_cz",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_multi_cz.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/shearPeel",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_shearPeel.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/spinning_control",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_spinning_control.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/spinning_cz",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_spinning_cz.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/spinning_cz_matDir",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_spinning_cz_matDir.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cohesiveZones",
+        "case": "cohesiveZones/uniaxial_cylinder_cz",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cohesiveZones/pfw_input_uniaxial_cylinder_cz.py",
+        "description": "DOMAIN ---------------------------------------------------------------------------------"
+      },
+      {
+        "family": "contact",
+        "case": "contact/asymmetricInterface",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contact/pfw_input_asymmetricInterface.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "contact",
+        "case": "contact/contactGapCorrection",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contact/pfw_input_contactGapCorrection.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "contact",
+        "case": "contact/symmetricInterface_explicit",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contact/pfw_input_symmetricInterface_explicit.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "contact",
+        "case": "contact/symmetricInterface_implicit",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contact/pfw_input_symmetricInterface_implicit.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "contactBC",
+        "case": "contactBC/ballSmack",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contactBC/pfw_input_ballSmack.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "contactBC",
+        "case": "contactBC/bouncyBall",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/contactBC/pfw_input_bouncyBall.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cubic",
+        "case": "cubic/elasticCubic_100",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cubic/pfw_input_elasticCubic_100.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cubic",
+        "case": "cubic/elasticCubic_110",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cubic/pfw_input_elasticCubic_110.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "cubic",
+        "case": "cubic/elasticCubic_111",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/cubic/pfw_input_elasticCubic_111.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "diskThruPartitions",
+        "case": "diskThruPartitions/ballsThruPartitions",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/diskThruPartitions/pfw_input_ballsThruPartitions.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "diskThruPartitions",
+        "case": "diskThruPartitions/diskThruPartitions",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/diskThruPartitions/pfw_input_diskThruPartitions.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "diskThruPartitions",
+        "case": "diskThruPartitions/diskThruPartitionsMultiField",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/diskThruPartitions/pfw_input_diskThruPartitionsMultiField.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "diskThruPartitions",
+        "case": "diskThruPartitions/diskThruSpace",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/diskThruPartitions/pfw_input_diskThruSpace.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "diskThruPartitions",
+        "case": "diskThruPartitions/diskThruSpace_rXXXX",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/diskThruPartitions/pfw_input_diskThruSpace_rXXXX.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "expandingBar",
+        "case": "expandingBar/expandingBar_chiumenti_noWeibull_sigma0p3_Gf1e-05_v00p1",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/expandingBar/pfw_input_expandingBar_chiumenti_noWeibull_sigma0p3_Gf1e-05_v00p1.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "expandingRing",
+        "case": "expandingRing/expandingRing_chiumenti_noWeibull_sigma0p3_Gf1e-05_v00p016",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/expandingRing/pfw_input_expandingRing_chiumenti_noWeibull_sigma0p3_Gf1e-05_v00p016.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "explicitContact",
+        "case": "explicitContact/explicitContactTest",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/explicitContact/pfw_input_explicitContactTest.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "explicitContact",
+        "case": "explicitContact/extremeDeformation",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/explicitContact/pfw_input_extremeDeformation.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "explicitContact",
+        "case": "explicitContact/spinningNormals",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/explicitContact/pfw_input_spinningNormals.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "gas",
+        "case": "gas/dilatingDomain",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/gas/pfw_input_dilatingDomain.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "gas",
+        "case": "gas/expandingGas",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/gas/pfw_input_expandingGas.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "generalizedVortex",
+        "case": "generalizedVortex/generalizedVortexMMS",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/generalizedVortex/pfw_input_generalizedVortexMMS.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_FTable",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_FTable.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_HYD",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_HYD.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_TXC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_TXC.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_Tension",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_Tension.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_anisotropicBuckling_unconfinedCompression",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_anisotropicBuckling_unconfinedCompression.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_isotropicBuckling_unconfinedCompression",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_isotropicBuckling_unconfinedCompression.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoModel_isotropicBuckling_uniaxial",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/pfw_input_geoModel_isotropicBuckling_uniaxial.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "implicitFluid",
+        "case": "implicitFluid/fluidPressure",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/implicitFluid/pfw_input_fluidPressure.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "materialSwap",
+        "case": "materialSwap/materialSwap",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/materialSwap/pfw_input_materialSwap.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressed4DisksCompressedPBC5x2MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressed4DisksCompressedPBC5x2MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressed4DisksPBC5x1MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressed4DisksPBC5x1MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressed4DisksPBC5x2MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressed4DisksPBC5x2MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressedMovingBlockPBC5x1MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressedMovingBlockPBC5x1MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressedMovingBlockPBC5x3MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressedMovingBlockPBC5x3MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressedMovingMultiMatBlockPBC5x3MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressedMovingMultiMatBlockPBC5x3MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "momentumTest",
+        "case": "momentumTest/preStressedSingleParticlePBC3x1MomentumLogging",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/momentumTest/pfw_input_preStressedSingleParticlePBC3x1MomentumLogging.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "periodicBoundaries",
+        "case": "periodicBoundaries/ballThruPBC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/periodicBoundaries/pfw_input_ballThruPBC.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "periodicBoundaries",
+        "case": "periodicBoundaries/diskThruPBC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/periodicBoundaries/pfw_input_diskThruPBC.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "polymerCZ",
+        "case": "polymerCZ/polymerCZ",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/polymerCZ/pfw_input_polymerCZ.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "polymerHeal",
+        "case": "polymerHeal/polymerHeal",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/polymerHeal/pfw_input_polymerHeal.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "shrinkage",
+        "case": "shrinkage/pillarCalcination",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/shrinkage/pfw_input_pillarCalcination.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "shrinkage",
+        "case": "shrinkage/shrinkingSphere",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/shrinkage/pfw_input_shrinkingSphere.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "sizeEffect",
+        "case": "sizeEffect/notchedBar",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/sizeEffect/pfw_input_notchedBar.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "spinningDisk",
+        "case": "spinningDisk/spinningDisk_FLIP",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/spinningDisk/pfw_input_spinningDisk_FLIP.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "spinningDisk",
+        "case": "spinningDisk/spinningDisk_FMPM2",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/spinningDisk/pfw_input_spinningDisk_FMPM2.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "spinningDisk",
+        "case": "spinningDisk/spinningDisk_PIC",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/spinningDisk/pfw_input_spinningDisk_PIC.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "stressControl",
+        "case": "stressControl/stressControl",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/stressControl/pfw_input_stressControl.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "stressControl",
+        "case": "stressControl/stressControl2",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/stressControl/pfw_input_stressControl2.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "temperatureTable",
+        "case": "temperatureTable/geoModel_tempTable",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/temperatureTable/pfw_input_geoModel_tempTable.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "triplyPeriodic",
+        "case": "triplyPeriodic/triplyPeriodic",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/triplyPeriodic/pfw_input_triplyPeriodic.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "vonMisesJ",
+        "case": "vonMisesJ/vonMisesJ",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/vonMisesJ/pfw_input_vonMisesJ.py",
+        "description": "-*- coding: utf-8 -*-"
+      }
+    ],
+    "validation": [
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geoOHCrD_2024_ISR08_V5",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geoOHCrD_2024_ISR08_V5.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsHydrostaticCreep_HP03",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsHydrostaticCreep_HP03.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsTriaxialCompression_ISR03",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsTriaxialCompression_ISR03.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsTriaxialCompression_TP1",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsTriaxialCompression_TP1.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsTriaxialCompression_TP2",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsTriaxialCompression_TP2.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsTriaxialCompression_TP3",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsTriaxialCompression_TP3.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "geomechanics",
+        "case": "geomechanics/geomechanicsTriaxialCreep_TC02",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/pfw_input_geomechanicsTriaxialCreep_TC02.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "polymer",
+        "case": "polymer/polymerCompression",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/pfw_input_polymerCompression.py",
+        "description": "-*- coding: utf-8 -*-"
+      },
+      {
+        "family": "polymer",
+        "case": "polymer/polymerTension",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/pfw_input_polymerTension.py",
+        "description": "-*- coding: utf-8 -*-"
+      }
+    ]
+  },
+  "post_scripts": [
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/postProcess_benchy_FMPM",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/visitRender_benchy.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/visitRender_borehole_Ghareb.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/plotReactions_brazilianDisk_BSpline.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/postProcess_brazilianDisk_BSpline",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/plotReactions_brazilianDisk_FLIP.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/postProcess_brazilianDisk_FLIP",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/plotReactions_brazilianDisk_FMPM.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/postProcess_brazilianDisk_FMPM",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/plotReactions_brazilianDisk_PIC.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/postProcess_brazilianDisk_PIC",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/plotReactions_brazilianDisk_XPIC.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/postProcess_brazilianDisk_XPIC",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/visitRender_collidingDisks.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/visitRender_copperFoamCompression.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/visitRender_copperFoamCompression2D.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/visitRender_elasticDisk.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/mpm_example_postprocess.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/visitRender_pdc.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/mpm_vv_plot_tools.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/mpm_vv_postprocess.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_analysis.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_visit_render.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/plotReactions_geoOHCrD_2024_ISR08.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/plotReactions_geomechanicsHydrostaticCreep.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/plotReactions_geomechanicsTriaxialCompression_ISR03.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/plotReactions_geomechanicsTriaxialCompression_TP1_TP2_TP3.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/geomechanics/plotReactions_geomechanicsTriaxialCreep.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/plotReactions_polymer.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/Ftable/plotReactions_elasticBlockUni.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/ceramic/plotReactions_ceramicTXC.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/ceramic/plotReactions_ceramicTXE.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsBuckling.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsDemo.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsHYD.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsTXC.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsTension.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/plotReactions_geomechanicsUnconfinedBuckling.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/polymerCZ/plotReactions_polymerCZ.py",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/verification/stressControl/plotReactions_stressControl.py"
+  ],
+  "source_inventory": [
+    {
+      "component": "MPM solver",
+      "path": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp"
+    },
+    {
+      "component": "MPM kernels",
+      "path": "src/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitMPM.hpp"
+    },
+    {
+      "component": "MPM solver fields",
+      "path": "src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+    },
+    {
+      "component": "MPM events",
+      "path": "src/coreComponents/events/mpmEvents/*"
+    },
+    {
+      "component": "Particle mesh and regions",
+      "path": "src/coreComponents/mesh/Particle*.{hpp,cpp}, src/coreComponents/mesh/particleGenerators/*"
+    },
+    {
+      "component": "Schema-generated docs",
+      "path": "src/coreComponents/schema/docs/SolidMechanics_MPM.rst and related MPM docs"
+    },
+    {
+      "component": "ParticleFileWriter",
+      "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py"
+    },
+    {
+      "component": "PFW geometry objects",
+      "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py"
+    },
+    {
+      "component": "PFW material library",
+      "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_materials.py"
+    },
+    {
+      "component": "PFW suite tools",
+      "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_suite.py and mpm_vv_*.py"
+    },
+    {
+      "component": "Canonical XML examples",
+      "path": "inputFiles/materialPointMethod/*"
+    }
+  ]
+}

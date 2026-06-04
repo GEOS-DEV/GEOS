@@ -1,0 +1,138 @@
+\ifdefined\pdfobjcompresslevel\pdfobjcompresslevel=0\fi
+\ifdefined\pdfminorversion\pdfminorversion=4\fi
+\documentclass[11pt,oneside]{report}
+\usepackage[letterpaper,margin=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,longtable,array,tabularx}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{makeidx}
+\usepackage{url}
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{etoolbox}
+% Number material-model subsubsections and show them in the TOC.
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+% Table-of-contents layout: progressively indent chapter, section, subsection,
+% and subsubsection entries and reserve enough number width for long labels.
+\makeatletter
+\renewcommand*\l@chapter{\@dottedtocline{0}{0.0em}{2.6em}}
+\renewcommand*\l@section{\@dottedtocline{1}{1.7em}{3.5em}}
+\renewcommand*\l@subsection{\@dottedtocline{2}{4.8em}{5.0em}}
+\renewcommand*\l@subsubsection{\@dottedtocline{3}{8.6em}{6.4em}}
+\makeatother
+\setlength{\emergencystretch}{3em}
+\newcommand{\llbracket}{[\![}
+\newcommand{\rrbracket}{]\!]}
+\makeindex
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={GEOS-MPM Manual},
+  pdfauthor={GEOS-MPM development team},
+  pdfsubject={GEOS Material Point Method manual},
+  pdfkeywords={GEOS, MPM, ParticleFileWriter, Material Point Method}
+}
+\lstdefinestyle{geos}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  showspaces=false,
+  showtabs=false,
+  frame=single,
+  framerule=0.3pt,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em
+}
+\lstset{style=geos}
+\setlist{nosep}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{GEOS-MPM Manual}
+\rhead{}
+\cfoot{\thepage}
+\titleformat{\chapter}[display]{\bfseries\Huge}{\chaptername\ \thechapter}{0.5ex}{\titlerule\vspace{1ex}}
+\newcommand{\generatedwarning}{\par\smallskip\noindent\fbox{\begin{minipage}{0.95\linewidth}\small This section is generated from the source archive. Regenerate it when the code, schema, or ParticleFileWriter changes.\end{minipage}}\par\smallskip}
+
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{-0.38in}
+{\Huge\bfseries GEOS-MPM Manual\par}
+\vspace{0.35em}
+{\Large Material Point Method theory, implementation, and ParticleFileWriter reference\par}
+\vspace{0.45em}
+{\large Source version: \texttt{VERSION\_ID = v1.1.0}\quad Generated on 2026-06-03\par}
+\vspace{0.75em}
+\includegraphics[height=0.32\textheight]{figures/cover_disk_compaction.png}\par
+\vspace{0.45em}
+{\footnotesize\emph{Stylized two-dimensional disk-compaction fragmentation result.}\par}
+\vspace{0.55em}
+\begin{minipage}{0.96\textwidth}
+\footnotesize
+\raggedright
+\textbf{Core GEOS-MPM development}\par
+Michael A. Homel, Ph.D. (LLNL) - GEOS-MPM LEAD Developer\par
+Cameron M. Crook, Ph.D. (LLNL) - GEOS-MPM Developer\par
+Stefan J. Povolny, Ph.D. (LLNL) - GEOS-MPM Developer\par
+\vspace{0.35em}
+\textbf{GEOS-MPM Contributors:}\par
+Jay Appleton, Sohanjit Ghosh, Margariete Malenda, Jacob Nuttal\par
+\vspace{0.35em}
+\textbf{GEOS Infrastructure Support:}\par
+Randy Settgast, Josh White, Matteo Cusini, Ben Corbett, Chris Sherman, Thomas Gazzola, Nicola Castalletto\par
+\vspace{0.35em}
+\textbf{Programmatic Support:}\par
+Eric Herbold, Alan DeHope, Andrew Saab, Kyle Sullivan\par
+\end{minipage}
+\vfill
+{\large Designed for regeneration and future Sphinx conversion\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\input{sections/00_preface}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\input{sections/00_introduction}
+\input{sections/01_getting_started}
+\input{sections/02_theory}
+\input{sections/03_pfw}
+\input{sections/03_event_controls}
+\input{sections/03_restart_controls}
+\input{sections/04_postprocessing}
+\input{sections/05_reports}
+\input{sections/06_maintaining}
+\input{sections/07_references}
+\input{generated/source_inventory}
+
+\appendix
+\input{generated/solver_attributes}
+\input{generated/events}
+\input{generated/pfw}
+\input{generated/particle_format}
+\input{generated/geometry_materials}
+\input{generated/suites}
+\input{generated/post_scripts}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+\end{document}

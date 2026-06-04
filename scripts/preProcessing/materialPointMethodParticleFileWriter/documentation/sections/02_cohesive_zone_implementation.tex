@@ -1,0 +1,187 @@
+\section{Cohesive zone implementation}
+\label{sec:cz-implementation}
+\label{sec:cohesive-zone-implementation}
+\index{cohesive zone}
+\index{cohesive zone!implementation}
+\index{CohesiveZoneRegion}
+\index{CohesiveZone event}
+
+This section describes the solver-side cohesive-zone implementation used by GEOS-MPM.  It is intentionally distinct from the user-facing event and PFW controls: the event-level inputs that activate a cohesive-zone interface are summarized in Section~\ref{sec:event-cohesivezone}, while PFW-side input convenience and generated XML controls are summarized in Chapter~\ref{ch:pfw}.  Here the focus is how the initialized interface is represented internally, how nodal cohesive tractions are computed, and which cohesive constitutive models are available.  The implementation follows the reference-configuration cohesive-zone strategy described by Crook and Homel \cite{crook2025cohesive}: cohesive forces are not carried by separate massless cohesive particles.  Instead, particles on a tagged surface store surface metadata and reference grid mappings.  During each explicit step, the solver reconstructs jumps in displacement across the two material fields, evaluates a cohesive law at reference cohesive nodes, converts tractions to nodal forces using current surface area measures, and maps those forces back to the ordinary MPM particles.
+
+\subsection{Reference-interface representation}
+\index{cohesive zone!reference configuration}
+\index{surface normal!cohesive zone}
+
+For a cohesive interface, the key geometric objects are the two material fields adjacent to the interface, denoted $A$ and $B$, a reference surface normal $\mathbf{N}^0$, a current surface normal $\mathbf{n}$, and a reference surface area $A^0$.  GEOS-MPM stores these data in \texttt{CohesiveZoneRegion} fields and in particle-level surface fields.  The region owns a list of cohesive nodes, their reference positions, reference partitioning normals, side-specific reference normals, and side-specific reference areas.  Cohesive particles store the reference grid nodes and reference shape-function weights that couple the particle to those cohesive nodes.
+
+The central design choice is that cohesive integration uses a reference grid mapping.  If $I$ denotes a cohesive node and $p$ a particle whose initial particle domain intersects the cohesive surface, the solver stores
+\begin{equation}
+  N^0_{Ip}=N_I(\mathbf{X}_p),
+  \qquad
+  \mathcal{S}_p^0=\{I:N^0_{Ip}\ne 0\},
+\end{equation}
+where $\mathbf{X}_p$ is a reference particle position or reference particle-domain quadrature location, depending on the particle representation.  The same reference weights are reused during cohesive-law enforcement.  This is the mechanism emphasized by Crook and Homel: by keeping the cohesive mapping tied to the reference interface, the cohesive law can remain stable during large deformation without introducing a separate surface-particle discretization \cite{crook2025cohesive}.
+
+The implementation currently assumes two velocity fields for cohesive-zone enforcement.  During initialization, particles with a cohesive surface flag and a matching \texttt{CZTag} are partitioned onto fields $A$ and $B$ using the explicit surface normal and the particle's damage-field partitioning.  Nodes receiving mass from both fields become cohesive nodes.  This two-field assumption is checked explicitly when the cohesive reference configuration is initialized.
+
+\subsection{Initialization algorithm}
+\index{cohesive zone!initialization}
+\index{CZTag}
+\index{SurfaceFlag!Cohesive}
+
+Cohesive zones are initialized by the \texttt{CohesiveZone} MPM event.  The event names one or more particle regions, assigns one cohesive constitutive model to each region, and associates each region with an integer \texttt{czTag}.  A particle is eligible for a region only when its surface flag marks it as cohesive and its particle \texttt{CZTag} matches the region tag.  The high-level initialization is:
+
+\begin{lstlisting}[caption={Cohesive-zone reference-configuration initialization.}]
+reset cohesive surface flags on particles
+project particle surface normals to the grid
+for each CohesiveZoneRegion R that is not initialized:
+    select particles with SurfaceFlag == Cohesive and CZTag == R.tag
+    split selected particle contributions onto fields A and B
+    mark grid nodes that receive mass from both fields as cohesive nodes
+    collect cohesive-node global ids across MPI ranks
+    store cohesive-node reference positions and reference partition normals
+    initialize nodal cohesive state: damage, temperature, and max jump history
+    for each selected particle:
+        store reference cohesive nodes and reference shape-function values
+        store reference deformation-gradient and reference surface data
+    compute side-specific reference nodal areas
+    mark R.initialized = 1
+\end{lstlisting}
+
+The reference nodal area can be computed by the mesh-based area integration path or by the brute-force particle-area path.  When \texttt{czVolumeNormalization} is enabled, the computed nodal surface area is multiplied by a local volume-normalization factor that limits the area contribution in partially filled grid cells.  This option is intended to make the discrete cohesive area less sensitive to boundary cells and trimmed particle domains.
+
+Two options control how particle surface data enter the reference configuration.  If \texttt{computeNormalsAndPositions} is enabled, the solver computes particle surface normals and positions before initializing the cohesive mapping.  The \texttt{normalsAndPositionsMethod} option selects the reconstruction method; the reviewed source registers \texttt{LogisticRegression} as the default.  The \texttt{czSurfaceDisplacementUpdate} option then selects how particle surface displacements are reconstructed during the step.  \texttt{TypeA} uses stored surface-position information; \texttt{TypeB}, the default, reconstructs the cohesive surface displacement from the particle-domain geometry and deformation gradients.
+
+\subsection{Step-level cohesive force update}
+\index{cohesive zone!force update}
+\index{cohesive traction}
+\index{particle cohesive force}
+
+At the beginning of the cohesive update, particle cohesive forces are zeroed.  If any cohesive region has not yet been initialized, the initialization algorithm above is executed.  The solver then enforces each cohesive law on the reference cohesive nodes.  For every cohesive particle, a side-specific surface displacement $\mathbf{u}^s_p$ is computed from the particle motion and the selected surface-displacement update.
+
+For the \texttt{TypeA} update, the stored reference surface-position vector is mapped through the current deformation gradient and compared with the reference position.  A schematic form is
+\begin{equation}
+  \mathbf{u}^{s,A}_p
+  = (\mathbf{x}_p-\mathbf{X}_p)
+    + \left(\mathbf{F}_p \mathbf{F}^{-1}_{p,cz}\mathbf{s}^0_p-\mathbf{s}^0_p\right),
+  \label{eq:cz-typea-displacement}
+\end{equation}
+where $\mathbf{F}_{p,cz}$ is the deformation gradient stored at cohesive initialization and $\mathbf{s}^0_p$ is the particle-to-surface reference vector.  For the \texttt{TypeB} update, the particle-domain surface vector is reconstructed from the particle geometry, mapped by the current and cohesive-reference deformation gradients, and differenced.  Both forms have the same purpose: they estimate the displacement of the material surface point, not merely the particle centroid.
+
+The particle surface displacements are projected to each cohesive node using the stored reference weights.  For side $\alpha\in\{A,B\}$,
+\begin{equation}
+  \bar{\mathbf{u}}_{I\alpha}
+  = \frac{\sum_{p\in \mathcal{P}_{I\alpha}} m_p N^0_{Ip}\,\mathbf{u}^s_p}
+         {\sum_{p\in \mathcal{P}_{I\alpha}} m_p N^0_{Ip}},
+  \qquad
+  \bar{\mathbf{n}}_{I\alpha}
+  = \frac{\sum_{p\in \mathcal{P}_{I\alpha}} m_p N^0_{Ip}\,\mathbf{n}_p}
+         {\left\lVert\sum_{p\in \mathcal{P}_{I\alpha}} m_p N^0_{Ip}\,\mathbf{n}_p\right\rVert}.
+  \label{eq:cz-grid-projection}
+\end{equation}
+The implementation also maps the cofactor of the deformation gradient, $\operatorname{cof}\mathbf{F}$, so that reference area vectors can be advanced to the current configuration.
+
+The effective interface normal is a mass-weighted difference of the two side normals,
+\begin{equation}
+  \mathbf{n}_{AB}
+  = \frac{m_A\bar{\mathbf{n}}_{IA}-m_B\bar{\mathbf{n}}_{IB}}
+         {\left\lVert m_A\bar{\mathbf{n}}_{IA}-m_B\bar{\mathbf{n}}_{IB}\right\rVert},
+  \label{eq:cz-effective-normal}
+\end{equation}
+with the out-of-plane component suppressed for plane-strain runs.  The opening and slip measures passed to the cohesive constitutive law are
+\begin{align}
+  \delta_n &= -\mathbf{n}_{AB}\cdot\left(\bar{\mathbf{u}}_{IA}-\bar{\mathbf{u}}_{IB}\right),\\
+  \boldsymbol{\delta}_t
+    &= \left(\bar{\mathbf{u}}_{IA}-\bar{\mathbf{u}}_{IB}\right)+\delta_n\mathbf{n}_{AB},
+  \qquad
+  \delta_t=\left\lVert\boldsymbol{\delta}_t\right\rVert.
+  \label{eq:cz-jump}
+\end{align}
+The cohesive constitutive wrapper returns a normal traction $T_n$ and shear traction magnitude $T_t$ from these jump measures and the nodal state variables.  When \texttt{preventCZInterpenetration} is enabled and the constitutive law would return a tensile-sign compression penalty inconsistent with the contact branch, the normal cohesive stress is clipped to avoid cohesive interpenetration forces.
+
+The traction is converted to a nodal cohesive force by multiplying by the current area measure.  In schematic form,
+\begin{equation}
+  \mathbf{a}_{I\alpha}
+  = \operatorname{cof}\mathbf{F}_{I\alpha}\,A^0_{I\alpha}\mathbf{N}^0_{I\alpha},
+  \qquad
+  A_I = \mathbf{n}_{AB}\cdot\mathbf{a}_{I,AB},
+  \qquad
+  \mathbf{f}^{cz}_{IA}=A_I\left(T_n\mathbf{n}_{AB}+T_t\mathbf{t}_{AB}\right),
+  \label{eq:cz-traction-force}
+\end{equation}
+where $\mathbf{t}_{AB}=\boldsymbol{\delta}_t/\delta_t$ when $\delta_t>0$ and the side-$B$ force is equal and opposite.  The code stores these nodal tractions in temporary cohesive-grid arrays and finally scatters them back to particles through the same reference mapping,
+\begin{equation}
+  \mathbf{f}^{cz}_p \mathrel{+}= \sum_{I\in\mathcal{S}_p^0}
+      N^0_{Ip}\frac{m_p}{m_{I\alpha}}\,\mathbf{f}^{cz}_{I\alpha}.
+  \label{eq:cz-grid-to-particle}
+\end{equation}
+Fully damaged cohesive nodes are propagated back to their supporting particles.  Affected particles have their cohesive flag disabled for future cohesive-force calculations and their surface flag is changed to the damaged-cohesive state so that the interface can be handled by the ordinary multi-field contact machinery.  This transition is one of the practical advantages of the Crook--Homel formulation: a weak or failed cohesive interface can degrade into a contact interface without changing the particle discretization \cite{crook2025cohesive}.
+
+\subsection{Available cohesive constitutive models}
+\index{cohesive zone!constitutive models}
+\index{UncoupledCohesiveZone}
+\index{CoupledCohesiveZone}
+\index{BicrystalCohesiveZone}
+\index{PolymerCohesiveZone}
+
+GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers four executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, and \texttt{PolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
+
+\paragraph{\texttt{UncoupledCohesiveZone}.}
+This is a linear uncoupled spring law with independent normal and tangential failure thresholds.  Required inputs are \texttt{normalForceConstant}, \texttt{shearForceConstant}, \texttt{maxNormalDisplacement}, and \texttt{maxTangentialDisplacement}.  The law is
+\begin{equation}
+  T_n=-k_n\delta_n(1-D),
+  \qquad
+  T_t=-k_t\delta_t(1-D),
+  \label{eq:cz-uncoupled}
+\end{equation}
+where $D$ is set to one when either displacement threshold is exceeded.  This model is useful for verification problems in which a simple elastic interface with abrupt failure is desired.
+
+\paragraph{\texttt{CoupledCohesiveZone}.}
+This law implements a coupled exponential cohesive response of the Needleman--Xu family \cite{xuneedleman1994}.  Required inputs are \texttt{characteristicNormalDisplacement}, \texttt{characteristicTangentialDisplacement}, \texttt{defaultMaxNormalStress}, and \texttt{defaultMaxShearStress}.  Optional displacement cutoffs \texttt{maxNormalDisplacement} and \texttt{maxTangentialDisplacement} default to very large values.  The code forms work-of-separation scales
+\begin{equation}
+  \phi_n = e\,\sigma^{max}_n\delta^c_n,
+  \qquad
+  \phi_t = \sqrt{e/2}\,\tau^{max}\delta^c_t,
+  \label{eq:cz-coupled-work}
+\end{equation}
+then evaluates coupled normal and shear stresses from normalized jumps $\bar{\delta}_n=\delta_n/\delta^c_n$ and $\bar{\delta}_t=\delta_t/\delta^c_t$.  In the reviewed implementation the coupling constants are fixed at $q=1$ and $r=0$, and complete damage is triggered when either optional maximum displacement cutoff is exceeded.
+
+\paragraph{\texttt{BicrystalCohesiveZone}.}
+This model extends \texttt{CoupledCohesiveZone} by scaling the nodal peak normal and shear strengths using a grain-boundary misorientation measure.  The strength scale follows a Read--Shockley-like low-angle boundary form \cite{readshockley1950}: for angles below a cutoff $\theta_m$ the reduction depends on $(\theta/\theta_m)\left[1-\log(\theta/\theta_m)\right]$, and above the cutoff the reduction saturates.  The model inherits the coupled cohesive inputs listed above.  In the reviewed source, the misorientation array is registered as model state; users should verify that the intended setup path populates this state before relying on misorientation-dependent strengths.
+
+\paragraph{\texttt{PolymerCohesiveZone}.}
+The polymer law represents a finite-thickness cohesive layer with bulk and shear stiffness, temperature-dependent strength and softening factors, plastic-strain-like history, and a maximum stretch criterion.  Required inputs are \texttt{thickness}, the bulk-modulus parameters \texttt{bulkModulus}, \texttt{bulkModulusA}, \texttt{bulkModulusB}, \texttt{bulkModulusT0}, the shear-modulus parameters \texttt{shearModulus}, \texttt{shearModulusA}, \texttt{shearModulusB}, \texttt{shearModulusT0}, yield-strength parameters \texttt{yieldStrength0}, \texttt{yieldStrengthA}, \texttt{yieldStrengthB}, \texttt{yieldStrengthT0}, rate/softening parameters \texttt{r0}, \texttt{r0A}, \texttt{r0B}, \texttt{r0T0}, \texttt{r1}, \texttt{r2}, energy-like parameters \texttt{Gr}, \texttt{GrA}, \texttt{GrB}, \texttt{GrT0}, and stretch-limit parameters \texttt{maximumStretch}, \texttt{maximumStretchA}, \texttt{maximumStretchB}, \texttt{maximumStretchT0}.  The model computes an effective stretch
+\begin{equation}
+  \lambda = \frac{\sqrt{(h+\delta_n)^2+\delta_t^2}}{h},
+  \label{eq:cz-polymer-stretch}
+\end{equation}
+where $h$ is the layer thickness, updates temperature-dependent moduli and strengths, computes a yield-limited traction scale, and tracks previous stretch and plastic-strain-like history.  Damage is activated when the stretch exceeds the temperature-adjusted maximum stretch.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
+\caption{Cohesive-zone constitutive model summary.}\label{tab:cz-model-summary}\\
+\toprule
+Model & Principal required inputs & Notes \\
+\midrule
+\endfirsthead
+\toprule
+Model & Principal required inputs & Notes \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{Uncoupled}\newline\texttt{CohesiveZone} & Normal and shear force constants; normal and tangential displacement limits. & Independent linear normal/tangential springs with abrupt complete damage. \\
+\texttt{Coupled}\newline\texttt{CohesiveZone} & Normal and tangential characteristic displacements; peak normal and shear stresses; optional displacement cutoffs. & Needleman--Xu-style coupled exponential cohesive law. \\
+\texttt{Bicrystal}\newline\texttt{CohesiveZone} & Inherits \texttt{CoupledCohesiveZone} inputs; requires a valid misorientation state for strength scaling. & Coupled law with misorientation-dependent peak-strength scaling. \\
+\texttt{Polymer}\newline\texttt{CohesiveZone} & Layer thickness; temperature-dependent bulk, shear, yield, rate/softening, \texttt{Gr}, and maximum-stretch parameters. & Finite-thickness polymer-interface law with thermal softening and stretch-based failure. \\
+\end{longtable}
+
+
+\subsection{Input controls and current limitations}
+\index{cohesive zone!inputs}
+\index{cohesive zone!limitations}
+
+The minimum event-level controls are \texttt{regionNames}, \texttt{constitutiveModels}, and \texttt{czTags}; the arrays must have the same nonzero length.  Optional controls are \texttt{czVolumeNormalization}, \texttt{computeNormalsAndPositions}, \texttt{normalsAndPositionsMethod}, and \texttt{czSurfaceDisplacementUpdate}.  These controls are documented with the other event inputs in Section~\ref{sec:event-cohesivezone}.  PFW-side setup usually also requires particle fields for surface flag, cohesive-zone tag, surface normal, and surface position.  The default PFW particle-field list already includes \texttt{SurfaceFlag}, \texttt{CZTag}, \texttt{SurfaceNormal}, and \texttt{SurfacePosition} in cohesive-capable cases.
+
+The principal implementation limitations in the reviewed snapshot are: cohesive-zone enforcement assumes two velocity fields; initialization depends on consistent particle surface flags and CZ tags; misorientation-dependent bicrystal strengths require a valid misorientation state; and once cohesive damage reaches completion the interface is handed off to contact rather than continuing to carry cohesive traction.  These limitations should be reflected in verification tests for new cohesive-zone use cases.
+
+

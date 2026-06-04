@@ -1,0 +1,144 @@
+\section{Restart controls}
+\label{sec:pfw-restart-controls}
+\index{restart controls!PFW}
+\index{restart files}
+\pfwidx{restartInterval}\pfwidx{runContinuation}\pfwidx{restartJobDir}\pfwidx{restartCycleNum}\pfwidx{autoRestart}\pfwidx{mSubmitJobs}\pfwidx{runCheckTime}\pfwidx{mWallTime}\pfwidx{lastRestartBufferInSeconds}\pfwidx{generateParticleFile}
+
+Restart output is controlled by a GEOS \texttt{Restart} output object and a \texttt{PeriodicEvent} that targets that output object.  PFW always writes the restart output block
+\begin{lstlisting}[language=XML,caption={GEOS restart output block written by PFW.}]
+<Outputs>
+  ...
+  <Restart name="restartOutput"/>
+</Outputs>
+\end{lstlisting}
+and writes the associated event
+\begin{lstlisting}[language=XML,caption={GEOS restart event written by PFW.}]
+<PeriodicEvent
+  name="restart"
+  timeFrequency="..."
+  target="/Outputs/restartOutput"/>
+\end{lstlisting}
+where the time frequency is supplied by \texttt{pfw["restartInterval"]}.  This plot-independent restart stream is separate from the VTK/Silo output controls in Section~\ref{sec:pfw-output-controls}; changing \texttt{outputType} does not change the restart format.
+
+A GEOS restart captures the data-repository state of objects and wrappers whose restart flags permit writing.  For MPM this includes the particle mesh state, active particle fields needed to continue the calculation, and restart-enabled solver state.  Output-only diagnostics and many temporary grid wrappers are intentionally not restart data.  After restarting, the particle file is no longer the source of the material state; it is retained by PFW mostly for bookkeeping and because the generated input directory is expected to remain self-contained.
+
+\subsection{Restart interval and disabling restarts}
+\label{sec:pfw-restart-interval}
+\index{restart interval}
+\index{PFW example!restart interval}
+
+The primary user control is \texttt{restartInterval}.  It is a simulation-time interval, not a wall-clock interval.  A smaller value gives more recent checkpoints but writes larger and more frequent restart files.  A larger value reduces I/O overhead but increases the amount of simulation time that may be lost if the job stops before completion.
+
+For short examples and deterministic verification tests, it is common to disable effective restart writing by setting the restart interval beyond the end time:
+\begin{lstlisting}[language=Python,caption={Effectively disabling restart writes for a short run.}]
+stopTime = 1.0e-4
+pfw["endTime"] = stopTime
+pfw["plotInterval"] = stopTime / 100.0
+
+# PFW still writes the GEOS Restart block, but this event is never reached
+# before the simulation completes.
+pfw["restartInterval"] = 2.0 * stopTime
+\end{lstlisting}
+
+For production runs, choose a restart interval based on the cost of losing work and the file-system cost of restart I/O:
+\begin{lstlisting}[language=Python,caption={Periodic restart output during a production run.}]
+stopTime = 2.0e-3
+pfw["endTime"] = stopTime
+pfw["plotInterval"] = stopTime / 200.0
+
+# Keep at most about 1 percent of the simulated time between checkpoints.
+pfw["restartInterval"] = stopTime / 100.0
+\end{lstlisting}
+
+Restart cadence should usually be coarser than plot cadence for small examples and finer than plot cadence for long production jobs where plots are infrequent.  For contact, cohesive-zone, damage, or machining calculations, restart files can be large because the particle state is large; verify restart-write cost in a short run before using very frequent checkpoints on a large calculation.
+
+\subsection{Manual continuation from a known restart}
+\label{sec:pfw-manual-restart-continuation}
+\index{restart!manual continuation}
+\index{PFW example!manual restart}
+
+PFW can generate a continuation run from a previous restart with the \texttt{runContinuation} controls.  In this mode PFW skips particle-file generation, copies the selected restart directory and root file into the new run directory, and adds the GEOS command-line restart flag \texttt{-r}.  The selected restart is constructed from the previous run-directory name and a zero-padded cycle number:
+\begin{equation}
+  \texttt{mpm\_}\langle\texttt{restartJobDir name}\rangle\texttt{\_restart\_}\langle\texttt{cycle number}\rangle .
+\end{equation}
+
+\begin{lstlisting}[language=Python,caption={Manual continuation from a previous PFW run directory.}]
+pfw["runContinuation"] = True
+pfw["restartJobDir"] = "/p/lustre1/user/runs/240603123456_myCase"
+pfw["restartCycleNum"] = 350000
+
+# In continuation mode PFW sets generateParticleFile to False internally.
+# The new run may extend endTime, change output cadence, or add later events.
+pfw["endTime"] = 4.0e-3
+pfw["plotInterval"] = 2.0e-5
+pfw["restartInterval"] = 1.0e-5
+\end{lstlisting}
+
+When using manual continuation, keep the mesh partitioning controls consistent with the original run: \texttt{xpar}, \texttt{ypar}, \texttt{zpar}, mesh dimensions, material-region names, and solver layout should match the restart.  Changing output frequency, diagnostic flags, or later event schedules is usually safe; changing geometry, particle density, contact-group meaning, or constitutive-model ordering is not a restart continuation and should be treated as a new calculation.
+
+\subsection{Automatic restart with \texttt{pfw\_check}}
+\label{sec:pfw-auto-restart}
+\index{auto restart}
+\index{PFW check script}
+\index{PFW example!automatic restart}
+
+The PFW automatic-restart path is a scheduler wrapper around the same GEOS restart files.  A submitted job writes periodic restarts.  When \texttt{pfw["autoRestart"] = True} and \texttt{pfw["mSubmitJobs"] = True}, PFW submits a second Slurm job that runs \texttt{pfw\_check.py} after the GEOS job finishes.  The check script scans the Slurm output.  If it sees \texttt{Job complete}, it stops.  If it sees \texttt{Job exited early}, \texttt{TIME LIMIT}, or \texttt{NODE FAILURE}, it finds the most recent \texttt{*\_restart\_*} directory, submits a restart job with \texttt{-r}, and schedules another check job.
+
+\begin{lstlisting}[language=Python,caption={Automatic Slurm restart workflow.}]
+pfw["mSubmitJobs"] = True
+pfw["autoRestart"] = True
+pfw["mWallTime"] = "02:00:00"
+pfw["runCheckTime"] = "00:02:00"
+pfw["mPartition"] = "pdebug"      # or a production partition
+pfw["mBank"] = "my_bank"
+
+# Restart cadence is still simulation-time based.
+pfw["restartInterval"] = stopTime / 100.0
+\end{lstlisting}
+
+The current PFW auto-restart wrapper is Slurm-oriented.  The reviewed PFW script prints that auto-restart is not supported for the Flux scheduler path and does not submit the check job in that case.  The suite runner can set the same option from the command line with \texttt{--auto-restart}; internally it appends \texttt{pfw['autoRestart'] = True} to the generated suite input.
+
+The automatic path depends on log messages and file naming.  If a job exits for a reason not recognized by \texttt{pfw\_check.py}, the checker reports an unknown interruption and stops rather than blindly resubmitting.  If the job stops before any restart file has been written, the checker cannot continue and reports that the restart interval should be reduced.
+
+\subsection{Stopping before wall time ends}
+\label{sec:pfw-walltime-restart-buffer}
+\index{wall time!restart buffer}
+\index{HaltEvent!PFW restart workflow}
+\pfwidx{lastRestartBufferInSeconds}
+
+PFW writes a GEOS \texttt{HaltEvent} so that a submitted job exits before the scheduler kills it at the batch wall-time limit.  The input is not a user-written event in \texttt{mpmEventsString}; it is generated automatically from the batch controls:
+\begin{lstlisting}[language=XML,caption={PFW-generated wall-clock halt event.}]
+<HaltEvent
+  maxRuntime="..."/>
+\end{lstlisting}
+The \texttt{maxRuntime} is computed from \texttt{pfw["mWallTime"]} and \texttt{pfw["lastRestartBufferInSeconds"]}.  The intent is to leave enough wall-clock time for GEOS to exit cleanly, flush logs, and allow the automatic restart checker to detect \texttt{Job exited early}.  A typical production setting is
+\begin{lstlisting}[language=Python,caption={Wall-time buffer for a restartable batch job.}]
+pfw["mWallTime"] = "08:00:00"
+pfw["lastRestartBufferInSeconds"] = 120
+pfw["autoRestart"] = True
+pfw["mSubmitJobs"] = True
+\end{lstlisting}
+
+The wall-clock halt does not itself force a new restart file at the instant the job stops.  It only prevents scheduler termination from interrupting GEOS abruptly.  To have a recent checkpoint available when the halt event fires, choose \texttt{restartInterval} small enough that at least one restart is expected during the wall-time allocation.  For jobs with rapidly changing time step or expensive output, test a short run and estimate both the simulated time advanced per wall-clock hour and the time required to write a restart.  Then choose the restart interval and buffer so that
+\begin{enumerate}[leftmargin=*]
+\item a valid restart is written well before the halt event can fire;
+\item the buffer is longer than the observed restart-write and shutdown time; and
+\item the checkpoint frequency does not dominate the total run time or overwhelm the file system.
+\end{enumerate}
+
+For very long campaigns, a robust pattern is to set \texttt{restartInterval} to a small fraction of the simulated time expected in one batch allocation and set \texttt{lastRestartBufferInSeconds} to a conservative I/O buffer.  If a checkpoint must be taken at a precise physical time, use \texttt{restartInterval} or a segmented run plan so that the desired time is an integer multiple of the restart cadence; the current PFW path does not provide a separate wall-clock-triggered restart writer.
+
+\subsection{Restart-control checklist}
+\label{sec:pfw-restart-checklist}
+\index{restart!checklist}
+
+Before using restart in a production run, verify the following in the generated XML and run directory:
+\begin{itemize}[leftmargin=*]
+\item The \texttt{Events} block contains a \texttt{PeriodicEvent} named \texttt{restart} targeting \texttt{/Outputs/restartOutput}.
+\item \texttt{restartInterval} is less than \texttt{endTime} when restart files are desired, and greater than \texttt{endTime} only when restart output is intentionally disabled.
+\item A short smoke run produces a restart directory and matching \texttt{.root} file that can be read by GEOS with \texttt{-r}.
+\item Manual continuation uses the same mesh partitioning and compatible constitutive, contact, and particle-field definitions as the original run.
+\item Automatic restart is only enabled on scheduler paths that support the generated \texttt{pfw\_check.py} job.
+\item The wall-time buffer is large enough for clean shutdown and does not assume that \texttt{HaltEvent} will force an additional restart write.
+\end{itemize}
+

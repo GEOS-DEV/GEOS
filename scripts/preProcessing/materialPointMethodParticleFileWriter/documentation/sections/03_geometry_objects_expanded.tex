@@ -1,0 +1,228 @@
+\section{Geometry objects}
+\label{sec:pfw-geometry-objects}
+\index{Geometry objects}
+\index{ParticleFileWriter!geometry objects}
+
+PFW geometry objects are the particle-creation layer between a user-defined model and the plain-text particle file.  During particle generation, PFW loops over the candidate particle centers implied by the background grid and particle-density controls.  Each candidate point is tested against an ordered list of geometry objects.  The first object that accepts the point supplies the particle type, material index, contact group, initial velocity, and any optional fields requested in \texttt{particleFileFields}.  Objects can therefore create solid regions, leave voids, tag surface particles, assign different materials or contact groups, paint damage or porosity, prescribe material directions, and provide exact surface normals or surface positions for contact and cohesive-zone calculations.
+
+\subsection{Creating objects and assembling the object list}
+\index{objects@\texttt{objects}}
+\index{make\_objects@\texttt{make\_objects}}
+\index{geometry objects!creation}
+
+The most direct workflow is to construct objects in the input file and assign the ordered list to \texttt{pfw["objects"]}.  The object order matters.  PFW tests objects sequentially and stops at the first match, so later objects do not overwrite particles created by earlier objects unless the earlier object rejects the particle point.  This priority rule is useful for inserting inclusions, defects, voids, or wrappers with controlled precedence.
+
+\begin{lstlisting}[language=Python,caption={Assembling an explicit PFW object list.}]
+import pfw_geometryObjects as geom
+
+matrix = geom.box("matrix", x0=[-1.0,-1.0,-1.0], x1=[1.0,1.0,1.0], mat=0, group=0)
+inclusion = geom.sphere("inclusion", x0=[0.0,0.0,0.0], r=0.25, mat=1, group=1)
+void = geom.sphere("void", x0=[0.4,0.0,0.0], r=0.10, mat=-1, group=0)
+
+# First accepted object wins.  Put small, high-priority features first.
+pfw["objects"] = [void, inclusion, matrix]
+\end{lstlisting}
+
+When geometry construction is expensive or rank-dependent, the input module can instead define a function named \texttt{make\_objects}.  The current PFW script uses this function only when \texttt{pfw["objects"]} is absent.  A zero-argument \texttt{make\_objects()} function is the legacy form and constructs the full list on every PFW rank.  A two-argument form, \texttt{make\_objects(rankxmin, rankxmax)}, receives the approximate $x$-extent assigned to the current particle-generation rank and can construct only objects whose bounding boxes overlap that slice.  Some older notes and user inputs may refer to this pattern as a \texttt{makeObjects} option; the active Python hook in the reviewed code is \texttt{make\_objects}.
+
+\begin{lstlisting}[language=Python,caption={Rank-sliced object construction with \texttt{make\_objects}.}]
+def make_objects(rankxmin, rankxmax):
+    objs = []
+    for center, radius, mat, group in particle_database:
+        if center[0] + radius < rankxmin:
+            continue
+        if center[0] - radius > rankxmax:
+            continue
+        objs.append(geom.sphere("grain", x0=center, r=radius, mat=mat, group=group))
+    return objs
+\end{lstlisting}
+
+The rank-sliced form is particularly useful for granular beds, voxel-derived objects, Voronoi constructions, and other cases in which constructing all objects on every rank would dominate preprocessing time or memory.  It does not change the meaning of the final particle file; it only reduces the number of candidate objects that a rank constructs and tests.
+
+\subsection{Object sorting in parallel PFW runs}
+\index{sortObjects@\texttt{sortObjects}}
+\index{geometry objects!sorting}
+\index{parallel PFW!object sorting}
+
+The \texttt{sortObjects} control is a second acceleration mechanism.  If \texttt{sortObjects=True}, PFW filters the object list at each candidate $x$-slice by evaluating
+\begin{equation}
+  x_{\min}^{(a)} \le x \le x_{\max}^{(a)},
+\end{equation}
+where \(x\) is the candidate particle center and \(x_{\min}^{(a)}\), \(x_{\max}^{(a)}\) are returned by object \(a\)'s \texttt{xMin()} and \texttt{xMax()} methods.  Only the filtered slice list is then searched for that $x$ coordinate.  The original order of the retained objects is preserved, so first-match priority is unchanged.
+
+This option is intended for many-object geometries with compact bounding boxes, such as packed granular beds or collections of inclusions.  It is not enabled by default because some objects are unbounded, use infinite default bounds, or have only approximate \texttt{xMin}/\texttt{xMax} implementations.  Such objects remain correct when \texttt{sortObjects=False}; they simply do not benefit from $x$-slice filtering.  The two acceleration mechanisms are complementary: \texttt{make\_objects(rankxmin, rankxmax)} reduces object construction, while \texttt{sortObjects} reduces per-point object testing after the list has been constructed.
+
+\subsection{Geometry-object interface and particle fields}
+\index{geometry objects!interface}
+\index{surface flags!PFW}
+\index{getMat@\texttt{getMat}}
+\index{getGroup@\texttt{getGroup}}
+\index{isInterior@\texttt{isInterior}}
+
+All PFW geometry objects are expected to provide at least an inside/outside query and enough metadata to assign particle fields.  The base \texttt{Geometry} constructor stores common attributes including \texttt{name}, \texttt{vel}, \texttt{mat}, \texttt{group}, \texttt{particleType}, \texttt{damage}, \texttt{porosity}, \texttt{temperature}, and \texttt{surfaceTraction}.  Objects can supply these as constants, callables, or explicit getter methods.
+
+The central query is
+\begin{equation}
+  f_a(\mathbf{x}_p,h_s)=\texttt{object.isInterior(pt, skinDepth)},
+\end{equation}
+where \(\mathbf{x}_p\) is the candidate particle center and \(h_s\) is the surface-search depth computed from the cell and particle spacing.  A negative return value rejects the particle point.  A nonnegative return value accepts it and is interpreted as the particle's surface flag when the \texttt{SurfaceFlag} field is enabled.  The most common values are \texttt{0} for an interior particle, \texttt{1} for a fully damaged particle, \texttt{2} for a ordinary surface particle, \texttt{3} for a cohesive-zone surface particle, and \texttt{4} for a damaged cohesive particle.  Older comments and user discussions sometimes refer to an \texttt{isSurface} method; in the current particle-generation path the surface/interior decision is carried by the integer returned from \texttt{isInterior}.
+
+After a candidate point is accepted, PFW queries optional object methods in the order required by the particle file.  Important methods and fallback attributes are summarized in Table~\ref{tab:pfw-geometry-interface}.  If a method is absent, PFW falls back to an attribute of the same concept, and if that attribute is callable it is evaluated at the particle point.  This pattern allows simple constant-valued objects and spatially varying user-defined objects to share the same interface.
+
+\begin{table}[htbp]
+\centering
+\caption{Common PFW geometry-object attributes and methods.}
+\label{tab:pfw-geometry-interface}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.31\linewidth}X@{}}
+\toprule
+\textbf{Attribute or method} & \textbf{Role in particle generation}\\
+\midrule
+\texttt{isInterior(pt, skinDepth)} & Accepts or rejects a candidate particle center.  Nonnegative return values become surface flags when the surface-flag particle field is written.\\
+\texttt{xMin()}, \texttt{xMax()} & Bounding interval used by \texttt{sortObjects}; finite bounds improve sorting efficiency.\\
+\texttt{getParticleType(pt)} or \texttt{particleType} & Selects single-point, B-spline, CPDI, CPTI, or CPDI2 particle type.\\
+\texttt{getMat(pt)} or \texttt{mat} & Selects the material index written to the particle file.  A negative material index is used as a void/deletion convention and suppresses particle creation.\\
+\texttt{getGroup(pt)} or \texttt{group} & Selects the contact group used by multi-field contact and related grouping options.\\
+\texttt{getVelocity(pt)} or \texttt{vel} & Provides the initial particle velocity.  In plane strain, PFW forces the through-thickness component to zero.\\
+\texttt{getDamage}, \texttt{getPorosity}, \texttt{getTemperature} & Assign optional initial state fields used by damage, porosity, and thermo-mechanical workflows.\\
+\texttt{getSurfaceNormal(pt)} & Provides an explicit outward surface normal for contact, DFG, or cohesive-zone workflows when the particle is surface flagged.\\
+\texttt{getSurfacePosition(pt)} & Provides the vector from the particle center to the exact or reconstructed surface point.\\
+\texttt{getSurfaceTraction(pt)} & Provides an optional initial/external surface-traction vector for surface particles.\\
+\texttt{getMatDir(pt)} & Provides a local material-direction triad for anisotropic materials, crystals, fibers, or layered strength fields.\\
+\texttt{getStrengthScale(pt)} & Provides spatial strength scaling, often for Weibull or layered heterogeneity.\\
+\texttt{getCZTag(pt)} & Provides cohesive-zone tags for surfaces that use cohesive constitutive models.\\
+\texttt{getSubregions()} & Reports material/particle-type pairs so PFW can construct compatible \texttt{ParticleRegion} subregions.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The distinction between object geometry and object metadata is important.  The inside/outside test decides whether a particle exists; the getter methods decide how the accepted particle is interpreted by GEOS-MPM.  A geometry object can therefore be used as a solid inclusion, a void, a contact body, a material-orientation map, a cohesive surface generator, or a local state-field painter depending on which getters or wrappers are attached.
+
+\subsection{Primitive analytic objects}
+\index{geometry objects!analytic primitives}
+
+\paragraph{\texttt{box}.}\index{geometry objects!box}Creates an axis-aligned rectangular solid from two opposite corners.  It is the most common object for blocks, platens, test coupons, and matrix domains.  Optional surface flags can enable or suppress selected faces for contact/cohesive workflows.
+
+\paragraph{\texttt{box2}.}\index{geometry objects!box2}A box variant used primarily for contact testing.  It follows the same rectangular membership test as \texttt{box}, but uses mixed corner-normal behavior so that contact-normal handling can be exercised at edges and corners.
+
+\paragraph{\texttt{notchedBar}.}\index{geometry objects!notchedBar}Creates a rectangular bar with an edge notch cut into the positive-$y$ face.  It is useful for fracture and localization examples that need a prescribed geometric flaw.  The source notes that notch surface normals are not fully defined, so exact-surface contact or cohesive workflows should verify this object before relying on those normals.
+
+\paragraph{\texttt{sphere}.}\index{geometry objects!sphere}Creates a sphere from center and radius, returning surface flags and surface-normal/position data near the spherical boundary.  In two-dimensional or plane-strain examples it is commonly used as a disk-like cross-section when the through-thickness grid has one active layer.
+
+\paragraph{\texttt{sphericalInclusion}.}\index{geometry objects!sphericalInclusion}Creates a spherical inclusion-like region but suppresses ordinary surface flagging.  This is useful when the inclusion should assign material or group data without creating a separate contact surface at the inclusion boundary.
+
+\paragraph{\texttt{shell}.}\index{geometry objects!shell}Creates a spherical shell between inner and outer radii.  It marks particles lying between the two spherical surfaces and provides inward/outward surface data near the shell boundaries.
+
+\paragraph{\texttt{ellipsoid}.}\index{geometry objects!ellipsoid}Creates a grid-aligned ellipsoid from a center and three semi-axis lengths.  It is useful for inclusions, pores, or idealized grains with anisotropic aspect ratios.
+
+\paragraph{\texttt{cone}.}\index{geometry objects!cone}Creates a cone from two axis points and a base radius.  Surface normals distinguish the side wall and base, making the object useful for idealized tooling or conical inclusions.
+
+\paragraph{\texttt{cylinder}.}\index{geometry objects!cylinder}Creates a solid or hollow cylinder from two axis points, an outer radius, and optionally an inner radius.  The object supports face/wall surface-flag controls, a slanted top plane through \texttt{n2}, and an axis-based material-direction triad.  Cylinders are used for disks, rods, pores, tools, and plane-strain circular samples.
+
+\paragraph{\texttt{toroid}.}\index{geometry objects!toroid}Creates a toroidal annulus from a center, major radius, and minor radius.  It is useful for ring-like structures or curved voids.
+
+\paragraph{\texttt{polygon}.}\index{geometry objects!polygon}Creates a two-dimensional polygon from ordered vertices.  PFW uses point-in-polygon and edge-distance operations to determine interior particles and surface flags.  The polygon is generally used for plane-strain domains or extruded cross-sections.
+
+\paragraph{\texttt{porousPolygon}.}\index{geometry objects!porousPolygon}Extends \texttt{polygon} by inserting two-dimensional pores according to a porosity and pore-size specification.  It is used for plane-strain porous mesostructures where the outer boundary is polygonal.
+
+\paragraph{\texttt{fill}.}\index{geometry objects!fill}Accepts all candidate particle points.  This is a convenience object for filling the full background domain or for constructing a lowest-priority background material beneath higher-priority objects.
+
+\subsection{Tooling, sample, and test-fixture objects}
+\index{geometry objects!tooling}
+
+\paragraph{\texttt{indentor}.}\index{geometry objects!indentor}Creates a faceted, grid-aligned indentation tool from an apex/location, number of facets, and included angle.  Three facets approximate a Berkovich-style geometry and four facets approximate a Vickers-style geometry.
+
+\paragraph{\texttt{spherical\_indenter}.}\index{geometry objects!spherical indenter}Creates an indenter with a spherical tip.  It is intended for indentation examples in which a curved contact surface is more appropriate than a faceted tip.
+
+\paragraph{\texttt{flatpunch\_indenter}.}\index{geometry objects!flat punch indenter}Creates a flat-punch indenter with a specified radius and angle.  It is useful for verification of moving tools, boundary contact, and explicit contact surfaces.
+
+\paragraph{\texttt{simple\_tensile\_gripper}.}\index{geometry objects!simple tensile gripper}Creates one side of a simple gripper claw for micromechanical tensile tests.  Dimensions define the inside width, grip height, gap, outer width, and thickness.
+
+\paragraph{\texttt{tensile\_gripper}.}\index{geometry objects!tensile gripper}Creates a more detailed tensile gripper based on micromechanical test hardware dimensions.  It is used when the gripper itself is represented by particles rather than only by boundary conditions.
+
+\paragraph{\texttt{pillar}.}\index{geometry objects!pillar}Creates a micropillar-style compression specimen with a cylindrical gauge length and a wider base connected by a smooth radial profile.  The object carries material-direction information and is intended for microcompression or strength-size-effect studies.  The source notes that its curved-surface normal approximation should be checked for exact-surface contact use.
+
+\paragraph{\texttt{pillarBase}.}\index{geometry objects!pillarBase}Creates a supporting base geometry for pillar simulations.  It is typically paired with \texttt{pillar} to represent a substrate or pedestal beneath the gauge section.
+
+\paragraph{\texttt{whiskers}.}\index{geometry objects!whiskers}Creates whisker- or fiber-like inclusions.  It is used for reinforced microstructure examples where slender embedded features need separate material directions or contact groups.
+
+\subsection{Mesostructure and inclusion objects}
+\index{geometry objects!mesostructures}
+
+\paragraph{\texttt{crystal}.}\index{geometry objects!crystal}Generates a faceted crystal analogue from a center, axis, height, and minimum/maximum face offsets.  It is useful for synthetic crystal-like inclusions or grains with flat facets.
+
+\paragraph{\texttt{foam}.}\index{geometry objects!foam}Creates a box with user-specified spherical pores.  The object removes particles inside the pore list and returns surface flags near the pore and outer-box boundaries.
+
+\paragraph{\texttt{poissonDiskFoam}.}\index{geometry objects!poissonDiskFoam}Creates a grid-aligned foam block with pores sampled by a Poisson-disk-style algorithm.  It supports two-dimensional and three-dimensional modes, periodic sampling options, minimum-ligament constraints, and explicit surface-normal/position information.
+
+\paragraph{\texttt{packedSphericalBed}.}\index{geometry objects!packedSphericalBed}Represents a packed bed of spherical grains inside a box.  The object stores grain centers, radii, material indices, contact groups, and particle types, and uses a cell-list search to answer point queries efficiently.  It can generate random sequential-addition-style packings or consume precomputed grain data provided through the input script.
+
+\paragraph{\texttt{twoMaterialBox}.}\index{geometry objects!twoMaterialBox}Creates a box in which accepted particles randomly select between two material indices.  This is a simple stochastic mixture helper rather than a resolved microstructure generator.
+
+\paragraph{\texttt{twoFieldBox}.}\index{geometry objects!twoFieldBox}Creates a box intended for two-contact-field or two-group testing.  It is a legacy/test helper for random or mixed contact group assignments; users should verify the current constructor before relying on it in production inputs.
+
+\paragraph{\texttt{polygonInclusions}.}\index{geometry objects!polygonInclusions}Assigns particles to polygonal inclusions embedded in a surrounding fill group.  Polygons should be provided with counter-clockwise point ordering.  The object is useful for two-dimensional composite or mesoscale inclusion studies.
+
+\subsection{Cohesive-zone and prill objects}
+\index{geometry objects!cohesive zones}
+\index{geometry objects!prills}
+
+\paragraph{\texttt{czSphericalPrill}.}\index{geometry objects!czSphericalPrill}Creates a spherical prill containing Voronoi-like crystals separated by cohesive-zone surfaces.  It can assign contact groups, crystal material directions, surface positions, and cohesive tags needed by the cohesive-zone workflow.
+
+\paragraph{\texttt{explicitBinderSphericalPrill}.}\index{geometry objects!explicitBinderSphericalPrill}Creates a two-dimensional spherical prill with explicit grain and binder regions.  It assigns grain and binder material indices separately and is used when binder ligaments should be represented by particles rather than only by cohesive interfaces.
+
+\paragraph{\texttt{czCylindricalPrill}.}\index{geometry objects!czCylindricalPrill}Creates a cylindrical prill with Voronoi-like internal crystals and cohesive-zone surfaces.  It is appropriate for cylindrical or disk-like prill geometries where cohesive interfaces are inserted between neighboring grains.
+
+\paragraph{\texttt{czPrill}.}\index{geometry objects!czPrill}Creates a box-shaped prill with internal Voronoi crystals, cohesive-zone tags, and configurable bonded/neat surface fractions.  It is a general prill mesostructure object for cohesive fracture and contact studies.
+
+\subsection{Voxel, image, and surface-import objects}
+\index{geometry objects!voxel imports}
+\index{geometry objects!STL}
+\index{geometry objects!image-based}
+
+\paragraph{\texttt{stl}.}\index{geometry objects!stl}Imports a closed triangulated STL surface.  The object supports ASCII and binary STL files, translation, scaling, optional centering, normal flipping, ray-casting inside/outside tests, and nearest-triangle surface projection.  It is useful for CAD-derived or segmented geometries that are not easily represented by analytic primitives.
+
+\paragraph{\texttt{VCCTL}.}\index{geometry objects!VCCTL}Creates particles from a VCCTL-style voxelized dataset.  Integer voxel phase values are mapped to material indices through a user-supplied map, allowing cementitious or other voxel-resolved microstructures to be converted into particles.
+
+\paragraph{\texttt{CT}.}\index{geometry objects!CT}Creates particles from a three-dimensional computed-tomography voxel dataset.  It is similar to \texttt{VCCTL} but kept separate for compatibility and specialization of CT-generated arrays and phase maps.
+
+\paragraph{\texttt{bitmap}.}\index{geometry objects!bitmap}Creates a two-dimensional particle geometry from an image or binary array.  Pixel or label values map to material indices, making this object useful for plane-strain image-based mesostructures.
+
+\paragraph{\texttt{GrainStack}.}\index{geometry objects!GrainStack}Creates particles from a stacked voxel or labeled-array representation of grains.  It provides bounding-box and index-casting utilities for converting array coordinates into model-space particles.
+
+\subsection{Periodic and architected-structure objects}
+\index{geometry objects!architected structures}
+
+\paragraph{\texttt{spinodal}.}\index{geometry objects!spinodal}Creates a spinodal-like porous or bicontinuous structure from a random field and target density controls.  It returns surface data by projecting to the implicit surface and is useful for synthetic porous materials.
+
+\paragraph{\texttt{tpms}.}\index{geometry objects!tpms}Creates triply periodic minimal surface or related periodic architectures using a selected implicit surface type, target density, cell size, and offset.  It is used for gyroid-like, Schwarz-like, spinodal, or other periodic mesostructures.
+
+\subsection{Boolean set operations}
+\index{geometry objects!Boolean operations}
+\index{union@\texttt{union}}
+\index{intersection@\texttt{intersection}}
+\index{difference@\texttt{difference}}
+
+The Boolean objects combine two existing geometry objects while preserving the PFW query interface.  They are useful for creating holes, clipped inclusions, intersected tool shapes, and domains assembled from reusable primitives.
+
+\paragraph{\texttt{union}.}Accepts a particle point if either sub-object accepts it.  Surface data are inherited from the sub-object that controls the accepted point according to the operation's priority rules.
+
+\paragraph{\texttt{intersection}.}Accepts a particle point only if both sub-objects accept it.  This is useful for clipping one object by another, such as retaining only the portion of a cylinder inside a box.
+
+\paragraph{\texttt{difference}.}Accepts particles that are inside object \texttt{A} and outside object \texttt{B}.  This is the standard tool for cutting voids, pores, holes, or notches from an otherwise solid object.  The current implementation includes surface-normal and surface-position logic to decide whether the nearest retained boundary belongs to \texttt{A} or to the removed object \texttt{B}.
+
+\subsection{Geometry wrappers and field painters}
+\index{geometry objects!wrappers}
+\index{wrappers!geometry}
+
+Wrappers take a sub-object and override or augment one part of its response.  They are the preferred way to add field data without reimplementing an inside/outside test.  All wrappers forward unmodified queries to the wrapped object unless they specifically override that field.
+
+\paragraph{Basic field wrappers.}The wrappers \texttt{materialDirectionWrapper}, \texttt{surfaceFlagWrapper}, \texttt{czTagWrapper}, \texttt{surfaceNormalWrapper}, \texttt{surfacePositionWrapper}, \texttt{shrinkageFlagWrapper}, \texttt{strengthScaleWrapper}, \texttt{damageWrapper}, \texttt{porosityWrapper}, and \texttt{temperatureWrapper} assign a corresponding constant or callable value to particles accepted by the wrapped object.
+
+\paragraph{Deletion and masking wrappers.}\texttt{functionalDeletionWrapper} calls a user-supplied deletion function and rejects points that should be removed.  \texttt{pointwisePorosityWrapper} randomly suppresses a fraction of points to represent unresolved porosity, but does not construct deterministic pore surfaces or surface flags.
+
+\paragraph{Voronoi, Weibull, and material-direction wrappers.}\texttt{voronoiWrapperWithLayeredStrengthScale}, \texttt{layeredVoronoiWeibullWrapper}, \texttt{voronoiWeibullBoxWrapper}, \texttt{voronoiMatDirBoxWrapper}, \texttt{sizeEffectVoronoiWeibullBoxWrapper}, and \texttt{layeredStrengthScaleBoxWrapper} assign spatially varying material directions, strength scales, flaws, or layered Weibull fields.  These wrappers are used for heterogeneous strength distributions, grain-level anisotropy, and size-effect studies.
+
+\paragraph{Box-local and crack-like wrappers.}\texttt{surfaceFlagBoxWrapper} and \texttt{damageBoxWrapper} override surface flag or damage only inside a specified box.  \texttt{pennyShapedCrackWrapper} paints a penny-shaped damaged region defined by two points and a radius, making it useful for seeded-crack or pre-damage studies.
+
+\paragraph{Coordinate-transform wrapper.}\texttt{transform} maps query points through a user-supplied transform before delegating to the sub-object, and transforms returned normals or vectors as needed.  It allows an analytic or imported object to be translated, rotated, or otherwise mapped without creating a new object class.

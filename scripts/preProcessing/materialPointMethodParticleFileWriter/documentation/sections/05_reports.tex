@@ -1,0 +1,37 @@
+\chapter{Linked reports and suite organization}
+\label{ch:linked-reports}
+\index{linked reports}
+\index{suite reports}
+
+\section{Verification report}
+\index{verification}
+The source archive includes a generated verification report:
+\begin{quote}
+\href{linked_reports/verification_suite_report.pdf}{Verification suite report PDF}
+\end{quote}
+The verification suite currently spans boundary conditions, prescribed deformation/F-tables, annealing, ceramic damage, cohesive zones, contact, expanding bars/rings, geomechanics, periodic boundaries, polymer cohesive-zone behavior, shrinkage, size effects, stress control, temperature tables, triply periodic geometry, and von Mises material behavior.  Appendix~\ref{app:suites} lists the discovered input cases.
+
+\section{Validation report}
+\index{validation}
+The source archive includes a generated validation report:
+\begin{quote}
+\href{linked_reports/validation_suite_report.pdf}{Validation suite report PDF}
+\end{quote}
+The validation cases in the reviewed archive are organized under geomechanics and polymer families.  Appendix~\ref{app:suites} lists the discovered input cases.
+
+\section{Examples report}
+\index{examples}
+The source archive includes a generated examples report:
+\begin{quote}
+\href{linked_reports/examples_suite_report.pdf}{Examples suite report PDF}
+\end{quote}
+The examples include STL import, borehole collapse, Brazilian disk variants, colliding disks, foam compression, elastic disk, PDC-like examples, powder compression, and other demonstration cases.
+
+\section{LLNL-specific material models and test suites}
+\index{LLNL-specific material models}
+\index{external material models}
+The manual source bundle contains a placeholder linked report:
+\begin{quote}
+\href{linked_reports/llnl_specific_material_models_and_test_suites.pdf}{LLNL-specific material models and test suites placeholder}
+\end{quote}
+Replace this file with the eventual out-of-tree/internal material-model report.  The build pathway for these models should remain documented through \texttt{GEOS\_EXTERNAL\_CONSTITUTIVE\_MODELS\_DIR} and the external registration hook.

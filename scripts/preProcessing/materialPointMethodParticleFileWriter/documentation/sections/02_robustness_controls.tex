@@ -1,0 +1,177 @@
+\section{Robustness controls: deletion, deformation-gradient reset, and particle splitting}
+\label{sec:robustness-controls}
+\index{robustness controls}
+\index{particle deletion}
+\index{deformation gradient!reset}
+\index{particle splitting}
+
+This section documents solver-side mechanisms that deliberately alter the active particle set or the particle kinematic state to keep large-deformation MPM calculations well posed.  These controls are not substitutes for mesh/time-step convergence studies or physically calibrated constitutive regularization, but they are useful guardrails for impact, fragmentation, contact, pore collapse, and highly damaged calculations.  The controls described here act after the ordinary explicit transfer/update sequence described in Section~\ref{sec:solver-steps} and are related to, but distinct from, the contact and cohesive-zone algorithms described in Sections~\ref{sec:contact-options} and~\ref{sec:cohesive-zone-implementation}.  User-facing parameters are listed in the generated solver attribute appendix and, when they are written by ParticleFileWriter, in the PFW controls of Chapter~\ref{chap:pfw}.
+
+\subsection{Particle deletion and active-particle compaction}
+\label{subsec:robust-particle-deletion}
+\index{particleDeleteFlag}
+\index{maxParticleJacobian}
+\index{minParticleJacobian}
+\index{maxParticleVelocity}
+\index{constitutiveUpdateFlag}
+
+GEOS-MPM uses a deferred deletion model.  During the step, several kernels or events set a per-particle integer flag,
+\begin{equation}
+  \texttt{particleDeleteFlag}_p = 1,
+\end{equation}
+when particle $p$ should no longer participate in subsequent active-particle loops.  The physical erase is performed later by \texttt{deleteBadParticles}, which moves particle-field wrappers to host memory, builds a set of indices with the delete flag set, erases those entries from the particle subregion, and reconstructs the active-particle index set.  Deleting is therefore a topology-changing operation; it removes the particle mass, history variables, constitutive state, and any diagnostic fields attached to the particle.
+
+The principal automatic deletion criteria are:
+\begin{enumerate}
+  \item \textbf{Constitutive failure flag.}  If a material wrapper exposes \texttt{constitutiveUpdateFlag}, \texttt{updateSolverDependencies} copies it to the solver field \texttt{particleConstitutiveUpdateFlag}.  A negative value at the first material point flags the particle for deletion.  This path lets a constitutive model request deletion after an unrecoverable update, for example failed return mapping or a material-specific erosion condition.
+  \item \textbf{Deformation-gradient determinant limits.}  During \texttt{particleKinematicUpdate}, the solver computes
+  \begin{equation}
+    J_p = \det \mathbf{F}_p.
+  \end{equation}
+  The particle is flagged if
+  \begin{equation}
+    J_p \le J_{\min}\quad\hbox{or}\quad J_p \ge J_{\max},
+    \label{eq:robust-j-deletion}
+  \end{equation}
+  where $J_{\min}=\texttt{minParticleJacobian}$ and $J_{\max}=\texttt{maxParticleJacobian}$.  In the reviewed source snapshot the constructor defaults are $J_{\min}=0.1$ and $J_{\max}=10$.  This criterion removes particles that have inverted, collapsed, or expanded beyond the range for which the mapped particle volume and constitutive response are trustworthy.
+  \item \textbf{Velocity overflow and maximum velocity.}  The kinematic update also checks whether any component is so large that squaring it would overflow a floating-point value.  Such particles are flagged before kinetic-energy or speed calculations can fail.  The registered user parameter \texttt{maxParticleVelocity} sets the intended speed limit through \texttt{maxParticleVelocitySquared}.  In the reviewed code, the overflow guard is active; the speed-squared accumulation for the ordinary maximum-speed comparison appears inside the overflow branch after a \texttt{break}, so that ordinary \texttt{maxParticleVelocity} deletion should be verified before relying on it as an active erosion rule.
+  \item \textbf{Out-of-domain particles.}  At the end-of-step cleanup stage, \texttt{flagOutOfRangeParticles} removes particles that cannot be mapped safely on the next step.  For \texttt{SinglePoint} particles the center must remain inside the global domain plus one buffer-cell layer, excluding periodic directions.  For \texttt{SinglePointBSpline} particles the center must remain inside the physical global domain because the cubic B-spline basis already needs the available buffer support.  For \texttt{CPDI} particles, all eight current-domain corners generated from the center and three $\mathbf{r}$ vectors must remain in range.  Periodic directions are skipped because particle centers are wrapped during repartitioning.
+  \item \textbf{Event-driven machining.}  The \texttt{MachineSample} event sets delete flags for particles outside an idealized dogbone, cylinder, or Brazilian-disk sample geometry.  This is a constructive-geometry deletion mechanism rather than a numerical-failure guard.
+\end{enumerate}
+
+A compact view of the deletion path is:
+\begin{lstlisting}[language=Python,caption={Deferred particle deletion in GEOS-MPM.}]
+for particle p:
+    if constitutiveUpdateFlag[p,0] < 0:
+        particleDeleteFlag[p] = 1
+    J = det(F[p])
+    if J <= minParticleJacobian or J >= maxParticleJacobian:
+        particleDeleteFlag[p] = 1
+    if any velocity component would overflow when squared:
+        particleDeleteFlag[p] = 1
+
+# Later, after grid resize/domain cleanup:
+for particle p:
+    if particle center or CPDI corner cannot map to available nodes:
+        particleDeleteFlag[p] = 1
+
+erase all particles with particleDeleteFlag == 1
+rebuild activeParticleIndices
+\end{lstlisting}
+
+Because particle deletion is non-conservative unless the removed material has negligible mass or represents intentional erosion, production studies should report the deletion thresholds, the number or mass of deleted particles, and whether deletion occurs at outflow boundaries, from constitutive failure, or from numerical pathologies.
+
+\subsection{Deformation-gradient reset}
+\label{subsec:robust-defgrad-reset}
+\index{resetDefGradForFullyDamagedParticles}
+\index{resetDefGradForScaledSurfaceParticles}
+\index{ResetDeformationGradient}
+\index{Gas material!deformation-gradient reset}
+
+The deformation-gradient reset is a kinematic regularization for selected particles.  It preserves the particle volume ratio and approximate rotation while removing deviatoric stretch from the stored deformation gradient.  It is applied in the grid-cleanup stage after particle deletion and repartitioning and before optional plotting of unscaled CPDI domains.
+
+For a selected particle, the solver computes the polar rotation $\mathbf{R}_p$ of the current deformation gradient $\mathbf{F}_p$ and its determinant $J_p=\det \mathbf{F}_p$.  It then forms an isotropic stretch with the same determinant,
+\begin{equation}
+  \mathbf{U}^{\mathrm{iso}}_p =
+  \begin{cases}
+    \operatorname{diag}(J_p^{1/2},J_p^{1/2},1), & \texttt{planeStrain}=1,\\[3pt]
+    J_p^{1/3}\mathbf{I}, & \texttt{planeStrain}=0,
+  \end{cases}
+\end{equation}
+then replaces
+\begin{equation}
+  \mathbf{F}_p \leftarrow \mathbf{R}_p\mathbf{U}^{\mathrm{iso}}_p.
+  \label{eq:robust-defgrad-reset}
+\end{equation}
+This operation leaves $J_p$ unchanged but removes the shape distortion stored in $\mathbf{F}_p$.  The source comments note that this is appropriate mainly for cases whose deviatoric response is hypoelastic or otherwise not meant to store permanent finite stretch in \texttt{particleDeformationGradient}.  The gas material path also uses this reset.
+
+The reviewed implementation has three activation routes:
+\begin{description}
+  \item[Gas materials.]  If the subregion constitutive model catalog name is \texttt{Gas}, eligible active particles are reset every cleanup pass.
+  \item[Fully damaged scaled particles.]  If \texttt{resetDefGradForFullyDamagedParticles=1}, CPDI-domain-scaled particles with \texttt{particleDamage > 0.9999999} and \texttt{particleDomainScaledFlag == 1} are reset.  This keeps fully failed, scaled particle domains from retaining excessive deviatoric distortion.
+  \item[Scaled surface particles and events.]  If \texttt{resetDefGradForScaledSurfaceParticles=1}, CPDI-domain-scaled particles with surface flags 3 or 4 are reset.  The \texttt{ResetDeformationGradient} MPM event sets this flag for one subsequent cleanup pass and then the solver resets the flag to zero.
+\end{description}
+
+For particles with surface geometry, the reset also updates reference surface data so that the current physical surface normal and position are preserved under the new $\mathbf{F}_p$.  For surface particles, the solver computes
+\begin{equation}
+  \mathbf{n}^{s,\mathrm{ref}}_p \leftarrow
+  \frac{\operatorname{cof}(\mathbf{F}_p)^{-1}\mathbf{n}^s_p}
+       {\left\|\operatorname{cof}(\mathbf{F}_p)^{-1}\mathbf{n}^s_p\right\|},
+  \qquad
+  \mathbf{x}^{s,\mathrm{ref}}_p \leftarrow \mathbf{F}_p^{-1}\mathbf{x}^s_p.
+\end{equation}
+This detail is important for contact and cohesive-zone calculations: the reset regularizes the CPDI domain but does not intentionally move an already stored surface in the current configuration.
+
+\begin{lstlisting}[language=Python,caption={Deformation-gradient reset.}]
+for active particle p:
+    if Gas material or selected damaged/scaled-surface CPDI particle:
+        R = polar_rotation(F[p])
+        J = det(F[p])
+        if planeStrain:
+            Uiso = diag(sqrt(J), sqrt(J), 1)
+        else:
+            Uiso = J**(1/3) * I
+        F[p] = R @ Uiso
+        if particle has surface geometry:
+            reference normal and surface position are recomputed
+resetDefGradForScaledSurfaceParticles = 0
+\end{lstlisting}
+
+\subsection{Particle splitting}
+\label{subsec:robust-particle-splitting}
+\index{subdivideParticles}
+\index{particleSubdivideFlag}
+\index{particleCopyFlag}
+\index{CPDI!particle splitting}
+
+Particle splitting is controlled by \texttt{subdivideParticles}.  It is called during the topology-preparation stage, after events and before particle maps, ghosts, and active-particle indices are refreshed.  The intent is to prevent finite-size CPDI-style particles from spanning too much of the background grid after large deformation.  In the reviewed source, the code comment notes that splitting should only be an option for finite-domain particle types such as CPDI, CPTI, and CPDI2; the actual implementation uses the particle $\mathbf{r}$ vectors and is therefore meaningful for particles with finite domain vectors.
+
+The splitting test uses a critical half-length based on the smallest grid spacing,
+\begin{equation}
+  \ell_{\mathrm{crit}} =
+  \begin{cases}
+    0.49999\min(h_x,h_y), & \texttt{planeStrain}=1,\\[2pt]
+    0.49999\min(h_x,h_y,h_z), & \texttt{planeStrain}=0.
+  \end{cases}
+\end{equation}
+For each active particle, the solver tests each active domain vector.  A split direction $d$ is selected when
+\begin{equation}
+  \left\|\mathbf{r}_{p,d}\right\|^2 > \ell_{\mathrm{crit}}^2.
+\end{equation}
+If $k$ directions are selected, the parent particle is replaced by $2^k$ children: one child reuses the original particle slot and $2^k-1$ new particles are appended to the subregion.  Mass, current volume, and reference volume are divided by $2^k$.  The selected current and reference $\mathbf{r}$ vectors are halved.  Current and reference centers are shifted by all combinations of $\pm$ the halved vectors in the split directions.  All other particle fields and constitutive-model fields are copied from the parent using \texttt{particleCopyFlag}, except for fields explicitly recomputed during the split such as mass, volume, center, reference center, and $\mathbf{r}$ vectors.
+
+\begin{equation}
+  m_{p_i}=\frac{m_p}{2^k},\qquad
+  V_{p_i}=\frac{V_p}{2^k},\qquad
+  V^{0}_{p_i}=\frac{V^{0}_p}{2^k}.
+\end{equation}
+For a split direction $d$, the child domain vector is
+\begin{equation}
+  \mathbf{r}_{p_i,d}=\frac{1}{2}\mathbf{r}_{p,d},
+\end{equation}
+while unsplit directions retain the original vector.  The child center is
+\begin{equation}
+  \mathbf{x}_{p_i}=\mathbf{x}_p+
+  \sum_{d\in\mathcal{S}_p} s_{i,d}\mathbf{r}_{p_i,d},
+  \qquad s_{i,d}\in\{-1,+1\},
+\end{equation}
+with the analogous operation applied to the reference center using reference $\mathbf{r}$ vectors.
+
+\begin{lstlisting}[language=Python,caption={Particle splitting.}]
+lcrit = 0.49999 * min(active grid spacings)
+for particle p:
+    split_dirs = [d for d in active_dims if norm(r[p,d]) > lcrit]
+    if split_dirs is empty:
+        continue
+    k = len(split_dirs)
+    factor = 2**k
+    create factor-1 appended children
+    for each child, including modified parent:
+        mass, volume, referenceVolume /= factor
+        halve r-vectors and reference r-vectors in split_dirs
+        shift current and reference centers by +/- halved r-vectors
+        copy all remaining particle and constitutive fields from parent
+rebuild activeParticleIndices
+\end{lstlisting}
+
+Splitting improves mapping quality when CPDI domains stretch across grid cells, but it also changes the particle discretization and can increase particle count rapidly in problems with persistent extension.  It should therefore be reported with the split threshold implied by the grid spacing and monitored through the emitted log message, which reports the number of particles generated by subdivision.

@@ -1,0 +1,142 @@
+\chapter{Generated ParticleFileWriter reference}
+\label{app:pfw}
+\index{ParticleFileWriter!parameters}
+\index{Silo grid fields}
+
+{\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{longtable}{@{}p{0.40\linewidth}p{0.32\linewidth}p{0.18\linewidth}@{}}
+\caption{ParticleFileWriter parameter keys and defaults from particleFileWriter.py.}\label{tab:pfw-params}\\
+\toprule
+\textbf{PFW key} & \textbf{Default} & \textbf{Emits solver attribute}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{PFW key} & \textbf{Default} & \textbf{Emits solver attribute}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+{\ttfamily run\allowbreak{}Debug} & {\ttfamily False} & no\\
+{\ttfamily run\allowbreak{}Check\allowbreak{}Time} & {\ttfamily '00:02:00'} & no\\
+{\ttfamily output\allowbreak{}Type} & {\ttfamily 'vtk'} & no\\
+{\ttfamily grid\allowbreak{}Field\allowbreak{}Names} & {\ttfamily []} & no\\
+{\ttfamily silo\allowbreak{}Grid\allowbreak{}Field\allowbreak{}Names} & {\ttfamily None} & no\\
+{\ttfamily silo\allowbreak{}Grid\allowbreak{}Fields} & {\ttfamily None} & no\\
+{\ttfamily generate\allowbreak{}Particle\allowbreak{}File} & {\ttfamily True} & no\\
+{\ttfamily run\allowbreak{}Continuation} & {\ttfamily False} & no\\
+{\ttfamily restart\allowbreak{}Job\allowbreak{}Dir} & {\ttfamily '.\allowbreak{}'} & no\\
+{\ttfamily restart\allowbreak{}Cycle\allowbreak{}Num} & {\ttfamily 0} & no\\
+{\ttfamily m\allowbreak{}Cores} & {\ttfamily 1} & no\\
+{\ttfamily m\allowbreak{}Nodes} & {\ttfamily 1} & no\\
+{\ttfamily m\allowbreak{}Bank} & {\ttfamily None} & no\\
+{\ttfamily m\allowbreak{}Wall\allowbreak{}Time} & {\ttfamily '00:30:00'} & no\\
+{\ttfamily m\allowbreak{}Batch} & {\ttfamily True} & no\\
+{\ttfamily m\allowbreak{}Submit\allowbreak{}Jobs} & {\ttfamily False} & no\\
+{\ttfamily auto\allowbreak{}Restart} & {\ttfamily False} & no\\
+{\ttfamily m\allowbreak{}Partition} & {\ttfamily 'pbatch'} & no\\
+{\ttfamily periodic} & {\ttfamily [False,\allowbreak{} False,\allowbreak{} False]} & no\\
+{\ttfamily xpar} & {\ttfamily 1} & no\\
+{\ttfamily ypar} & {\ttfamily 1} & no\\
+{\ttfamily zpar} & {\ttfamily 1} & no\\
+{\ttfamily n\allowbreak{}I} & {\ttfamily 5} & no\\
+{\ttfamily n\allowbreak{}J} & {\ttfamily 5} & no\\
+{\ttfamily n\allowbreak{}K} & {\ttfamily 5} & no\\
+{\ttfamily ppc} & {\ttfamily 2} & no\\
+{\ttfamily ppcx} & {\ttfamily None} & no\\
+{\ttfamily ppcy} & {\ttfamily None} & no\\
+{\ttfamily ppcz} & {\ttfamily None} & no\\
+{\ttfamily xmin} & {\ttfamily -\allowbreak{}0.\allowbreak{}5} & no\\
+{\ttfamily xmax} & {\ttfamily 0.\allowbreak{}5} & no\\
+{\ttfamily ymin} & {\ttfamily 0.\allowbreak{}0} & no\\
+{\ttfamily ymax} & {\ttfamily 1.\allowbreak{}0} & no\\
+{\ttfamily zmin} & {\ttfamily -\allowbreak{}0.\allowbreak{}5} & no\\
+{\ttfamily zmax} & {\ttfamily 0.\allowbreak{}5} & no\\
+{\ttfamily last\allowbreak{}Restart\allowbreak{}Buffer\allowbreak{}In\allowbreak{}Seconds} & {\ttfamily 10} & no\\
+{\ttfamily objects} & {\ttfamily None} & no\\
+{\ttfamily sort\allowbreak{}Objects} & {\ttfamily False} & no\\
+{\ttfamily time\allowbreak{}Integration\allowbreak{}Option} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}History} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}Coordinates} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}Variables} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}Write\allowbreak{}Interval} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}Cycle\allowbreak{}Interval} & {\ttfamily None} & yes\\
+{\ttfamily tracer\allowbreak{}Output\allowbreak{}Prefix} & {\ttfamily None} & yes\\
+{\ttfamily update\allowbreak{}Method} & {\ttfamily None} & yes\\
+{\ttfamily update\allowbreak{}Order} & {\ttfamily None} & yes\\
+{\ttfamily cfl\allowbreak{}Factor} & {\ttfamily None} & yes\\
+{\ttfamily initial\allowbreak{}Dt} & {\ttfamily None} & yes\\
+{\ttfamily solver\allowbreak{}Profiling} & {\ttfamily None} & yes\\
+{\ttfamily cpdi\allowbreak{}Domain\allowbreak{}Scaling} & {\ttfamily None} & yes\\
+{\ttfamily damage\allowbreak{}Field\allowbreak{}Partitioning} & {\ttfamily None} & yes\\
+{\ttfamily plane\allowbreak{}Strain} & {\ttfamily False} & yes\\
+{\ttfamily needs\allowbreak{}Neighbor\allowbreak{}List} & {\ttfamily None} & yes\\
+{\ttfamily reaction\allowbreak{}History} & {\ttfamily None} & yes\\
+{\ttfamily reaction\allowbreak{}Write\allowbreak{}Interval} & {\ttfamily None} & yes\\
+{\ttfamily box\allowbreak{}Average\allowbreak{}History} & {\ttfamily None} & yes\\
+{\ttfamily box\allowbreak{}Average\allowbreak{}Write\allowbreak{}Interval} & {\ttfamily None} & yes\\
+{\ttfamily prescribed\allowbreak{}Bc\allowbreak{}Table} & {\ttfamily None} & yes\\
+{\ttfamily prescribed\allowbreak{}FTable} & {\ttfamily None} & yes\\
+{\ttfamily prescribed\allowbreak{}Boundary\allowbreak{}FTable} & {\ttfamily None} & yes\\
+{\ttfamily f\allowbreak{}Table} & {\ttfamily None} & yes\\
+{\ttfamily f\allowbreak{}Table\allowbreak{}Interp\allowbreak{}Type} & {\ttfamily None} & yes\\
+{\ttfamily FSubcycles} & {\ttfamily None} & no\\
+{\ttfamily reset\allowbreak{}Def\allowbreak{}Grad\allowbreak{}For\allowbreak{}Fully\allowbreak{}Damaged\allowbreak{}Particles} & {\ttfamily None} & yes\\
+{\ttfamily treat\allowbreak{}Fully\allowbreak{}Damaged\allowbreak{}As\allowbreak{}Single\allowbreak{}Field} & {\ttfamily None} & yes\\
+{\ttfamily plot\allowbreak{}Unscaled\allowbreak{}Particles} & {\ttfamily None} & yes\\
+{\ttfamily contact\allowbreak{}Gap\allowbreak{}Correction} & {\ttfamily None} & yes\\
+{\ttfamily explicit\allowbreak{}Surface\allowbreak{}Normal\allowbreak{}Influence} & {\ttfamily None} & yes\\
+{\ttfamily use\allowbreak{}Surface\allowbreak{}Position\allowbreak{}For\allowbreak{}Contact} & {\ttfamily None} & yes\\
+{\ttfamily disable\allowbreak{}Surface\allowbreak{}Normals\allowbreak{}And\allowbreak{}Positions\allowbreak{}On\allowbreak{}CPDIScaling} & {\ttfamily None} & yes\\
+{\ttfamily separability\allowbreak{}Min\allowbreak{}Damage} & {\ttfamily 0.\allowbreak{}5} & yes\\
+{\ttfamily stress\allowbreak{}Control} & {\ttfamily None} & yes\\
+{\ttfamily stress\allowbreak{}Table} & {\ttfamily None} & yes\\
+{\ttfamily stress\allowbreak{}Control\allowbreak{}Kp} & {\ttfamily None} & yes\\
+{\ttfamily stress\allowbreak{}Control\allowbreak{}Ki} & {\ttfamily None} & yes\\
+{\ttfamily stress\allowbreak{}Control\allowbreak{}Kd} & {\ttfamily None} & yes\\
+{\ttfamily stress\allowbreak{}Table\allowbreak{}Interp\allowbreak{}Type} & {\ttfamily None} & yes\\
+{\ttfamily boundary\allowbreak{}Condition\allowbreak{}Types} & {\ttfamily None} & yes\\
+{\ttfamily bc\allowbreak{}Table} & {\ttfamily None} & yes\\
+{\ttfamily use\allowbreak{}Events} & {\ttfamily None} & yes\\
+{\ttfamily body\allowbreak{}Force} & {\ttfamily None} & yes\\
+{\ttfamily generalized\allowbreak{}Vortex\allowbreak{}MMS} & {\ttfamily None} & yes\\
+{\ttfamily friction\allowbreak{}Coefficient} & {\ttfamily None} & yes\\
+{\ttfamily friction\allowbreak{}Coefficient\allowbreak{}Table} & {\ttfamily None} & yes\\
+{\ttfamily friction\allowbreak{}Coefficient\allowbreak{}Rule\allowbreak{}Of\allowbreak{}Mixtures} & {\ttfamily None} & yes\\
+{\ttfamily use\allowbreak{}Damage\allowbreak{}As\allowbreak{}Surface\allowbreak{}Flag} & {\ttfamily False} & yes\\
+{\ttfamily neighbor\allowbreak{}Radius} & {\ttfamily None} & yes\\
+{\ttfamily min\allowbreak{}Particle\allowbreak{}Jacobian} & {\ttfamily None} & yes\\
+{\ttfamily max\allowbreak{}Particle\allowbreak{}Jacobian} & {\ttfamily None} & yes\\
+{\ttfamily log\allowbreak{}Level} & {\ttfamily None} & yes\\
+{\ttfamily materials} & {\ttfamily None} & no\\
+{\ttfamily material\allowbreak{}Property\allowbreak{}String} & {\ttfamily None} & no\\
+{\ttfamily end\allowbreak{}Time} & {\ttfamily 1.\allowbreak{}0} & no\\
+{\ttfamily plot\allowbreak{}Interval} & {\ttfamily None} & no\\
+{\ttfamily restart\allowbreak{}Interval} & {\ttfamily None} & no\\
+{\ttfamily plot\allowbreak{}Grid\allowbreak{}Fields} & {\ttfamily None} & yes\\
+{\ttfamily use\allowbreak{}Sinusoidal\allowbreak{}Damage\allowbreak{}Field} & {\ttfamily False} & no\\
+{\ttfamily wavy\allowbreak{}Crack} & {\ttfamily False} & no\\
+{\ttfamily particle\allowbreak{}Refinement} & {\ttfamily None} & no\\
+{\ttfamily mpm\allowbreak{}Events\allowbreak{}String} & {\ttfamily ''} & no\\
+{\ttfamily max\allowbreak{}Particle\allowbreak{}Velocity} & {\ttfamily 10.\allowbreak{}0} & yes\\
+{\ttfamily cohesive\allowbreak{}Field\allowbreak{}Partitioning} & {\ttfamily 0} & yes\\
+{\ttfamily enable\allowbreak{}Cohesive\allowbreak{}Failure} & {\ttfamily 0} & yes\\
+{\ttfamily max\allowbreak{}Cohesive\allowbreak{}Normal\allowbreak{}Stress} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily max\allowbreak{}Cohesive\allowbreak{}Shear\allowbreak{}Stress} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily characteristic\allowbreak{}Normal\allowbreak{}Displacement} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily characteristic\allowbreak{}Tangential\allowbreak{}Displacement} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily max\allowbreak{}Cohesive\allowbreak{}Normal\allowbreak{}Displacement} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily max\allowbreak{}Cohesive\allowbreak{}Tangential\allowbreak{}Displacement} & {\ttfamily 0.\allowbreak{}01} & yes\\
+{\ttfamily prescribed\allowbreak{}Boundary\allowbreak{}Transverse\allowbreak{}Velocities} & {\ttfamily [[0.\allowbreak{}0,\allowbreak{} 0.\allowbreak{}0],\allowbreak{} [0.\allowbreak{}0,\allowbreak{} 0.\allowbreak{}0],\allowbreak{} [0.\allowbreak{}0,\allowbreak{} 0.\allowbreak{}0],\allowbreak{} [0.\allowbreak{}0,\allowbreak{} 0.\allowbreak{}0],\allowbreak{} [0.\allowbreak{}.\allowbreak{}.\allowbreak{}.\allowbreak{}} & yes\\
+{\ttfamily particle\allowbreak{}File\allowbreak{}Fields} & {\ttfamily ['Velocity',\allowbreak{} 'Material\allowbreak{}Type',\allowbreak{} 'Contact\allowbreak{}Group',\allowbreak{} 'Surfac.\allowbreak{}.\allowbreak{}.\allowbreak{}} & no\\
+\end{longtable}
+}
+
+
+\section{Silo grid field presets}
+\paragraph{Common preset.} gridMass, gridVelocity, gridInternalForce, gridDamageGradient.
+
+\paragraph{All preset.} gridCohesiveNode, gridSurfaceMass, gridSurfaceFieldMass, gridExplicitSurfaceNormal, gridPrincipalExplicitSurfaceNormal, gridCohesiveFieldFlag, gridMaxMappedParticleID, gridCohesiveArea, gridCohesiveForce, gridReferenceSurfacePosition, gridReferenceMaterialVolume, gridReferenceAreaVector, gridDisplacement, gridCenterOfVolume, gridParticleMappedSurfaceNormal, gridMass, gridActive, gridMaterialVolume, gridUncontactedVelocity, gridVelocity, gridDVelocity, gridMomentum, gridAcceleration, gridExternalForce, gridSurfaceTensionForce, gridInternalForce, gridContactForce, gridDamage, gridDamageGradient, gridMaxDamage, gridFieldGradientAlignment.
