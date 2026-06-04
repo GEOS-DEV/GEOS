@@ -1,0 +1,22 @@
+\subsection{PBC compaction momentum conservation}
+\label{sec:pbcCompactionMomentumTest}
+
+This verification problem compresses a deterministic, periodically repeated array of circular bodies in plane strain.  The left and right boundaries are periodic, while the top and bottom boundaries impose equal and opposite vertical compaction.  The initial velocity is zero, so the exact total x-momentum is zero for the entire calculation.  Any late-time drift in the global particle x-momentum therefore indicates a loss of discrete momentum conservation rather than a physical impulse.
+
+The case is intentionally short and severe.  It starts with nearly rigid-body motion and then develops large contact and internal forces as the bodies pack and distort.  The verification suite uses this transition to separate harmless early-time transport behavior from the late-time momentum drift visible in the deformation movie.  The primary metric is
+\begin{equation}
+  P_x(t) = \sum_p m_p v_{p,x}(t), \qquad
+  e_P = \max_t |P_x(t)|,
+\end{equation}
+with the expected value $P_x(t)=0$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.46\textwidth]{\CaseSourceDir/setup_compaction.png}\hfill
+  \includegraphics[width=0.46\textwidth]{\CaseSourceDir/expected_deformation_elastic.png}
+  \caption{PBC compaction momentum test.  Left: schematic of the periodic x-boundaries and symmetric y-compaction.  Right: representative late-time elastic deformation used to motivate the x-momentum diagnostic.}
+\end{figure}
+
+Two subcases are run from the same PFW input: an elastic material and an elastic-plastic material.  Both use the same geometry, imposed compaction history, and FMPM update.  The post-processor generates x-velocity contour frames at the initial, quarter, half, three-quarter, and final output states, plus a CSV/plot of total particle x-momentum versus time.
+
+\IfFileExists{\CaseOutputDir/pbc_compaction_results.tex}{\input{\CaseOutputDir/pbc_compaction_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_pbcCompactionMomentumTest.py} after the GEOS jobs finish.}

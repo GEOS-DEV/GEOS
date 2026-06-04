@@ -2832,6 +2832,39 @@ verificationQuartz["materialString"] = generateMaterialString(verificationQuartz
 # #################################################################################################
 
 
+
+###################################################################################################
+# PBC COMPACTION MOMENTUM VERIFICATION MATERIALS:
+# Dimensionless, intentionally soft material cards used by verification/pbcCompactionMomentumTest.
+# The elastic and plastic subcases share density, Young's modulus, and Poisson's ratio so that any
+# difference in total x-momentum drift can be attributed to the constitutive update/contact state,
+# not to a different elastic wave speed.
+pbcCompactionElastic = {}
+pbcCompactionElastic["name"] = "pbcCompactionElastic"
+pbcCompactionElastic["version"] = 2606040001
+pbcCompactionElastic["model"] = "ElasticIsotropic"
+pbcCompactionElastic["defaultDensity"] = 1.0
+pbcCompactionElastic["defaultYoungModulus"] = 10.0
+pbcCompactionElastic["defaultPoissonRatio"] = 0.22
+pbcCompactionElastic["defaultBulkModulus"] = pbcCompactionElastic["defaultYoungModulus"]/(3.0*(1.0 - 2.0*pbcCompactionElastic["defaultPoissonRatio"]))
+pbcCompactionElastic["defaultShearModulus"] = pbcCompactionElastic["defaultYoungModulus"]/(2.0*(1.0 + pbcCompactionElastic["defaultPoissonRatio"]))
+pbcCompactionElastic["waveSpeed"] = float(np.sqrt((pbcCompactionElastic["defaultBulkModulus"] + 4.0/3.0*pbcCompactionElastic["defaultShearModulus"])/pbcCompactionElastic["defaultDensity"]))
+pbcCompactionElastic["materialString"] = generateMaterialString(pbcCompactionElastic)
+
+pbcCompactionPlastic = {}
+pbcCompactionPlastic["name"] = "pbcCompactionPlastic"
+pbcCompactionPlastic["version"] = 2606040002
+pbcCompactionPlastic["model"] = "VonMisesJ"
+pbcCompactionPlastic["defaultDensity"] = pbcCompactionElastic["defaultDensity"]
+pbcCompactionPlastic["defaultYoungModulus"] = pbcCompactionElastic["defaultYoungModulus"]
+pbcCompactionPlastic["defaultPoissonRatio"] = pbcCompactionElastic["defaultPoissonRatio"]
+pbcCompactionPlastic["defaultBulkModulus"] = pbcCompactionElastic["defaultBulkModulus"]
+pbcCompactionPlastic["defaultShearModulus"] = pbcCompactionElastic["defaultShearModulus"]
+pbcCompactionPlastic["defaultYieldStrength"] = 0.5
+pbcCompactionPlastic["waveSpeed"] = pbcCompactionElastic["waveSpeed"]
+pbcCompactionPlastic["materialString"] = generateMaterialString(pbcCompactionPlastic)
+# #################################################################################################
+
 # -------------------------------------------------------------------------------------------------
 # FINALIZE MATERIAL DICTIONARIES
 # -------------------------------------------------------------------------------------------------
@@ -2887,6 +2920,8 @@ exampleSuiteMaterials = [
 verificationMaterials = [
     verificationElastic,
     verificationQuartz,
+    pbcCompactionElastic,
+    pbcCompactionPlastic,
 ]
 
 allMaterials = engineeringMaterials + mpmExplicitSolidMaterials + exampleSuiteMaterials + verificationMaterials

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  21 MAY 2026 08:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  4 JUN 2026 10:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -358,14 +358,79 @@ File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 File: listings.cfg 2020/03/24 1.8d listings configuration
 ))
 Package: listings 2020/03/24 1.8d (Carsten Heinz)
+
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2021/10/15 v2.17l AMS math features
+\@mathmargin=\skip56
+
+For additional information on amsmath, use the `?' option.
+
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2021/08/26 v2.01 AMS text
+
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks22
+\ex@=\dimen178
+))
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen179
+)
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2021/08/26 v2.02 operator names
+)
+\inf@bad=\count290
+LaTeX Info: Redefining \frac on input line 234.
+\uproot@=\count291
+\leftroot@=\count292
+LaTeX Info: Redefining \overline on input line 399.
+\classnum@=\count293
+\DOTSCASE@=\count294
+LaTeX Info: Redefining \ldots on input line 496.
+LaTeX Info: Redefining \dots on input line 499.
+LaTeX Info: Redefining \cdots on input line 620.
+\Mathstrutbox@=\box59
+\strutbox@=\box60
+\big@size=\dimen180
+LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
+\macc@depth=\count295
+\c@MaxMatrixCols=\count296
+\dotsspace@=\muskip17
+\c@parentequation=\count297
+\dspbrk@lvl=\count298
+\tag@help=\toks23
+\row@=\count299
+\column@=\count300
+\maxfields@=\count301
+\andhelp@=\toks24
+\eqnshift@=\dimen181
+\alignsep@=\dimen182
+\tagshift@=\dimen183
+\tagwidth@=\dimen184
+\totwidth@=\dimen185
+\lineht@=\dimen186
+\@envbody=\toks25
+\multlinegap=\skip57
+\multlinetaggap=\skip58
+\mathdisplay@stack=\toks26
+LaTeX Info: Redefining \[ on input line 2938.
+LaTeX Info: Redefining \] on input line 2939.
+)
 Package hyperref Info: Option `colorlinks' set `true' on input line 4.
 
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/l3backend/l3backend-pdfte
 x.def
 File: l3backend-pdftex.def 2022-02-07 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count290
-\l__pdf_internal_box=\box59
+\l__color_backend_stack_int=\count302
+\l__pdf_internal_box=\box61
 ) (./verification_suite_report.aux)
 \openout1 = `verification_suite_report.aux'.
 
@@ -426,24 +491,33 @@ LaTeX Font Info:    ... okay on input line 6.
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count291
-\scratchdimen=\dimen178
-\scratchbox=\box60
-\nofMPsegments=\count292
-\nofMParguments=\count293
-\everyMPshowfont=\toks22
-\MPscratchCnt=\count294
-\MPscratchDim=\dimen179
-\MPnumerator=\count295
-\makeMPintoPDFobject=\count296
-\everyMPtoPDFconversion=\toks23
+\scratchcounter=\count303
+\scratchdimen=\dimen187
+\scratchbox=\box62
+\nofMPsegments=\count304
+\nofMParguments=\count305
+\everyMPshowfont=\toks27
+\MPscratchCnt=\count306
+\MPscratchDim=\dimen188
+\MPnumerator=\count307
+\makeMPintoPDFobject=\count308
+\everyMPtoPDFconversion=\toks28
 )
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-bas
 e.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/grfext/grfext.sty
+Package: grfext 2019/12/03 v1.3 Manage graphics extensions (HO)
+)
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 85.
+Package grfext Info: Graphics extension search list:
+(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 504.
 
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/latexconfig/epstopdf-sys.
@@ -466,7 +540,7 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 string.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count297
+\c@section@level=\count309
 )
 LaTeX Info: Redefining \ref on input line 6.
 LaTeX Info: Redefining \pageref on input line 6.
@@ -475,19 +549,8 @@ LaTeX Info: Redefining \nameref on input line 6.
 \@outlinefile=\write3
 \openout3 = `verification_suite_report.out'.
 
-\c@lstlisting=\count298
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 10.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 10.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 10.
- (./verification_suite_report.toc
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 4.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 4.
-)
+\c@lstlisting=\count310
+ (./verification_suite_report.toc)
 \tf@toc=\write4
 \openout4 = `verification_suite_report.toc'.
 
@@ -505,389 +568,119 @@ less \OT1/cmtt/m/n/10 --stop-on-error
 [2
 
 ]
-Overfull \hbox (62.53665pt too wide) in alignment at lines 19--19
+Overfull \hbox (105.4742pt too wide) in alignment at lines 19--19
  [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (62.53665pt too wide) in alignment at lines 19--25
+Overfull \hbox (105.4742pt too wide) in alignment at lines 19--21
  [] [] [] [] [] [] [] 
  []
 
 [3
 
-]
-<schematics/anneal__annealCompression_schematic.png, id=101, 346.896pt x 173.44
-8pt>
-File: schematics/anneal__annealCompression_schematic.png Graphic file (type png
-)
-<use schematics/anneal__annealCompression_schematic.png>
-Package pdftex.def Info: schematics/anneal__annealCompression_schematic.png  us
-ed on input line 81.
-(pdftex.def)             Requested size: 374.35666pt x 187.1887pt.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[4
+] [4
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 99--99
-[]|\OT1/cmr/m/n/7 reactionHistory.csv when present;
+Overfull \hbox (81.7093pt too wide) in alignment at lines 23--23
+ [] [] [] [] [] [] [] [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 99--99
-\OT1/cmr/m/n/7 train/-pres-sure/-plas-tic/-dam-age/ve-
+Overfull \hbox (81.7093pt too wide) in alignment at lines 23--26
+ [] [] [] [] [] [] [] [] 
  []
 
-
-Underfull \hbox (badness 1990) in paragraph at lines 99--99
-\OT1/cmr/m/n/7 com-po-nents are avail-able; com-po-
- []
-
-
-Underfull \hbox (badness 1014) in paragraph at lines 99--99
-\OT1/cmr/m/n/7 strain/-mo-men-tum when com-po-nent
- []
-
-
-Overfull \hbox (135.28404pt too wide) in paragraph at lines 99--101
- []\OT1/cmr/bx/n/10 Verification plot-ting plan.[] []
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 99--101
-
- []
-
-[5 <./schematics/anneal__annealCompression_schematic.png>]
-<schematics/anneal__annealTension_schematic.png, id=163, 346.896pt x 173.448pt>
-
-File: schematics/anneal__annealTension_schematic.png Graphic file (type png)
-<use schematics/anneal__annealTension_schematic.png>
-Package pdftex.def Info: schematics/anneal__annealTension_schematic.png  used o
-n input line 115.
-(pdftex.def)             Requested size: 374.35666pt x 187.1887pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 133--133
-[]|\OT1/cmr/m/n/7 reactionHistory.csv when present;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 133--133
-\OT1/cmr/m/n/7 train/-pres-sure/-plas-tic/-dam-age/ve-
- []
-
-
-Underfull \hbox (badness 1990) in paragraph at lines 133--133
-\OT1/cmr/m/n/7 com-po-nents are avail-able; com-po-
- []
-
-
-Underfull \hbox (badness 1014) in paragraph at lines 133--133
-\OT1/cmr/m/n/7 strain/-mo-men-tum when com-po-nent
- []
-
-
-Overfull \hbox (135.28404pt too wide) in paragraph at lines 133--135
- []\OT1/cmr/bx/n/10 Verification plot-ting plan.[] []
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 133--135
-
- []
-
-[6
-
- <./schematics/anneal__annealTension_schematic.png>]
-<schematics/cohesiveZones__cz_gridAligned_schematic.png, id=180, 346.896pt x 17
-3.448pt>
-File: schematics/cohesiveZones__cz_gridAligned_schematic.png Graphic file (type
- png)
-<use schematics/cohesiveZones__cz_gridAligned_schematic.png>
-Package pdftex.def Info: schematics/cohesiveZones__cz_gridAligned_schematic.png
-  used on input line 149.
-(pdftex.def)             Requested size: 374.35666pt x 187.1887pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 170--170
-[]|\OT1/cmr/m/n/7 reactionHistory.csv when present;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 170--170
-\OT1/cmr/m/n/7 train/-pres-sure/-plas-tic/-dam-age/ve-
- []
-
-
-Underfull \hbox (badness 1990) in paragraph at lines 170--170
-\OT1/cmr/m/n/7 com-po-nents are avail-able; com-po-
- []
-
-
-Underfull \hbox (badness 1014) in paragraph at lines 170--170
-\OT1/cmr/m/n/7 strain/-mo-men-tum when com-po-nent
- []
-
-
-Overfull \hbox (135.28404pt too wide) in paragraph at lines 170--172
- []\OT1/cmr/bx/n/10 Verification plot-ting plan.[] []
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 170--172
-
- []
-
-[7
-
- <./schematics/cohesiveZones__cz_gridAligned_schematic.png>]
-<schematics/geomechanics__geoModel_FTable_schematic.png, id=199, 462.528pt x 26
-7.399pt>
-File: schematics/geomechanics__geoModel_FTable_schematic.png Graphic file (type
- png)
-<use schematics/geomechanics__geoModel_FTable_schematic.png>
-Package pdftex.def Info: schematics/geomechanics__geoModel_FTable_schematic.png
-  used on input line 187.
-(pdftex.def)             Requested size: 374.35666pt x 216.43695pt.
-
-Overfull \hbox (42.21098pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsBuckling.py| 
- []
-
-
-Overfull \hbox (31.86371pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsDemo.py| 
- []
-
-
-Overfull \hbox (29.55817pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsHYD.py| 
- []
-
-
-Overfull \hbox (28.83592pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsTXC.py| 
- []
-
-
-Overfull \hbox (38.60124pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsTension.py| 
- []
-
-
-Overfull \hbox (81.40561pt too wide) in paragraph at lines 209--209
-[]|\OT1/cmr/m/n/7 plotReactions[]geomechanicsUnconfinedBuckling.py| 
- []
-
-
-Overfull \hbox (135.28404pt too wide) in paragraph at lines 209--211
- []\OT1/cmr/bx/n/10 Verification plot-ting plan.[] []
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 209--211
-
- []
-
-[8
-
- <./schematics/geomechanics__geoModel_FTable_schematic.png>]
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_initial\_pressure.png' not found on input line 
-213.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_initial_pressure.png' not found: using dr
-aft setting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.213 ..._geoModel\_FTable\_initial\_pressure.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_final\_plasticStrainMagnitude.png' not found on
- input line 214.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_final_plasticStrainMagnitude.png' not fou
-nd: using draft setting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.214 ...Table\_final\_plasticStrainMagnitude.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_reaction.png' not found on input line 215.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_reaction.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.215 ...hanics\_\_geoModel\_FTable\_reaction.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_box\_damage.png' not found on input line 216.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_box_damage.png' not found: using draft se
-tting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.216 ...ics\_\_geoModel\_FTable\_box\_damage.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_box\_energy.png' not found on input line 217.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_box_energy.png' not found: using draft se
-tting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.217 ...ics\_\_geoModel\_FTable\_box\_energy.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
-omechanics\_\_geoModel\_FTable\_box\_stress.png' not found on input line 218.
-
-
-! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
-_FTable/geomechanics__geoModel_FTable_box_stress.png' not found: using draft se
-tting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.218 ...ics\_\_geoModel\_FTable\_box\_stress.png}
-                                                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-[9] [10]
-<schematics/implicitFluid__fluidPressure_schematic.png, id=220, 346.896pt x 173
-.448pt>
-File: schematics/implicitFluid__fluidPressure_schematic.png Graphic file (type 
-png)
-<use schematics/implicitFluid__fluidPressure_schematic.png>
-Package pdftex.def Info: schematics/implicitFluid__fluidPressure_schematic.png 
- used on input line 227.
-(pdftex.def)             Requested size: 374.35666pt x 187.1887pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 247--247
-[]|\OT1/cmr/m/n/7 reactionHistory.csv when present;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 247--247
-\OT1/cmr/m/n/7 train/-pres-sure/-plas-tic/-dam-age/ve-
- []
-
-
-Underfull \hbox (badness 1990) in paragraph at lines 247--247
-\OT1/cmr/m/n/7 com-po-nents are avail-able; com-po-
- []
-
-
-Underfull \hbox (badness 1014) in paragraph at lines 247--247
-\OT1/cmr/m/n/7 strain/-mo-men-tum when com-po-nent
- []
-
-
-Overfull \hbox (135.28404pt too wide) in paragraph at lines 247--249
- []\OT1/cmr/bx/n/10 Verification plot-ting plan.[] []
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 247--249
-
- []
-
-[11
-
- <./schematics/implicitFluid__fluidPressure_schematic.png>]
+[5
+
+] (../pbcCompactionMomentumTest/test.tex
+<../pbcCompactionMomentumTest/setup_compaction.png, id=66, 1204.5pt x 823.075pt
+>
+File: ../pbcCompactionMomentumTest/setup_compaction.png Graphic file (type png)
+
+<use ../pbcCompactionMomentumTest/setup_compaction.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/setup_compaction.png  use
+d on input line 15.
+(pdftex.def)             Requested size: 246.01047pt x 168.1035pt.
+<../pbcCompactionMomentumTest/expected_deformation_elastic.png, id=67, 1121.188
+75pt x 840.13875pt>
+File: ../pbcCompactionMomentumTest/expected_deformation_elastic.png Graphic fil
+e (type png)
+<use ../pbcCompactionMomentumTest/expected_deformation_elastic.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/expected_deformation_elas
+tic.png  used on input line 16.
+(pdftex.def)             Requested size: 246.01047pt x 184.34395pt.
+
+(../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compaction_r
+esults.tex
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compaction_t
+otal_x_momentum.png, id=68, 491.436pt x 317.988pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compact
+ion_total_x_momentum.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compacti
+on_total_x_momentum.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/pbc_compaction_total_x_momentum.png  used on input line 17.
+(pdftex.def)             Requested size: 385.05489pt x 249.16502pt.
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compaction_i
+nternal_force_balance.png, id=70, 491.436pt x 317.988pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compact
+ion_internal_force_balance.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compacti
+on_internal_force_balance.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/pbc_compaction_internal_force_balance.png  used on input line 23.
+(pdftex.def)             Requested size: 385.05489pt x 249.16502pt.
+)) [6
+
+ <../pbcCompactionMomentumTest/setup_compaction.png (PNG copy)> <../pbcCompacti
+onMomentumTest/expected_deformation_elastic.png (PNG copy)>]
+[7 <../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compactio
+n_total_x_momentum.png> <../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/pbc_compaction_internal_force_balance.png>]
 (./verification_suite_report.aux)
 Package rerunfilecheck Info: File `verification_suite_report.out' has not chang
 ed.
-(rerunfilecheck)             Checksum: 7C3A863FBFDB7410F5F0030455226BDD;2714.
+(rerunfilecheck)             Checksum: 3B348473FE97070840B7E0C9CDD02426;875.
  ) 
 Here is how much of TeX's memory you used:
- 11384 strings out of 478268
- 206018 string characters out of 5754030
- 740435 words of memory out of 5000000
- 29317 multiletter control sequences out of 15000+600000
- 474651 words of font info for 47 fonts, out of 8000000 for 9000
+ 11796 strings out of 478268
+ 196314 string characters out of 5754030
+ 483239 words of memory out of 5000000
+ 29822 multiletter control sequences out of 15000+600000
+ 475276 words of font info for 50 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,9n,63p,413b,1055s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022032
-1-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super
--ts1.enc}</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
+ 60i,8n,63p,632b,1067s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022032
+1-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+bx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
 20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmbx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/t
+s/cm/cmbx12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/t
 exlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmbx12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-1
+amsfonts/cm/cmex10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-1
 0.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/
-public/amsfonts/cm/cmr10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64
-/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmr12.pfb></usr/tce/backend/installations/linux-rhel8-
-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/tce/backend/installations/linux-
-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/tce/backend/installations/l
-inux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/
-texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/tce/backend/installati
-ons/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoe
-x6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/tce/backend/ins
-tallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzsta
-nspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></usr/tce/backe
-nd/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfy
-zzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/tce
-/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
-r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on verification_suite_report.pdf (11 pages, 226837 bytes).
+public/amsfonts/cm/cmmi10.pfb></usr/tce/backend/installations/linux-rhel8-x86_6
+4/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmmi7.pfb></usr/tce/backend/installations/linux-rhel8
+-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/tce/backend/installations/linux
+-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/tce/backend/installations
+/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6i
+j/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/tce/backend/install
+ations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspb
+coex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/tce/backend/in
+stallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzst
+anspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/tce/bac
+kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
+fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/
+tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
+j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
+
+Output written on verification_suite_report.pdf (7 pages, 598547 bytes).
 PDF statistics:
- 313 PDF objects out of 1000 (max. 8388607)
- 265 compressed objects within 3 object streams
- 120 named destinations out of 1000 (max. 500000)
- 138 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 151 PDF objects out of 1000 (max. 8388607)
+ 110 compressed objects within 2 object streams
+ 26 named destinations out of 1000 (max. 500000)
+ 61 words of extra memory for PDF output out of 10000 (max. 10000000)
 

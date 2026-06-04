@@ -487,6 +487,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_LBarScale( 0.0 ),
   m_logMomentum( 0 ),
   m_logStartCycle( 0 ),
+  m_currentMomentumLogCycle( 0 ),
+  m_currentMomentumLogTime( 0.0 ),
+  m_currentMomentumLogDt( 0.0 ),
+  m_momentumHistoryInitialized( false ),
   m_LRtolerance( 0.01 ),
   m_maxLRIterations( 30 ),
   m_maxNodalNeighbors( 0 ),
@@ -932,7 +936,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "logMomentum", &m_logMomentum ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for logging momentum balance." );
+    setDescription( "Flag for logging momentum balance. Use 1 for per-step CSV rows and 2 for per-stage log output." );
 
     registerWrapper( "logStartCycle", &m_logStartCycle ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2798,6 +2802,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  m_currentMomentumLogTime = time_n;
+  m_currentMomentumLogDt = dt;
+  m_currentMomentumLogCycle = cycleNumber;
+
   #define USE_PHYSICS_LOOP
 
 
@@ -4365,140 +4373,199 @@ real64 SolidMechanicsMPM::kernel( real64 const & r ) // distance from particle t
 /**
  * @brief Logs momentum sum.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Writes rank-zero momentum diagnostics to the GEOS log and, at the end of each explicit step,
+ * to mpm_momentumHistory.csv for verification post-processing.
  */
 void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code location of output
                                           ParticleManager & particleManager,
                                           NodeManager & nodeManager )
 {
-  if (m_logMomentum > 0)
+  if( m_logMomentum <= 0 || m_currentMomentumLogCycle < m_logStartCycle )
   {
-    int rank = 0;
-    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-    localIndex const numVelocityFields = m_numVelocityFields;
+    return;
+  }
 
-    // Sum particle momentum for debugging.
-    real64 partitionParticleMomentumSum[8] = {};
-    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // logMomentum=1 records one row per explicit step.  logMomentum>1 keeps the
+  // more expensive per-stage audit at every logAndProfile call.
+  if( label != "End explicit step" && m_logMomentum < 2 )
+  {
+    return;
+  }
+
+  int rank = 0;
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
+  localIndex const numVelocityFields = m_numVelocityFields;
+
+  // Sum particle momentum for debugging.
+  real64 partitionParticleMomentumSum[8] = {};
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [&] ( localIndex const pp )
     {
-      arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
-
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      forAll< serialPolicy >( activeParticleIndices.size(), [&] ( localIndex const pp )
+      localIndex const p = activeParticleIndices[pp];
+      partitionParticleMomentumSum[3] += particleMass[p];
+      for( int i=0; i<3; ++i )
       {
-        localIndex const p = activeParticleIndices[pp];
-        partitionParticleMomentumSum[3] += particleMass[p];
-        for (int i=0; i<3; ++i )
-          {
-            partitionParticleMomentumSum[i] += particleMass[p]*particleVelocity[p][i];
-          }
-      } ); // particle loop
+        partitionParticleMomentumSum[i] += particleMass[p]*particleVelocity[p][i];
+      }
+    } ); // particle loop
 
-      SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
-      forAll< serialPolicy >( inactiveParticleIndices.size(), [&] ( localIndex const pp )
+    SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
+    forAll< serialPolicy >( inactiveParticleIndices.size(), [&] ( localIndex const pp )
+    {
+      localIndex const p = inactiveParticleIndices[pp];
+      partitionParticleMomentumSum[7] += particleMass[p];
+      for( int i=0; i<3; ++i )
       {
-        localIndex const p = inactiveParticleIndices[pp];
-        partitionParticleMomentumSum[7] += particleMass[p];
-        for (int i=0; i<3; ++i )
-          {
-            partitionParticleMomentumSum[i+4] += particleMass[p]*particleVelocity[p][i];
-          }
-      } ); // particle loop
+        partitionParticleMomentumSum[i+4] += particleMass[p]*particleVelocity[p][i];
+      }
+    } ); // particle loop
 
-    });
+  });
 
-    // GEOS_LOG_RANK( label<<" - Rank: "<<rank<<" partition particle momentum sum = [ "<<partitionParticleMomentumSum[0]<<", "<<partitionParticleMomentumSum[1]<<", "<<partitionParticleMomentumSum[2]<<"]" );
+  // Do an MPI sync to total these values.
+  real64 globalParticleMomentumSum[8] = {};
+  for( localIndex i = 0; i < 8; ++i )
+  {
+    real64 localSum = partitionParticleMomentumSum[i];
+    real64 globalSum;
+    MPI_Allreduce( &localSum,
+                  &globalSum,
+                  1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  MPI_COMM_GEOS );
+    globalParticleMomentumSum[i] = globalSum;
+  }
+  if( rank == 0 )
+  {
+    GEOS_LOG_RANK( label<<" GLOBAL particle momentum sum = [ "<<globalParticleMomentumSum[0]<<", "<<globalParticleMomentumSum[1]<<", "<<globalParticleMomentumSum[2]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL particle mass sum.    = "<<globalParticleMomentumSum[3] );
+    GEOS_LOG_RANK( label<<" GLOBAL inactive particle momentum sum = [ "<<globalParticleMomentumSum[4]<<", "<<globalParticleMomentumSum[5]<<", "<<globalParticleMomentumSum[6]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL inactive particle mass sum.    = "<<globalParticleMomentumSum[7] );
+  }
 
-    // Do an MPI sync to total these values
-    real64 globalParticleMomentumSum[8] = {};
-    for( localIndex i = 0; i < 8; ++i )
+  // Sum grid momentum for debugging.
+  real64 partitionGridMomentumSum[13] = {};
+  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
+  arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView3d< real64 > const & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
+  arrayView3d< real64 const > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+
+  localIndex const numNodes = nodeManager.size();
+  forAll< serialPolicy >( numNodes, [&] ( localIndex const g )
+  {
+    for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
     {
-      real64 localSum = partitionParticleMomentumSum[i];
-      real64 globalSum;
-      MPI_Allreduce( &localSum,
-                    &globalSum,
-                    1,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    MPI_COMM_GEOS );
-      globalParticleMomentumSum[i] = globalSum;
-    }
-    if(rank == 0)
-    {
-      GEOS_LOG_RANK(label<<" GLOBAL particle momentum sum = [ "<<globalParticleMomentumSum[0]<<", "<<globalParticleMomentumSum[1]<<", "<<globalParticleMomentumSum[2]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL particle mass sum.    = "<<globalParticleMomentumSum[3]);
-      GEOS_LOG_RANK(label<<" GLOBAL inactive particle momentum sum = [ "<<globalParticleMomentumSum[4]<<", "<<globalParticleMomentumSum[5]<<", "<<globalParticleMomentumSum[6]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL inactive particle mass sum.    = "<<globalParticleMomentumSum[7]);
-    }
-
-    // Sum grid momentum for debugging.
-    real64 partitionGridMomentumSum[13] = {};
-    arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
-    arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-    arrayView3d< real64 > const & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
-    arrayView3d< real64 const > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
-
-    localIndex const numNodes = nodeManager.size();
-    forAll< serialPolicy >( numNodes, [&] ( localIndex const g )
-    { // Loop over velocity fields
-      for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
+      if( gridGhostRank[g] <= -1 )
       {
         for( localIndex i=0; i < 3; ++i )
         {
-          if( gridGhostRank[g] <= -1 )
+          // Total momentum.
+          partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
+          // Momentum excluding small mass nodes.
+          if( gridMass[g][fieldIndex] > m_smallMass )
           {
-            // Total momentum
-            partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
-            // Momentum excluding small mass nodes
-            if( gridMass[g][fieldIndex] > m_smallMass )
-            { // This stores the momentum mapped skipping small mass ndoes so we can compare
-              // and compute the momentium lost due to the small mass threshold
-              partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
-            }
-            // Internal Force
+            // This stores the momentum mapped skipping small-mass nodes so we can compare
+            // and compute the momentum lost due to the small-mass threshold.
+            partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
+          }
+          // Internal force excluding small-mass nodes.
+          if( gridMass[g][fieldIndex] > m_smallMass )
+          {
             partitionGridMomentumSum[i+6] += gridInternalForce[g][fieldIndex][i];
-            if( gridMass[g][fieldIndex] <= m_smallMass )
-            { // Small mass momentum. This is lost when we threshold and may be relatively
-              // large (1/64th to 1/4) of the internal force from a particle, even if
-              // the momentum mapped to these nodes is small.
-              partitionGridMomentumSum[i+9] += gridInternalForce[g][fieldIndex][i];
-            }
+          }
+          if( gridMass[g][fieldIndex] <= m_smallMass )
+          {
+            // Small-mass force. The associated impulse is not applied to particle velocities
+            // when inactive nodes have zero acceleration/velocity in the grid trial update.
+            partitionGridMomentumSum[i+9] += gridInternalForce[g][fieldIndex][i];
           }
         }
-        if( gridGhostRank[g] <= -1 )
-          {
-            partitionGridMomentumSum[12] += gridMass[g][fieldIndex];
-          }
+        partitionGridMomentumSum[12] += gridMass[g][fieldIndex];
       }
-    });
-
-    //GEOS_LOG_RANK(label<<" - Rank: "<<rank<<" partition grid momentum sum = [ "<<partitionGridMomentumSum[0]<<", "<<partitionGridMomentumSum[1]<<", "<<partitionGridMomentumSum[2]<<"]");
-    //GEOS_LOG_RANK(label<<" - Rank: "<<rank<<" partition grid thresholded momentum sum = [ "<<partitionGridMomentumSum[3]<<", "<<partitionGridMomentumSum[4]<<", "<<partitionGridMomentumSum[5]<<"]");
-
-    // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
-    // so file is directly plottable in excel as CSV or something.
-    real64 globalGridMomentumSum[13] = {};
-    for( localIndex i = 0; i < 13; ++i )
-    {
-      real64 localSum = partitionGridMomentumSum[i];
-      real64 globalSum;
-      MPI_Allreduce( &localSum,
-                    &globalSum,
-                    1,
-                    MPI_DOUBLE,
-                    MPI_SUM,
-                    MPI_COMM_GEOS );
-      globalGridMomentumSum[i] = globalSum;
     }
-    if(rank == 0)
-    {
-      GEOS_LOG_RANK(label<<" GLOBAL nodal momentum sum                  = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL nodal mass-thresholded momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL nodal internal force sum (excluding small mass) = [ "<<globalGridMomentumSum[6]<<", "<<globalGridMomentumSum[7]<<", "<<globalGridMomentumSum[8]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL nodal internal force sum (small mass nodes only) = [ "<<globalGridMomentumSum[9]<<", "<<globalGridMomentumSum[10]<<", "<<globalGridMomentumSum[11]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL nodal mass sum                      = "<<globalGridMomentumSum[12]);
+  });
 
+  // Do an MPI sync to total these values.
+  real64 globalGridMomentumSum[13] = {};
+  for( localIndex i = 0; i < 13; ++i )
+  {
+    real64 localSum = partitionGridMomentumSum[i];
+    real64 globalSum;
+    MPI_Allreduce( &localSum,
+                  &globalSum,
+                  1,
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  MPI_COMM_GEOS );
+    globalGridMomentumSum[i] = globalSum;
+  }
+  if( rank == 0 )
+  {
+    GEOS_LOG_RANK( label<<" GLOBAL nodal momentum sum                  = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL nodal mass-thresholded momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL nodal internal force sum (excluding small mass) = [ "<<globalGridMomentumSum[6]<<", "<<globalGridMomentumSum[7]<<", "<<globalGridMomentumSum[8]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL nodal internal force sum (small mass nodes only) = [ "<<globalGridMomentumSum[9]<<", "<<globalGridMomentumSum[10]<<", "<<globalGridMomentumSum[11]<<"]" );
+    GEOS_LOG_RANK( label<<" GLOBAL nodal mass sum                      = "<<globalGridMomentumSum[12] );
+
+    if( label == "End explicit step" )
+    {
+      std::ios_base::openmode mode = std::ios::out;
+      if( m_momentumHistoryInitialized )
+      {
+        mode |= std::ios::app;
+      }
+      else
+      {
+        mode |= std::ios::trunc;
+      }
+
+      std::ofstream history( "mpm_momentumHistory.csv", mode );
+      if( history )
+      {
+        history << std::setprecision( 16 );
+        if( !m_momentumHistoryInitialized )
+        {
+          history << "cycle,time,dt,"
+                  << "particle_momentum_x,particle_momentum_y,particle_momentum_z,particle_mass,"
+                  << "inactive_particle_momentum_x,inactive_particle_momentum_y,inactive_particle_momentum_z,inactive_particle_mass,"
+                  << "nodal_momentum_x,nodal_momentum_y,nodal_momentum_z,"
+                  << "nodal_thresholded_momentum_x,nodal_thresholded_momentum_y,nodal_thresholded_momentum_z,"
+                  << "nodal_internal_force_active_x,nodal_internal_force_active_y,nodal_internal_force_active_z,"
+                  << "nodal_internal_force_small_mass_x,nodal_internal_force_small_mass_y,nodal_internal_force_small_mass_z,"
+                  << "nodal_mass\n";
+          m_momentumHistoryInitialized = true;
+        }
+        history << m_currentMomentumLogCycle << ","
+                << m_currentMomentumLogTime << ","
+                << m_currentMomentumLogDt << ","
+                << globalParticleMomentumSum[0] << ","
+                << globalParticleMomentumSum[1] << ","
+                << globalParticleMomentumSum[2] << ","
+                << globalParticleMomentumSum[3] << ","
+                << globalParticleMomentumSum[4] << ","
+                << globalParticleMomentumSum[5] << ","
+                << globalParticleMomentumSum[6] << ","
+                << globalParticleMomentumSum[7] << ","
+                << globalGridMomentumSum[0] << ","
+                << globalGridMomentumSum[1] << ","
+                << globalGridMomentumSum[2] << ","
+                << globalGridMomentumSum[3] << ","
+                << globalGridMomentumSum[4] << ","
+                << globalGridMomentumSum[5] << ","
+                << globalGridMomentumSum[6] << ","
+                << globalGridMomentumSum[7] << ","
+                << globalGridMomentumSum[8] << ","
+                << globalGridMomentumSum[9] << ","
+                << globalGridMomentumSum[10] << ","
+                << globalGridMomentumSum[11] << ","
+                << globalGridMomentumSum[12] << "\n";
+      }
     }
   }
 }

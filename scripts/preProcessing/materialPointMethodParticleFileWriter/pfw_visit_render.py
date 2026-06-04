@@ -410,6 +410,14 @@ def _component_scalar(scalars, stem, component, field_index=None):
     return _find_best_scalar(scalars, suffixes=tuple(suffixes), contains=(stem,))
 
 
+def _derive_velocity_component(scalars, stem, output_name, component, field_index=None):
+    comp = _component_scalar(scalars, stem, component, field_index=field_index)
+    if not comp:
+        print("Could not derive {0}; missing {1} component {2}".format(output_name, stem, component))
+        return None
+    return _define_scalar_expression(output_name, _quote_visit_var(comp))
+
+
 def _derive_grid_displacement_magnitude(scalars):
     components = []
     for component in range(3):
@@ -455,6 +463,18 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None):
         return _derive_grid_displacement_magnitude(scalars)
     if key in ("particledisplacementmagnitude", "particledisplacement", "displacementmagnitude"):
         return _derive_particle_displacement_magnitude(scalars, meshes)
+    if key in ("particlevelocityx", "particlexvelocity", "xparticlevelocity", "particlevx"):
+        return _derive_velocity_component(scalars, "particleVelocity", "particleVelocityX", 0)
+    if key in ("particlevelocityy", "particleyvelocity", "yparticlevelocity", "particlevy"):
+        return _derive_velocity_component(scalars, "particleVelocity", "particleVelocityY", 1)
+    if key in ("particlevelocityz", "particlezvelocity", "zparticlevelocity", "particlevz"):
+        return _derive_velocity_component(scalars, "particleVelocity", "particleVelocityZ", 2)
+    if key in ("gridvelocityx", "gridxvelocity", "xgridvelocity", "gridvx", "backgroundvelocityx"):
+        return _derive_velocity_component(scalars, "gridVelocity", "gridVelocityX", 0, field_index=0)
+    if key in ("gridvelocityy", "gridyvelocity", "ygridvelocity", "gridvy", "backgroundvelocityy"):
+        return _derive_velocity_component(scalars, "gridVelocity", "gridVelocityY", 1, field_index=0)
+    if key in ("gridvelocityz", "gridzvelocity", "zgridvelocity", "gridvz", "backgroundvelocityz"):
+        return _derive_velocity_component(scalars, "gridVelocity", "gridVelocityZ", 2, field_index=0)
     return None
 
 
@@ -859,17 +879,25 @@ def resolve_states(state_spec, n_states):
     out = []
     for raw in [s.strip() for s in state_spec.split(",") if s.strip()]:
         key = raw.lower()
+        max_state = max(n_states - 1, 0)
         if key == "initial":
             out.append(("initial", 0))
         elif key == "final":
-            out.append(("final", max(n_states - 1, 0)))
+            out.append(("final", max_state))
         elif key in ("middle", "mid", "half"):
-            out.append(("middle", max(n_states - 1, 0) // 2))
+            out.append(("middle", max_state // 2))
+        elif key in ("quarter", "firstquarter", "q1"):
+            out.append(("quarter", max_state // 4))
+        elif key in ("threequarter", "threequarters", "thirdquarter", "q3"):
+            out.append(("threequarter", (3 * max_state) // 4))
+        elif key.endswith("%"):
+            fraction = max(0.0, min(1.0, float(key[:-1]) / 100.0))
+            out.append(("pct{0}".format(int(round(100.0 * fraction))), int(round(fraction * max_state))))
         else:
             idx = int(raw)
             if idx < 0:
                 idx = max(n_states + idx, 0)
-            out.append(("state{0}".format(idx), min(idx, max(n_states - 1, 0))))
+            out.append(("state{0}".format(idx), min(idx, max_state)))
     seen = set()
     unique = []
     for label, idx in out:

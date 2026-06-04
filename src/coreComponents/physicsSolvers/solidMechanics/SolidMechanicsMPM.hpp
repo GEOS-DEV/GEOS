@@ -1224,6 +1224,10 @@ protected:
   real64 m_LBarScale;
   int m_logMomentum;
   int m_logStartCycle;
+  int m_currentMomentumLogCycle;
+  real64 m_currentMomentumLogTime;
+  real64 m_currentMomentumLogDt;
+  bool m_momentumHistoryInitialized;
   real64 m_LRtolerance;
   stdVector< array2d< integer > > m_mappedFields;
   stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,

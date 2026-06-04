@@ -1,24 +1,7 @@
 \contentsline {section}{\numberline {1}Running and rerunning}{2}{section.1}%
 \contentsline {section}{\numberline {2}Timing and dispatch summary}{2}{section.2}%
-\contentsline {section}{\numberline {3}Failures, expected failures, and diagnostics}{4}{section.3}%
-\contentsline {subsection}{\numberline {3.1}anneal\_\_annealCompression}{4}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}anneal\_\_annealTension}{4}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}cohesiveZones\_\_cz\_gridAligned}{4}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}geomechanics\_\_geoModel\_FTable}{4}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}implicitFluid\_\_fluidPressure}{4}{subsection.3.5}%
-\contentsline {section}{\numberline {4}Case studies}{4}{section.4}%
-\contentsline {subsection}{\numberline {4.1}anneal / annealCompression}{4}{subsection.4.1}%
-\contentsline {paragraph}{Code features exercised.}{5}{section*.7}%
-\contentsline {paragraph}{Verification plotting plan.}{5}{section*.8}%
-\contentsline {subsection}{\numberline {4.2}anneal / annealTension}{6}{subsection.4.2}%
-\contentsline {paragraph}{Code features exercised.}{6}{section*.10}%
-\contentsline {paragraph}{Verification plotting plan.}{6}{section*.11}%
-\contentsline {subsection}{\numberline {4.3}cohesiveZones / cz gridAligned}{7}{subsection.4.3}%
-\contentsline {paragraph}{Code features exercised.}{7}{section*.13}%
-\contentsline {paragraph}{Verification plotting plan.}{7}{section*.14}%
-\contentsline {subsection}{\numberline {4.4}geomechanics / geoModel FTable}{8}{subsection.4.4}%
-\contentsline {paragraph}{Code features exercised.}{8}{section*.16}%
-\contentsline {paragraph}{Verification plotting plan.}{9}{section*.17}%
-\contentsline {subsection}{\numberline {4.5}implicitFluid / fluidPressure}{11}{subsection.4.5}%
-\contentsline {paragraph}{Code features exercised.}{11}{section*.19}%
-\contentsline {paragraph}{Verification plotting plan.}{11}{section*.20}%
+\contentsline {paragraph}{Subcase timing detail.}{4}{section*.2}%
+\contentsline {section}{\numberline {3}Case studies}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}pbcCompactionMomentumTest}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}PBC compaction momentum conservation}{6}{subsection.3.2}%
+\contentsline {paragraph}{Generated momentum metric.}{6}{section*.3}%
