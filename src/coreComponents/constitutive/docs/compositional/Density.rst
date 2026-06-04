@@ -37,7 +37,8 @@ Finally, the mass density of the phase, :math:`\rho_{mass}`, is obtained by mult
 
 where :math:`MW_i` is the molecular weight of component :math:`i`. This model is recommended for all hydrocarbon phases.
 
-Parameters:
+Parameters
+~~~~~~~~~~~~~~~~
 
 * ``componentVolumeShift``: Component-specific volume shift parameters (dimensionless).
 
@@ -49,7 +50,7 @@ For aqueous phases containing dissolved salts, cubic equations of state often st
 First, the apparent molar weight of the brine, :math:`MW_{brine}`, is calculated from the salinity, :math:`S` (molality), the salt molar weight, :math:`MW_{salt}`, and the water molar weight, :math:`MW_{H2O}`:
 
 .. math::
-    MW_{brine} = \frac{1}{S + \frac{1 - S \cdot MW_{salt}}{MW_{H2O}}}
+    MW_{brine} = \frac{MW_{H2O}}{1 + S\left(MW_{H2O} - MW_{salt}\right)}
 
 The target mass density of the brine, :math:`\rho_{brine}`, is then evaluated. The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal. The temperature must be in Kelvin and must be between :math:`283.15` and :math:`623.15` Kelvin. Using these parameters, a preprocessing step constructs a two-dimensional table storing the brine density for the specified salinity as a function of pressure and temperature. For salinities above a threshold of :math:`0.25` mol/kg, the density is calculated directly using the Phillips correlation, :math:`\rho_{Phillips}(P, T, S)`, using the expression:
 
@@ -89,7 +90,8 @@ The phase mass density, :math:`\rho_{mass}`, is then computed by multiplying the
 
 *(Note: While the volume shift tightly couples the Phillips correlation to the EOS density, the brine viscosity is not derived from this density. Instead, the phase viscosity is modelled independently using a distinct temperature- and salinity-dependent multiplier applied to the pure water viscosity).*
 
-Parameters:
+Parameters
+~~~~~~~~~~~~~~~~
 
 * ``salinity``: Brine salinity (mol/kg).
 * ``saltMolarWeight``: The molar weight of the salt component (kg/mol).
@@ -107,7 +109,8 @@ The phase molar density, :math:`\rho_{molar}`, is then calculated by dividing th
 .. math::
     \rho_{molar} = \frac{\rho}{MW_{H2O}}
 
-Parameters:
+Parameters
+~~~~~~~~~~~~~~~~
 
 * ``waterReferencePressure``: Reference pressure for the water density calculation (Pa).
 * ``waterReferenceTemperature``: Reference temperature for the water density calculation (K).

@@ -43,15 +43,3 @@ The evaluation of fluid properties follows a sequential thermodynamic structure 
    * Thermal Properties: If the simulation is non-isothermal, the phase enthalpies and internal energies are computed using ideal gas heat capacities and EoS departure functions.
 
 4. Total Fluid Properties: The individual phase properties are homogenised to yield total fluid properties (e.g., total density). Derivatives with respect to pressure, temperature, and composition are rigorously propagated using the chain rule.
-
-Structure of this Documentation
--------------------------------
-
-This documentation is divided into the following sections:
-
-* `Phase Split <PhaseSplit.rst>`_: Details the thermodynamic stability and flash calculations (Negative Flash and K-Value Flash), including the underlying Equations of State.
-* `Density <Density.rst>`_: Describes the models used to compute molar and mass phase densities.
-* `Viscosity <Viscosity.rst>`_: Details the models used to evaluate the resistance to flow for each phase.
-* `Enthalpy <Enthalpy.rst>`_: Explains the calculation of thermal properties.
-* `Miscellaneous <Miscellaneous.rst>`_: Outlines internal unit conversions and mass-to-molar variable handling.
-* `References <References.rst>`_: Provides the bibliography for the scientific correlations implemented in the code.

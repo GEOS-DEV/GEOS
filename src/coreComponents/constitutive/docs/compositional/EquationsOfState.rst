@@ -1,5 +1,5 @@
 Equations of state
-==================
+------------------
 
 An Equation of State (EoS) mathematically relates the pressure, volume, temperature, and composition of a fluid. In compositional modelling, the EoS serves a dual purpose: 
 1. It calculates the fugacity coefficients, :math:`\phi_i`, required to establish thermodynamic phase equilibrium.
@@ -8,9 +8,9 @@ An Equation of State (EoS) mathematically relates the pressure, volume, temperat
 The fugacity coefficient of a component is derived from the exact thermodynamic relationship involving the integration of the EoS volume departure with respect to pressure. 
 
 Cubic equation of state
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The Peng-Robinson (PR) and Soave-Redlich-Kwong (SRK) equations of state are widely used for hydrocarbon systems encompassing natural gas, gas condensates, and volatile oils. The fundamental pressure-volume-temperature (PVT) relationships for these equations are defined as:
+The Peng-Robinson (PR) (Peng and Robinson, 1976; Robinson and Peng, 1978) and Soave-Redlich-Kwong (SRK) (Soave, 1972) equations of state are widely used for hydrocarbon systems encompassing natural gas, gas condensates, and volatile oils. The fundamental pressure-volume-temperature (PVT) relationships for these equations are defined as:
 
 * Peng-Robinson (PR):
   
@@ -106,12 +106,12 @@ where the intermediate terms are defined as:
 .. math::
     E = \ln \left( \frac{Z + \delta_1 B}{Z + \delta_2 B} \right), \quad F = \ln(Z - B), \quad G = \frac{1}{(\delta_1 - \delta_2)B}
 
-Soreide-whitson equation of state
----------------------------------
+Soreide-Whitson equation of state
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Soreide-Whitson model represents a specialized modification of the Peng-Robinson EoS tailored specifically for aqueous-hydrocarbon mixtures, such as those encountered in carbon sequestration (CO2-brine systems) or water-flooding in oil reservoirs. It adapts the standard cubic EoS by capturing the "salting-out" effect, where increased brine salinity reduces the solubility of hydrocarbons and CO2 in the aqueous phase. It is highly recommended whenever accurate modelling of gas dissolution in saline water is critical.
 
-This model introduces two primary modifications to the standard Peng-Robinson formulation, applying special treatment exclusively to the water component and its interactions within the aqueous phase:
+This model introduces two primary modifications to the standard Peng-Robinson formulation, applying special treatment exclusively to the water component and its interactions within the aqueous phase and follows closely the description given by Soreide and Whitson (1992):
 
 First, the standard alpha function, :math:`\alpha_i`, is replaced specifically for the water component by a salinity-dependent formulation. If :math:`c_{sw}` represents the brine salinity, the water alpha function is evaluated as:
 
@@ -170,7 +170,7 @@ For hydrogen sulfide (H2S):
 
 where :math:`A_0 = -0.20441` and :math:`A_1 = 0.23426`.
 
-For hydrogen (H2):
+For hydrogen (H2) the correlation due to Chabab et al. (2024) is used:
 
 .. math::
     k_{ij}^{AQ} = D_0 (1 + a_0 c_{sw}) + D_1 T_{r,i} (1 + a_1 c_{sw}) + D_2 \exp(D_3 T_{r,i})
@@ -178,7 +178,7 @@ For hydrogen (H2):
 where :math:`D_0 = -2.11917`, :math:`D_1 = 0.14888`, :math:`D_2 = -13.01835`, :math:`D_3 = -0.43946`, :math:`a_0 = -0.0226322`, and :math:`a_1 = -0.0044736`.
 
 Component naming requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because the Soreide-Whitson EoS applies highly specific correlations based on the exact type of component interacting with water, it relies on the component's assigned name to identify its type. This name matching is case-insensitive.
 
@@ -193,7 +193,7 @@ To trigger the correct dynamic binary interaction coefficients, you must use the
 If a component's name does not match any of these predefined strings (for example, if you name it "CarbonDioxide", "C1", or "Methane"), the model will automatically default to categorising it as a generic hydrocarbon (``hc``). While this is the intended and correct behavior for actual hydrocarbons (where methane is safely identified via its acentric factor), using an unrecognized name for a special non-hydrocarbon (like CO2) will cause the simulator to mistakenly apply the generic hydrocarbon-water correlation instead of its highly tuned specific correlation.
 
 Model parameters
-----------------
+~~~~~~~~~~~~~~~~
 
 Equations of state are assigned per-phase within the specific fluid model XML block (e.g., ``<CompositionalTwoPhaseFluidPhillipsBrine>``).
 

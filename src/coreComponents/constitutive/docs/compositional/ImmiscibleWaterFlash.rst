@@ -1,10 +1,10 @@
 Immiscible water flash
-======================
+----------------------
 
 The immiscible water flash is an efficient three-phase equilibrium model designed for systems containing an aqueous phase alongside hydrocarbon liquid and vapour phases. Instead of solving a fully coupled three-phase equation of state problem, this model vastly simplifies the phase split by assuming water forms a strictly pure aqueous phase and is completely immiscible in the hydrocarbon phases, while hydrocarbons are entirely insoluble in the aqueous phase.
 
 Methodology
------------
+~~~~~~~~~~~
 
 In this formulation, the mixture composition is explicitly separated into a water component and a hydrocarbon mixture before any thermodynamic equilibrium calculations occur. The water component is identified using its assigned component name (e.g., ``H2O``). 
 
@@ -26,7 +26,7 @@ The feed composition of the remaining hydrocarbon mixture is then normalised:
 for all non-water components, while the normalised hydrocarbon feed fraction for water is set to zero.
 
 Equilibrium calculation
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 During the simulation step, if the total hydrocarbon fraction :math:`z_{hc}` is negligibly small, the model bypasses the flash and assigns the system as a single-phase aqueous fluid.
 
@@ -45,14 +45,14 @@ Once the two-phase hydrocarbon flash converges, the overall phase fractions for 
 The derivatives of the phase fractions and compositions with respect to pressure, temperature, and total composition are analytically transformed using the chain rule to account for this scaling and normalisation.
 
 Recommendations and pitfalls
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The immiscible water flash is highly computationally efficient and is recommended for multi-phase reservoir simulations where water solubility in the hydrocarbon phases (and vice versa) is negligible. By avoiding a full three-phase fugacity solver, it drastically reduces simulation time and improves non-linear solver stability.
 
 Pitfalls: Because this model strictly enforces total immiscibility, it cannot accurately model scenarios where mutual solubility is physically significant, such as high-pressure CO2 injection into saline aquifers (where CO2 dissolves heavily into brine, and water vaporises into the gas stream). For such complex mutual solubility problems, using a two-phase flash paired with the Soreide-Whitson equation of state might be required.
 
 Model parameters
-----------------
+~~~~~~~~~~~~~~~~
 
 The immiscible water flash fluid models are assigned using specific XML blocks that pair the three-phase flash model with distinct viscosity and density models for the hydrocarbon and aqueous phases.
 
@@ -75,12 +75,13 @@ Here is an example demonstrating how to specify the parameters for a three-phase
         waterViscosity="1.002e-3"
         waterCompressibility="4.5e-10" />
 
-* catalog options: ``CompositionalThreePhaseLohrenzBrayClarkViscosity``
-* parameters:
-  * ``equationsOfState``: List specifying the EoS type for each phase (liquid, vapour, aqueous). Note that the aqueous EoS entry is largely ignored by the pure-water density model but must be provided for list alignment.
-  * ``waterReferencePressure``: The reference pressure for water density and viscosity [Pa].
-  * ``waterReferenceTemperature``: The reference temperature for water density and viscosity [K] (optional, default: 293.15).
-  * ``waterDensity``: The water density at the reference pressure and temperature [kg/m^3].
-  * ``waterViscosity``: The water viscosity at the reference pressure and temperature [Pa.s].
-  * ``waterCompressibility``: The constant isothermal compressibility of water [1/Pa].
-  * ``waterExpansionCoefficient``: The volumetric coefficient of thermal expansion of water [1/K] (optional, default: 0.0).
+Parameters
+~~~~~~~~~~~~~~~~
+
+* ``equationsOfState``: List specifying the EoS type for each phase (liquid, vapour, aqueous). Note that the aqueous EoS entry is largely ignored by the pure-water density model but must be provided for list alignment.
+* ``waterReferencePressure``: The reference pressure for water density and viscosity [Pa].
+* ``waterReferenceTemperature``: The reference temperature for water density and viscosity [K] (optional, default: 293.15).
+* ``waterDensity``: The water density at the reference pressure and temperature [kg/m^3].
+* ``waterViscosity``: The water viscosity at the reference pressure and temperature [Pa.s].
+* ``waterCompressibility``: The constant isothermal compressibility of water [1/Pa].
+* ``waterExpansionCoefficient``: The volumetric coefficient of thermal expansion of water [1/K] (optional, default: 0.0).

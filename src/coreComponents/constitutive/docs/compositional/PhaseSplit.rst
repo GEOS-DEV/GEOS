@@ -8,9 +8,9 @@ Phase split equations
 
 The phase split relies on two fundamental physical principles: the conservation of mass (material balance) and thermodynamic equilibrium.
 
-**Material Balance (The Rachford-Rice Equation)**
+**Material Balance**
 
-For a two-phase system (liquid and vapour), the overall mole fraction of a component, :math:`z_i`, must equal the sum of its molar contributions in the liquid phase, :math:`x_i`, and the vapour phase, :math:`y_i`. Introducing the vapour phase fraction, :math:`V`, and the equilibrium ratio (K-value), :math:`K_i = y_i / x_i`, the material balance is expressed by the Rachford-Rice equation:
+For a two-phase system (liquid and vapour), the overall mole fraction of a component, :math:`z_i`, must equal the sum of its molar contributions in the liquid phase, :math:`x_i`, and the vapour phase, :math:`y_i`. Introducing the vapour phase fraction, :math:`V`, and the equilibrium ratio (K-value), :math:`K_i = y_i / x_i`, the material balance is expressed by the Rachford-Rice equation (Rachford and Rice, 1952):
 
 .. math::
     \sum_{i=1}^{N_c} \frac{z_i (K_i - 1)}{1 + V (K_i - 1)} = 0
@@ -36,12 +36,4 @@ Using the fugacity coefficient, :math:`\phi_i`, where :math:`f_i = x_i \phi_i P`
     K_i = \frac{\phi_i^L}{\phi_i^V}
 
 The phase split models in this framework either rigorously solve for these fugacity coefficients using an Equation of State or use simplified, pre-tabulated K-values.
-
-.. include:: EquationsOfState.rst
-
-.. include:: NegativeFlash.rst
-
-.. include:: KValueFlash.rst
-
-.. include:: ImmiscibleWaterFlash.rst
 

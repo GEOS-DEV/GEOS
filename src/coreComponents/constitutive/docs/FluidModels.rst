@@ -15,6 +15,6 @@ single fluids and fluid mixtures.
 
    BlackOilFluid
 
-   compositional/CompositionalMultiphaseFluid
+   CompositionalMultiphaseFluid
 
    CO2BrineFluid
