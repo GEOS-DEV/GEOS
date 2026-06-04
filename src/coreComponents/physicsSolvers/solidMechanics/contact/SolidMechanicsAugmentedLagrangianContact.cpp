@@ -1070,80 +1070,80 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
 }
 
 
-std::tuple< array2d<real64>, array1d<int>> SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(
-std::ptrdiff_t const rsize,
-FrictionBase const& frictionLaw,
-bool isSimultaneous,
-real64 const slidingCheckTolerance,
-arrayView1d< real64 const > const& normalDisplacementTolerance,
-arrayView1d< real64 const > const& normalTractionTolerance,
-arrayView1d< real64 const > const& slidingTolerance,
-arrayView2d<real64 const> const & iterativePenalty,
-arrayView2d<real64 const> const & dispJump,
-arrayView2d<real64 const> const & deltaDispJump,
-arrayView1d< integer const> const& ghostRank,
-arrayView1d< integer const> const& fractureState,
-arrayView2d<real64> const & traction )
+std::tuple< array2d< real64 >, array1d< int > > SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(
+  std::ptrdiff_t const rsize,
+  FrictionBase const & frictionLaw,
+  bool isSimultaneous,
+  real64 const slidingCheckTolerance,
+  arrayView1d< real64 const > const & normalDisplacementTolerance,
+  arrayView1d< real64 const > const & normalTractionTolerance,
+  arrayView1d< real64 const > const & slidingTolerance,
+  arrayView2d< real64 const > const & iterativePenalty,
+  arrayView2d< real64 const > const & dispJump,
+  arrayView2d< real64 const > const & deltaDispJump,
+  arrayView1d< integer const > const & ghostRank,
+  arrayView1d< integer const > const & fractureState,
+  arrayView2d< real64 > const & traction )
 {
-        array2d< real64 > traction_new;
-        std::ptrdiff_t const sizes[2] = {rsize, 3};
-        traction_new.resize(2, sizes);
-        array1d< int > condConv;
-        condConv.resize(rsize);
+  array2d< real64 > traction_new;
+  std::ptrdiff_t const sizes[2] = {rsize, 3};
+  traction_new.resize( 2, sizes );
+  array1d< int > condConv;
+  condConv.resize( rsize );
 
-        // Update the traction field based on the displacement results from the nonlinear solve
-      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        using FrictionType = TYPEOFREF( castedFrictionLaw );
-        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+  // Update the traction field based on the displacement results from the nonlinear solve
+  constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
+  {
+    using FrictionType = TYPEOFREF( castedFrictionLaw );
+    typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        if( isSimultaneous )
-        {
-          solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
-            launch< parallelDevicePolicy<> >( rsize,
-                                              iterativePenalty,
-                                              traction,
-                                              dispJump,
-                                              deltaDispJump,
-                                              traction_new.toView() );
-        }
-        else
-        {
-          solidMechanicsALMKernels::ComputeTractionKernel::
-            launch< parallelDevicePolicy<> >( rsize,
-                                              frictionWrapper,
-                                              iterativePenalty,
-                                              traction,
-                                              dispJump,
-                                              deltaDispJump,
-                                              traction_new.toView() );
-        }
-      } );
+    if( isSimultaneous )
+    {
+      solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
+        launch< parallelDevicePolicy<> >( rsize,
+                                          iterativePenalty,
+                                          traction,
+                                          dispJump,
+                                          deltaDispJump,
+                                          traction_new.toView() );
+    }
+    else
+    {
+      solidMechanicsALMKernels::ComputeTractionKernel::
+        launch< parallelDevicePolicy<> >( rsize,
+                                          frictionWrapper,
+                                          iterativePenalty,
+                                          traction,
+                                          dispJump,
+                                          deltaDispJump,
+                                          traction_new.toView() );
+    }
+  } );
 
-      // real64 const slidingCheckTolerance = m_slidingCheckTolerance;
+  // real64 const slidingCheckTolerance = m_slidingCheckTolerance;
 
-      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        using FrictionType = TYPEOFREF( castedFrictionLaw );
-        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+  constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
+  {
+    using FrictionType = TYPEOFREF( castedFrictionLaw );
+    typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        solidMechanicsALMKernels::ConstraintCheckKernel::
-          launch< parallelDevicePolicy<> >( rsize,
-                                            frictionWrapper,
-                                            ghostRank,
-                                            traction,
-                                            dispJump,
-                                            deltaDispJump,
-                                            normalTractionTolerance,
-                                            normalDisplacementTolerance,
-                                            slidingTolerance,
-                                            slidingCheckTolerance,
-                                            fractureState,
-                                            condConv.toView() );
-      } );
+    solidMechanicsALMKernels::ConstraintCheckKernel::
+      launch< parallelDevicePolicy<> >( rsize,
+                                        frictionWrapper,
+                                        ghostRank,
+                                        traction,
+                                        dispJump,
+                                        deltaDispJump,
+                                        normalTractionTolerance,
+                                        normalDisplacementTolerance,
+                                        slidingTolerance,
+                                        slidingCheckTolerance,
+                                        fractureState,
+                                        condConv.toView() );
+  } );
 
 
-      return std::make_tuple(traction_new,condConv);
+  return std::make_tuple( traction_new, condConv );
 }
 
 
@@ -1191,7 +1191,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       // condConv.resize( subRegion.size());
 
-      std::tie(traction_new, condConv) = updateTractionAndConstraintCheck(
+      std::tie( traction_new, condConv ) = updateTractionAndConstraintCheck(
         subRegion.size(),
         frictionLaw,
         m_simultaneous,
@@ -1205,7 +1205,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         ghostRank,
         fractureState,
         traction
-      );
+        );
       arrayView1d< int > const condConv_v = condConv.toView();
 
 

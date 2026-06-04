@@ -23,8 +23,6 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-//TODO take friction from contact solver
-
 namespace geos
 {
 
@@ -38,11 +36,6 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Friction model to test" );
-  
-  // registerWrapper( viewKeyStruct::frictionNameString(), &m_contactName ).
-  //   setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Contact model to test" );
 
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -51,7 +44,7 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
   registerWrapper( viewKeyStruct::jumpFunctionString(), &m_jumpFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the input function representing jump function along world x-axis" );
-  
+
   registerWrapper( viewKeyStruct::dJumpFunctionString(), &m_dJumpFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the input function representing deltaDisplacementJump function along world x-axis" );
@@ -117,10 +110,6 @@ void FrictionDriver::postInputInitialization()
 bool FrictionDriver::execute()
 {
   FrictionBase & baseFriction = getFriction();
-  // ContactSolverBase & baseContact = getContact();
-
-  //temp 
-  // auto& castedContactModel = dynamic_cast< SolidMechanicsAugmentedLagrangianContact& >( baseContact );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Friction Driver" );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Friction ............... " << m_frictionName );
@@ -130,7 +119,6 @@ bool FrictionDriver::execute()
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
-
   conduit::Node node;
   dataRepository::Group rootGroup( "root", node );
   dataRepository::Group discretization( "discretization", &rootGroup );
@@ -142,7 +130,6 @@ bool FrictionDriver::execute()
   constitutiveUpdatePassThru( baseFriction, [&]( auto & selectedFrictionModel )
   {
     using FRICTION_TYPE = TYPEOFREF( selectedFrictionModel );
-    // using CONTACT_TYPE = TYPEOFREF( castedContactModel );
     runTest< FRICTION_TYPE >( selectedFrictionModel, m_table );
   } );
 
@@ -200,7 +187,7 @@ void FrictionDriver::initializeTable()
     m_table( index, NJUMP ) = jump*sin_theta;
     m_table( index, SLIP0 ) = jump*cos_theta*cos_phi;
     m_table( index, SLIP1 ) = jump*cos_theta*sin_phi;
-    
+
     real64 const dJump = dJumpFunction.evaluate( &time );
     m_table( index, NDJUMP ) = dJump*sin_theta;
     m_table( index, DSLIP0 ) = dJump*cos_theta*cos_phi;
@@ -231,15 +218,6 @@ FrictionBase const & FrictionDriver::getFriction() const
   return getConstitutiveManager().getGroup< FrictionBase >( m_frictionName );
 }
 
-// ContactSolverBase & FrictionDriver::getContact()
-// {
-//   return getConstitutiveManager().getGroup< ContactSolverBase >( m_contactName );
-// }
-
-// ContactSolverBase const & FrictionDriver::getContact() const
-// {
-//   return getConstitutiveManager().getGroup< ContactSolverBase >( m_contactName );
-// }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
                         FrictionDriver,

@@ -114,7 +114,7 @@ public:
   virtual bool updateConfiguration( DomainPartition & domain,
                                     integer configurationLoopIter ) override final;
 
-  
+
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
@@ -218,20 +218,20 @@ public:
 
 
   static
-  std::tuple< array2d<real64>, array1d<int>> updateTractionAndConstraintCheck(std::ptrdiff_t const rsize,
-    constitutive::FrictionBase const& frictionLaw,
-    bool isSimultaneous,
-    real64 const slidingCheckTolerance,
-    arrayView1d< real64 const > const& normalDisplacementTolerance,
-    arrayView1d< real64 const > const& normalTractionTolerance,
-    arrayView1d< real64 const > const& slidingTolerance,
-    arrayView2d<real64 const> const & iterativePenalty,
-    arrayView2d<real64 const> const & dispJump,
-    arrayView2d<real64 const> const & deltaDispJump,
-    arrayView1d< integer const> const& ghostRank,
-    arrayView1d< integer const> const& fractureState,
-    arrayView2d<real64> const & traction );
-    
+  std::tuple< array2d< real64 >, array1d< int > > updateTractionAndConstraintCheck( std::ptrdiff_t const rsize,
+                                                                                    constitutive::FrictionBase const & frictionLaw,
+                                                                                    bool isSimultaneous,
+                                                                                    real64 const slidingCheckTolerance,
+                                                                                    arrayView1d< real64 const > const & normalDisplacementTolerance,
+                                                                                    arrayView1d< real64 const > const & normalTractionTolerance,
+                                                                                    arrayView1d< real64 const > const & slidingTolerance,
+                                                                                    arrayView2d< real64 const > const & iterativePenalty,
+                                                                                    arrayView2d< real64 const > const & dispJump,
+                                                                                    arrayView2d< real64 const > const & deltaDispJump,
+                                                                                    arrayView1d< integer const > const & ghostRank,
+                                                                                    arrayView1d< integer const > const & fractureState,
+                                                                                    arrayView2d< real64 > const & traction );
+
 private:
 
 
