@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  4 JUN 2026 00:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  4 JUN 2026 13:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -910,7 +910,7 @@ Underfull \hbox (badness 1715) in paragraph at lines 68--68
 (./sections/02_events_expanded.tex [23]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 51.
- [24] [25] [26]
+ [24] [25]
 Underfull \hbox (badness 2237) in paragraph at lines 186--187
 \T1/lmtt/m/n/10.95 endTime\T1/lmr/m/n/10.95 (+20) ; \T1/lmtt/m/n/10.95 czVolume
 Normalization\T1/lmr/m/n/10.95 (+20) , de-fault \T1/lmtt/m/n/10.95 1\T1/lmr/m/n
@@ -925,7 +925,7 @@ Overfull \hbox (20.56873pt too wide) in paragraph at lines 186--187
 /m/n/10.95 (-20) and \T1/lmtt/m/n/10.95 computeNormalsAndPositions
  []
 
-[27] [28] [29]
+[26] [27] [28] [29]
 Overfull \hbox (260.0977pt too wide) detected at line 352
 [][][] \OMS/lmsy/m/n/10.95   []\OML/lmm/m/it/10.95 ;  [] \OMS/lmsy/m/n/10.95   
 []\OML/lmm/m/it/10.95 ;  [] \OMS/lmsy/m/n/10.95   []\OML/lmm/m/it/10.95 :
@@ -981,7 +981,7 @@ oncentration fac-tor and $\OT1/lmr/m/n/10.95 (-20) ^^@[] = 1$ \T1/lmr/m/n/10.95
 ) .
  []
 
-<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1543, 1385.175pt x 933.48
+<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1541, 1385.175pt x 933.48
 75pt>
 File: figures/ceramic_damage_yield_surface_fig8_hi.pdf Graphic file (type pdf)
 <use figures/ceramic_damage_yield_surface_fig8_hi.pdf>
@@ -991,7 +991,7 @@ Package pdftex.def Info: figures/ceramic_damage_yield_surface_fig8_hi.pdf  used
 [45 <./figures/ceramic_damage_yield_surface_fig8_hi.pdf>] [46] [47] [48
 
 ]
-<figures/graphite_deformation_modes.png, id=1614, 493.407pt x 255.573pt>
+<figures/graphite_deformation_modes.png, id=1612, 493.407pt x 255.573pt>
 File: figures/graphite_deformation_modes.png Graphic file (type png)
 <use figures/graphite_deformation_modes.png>
 Package pdftex.def Info: figures/graphite_deformation_modes.png  used on input 
@@ -999,7 +999,7 @@ line 518.
 (pdftex.def)             Requested size: 471.78102pt x 244.38403pt.
 
 [49] [50 <./figures/graphite_deformation_modes.png (PNG copy)>] [51]
-<figures/graphite_point_slope_strength.png, id=1670, 751.24664pt x 397.12366pt>
+<figures/graphite_point_slope_strength.png, id=1668, 751.24664pt x 397.12366pt>
 
 File: figures/graphite_point_slope_strength.png Graphic file (type png)
 <use figures/graphite_point_slope_strength.png>
@@ -1015,7 +1015,7 @@ lmtt/m/n/10.95 coupledStrainHardeningC0\T1/lmr/m/n/10.95 (-20) .
  []
 
 [52 <./figures/graphite_point_slope_strength.png>] [53] [54] [55]
-<figures/geomechanics_formulation_composite.png, id=1742, 693.792pt x 697.76685
+<figures/geomechanics_formulation_composite.png, id=1740, 693.792pt x 697.76685
 pt>
 File: figures/geomechanics_formulation_composite.png Graphic file (type png)
 <use figures/geomechanics_formulation_composite.png>
@@ -1179,25 +1179,25 @@ File: lstlang1.sty 2020/03/24 1.8d listings language file
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 )
 [64]) [65] [66]
-<figures/particle_shape_functions.pdf, id=1926, 520.34402pt x 296.307pt>
+<figures/particle_shape_functions.pdf, id=1924, 520.34402pt x 296.307pt>
 File: figures/particle_shape_functions.pdf Graphic file (type pdf)
 <use figures/particle_shape_functions.pdf>
 Package pdftex.def Info: figures/particle_shape_functions.pdf  used on input li
-ne 844.
+ne 842.
 (pdftex.def)             Requested size: 452.11942pt x 257.46852pt.
  [67] [68 <./figures/particle_shape_functions.pdf>] [69]
 [70] [71] [72]
-Underfull \hbox (badness 2073) in paragraph at lines 1183--1183
+Underfull \hbox (badness 2073) in paragraph at lines 1181--1181
 []|\T1/lmr/m/n/10.95 (+20) implemented, de-
  []
 
 
-Underfull \hbox (badness 2582) in paragraph at lines 1185--1186
+Underfull \hbox (badness 2582) in paragraph at lines 1183--1184
 []|\T1/lmr/m/n/10.95 (+20) Approximate full-mass in-verse con-trolled by
  []
 
 [73] [74] [75] [76] [77] [78]
-Overfull \hbox (24.225pt too wide) in paragraph at lines 1454--1456
+Overfull \hbox (24.225pt too wide) in paragraph at lines 1452--1454
 \T1/lmr/m/n/10.95 (-20) buffer-reflection op-er-a-tions used by a mov-ing face.
  The reg-is-tered \T1/lmtt/m/n/10.95 boundaryFaceCoefficientsOfRestitution
  []
@@ -1257,7 +1257,7 @@ n-trols are \T1/lmtt/m/n/10.95 czVolumeNormalization\T1/lmr/m/n/10.95 (+20) ,
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
 )
-<figures/contact_fields_schematic.pdf, id=2343, 1000.88431pt x 573.46545pt>
+<figures/contact_fields_schematic.pdf, id=2341, 1000.88431pt x 573.46545pt>
 File: figures/contact_fields_schematic.pdf Graphic file (type pdf)
 <use figures/contact_fields_schematic.pdf>
 Package pdftex.def Info: figures/contact_fields_schematic.pdf  used on input li
@@ -1271,7 +1271,7 @@ Overfull \hbox (61.4305pt too wide) in paragraph at lines 140--142
 m/n/10.95 useSurfacePositionForContact=1\T1/lmr/m/n/10.95 (-20) ,
  []
 
-<figures/contact_surface_methods_schematic.pdf, id=2488, 455.4475pt x 220.0659p
+<figures/contact_surface_methods_schematic.pdf, id=2486, 455.4475pt x 220.0659p
 t>
 File: figures/contact_surface_methods_schematic.pdf Graphic file (type pdf)
 <use figures/contact_surface_methods_schematic.pdf>
@@ -1280,7 +1280,7 @@ Package pdftex.def Info: figures/contact_surface_methods_schematic.pdf  used on
 (pdftex.def)             Requested size: 471.78102pt x 227.95984pt.
 [90 <./figures/contact_surface_methods_schematic.pdf>] [91] [92] [93] [94]
 [95]
-<figures/contact_examples_summary.pdf, id=2581, 1011.78pt x 433.62pt>
+<figures/contact_examples_summary.pdf, id=2579, 1011.78pt x 433.62pt>
 File: figures/contact_examples_summary.pdf Graphic file (type pdf)
 <use figures/contact_examples_summary.pdf>
 Package pdftex.def Info: figures/contact_examples_summary.pdf  used on input li
@@ -1309,7 +1309,7 @@ Chapter 3.
 [102
 
 ] [103] [104]
-<figures/pfw_grid_partition_schematic.pdf, id=2806, 892.6873pt x 516.32903pt>
+<figures/pfw_grid_partition_schematic.pdf, id=2804, 892.6873pt x 516.32903pt>
 File: figures/pfw_grid_partition_schematic.pdf Graphic file (type pdf)
 <use figures/pfw_grid_partition_schematic.pdf>
 Package pdftex.def Info: figures/pfw_grid_partition_schematic.pdf  used on inpu
@@ -1872,276 +1872,276 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 56--58
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 77--77
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
 []|\T1/lmtt/m/n/6 m_computeInternalEnergyAnd
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 79--79
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
 []|\T1/lmtt/m/n/6 computeParticleSurfaceNormalsAnd
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 79--79
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
 []|\T1/lmtt/m/n/6 m_computeParticleSurfaceNormals
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 88--88
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
 []|\T1/lmtt/m/n/6 disableSurfaceNormalsAndPositionsOn
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 88--88
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+[]|\T1/lmtt/m/n/6 m_disableSurfaceNormalsAnd
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+[]|\T1/lmtt/m/n/6 disableSurfaceNormalsAndPositionsOn
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
 []|\T1/lmtt/m/n/6 m_disableSurfaceNormalsAnd
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 89--89
-[]|\T1/lmtt/m/n/6 disableSurfaceNormalsAndPositionsOn
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 89--89
-[]|\T1/lmtt/m/n/6 m_disableSurfaceNormalsAnd
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 91--91
 []|\T1/lmtt/m/n/6 enablePrescribedBoundaryTransverse
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 115--115
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
 []|\T1/lmtt/m/n/6 m_overwriteExistingNormalsAnd
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 123--123
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
 []|\T1/lmtt/m/n/6 prescribedBoundaryTransverse
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 134--134
+Underfull \hbox (badness 10000) in paragraph at lines 132--132
 []|\T1/lmtt/m/n/6 m_resetDefGradForFullyDamaged
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 135--135
+Underfull \hbox (badness 10000) in paragraph at lines 133--133
 []|\T1/lmtt/m/n/6 m_resetDefGradForScaledSurface
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 149--149
+Underfull \hbox (badness 10000) in paragraph at lines 147--147
 []|\T1/lmtt/m/n/6 surfaceNormalAndPositionDamage
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 149--149
+Underfull \hbox (badness 10000) in paragraph at lines 147--147
 []|\T1/lmtt/m/n/6 m_surfaceNormalAndPositionDamage
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 173--173
+Underfull \hbox (badness 10000) in paragraph at lines 170--170
 []|\T1/lmtt/m/n/6 m_useReferenceVectorsForParticle
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 58--176
+Overfull \hbox (1.60341pt too wide) in alignment at lines 58--173
  [] [] [] [] 
  []
 
 [160
 
 ] [161] [162]
-Overfull \hbox (17.1885pt too wide) in paragraph at lines 180--181
+Overfull \hbox (17.1885pt too wide) in paragraph at lines 177--178
 [] []\T1/lmr/bx/n/10.95 (-20) In-ter-nal/non-in-put wrap-pers.[] \T1/lmr/m/n/10
 .95 (-20) The fol-low-ing reg-is-tered wrap-pers were marked with \T1/lmtt/m/n/
 10.95 InputFlags::FALSE
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 188--193
+Overfull \hbox (1.60341pt too wide) in alignment at lines 185--190
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 193--197
+Overfull \hbox (1.60341pt too wide) in alignment at lines 190--194
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 197--200
+Overfull \hbox (1.60341pt too wide) in alignment at lines 194--197
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 200--202
+Overfull \hbox (1.60341pt too wide) in alignment at lines 197--199
  [] [] [] [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 205--206
+Underfull \hbox (badness 10000) in paragraph at lines 202--203
 []|\T1/lmr/m/n/8 (+20) Factor to ap-ply to the `CFL con-di-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 205--206
+Underfull \hbox (badness 10000) in paragraph at lines 202--203
 \T1/lmr/m/n/8 (+20) <http://en.wikipedia.org/wiki/Courant-Friedrichs-
  []
 
 
-Underfull \hbox (badness 5446) in paragraph at lines 209--210
+Underfull \hbox (badness 5446) in paragraph at lines 206--207
 []|\T1/lmr/m/n/8 (+20) Name of dis-cretiza-tion ob-ject (de-fined in the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 220--220
+Underfull \hbox (badness 10000) in paragraph at lines 217--217
 []|\T1/lmtt/m/n/8 prescribedBoundary
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 232--232
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
 []|\T1/lmtt/m/n/8 treatFullyDamagedAs
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 232--232
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
 []|\T1/lmtt/m/n/8 Whether to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 232--232
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
 \T1/lmtt/m/n/8 consolidate fully
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 232--232
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
 \T1/lmtt/m/n/8 damaged fields
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 236--236
+Underfull \hbox (badness 10000) in paragraph at lines 233--233
 []|\T1/lmtt/m/n/8 NonlinearSolver
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 202--237
+Overfull \hbox (1.60341pt too wide) in alignment at lines 199--234
  [] [] [] [] 
  []
 
 [163]
-Overfull \hbox (1.60341pt too wide) in alignment at lines 241--246
+Overfull \hbox (1.60341pt too wide) in alignment at lines 238--243
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 246--250
+Overfull \hbox (1.60341pt too wide) in alignment at lines 243--247
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 250--253
+Overfull \hbox (1.60341pt too wide) in alignment at lines 247--250
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 253--255
+Overfull \hbox (1.60341pt too wide) in alignment at lines 250--252
  [] [] [] [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 256--256
+Underfull \hbox (badness 10000) in paragraph at lines 253--253
 []|\T1/lmtt/m/n/8 required path to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 257--257
+Underfull \hbox (badness 10000) in paragraph at lines 254--254
 []|\T1/lmtt/m/n/8 required A name is
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 257--257
+Underfull \hbox (badness 10000) in paragraph at lines 254--254
 \T1/lmtt/m/n/8 required for any
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 258--258
+Underfull \hbox (badness 10000) in paragraph at lines 255--255
 []|\T1/lmtt/m/n/8 required path to
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 255--259
+Overfull \hbox (1.60341pt too wide) in alignment at lines 252--256
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 263--268
+Overfull \hbox (1.60341pt too wide) in alignment at lines 260--265
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 268--272
+Overfull \hbox (1.60341pt too wide) in alignment at lines 265--269
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 272--275
+Overfull \hbox (1.60341pt too wide) in alignment at lines 269--272
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 275--277
+Overfull \hbox (1.60341pt too wide) in alignment at lines 272--274
  [] [] [] [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 278--278
+Underfull \hbox (badness 10000) in paragraph at lines 275--275
 []|\T1/lmtt/m/n/8 Mesh body that
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 278--278
+Underfull \hbox (badness 10000) in paragraph at lines 275--275
 \T1/lmtt/m/n/8 contains this
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 279--279
+Underfull \hbox (badness 10000) in paragraph at lines 276--276
 []|\T1/lmtt/m/n/8 required A name is
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 279--279
+Underfull \hbox (badness 10000) in paragraph at lines 276--276
 \T1/lmtt/m/n/8 required for any
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 277--280
+Overfull \hbox (1.60341pt too wide) in alignment at lines 274--277
  [] [] [] [] 
  []
 
 [164]
-Overfull \hbox (1.60341pt too wide) in alignment at lines 284--289
+Overfull \hbox (1.60341pt too wide) in alignment at lines 281--286
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 289--293
+Overfull \hbox (1.60341pt too wide) in alignment at lines 286--290
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 293--296
+Overfull \hbox (1.60341pt too wide) in alignment at lines 290--293
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 296--298
+Overfull \hbox (1.60341pt too wide) in alignment at lines 293--295
  [] [] [] [] 
  []
 
 
-Overfull \hbox (1.60341pt too wide) in alignment at lines 298--299
+Overfull \hbox (1.60341pt too wide) in alignment at lines 295--296
  [] [] [] [] 
  []
 
@@ -4537,10 +4537,10 @@ Underfull \hbox (badness 1460) in paragraph at lines 633--635
 
 ]) (./geos_mpm_manual.aux) ) 
 Here is how much of TeX's memory you used:
- 23373 strings out of 478268
- 390899 string characters out of 5754030
+ 23369 strings out of 478268
+ 390792 string characters out of 5754030
  1213304 words of memory out of 5000000
- 38076 multiletter control sequences out of 15000+600000
+ 38074 multiletter control sequences out of 15000+600000
  603433 words of font info for 354 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  60i,14n,80p,1750b,2032s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -4614,9 +4614,9 @@ ive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/
 lmtti10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texli
 ve-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsf
 onts/symbols/msbm10.pfb>
-Output written on geos_mpm_manual.pdf (201 pages, 10848007 bytes).
+Output written on geos_mpm_manual.pdf (201 pages, 10847640 bytes).
 PDF statistics:
- 6443 PDF objects out of 7423 (max. 8388607)
- 2633 named destinations out of 2984 (max. 500000)
+ 6441 PDF objects out of 7423 (max. 8388607)
+ 2631 named destinations out of 2984 (max. 500000)
  75205 words of extra memory for PDF output out of 89155 (max. 10000000)
 
