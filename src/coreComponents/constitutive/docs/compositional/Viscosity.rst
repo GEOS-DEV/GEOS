@@ -67,7 +67,7 @@ where the interaction parameter :math:`\phi_{ij}` is defined as:
 
     \phi_{ij} = \frac{\left[1 + (\mu_i^*/\mu_j^*)^{1/2} (M_i/M_j)^{-1/4}\right]^2}{\sqrt{8(1 + M_i/M_j)}}
 
-The Brokaw mixing rule (Brokaw, R. S., 1968, Viscosity of Gas Mixtures, National Aeronautics and Space Administration) evaluates the mixture viscosity as:
+The Brokaw mixing rule (Brokaw, 1968) evaluates the mixture viscosity as:
 
 .. math::
 
@@ -109,6 +109,12 @@ This residual is added to the dilute gas viscosity to obtain the final phase vis
     \mu = \mu^* + \frac{f(\rho_r)^4 - 10^{-4}}{\xi}
 
 This model is strongly recommended for all miscible gas, volatile oil, and general compositional hydrocarbon simulations.
+
+The model relies on critical component volumes; when these are not provided, they are estimated internally using a correlation due to Ihmels (2010)
+
+.. math::
+
+    V_c = \frac{2.215 \times 10^{-6} T_c}{0.025 + 10^{-6} P_c}
 
 Parameters
 ~~~~~~~~~~~~
