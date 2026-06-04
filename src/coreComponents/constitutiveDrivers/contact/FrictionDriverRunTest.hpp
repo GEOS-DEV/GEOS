@@ -49,12 +49,16 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   array2d< real64 > jump( 1, 3 );
   array2d< real64 > djump( 1, 3 );
 
+  bool isSimultaneous = true;
+  real64 const slidingCheckTol = .05; //default
+
   //TODO computeTolerance eleme to Elem
 
   integer const numRows = m_table.size( 0 );
   forAll< parallelDevicePolicy<> >( numRows,
                                     [&friction, &table,
                                      &ghostRank, &normalDisplacementTol, &normalTractionTol, &slidingTol, &iterPen,
+                                     &slidingCheckTol, &isSimultaneous,
                                      &jump, &djump,
                                      &fractureState, &traction ]
                                     GEOS_HOST_DEVICE ( integer const ei )
@@ -70,30 +74,36 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     djump[0][0] = table( ei, NDJUMP );
     djump[0][1] = table( ei, DSLIP0 );
     djump[0][2] = table( ei, DSLIP1 );
+    GEOS_LOG_RANK( GEOS_FMT( "[debug : before] djump [0:3]\n \t {} \n\t {} \n\t {}",
+                             djump[0][0], djump[0][1], djump[0][2] ));
 
     traction[0][0] = table( ei, NTRAC );
     traction[0][1] = table( ei, STRAC0 );
     traction[0][2] = table( ei, STRAC1 );
 
 
-    SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck( 1,
-                                                                                friction,
-                                                                                true,//simultaneous
-                                                                                0.05,//slidingCheckTolerance
-                                                                                normalDisplacementTol,
-                                                                                normalTractionTol,
-                                                                                slidingTol,
-                                                                                iterPen,
-                                                                                jump,
-                                                                                djump,
-                                                                                ghostRank,
-                                                                                fractureState.toView(),
-                                                                                traction.toView()
-                                                                                );
-    table( ei, FS ) = fractureState[0];
-    table( ei, NEWTRAC ) = traction[0][0];
-    table( ei, SNEWTRAC0 ) = traction[0][1];
-    table( ei, SNEWTRAC1 ) = traction[0][2];
+    auto [newTraction, condCov] = SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck( 1,
+                                                                                                              friction,
+                                                                                                              isSimultaneous,
+                                                                                                              slidingCheckTol,
+                                                                                                              normalDisplacementTol,
+                                                                                                              normalTractionTol,
+                                                                                                              slidingTol,
+                                                                                                              iterPen,
+                                                                                                              jump,
+                                                                                                              djump,
+                                                                                                              ghostRank,
+                                                                                                              fractureState.toView(),
+                                                                                                              traction.toView()
+                                                                                                              );
+    GEOS_LOG_RANK( GEOS_FMT( "[debug : after] djump [0:3]\n \t {} \n\t {} \n\t {}",
+                             djump[0][0], djump[0][1], djump[0][2] ));
+
+    // table( ei, FS ) = fractureState[0];
+    table( ei, FS ) = condCov[0];
+    table( ei, NEWTRAC ) = newTraction[0][0];
+    table( ei, SNEWTRAC0 ) = newTraction[0][1];
+    table( ei, SNEWTRAC1 ) = newTraction[0][2];
 
   } );
 }
