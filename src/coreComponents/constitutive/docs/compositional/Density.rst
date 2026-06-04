@@ -88,7 +88,8 @@ The phase mass density, :math:`\rho_{mass}`, is then computed by multiplying the
 .. math::
     \rho_{mass} = \rho_{molar} \left( x_{H2O} MW_{brine} + \sum_{i \neq H2O} x_i MW_i \right)
 
-*(Note: While the volume shift tightly couples the Phillips correlation to the EOS density, the brine viscosity is not derived from this density. Instead, the phase viscosity is modelled independently using a distinct temperature- and salinity-dependent multiplier applied to the pure water viscosity).*
+.. note::
+    While the volume shift tightly couples the Phillips correlation to the EOS density, the brine viscosity is not derived from this density. Instead, the phase viscosity is modelled independently using a distinct temperature- and salinity-dependent multiplier applied to the pure water viscosity.
 
 Parameters
 ~~~~~~~~~~~~~~~~

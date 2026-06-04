@@ -43,33 +43,6 @@ Model parameters
 
 The K-value flash fluid models are assigned using specific XML blocks that pair the flash model with viscosity and density models.
 
-Here is an example demonstrating how to specify the parameters for a two-phase system using the K-value flash paired with the Phillips brine model:
-
-.. code-block:: xml
-
-        <CompositionalTwoPhaseKValueFluidPhillipsBrine
-            name="FLUID"
-            phaseNames="{ gas, water }"
-            equationsOfState="{ PengRobinson, SoreideWhitson }"
-            componentNames="{ CH4, CO2, H2S, H2O }"
-            componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 3.40809e-02, 1.80153e-02 }"
-            componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 9.00000e+06, 2.20640e+07 }"
-            componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 3.73100e+02, 6.47096e+02 }"
-            componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 9.81354e-05, 5.59480e-05 }"
-            componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 1.00500e-01, 3.44300e-01 }"
-            componentBinaryCoeff="{
-                { 0.0000, 0.0000, 0.0000, 0.4850 },
-                { 0.0000, 0.0000, 0.0000, 0.1896 },
-                { 0.0000, 0.0000, 0.0000, 0.1353 },
-                { 0.4850, 0.1896, 0.1353, 0.0000 }
-            }"
-            kValueTables="{ KV_CH4, KV_CO2, KV_H2S, KV_H2O }"
-            waterCompressibility="4.1483E-10"
-            salinity="2.3" /> 
-
-Parameters
-~~~~~~~~~~~~~~~~
-
 * ``kValueTables``: List of function names linking to the pre-tabulated K-values. For an :math:`N`-phase system, this requires :math:`(N-1) \times N_c` function names.
 * ``pressureCoordinates``: List of pressure values for interpolation grid generation (optional). Unit: [Pa].
 * ``temperatureCoordinates``: List of temperature values for interpolation grid generation (optional). Unit: [K].

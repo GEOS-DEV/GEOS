@@ -36,4 +36,6 @@ This documentation is divided into the following sections:
 
 .. include:: compositional/Miscellaneous.rst
 
+.. include:: compositional/Models.rst
+
 .. include:: compositional/References.rst

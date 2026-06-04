@@ -3,10 +3,13 @@ Immiscible water flash
 
 The immiscible water flash is an efficient three-phase equilibrium model designed for systems containing an aqueous phase alongside hydrocarbon liquid and vapour phases. Instead of solving a fully coupled three-phase equation of state problem, this model vastly simplifies the phase split by assuming water forms a strictly pure aqueous phase and is completely immiscible in the hydrocarbon phases, while hydrocarbons are entirely insoluble in the aqueous phase.
 
+.. note::
+    When using the immiscibile water flash, the water component still needs to be explicitly specified as one of the components with the name ``H2O``.
+
 Methodology
 ~~~~~~~~~~~
 
-In this formulation, the mixture composition is explicitly separated into a water component and a hydrocarbon mixture before any thermodynamic equilibrium calculations occur. The water component is identified using its assigned component name (e.g., ``H2O``). 
+In this formulation, the mixture composition is explicitly separated into a water component and a hydrocarbon mixture before any thermodynamic equilibrium calculations occur. The water component is identified using its assigned component name (``H2O``). 
 
 Given a total feed mole fraction :math:`z_i` for each component, the mole fraction of the aqueous phase, :math:`V_{aq}`, is determined to be exactly equal to the total feed mole fraction of the water component:
 
@@ -55,27 +58,5 @@ Model parameters
 ~~~~~~~~~~~~~~~~
 
 The immiscible water flash fluid models are assigned using specific XML blocks that pair the three-phase flash model with distinct viscosity and density models for the hydrocarbon and aqueous phases.
-
-Here is an example demonstrating how to specify the parameters for a three-phase system using the immiscible water flash paired with the Lohrenz-Bray-Clark viscosity model for hydrocarbons and a distinct constant-compressibility formulation for the pure water phase:
-
-.. code-block:: xml
-
-    <CompositionalThreePhaseLohrenzBrayClarkViscosity
-        name="fluid"
-        phaseNames="{ liquid, vapour, aqueous }"
-        equationsOfState="{ PengRobinson, PengRobinson, PengRobinson }"
-        componentNames="{ CH4, C10, H2O }"
-        componentMolarWeight="{ 1.604e-02, 1.422e-01, 1.801e-02 }"
-        componentCriticalPressure="{ 4.599e+06, 2.103e+06, 2.206e+07 }"
-        componentCriticalTemperature="{ 1.905e+02, 6.177e+02, 6.471e+02 }"
-        componentAcentricFactor="{ 1.142e-02, 4.880e-01, 3.443e-01 }"
-        waterReferencePressure="1.01325e5"
-        waterReferenceTemperature="293.15"
-        waterDensity="998.2"
-        waterViscosity="1.002e-3"
-        waterCompressibility="4.5e-10" />
-
-Parameters
-~~~~~~~~~~~~~~~~
 
 * ``equationsOfState``: List specifying the EoS type for each phase (liquid, vapour, aqueous). Note that the aqueous EoS entry is largely ignored by the pure-water density model but must be provided for list alignment.

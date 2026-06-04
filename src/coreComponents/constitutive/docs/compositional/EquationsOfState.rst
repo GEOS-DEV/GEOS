@@ -195,25 +195,7 @@ If a component's name does not match any of these predefined strings (for exampl
 Model parameters
 ~~~~~~~~~~~~~~~~
 
-Equations of state are assigned per-phase within the specific fluid model XML block (e.g., ``<CompositionalTwoPhaseFluidPhillipsBrine>``).
-
-The ``equationsOfState`` attribute takes a list specifying the EoS type for each phase corresponding to the order defined in the ``phaseNames`` list. Standard component properties necessary for the EoS calculations must also be provided in matching component order.
-
-Here is an example demonstrating how to specify the parameters for a two-phase system using the Soreide-Whitson EoS for the aqueous phase and Peng-Robinson for the gas phase:
-
-.. code-block:: xml
-
-    <CompositionalTwoPhaseFluidPhillipsBrine
-      name="brine"
-      phaseNames="{ liquid, gas }"
-      equationsOfState="{ SoreideWhitson, PengRobinson }"
-      componentNames="{ CH4, CO2, H2O }"
-      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 2.20640e+07 }"
-      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 6.47096e+02 }"
-      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 5.59480e-05 }"
-      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 3.44300e-01 }"
-      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 1.80153e-02 }"
-      salinity="0.6" />
+Equations of state are assigned per-phase within the specific fluid model XML block. The ``equationsOfState`` attribute takes a list specifying the EoS type for each phase corresponding to the order defined in the ``phaseNames`` list. Standard component properties necessary for the EoS calculations must also be provided in matching component order.
 
 * ``equationsOfState``: List specifying the EoS type (e.g., ``PengRobinson``, ``SoaveRedlichKwong``, ``SoreideWhitson``) corresponding to each phase.
 * ``componentCriticalPressure``: Critical pressure of each component. Unit: [Pa].
