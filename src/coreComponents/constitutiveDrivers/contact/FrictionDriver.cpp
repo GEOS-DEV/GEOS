@@ -167,7 +167,8 @@ void FrictionDriver::getColumnNames( string_array & columnNames ) const
   columnNames.emplace_back( "delta displacement jump,normal" );
   columnNames.emplace_back( "delta displacement jump,tangent1" );
   columnNames.emplace_back( "delta displacement jump,tangent2" );
-  columnNames.emplace_back( "fracture state" );
+  columnNames.emplace_back( "encoded constaint (0:converged, 1:stick & gn>0 (opening), 2: interpenetration, 3: stick & gt>lim (disp-sliding), 4: tau>taulim (trac-sliding) )" );
+  columnNames.emplace_back( "fracture state (0:stick, 1:slip , 2: new slip, 3: open)" );
   columnNames.emplace_back( "newtraction,normal" );
   columnNames.emplace_back( "newtraction,tangent1" );
   columnNames.emplace_back( "newtraction,tangent2" );
@@ -212,6 +213,7 @@ void FrictionDriver::initializeTable()
     m_table( index, DSLIP0 ) = dJump*cos_theta*cos_phi;
     m_table( index, DSLIP1 ) = dJump*cos_theta*sin_phi;
 
+    m_table( index, CC )    = 0;
     m_table( index, FS )    = fields::contact::FractureState::Stick;
   }
 

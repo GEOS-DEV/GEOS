@@ -53,10 +53,11 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   real64 const slidingCheckTol = .05; //default
 
   //TODO computeTolerance eleme to Elem
+  typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
   integer const numRows = m_table.size( 0 );
   forAll< parallelDevicePolicy<> >( numRows,
-                                    [&friction, &table,
+                                    [&friction, &table, &kernelWrapper,
                                      &ghostRank, &normalDisplacementTol, &normalTractionTol, &slidingTol, &iterPen,
                                      &slidingCheckTol, &isSimultaneous,
                                      &jump, &djump,
@@ -65,7 +66,6 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   {
 
     GEOS_LOG_RANK( "[debug] Table Evaluation" );
-    GEOS_LOG_RANK( GEOS_FMT( " jump [{}x{}]", jump.size( 0 ), jump.size( 1 )));
 
     jump[0][0] = table( ei, NJUMP );
     jump[0][1] = table( ei, SLIP0 );
@@ -74,13 +74,15 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     djump[0][0] = table( ei, NDJUMP );
     djump[0][1] = table( ei, DSLIP0 );
     djump[0][2] = table( ei, DSLIP1 );
-    GEOS_LOG_RANK( GEOS_FMT( "[debug : before] djump [0:3]\n \t {} \n\t {} \n\t {}",
-                             djump[0][0], djump[0][1], djump[0][2] ));
+
 
     traction[0][0] = table( ei, NTRAC );
     traction[0][1] = table( ei, STRAC0 );
     traction[0][2] = table( ei, STRAC1 );
 
+    kernelWrapper.updateFractureState( jump[0],
+                                       traction[0],
+                                       fractureState[0] );
 
     auto [newTraction, condCov] = SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck( 1,
                                                                                                               friction,
@@ -96,11 +98,13 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
                                                                                                               fractureState.toView(),
                                                                                                               traction.toView()
                                                                                                               );
-    GEOS_LOG_RANK( GEOS_FMT( "[debug : after] djump [0:3]\n \t {} \n\t {} \n\t {}",
-                             djump[0][0], djump[0][1], djump[0][2] ));
 
-    // table( ei, FS ) = fractureState[0];
-    table( ei, FS ) = condCov[0];
+    kernelWrapper.updateFractureState( jump[0],
+                                       newTraction[0],
+                                       fractureState[0] );
+
+    table( ei, CC ) = condCov[0];
+    table( ei, FS ) = fractureState[0];
     table( ei, NEWTRAC ) = newTraction[0][0];
     table( ei, SNEWTRAC0 ) = newTraction[0][1];
     table( ei, SNEWTRAC1 ) = newTraction[0][2];
