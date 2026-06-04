@@ -146,3 +146,23 @@ Parameters
 
 * ``salinity``: The salinity of the brine. Unit: [mol/kg].
 * ``temperatureCoordinates``: List of temperature values for the interpolation of tabulated pure water properties. Unit: [K].
+
+Immiscible water viscosity
+--------------------------
+
+A simplified exponential viscosity model is available for pure, immiscible water phases. It evaluates the viscosity, :math:`\mu`, based on pressure and temperature variations from a reference state:
+
+.. math::
+
+    \mu = \mu_{ref} \exp(c_{\mu} (P - P_{ref})) \exp(-\alpha_{\mu} (T - T_{ref}))
+
+where :math:`\mu_{ref}` is the reference viscosity, :math:`c_{\mu}` is the viscosity compressibility, and :math:`\alpha_{\mu}` is the viscosity expansion coefficient.
+
+Parameters
+~~~~~~~~~~~~
+
+* ``waterReferencePressure``: Reference pressure for the water viscosity calculation. Unit: [Pa].
+* ``waterReferenceTemperature``: Reference temperature for the water viscosity calculation. Unit: [K].
+* ``waterViscosity``: Water viscosity at the reference pressure and temperature. Unit: [Pa.s].
+* ``waterViscosityCompressibility``: The compressibility (normalized derivative with respect to pressure) of the water viscosity. Unit: [1/Pa].
+* ``waterViscosityExpansionCoefficient``: The coefficient of thermal expansion (normalized derivative with respect to temperature) of water viscosity. Unit: [1/K].
