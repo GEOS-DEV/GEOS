@@ -68,8 +68,6 @@ pfw["nI"] = 48
 pfw["nJ"] = 48
 pfw["nK"] = 3
 pfw["ppc"] = 2
-pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
-pfw["mNodes"] = 1
 
 pfw["xmin"] = -2.0
 pfw["xmax"] = 2.0
