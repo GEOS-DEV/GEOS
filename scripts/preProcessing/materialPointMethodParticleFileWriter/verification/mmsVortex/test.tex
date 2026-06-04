@@ -1,0 +1,78 @@
+% Human-editable description for the MMS vortex verification test folder.
+% Generated figures and tables are written by postProcess_mmsVortex.py under
+% \CaseOutputDir and are included near the end of this section.
+
+\paragraph{Purpose.}
+This test verifies the generalized-vortex method-of-manufactured-solutions
+(MMS) problem described by Kamojjala, Brannon, Sadeghirad, and Guilkey,
+``Verification tests in solid mechanics,'' \emph{Engineering with Computers}
+31:193--213, 2015, doi:10.1007/s00366-013-0342-x.  The test exercises
+\texttt{SolidMechanics\_MPM} under a smooth large-deformation field containing
+simple shear with superposed rotation, while keeping the analytical solution and
+expected final state known.
+
+\paragraph{Problem definition.}
+The manufactured solution is posed on an annulus with inner radius $a=0.75$ and
+outer radius $b=1.25$.  Material points move only in the circumferential
+direction; the displacement and displacement gradients vanish at the inner and
+outer radii, so the ring may also be embedded in a stationary square background
+block.  The initial displacement and velocity are zero, the stop time is
+$T=1$, and the temporal factor is zero again at $t=T$, so the exact final
+configuration coincides with the initial configuration.  The material card is
+the shared \texttt{pfw\_materials.hyperelasticMMS} parameterization of the
+Neo-Hookean MMS model used for this test: density $1000$, Lam\'e parameter
+$\lambda=577$, and shear modulus $\mu=384.6153846153846$ in the unit system of
+the PFW input.
+
+\paragraph{Numerical variants.}
+The same human-readable PFW input is run twice from this folder.  One variant
+uses CPDI particles with FLIP transfer, and one variant uses FMPM with
+single-point B-spline particles.  The file \texttt{pfw\_input\_mmsVortex.py} is
+the only PFW source input in this folder.  The folder-level \texttt{runTest}
+script selects the numerical variant by setting documented template environment
+variables before invoking \texttt{particleFileWriter.py}.  The template comments
+list the concrete values used for the CPDI-FLIP and FMPM/singlePointBspline
+runs, so users can copy the input and replace the defaults to make a standalone
+single-case example.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.45\linewidth]{\CaseSourceDir/setup_vortex.png}\hfill
+  \includegraphics[width=0.45\linewidth]{\CaseSourceDir/expected_deformation_kamojjala_fig11.png}
+  \caption{Left: static setup diagram for the square computational domain,
+  annular MMS motion region, and tracer rings.  Right: expected generalized
+  vortex deformation pattern from Kamojjala et al.; hue is proportional to the
+  initial angular coordinate.}
+\end{figure}
+
+\paragraph{Expected results.}
+At $t=0$ the displacement field is zero.  Near $t=T/2$ the annulus should show a
+smooth rotational vortex with maximum displacement inside the ring and zero
+motion at the inner and outer radii.  At $t=T$ the exact displacement returns to
+zero everywhere, so numerical residual displacement, shape distortion, or mesh
+texture in the final configuration indicates integration, transfer, particle
+support, or boundary-treatment error.  Kamojjala et al. used the generalized
+vortex to reveal that older uGIMP-style MPM could become unstable in large
+deformation while CPDI remained stable; this suite compares the current CPDI-FLIP
+and FMPM/singlePointBspline implementations against the same manufactured
+motion.
+
+\paragraph{Metric.}
+The quantitative metric is the average norm of the displacement of a fixed
+array of Lagrangian tracer particles seeded in the annulus.  The post-processor
+compares this history against the analytical displacement norm from the
+manufactured vortex and reports peak and final RMS errors for both variants.
+The suite also records Slurm timing metadata when available, and the input
+requests current GEOS solver statistics with \texttt{writeStatistics="all"} so
+run directories retain detailed solver-side diagnostics.
+
+\paragraph{Generated outputs.}
+The post-processor writes combined CSV data, JSON summaries, comparison plots,
+and the VisIt particle/background images at $t=0$, $t=t_{stop}/2$, and
+$t=t_{stop}$ when VisIt is available.
+
+\IfFileExists{\CaseOutputDir/mms_vortex_results.tex}{%
+  \input{\CaseOutputDir/mms_vortex_results.tex}%
+}{%
+  \begin{center}\fbox{MMS vortex post-processing products have not been generated.}\end{center}%
+}

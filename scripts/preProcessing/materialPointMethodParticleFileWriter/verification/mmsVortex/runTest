@@ -1,0 +1,263 @@
+#!/usr/bin/env python3
+"""Dispatch all MMS vortex verification variants in this folder."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+VARIANTS = [
+    {
+        "name": "cpdiFlip",
+        "label": "CPDI-FLIP",
+        "case_name": "mmsVortex_cpdiFlip",
+        "update_method": "FLIP",
+        "update_order": "",
+        "particle_type": "2",
+    },
+    {
+        "name": "fmpmSinglePointBspline",
+        "label": "FMPM/singlePointBspline",
+        "case_name": "mmsVortex_fmpmSinglePointBspline",
+        "update_method": "FMPM",
+        "update_order": "2",
+        "particle_type": "1",
+    },
+]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the MMS vortex verification test folder")
+    parser.add_argument("--suite", default="verification")
+    parser.add_argument("--case-id", default="mmsVortex")
+    parser.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", sys.executable))
+    parser.add_argument("--force", "-y", action="store_true")
+    parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--no-visit", action="store_true")
+    parser.add_argument("--post-walltime", default="00:05:00")
+    parser.add_argument("--post-partition", default="pdebug")
+    parser.add_argument("--walltime", default=None)
+    parser.add_argument("--ats-fast", action="store_true")
+    parser.add_argument("--jobs", type=int, default=int(os.environ.get("PFW_MMS_VORTEX_JOBS", "1")))
+    return parser.parse_args()
+
+
+def pfw_root(source_dir: Path) -> Path:
+    for parent in [source_dir] + list(source_dir.parents):
+        if (parent / "particleFileWriter.py").is_file() and (parent / "mpm_vv_case_runner.py").is_file():
+            return parent
+    raise SystemExit(f"could not find particleFileWriter.py above {source_dir}")
+
+
+def run_command(cmd: list[str], cwd: Path, env: dict[str, str]) -> tuple[int, str]:
+    proc = subprocess.run(cmd, cwd=cwd, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return proc.returncode, proc.stdout
+
+
+def variant_case_id(folder_case_id: str, variant: dict[str, str]) -> str:
+    return f"{folder_case_id}__{variant['name']}"
+
+
+def read_variant_jobs(source_dir: Path, folder_case_id: str, variant: dict[str, str]) -> dict:
+    cid = variant_case_id(folder_case_id, variant)
+    output_dir = source_dir / "output" / cid
+    jobs_path = output_dir / f"{variant['case_name']}_jobs.json"
+    if not jobs_path.is_file():
+        return {}
+    try:
+        return json.loads(jobs_path.read_text())
+    except Exception:
+        return {}
+
+
+def dispatch_variant(args: argparse.Namespace, source_dir: Path, runner: Path, variant: dict[str, str]) -> dict:
+    cid = variant_case_id(args.case_id, variant)
+    env = os.environ.copy()
+    env.update(
+        {
+            "MMS_VARIANT_LABEL": variant["label"],
+            "MMS_CASE_NAME": variant["case_name"],
+            "MMS_UPDATE_METHOD": variant["update_method"],
+            "MMS_UPDATE_ORDER": variant["update_order"],
+            "MMS_PARTICLE_TYPE": variant["particle_type"],
+        }
+    )
+    cmd = [
+        args.python_cmd,
+        str(runner),
+        "--suite",
+        args.suite,
+        "--case-id",
+        cid,
+        "--input",
+        "pfw_input_mmsVortex.py",
+        "--source-dir",
+        str(source_dir),
+        "--output-prefix",
+        variant["case_name"],
+        "--python",
+        args.python_cmd,
+        "--post-walltime",
+        args.post_walltime,
+        "--post-partition",
+        args.post_partition,
+        "--no-post",
+    ]
+    if args.force:
+        cmd.append("--force")
+    if args.prepare_only:
+        cmd.append("--prepare-only")
+    if args.no_visit:
+        cmd.append("--no-visit")
+    if args.ats_fast:
+        cmd.append("--ats-fast")
+    if args.walltime:
+        cmd += ["--walltime", args.walltime]
+
+    start_time = time.time()
+    code, output = run_command(cmd, source_dir, env)
+    elapsed_seconds = round(time.time() - start_time, 3)
+    print(f"[mmsVortex] {variant['name']} returncode={code} dispatchElapsed={elapsed_seconds}s", flush=True)
+    if output:
+        print(output, end="" if output.endswith("\n") else "\n", flush=True)
+    jobs = read_variant_jobs(source_dir, args.case_id, variant)
+    return {
+        "name": variant["name"],
+        "label": variant["label"],
+        "case_id": cid,
+        "case_name": variant["case_name"],
+        "returncode": code,
+        "jobs": jobs,
+        "dispatch_elapsed_seconds": elapsed_seconds,
+        "log_excerpt": output[-12000:],
+    }
+
+
+def post_command(args: argparse.Namespace, source_dir: Path, output_dir: Path) -> list[str]:
+    cmd = [
+        args.python_cmd,
+        str(source_dir / "postProcess_mmsVortex.py"),
+        "--suite",
+        args.suite,
+        "--source-dir",
+        str(source_dir),
+        "--output-dir",
+        str(output_dir),
+        "--case-id",
+        args.case_id,
+        "--python",
+        args.python_cmd,
+    ]
+    if args.no_visit:
+        cmd.append("--no-visit")
+    return cmd
+
+
+def submit_or_run_post(args: argparse.Namespace, source_dir: Path, output_dir: Path, manifest: dict) -> tuple[str, int]:
+    if args.prepare_only:
+        return "", 0
+    geos_jobs = [str(s.get("jobs", {}).get("geos_job_id", "")) for s in manifest.get("subcases", [])]
+    geos_jobs = [j for j in geos_jobs if j]
+    cmd = post_command(args, source_dir, output_dir)
+    bank = next((str(s.get("jobs", {}).get("bank", "")) for s in manifest.get("subcases", []) if s.get("jobs", {}).get("bank")), os.environ.get("GEOS_BANK", ""))
+
+    if geos_jobs and shutil.which("sbatch"):
+        script = output_dir / "post_mmsVortex.sbatch"
+        lines = [
+            "#!/bin/bash",
+        ]
+        if bank:
+            lines.append(f"#SBATCH -A {bank}")
+        lines += [
+            f"#SBATCH -p {args.post_partition}",
+            "#SBATCH -N 1",
+            "#SBATCH -n 1",
+            f"#SBATCH -t {args.post_walltime}",
+            "#SBATCH -J post_mmsVortex",
+            "#SBATCH --dependency=afterany:" + ":".join(geos_jobs),
+            "set -euo pipefail",
+            f"cd {source_dir}",
+            " ".join(repr(x) for x in cmd),
+            "",
+        ]
+        script.write_text("\n".join(lines))
+        proc = subprocess.run(["sbatch", str(script)], cwd=source_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (output_dir / "mmsVortex_post_submit.log").write_text(proc.stdout)
+        print(proc.stdout, end="", flush=True)
+        match = re.search(r"Submitted batch job\s+([0-9]+)", proc.stdout)
+        return (match.group(1) if match else ""), proc.returncode
+
+    proc = subprocess.run(cmd, cwd=source_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (output_dir / "mmsVortex_postProcess.log").write_text(proc.stdout)
+    print(proc.stdout, end="", flush=True)
+    return "", proc.returncode
+
+
+def main() -> int:
+    args = parse_args()
+    source_dir = Path(__file__).resolve().parent
+    root = pfw_root(source_dir)
+    runner = root / "mpm_vv_case_runner.py"
+    output_dir = source_dir / "output" / args.case_id
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.force:
+        for child in output_dir.iterdir():
+            if child.is_dir() and not child.is_symlink():
+                shutil.rmtree(child)
+            else:
+                child.unlink(missing_ok=True)
+
+    workers = max(1, min(int(args.jobs or 1), len(VARIANTS)))
+    print(f"[mmsVortex] dispatching {len(VARIANTS)} variant(s) with {workers} worker(s)", flush=True)
+    if workers == 1:
+        subcases = [dispatch_variant(args, source_dir, runner, variant) for variant in VARIANTS]
+    else:
+        subcases = []
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(dispatch_variant, args, source_dir, runner, variant) for variant in VARIANTS]
+            for future in as_completed(futures):
+                subcases.append(future.result())
+        order = {variant["name"]: i for i, variant in enumerate(VARIANTS)}
+        subcases.sort(key=lambda item: order.get(item["name"], 999))
+
+    geos_jobs = [str(s.get("jobs", {}).get("geos_job_id", "")) for s in subcases if s.get("jobs", {}).get("geos_job_id")]
+    manifest = {
+        "case_id": args.case_id,
+        "suite": args.suite,
+        "source_dir": str(source_dir),
+        "output_dir": str(output_dir),
+        "input": "pfw_input_mmsVortex.py",
+        "run_script": "runTest",
+        "subcases": subcases,
+        "geos_job_id": ",".join(geos_jobs),
+        "status": "prepared" if args.prepare_only else "dispatched",
+    }
+    manifest_path = output_dir / "mmsVortex_jobs.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str))
+
+    post_job, post_code = submit_or_run_post(args, source_dir, output_dir, manifest)
+    if post_job:
+        manifest["post_job_id"] = post_job
+        manifest["status"] = "submitted"
+    elif post_code:
+        manifest["post_returncode"] = post_code
+        manifest["status"] = "postprocess-failed"
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str))
+
+    failures = [sub for sub in subcases if int(sub.get("returncode", 0) or 0) != 0]
+    if failures:
+        print("[mmsVortex] failed subcases: " + ", ".join(sub["name"] for sub in failures), flush=True)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
