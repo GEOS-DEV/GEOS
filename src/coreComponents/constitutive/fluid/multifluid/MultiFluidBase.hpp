@@ -1019,27 +1019,16 @@ MultiFluidBase::KernelWrapper::
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+  // Space for dummy derivatives
+  StackArray< real64, 4, 2*maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > derivatives( 2, 1, numPhase, numComp+2 );
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseMassDensAndDeriv { phaseMassDens, dPhaseMassDens[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseEnthalpyAndDeriv { phaseEnthalpy, dPhaseEnthalpy[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseInternalEnergyAndDeriv { phaseInternalEnergy, dPhaseInternalEnergy[0][0] };
+  using SliceType = MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >;
 
   computeInternalEnergy( pressure,
-                         phaseFracAndDeriv,
-                         phaseMassDensAndDeriv,
-                         phaseEnthalpyAndDeriv,
-                         phaseInternalEnergyAndDeriv );
+                         SliceType { phaseFrac, derivatives[0][0] },
+                         SliceType { phaseMassDens, derivatives[0][0] },
+                         SliceType { phaseEnthalpy, derivatives[0][0] },
+                         SliceType { phaseInternalEnergy, derivatives[1][0] } );
 }
 
 GEOS_HOST_DEVICE
