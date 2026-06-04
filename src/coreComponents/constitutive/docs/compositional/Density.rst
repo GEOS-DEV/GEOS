@@ -40,7 +40,7 @@ where :math:`MW_i` is the molecular weight of component :math:`i`. This model is
 Parameters
 ~~~~~~~~~~~~~~~~
 
-* ``componentVolumeShift``: Component-specific volume shift parameters (dimensionless).
+* ``componentVolumeShift``: Component-specific volume shift parameters. Unit: [dimensionless].
 
 Phillips brine density model
 ----------------------------
@@ -93,8 +93,8 @@ The phase mass density, :math:`\rho_{mass}`, is then computed by multiplying the
 Parameters
 ~~~~~~~~~~~~~~~~
 
-* ``salinity``: Brine salinity (mol/kg).
-* ``saltMolarWeight``: The molar weight of the salt component (kg/mol).
+* ``salinity``: Brine salinity. Unit: [mol/kg].
+* ``saltMolarWeight``: The molar weight of the salt component. Unit: [kg/mol].
 
 Immiscible water density
 ------------------------
@@ -112,8 +112,8 @@ The phase molar density, :math:`\rho_{molar}`, is then calculated by dividing th
 Parameters
 ~~~~~~~~~~~~~~~~
 
-* ``waterReferencePressure``: Reference pressure for the water density calculation (Pa).
-* ``waterReferenceTemperature``: Reference temperature for the water density calculation (K).
-* ``waterDensity``: Water mass density at the reference pressure and temperature (kg/m^3).
-* ``waterCompressibility``: Isothermal compressibility of water (1/Pa).
-* ``waterExpansionCoefficient``: Volumetric coefficient of thermal expansion of water (1/K).
+* ``waterReferencePressure``: Reference pressure for the water density calculation. Unit: [Pa].
+* ``waterReferenceTemperature``: Reference temperature for the water density calculation. Unit: [K].
+* ``waterDensity``: Water mass density at the reference pressure and temperature. Unit: [kg/m^3].
+* ``waterCompressibility``: Isothermal compressibility of water. Unit: [1/Pa].
+* ``waterExpansionCoefficient``: Volumetric coefficient of thermal expansion of water. Unit: [1/K].

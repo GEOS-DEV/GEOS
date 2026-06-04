@@ -69,8 +69,8 @@ The negative two-phase flash is the recommended standard for rigorous compositio
 Parameters
 ~~~~~~~~~~~~~~~~
 
-* ``stabilityThreshold``: Tangent plane distance below which a mixture is unstable (default: -1.0e-8).
-* ``stabilityTolerance``: Tolerance for stationarity in the stability test.
-* ``stabilityMaxIterations``: Maximum successive substitution steps for stability analysis.
-* ``flashTolerance``: Convergence tolerance for the fugacity ratio error.
-* ``flashMaxIterations``: Maximum successive substitution steps for the flash solve.
+* ``stabilityThreshold``: Tangent plane distance below which a mixture is unstable (default: -1.0e-8). Unit: [dimensionless].
+* ``stabilityTolerance``: Tolerance for stationarity in the stability test. Unit: [dimensionless].
+* ``stabilityMaxIterations``: Maximum successive substitution steps for stability analysis. Unit: [dimensionless].
+* ``flashTolerance``: Convergence tolerance for the fugacity ratio error. Unit: [dimensionless].
+* ``flashMaxIterations``: Maximum successive substitution steps for the flash solve. Unit: [dimensionless].

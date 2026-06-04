@@ -71,5 +71,5 @@ Parameters
 ~~~~~~~~~~~~~~~~
 
 * ``kValueTables``: List of function names linking to the pre-tabulated K-values. For an :math:`N`-phase system, this requires :math:`(N-1) \times N_c` function names.
-* ``pressureCoordinates``: List of pressure values for interpolation grid generation (optional).
-* ``temperatureCoordinates``: List of temperature values for interpolation grid generation (optional).
+* ``pressureCoordinates``: List of pressure values for interpolation grid generation (optional). Unit: [Pa].
+* ``temperatureCoordinates``: List of temperature values for interpolation grid generation (optional). Unit: [K].

@@ -16,7 +16,7 @@ Given a total feed mole fraction :math:`z_i` for each component, the mole fracti
 The composition of the aqueous phase is fixed at 100% water. The remaining feed defines the total hydrocarbon mole fraction, :math:`z_{hc}`:
 
 .. math::
-    z_{hc} = 1.0 - z_{w}
+    z_{hc} = 1 - z_{w}
 
 The feed composition of the remaining hydrocarbon mixture is then normalised:
 
@@ -40,7 +40,7 @@ Once the two-phase hydrocarbon flash converges, the overall phase fractions for 
     V_{V} = z_{hc} V_{V,hc}
 
 .. math::
-    V_{L} = z_{hc} (1.0 - V_{V,hc})
+    V_{L} = z_{hc} (1 - V_{V,hc})
 
 The derivatives of the phase fractions and compositions with respect to pressure, temperature, and total composition are analytically transformed using the chain rule to account for this scaling and normalisation.
 
@@ -79,9 +79,3 @@ Parameters
 ~~~~~~~~~~~~~~~~
 
 * ``equationsOfState``: List specifying the EoS type for each phase (liquid, vapour, aqueous). Note that the aqueous EoS entry is largely ignored by the pure-water density model but must be provided for list alignment.
-* ``waterReferencePressure``: The reference pressure for water density and viscosity [Pa].
-* ``waterReferenceTemperature``: The reference temperature for water density and viscosity [K] (optional, default: 293.15).
-* ``waterDensity``: The water density at the reference pressure and temperature [kg/m^3].
-* ``waterViscosity``: The water viscosity at the reference pressure and temperature [Pa.s].
-* ``waterCompressibility``: The constant isothermal compressibility of water [1/Pa].
-* ``waterExpansionCoefficient``: The volumetric coefficient of thermal expansion of water [1/K] (optional, default: 0.0).

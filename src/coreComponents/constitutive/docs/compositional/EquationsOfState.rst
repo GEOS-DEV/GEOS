@@ -154,14 +154,14 @@ For carbon dioxide (CO2):
 .. math::
     k_{ij}^{AQ} = A_0 a_0 + A_1 a_1 T_{r,i} + A_2 a_2
 
-where :math:`A_0 = -0.31092`, :math:`A_1 = 0.23580`, :math:`A_2 = -21.2566`, :math:`a_0 = 1.0 + 0.15587 c_{sw}^{0.7505}`, :math:`a_1 = 1.0 + 0.17837 c_{sw}^{0.979}`, and :math:`a_2 = \exp(-6.7222 T_{r,i} - c_{sw})`.
+where :math:`A_0 = -0.31092`, :math:`A_1 = 0.23580`, :math:`A_2 = -21.2566`, :math:`a_0 = 1 + 0.15587 c_{sw}^{0.7505}`, :math:`a_1 = 1 + 0.17837 c_{sw}^{0.979}`, and :math:`a_2 = \exp(-6.7222 T_{r,i} - c_{sw})`.
 
 For nitrogen (N2):
 
 .. math::
     k_{ij}^{AQ} = A_0 a_0 + A_1 a_1 T_{r,i}
 
-where :math:`A_0 = -1.70235`, :math:`A_1 = 0.44338`, :math:`a_0 = 1.0 + 0.025587 c_{sw}^{0.75}`, and :math:`a_1 = 1.0 + 0.08126 c_{sw}^{0.75}`.
+where :math:`A_0 = -1.70235`, :math:`A_1 = 0.44338`, :math:`a_0 = 1 + 0.025587 c_{sw}^{0.75}`, and :math:`a_1 = 1 + 0.08126 c_{sw}^{0.75}`.
 
 For hydrogen sulfide (H2S):
 
@@ -216,9 +216,9 @@ Here is an example demonstrating how to specify the parameters for a two-phase s
       salinity="0.6" />
 
 * ``equationsOfState``: List specifying the EoS type (e.g., ``PengRobinson``, ``SoaveRedlichKwong``, ``SoreideWhitson``) corresponding to each phase.
-* ``componentCriticalPressure``: Critical pressure of each component [Pa].
-* ``componentCriticalTemperature``: Critical temperature of each component [K].
-* ``componentAcentricFactor``: Acentric factor of each component.
-* ``componentVolumeShift``: Volume shift parameter for each component (optional).
-* ``componentBinaryCoeff``: Flattened :math:`N \times N` matrix of binary interaction coefficients (optional).
-* ``salinity``: Brine salinity [mol/kg] utilized by the Soreide-Whitson aqueous model (optional, defaults to 0.0).
+* ``componentCriticalPressure``: Critical pressure of each component. Unit: [Pa].
+* ``componentCriticalTemperature``: Critical temperature of each component. Unit: [K].
+* ``componentAcentricFactor``: Acentric factor of each component. Unit: [dimensionless].
+* ``componentVolumeShift``: Volume shift parameter for each component (optional). Unit: [dimensionless].
+* ``componentBinaryCoeff``: Flattened :math:`N \times N` matrix of binary interaction coefficients (optional). Unit: [dimensionless].
+* ``salinity``: Brine salinity utilized by the Soreide-Whitson aqueous model (optional, defaults to 0.0). Unit: [mol/kg].

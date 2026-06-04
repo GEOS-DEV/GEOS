@@ -113,7 +113,7 @@ This model is strongly recommended for all miscible gas, volatile oil, and gener
 Parameters
 ~~~~~~~~~~~~
 
-* ``viscosityMixingRule``: Defines the dilute gas mixing rule. Valid options are ``HerningZipperer``, ``Wilke``, or ``Brokaw``. Unit: Dimensionless (String).
+* ``viscosityMixingRule``: Defines the dilute gas mixing rule. Valid options are ``HerningZipperer``, ``Wilke``, or ``Brokaw``.
 * ``componentCriticalVolume``: The critical volumes of each component, required for the reduced density calculation. Unit: [m^3/mol].
 
 Phillips brine viscosity model
