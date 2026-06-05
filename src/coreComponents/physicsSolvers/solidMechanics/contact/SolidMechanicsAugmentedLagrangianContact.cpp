@@ -37,6 +37,7 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -54,9 +55,9 @@ using namespace dataRepository;
 using namespace fields;
 
 // Workaround for nvcc bug: forDiscretizationOnMeshTargets lambdas receive
-// string_array const & (= std::vector<std::string>) as a parameter.  When the
+// string_array const & (= stdVector<std::string>) as a parameter.  When the
 // lambda body also contains device kernel launches, nvcc erroneously tries to
-// generate a device-compatible destructor for std::vector<std::string> even
+// generate a device-compatible destructor for stdVector<std::string> even
 // though it is a reference parameter whose lifetime is not managed by the lambda.
 GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
 
@@ -783,12 +784,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           PorousSolid< ElasticIsotropic, ConstantPermeability >,
-                           CellElementSubRegion >( mesh,
-                                                   poromechanicsRegionNames,
-                                                   getDiscretizationName(),
-                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsALMContactPorousKernelsDispatchTypeList >( mesh,
+                                                                                    poromechanicsRegionNames,
+                                                                                    getDiscretizationName(),
+                                                                                    FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );

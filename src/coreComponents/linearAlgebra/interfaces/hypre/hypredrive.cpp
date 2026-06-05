@@ -654,7 +654,7 @@ stdVector< string > buildDofLabelNames( LinearSolverParameters::MGR::StrategyTyp
   return labels;
 }
 
-std::string joinLabelNames( std::vector< HYPRE_Int > const & values,
+std::string joinLabelNames( stdVector< HYPRE_Int > const & values,
                             stdVector< string > const & labelNames )
 {
   std::ostringstream stream;
@@ -903,7 +903,7 @@ struct LevelAMGBlock
 struct MGRSpecialization
 {
   AMGFlavor coarseFlavor = AMGFlavor::pressure;
-  std::vector< LevelAMGBlock > fRelaxAMGLevels;
+  stdVector< LevelAMGBlock > fRelaxAMGLevels;
   HYPRE_Int pmax = 0;
   HYPRE_Int coarseMinCoarseSize = -1;
 };
@@ -1171,13 +1171,13 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   appendLine( stream, 2, GEOS_FMT( "num_levels: {}", MGRStrategyProbe< STRATEGY >::numReductionLevels + 1 ) );
   appendLine( stream, 2, "level:" );
 
-  std::vector< HYPRE_Int > activeLabels( static_cast< size_t >( strategy.m_numBlocks ) );
+  stdVector< HYPRE_Int > activeLabels( static_cast< size_t >( strategy.m_numBlocks ) );
   std::iota( activeLabels.begin(), activeLabels.end(), 0 );
 
   for( HYPRE_Int level = 0; level < MGRStrategyProbe< STRATEGY >::numReductionLevels; ++level )
   {
-    std::vector< HYPRE_Int > cLabels( strategy.m_labels[level].begin(), strategy.m_labels[level].end() );
-    std::vector< HYPRE_Int > fLabels;
+    stdVector< HYPRE_Int > cLabels( strategy.m_labels[level].begin(), strategy.m_labels[level].end() );
+    stdVector< HYPRE_Int > fLabels;
 
     for( HYPRE_Int const activeLabel : activeLabels )
     {
