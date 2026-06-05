@@ -42,7 +42,7 @@
 /src/coreComponents/LvArray                           @MelReyCG @OmarDuran @castelletto1 @corbett5 @rrsettgast
 /src/coreComponents/codingUtilities                   @MelReyCG @OmarDuran @bd713 @castelletto1 @corbett5 @rrsettgast
 /src/coreComponents/common                            @MelReyCG @OmarDuran @bd713 @castelletto1 @corbett5 @rrsettgast
-/src/coreComponents/constitutive                      @OmarDuran @dkachuma @rrsettgast @joshua-white jhuang2601
+/src/coreComponents/constitutive                      @OmarDuran @dkachuma @rrsettgast @joshua-white @jhuang2601
 /src/coreComponents/constitutive/capillaryPressure    @dkachuma @joshua-white @jafranc
 /src/coreComponents/constitutive/contact              @OmarDuran @jafranc @jhuang2601 @rrsettgast
 /src/coreComponents/constitutive/diffusion            @dkachuma @jafranc @joshua-white
@@ -71,10 +71,10 @@
 /src/coreComponents/mesh                              @OmarDuran @bd713 @jafranc @rrsettgast @wrtobin
 /src/coreComponents/physicsSolvers                    @MelReyCG @OmarDuran @bd713 @castelletto1 @rrsettgast
 /src/coreComponents/physicsSolvers/contact            @OmarDuran @jafranc @jhuang2601 @rrsettgast
-/src/coreComponents/physicsSolvers/fluidFlow          @OmarDuran @dkachuma @rrsettgast @tjb-ltk jhuang2601
+/src/coreComponents/physicsSolvers/fluidFlow          @OmarDuran @dkachuma @rrsettgast @tjb-ltk @jhuang2601
 /src/coreComponents/physicsSolvers/inducedSeismicity  @castelletto1 @frankfeifan @jhuang2601 @kimtaeho07 @rrsettgast
 /src/coreComponents/physicsSolvers/multiphysics       @OmarDuran @castelletto1 @frankfeifan @jhuang2601 @rrsettgast
-/src/coreComponents/physicsSolvers/python             @alexbenedicto @bd713 @corbett5 @cssherman @jafranc
+/src/coreComponents/physicsSolvers/python             @bd713 @corbett5 @cssherman @jafranc
 /src/coreComponents/physicsSolvers/simplePDE          @castelletto1 @frankfeifan @rrsettgast @bd713
 /src/coreComponents/physicsSolvers/solidMechanics     @OmarDuran @castelletto1 @jhuang2601 @rrsettgast
 /src/coreComponents/physicsSolvers/surfaceGeneration  @OmarDuran @bd713 @jhuang2601 @rrsettgast
