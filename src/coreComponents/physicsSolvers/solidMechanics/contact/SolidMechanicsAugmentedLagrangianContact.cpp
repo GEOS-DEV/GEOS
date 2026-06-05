@@ -2095,13 +2095,13 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         bool const hasCoulombParams = frictionLaw.hasWrapper( fields::contact::cohesion::key() ) &&
                                       frictionLaw.hasWrapper( fields::contact::frictionCoefficient::key() );
 
-        arrayView1d< real64 const > cohesion;
-        arrayView1d< real64 const > frictionCoefficient;
-        if( hasCoulombParams )
-        {
-          cohesion = frictionLaw.getWrapper< array1d< real64 > >( fields::contact::cohesion::key() ).reference().toViewConst();
-          frictionCoefficient = frictionLaw.getWrapper< array1d< real64 > >( fields::contact::frictionCoefficient::key() ).reference().toViewConst();
-        }
+        GEOS_ERROR_IF( !hasCoulombParams,
+                       GEOS_FMT( "Friction law '{}' has no per-cell cohesion or frictionCoefficient fields. "
+                                 "These fields are required for initial traction computation.",
+                                 frictionLawName ) );
+
+        arrayView1d< real64 const > const cohesion = frictionLaw.getField< fields::contact::cohesion >().reference().toViewConst();
+        arrayView1d< real64 const > const frictionCoefficient = frictionLaw.getField< fields::contact::frictionCoefficient >().reference().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,

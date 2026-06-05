@@ -92,6 +92,7 @@ public:
 
   /**
    * @brief Evaluate and store the elastic slip
+   * @param[in] k the cell index
    * @param[in] dispJump the displacement jump
    * @param[in] oldDispJump the previous displacement jump
    * @param[in] tractionVector the traction vector
@@ -189,19 +190,35 @@ public:
   }
 
   /**
+   * @brief Return the cohesion for element k (default: 0)
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 getCohesion( localIndex const ) const { return 0.0; }
+
+  /**
+   * @brief Return the friction coefficient for element k (default: 0)
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 getFrictionCoefficient( localIndex const ) const { return 0.0; }
+
+  /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
-   * @param[in] k the cell index
+   * @param[in] cohesion the cohesion value
+   * @param[in] frictionCoefficient the friction coefficient value
    * @param[in] normalTraction the normal traction
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
   GEOS_HOST_DEVICE
   inline
-  virtual real64 computeLimitTangentialTractionNorm( localIndex const k,
+  virtual real64 computeLimitTangentialTractionNorm( real64 const cohesion,
+                                                     real64 const frictionCoefficient,
                                                      real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
   {
-    GEOS_UNUSED_VAR( k, normalTraction );
+    GEOS_UNUSED_VAR( cohesion, frictionCoefficient, normalTraction );
     dLimitTangentialTractionNorm_dTraction = 0.0;
     return 0;
   }
