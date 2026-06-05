@@ -83,6 +83,29 @@ def family_label(case_id: str) -> str:
     return mapping.get(top, top)
 
 
+def discovery_skipped(path: Path, root: Path) -> bool:
+    """Return True when a directory tree is intentionally excluded.
+
+    Some historical verification inputs are validation-scale examples or broad
+    legacy driver collections.  They remain in-tree for reference, but they
+    should not be picked up by the fast verification-suite discovery pass.  A
+    .mpm_vv_skip_discovery marker on any parent directory makes that policy
+    explicit and local to the quarantined tree.
+    """
+    try:
+        rel = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    cur = root.resolve()
+    if (cur / ".mpm_vv_skip_discovery").is_file():
+        return True
+    for part in rel.parts:
+        cur = cur / part
+        if cur.is_dir() and (cur / ".mpm_vv_skip_discovery").is_file():
+            return True
+    return False
+
+
 def discover_cases(suite: str) -> list[Case]:
     root = suite_root(suite)
     out: list[Case] = []
@@ -94,6 +117,8 @@ def discover_cases(suite: str) -> list[Case]:
     for run_script in sorted(root.rglob("runTest")):
         parts = set(run_script.parts)
         if "output" in parts or "__pycache__" in parts or not run_script.is_file():
+            continue
+        if discovery_skipped(run_script.parent, root):
             continue
         folder = run_script.parent
         folder_cases.add(folder.resolve())
@@ -110,6 +135,8 @@ def discover_cases(suite: str) -> list[Case]:
         parts = set(input_path.parts)
         name = input_path.name
         if "output" in parts or "__pycache__" in parts:
+            continue
+        if discovery_skipped(input_path.parent, root):
             continue
         if input_path.parent.resolve() in folder_cases:
             continue
