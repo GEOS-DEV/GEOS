@@ -5,7 +5,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 import pfw_materials as matdb
 
 # This is currently just a smoke test to see if the geomechanics model is implemented
-# successfully and runs. 
+# successfully and runs.
 #
 # Initializes material with a confining stress (should be p < -p0/3 ) and then ramps
 # load in 1 direction with that confinement maintained through stress control on
@@ -22,7 +22,7 @@ timeScale = physicalStopTime / stopTime  # strain rate multiplier to match 1-yea
 
 #confiningPressure = 0.005  # confining pressure GPa
 #maxCompressiveStrain = 0.05 # stress control end point (GPa)
-confiningPressure = 0.00  
+confiningPressure = 0.00
 maxCompressiveStrain = -0.1
 
 fractureEnergyReleaseRate = 1.e-10
@@ -32,7 +32,6 @@ kp = 0.05
 ki = 0.00
 kd = 0.005
 pfw["cflFactor"]=0.005
-
 
 
 # DOMAIN ---------------------------------------------------------------------------------
@@ -85,8 +84,8 @@ pfw["reactionWriteInterval"] = stopTime/1000
 pfw["boxAverageHistory"] = 1
 pfw["boxAverageWriteInterval"] = stopTime/1000
 
-pfw["solverProfiling"]=0         
-pfw["frictionCoefficient"]=0.25  
+pfw["solverProfiling"]=0
+pfw["frictionCoefficient"]=0.25
 
 pfw["updateMethod"]="PIC"
 pfw["updateOrder"]=2
@@ -111,61 +110,3 @@ pfw["fTable"]=[
     [0,	          1.000,	    1.,	1.],
     [stopTime,	    1.0,1.0, np.exp(-maxCompressiveStrain) ]
     ]
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
-
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
-
-try:
-    refine = 1
-except Exception:
-    pass
-
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---

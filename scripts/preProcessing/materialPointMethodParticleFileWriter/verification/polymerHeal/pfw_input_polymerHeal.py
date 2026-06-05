@@ -94,7 +94,7 @@ shearSofteningMagnitudeB= -0.15
 shearSofteningMagnitudeT0= 260.
 
 #r1
-shearSofteningShapeParameter1 = 0.1    
+shearSofteningShapeParameter1 = 0.1
 
 #r2
 shearSofteningShapeParameter2 = 1.0
@@ -105,7 +105,7 @@ pfw["materialPropertyString"]="""
     name="isotropic"
     defaultDensity=""" + '"' + str(density) + '"' + """
     defaultYoungModulus=""" + '"' + str(E) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """/>    
+    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """/>
 <StrainHardeningPolymer
     name="polymer"
     defaultDensity="2.648"
@@ -116,25 +116,25 @@ pfw["materialPropertyString"]="""
     defaultShearModulus=""" + '"' + str(shearModulusDefault)  + '"' + """
     shearModulusA=""" + '"' + str(shearModulusA)  + '"' + """
     shearModulusB=""" + '"' + str(shearModulusB)  + '"' + """
-    shearModulusT0=""" + '"' + str(shearModulusT0)  + '"' + """   
+    shearModulusT0=""" + '"' + str(shearModulusT0)  + '"' + """
     defaultYieldStrength=""" + '"' + str(yieldStrengthDefault)  + '"' + """
     yieldStrengthA=""" + '"' + str(yieldStrengthA)  + '"' + """
     yieldStrengthB=""" + '"' + str(yieldStrengthB)  + '"' + """
     yieldStrengthT0=""" + '"' + str(yieldStrengthT0)  + '"' + """
-    maximumStretch=""" + '"' + str(maximumStretch)  + '"' + """ 
+    maximumStretch=""" + '"' + str(maximumStretch)  + '"' + """
     maximumStretchA=""" + '"' + str(maximumStretchA)  + '"' + """
     maximumStretchB=""" + '"' + str(maximumStretchB)  + '"' + """
-    maximumStretchT0=""" + '"' + str(maximumStretchT0)  + '"' + """                        
+    maximumStretchT0=""" + '"' + str(maximumStretchT0)  + '"' + """
     strainHardeningSlope=""" + '"' + str(strainHardeningSlopeDefault)  + '"' + """
     strainHardeningSlopeA=""" + '"' + str(strainHardeningSlopeA)  + '"' + """
     strainHardeningSlopeB=""" + '"' + str(strainHardeningSlopeB)  + '"' + """
     strainHardeningSlopeT0=""" + '"' + str(strainHardeningSlopeT0)  + '"' + """
     shearSofteningMagnitude=""" + '"' + str(shearSofteningMagnitudeDefault)  + '"' + """
-    shearSofteningMagnitudeA=""" + '"' + str(shearSofteningMagnitudeA)  + '"' + """                    
-    shearSofteningMagnitudeB=""" + '"' + str(shearSofteningMagnitudeB)  + '"' + """                  
-    shearSofteningMagnitudeT0=""" + '"' + str(shearSofteningMagnitudeT0)  + '"' + """                   
-    shearSofteningShapeParameter1=""" + '"' + str(shearSofteningShapeParameter1)  + '"' + """                      
-    shearSofteningShapeParameter2=""" + '"' + str(shearSofteningShapeParameter2)  + '"' + """/>  
+    shearSofteningMagnitudeA=""" + '"' + str(shearSofteningMagnitudeA)  + '"' + """
+    shearSofteningMagnitudeB=""" + '"' + str(shearSofteningMagnitudeB)  + '"' + """
+    shearSofteningMagnitudeT0=""" + '"' + str(shearSofteningMagnitudeT0)  + '"' + """
+    shearSofteningShapeParameter1=""" + '"' + str(shearSofteningShapeParameter1)  + '"' + """
+    shearSofteningShapeParameter2=""" + '"' + str(shearSofteningShapeParameter2)  + '"' + """/>
 """
 
 # EVENTS ----------------------------------------------------------------
@@ -145,7 +145,7 @@ pfw["materialPropertyString"]="""
 # pfw["useEvents"]=1
 # pfw["mpmEventsString"]="""
 # <MPMEvents>
-#     <Anneal 
+#     <Anneal
 #         time=
 """ + '"' + str(loadTime) + '"' + """
 #         interval=""" + '"' + str(0.1) + '"' + """
@@ -171,7 +171,7 @@ stopTime = testTime + 5.0
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-<Anneal 
+<Anneal
         time=
 """ + '"' + str(unloadTime) + '"' + """
         interval=""" + '"' + str(annealTimeInterval) + '"' + """
@@ -215,7 +215,7 @@ pfw["cflFactor"]=0.25
 pfw["initialDt"]=1e-16
 pfw["cpdiDomainScaling"]=1
 pfw["damageFieldPartitioning"]=1
-pfw["separabilityMinDamage"]=0.5               
+pfw["separabilityMinDamage"]=0.5
 pfw["treatFullyDamagedAsSingleField"]=1
 
 pfw["solverProfiling"]=0
@@ -276,63 +276,5 @@ def make_objects():
     top_platen = geom.box("top_platen", [-sampleWidth/2, domainHeight - (domainHeight-binder_thickness)/2, 0.0], [ sampleWidth/2, domainHeight, 0.0], mat=0, group=0,dim=2, flaggedSurfaces=[False, False, False, False])
     binder = geom.box("binder", [-sampleWidth/2, domainHeight - (domainHeight-binder_thickness)/2, 0.0], [ sampleWidth/2, (domainHeight-binder_thickness)/2, 0.0], mat=1, group=0,dim=2, flaggedSurfaces=[False, False, False, False])
     bottom_platen = geom.box("bot_platen", [-sampleWidth/2, 0.0, 0.0], [ sampleWidth/2, (domainHeight-binder_thickness)/2, 0.0], mat=0, group=0,dim=2, flaggedSurfaces=[False, False, False, False])
-    
+
     return [top_platen, binder, bottom_platen]
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
-
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
-
-try:
-    refine = 1
-except Exception:
-    pass
-
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---

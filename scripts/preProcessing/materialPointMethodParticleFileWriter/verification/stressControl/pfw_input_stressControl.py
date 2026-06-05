@@ -1,164 +1,106 @@
 # -*- coding: utf-8 -*-
-import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
-import numpy as np                   # math stuff
-from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+"""Elastic stress-control verification.
 
-pfw = {} 
-pfw["runDebug"] = True
+A single elastic cube is driven by the MPM stress-control boundary condition.
+The stress table first applies a hydrostatic compression, then adds a uniaxial
+compressive increment in y, and finally unloads to zero.  The expected solution
+is the prescribed stress table itself; the verification metric is the tracking
+error between box-average stress and the analytical target history.
+"""
 
-preloadTime = 10.0
-stressRate = 0.1 / 20
-pressure = 0.1
-maxStress = -0.2
+import os
 
-testTime = preloadTime + abs( maxStress ) / stressRate
-stopTime = max( abs(-pressure + maxStress), abs(pressure) ) / stressRate + testTime
+import pfw_geometryObjects as geom
 
-# DOMAIN ---------------------------------------------------------------------------------
+#[pfw_dependency] pfw:pfw_materials.py
+import pfw_materials as material_db
 
-sampleWidth = 0.1  # mm
-sampleHeight = 0.1 # mm
-sampleLength = 0.1 # mm
+pfw = {}
 
-domainWidth = sampleWidth
-domainHeight = sampleHeight
-domainLength = sampleLength
+case_name = os.environ.get("STRESS_CONTROL_CASE_NAME", "elasticStressControl")
+variant_label = os.environ.get("STRESS_CONTROL_VARIANT_LABEL", "P-only")
+kp = float(os.environ.get("STRESS_CONTROL_KP", "1.0"))
+ki = float(os.environ.get("STRESS_CONTROL_KI", "0.0"))
+kd = float(os.environ.get("STRESS_CONTROL_KD", "0.0"))
 
-pfw["xmin"] = -0.5*domainWidth # mm
-pfw["xmax"] =  0.5*domainWidth # mm
-pfw["ymin"] =  0.0             # mm
-pfw["ymax"] = domainHeight     # mm
-pfw["zmin"] =-0.5*domainLength # mm
-pfw["zmax"] = 0.5*domainLength # mm
-
-refine = 1 # paritions in each direction
-cpp = 5    # cells per partition in each direction
-
-pfw["xpar"]=refine
-pfw["ypar"]=refine
-pfw["zpar"]=refine
-
-pfw["nI"]=pfw["xpar"]*cpp  # grid cells in the x-direction
-pfw["nJ"]=pfw["ypar"]*cpp  # grid cells in the y-direction
-pfw["nK"]=pfw["zpar"]*cpp  # grid cells in the z-direction
-pfw["ppc"]=2               # particles per cell in each direction
-
-# BATCH PARAMETERS  --------------------------------------------------------
-
-pfw["mBatch"]=True
+pfw["caseName"] = case_name
+pfw["runDebug"] = False
+pfw["mBatch"] = True
 pfw["mWallTime"] = "00:05:00"
-pfw["mSubmitJobs"]=False
+pfw["mSubmitJobs"] = False
 
-# GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
+refine = int(os.environ.get("STRESS_CONTROL_REFINE", "1"))
+cpp = int(os.environ.get("STRESS_CONTROL_CPP", "8"))
+ppc = int(os.environ.get("STRESS_CONTROL_PPC", "2"))
+pfw["xpar"] = refine
+pfw["ypar"] = refine
+pfw["zpar"] = refine
+pfw["nI"] = pfw["xpar"] * cpp
+pfw["nJ"] = pfw["ypar"] * cpp
+pfw["nK"] = pfw["zpar"] * cpp
+pfw["ppc"] = ppc
 
-pfw["endTime"]=stopTime           
-pfw["plotInterval"]=stopTime/100
-pfw["restartInterval"]=stopTime
+pfw["xmin"] = -0.5
+pfw["xmax"] = 0.5
+pfw["ymin"] = -0.5
+pfw["ymax"] = 0.5
+pfw["zmin"] = -0.5
+pfw["zmax"] = 0.5
 
-pfw["timeIntegrationOption"]="ExplicitDynamic"
-pfw["cflFactor"]=0.05 
-pfw["initialDt"]=1e-16
+stop_time = 1.0
+pressure = 0.01
+y_increment = -0.03
+pfw["endTime"] = stop_time
+pfw["plotInterval"] = stop_time / 5.0
+pfw["restartInterval"] = 2.0 * stop_time
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["cflFactor"] = 0.05
+pfw["initialDt"] = 1.0e-12
+pfw["writeStatistics"] = "all"
+pfw["reactionHistory"] = 1
+pfw["reactionWriteInterval"] = stop_time / 250.0
+pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"] = stop_time / 250.0
+pfw["frictionCoefficient"] = 0.0
+pfw["updateMethod"] = "PIC"
+pfw["useAPIC"] = 1
+pfw["outputType"] = "silo"
+pfw["plotGridFields"] = 1
+pfw["gridFieldNames"] = ["gridMass", "gridVelocity", "gridInternalForce"]
 
-pfw["solverProfiling"]=0
-pfw["needsNeighborList"]=0
-pfw["reactionHistory"]=1
-pfw["reactionWriteInterval"]=stopTime/2000
-pfw["boxAverageHistory"]=1
-pfw["boxAverageWriteInterval"]=stopTime/2000
-pfw["frictionCoefficient"]=0.0
+pfw["prescribedBcTable"] = 0
+pfw["boundaryConditionTypes"] = [2, 2, 2, 2, 2, 2]
+pfw["prescribedBoundaryFTable"] = 0
+pfw["stressControl"] = [1, 1, 1]
+pfw["stressTableInterpType"] = "Cosine"
+pfw["stressControlKp"] = kp
+pfw["stressControlKi"] = ki
+pfw["stressControlKd"] = kd
+pfw["stressTable"] = [
+    [0.00, 0.0, 0.0, 0.0],
+    [0.25, -pressure, -pressure, -pressure],
+    [0.75, -pressure, -pressure + y_increment, -pressure],
+    [1.00, 0.0, 0.0, 0.0],
+]
 
-# MATERIAL PROPERTIES --------------------------------------------------------------------
+material = material_db.verificationElastic.copy()
+pfw["materials"] = [material["name"]]
+pfw["materialPropertyString"] = material["materialString"]
 
-density = 1.93 # mass density (mg/mm^3)
-E = 45.0       # Young's modulus (GPa)
-nu = 0.27      # Poisson's ratio (-)
+block = geom.box(
+    "stress_control_block",
+    [pfw["xmin"], pfw["ymin"], pfw["zmin"]],
+    [pfw["xmax"], pfw["ymax"], pfw["zmax"]],
+    vel=[0.0, 0.0, 0.0],
+    mat=0,
+    group=0,
+)
+pfw["objects"] = [block]
 
-pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
-<ElasticIsotropic
-    name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultYoungModulus=""" + '"' + str(E) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """/>"""
-
-# GEOMETRY OBJECTS -------------------------------------------------------
-
-block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
-pfw["objects"]=[block]
-
-# DEFORMATION ---------------------------------------------------------------------------------
-
-pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
-
-pfw["fTableInterpType"] = "Cosine"
-pfw["prescribedFTable"]=0
-pfw["prescribedBoundaryFTable"]=0
-
-pfw["stressControl"]=[ 1, 1, 1]
-pfw["stressTableInterpType"] = 'Cosine'
-pfw["stressControlKp"] = 1.0
-pfw["stressControlKi"] = 0.0
-pfw["stressControlKd"] = 0.0
-pfw["stressTable"]=[[0.0,      	      0.0,       0.0,                   0.0],
-					[preloadTime,     -pressure, -pressure,             -pressure],
-					[testTime,        -pressure, -pressure + maxStress, -pressure],
-					[stopTime,        0.0,       0.0,                   0.0]]
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
-
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
-
-try:
-    refine = 1
-except Exception:
-    pass
-
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---
+pfw_expected = {
+    "variant_label": variant_label,
+    "stress_table": pfw["stressTable"],
+    "kp": kp,
+    "ki": ki,
+    "kd": kd,
+}

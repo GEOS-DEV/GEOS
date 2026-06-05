@@ -1,148 +1,102 @@
 # -*- coding: utf-8 -*-
-import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
-import numpy as np                   # math stuff
-from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+"""Partition-crossing free-flight verification.
+
+A disk translates diagonally across a two-dimensional 3 x 3 partitioned domain
+without external forces.  The analytical solution is constant velocity and a
+linear center-of-mass trajectory.  The test isolates MPI partition ownership
+transfer, particle migration, tracer output, and global momentum conservation.
+"""
+
+import os
+
+import pfw_geometryObjects as geom
+import pfw_tracerPoints as tracers
+
+#[pfw_dependency] pfw:pfw_materials.py
+import pfw_materials as material_db
 
 pfw = {}
-pfw["runDebug"] = True
-stopTime = 0.01
+case_name = os.environ.get("PARTITION_CASE_NAME", "partitionCrossing2D")
+variant_label = os.environ.get("PARTITION_VARIANT_LABEL", "single material")
+velocity = [float(x) for x in os.environ.get("PARTITION_VELOCITY", "0.20,0.16,0.0").split(",")]
 
-# Domain ---------------------------------------------------------------------------------
-refine = 1
-cpp = 5
+pfw["caseName"] = case_name
+pfw["runDebug"] = False
+pfw["mBatch"] = True
+pfw["mWallTime"] = "00:02:00"
+pfw["mSubmitJobs"] = False
 
-pfw["xpar"]=refine  # grid partitions
-pfw["ypar"]=refine
-pfw["zpar"]=1
-
-pfw["nI"]=pfw["xpar"]*cpp  	# grid cells in the x-direction
-pfw["nJ"]=pfw["ypar"]*cpp  	# grid cells in the y-direction
-pfw["nK"]=3  			# grid cells in the z-direction
-pfw["ppc"]=2   		# particles per cell in each direction
-
-domainLength = 1.0 # m
-domainThickness = domainLength*(pfw["nK"]-2)/(pfw["nI"]-2)  # m, to get cubic cells
-
-# Define all the geometric objects -------------------------------------------------------
-pfw["xmin"] =-0.5*domainLength	# m
-pfw["xmax"] = 0.5*domainLength	# m
-pfw["ymin"] =-0.5*domainLength	# m
-pfw["ymax"] = 0.5*domainLength	# m
-pfw["zmin"] =-0.5*domainThickness 	# m
-pfw["zmax"] = 0.5*domainThickness 	# m
-
-lx = pfw["xmax"] - pfw["xmin"]
-ly = pfw["ymax"] - pfw["ymin"]
-lz = pfw["zmax"] - pfw["zmin"]
-
+refine = int(os.environ.get("PARTITION_REFINE", "3"))
+cpp = int(os.environ.get("PARTITION_CPP", "8"))
+ppc = int(os.environ.get("PARTITION_PPC", "2"))
 pfw["planeStrain"] = 1
+pfw["xpar"] = refine
+pfw["ypar"] = refine
+pfw["zpar"] = 1
+pfw["nI"] = pfw["xpar"] * cpp
+pfw["nJ"] = pfw["ypar"] * cpp
+pfw["nK"] = 3
+pfw["ppc"] = ppc
 
-# Batch parameters for GEOS runs.  --------------------------------------------------------
+pfw["xmin"] = -0.5
+pfw["xmax"] = 0.5
+pfw["ymin"] = -0.5
+pfw["ymax"] = 0.5
+thickness = (pfw["xmax"] - pfw["xmin"]) / float(pfw["nI"] - 2)
+pfw["zmin"] = -0.5 * thickness
+pfw["zmax"] = 0.5 * thickness
 
-pfw["mBatch"]=True
-pfw["mWallTime"] = "00:05:00" 
-pfw["mSubmitJobs"]=False
+stop_time = 2.0
+pfw["endTime"] = stop_time
+pfw["plotInterval"] = stop_time / 8.0
+pfw["restartInterval"] = 2.0 * stop_time
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["cflFactor"] = 0.25
+pfw["initialDt"] = 1.0e-12
+pfw["writeStatistics"] = "all"
+pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"] = stop_time / 200.0
+pfw["logMomentum"] = 1
+pfw["frictionCoefficient"] = 0.0
+pfw["updateMethod"] = os.environ.get("PARTITION_UPDATE_METHOD", "FLIP")
+pfw["outputType"] = "silo"
+pfw["plotGridFields"] = 1
+pfw["gridFieldNames"] = ["gridMass", "gridVelocity", "gridMomentum"]
+pfw["particleFileFields"] = ["Velocity", "MaterialType"]
 
-# GEOS MPM i/o parameters ---------------------------------------------------------------
+pfw["prescribedBcTable"] = 0
+pfw["prescribedBoundaryFTable"] = 0
+pfw["boundaryConditionTypes"] = [0, 0, 0, 0, 1, 1]
 
-# GEOSX MPM PARAMETERS ------------------------------------------------------------------
+material = material_db.verificationElastic.copy()
+pfw["materials"] = [material["name"]]
+pfw["materialPropertyString"] = material["materialString"]
 
-pfw["endTime"]=stopTime				# seconds
-pfw["plotInterval"]=stopTime/100
-pfw["restartInterval"]=stopTime/4
+center0 = (-0.25, -0.22, 0.0)
+radius = 0.09
+disk = geom.cylinder(
+    "partition_disk",
+    [center0[0], center0[1], pfw["zmin"]],
+    [center0[0], center0[1], pfw["zmax"]],
+    radius,
+    vel=velocity,
+    mat=0,
+    group=0,
+)
+pfw["objects"] = [disk]
 
-pfw["timeIntegrationOption"]="ExplicitDynamic"
-pfw["cflFactor"]=0.5    
-pfw["initialDt"]=1e-16
+tracers.set_tracers(
+    pfw,
+    [center0] + tracers.disk(center0, radius * 0.75, normal_axis="z", radial_count=2, angular_count=12, include_center=False),
+    variables=["particleID", "velocityX", "velocityY", "speed"],
+    write_interval=stop_time / 80.0,
+    output_prefix="partitionCrossingTracer",
+)
 
-pfw["solverProfiling"]=0
-pfw["neighborRadius"]=-1.01
-pfw["needsNeighborList"]=1
-pfw["cpdiDomainScaling"]=1
-pfw["damageFieldPartitioning"]=1
-pfw["contactGapCorrection"] = "Implicit"
-pfw["frictionCoefficient"]=0.25
-
-pfw["prescribedBoundaryFTable"]=0
-
-pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[0, 0, 0, 0, 0, 0 ]  
-
-# END GEOSX MPM PARAMETERS ---------------------------------------------------------------
-
-# Define all the geometric objects -------------------------------------------------------
-
-disk1 = geom.cylinder('disk1',[0.0, 0.0, pfw["zmin"]],[0.0, 0.0, pfw["zmax"]], 0.3, vel=[-120.0,-120.0,0.0], mat=0, group=0)
-pfw["objects"]=[disk1]
-
-pfw["materials"] = [ "aluminum", "aluminum10x" ]
-pfw["materialPropertyString"]="""
-<ElasticIsotropic
-	name="aluminum"
-	defaultDensity="2700"
-	defaultBulkModulus="70.0e8"
-	defaultShearModulus="24.0e8"/>
-<ElasticIsotropic
-	name="aluminum10x"
-	defaultDensity="27000"
-	defaultBulkModulus="70.0e9"
-	defaultShearModulus="24.0e9"/>
-"""
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
-
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
-
-try:
-    refine = 1
-except Exception:
-    pass
-
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---
+pfw_expected = {
+    "variant_label": variant_label,
+    "center0": center0,
+    "velocity": velocity,
+    "stop_time": stop_time,
+    "partitions": [pfw["xpar"], pfw["ypar"], pfw["zpar"]],
+}

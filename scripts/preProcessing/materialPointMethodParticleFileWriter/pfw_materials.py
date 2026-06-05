@@ -359,7 +359,7 @@ def _select_transverse_isotropic_elastic_set(material):
         return stiffness_constants
     name = material.get('name', '<unnamed>')
     raise KeyError(
-        'Material %s does not define a complete ElasticTransverseIsotropic ' 
+        'Material %s does not define a complete ElasticTransverseIsotropic '
         'engineering-constant or stiffness-constant set.' % name
     )
 
@@ -2832,6 +2832,26 @@ verificationQuartz["materialString"] = generateMaterialString(verificationQuartz
 # #################################################################################################
 
 
+###################################################################################################
+# VERIFICATION VON MISES MATERIAL:
+# Small, dimensionless VonMisesJ card for the uniaxial plasticity verification.  It shares the
+# verificationElastic stiffness so the expected elastic slope and yield point are simple, and uses a
+# low yield strength so the fast single-block test reaches plastic flow at small strain.
+verificationVonMises = {}
+verificationVonMises["name"] = "verificationVonMises"
+verificationVonMises["version"] = 2606050001
+verificationVonMises["model"] = "VonMisesJ"
+verificationVonMises["defaultDensity"] = 1.0
+verificationVonMises["defaultYoungModulus"] = 1.0
+verificationVonMises["defaultPoissonRatio"] = 0.25
+verificationVonMises["defaultBulkModulus"] = verificationVonMises["defaultYoungModulus"]/(3.0*(1.0 - 2.0*verificationVonMises["defaultPoissonRatio"]))
+verificationVonMises["defaultShearModulus"] = verificationVonMises["defaultYoungModulus"]/(2.0*(1.0 + verificationVonMises["defaultPoissonRatio"]))
+verificationVonMises["defaultYieldStrength"] = 0.02
+verificationVonMises["waveSpeed"] = float(np.sqrt((verificationVonMises["defaultBulkModulus"] + 4.0/3.0*verificationVonMises["defaultShearModulus"])/verificationVonMises["defaultDensity"]))
+verificationVonMises["materialString"] = generateMaterialString(verificationVonMises)
+# #################################################################################################
+
+
 
 ###################################################################################################
 # PBC COMPACTION MOMENTUM VERIFICATION MATERIALS:
@@ -2920,6 +2940,7 @@ exampleSuiteMaterials = [
 verificationMaterials = [
     verificationElastic,
     verificationQuartz,
+    verificationVonMises,
     pbcCompactionElastic,
     pbcCompactionPlastic,
 ]

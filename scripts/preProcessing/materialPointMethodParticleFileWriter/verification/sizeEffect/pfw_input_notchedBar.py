@@ -3,7 +3,7 @@ import pfw_geometryObjects as geom   # this contains all the geometry object fun
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
 
-pfw = {} 
+pfw = {}
 pfw["runDebug"] = False
 # GEOMETRY ----------------------------------------------------------------------------
 D = 1 # sample thickness (mm) this is "D" int he paper"
@@ -11,7 +11,7 @@ D = 1 # sample thickness (mm) this is "D" int he paper"
 sampleX = 3.5*D    # ratio of weibull referene volume to sample volume
 sampleY = 1.0*D
 sampleZ = 1.0*D
-crackLength = 0.2*D  # this is for the 1/5th 
+crackLength = 0.2*D  # this is for the 1/5th
 
 refine = 1
 
@@ -94,7 +94,7 @@ pfw["cflFactor"]=0.25
 pfw["initialDt"]=1e-16
 pfw["cpdiDomainScaling"]=1
 pfw["damageFieldPartitioning"]=1
-pfw["separabilityMinDamage"]=0.5               
+pfw["separabilityMinDamage"]=0.5
 pfw["treatFullyDamagedAsSingleField"]=1
 pfw["needsNeighborList"]=1
 pfw["reactionHistory"]=1
@@ -120,20 +120,20 @@ def getDamage(self,pt):
   return damage
 
 def make_objects():
-  bar = geom.box('box', 
+  bar = geom.box('box',
                  x0 = [ -0.5*sampleX, -0.5*sampleY, -0.5*sampleZ ],
                  x1 = [  0.5*sampleX,  0.5*sampleY,  0.5*sampleZ ],
                  vel=[0.,0.,0],
                  mat=0,
                  flaggedSurfaces=[True,True,True,True,True,True],
                  group=0)
-  
+
   notchedBar = geom.damageWrapper('notchedBar',subObject=bar, damage=getDamage)
-  
+
   DX = domainX/pfw["nI"]
   weibullFlawSize = 6.0*DX
-  weibullBar = geom.voronoiWeibullBoxWrapper('weibullSubstrate',                                                     
-    subObject=notchedBar,       
+  weibullBar = geom.voronoiWeibullBoxWrapper('weibullSubstrate',
+    subObject=notchedBar,
     x0 = np.array( [-0.5*sampleX - weibullFlawSize, -0.5*sampleY - weibullFlawSize, -0.5*sampleZ - weibullFlawSize ] ),
     x1 = np.array( [ 0.5*sampleX + weibullFlawSize, 0.5*sampleY + weibullFlawSize, 0.5*sampleZ + weibullFlawSize ] ),
     flawSize=weibullFlawSize,
@@ -146,7 +146,7 @@ def make_objects():
     randomMatDir = False
     )
 
-  
+
   leftRoller = geom.cylinder("left",
                             x1=[ -1.25*D, pfw["ymin"], pfw["zmin"] ],
                             x2=[ -1.25*D, pfw["ymin"], pfw["zmax"] ],
@@ -168,7 +168,7 @@ def make_objects():
                             vel=[0.,0.,0.],
                             mat=1,
                             group=0)
-  
+
   objects = [weibullBar,leftRoller,rightRoller,topRoller]
   return objects
 
@@ -201,7 +201,6 @@ pfw["materialPropertyString"]="""
 """
 
 
-
 # Deformation ---------------------------------------------------------------------------------
 
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 0, 0 ]
@@ -210,62 +209,3 @@ pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
 		       [stopTime, 1.00, 0.95, 1.00]]
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
-
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
-
-try:
-    refine = 1
-except Exception:
-    pass
-
-# Fix common legacy typos before GEOS XML is written.
-for _legacyPlaneStrainKey in ("planeSrain", "planeStrian"):
-    if _legacyPlaneStrainKey in pfw and "planeStrain" not in pfw:
-        pfw["planeStrain"] = pfw.pop(_legacyPlaneStrainKey)
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---

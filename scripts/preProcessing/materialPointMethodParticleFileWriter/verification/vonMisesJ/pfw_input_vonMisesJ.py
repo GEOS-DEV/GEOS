@@ -1,155 +1,92 @@
 # -*- coding: utf-8 -*-
-import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
-import numpy as np                   # math stuff
-from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+"""Von Mises elastic-perfectly-plastic uniaxial loading verification.
+
+A single cube is stretched in y with lateral faces released.  For the small
+verification strain path, the expected one-dimensional response is linear elastic
+until the Von Mises yield strength is reached, followed by an approximately
+constant axial stress and increasing equivalent plastic strain.  The test
+isolates the VonMisesJ stress update and plastic-strain output.
+"""
+
+import os
+
+import pfw_geometryObjects as geom
+
+#[pfw_dependency] pfw:pfw_materials.py
+import pfw_materials as material_db
 
 pfw = {}
-pfw["runDebug"] = True
-stopTime = 10.0
+case_name = os.environ.get("VONMISES_CASE_NAME", "vonMisesUniaxialPlasticity")
+variant_label = os.environ.get("VONMISES_VARIANT_LABEL", "uniaxial")
+final_strain = float(os.environ.get("VONMISES_FINAL_STRAIN", "0.05"))
 
-# DOMAIN ---------------------------------------------------------------------------------
-
-sampleWidth = 1.0
-sampleHeight = 1.0
-sampleLength = 1.0
-
-domainWidth = 1.25*sampleWidth
-domainHeight = sampleHeight
-domainLength = 1.25*sampleLength
-
-pfw["xmin"] = -0.5*domainWidth # mm
-pfw["xmax"] = 0.5*domainWidth # mm
-pfw["ymin"] = -0.5*domainHeight # mm
-pfw["ymax"] = 0.5*domainHeight # mm
-pfw["zmin"] =-0.5*domainLength # mm
-pfw["zmax"] = 0.5*domainLength # mm
-
-pfw["periodic"] = [False, False, False]
-
-refine = 1 # partitions in each direction
-cpp = 8 # cells per partition in each direction
-
-pfw["xpar"]=refine  # grid partitions
-pfw["ypar"]=refine
-pfw["zpar"]=refine
-
-pfw["nI"]=pfw["xpar"]*cpp  # grid cells in the x-direction
-pfw["nJ"]=pfw["ypar"]*cpp  # grid cells in the y-direction
-pfw["nK"]=pfw["zpar"]*cpp  # grid cells in the z-direction
-pfw["ppc"]=2               # particles per cell in each direction
-
-# BATCH PARAMETERS  --------------------------------------------------------
-
-pfw["mBatch"]=True
+pfw["caseName"] = case_name
+pfw["runDebug"] = False
+pfw["mBatch"] = True
 pfw["mWallTime"] = "00:05:00"
-pfw["mSubmitJobs"]=False
+pfw["mSubmitJobs"] = False
 
-# GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
+refine = int(os.environ.get("VONMISES_REFINE", "1"))
+cpp = int(os.environ.get("VONMISES_CPP", "8"))
+ppc = int(os.environ.get("VONMISES_PPC", "2"))
+pfw["xpar"] = refine
+pfw["ypar"] = refine
+pfw["zpar"] = refine
+pfw["nI"] = pfw["xpar"] * cpp
+pfw["nJ"] = pfw["ypar"] * cpp
+pfw["nK"] = pfw["zpar"] * cpp
+pfw["ppc"] = ppc
 
-pfw["endTime"]=stopTime
-pfw["plotInterval"]=stopTime/10
-pfw["restartInterval"]=stopTime*10 # Don't need restarts for now
+pfw["xmin"] = -0.5
+pfw["xmax"] = 0.5
+pfw["ymin"] = -0.5
+pfw["ymax"] = 0.5
+pfw["zmin"] = -0.5
+pfw["zmax"] = 0.5
 
-pfw["timeIntegrationOption"]="ExplicitDynamic"
-pfw["cflFactor"]=0.25
-pfw["initialDt"]=1e-16
-pfw["cpdiDomainScaling"]=1
-pfw["damageFieldPartitioning"]=0
+stop_time = 1.0
+pfw["endTime"] = stop_time
+pfw["plotInterval"] = stop_time / 5.0
+pfw["restartInterval"] = 2.0 * stop_time
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["cflFactor"] = 0.10
+pfw["initialDt"] = 1.0e-12
+pfw["writeStatistics"] = "all"
+pfw["reactionHistory"] = 1
+pfw["reactionWriteInterval"] = stop_time / 250.0
+pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"] = stop_time / 250.0
+pfw["frictionCoefficient"] = 0.0
+pfw["updateMethod"] = "PIC"
+pfw["useAPIC"] = 1
+pfw["outputType"] = "silo"
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "PlasticStrainMagnitude"]
+pfw["plotGridFields"] = 1
+pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
 
-pfw["solverProfiling"]=0
-pfw["needsNeighborList"]=0
-pfw["reactionHistory"]=1
-pfw["boxAverageHistory"]=1
-
-pfw["maxParticleVelocity"]=10.0
-pfw["minParticleJacobian"]=0.01
-pfw["maxParticleJacobian"]=10.0
-
-# MATERIAL PROPERTIES --------------------------------------------------------------------
-
-density = 1.00 # mass density mg/mm^3
-E = 5.0   # Young's modulus (GPa)
-nu = 0.22   # Poisson's ratio (-)
-strength = 0.8 # yield strength (GPa)
-
-pfw["materials"] = ["elasticPlastic"]
-pfw["materialPropertyString"]="""
-<VonMisesJ
-    name="elasticPlastic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultYoungModulus=""" + '"' + str(E) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """
-    defaultYieldStrength=""" + '"' + str(strength) + '"' + """/>"""
-
-# GEOMETRY OBJECTS -------------------------------------------------------
-
-box=geom.box('box',[-sampleWidth/2, -sampleHeight/2, -sampleLength/2],[sampleWidth/2, sampleHeight/2, sampleLength/2], vel=[0.0, 0.0, 0.0], mat=0, group=0, dim=3)
-pfw["objects"]=[box]
-
-# DEFORMATION ---------------------------------------------------------------------------------
-
-pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
-
+pfw["prescribedBcTable"] = 0
+pfw["boundaryConditionTypes"] = [0, 0, 2, 2, 0, 0]
 pfw["fTableInterpType"] = "Cosine"
-pfw["prescribedBoundaryFTable"]=1
-pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
-               [stopTime,     1.00,  1.20,  1.00]]
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
-# Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
-def _vv_fast_int(_value, _default):
-    try:
-        return int(float(str(_value).strip().strip('"').strip("'")))
-    except Exception:
-        return int(_default)
+pfw["prescribedBoundaryFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stop_time, 1.0, 1.0 + final_strain, 1.0]]
 
-def _vv_fast_bool(_value):
-    if isinstance(_value, bool):
-        return _value
-    return str(_value).strip().strip('"').strip("'").lower() in ("1", "true", "yes", "on")
+material = material_db.verificationVonMises.copy()
+pfw["materials"] = [material["name"]]
+pfw["materialPropertyString"] = material["materialString"]
 
-try:
-    refine = 1
-except Exception:
-    pass
+block = geom.box(
+    "von_mises_block",
+    [pfw["xmin"], pfw["ymin"], pfw["zmin"]],
+    [pfw["xmax"], pfw["ymax"], pfw["zmax"]],
+    vel=[0.0, 0.0, 0.0],
+    mat=0,
+    group=0,
+)
+pfw["objects"] = [block]
 
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
-
-_vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
-# Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
-try:
-    if _vv_fast_int(pfw.get("zpar", 1), 1) == 1 and "nK" not in pfw:
-        _vv_fast_plane = True
-except Exception:
-    pass
-
-_vv_fast_cpp_cap = 24 if _vv_fast_plane else 8
-_vv_fast_max_partitions = 2
-pfw["mWallTime"] = "00:05:00"
-
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
-if _vv_fast_plane:
-    pfw["zpar"] = 1
-
-# Preserve already coarser grids, but cap high cells-per-partition values.
-def _vv_fast_cap_cells(_nkey, _pkey, _default_cells=1):
-    _p = max(1, _vv_fast_int(pfw.get(_pkey, 1), 1))
-    _n = _vv_fast_int(pfw.get(_nkey, 0), 0)
-    if _n <= 0:
-        return max(1, _p * min(_default_cells, _vv_fast_cpp_cap))
-    _cpp = max(1, (_n + _p - 1) // _p)
-    return max(1, _p * min(_cpp, _vv_fast_cpp_cap))
-
-pfw["nI"] = _vv_fast_cap_cells("nI", "xpar", _vv_fast_cpp_cap)
-pfw["nJ"] = _vv_fast_cap_cells("nJ", "ypar", _vv_fast_cpp_cap)
-if _vv_fast_plane:
-    if "nK" in pfw:
-        pfw["nK"] = max(1, min(_vv_fast_int(pfw.get("nK", 1), 1), 8))
-else:
-    pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
-
-pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-# --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---
+pfw_expected = {
+    "variant_label": variant_label,
+    "final_strain": final_strain,
+    "young_modulus": material["defaultYoungModulus"],
+    "yield_strength": material["defaultYieldStrength"],
+}

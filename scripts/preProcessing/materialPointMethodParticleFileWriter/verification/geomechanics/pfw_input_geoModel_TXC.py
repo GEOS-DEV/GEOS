@@ -5,7 +5,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 import pfw_materials as matdb
 
 # This is currently just a smoke test to see if the geomechanics model is implemented
-# successfully and runs. 
+# successfully and runs.
 #
 # Initializes material with a confining stress (should be p < -p0/3 ) and then ramps
 # load in 1 direction with that confinement maintained through stress control on
@@ -20,6 +20,7 @@ stopTime = 1000.0
 # maxCompressiveStrain = 0.0704 # F-table (strain) control end point (GPa)
 
 pressure = 0.0032  # confining pressure GPa (make sure this p < -p0/3)
+confiningPressure = pressure
 maxCompressiveStrain = 0.035
 
 # PID Control Parameters
@@ -80,8 +81,8 @@ pfw["reactionWriteInterval"] = stopTime/1000
 pfw["boxAverageHistory"] = 1
 pfw["boxAverageWriteInterval"] = stopTime/1000
 
-pfw["solverProfiling"]=0         
-pfw["frictionCoefficient"]=0.25  
+pfw["solverProfiling"]=0
+pfw["frictionCoefficient"]=0.25
 
 pfw["updateMethod"]="PIC" # best for single element.
 pfw["updateOrder"]=2      # This only needs to be specified with XPIC or FMPM.
@@ -107,7 +108,7 @@ b3 = 1.42 # elastic-plastic coupling, reduction in bulk modulus with plastic vol
 b4 = 0.015 # elastic-plastic coupling shape parameter.
 
 # nonlinear shear modulus defined with a pressure-dependent poisson's ratio.
-# Two options, 
+# Two options,
 #   (i) constant shear modulus ( g0>0, g1=g2=0)
 #   (ii) pressure-depenndent poissons ratio,  ( 0 < g1+g2 < 0.5 )
 #        low pressure poisson's ratio: g1+g2
@@ -211,13 +212,13 @@ pfw["fTable"]=[[0.0, 1., 1., 1.],
 # Initialize with confining pressure
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-    <InitializeStress 
+    <InitializeStress
         startTime="0.0"
         endTime="0.001"
         targetRegion="all"
         pressure=""" + '"' + str(pressure) + '"' + """
     />
-     <ConfiningPressure 
+     <ConfiningPressure
         startTime=""" + '"' + str(0.) + '"' + """
         endTime=""" + '"' + str(stopTime) + '"' + """
         confiningPressureBoxMin="{"""+str(-0.01*domainX)+','+str(-0.01*domainY)+','+str(-2.0*domainZ)+"""}"
