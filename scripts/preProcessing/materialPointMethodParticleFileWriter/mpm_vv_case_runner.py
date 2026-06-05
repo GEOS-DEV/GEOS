@@ -165,8 +165,19 @@ def _vv_fast_int(_value, _default):
 _vv_fast_plane = str(pfw.get("planeStrain", False)).strip().lower() in ("1", "true", "yes", "on")
 _vv_fast_cpp_cap = 12 if _vv_fast_plane else 6
 _vv_fast_max_partitions = 2
-for _vv_key in ("xpar", "ypar", "zpar"):
-    pfw[_vv_key] = max(1, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
+
+def _vv_fast_periodic_axis(_axis):
+    _periodic = pfw.get("periodic", [False, False, False])
+    try:
+        return str(_periodic[_axis]).strip().lower() in ("1", "true", "yes", "on")
+    except Exception:
+        return False
+
+for _vv_axis, _vv_key in enumerate(("xpar", "ypar", "zpar")):
+    # Periodic MPM tests need at least three partitions in a periodic direction
+    # so the left/owned/right periodic communication neighborhood is well defined.
+    _vv_min_partitions = 3 if _vv_fast_periodic_axis(_vv_axis) else 1
+    pfw[_vv_key] = max(_vv_min_partitions, min(_vv_fast_int(pfw.get(_vv_key, 1), 1), _vv_fast_max_partitions))
 if _vv_fast_plane:
     pfw["zpar"] = 1
 

@@ -17,6 +17,6 @@ with the expected value $P_x(t)=0$.
   \caption{PBC compaction momentum test.  Left: schematic of the periodic x-boundaries and symmetric y-compaction.  Right: representative late-time elastic deformation used to motivate the x-momentum diagnostic.}
 \end{figure}
 
-Two subcases are run from the same PFW input: an elastic material and an elastic-plastic material.  Both use the same geometry, imposed compaction history, and FMPM update.  The post-processor generates x-velocity contour frames at the initial, quarter, half, three-quarter, and final output states, plus a CSV/plot of total particle x-momentum versus time.
+Two subcases are run from the same PFW input: an elastic material and an elastic-plastic material.  Both use the same geometry, imposed compaction history, and FMPM update.  Because the $x$ direction is periodic, the input uses at least three MPI partitions in $x$; this avoids an under-resolved periodic left/owned/right communication neighborhood while preserving the compact run time of the verification case.  The post-processor generates x-velocity contour frames at the initial, quarter, half, three-quarter, and final output states, plus a CSV/plot of total particle x-momentum versus time.
 
 \IfFileExists{\CaseOutputDir/pbc_compaction_results.tex}{\input{\CaseOutputDir/pbc_compaction_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_pbcCompactionMomentumTest.py} after the GEOS jobs finish.}

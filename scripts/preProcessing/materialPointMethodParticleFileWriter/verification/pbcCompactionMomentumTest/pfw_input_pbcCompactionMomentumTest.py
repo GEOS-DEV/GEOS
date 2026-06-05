@@ -41,11 +41,24 @@ material_name = os.environ.get("PBC_COMPACTION_MATERIAL", "pbcCompactionElastic"
 #   longer diagnostic run: "30.0"
 stop_time = float(os.environ.get("PBC_COMPACTION_STOP_TIME", "6.0"))
 
-# PBC_COMPACTION_GRID_REFINE and PBC_COMPACTION_CELLS_PER_PARTITION replacement examples:
-#   suite default: refine="2", cells_per_partition="12"  -> 24 x 24 background cells
-#   diagnostic run: refine="5", cells_per_partition="20" -> 100 x 100 background cells
-refine = int(os.environ.get("PBC_COMPACTION_GRID_REFINE", "2"))
+# PBC_COMPACTION_GRID_REFINE, PBC_COMPACTION_X_PARTITIONS,
+# PBC_COMPACTION_Y_PARTITIONS, and PBC_COMPACTION_CELLS_PER_PARTITION replacement examples:
+#   suite default: refine="2", x_partitions="3", y_partitions="2", cells_per_partition="12"
+#                  -> 36 x 24 cells on 3 x 2 MPI partitions
+#   diagnostic run: refine="5", x_partitions="5", y_partitions="5", cells_per_partition="20"
+#                  -> 100 x 100 cells on 5 x 5 MPI partitions
+#
+# The x-direction is periodic for this test and requires at least three MPI
+# partitions in that periodic direction.  The run script may reduce refine for
+# fast runs, but xpar must not drop below 3.
+grid_refine = int(os.environ.get("PBC_COMPACTION_GRID_REFINE", "2"))
 cells_per_partition = int(os.environ.get("PBC_COMPACTION_CELLS_PER_PARTITION", "12"))
+periodic_x_partitions = int(os.environ.get("PBC_COMPACTION_X_PARTITIONS", str(max(3, grid_refine))))
+y_partitions = int(os.environ.get("PBC_COMPACTION_Y_PARTITIONS", str(max(1, grid_refine))))
+if periodic_x_partitions < 3:
+    raise ValueError("PBC compaction requires at least 3 MPI partitions in the periodic x direction")
+if y_partitions < 1:
+    raise ValueError("PBC compaction requires at least 1 MPI partition in the y direction")
 
 # PBC_COMPACTION_FINAL_YSTRETCH replacement examples:
 #   suite default: "0.4"  -> 60 percent imposed height reduction at final time
@@ -72,8 +85,8 @@ pfw["ymax"] =  0.5 * domain_height
 pfw["planeStrain"] = 1
 pfw["periodic"] = [True, False, False]
 
-pfw["xpar"] = refine
-pfw["ypar"] = refine
+pfw["xpar"] = periodic_x_partitions
+pfw["ypar"] = y_partitions
 pfw["zpar"] = 1
 pfw["nI"] = pfw["xpar"] * cells_per_partition
 pfw["nJ"] = pfw["ypar"] * cells_per_partition
@@ -106,6 +119,10 @@ pfw["cflFactor"] = 0.25
 pfw["initialDt"] = 1.0e-16
 pfw["cpdiDomainScaling"] = 1
 pfw["damageFieldPartitioning"] = 1
+# Default-on solver guard for this severe deformation case: if a particle stencil
+# maps outside the local grid, flag that particle for deletion and compact the
+# active-ordinal mapping rows rather than letting a stale/bad row reach DFG/P2G/G2P.
+pfw["flagParticlesWithBadMappingArraysForDeletion"] = 1
 
 pfw["solverProfiling"] = 0
 pfw["needsNeighborList"] = 0
@@ -129,9 +146,10 @@ pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 1
 # Current GEOS expects the writeStatistics enum string, not a legacy 0/1 flag.
 pfw["writeStatistics"] = "all"
 
-# Momentum verification diagnostics.  The solver writes mpm_momentumHistory.csv when
-# logMomentum is enabled; the folder post-processor plots total x-momentum from that CSV.
-pfw["logMomentum"] = 1
+# Momentum verification diagnostics.  The solver writes mpm_momentumHistory.csv.
+# Use logMomentum=2 here because this test is intended to diagnose where momentum
+# first drifts between P2G, grid update/contact, BCs, FMPM, and G2P.
+pfw["logMomentum"] = 2
 pfw["logStartCycle"] = 0
 
 pfw["outputType"] = "silo"

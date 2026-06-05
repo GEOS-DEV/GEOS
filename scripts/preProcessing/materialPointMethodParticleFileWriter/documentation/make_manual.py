@@ -2985,16 +2985,16 @@ The buffer-node extension is centered on the prescribed boundary value.  For the
   v_{G\alpha,d}=-v_{J(G)\alpha,d}+2v_{B(G)\alpha,d}.
   \label{eq:bc-moving-buffer-normal}
 \end{equation}
-For tangential components, the code chooses either the same moving odd extension when transverse velocities are prescribed or a free-slip even extension otherwise:
+For tangential components, the code applies the same moving odd extension only when transverse velocities are explicitly prescribed.  When transverse motion is not prescribed, the buffer-node tangential velocity, increment, and acceleration are left unchanged:
 \begin{equation}
   v_{G\alpha,d_k}=\begin{cases}
     -v_{J(G)\alpha,d_k}+2v_{B(G)\alpha,d_k}, & \text{prescribed transverse component active},\\
-     v_{J(G)\alpha,d_k}, & \text{transverse component free},
+    v_{G\alpha,d_k}^{\mathrm{before}}, & \text{transverse component free},
   \end{cases}
   \qquad k=1,2.
   \label{eq:bc-moving-buffer-tangent}
 \end{equation}
-The same component-wise extension is applied to the acceleration.  This construction gives the interpolation stencil a boundary-consistent field: constrained components are odd about the prescribed control value, while unconstrained tangential components remain even.
+This construction constrains only the physical Dirichlet components.  Free tangential components are natural/slip degrees of freedom; overwriting them on mass-bearing buffer/control nodes can inject a real tangential impulse.
 
 \begin{lstlisting}[caption={Moving-face enforcement.}]
 for field alpha and boundary node I:
@@ -3013,7 +3013,10 @@ for buffer node G:
   J = reflected interior node
   B = boundary node at same tangential indices
   velocity[G,d] = -velocity[J,d] + 2*velocity[B,d]
-  velocity[G,t] = moving extension if tangential constrained, else even extension
+  if tangential constrained:
+    velocity[G,t] = -velocity[J,t] + 2*velocity[B,t]
+  else:
+    leave velocity[G,t] unchanged
 \end{lstlisting}
 
 \subsection{Boundary contact faces}
@@ -3143,7 +3146,7 @@ When a moving or contact boundary changes a normal nodal velocity, the solver ca
   R_f^{\mathrm{local}} \mathrel{+}= m_{I\alpha}\frac{v_{I\alpha,d}^{\mathrm{bc}}-v_{I\alpha,d}^{\mathrm{old}}}{\Delta t}.
   \label{eq:bc-reaction-momentum}
 \end{equation}
-If \texttt{useInteralForceAsFaceReaction} is enabled, the contribution is instead based on the internal force component,
+If \texttt{useInternalForceAsFaceReaction} is enabled, the contribution is instead based on the internal force component,
 \begin{equation}
   R_f^{\mathrm{local}} \mathrel{-}= f_{I\alpha,d}^{\mathrm{int}}.
   \label{eq:bc-reaction-internal-force}
@@ -3160,7 +3163,7 @@ Higher-order FMPM velocity increments use a homogeneous version of the boundary 
 \begin{equation}
   \Delta v_{G\alpha,d}=-\Delta v_{J(G)\alpha,d},
 \end{equation}
-and transverse increments are either reflected oddly when transverse velocities are prescribed or copied evenly when they are free.  This is the same incremental compatibility idea emphasized by Nairn \cite{nairn2026fmpm}: grid-based velocity constraints and lumped-mass contact operations are applied to each FMPM increment so that the final filtered velocity still satisfies the required constraints.  Therefore, the FMPM restriction should not be read as a general incompatibility with moving velocity boundaries or multi-field material contact.  Those paths use the incremental correction strategy.  The code-status caveat is specifically the \texttt{boundaryConditionTypes == Contact} wall/contact-boundary bctype, which is guarded in the reviewed branch and should be treated as untested until the corresponding verification case is added.
+and transverse increments are either reflected oddly when transverse velocities are prescribed or left unchanged when they are free.  This is the same incremental compatibility idea emphasized by Nairn \cite{nairn2026fmpm}: grid-based velocity constraints and lumped-mass contact operations are applied to each FMPM increment so that the final filtered velocity still satisfies the required constraints.  Therefore, the FMPM restriction should not be read as a general incompatibility with moving velocity boundaries or multi-field material contact.  Those paths use the incremental correction strategy.  The code-status caveat is specifically the \texttt{boundaryConditionTypes == Contact} wall/contact-boundary bctype, which is guarded in the reviewed branch and should be treated as untested until the corresponding verification case is added.
 
 \subsection{Periodic boundaries as topology rather than face constraints}
 \label{subsec:bc-periodic-internals}
@@ -5097,7 +5100,7 @@ pfw["materialPropertyString"] = custom["materialString"]
 \index{solver controls}
 \index{ParticleFileWriter!solver controls}
 \providecommand{\pfwidx}[1]{\index{PFW parameter!#1@\texttt{#1}}}
-\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
+\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
 
 The PFW parameter catalogue in Appendix~\ref{app:pfw} lists all keys discovered in \texttt{particleFileWriter.py}; Appendix~\ref{app:solver-attributes} lists the corresponding solver-side wrappers discovered from \texttt{SolidMechanics\_MPM}.  This section gives copyable solver-control fragments from the verification, validation, and example inputs, but it intentionally avoids re-documenting controls that are treated in detail elsewhere in this chapter.  Geometry construction is described in Sections~\ref{sec:pfw-geometry-objects} and~\ref{sec:pfw-materials}; boundary, F-table, and stress-control inputs are described in Section~\ref{sec:pfw-boundary-controls}; diagnostics are described in Section~\ref{sec:pfw-diagnostics}; and output controls are described in Section~\ref{sec:pfw-output-controls}.  The examples below are therefore fragments to be placed into a complete \texttt{pfw\_input} file after the grid, material, and object definitions have been supplied.
 
@@ -5217,7 +5220,7 @@ If explicit surface normals or positions are requested but the corresponding par
 \index{CPDI!PFW example}
 \index{DFG!PFW example}
 \index{damage!PFW example}
-\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{disableSurfaceNormalsAndPositionsOnCPDIScaling}\pfwidx{plotUnscaledParticles}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{particleFileFields}
+\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{disableSurfaceNormalsAndPositionsOnCPDIScaling}\pfwidx{plotUnscaledParticles}\pfwidx{particleFileFields}
 
 The Brazilian-disk FLIP example is representative of CPDI damage simulations.  CPDI domain scaling improves contact/fracture behavior for distorted domains; DFG contact introduces two fields when the damage-gradient criteria are met; and the neighbor list is typically required by damage models, field-gradient partitioning, or surface reconstruction.
 
@@ -5232,8 +5235,6 @@ pfw["separabilityMinDamage"] = 0.5
 pfw["treatFullyDamagedAsSingleField"] = 1
 pfw["resetDefGradForFullyDamagedParticles"] = 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 1
-pfw["useDamageAsSurfaceFlag"] = 0
-
 # Useful output during development of CPDI scaling and DFG contact.
 pfw["plotUnscaledParticles"] = 1
 pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
@@ -5241,12 +5242,12 @@ pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "RVector"]
 \end{lstlisting}
 
-Set \texttt{useDamageAsSurfaceFlag=1} only when the initial \texttt{Damage} field is intended to seed surface flags.  For many continuum-damage runs, surface flags are painted geometrically while the evolving damage field controls DFG separability.
+Initial surface flags are supplied explicitly through geometry painting or the \texttt{SurfaceFlag} particle-file field.  The evolving damage field still controls DFG separability.
 
 \subsection{Example: notched bar with crack-tip correction controls}
 \index{notched bar!PFW example}
 \index{crack-tip detection!PFW}
-\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{particleFileFields}
+\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{particleFileFields}
 
 The notched-bar verification input constructs an initial notch by painting damage and surface data on particles.  Solver-side crack-tip controls are direct pass-through keys: they are registered by \texttt{SolidMechanics\_MPM} even though they are not part of the older PFW default table.  This is the normal pattern for newly added solver controls.
 
@@ -5262,8 +5263,6 @@ pfw["useCrackTipDetection"] = 1
 pfw["crackTipDetectionThreshold"] = 0.75
 pfw["surfaceQualityThreshold"] = 0.2
 pfw["thinFeatureDFGThreshold"] = 1.5
-pfw["useDamageAsSurfaceFlag"] = 1
-
 pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "SurfaceFlag", "Damage", "StrengthScale",
                              "RVector", "SurfaceNormal", "SurfacePosition"]
@@ -5417,7 +5416,7 @@ Single-field contact & \texttt{damageFieldPartitioning=0}, same object \texttt{g
 Group contact and friction & \texttt{frictionCoefficient}, \texttt{frictionCoefficientTable}, \texttt{frictionCoefficientRuleOfMixtures} & Two-material friction example\\
 Contact normals and gap closure & \texttt{contactGapCorrection}, \texttt{contactNormalType}, \texttt{contactNormalExponent}, \texttt{useSurfacePositionForContact}, \texttt{explicitSurfaceNormalInfluence} & Two-material friction example; B-spline/FMPM example\\
 CPDI and DFG damage & \texttt{cpdiDomainScaling}, \texttt{damageFieldPartitioning}, \texttt{needsNeighborList}, \texttt{separabilityMinDamage}, \texttt{treatFullyDamagedAsSingleField} & CPDI/FLIP damage example\\
-Damage-derived surfaces & \texttt{useDamageAsSurfaceFlag}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
+Painted surface flags & \texttt{particleFileFields}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
 Crack-tip controls & \texttt{useCrackTipDetection}, \texttt{crackTipDetectionThreshold} & Notched-bar example\\
 Logistic-regression surface reconstruction & \texttt{normalAndPositionMethod}, \texttt{maxLRIterations}, \texttt{LRtolerance} & B-spline/FMPM example\\
 Cohesive-zone event controls & \texttt{useEvents}, \texttt{mpmEventsString}, \texttt{cohesiveFieldPartitioning}, \texttt{preventCZInterpenetration} & Cohesive-zone example\\
@@ -5561,7 +5560,7 @@ PFW exposes several lightweight CSV diagnostics that are separate from plot-file
 \toprule
 Diagnostic & Principal PFW controls \\
 \midrule
-Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInteralForceAsFaceReaction} \\
+Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInternalForceAsFaceReaction} \\
 Box averages & \texttt{boxAverageHistory}, \texttt{boxAverageWriteInterval}, \texttt{boxAverageMin}, \texttt{boxAverageMax}, \texttt{boxAverageResizeWithDomain} \\
 Profiles & \texttt{profileHistory}, \texttt{profileDirection}, \texttt{profileVariables}, \texttt{profileNumSlices}, \texttt{profileWriteInterval}, \texttt{profileCycleInterval} \\
 Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVariables}, \texttt{tracerWriteInterval}, \texttt{tracerCycleInterval}, \texttt{tracerOutputPrefix} \\
@@ -5574,7 +5573,7 @@ Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVari
 \subsection{Reaction history}
 \label{subsec:pfw-reaction-history}
 \index{reactionHistory}
-\pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInteralForceAsFaceReaction}
+\pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInternalForceAsFaceReaction}
 
 Boundary reactions are enabled with \texttt{reactionHistory}.  The write cadence is controlled by \texttt{reactionWriteInterval}; if this interval is zero or omitted, the solver can write every step.  The output is \path{reactionHistory.csv}.  Section~\ref{subsec:bc-reactions-internals} describes the internal accumulation algorithm, and Section~\ref{sec:csv-histories} summarizes the reaction file layout and post-processing conventions.
 
@@ -5583,17 +5582,17 @@ pfw["reactionHistory"] = 1
 pfw["reactionWriteInterval"] = stopTime / 1000.0
 
 # Default behavior: reaction comes from the imposed nodal velocity correction.
-pfw["useInteralForceAsFaceReaction"] = 0
+pfw["useInternalForceAsFaceReaction"] = 0
 \end{lstlisting}
 
-The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInteralForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The name preserves the current solver spelling.
+The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInternalForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The spelling matches the current GEOS solver attribute.
 
 \begin{lstlisting}[language=Python,caption={Reaction-history controls using the boundary internal-force component.}]
 pfw["reactionHistory"] = 1
 pfw["reactionWriteInterval"] = stopTime / 2000.0
 
 # Spelling matches the current GEOS solver attribute.
-pfw["useInteralForceAsFaceReaction"] = 1
+pfw["useInternalForceAsFaceReaction"] = 1
 \end{lstlisting}
 
 The internal-force option is a diagnostic correction; it does not change the boundary condition.  An APIC-consistent boundary mapping would address the same issue more directly, because the affine part of the particle velocity field would be represented during the boundary projection rather than being corrected only after the velocity has been mapped to the grid.
@@ -6191,6 +6190,8 @@ Reaction, box-average, profile, and tracer histories are intentionally simple CS
 The reaction file \path{reactionHistory.csv} has the header \texttt{time, F00, F11, F22, length\_x, length\_y, length\_z, Rx-, Rx+, Ry-, Ry+, Rz-, Rz+, L00, L11, L22}.  The reaction columns are integrated face forces in the solver force units.  To compare to a measured or analytical stress, divide the appropriate reaction by the actual material area of the loaded boundary.  The PFW controls that enable this file and select the velocity-correction or internal-force reaction measure are described in Section~\ref{subsec:pfw-reaction-history}.
 
 The box-average file \path{boxAverageHistory.csv} reports volume- or mass-weighted aggregate quantities over the selected averaging box.  Profile files use the pattern \path{profile_<direction>_<variable>.csv}.  Tracer files use the configured \texttt{tracerOutputPrefix} and write \texttt{t,x,y,z} followed by the requested particle fields for the selected particle ID.
+
+When \texttt{logMomentum} is enabled on \texttt{SolidMechanics\_MPM}, the solver writes \path{mpm_momentumHistory.csv}.  The normal solver path writes two rank-zero rows per explicit step: \texttt{Force balance snapshot}, after grid-field synchronization and active-mask construction, and \texttt{End explicit step}, after particle update and cleanup.  The rows include particle momentum and mass, inactive and delete-flagged particle totals, nodal \texttt{gridMomentum}, mass-weighted \texttt{gridVelocity}, \texttt{gridDVelocity}, \texttt{gridVPlus}, active/small-mass internal, external, and contact force sums, nodal mass partitions, and active-mask consistency counts.  Verification scripts should select \texttt{stage == End explicit step} for particle-momentum metrics and \texttt{stage == Force balance snapshot} for grid-force balance plots.  Additional non-production stage rows are reserved for temporary targeted debugging and require explicit code-side calls to \texttt{logMomentumSum}.
 
 """)
 

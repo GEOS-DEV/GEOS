@@ -366,9 +366,15 @@ public:
                       ParticleManager & particleManager,
                       NodeManager & nodeManager );
 
-  void logMomentumSum( std::string label, // For tagging code location of output
+  void logMomentumSum( std::string const & label, // For tagging code location of output
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
+
+  void logMomentumSum( std::string const & label, // For tagging code location of output
+                       ParticleManager & particleManager,
+                       NodeManager & nodeManager,
+                       arrayView3d< real64 const > const diagnosticVelocity,
+                       std::string const & diagnosticVelocityName );
 
   void moveParticleWrappersToHost( ParticleManager & particleManager );
 
@@ -945,40 +951,56 @@ public:
 
   void resizeMappingArrays( ParticleManager & particleManager );
 
-  void populateMappingArraysForActiveParticles( ParticleManager & particleManager,
-                              NodeManager & nodeManager ); //,
-  //  SpatialPartition & partition  );
+  bool populateMappingArraysForActiveParticles( ParticleManager & particleManager,
+                                                NodeManager & nodeManager );
+
+  bool flagParticlesWithBadMappingArraysAndCompactActiveOrdinalState( ParticleManager & particleManager,
+                                                                      stdVector< array1d< int > > & badMappingRows );
+
+  void compactActiveOrdinalMappingArrays( localIndex const subRegionIndex,
+                                          ParticleSubRegion & subRegion,
+                                          arrayView1d< int const > const badMappingRows );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+  void invalidateShapeFunctionRow( localIndex const numberOfMappedNodesPerParticle,
+                                   arraySlice1d< int > const mappedNodes,
+                                   arraySlice1d< real64 > const shapeFunctionValues,
+                                   arraySlice2d< real64 > const shapeFunctionGradientValues );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  bool computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                          arraySlice1d< real64 const > const particlePosition,
                                          arrayView3d< int const > const ijkMap,
                                          real64 const (&xLocalMin)[3],
                                          real64 const (&hEl)[3],
+                                         localIndex const (&nEl)[3],
                                          arraySlice1d< int > const mappedNodes,
                                          arraySlice1d< real64 > const shapeFunctionValues,
                                          arraySlice2d< real64 > const shapeFunctionGradientValues );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+  bool computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                 arraySlice1d< real64 const > const particlePosition,
                                                 arrayView3d< int const > const ijkMap,
                                                 real64 const (&xLocalMin)[3],
                                                 real64 const (&hEl)[3],
+                                                localIndex const (&nEl)[3],
                                                 arraySlice1d< int > const mappedNodes,
                                                 arraySlice1d< real64 > const shapeFunctionValues,
                                                 arraySlice2d< real64 > const shapeFunctionGradientValues );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+  bool computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                   arraySlice1d< real64 const > const particlePosition,
                                   arraySlice2d< real64 const > const particleRVectors,
                                   arrayView3d< int const > const ijkMap,
                                   real64 const (&xLocalMin)[3],
                                   real64 const (&hEl)[3],
+                                  localIndex const (&nEl)[3],
                                   arraySlice1d< int > const mappedNodes,
                                   arraySlice1d< real64 > const shapeFunctionValues,
                                   arraySlice2d< real64 > const shapeFunctionGradientValues );
@@ -1208,6 +1230,7 @@ protected:
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable;
   int m_FSubcycles;
+  int m_flagParticlesWithBadMappingArraysForDeletion;
   array2d< real64 > m_fTable;
   mpm::InterpolationOption m_fTableInterpType;
   int m_generalizedVortexMMS;

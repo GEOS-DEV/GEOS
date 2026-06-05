@@ -161,6 +161,32 @@ gridDamageGradient.  For a larger diagnostic dump, `pfw["siloGridFields"] =
 "all"` expands to the MPM grid fields known to PFW, but this can substantially
 increase plot-file size.
 
+***MPM momentum history and moving-boundary tangential components***
+
+Set:
+
+  pfw["logMomentum"] = 1
+
+to write `mpm_momentumHistory.csv` from `SolidMechanics_MPM`.  The file contains
+two rows per explicit step after `pfw["logStartCycle"]`: a
+`Force balance snapshot` row immediately after grid-field synchronization and
+active-mask construction, and an `End explicit step` row after particle update
+and cleanup.  The rows include particle momentum/mass, inactive-particle
+momentum/mass, grid momentum, mass-weighted grid-velocity momentum, grid
+velocity-increment momentum, internal/external/contact force balances,
+active-mask mismatch counts, and delete-flagged particle counts.  The
+verification-suite post-processors use the force-balance row for grid-force
+plots and the end-of-step row for particle-momentum metrics.  Values greater
+than one are reserved for focused developer diagnostics at explicit call sites;
+production verification inputs should normally use 1.
+
+Moving boundary faces prescribe the normal component of velocity.  Transverse
+components remain free unless the input sets the corresponding
+`enablePrescribedBoundaryTransverseVelocities` flag and supplies values in
+`prescribedBoundaryTransverseVelocities`.  Leaving free tangential components
+unchanged gives a frictionless/free-tangential boundary response and avoids
+artificial tangential impulse from boundary buffer nodes.
+
 ***Lagrangian tracer points***
 
 The MPM solver can write one CSV history file per Lagrangian tracer.  Each tracer

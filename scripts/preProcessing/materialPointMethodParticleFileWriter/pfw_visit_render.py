@@ -54,7 +54,10 @@ def parse_args(argv):
     parser.add_argument("--perspective", action="store_true", help="Enable perspective. Default is off for explicit 2D views")
     parser.add_argument("--colortable", default="hot_desaturated", help="VisIt color table for pseudocolor plots")
     parser.add_argument("--point-size-pixels", type=int, default=5, help="Point size for particle pseudocolor plots")
-    parser.add_argument("--range-mode", choices=("unit", "auto"), default="unit", help="Pseudocolor scaling: unit fixes [0,1], auto uses VisIt/data range")
+    parser.add_argument("--range-mode", choices=("unit", "auto", "explicit"), default="unit", help="Pseudocolor scaling: unit fixes [0,1], auto uses VisIt/data range, explicit uses --color-min/--color-max")
+    parser.add_argument("--color-min", type=float, default=None, help="Explicit pseudocolor minimum; implies --range-mode explicit when paired with --color-max")
+    parser.add_argument("--color-max", type=float, default=None, help="Explicit pseudocolor maximum; implies --range-mode explicit when paired with --color-min")
+    parser.add_argument("--strict-variable", action="store_true", help="Fail instead of falling back to unrelated variables when the requested variable cannot be plotted")
     parser.add_argument("--no-annotations", action="store_true")
     parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=True, help="Add VisIt TimeSlider annotation")
     parser.add_argument("--no-time-slider", dest="time_slider", action="store_false", help="Disable TimeSlider annotation")
@@ -410,12 +413,58 @@ def _component_scalar(scalars, stem, component, field_index=None):
     return _find_best_scalar(scalars, suffixes=tuple(suffixes), contains=(stem,))
 
 
+def _known_component_paths(stem, component, field_index=None):
+    """Likely GEOS/VisIt component variable names for grouped Silo vectors.
+
+    Some VisIt/Silo combinations expose vector components in the plot menu but
+    do not report those leaves through metadata.GetScalars().  In that case a
+    direct expression such as
+    <ParticleRegion1_ParticleDomains_ParticleFields/particleVelocity/x> still
+    plots correctly.  Prefer these deterministic component paths over falling
+    back to damage or material fields when the user requested a velocity.
+    """
+    label = ("x", "y", "z")[component]
+    paths = []
+    if stem == "particleVelocity":
+        paths.extend([
+            "ParticleRegion1_ParticleDomains_ParticleFields/particleVelocity/{0}".format(label),
+            "ParticleRegion1_ParticleDomains_ParticleFields/particleVelocity/{0}".format(component),
+            "particleVelocity/{0}".format(label),
+            "particleVelocity/{0}".format(component),
+        ])
+    elif stem == "gridVelocity":
+        field = 0 if field_index is None else int(field_index)
+        paths.extend([
+            "CellRegion1/gridVelocity/{0}".format(label),
+            "CellRegion1/gridVelocity/{0}".format(component),
+            "gridVelocity/{0}".format(label),
+            "gridVelocity/{0}".format(component),
+            "gridVelocity_{0}_{1}".format(field, component),
+            "gridVelocity_{0}_{1}".format(field, label),
+        ])
+    return paths
+
+
 def _derive_velocity_component(scalars, stem, output_name, component, field_index=None):
     comp = _component_scalar(scalars, stem, component, field_index=field_index)
-    if not comp:
+    candidates = []
+    if comp:
+        candidates.append(comp)
+    for candidate in _known_component_paths(stem, component, field_index=field_index):
+        if candidate not in candidates:
+            candidates.append(candidate)
+    if not candidates:
         print("Could not derive {0}; missing {1} component {2}".format(output_name, stem, component))
         return None
-    return _define_scalar_expression(output_name, _quote_visit_var(comp))
+
+    # Try the best metadata-reported component first.  If metadata omitted the
+    # component, fall back to common GEOS grouped-component paths.  VisIt does not
+    # always validate expression definitions until the plot is added, so the main
+    # candidate loop still controls success/failure.
+    expression = _quote_visit_var(candidates[0])
+    if len(candidates) > 1:
+        print("Velocity component candidates for {0}: {1}".format(output_name, candidates))
+    return _define_scalar_expression(output_name, expression)
 
 
 def _derive_grid_displacement_magnitude(scalars):
@@ -535,7 +584,7 @@ def ordered_scalar_candidates(scalars, requested):
     return candidates
 
 
-def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit"):
+def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
     try:
         PseudocolorAttributes = globals()["PseudocolorAttributes"]
         SetPlotOptions = globals()["SetPlotOptions"]
@@ -556,7 +605,10 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit"):
             attrs.pointSizeVarEnabled = 0
         if hasattr(attrs, "legendFlag"):
             attrs.legendFlag = 1
-        if str(range_mode).lower() == "auto":
+        mode = str(range_mode).lower()
+        if color_min is not None and color_max is not None:
+            mode = "explicit"
+        if mode == "auto":
             if hasattr(attrs, "minFlag"):
                 attrs.minFlag = 0
             if hasattr(attrs, "maxFlag"):
@@ -567,18 +619,18 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit"):
             if hasattr(attrs, "maxFlag"):
                 attrs.maxFlag = 1
             if hasattr(attrs, "min"):
-                attrs.min = 0.0
+                attrs.min = float(color_min) if mode == "explicit" and color_min is not None else 0.0
             if hasattr(attrs, "max"):
-                attrs.max = 1.0
+                attrs.max = float(color_max) if mode == "explicit" and color_max is not None else 1.0
         SetPlotOptions(attrs)
     except Exception as exc:
         print("Could not configure Pseudocolor attributes: {0}".format(exc))
 
 
-def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="unit"):
+def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
     try:
         call_visit("AddPlot", "Pseudocolor", variable)
-        configure_pseudocolor(point_size_pixels, colortable, range_mode)
+        configure_pseudocolor(point_size_pixels, colortable, range_mode, color_min=color_min, color_max=color_max)
         return True
     except Exception as exc:
         print("Could not add Pseudocolor plot for {0}: {1}".format(variable, exc))
@@ -863,6 +915,8 @@ def save_window(output_dir, filename, width, height):
         SetSaveWindowAttributes = getattr(__main__, "SetSaveWindowAttributes")
         SaveWindow = getattr(__main__, "SaveWindow")
     attrs = SaveWindowAttributes()
+    if hasattr(attrs, "outputToCurrentDirectory"):
+        attrs.outputToCurrentDirectory = 0
     attrs.outputDirectory = str(output_dir)
     attrs.fileName = filename
     attrs.family = 0
@@ -942,17 +996,32 @@ def main(argv=None):
     candidates = []
     if derived_variable:
         candidates.append(derived_variable)
-    for candidate in ordered_scalar_candidates(scalars, args.variable):
-        if candidate not in candidates:
-            candidates.append(candidate)
+    if not args.strict_variable:
+        for candidate in ordered_scalar_candidates(scalars, args.variable):
+            if candidate not in candidates:
+                candidates.append(candidate)
+    elif not candidates and args.variable:
+        # A strict requested variable should fail loudly instead of silently
+        # plotting damage or material type.  Add the literal request as a last
+        # chance for exact VisIt variable names supplied by the caller.
+        candidates.append(args.variable)
     print("Scalar candidate order: {0}".format(candidates[:12]))
 
     plotted_variable = None
     for variable in candidates:
-        if try_add_pseudocolor(variable, args.point_size_pixels, args.colortable, args.range_mode):
+        if try_add_pseudocolor(
+            variable,
+            args.point_size_pixels,
+            args.colortable,
+            args.range_mode,
+            color_min=args.color_min,
+            color_max=args.color_max,
+        ):
             plotted_variable = variable
             break
     if plotted_variable is None:
+        if args.strict_variable:
+            raise RuntimeError("Could not create a pseudocolor plot for requested variable {0}".format(args.variable))
         raise RuntimeError("Could not create a pseudocolor plot for any scalar variable candidate")
 
     mesh_variable = choose_mesh(meshes, args.mesh)

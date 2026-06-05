@@ -33,7 +33,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--case-id", default="pbcCompactionMomentumTest")
     parser.add_argument("--python", dest="python_cmd", default=sys.executable)
     parser.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
-    parser.add_argument("--no-visit", action="store_true")
+    parser.add_argument("--no-visit", action="store_true", help="Do not launch VisIt; still include any existing valid velocity PNGs in the LaTeX fragment")
+    parser.add_argument("--rerender-visit", action="store_true", help="Re-render VisIt frames even when matching PNGs already exist")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -109,17 +110,70 @@ def float_value(row: dict[str, str], key: str, default: float = 0.0) -> float:
         return default
 
 
-def read_momentum_csv(path: Path) -> list[dict[str, float]]:
-    rows: list[dict[str, float]] = []
+TEXT_MOMENTUM_COLUMNS = {"stage", "diagnostic_velocity_field"}
+FORCE_BALANCE_STAGES = {"Force balance snapshot", "10b. After active grid-field mask update"}
+END_STEP_STAGE = "End explicit step"
+
+
+def read_momentum_csv(path: Path) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
             return rows
         for raw in reader:
-            row = {key: float_value(raw, key, 0.0) for key in reader.fieldnames}
+            row: dict[str, object] = {}
+            for key in reader.fieldnames:
+                if key in TEXT_MOMENTUM_COLUMNS:
+                    row[key] = raw.get(key, "")
+                else:
+                    row[key] = float_value(raw, key, 0.0)
             row["cycle"] = int(float_value(raw, "cycle", len(rows)))
             rows.append(row)
     return rows
+
+
+def metric_rows(history: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Rows used for production momentum metrics.
+
+    New momentum ledgers carry a string stage column.  Use only the end-of-step
+    rows for the reported particle momentum.  Legacy CSV files do not have a
+    stage column and are already one-row-per-step, so keep them as-is.
+    """
+    if not history or "stage" not in history[0]:
+        return history
+    selected = [row for row in history if str(row.get("stage", "")) == END_STEP_STAGE]
+    return selected if selected else history
+
+
+def force_balance_rows(history: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Rows where the grid internal-force balance is meaningful.
+
+    The end-of-step particle momentum is meaningful after grid cleanup and
+    constitutive updates, but the grid force arrays are not a force-balance
+    snapshot at that point.  When a stage ledger is available, use the single
+    synchronized force-assembly snapshot.  Legacy one-row-per-step CSV files did
+    not carry a stage column and are treated as force-balance rows.
+    """
+    if not history:
+        return []
+    if "stage" not in history[0]:
+        return history
+    return [row for row in history if str(row.get("stage", "")) in FORCE_BALANCE_STAGES]
+
+
+def row_float(row: dict[str, object], key: str, default: float = 0.0) -> float:
+    value = row.get(key, default)
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def internal_force_total_x(row: dict[str, object]) -> float:
+    if "nodal_internal_force_all_x" in row:
+        return row_float(row, "nodal_internal_force_all_x", 0.0)
+    return row_float(row, "nodal_internal_force_active_x", row_float(row, "nodal_internal_force_x", 0.0)) + row_float(row, "nodal_internal_force_small_mass_x", 0.0)
 
 
 def parse_log_momentum(run_dir: Path) -> list[dict[str, float]]:
@@ -164,14 +218,14 @@ def parse_log_momentum(run_dir: Path) -> list[dict[str, float]]:
     return rows
 
 
-def summarize(history: list[dict[str, float]]) -> dict[str, float]:
+def summarize(history: list[dict[str, object]], force_history: list[dict[str, object]] | None = None) -> dict[str, float]:
     if not history:
         return {"num_rows": 0}
-    px = [row.get("particle_momentum_x", 0.0) for row in history]
-    times = [row.get("time", float(i)) for i, row in enumerate(history)]
-    small_fx = [row.get("nodal_internal_force_small_mass_x", 0.0) for row in history]
-    active_fx = [row.get("nodal_internal_force_active_x", row.get("nodal_internal_force_x", 0.0)) for row in history]
-    total_fx = [a + b for a, b in zip(active_fx, small_fx)]
+    px = [row_float(row, "particle_momentum_x", 0.0) for row in history]
+    times = [row_float(row, "time", float(i)) for i, row in enumerate(history)]
+    force_rows_for_summary = force_history or []
+    small_fx = [row_float(row, "nodal_internal_force_small_mass_x", 0.0) for row in force_rows_for_summary]
+    total_fx = [internal_force_total_x(row) for row in force_rows_for_summary]
     return {
         "num_rows": len(history),
         "initial_time": times[0],
@@ -201,11 +255,15 @@ def collect_results(source_dir: Path, output_dir: Path, case_id: str) -> list[di
         csv_path = find_momentum_csv(run_dir)
         try:
             if csv_path:
-                history = read_momentum_csv(csv_path)
+                raw_history = read_momentum_csv(csv_path)
             else:
-                history = parse_log_momentum(run_dir)
+                raw_history = parse_log_momentum(run_dir)
+            history = metric_rows(raw_history)
+            force_history = force_balance_rows(raw_history)
             result["history"] = history
-            result["summary"] = summarize(history)
+            result["force_history"] = force_history
+            result["raw_history_rows"] = len(raw_history)
+            result["summary"] = summarize(history, force_history)
             if csv_path:
                 result["momentum_csv"] = str(csv_path)
             elif history:
@@ -225,6 +283,8 @@ def write_combined_csv(output_dir: Path, results: list[dict]) -> None:
         "cycle",
         "time",
         "dt",
+        "stage",
+        "diagnostic_velocity_field",
         "particle_momentum_x",
         "particle_momentum_y",
         "particle_momentum_z",
@@ -243,6 +303,11 @@ def write_combined_csv(output_dir: Path, results: list[dict]) -> None:
         "nodal_internal_force_small_mass_x",
         "nodal_internal_force_small_mass_y",
         "nodal_internal_force_small_mass_z",
+        "nodal_internal_force_all_x",
+        "nodal_internal_force_all_y",
+        "nodal_internal_force_all_z",
+        "nodal_external_force_all_x",
+        "nodal_contact_force_all_x",
         "nodal_mass",
     ]
     with (output_dir / "pbc_compaction_momentum_history.csv").open("w", newline="") as handle:
@@ -267,8 +332,8 @@ def make_plots(output_dir: Path, results: list[dict]) -> None:
         if not history:
             continue
         any_data = True
-        times = [row.get("time", float(i)) for i, row in enumerate(history)]
-        px = [row.get("particle_momentum_x", 0.0) for row in history]
+        times = [row_float(row, "time", float(i)) for i, row in enumerate(history)]
+        px = [row_float(row, "particle_momentum_x", 0.0) for row in history]
         ax.plot(times, px, label=result["label"])
     if any_data:
         ax.axhline(0.0, linewidth=0.8)
@@ -284,16 +349,16 @@ def make_plots(output_dir: Path, results: list[dict]) -> None:
     fig, ax = plt.subplots(figsize=(6.8, 4.4))
     any_data = False
     for result in results:
-        history = result.get("history", [])
+        history = result.get("force_history", [])
         if not history:
             continue
         any_data = True
-        times = [row.get("time", float(i)) for i, row in enumerate(history)]
-        active = [row.get("nodal_internal_force_active_x", row.get("nodal_internal_force_x", 0.0)) for row in history]
-        small = [row.get("nodal_internal_force_small_mass_x", 0.0) for row in history]
-        total = [a + s for a, s in zip(active, small)]
+        times = [row_float(row, "time", float(i)) for i, row in enumerate(history)]
+        small = [row_float(row, "nodal_internal_force_small_mass_x", 0.0) for row in history]
+        total = [internal_force_total_x(row) for row in history]
         ax.plot(times, total, label=result["label"] + " total")
         ax.plot(times, small, linestyle="--", label=result["label"] + " small-mass")
+    force_plot = output_dir / "pbc_compaction_internal_force_balance.png"
     if any_data:
         ax.axhline(0.0, linewidth=0.8)
         ax.set_xlabel("time")
@@ -302,7 +367,11 @@ def make_plots(output_dir: Path, results: list[dict]) -> None:
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.25)
         fig.tight_layout()
-        fig.savefig(output_dir / "pbc_compaction_internal_force_balance.png", dpi=180)
+        fig.savefig(force_plot, dpi=180)
+    elif force_plot.is_file():
+        # Avoid carrying a stale force-balance plot from an older diagnostic run
+        # into a report generated from a production end-of-step-only CSV.
+        force_plot.unlink()
     plt.close(fig)
 
 
@@ -320,7 +389,86 @@ def find_visit_command(explicit: str) -> str:
     return shutil.which("visit") or ""
 
 
+def frame_state_label(path: Path) -> str:
+    name = path.stem.lower()
+    for label in ("initial", "quarter", "middle", "threequarter", "final"):
+        if f"_{label}_" in name or name.endswith(f"_{label}"):
+            return label
+    return ""
+
+
+def is_valid_particle_velocity_frame(path: Path) -> bool:
+    stem = path.stem.lower()
+    # The old renderer fell back to particleDamage while the case-name still
+    # contained particleVelocityX.  Do not include those misleading images in
+    # the verification report.
+    return "particlevelocityx" in stem and "particledamage" not in stem
+
+
+def existing_particle_velocity_frames(output_dir: Path, source_dir: Path, variant_name: str) -> list[Path]:
+    search_roots = [output_dir / "visit_frames" / variant_name, source_dir / "visit_frames" / variant_name, source_dir]
+    frames: list[Path] = []
+    seen: set[Path] = set()
+    for root in search_roots:
+        if not root.is_dir():
+            continue
+        for png in sorted(root.rglob("*.png")):
+            try:
+                resolved = png.resolve()
+            except Exception:
+                resolved = png
+            if resolved in seen:
+                continue
+            if variant_name.lower() not in png.name.lower():
+                continue
+            if is_valid_particle_velocity_frame(png):
+                frames.append(png)
+                seen.add(resolved)
+    return frames
+
+
+def copy_existing_particle_velocity_frames(source_dir: Path, output_dir: Path, results: list[dict]) -> None:
+    """Copy already-rendered valid particle-x-velocity frames into output/visit_frames.
+
+    Older versions of pfw_visit_render.py left VisIt's outputToCurrentDirectory
+    flag enabled, so SaveWindow wrote PNGs into the case source folder even when
+    --output-dir was supplied.  Keep those frames usable without requiring a
+    rerender, but deliberately ignore the known bad
+    particleVelocityX_*_particleDamage.png fallback images.
+    """
+    for result in results:
+        variant_name = result["name"]
+        frame_dir = output_dir / "visit_frames" / variant_name
+        frame_dir.mkdir(parents=True, exist_ok=True)
+        for png in existing_particle_velocity_frames(output_dir, source_dir, variant_name):
+            try:
+                if png.parent.resolve() == frame_dir.resolve():
+                    continue
+            except Exception:
+                pass
+            target = frame_dir / png.name
+            if not target.is_file():
+                shutil.copy2(png, target)
+
+
+def particle_velocity_frames_for_report(output_dir: Path, variant_name: str) -> dict[str, Path]:
+    frame_dir = output_dir / "visit_frames" / variant_name
+    out: dict[str, Path] = {}
+    if not frame_dir.is_dir():
+        return out
+    for png in sorted(frame_dir.rglob("*.png")):
+        if variant_name.lower() not in png.name.lower():
+            continue
+        if not is_valid_particle_velocity_frame(png):
+            continue
+        state = frame_state_label(png)
+        if state and state not in out:
+            out[state] = png
+    return out
+
+
 def run_visit_render(args: argparse.Namespace, source_dir: Path, output_dir: Path, results: list[dict]) -> None:
+    copy_existing_particle_velocity_frames(source_dir, output_dir, results)
     if args.no_visit:
         return
     visit_cmd = find_visit_command(args.visit_cmd)
@@ -335,35 +483,54 @@ def run_visit_render(args: argparse.Namespace, source_dir: Path, output_dir: Pat
         run_dir = Path(run_dir_text)
         frame_dir = output_dir / "visit_frames" / result["name"]
         frame_dir.mkdir(parents=True, exist_ok=True)
-        for variable in ("particleVelocityX", "gridVelocityX"):
-            cmd = [
-                visit_cmd,
-                "-nowin",
-                "-cli",
-                "-s",
-                str(script),
-                "--run-dir",
-                str(run_dir),
-                "--output-dir",
-                str(frame_dir),
-                "--case-name",
-                f"{result['case_name']}_{variable}",
-                "--variable",
-                variable,
-                "--states",
-                "initial,quarter,middle,threequarter,final",
-                "--view",
-                "xy",
-                "--range-mode",
-                "auto",
-            ]
-            proc = subprocess.run(cmd, cwd=source_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            log_path = output_dir / f"visit_{result['name']}_{variable}.log"
-            log_path.write_text(proc.stdout)
-            if proc.returncode != 0:
-                print(f"VisIt render failed for {result['name']} {variable}; see {log_path}")
-            else:
-                print(f"VisIt render complete for {result['name']} {variable}")
+        variable = "particleVelocityX"
+        existing = particle_velocity_frames_for_report(output_dir, result["name"])
+        if {"middle", "final"}.issubset(existing.keys()) and not args.rerender_visit:
+            print(
+                f"Using existing particle x-velocity frames for {result['name']}; "
+                "pass --rerender-visit to regenerate."
+            )
+            continue
+        cmd = [
+            visit_cmd,
+            "-nowin",
+            "-cli",
+            "-s",
+            str(script),
+            "--run-dir",
+            str(run_dir),
+            "--output-dir",
+            str(frame_dir),
+            "--case-name",
+            f"{result['case_name']}_{variable}",
+            "--variable",
+            variable,
+            "--strict-variable",
+            "--states",
+            "initial,middle,final",
+            "--view",
+            "xy",
+            "--width",
+            "1024",
+            "--height",
+            "1024",
+            "--range-mode",
+            "explicit",
+            "--color-min",
+            "-0.05",
+            "--color-max",
+            "0.05",
+        ]
+        proc = subprocess.run(cmd, cwd=source_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        log_path = output_dir / f"visit_{result['name']}_{variable}.log"
+        log_path.write_text(proc.stdout)
+        # Copy frames again to catch older VisIt builds that ignored
+        # outputDirectory and saved into cwd despite the renderer request.
+        copy_existing_particle_velocity_frames(source_dir, output_dir, [result])
+        if proc.returncode != 0:
+            print(f"VisIt render failed for {result['name']} {variable}; see {log_path}")
+        else:
+            print(f"VisIt render complete for {result['name']} {variable}")
 
 
 def write_summary(output_dir: Path, results: list[dict]) -> None:
@@ -425,25 +592,57 @@ def write_latex(output_dir: Path, results: list[dict]) -> None:
             r"\begin{figure}[htbp]",
             r"\centering",
             r"\includegraphics[width=0.72\textwidth]{\CaseOutputDir/pbc_compaction_internal_force_balance.png}",
-            r"\caption{Global x-component of the nodal internal-force balance, including the contribution carried by small-mass nodes.}",
+            r"\caption{Global x-component of the nodal internal-force balance at the synchronized force-assembly snapshot, including the contribution carried by small-mass nodes.}",
             r"\end{figure}",
             r"",
         ]
-    frame_root = output_dir / "visit_frames"
-    if frame_root.is_dir():
-        pngs = sorted(frame_root.glob("*/*.png"))[:12]
-        if pngs:
-            lines += [r"\paragraph{VisIt x-velocity frames.}"]
-            for png in pngs:
-                try:
-                    rel = png.relative_to(output_dir)
-                except ValueError:
-                    continue
-                lines += [
-                    r"\begin{center}",
-                    r"\includegraphics[width=0.45\textwidth]{\CaseOutputDir/" + str(rel).replace("\\", "/") + r"}",
-                    r"\end{center}",
-                ]
+    else:
+        lines += [
+            r"\paragraph{Internal-force balance snapshot.}",
+            r"No synchronized force-assembly snapshot was available in the momentum-history CSV. The production end-of-step momentum rows remain valid for the conservation metric, but the grid force arrays are not plotted after grid cleanup because they no longer represent a force-balance snapshot.",
+            r"",
+        ]
+    # Include a compact 2x2 panel: elastic/plastic by half-time/final.
+    # These are particle x-velocity pseudocolor plots overlaid on the background
+    # grid; initial frames are usually nearly uniform and are omitted from the
+    # report to keep the suite section concise.
+    selected_frames = []
+    for result in results:
+        by_state = particle_velocity_frames_for_report(output_dir, result["name"])
+        for state, label in (("middle", r"$t \approx T/2$"), ("final", r"$t=T$")):
+            frame = by_state.get(state)
+            if frame is not None:
+                selected_frames.append((result["label"], label, frame))
+    if selected_frames:
+        lines += [
+            r"\begin{figure}[htbp]",
+            r"\centering",
+        ]
+        for idx, (variant_label, state_label, frame) in enumerate(selected_frames):
+            try:
+                rel = frame.relative_to(output_dir)
+            except ValueError:
+                continue
+            if idx > 0 and idx % 2 == 0:
+                lines.append(r"\par\vspace{0.5em}")
+            lines += [
+                r"\begin{minipage}{0.48\textwidth}",
+                r"\centering",
+                r"\includegraphics[width=\linewidth]{\CaseOutputDir/" + str(rel).replace("\\", "/") + r"}",
+                r"\par\small " + latex_escape(variant_label) + r", " + state_label,
+                r"\end{minipage}" + (r"\hfill" if idx % 2 == 0 else ""),
+            ]
+        lines += [
+            r"\caption{Particle x-velocity contours overlaid on the background grid for the PBC compaction momentum test.  The physically expected total x-momentum is zero, so these frames visualize local transverse velocity while the momentum plot quantifies the global conservation error.}",
+            r"\end{figure}",
+            r"",
+        ]
+    else:
+        lines += [
+            r"\paragraph{VisIt x-velocity frames.}",
+            r"No valid particle x-velocity frames were found in \texttt{\CaseOutputDir/visit\_frames}.  Re-run the post-processor with VisIt enabled, for example \texttt{--visit-cmd visit --rerender-visit}.",
+            r"",
+        ]
     (output_dir / "pbc_compaction_results.tex").write_text("\n".join(lines) + "\n")
 
 

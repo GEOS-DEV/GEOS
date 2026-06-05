@@ -609,6 +609,7 @@ parameters = {
                'frictionCoefficientTable': ( None, True ),  # MPM: friction coefficients by contact group.
                'frictionCoefficientRuleOfMixtures': ( None, True ),  # MPM: rule of mixtures for friction coefficient.
                'FSubcycles': ( None, True ),  # MPM: deformation-gradient integration subcycles.
+               'flagParticlesWithBadMappingArraysForDeletion': ( None, True ),  # MPM: delete/compact particles whose map stencils are out of bounds.
                'fTable': ( None, True ),  # MPM: time-dependent global stretch/deformation table.
                'fTableInterpType': ( None, True ),  # MPM: interpolation type for fTable.
                'generalizedVortexMMS': ( None, True ),  # MPM: generalized-vortex MMS option.

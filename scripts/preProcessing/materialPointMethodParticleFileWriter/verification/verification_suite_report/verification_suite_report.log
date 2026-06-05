@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  4 JUN 2026 10:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  5 JUN 2026 12:21
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -631,26 +631,86 @@ on_internal_force_balance.png>
 Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
 tumTest/pbc_compaction_internal_force_balance.png  used on input line 23.
 (pdftex.def)             Requested size: 385.05489pt x 249.16502pt.
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames/ela
+stic/pbcCompactionMomentum_elastic_particleVelocityX_middle_particleVelocityX.p
+ng, id=71, 1027.84pt x 1027.84pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frame
+s/elastic/pbcCompactionMomentum_elastic_particleVelocityX_middle_particleVeloci
+tyX.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames
+/elastic/pbcCompactionMomentum_elastic_particleVelocityX_middle_particleVelocit
+yX.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/visit_frames/elastic/pbcCompactionMomentum_elastic_particleVelocityX_mi
+ddle_particleVelocityX.png  used on input line 31.
+(pdftex.def)             Requested size: 256.70053pt x 256.69275pt.
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames/ela
+stic/pbcCompactionMomentum_elastic_particleVelocityX_final_particleVelocityX.pn
+g, id=72, 1027.84pt x 1027.84pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frame
+s/elastic/pbcCompactionMomentum_elastic_particleVelocityX_final_particleVelocit
+yX.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames
+/elastic/pbcCompactionMomentum_elastic_particleVelocityX_final_particleVelocity
+X.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/visit_frames/elastic/pbcCompactionMomentum_elastic_particleVelocityX_fi
+nal_particleVelocityX.png  used on input line 36.
+(pdftex.def)             Requested size: 256.70053pt x 256.69275pt.
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames/pla
+stic/pbcCompactionMomentum_plastic_particleVelocityX_middle_particleVelocityX.p
+ng, id=73, 1027.84pt x 1027.84pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frame
+s/plastic/pbcCompactionMomentum_plastic_particleVelocityX_middle_particleVeloci
+tyX.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames
+/plastic/pbcCompactionMomentum_plastic_particleVelocityX_middle_particleVelocit
+yX.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/visit_frames/plastic/pbcCompactionMomentum_plastic_particleVelocityX_mi
+ddle_particleVelocityX.png  used on input line 42.
+(pdftex.def)             Requested size: 256.70053pt x 256.69275pt.
+<../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames/pla
+stic/pbcCompactionMomentum_plastic_particleVelocityX_final_particleVelocityX.pn
+g, id=74, 1027.84pt x 1027.84pt>
+File: ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frame
+s/plastic/pbcCompactionMomentum_plastic_particleVelocityX_final_particleVelocit
+yX.png Graphic file (type png)
+<use ../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames
+/plastic/pbcCompactionMomentum_plastic_particleVelocityX_final_particleVelocity
+X.png>
+Package pdftex.def Info: ../pbcCompactionMomentumTest/output/pbcCompactionMomen
+tumTest/visit_frames/plastic/pbcCompactionMomentum_plastic_particleVelocityX_fi
+nal_particleVelocityX.png  used on input line 47.
+(pdftex.def)             Requested size: 256.70053pt x 256.69275pt.
 )) [6
 
  <../pbcCompactionMomentumTest/setup_compaction.png (PNG copy)> <../pbcCompacti
 onMomentumTest/expected_deformation_elastic.png (PNG copy)>]
 [7 <../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/pbc_compactio
 n_total_x_momentum.png> <../pbcCompactionMomentumTest/output/pbcCompactionMomen
-tumTest/pbc_compaction_internal_force_balance.png>]
-(./verification_suite_report.aux)
+tumTest/pbc_compaction_internal_force_balance.png>] [8 <../pbcCompactionMomentu
+mTest/output/pbcCompactionMomentumTest/visit_frames/elastic/pbcCompactionMoment
+um_elastic_particleVelocityX_middle_particleVelocityX.png (PNG copy)> <../pbcCo
+mpactionMomentumTest/output/pbcCompactionMomentumTest/visit_frames/elastic/pbcC
+ompactionMomentum_elastic_particleVelocityX_final_particleVelocityX.png (PNG co
+py)> <../pbcCompactionMomentumTest/output/pbcCompactionMomentumTest/visit_frame
+s/plastic/pbcCompactionMomentum_plastic_particleVelocityX_middle_particleVeloci
+tyX.png (PNG copy)> <../pbcCompactionMomentumTest/output/pbcCompactionMomentumT
+est/visit_frames/plastic/pbcCompactionMomentum_plastic_particleVelocityX_final_
+particleVelocityX.png (PNG copy)>] (./verification_suite_report.aux)
 Package rerunfilecheck Info: File `verification_suite_report.out' has not chang
 ed.
 (rerunfilecheck)             Checksum: 3B348473FE97070840B7E0C9CDD02426;875.
  ) 
 Here is how much of TeX's memory you used:
- 11796 strings out of 478268
- 196314 string characters out of 5754030
- 483239 words of memory out of 5000000
- 29822 multiletter control sequences out of 15000+600000
- 475276 words of font info for 50 fonts, out of 8000000 for 9000
+ 11834 strings out of 478268
+ 200781 string characters out of 5754030
+ 485239 words of memory out of 5000000
+ 29849 multiletter control sequences out of 15000+600000
+ 476114 words of font info for 53 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,8n,63p,632b,1067s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 60i,8n,63p,694b,1067s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022032
 1-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cm
 bx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
@@ -663,24 +723,30 @@ public/amsfonts/cm/cmmi10.pfb></usr/tce/backend/installations/linux-rhel8-x86_6
 4/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts
 /type1/public/amsfonts/cm/cmmi7.pfb></usr/tce/backend/installations/linux-rhel8
 -x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/tce/backend/installations/linux
+/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/tce/backend/installations/linux
 -rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/tce/backend/installations
+f-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/tce/backend/installations
 /linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6i
-j/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/tce/backend/install
+j/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/tce/backend/install
 ations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspb
-coex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/tce/backend/in
-stallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzst
-anspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/tce/bac
-kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
-fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/
-tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
-j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
-
-Output written on verification_suite_report.pdf (7 pages, 598547 bytes).
+coex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/tce/backend/i
+nstallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzs
+tanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/tce/back
+end/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmf
+yzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/tce
+/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
+r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></
+usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5d
+vbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.
+pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220
+321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texliv
+e-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmtt9.pfb>
+Output written on verification_suite_report.pdf (8 pages, 1015970 bytes).
 PDF statistics:
- 151 PDF objects out of 1000 (max. 8388607)
- 110 compressed objects within 2 object streams
- 26 named destinations out of 1000 (max. 500000)
- 61 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 175 PDF objects out of 1000 (max. 8388607)
+ 123 compressed objects within 2 object streams
+ 28 named destinations out of 1000 (max. 500000)
+ 81 words of extra memory for PDF output out of 10000 (max. 10000000)
 
