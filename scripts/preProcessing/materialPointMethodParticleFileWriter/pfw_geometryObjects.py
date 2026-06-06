@@ -11097,3 +11097,601 @@ class difference(SetOperation):
 # ===========================================
 # END SET OPERATIONS
 # ===========================================
+
+# ============================================================================
+# Graphite validation granular compact geometry helpers
+# ============================================================================
+# These objects are intentionally self contained PFW geometry objects.  They are
+# used by the graphite validation suite and can also be used by other PFW inputs.
+
+
+def _gv_unit(v, fallback=None):
+  v = np.asarray(v, dtype=float)
+  n = float(np.linalg.norm(v))
+  if n <= 1.0e-30:
+    if fallback is None:
+      return np.array([1.0, 0.0, 0.0], dtype=float)
+    return np.asarray(fallback, dtype=float)
+  return v / n
+
+
+def _gv_basis_from_primary(d):
+  d = _gv_unit(d, np.array([1.0, 0.0, 0.0]))
+  trial = np.array([0.0, 0.0, 1.0], dtype=float)
+  if abs(float(np.dot(d, trial))) > 0.90:
+    trial = np.array([0.0, 1.0, 0.0], dtype=float)
+  e2 = _gv_unit(np.cross(trial, d), np.array([0.0, 1.0, 0.0]))
+  e3 = _gv_unit(np.cross(d, e2), np.array([0.0, 0.0, 1.0]))
+  return np.vstack((d, e2, e3))
+
+
+def _gv_polygon_area_3d(vertices):
+  pts = np.asarray(vertices, dtype=float)
+  if pts.ndim != 2 or pts.shape[0] < 3:
+    return 0.0
+  c = np.mean(pts, axis=0)
+  area = 0.0
+  for i in range(pts.shape[0]):
+    a = pts[i] - c
+    b = pts[(i + 1) % pts.shape[0]] - c
+    area += 0.5 * float(np.linalg.norm(np.cross(a, b)))
+  return max(0.0, area)
+
+
+def _gv_hash_to_unit(seed_tuple):
+  h = 1469598103934665603
+  for value in seed_tuple:
+    iv = int(value) & 0xffffffffffffffff
+    h ^= iv
+    h = (h * 1099511628211) & 0xffffffffffffffff
+  return (h % 1000003) / 1000003.0
+
+
+class curvedBrazilPlaten:
+  """Rigid curved platen for a Brazilian splitting test.
+
+  The platen is extruded in z.  In the x-y section its contact surface is a
+  circular arc.  ``upper=True`` creates the upper platen; ``upper=False`` creates
+  the lower mirror image.
+  """
+
+  def __init__(self, name, upper, contact_y, thickness, half_width, curvature_radius,
+               zmin, zmax, vel=[0.0, 0.0, 0.0], mat=_defaultMat,
+               group=_defaultGroup, particleType=_defaultParticleType):
+    self.name = name
+    self.upper = bool(upper)
+    self.contact_y = float(contact_y)
+    self.thickness = float(thickness)
+    self.half_width = float(half_width)
+    self.curvature_radius = float(max(curvature_radius, 1.001 * self.half_width))
+    self.zmin = float(zmin)
+    self.zmax = float(zmax)
+    self.vel = np.asarray(vel, dtype=float)
+    self.mat = int(mat)
+    self.group = int(group)
+    self.particleType = int(particleType)
+    self.damage = _defaultDamage
+    self.strengthScale = _defaultStrengthScale
+    if self.thickness <= 0.0:
+      raise ValueError('curvedBrazilPlaten thickness must be positive')
+    if self.half_width <= 0.0:
+      raise ValueError('curvedBrazilPlaten half_width must be positive')
+
+  def _surface_y_positive(self, x):
+    xclip = max(-0.999 * self.curvature_radius, min(0.999 * self.curvature_radius, float(x)))
+    return self.contact_y + math.sqrt(max(0.0, self.curvature_radius * self.curvature_radius - xclip * xclip)) - self.curvature_radius
+
+  def _surface_slope_positive(self, x):
+    xclip = max(-0.999 * self.curvature_radius, min(0.999 * self.curvature_radius, float(x)))
+    denom = math.sqrt(max(1.0e-30, self.curvature_radius * self.curvature_radius - xclip * xclip))
+    return -xclip / denom
+
+  def _distances_normals(self, pt):
+    x, y, z = [float(v) for v in np.asarray(pt[:3], dtype=float)]
+    sx = self._surface_y_positive(x)
+    dsdx = self._surface_slope_positive(x)
+    out = []
+    if self.upper:
+      out.append((y - sx, _gv_unit(np.array([dsdx, -1.0, 0.0]))))
+      out.append(((self.contact_y + self.thickness) - y, np.array([0.0, 1.0, 0.0])))
+    else:
+      out.append((-y - sx, _gv_unit(np.array([-dsdx, 1.0, 0.0]))))
+      out.append((y - (-self.contact_y - self.thickness), np.array([0.0, -1.0, 0.0])))
+    out.append((self.half_width - abs(x), np.array([1.0 if x >= 0.0 else -1.0, 0.0, 0.0])))
+    out.append((z - self.zmin, np.array([0.0, 0.0, -1.0])))
+    out.append((self.zmax - z, np.array([0.0, 0.0, 1.0])))
+    return out
+
+  def isInterior(self, pt, skinDepth):
+    x, y, z = [float(v) for v in np.asarray(pt[:3], dtype=float)]
+    if abs(x) > self.half_width or z < self.zmin or z > self.zmax:
+      return -1
+    sy = self._surface_y_positive(x)
+    if self.upper:
+      inside = (y >= sy) and (y <= self.contact_y + self.thickness)
+    else:
+      inside = (y <= -sy) and (y >= -self.contact_y - self.thickness)
+    if not inside:
+      return -1
+    skin = float(max(0.0, skinDepth))
+    for dist, _ in self._distances_normals(pt):
+      if dist <= skin:
+        return 2
+    return 0
+
+  def getSurfaceNormal(self, pt):
+    d = self._distances_normals(pt)
+    i = int(np.argmin([abs(v[0]) for v in d]))
+    return d[i][1]
+
+  def getSurfacePosition(self, pt):
+    d = self._distances_normals(pt)
+    i = int(np.argmin([abs(v[0]) for v in d]))
+    return d[i][0] * d[i][1]
+
+  def getCZTag(self, pt): return 0
+  def getMat(self, pt): return self.mat
+  def getGroup(self, pt): return self.group
+  def getVelocity(self, pt): return self.vel
+  def getMatDir(self, pt): return _gv_basis_from_primary(np.array([0.0, 1.0 if self.upper else -1.0, 0.0]))
+  def getStrengthScale(self, pt): return self.strengthScale
+  def getDamage(self, pt): return self.damage
+  def getSubregions(self): return [(self.mat, self.particleType)]
+  def xMin(self): return -self.half_width
+  def xMax(self): return self.half_width
+  def yMin(self):
+    if self.upper:
+      return self.contact_y - self.half_width * self.half_width / max(2.0 * self.curvature_radius, 1.0e-30)
+    return -self.contact_y - self.thickness
+  def yMax(self):
+    if self.upper:
+      return self.contact_y + self.thickness
+    return -self.contact_y + self.half_width * self.half_width / max(2.0 * self.curvature_radius, 1.0e-30)
+  def zMin(self): return self.zmin
+  def zMax(self): return self.zmax
+
+
+class granularCompactVoronoiWrapper(BaseWrapper):
+  """General 3-D granular compact wrapper based on a Voronoi tessellation.
+
+  ``subObject`` defines the external compact geometry.  Seed points are generated
+  with a packed-bed-like jittered lattice.  Each seed is assigned one material
+  family from ``materialSpecs`` or void.  A material spec may be repeated to
+  represent a multimodal distribution.  Example material spec::
+
+    {'mat': 0, 'volumeFraction': 0.45, 'meanDiameter': 1.0,
+     'stddev': 0.1, 'microPorosity': 0.05, 'microPoreSize': 0.1}
+
+  The remaining volume fraction is macro porosity.  Internal mating faces are
+  randomly assigned according to ``interfaceSpecs`` by estimated Voronoi face
+  area.  Interface specs with a positive ``tag`` are treated as CZ faces.  Specs
+  with ``kind='single_field'`` are treated as continuous field, and any remaining
+  area is DFG frictional contact.
+  """
+
+  def __init__(self, name, subObject, materialSpecs, interfaceSpecs=None, seed=1,
+               strengthScaleMode='none', weibullModulus=10.0,
+               weibullReferenceVolume=1.0, weibullLayerThickness=None,
+               weibullCellSize=None, contactGroupColors=48,
+               skinPriorityTolerance=1.0e-12):
+    super().__init__(name, subObject)
+    self.materialSpecs = [dict(s) for s in materialSpecs]
+    if len(self.materialSpecs) == 0:
+      raise ValueError('granularCompactVoronoiWrapper requires at least one material spec')
+    self.interfaceSpecs = [dict(s) for s in (interfaceSpecs or [])]
+    self.seed = int(seed)
+    self.rng = np.random.default_rng(self.seed)
+    self.strengthScaleMode = str(strengthScaleMode)
+    self.weibullModulus = float(weibullModulus)
+    self.weibullReferenceVolume = float(weibullReferenceVolume)
+    self.weibullLayerThickness = weibullLayerThickness
+    self.weibullCellSize = weibullCellSize
+    self.contactGroupColors = max(1, int(contactGroupColors))
+    self.skinPriorityTolerance = float(skinPriorityTolerance)
+    self.vel = np.array([0.0, 0.0, 0.0])
+    self.damage = _defaultDamage
+    self.strengthScale = _defaultStrengthScale
+    self.particleType = subObject.particleType
+    self._validate_specs()
+    self._make_seed_points()
+    self.kdt = KDTree(self.vpts, leaf_size=max(1, int(math.ceil(len(self.vpts) / 2))))
+    self.voronoi = Voronoi(self.vpts)
+    self._assign_cell_phases()
+    self.neighbor_data = [[] for _ in range(len(self.vpts))]
+    self.interface_area_by_pair = {}
+    self.interface_assignments = {}
+    self._ridge_records = []
+    self._build_neighbors()
+    self._assign_interface_types()
+    self.mat_dirs = self._make_material_directions()
+    self._last_key = None
+    self._last_index = None
+    self._last_interface = None
+    self._last_micro = None
+
+  def _validate_specs(self):
+    total = 0.0
+    for i, spec in enumerate(self.materialSpecs):
+      spec.setdefault('name', 'material_%d' % i)
+      spec['mat'] = int(spec.get('mat', 0))
+      spec['volumeFraction'] = float(spec.get('volumeFraction', spec.get('volFrac', 0.0)))
+      spec['meanDiameter'] = float(spec.get('meanDiameter', spec.get('meanDiameter_mm', spec.get('diameter', 1.0))))
+      spec['stddev'] = float(spec.get('stddev', spec.get('diameterStdDev', 0.0)))
+      spec['microPorosity'] = float(spec.get('microPorosity', 0.0))
+      spec['microPoreSize'] = float(spec.get('microPoreSize', 0.25 * spec['meanDiameter']))
+      if spec['volumeFraction'] < 0.0:
+        raise ValueError('material volume fractions must be nonnegative')
+      if spec['meanDiameter'] <= 0.0:
+        raise ValueError('meanDiameter must be positive')
+      if not (0.0 <= spec['microPorosity'] < 1.0):
+        raise ValueError('microPorosity must satisfy 0 <= microPorosity < 1')
+      total += spec['volumeFraction']
+    if total > 1.0 + 1.0e-12:
+      raise ValueError('sum(material volume fractions) must be <= 1')
+    self.macroPorosity = max(0.0, 1.0 - total)
+    self.totalSolidFraction = total
+
+  def _bbox(self):
+    if all(hasattr(self.subObject, m) for m in ('xMin', 'xMax', 'yMin', 'yMax', 'zMin', 'zMax')):
+      return (float(self.subObject.xMin()), float(self.subObject.xMax()),
+              float(self.subObject.yMin()), float(self.subObject.yMax()),
+              float(self.subObject.zMin()), float(self.subObject.zMax()))
+    if all(hasattr(self.subObject, a) for a in ('x1', 'x2', 'r')):
+      x1 = np.asarray(self.subObject.x1, dtype=float)
+      x2 = np.asarray(self.subObject.x2, dtype=float)
+      r = float(self.subObject.r)
+      lo = np.minimum(x1, x2) - r
+      hi = np.maximum(x1, x2) + r
+      return (float(lo[0]), float(hi[0]), float(lo[1]), float(hi[1]), float(lo[2]), float(hi[2]))
+    raise AttributeError('subObject must provide x/y/z bounds or x1/x2/r attributes')
+
+  def _representative_spacing(self):
+    if self.totalSolidFraction <= 0.0:
+      return self.materialSpecs[0]['meanDiameter']
+    return sum(s['volumeFraction'] * s['meanDiameter'] for s in self.materialSpecs) / self.totalSolidFraction
+
+  def _make_seed_points(self):
+    xmin, xmax, ymin, ymax, zmin, zmax = self._bbox()
+    spacing = self._representative_spacing()
+    nx = max(2, int(math.ceil((xmax - xmin) / spacing)) + 1)
+    ny = max(2, int(math.ceil((ymax - ymin) / spacing)) + 1)
+    nz = max(2, int(math.ceil((zmax - zmin) / spacing)) + 1)
+    points = []
+    for iz in range(nz):
+      z = zmin + (iz + 0.5) * (zmax - zmin) / nz
+      for iy in range(ny):
+        y = ymin + (iy + 0.5) * (ymax - ymin) / ny
+        for ix in range(nx):
+          x = xmin + (ix + 0.5) * (xmax - xmin) / nx
+          local_spacing = min((xmax - xmin) / nx, (ymax - ymin) / ny, (zmax - zmin) / nz)
+          jitter = 0.30 * local_spacing * self.rng.uniform(-1.0, 1.0, size=3)
+          pt = np.array([x, y, z]) + jitter
+          if self.subObject.isInterior(pt, 0.0) >= 0:
+            points.append(pt)
+    if len(points) < 8:
+      raise RuntimeError('too few Voronoi seeds for granularCompactVoronoiWrapper')
+    self.vpts = np.asarray(points, dtype=float)
+
+  def _assign_cell_phases(self):
+    weights = np.array([s['volumeFraction'] for s in self.materialSpecs], dtype=float)
+    if np.sum(weights) <= 0.0:
+      raise ValueError('at least one material volumeFraction must be positive')
+    cumulative = np.cumsum(weights)
+    self.phase = -np.ones(len(self.vpts), dtype=int)
+    for i in range(len(self.vpts)):
+      u = self.rng.random()
+      if u >= cumulative[-1]:
+        self.phase[i] = -1
+      else:
+        self.phase[i] = int(np.searchsorted(cumulative, u, side='right'))
+    if not np.any(self.phase >= 0):
+      self.phase[0] = 0
+
+  def _face_area_from_ridge_vertices(self, ridge_vertices):
+    spacing = self._representative_spacing()
+    if ridge_vertices is None or len(ridge_vertices) < 3 or any(v < 0 for v in ridge_vertices):
+      return 0.65 * spacing * spacing
+    pts = self.voronoi.vertices[np.asarray(ridge_vertices, dtype=int)]
+    area = _gv_polygon_area_3d(pts)
+    if not np.isfinite(area) or area <= 0.0:
+      area = 0.65 * spacing * spacing
+    return float(min(max(area, 0.02 * spacing * spacing), 4.0 * spacing * spacing))
+
+  def _build_neighbors(self):
+    for ridge_points, ridge_vertices in zip(self.voronoi.ridge_points, self.voronoi.ridge_vertices):
+      a, b = int(ridge_points[0]), int(ridge_points[1])
+      dab = self.vpts[b] - self.vpts[a]
+      dist = float(np.linalg.norm(dab))
+      if dist <= 1.0e-30:
+        continue
+      normal_ab = dab / dist
+      half_dist = 0.5 * dist
+      phase_a = int(self.phase[a])
+      phase_b = int(self.phase[b])
+      solid_solid = bool(phase_a >= 0 and phase_b >= 0)
+      solid_void = bool((phase_a >= 0) != (phase_b >= 0))
+      pair = tuple(sorted((a, b)))
+      area = self._face_area_from_ridge_vertices(ridge_vertices)
+      if solid_solid:
+        self.interface_area_by_pair[pair] = area
+        self._ridge_records.append((pair, area))
+      self.neighbor_data[a].append((b, normal_ab, half_dist, solid_solid, solid_void, pair))
+      self.neighbor_data[b].append((a, -normal_ab, half_dist, solid_solid, solid_void, pair))
+
+  def _assign_interface_types(self):
+    records = list(self._ridge_records)
+    if not records:
+      self.interface_stats = {'total_internal_area_mm2': 0.0}
+      return
+    total_area = float(sum(area for _, area in records))
+    shuffled = list(records)
+    self.rng.shuffle(shuffled)
+    assigned_area = 0.0
+    for spec in self.interfaceSpecs:
+      name = str(spec.get('name', spec.get('kind', 'interface')))
+      frac = float(spec.get('areaFraction', spec.get('fraction', 0.0)))
+      target = max(0.0, min(1.0, frac)) * total_area
+      current = 0.0
+      for pair, area in shuffled:
+        if pair in self.interface_assignments:
+          continue
+        if current < target:
+          self.interface_assignments[pair] = name
+          current += float(area)
+          assigned_area += float(area)
+      spec['_assignedArea'] = current
+    for pair, _ in records:
+      self.interface_assignments.setdefault(pair, 'frictional')
+    self.interface_stats = self._compute_interface_stats()
+
+  def _interface_spec_by_name(self, name):
+    for spec in self.interfaceSpecs:
+      if str(spec.get('name', spec.get('kind', 'interface'))) == name:
+        return spec
+    return {'name': 'frictional', 'kind': 'frictional', 'tag': 0}
+
+  def _compute_interface_stats(self):
+    areas = {}
+    counts = {}
+    for pair, area in self.interface_area_by_pair.items():
+      kind = self.interface_assignments.get(pair, 'frictional')
+      areas[kind] = areas.get(kind, 0.0) + float(area)
+      counts[kind] = counts.get(kind, 0) + 1
+    total = float(sum(areas.values()))
+    stats = {'total_internal_area_mm2': total, 'num_internal_interfaces': int(sum(counts.values()))}
+    for key in sorted(areas):
+      stats[key + '_area_mm2'] = areas[key]
+      stats[key + '_area_fraction'] = areas[key] / total if total > 0.0 else 0.0
+      stats[key + '_interfaces'] = int(counts[key])
+    # Common aliases used by validation post-processing.
+    stats['polymer_area_mm2'] = areas.get('polymer_cz', areas.get('polymer', 0.0))
+    stats['bicrystal_area_mm2'] = areas.get('bicrystal_cz', areas.get('crystal_cz', 0.0))
+    stats['frictional_area_mm2'] = areas.get('frictional', 0.0)
+    return stats
+
+  def _make_material_directions(self):
+    dirs = []
+    for i in range(len(self.vpts)):
+      neighbors = self.neighbor_data[i]
+      if neighbors:
+        j = int(self.rng.integers(0, len(neighbors)))
+        primary = neighbors[j][1]
+        if self.rng.random() < 0.5:
+          primary = -primary
+      else:
+        primary = self.rng.normal(size=3)
+      dirs.append(_gv_basis_from_primary(primary))
+    return dirs
+
+  def _locate_index(self, pt):
+    x = np.asarray(pt[:3], dtype=float)
+    key = (float(x[0]), float(x[1]), float(x[2]))
+    if self._last_key == key:
+      return self._last_index
+    if self.subObject.isInterior(x, 0.0) < 0:
+      self._last_key = key
+      self._last_index = -1
+      return -1
+    _, idx = self.kdt.query(x.reshape(1, -1), k=1)
+    idx = int(idx[0, 0])
+    if self.phase[idx] < 0:
+      self._last_key = key
+      self._last_index = -1
+      return -1
+    self._last_key = key
+    self._last_index = idx
+    return idx
+
+  def _subobject_surface_distance_normal(self, pt):
+    if hasattr(self.subObject, 'getSurfacePosition'):
+      p = np.asarray(self.subObject.getSurfacePosition(pt), dtype=float)
+      d = float(np.linalg.norm(p))
+      if d > 1.0e-30:
+        return d, p / d
+    if hasattr(self.subObject, 'getSurfaceNormal'):
+      return 1.0e99, np.asarray(self.subObject.getSurfaceNormal(pt), dtype=float)
+    return 1.0e99, np.array([0.0, 0.0, 1.0])
+
+  def _nearest_interface(self, pt, idx):
+    x = np.asarray(pt[:3], dtype=float)
+    best = None
+    best_dist = np.inf
+    if idx < 0:
+      return None
+    for neighbor, normal, half_dist, solid_solid, solid_void, pair in self.neighbor_data[idx]:
+      dv = x - self.vpts[idx]
+      projected = float(np.dot(normal, dv))
+      if projected <= 0.0:
+        continue
+      distance_to_face = half_dist - projected
+      if distance_to_face < best_dist:
+        best_dist = distance_to_face
+        best = {'neighbor': neighbor, 'normal': np.asarray(normal, dtype=float),
+                'distance': float(distance_to_face), 'solid_solid': bool(solid_solid),
+                'solid_void': bool(solid_void), 'pair': pair}
+    return best
+
+  def _micro_pore_state(self, pt, idx, skinDepth):
+    phase = int(self.phase[idx])
+    if phase < 0:
+      return -1, None
+    spec = self.materialSpecs[phase]
+    poro = float(spec.get('microPorosity', 0.0))
+    if poro <= 0.0:
+      return 0, None
+    pore_d = float(spec.get('microPoreSize', 0.25 * spec.get('meanDiameter', 1.0)))
+    pore_r = max(0.0, 0.5 * pore_d)
+    if pore_r <= 0.0:
+      return 0, None
+    # One deterministic spherical pore per cell gives a simple micro-porosity
+    # representation without correlating pores between cells.
+    u = np.array([
+      _gv_hash_to_unit((self.seed, idx, 17)),
+      _gv_hash_to_unit((self.seed, idx, 23)),
+      _gv_hash_to_unit((self.seed, idx, 37))]) - 0.5
+    pore_center = self.vpts[idx] + 0.45 * spec['meanDiameter'] * u
+    dvec = np.asarray(pt[:3], dtype=float) - pore_center
+    d = float(np.linalg.norm(dvec))
+    # Use microPorosity as an activation probability per cell.  This is simple,
+    # deterministic, and leaves the macroscopic material volume fraction under
+    # user control through the material specs.
+    active = _gv_hash_to_unit((self.seed, idx, 41)) < poro
+    if not active:
+      return 0, None
+    if d < pore_r:
+      return -1, None
+    if d - pore_r <= max(0.0, skinDepth):
+      normal = _gv_unit(dvec)
+      return 2, {'distance': d - pore_r, 'normal': normal}
+    return 0, None
+
+  def isInterior(self, pt, skinDepth):
+    idx = self._locate_index(pt)
+    self._last_interface = None
+    self._last_micro = None
+    if idx < 0:
+      return -1
+    micro_state, micro_info = self._micro_pore_state(pt, idx, skinDepth)
+    if micro_state < 0:
+      return -1
+    if micro_state == 2:
+      self._last_micro = micro_info
+      return 2
+    skin = float(max(0.0, skinDepth))
+    sub_flag = self.subObject.isInterior(pt, skin)
+    sub_dist, _ = self._subobject_surface_distance_normal(pt)
+    interface = self._nearest_interface(pt, idx)
+    self._last_interface = interface
+    if sub_flag == 2:
+      return 2
+    if interface is not None and interface['distance'] <= skin:
+      # Free pore surface takes precedence near voids.  If a CZ face meets a free
+      # surface, the free surface wins when distances are comparable.
+      if interface['solid_void']:
+        return 2
+      if interface['solid_solid'] and interface['distance'] + self.skinPriorityTolerance < sub_dist:
+        kind = self.interface_assignments.get(interface['pair'], 'frictional')
+        spec = self._interface_spec_by_name(kind)
+        if str(spec.get('kind', kind)) == 'single_field':
+          return 0
+        if int(spec.get('tag', 0)) != 0:
+          return 3
+        return 2
+    return 0
+
+  def getSurfaceNormal(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return np.array([0.0, 0.0, 0.0])
+    if self._last_micro is not None:
+      return self._last_micro['normal']
+    sub_dist, sub_normal = self._subobject_surface_distance_normal(pt)
+    interface = self._last_interface or self._nearest_interface(pt, idx)
+    if interface is not None and interface['distance'] + self.skinPriorityTolerance < sub_dist:
+      return interface['normal']
+    return sub_normal
+
+  def getSurfacePosition(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return np.array([0.0, 0.0, 0.0])
+    if self._last_micro is not None:
+      return self._last_micro['distance'] * self._last_micro['normal']
+    sub_dist, sub_normal = self._subobject_surface_distance_normal(pt)
+    interface = self._last_interface or self._nearest_interface(pt, idx)
+    if interface is not None and interface['distance'] + self.skinPriorityTolerance < sub_dist:
+      return interface['distance'] * interface['normal']
+    return sub_dist * sub_normal
+
+  def getCZTag(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return 0
+    interface = self._last_interface or self._nearest_interface(pt, idx)
+    if interface is None or not interface['solid_solid']:
+      return 0
+    kind = self.interface_assignments.get(interface['pair'], 'frictional')
+    return int(self._interface_spec_by_name(kind).get('tag', 0))
+
+  def getMat(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return self.materialSpecs[0]['mat']
+    return int(self.materialSpecs[int(self.phase[idx])]['mat'])
+
+  def getGroup(self, pt):
+    idx = self._locate_index(pt)
+    base_group = self.subObject.getGroup(pt) if hasattr(self.subObject, 'getGroup') else getattr(self.subObject, 'group', _defaultGroup)
+    if idx < 0:
+      return base_group
+    return int(base_group + 1 + (idx % self.contactGroupColors))
+
+  def getVelocity(self, pt):
+    if hasattr(self.subObject, 'getVelocity'):
+      return self.subObject.getVelocity(pt)
+    return self.subObject.vel(self.subObject, pt) if callable(self.subObject.vel) else self.subObject.vel
+
+  def getMatDir(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return _gv_basis_from_primary(np.array([0.0, 0.0, 1.0]))
+    return self.mat_dirs[idx]
+
+  def getStrengthScale(self, pt):
+    idx = self._locate_index(pt)
+    if idx < 0:
+      return 1.0
+    mode = self.strengthScaleMode.lower()
+    if mode in ('none', 'off', 'constant'):
+      return 1.0
+    x = np.asarray(pt[:3], dtype=float)
+    if mode in ('layered', 'layered_weibull'):
+      h = float(self.weibullLayerThickness or self._representative_spacing())
+      n = self.mat_dirs[idx][0]
+      key = int(math.floor(float(np.dot(x - self.vpts[idx], n)) / max(h, 1.0e-30)))
+      u = max(1.0e-12, _gv_hash_to_unit((self.seed, idx, key, 101)))
+      return float((-math.log(1.0 - u)) ** (1.0 / max(self.weibullModulus, 1.0e-12)))
+    if mode in ('voronoi', 'voronoi_weibull'):
+      h = float(self.weibullCellSize or self._representative_spacing())
+      q = np.floor((x - self.vpts[idx]) / max(h, 1.0e-30)).astype(int)
+      u = max(1.0e-12, _gv_hash_to_unit((self.seed, idx, int(q[0]), int(q[1]), int(q[2]), 211)))
+      return float((-math.log(1.0 - u)) ** (1.0 / max(self.weibullModulus, 1.0e-12)))
+    return 1.0
+
+  def getDamage(self, pt):
+    return _defaultDamage
+
+  def getSubregions(self):
+    regs = []
+    for spec in self.materialSpecs:
+      item = (int(spec['mat']), self.particleType)
+      if item not in regs:
+        regs.append(item)
+    return regs
+
+  def xMin(self): return self._bbox()[0]
+  def xMax(self): return self._bbox()[1]
+  def yMin(self): return self._bbox()[2]
+  def yMax(self): return self._bbox()[3]
+  def zMin(self): return self._bbox()[4]
+  def zMax(self): return self._bbox()[5]
