@@ -647,17 +647,19 @@ void writeParticleOrDefaultArray2dField( SiloFile & silo,
   localIndex const numComponents = array.size( 1 );
   if( useParticleMulticomponentLayout && writeParticleArray2dAsNativeMulticomponent( numComponents ) )
   {
+    int const siloTensorRank = particleArray2dTensorRank( numComponents );
     silo.writeDataField< real64 >( meshName,
                                    fieldName,
                                    array,
-                                   particleArray2dTensorRank( numComponents ),
+                                   siloTensorRank,
                                    centering,
                                    cycleNumber,
                                    problemTime,
                                    multiRoot );
     silo.writeVectorComponentVarDefinitions( fieldName,
                                              multiRoot,
-                                             particleArray2dComponentNames( wrapper, numComponents ) );
+                                             particleArray2dComponentNames( wrapper, numComponents ),
+                                             siloTensorRank );
   }
   else
   {
@@ -700,7 +702,8 @@ void writeParticleOrDefaultArray3dField( SiloFile & silo,
                                    multiRoot );
     silo.writeVectorComponentVarDefinitions( fieldName,
                                              multiRoot,
-                                             particleArray3dTensorComponentNames( wrapper, 1, 2 ) );
+                                             particleArray3dTensorComponentNames( wrapper, 1, 2 ),
+                                             DB_VARTYPE_TENSOR );
   }
   else
   {
@@ -803,7 +806,7 @@ void writeGridVectorComponent( SiloFile & silo,
                                cycleNumber,
                                problemTime,
                                multiRoot );
-  silo.writeVectorComponentVarDefinitions( varName, multiRoot, componentNames );
+  silo.writeVectorComponentVarDefinitions( varName, multiRoot, componentNames, DB_VARTYPE_VECTOR );
 }
 
 /**
@@ -867,7 +870,7 @@ bool writeRequestedGridField( SiloFile & silo,
                                      cycleNumber,
                                      problemTime,
                                      multiRoot );
-        silo.writeVectorComponentVarDefinitions( fieldName, multiRoot, componentNames );
+        silo.writeVectorComponentVarDefinitions( fieldName, multiRoot, componentNames, DB_VARTYPE_VECTOR );
       }
       else
       {
@@ -4312,7 +4315,8 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
 
 void SiloFile::writeVectorComponentVarDefinitions( string const & fieldName,
                                                   string const & subDirectory,
-                                                  string_array const & componentNames )
+                                                  string_array const & componentNames,
+                                                  int const siloTensorRank )
 {
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) != 0 || componentNames.empty() )
   {
@@ -4332,7 +4336,32 @@ void SiloFile::writeVectorComponentVarDefinitions( string const & fieldName,
   for( int i = 0; i < numComponents; ++i )
   {
     expressionNames[i] = vectorName + "/" + componentNames[i];
-    definitions[i] = "<" + vectorName + ">[" + std::to_string( i ) + "]";
+
+    if( siloTensorRank == DB_VARTYPE_SYMTENSOR && numComponents == 6 )
+    {
+      // Silo/VisIt represents a symmetric tensor as a rank-2 tensor.  The
+      // one-level expression <tensor>[i] extracts tensor row i, i.e. a vector,
+      // so scalar component definitions must use two-level indexing.  GEOS
+      // particle symmetric tensors are stored in Voigt order XX, YY, ZZ, YZ,
+      // XZ, XY.
+      static int const symTensorIndex[6][2] = { { 0, 0 }, { 1, 1 }, { 2, 2 },
+                                                { 1, 2 }, { 0, 2 }, { 0, 1 } };
+      definitions[i] = "<" + vectorName + ">[" + std::to_string( symTensorIndex[i][0] ) + "][" +
+                       std::to_string( symTensorIndex[i][1] ) + "]";
+    }
+    else if( siloTensorRank == DB_VARTYPE_TENSOR && numComponents == 9 )
+    {
+      // Full tensors are written in row-major component order.
+      int const row = i / 3;
+      int const col = i % 3;
+      definitions[i] = "<" + vectorName + ">[" + std::to_string( row ) + "][" +
+                       std::to_string( col ) + "]";
+    }
+    else
+    {
+      definitions[i] = "<" + vectorName + ">[" + std::to_string( i ) + "]";
+    }
+
     names[i] = expressionNames[i].c_str();
     defns[i] = definitions[i].c_str();
     types[i] = DB_VARTYPE_SCALAR;

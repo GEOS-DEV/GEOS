@@ -614,7 +614,8 @@ public:
    */
   void writeVectorComponentVarDefinitions( string const & fieldName,
                                            string const & subDirectory,
-                                           string_array const & componentNames );
+                                           string_array const & componentNames,
+                                           int const siloTensorRank );
 
   /**
    * find the silo mesh type that we are attempting to reference
