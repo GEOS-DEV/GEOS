@@ -284,7 +284,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setDescription( "Array of quadrature point jacobian values" );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
 
