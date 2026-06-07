@@ -1,0 +1,19 @@
+\subsection{Von Mises uniaxial plasticity}
+\label{sec:verification:von-mises-uniaxial}
+
+This test isolates the \texttt{VonMisesJ} constitutive update and equivalent plastic-strain output.  A single cube is stretched monotonically in $y$ to a small final strain with lateral faces released, producing an approximately one-dimensional elastic-perfectly-plastic stress path.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_von_mises.png}
+  \caption{Von Mises uniaxial loading setup.  The measured box-average axial stress is compared with the ideal elastic-perfectly-plastic law.}
+\end{figure}
+
+The analytical comparison uses
+\begin{equation}
+  \sigma_y^{\star}(\epsilon)=\min(E\epsilon,\sigma_0),\qquad
+  \epsilon_p^{\star}=\max\left(0,\epsilon-\frac{\sigma_0}{E}\right),
+\end{equation}
+with $E=1$ and $\sigma_0=0.02$.  The metric is RMS and maximum stress error; equivalent plastic strain is also reported when present in the history output.
+
+\IfFileExists{\CaseOutputDir/von_mises_results.tex}{\input{\CaseOutputDir/von_mises_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_vonMisesJ.py} after the GEOS job finishes.}

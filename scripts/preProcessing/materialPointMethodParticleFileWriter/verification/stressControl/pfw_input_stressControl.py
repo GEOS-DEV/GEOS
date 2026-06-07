@@ -63,7 +63,6 @@ pfw["boxAverageHistory"] = 1
 pfw["boxAverageWriteInterval"] = stop_time / 250.0
 pfw["frictionCoefficient"] = 0.0
 pfw["updateMethod"] = "PIC"
-pfw["useAPIC"] = 1
 pfw["outputType"] = "silo"
 pfw["plotGridFields"] = 1
 pfw["gridFieldNames"] = ["gridMass", "gridVelocity", "gridInternalForce"]

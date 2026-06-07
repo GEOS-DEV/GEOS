@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "smoothstep",
+        "label": "Smoothstep F-table",
+        "case_name": "elasticFTableBoundarySwitch_smoothstep",
+        "env": {
+            "FTABLE_CASE_NAME": "elasticFTableBoundarySwitch_smoothstep",
+            "FTABLE_VARIANT_LABEL": "Smoothstep F-table",
+            "FTABLE_INTERP_TYPE": "Smoothstep",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_elasticBlockUni.py", post_script="postProcess_elasticBlockUni.py", variants=VARIANTS, default_case_id="Ftable", description="Run the elastic F-table boundary-switch verification"))

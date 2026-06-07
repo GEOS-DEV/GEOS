@@ -1,0 +1,18 @@
+\subsection{Partition-crossing free flight}
+\label{sec:verification:partition-crossing}
+
+This test isolates MPI particle migration across a $3\times3$ processor layout.  A disk moves diagonally across partition boundaries in a non-periodic two-dimensional domain with no forces or prescribed deformation.  The ideal solution is constant-velocity free flight.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_partition_crossing.png}
+  \caption{Partition-crossing setup.  The disk crosses multiple partition seams while tracer positions are compared with the analytical free-flight trajectory.}
+\end{figure}
+
+For each tracer,
+\begin{equation}
+  \mathbf{x}^{\star}(t)=\mathbf{x}_0+\mathbf{v}_0 t .
+\end{equation}
+The metric is RMS tracer-position error over all tracer records, with velocity error also reported when tracer velocity output is available.
+
+\IfFileExists{\CaseOutputDir/partition_crossing_results.tex}{\input{\CaseOutputDir/partition_crossing_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_diskThruPartitions.py} after the GEOS job finishes.}

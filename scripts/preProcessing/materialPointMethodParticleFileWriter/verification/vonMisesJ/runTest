@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "uniaxial",
+        "label": "Uniaxial strain ramp",
+        "case_name": "vonMisesUniaxialPlasticity_uniaxial",
+        "env": {
+            "VONMISES_CASE_NAME": "vonMisesUniaxialPlasticity_uniaxial",
+            "VONMISES_VARIANT_LABEL": "Uniaxial strain ramp",
+            "VONMISES_FINAL_STRAIN": "0.05",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_vonMisesJ.py", post_script="postProcess_vonMisesJ.py", variants=VARIANTS, default_case_id="vonMisesJ", description="Run Von Mises uniaxial plasticity verification"))

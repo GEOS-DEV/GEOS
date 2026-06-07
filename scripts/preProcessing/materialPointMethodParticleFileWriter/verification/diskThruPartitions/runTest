@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "singleMaterial2d",
+        "label": "Single-material 2D disk",
+        "case_name": "partitionCrossing2D_singleMaterial",
+        "env": {
+            "PARTITION_CASE_NAME": "partitionCrossing2D_singleMaterial",
+            "PARTITION_VARIANT_LABEL": "Single-material 2D disk",
+            "PARTITION_VELOCITY": "0.20,0.16,0.0",
+            "PARTITION_REFINE": "3",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_diskThruPartitions.py", post_script="postProcess_diskThruPartitions.py", variants=VARIANTS, default_case_id="diskThruPartitions", description="Run partition-crossing verification"))

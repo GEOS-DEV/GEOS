@@ -1,0 +1,22 @@
+\subsection{Geomechanics tension}
+\label{sec:geomechanicsTension}
+
+This folder is a split, single-purpose verification target derived from the
+legacy broad driver collection.  It owns one PFW input, one run script, one
+post-processing entry point, and a setup schematic.  The retained legacy physics
+configuration should next be cleaned so the input contains only non-default
+parameters and its material law is selected from \texttt{pfw\_materials.py}.
+
+\paragraph{Purpose.} Tension geomechanics case; verifies tensile response, damage/onset, and reaction histories.
+
+\paragraph{Expected diagnostics.} The post-processing should report mass and
+momentum conservation where relevant, reaction/box/tracer histories, and a
+problem-specific normalized error against the ideal or analytical solution.  For
+this first split patch, the folder-owned post-process entry point delegates to
+the common generic renderer; the metric hook is intentionally local to this
+folder for the next modernization pass.
+
+\paragraph{Recommended VisIt products.} Render initial, intermediate, and final
+particle fields over the background grid.  Cohesive/contact cases should show
+interface state, gap/opening, damage or contact force; geomechanics cases should
+show pressure, deviatoric stress, volumetric strain, and plastic/damage fields.

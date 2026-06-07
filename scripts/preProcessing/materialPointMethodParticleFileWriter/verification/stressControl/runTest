@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "pOnly",
+        "label": "P controller",
+        "case_name": "elasticStressControl_pOnly",
+        "env": {
+            "STRESS_CONTROL_CASE_NAME": "elasticStressControl_pOnly",
+            "STRESS_CONTROL_VARIANT_LABEL": "P controller",
+            "STRESS_CONTROL_KP": "1.0",
+            "STRESS_CONTROL_KI": "0.0",
+            "STRESS_CONTROL_KD": "0.0",
+        },
+    },
+    {
+        "name": "pd",
+        "label": "PD controller",
+        "case_name": "elasticStressControl_pd",
+        "env": {
+            "STRESS_CONTROL_CASE_NAME": "elasticStressControl_pd",
+            "STRESS_CONTROL_VARIANT_LABEL": "PD controller",
+            "STRESS_CONTROL_KP": "0.8",
+            "STRESS_CONTROL_KI": "0.0",
+            "STRESS_CONTROL_KD": "0.02",
+        },
+    },
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_stressControl.py", post_script="postProcess_stressControl.py", variants=VARIANTS, default_case_id="stressControl", description="Run elastic stress-control verification variants"))

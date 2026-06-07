@@ -1,0 +1,19 @@
+\subsection{Spinning-disk conservation}
+\label{sec:verification:spinning-disk-conservation}
+
+This test isolates particle-grid transfer conservation and dissipation behavior.  A two-dimensional elastic disk is initialized in solid-body rotation and then evolves without external forces.  The same input is dispatched for PIC, FLIP, and FMPM2 variants.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_spinning_disk.png}
+  \caption{Spinning-disk setup.  Tracer velocities define angular-momentum and kinetic-energy proxies that should remain constant for the ideal force-free motion.}
+\end{figure}
+
+The tracer-based diagnostics are
+\begin{equation}
+  L_z=\sum_i (x_i v_{y,i}-y_i v_{x,i}), \qquad
+  K=\frac{1}{2}\sum_i \left(v_{x,i}^2+v_{y,i}^2\right).
+\end{equation}
+The metrics are maximum and final relative drift in $L_z$ and $K$.
+
+\IfFileExists{\CaseOutputDir/spinning_disk_results.tex}{\input{\CaseOutputDir/spinning_disk_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_spinningDisk.py} after the GEOS jobs finish.}

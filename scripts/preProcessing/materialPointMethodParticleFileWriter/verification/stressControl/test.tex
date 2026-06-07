@@ -1,0 +1,18 @@
+\subsection{Elastic stress control}
+\label{sec:verification:elastic-stress-control}
+
+This test isolates the stress-control boundary condition for a single elastic block.  The target stress path first applies a hydrostatic compression, then adds a uniaxial compressive increment in $y$, and finally unloads.  The folder run script dispatches proportional and proportional-derivative controller variants from the same input file.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_stress_control.png}
+  \caption{Stress-control setup and target loading path.  All faces participate in the feedback boundary condition and the box-average stress is compared with the prescribed table.}
+\end{figure}
+
+The expected solution is the prescribed stress table,
+\begin{equation}
+  \boldsymbol{\sigma}^{\star}(t)=\mathrm{interp}\left[(0,0,0,0),(0.25,-p,-p,-p),(0.75,-p,-p+\Delta\sigma_y,-p),(1,0,0,0)\right],
+\end{equation}
+with $p=0.01$ and $\Delta\sigma_y=-0.03$.  The metric is the RMS component-wise tracking error between box-average stress and $\boldsymbol{\sigma}^{\star}$.
+
+\IfFileExists{\CaseOutputDir/stress_control_results.tex}{\input{\CaseOutputDir/stress_control_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_stressControl.py} after the GEOS jobs finish.}

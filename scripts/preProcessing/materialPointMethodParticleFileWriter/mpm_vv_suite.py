@@ -57,6 +57,7 @@ def family_label(case_id: str) -> str:
         "cohesiveZones": "Cohesive zones",
         "contact": "Contact",
         "contactBC": "Contact boundary conditions",
+        "contactSurfaceGapClosure": "Contact surface/gap closure",
         "cubic": "Cubic elasticity (expected fail on this branch)",
         "diskThruPartitions": "Partition transfer",
         "expandingBar": "Expanding bar analytic comparison",

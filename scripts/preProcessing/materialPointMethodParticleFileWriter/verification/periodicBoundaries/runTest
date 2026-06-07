@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "disk2d",
+        "label": "2D periodic disk",
+        "case_name": "periodicAdvection_disk2d",
+        "env": {
+            "PERIODIC_CASE_NAME": "periodicAdvection_disk2d",
+            "PERIODIC_VARIANT_LABEL": "2D periodic disk",
+            "PERIODIC_VELOCITY": "0.42,0.31,0.0",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_diskThruPBC.py", post_script="postProcess_periodicBoundaries.py", variants=VARIANTS, default_case_id="periodicBoundaries", description="Run periodic advection verification"))

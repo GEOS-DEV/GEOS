@@ -1,0 +1,19 @@
+\subsection{Periodic advection}
+\label{sec:verification:periodic-advection}
+
+This test isolates two-dimensional periodic particle communication and remapping.  A disk is initialized with a constant velocity in a periodic unit square and evolves without body force, contact, or prescribed deformation.  The ideal solution is free advection modulo the periodic domain.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_periodic_advection.png}
+  \caption{Periodic advection setup.  Tracer points are compared with the modulo-domain free-flight solution after crossing periodic seams.}
+\end{figure}
+
+For each tracer,
+\begin{equation}
+  x^{\star}(t)=x_0+v_x t \pmod{L_x},\qquad
+  y^{\star}(t)=y_0+v_y t \pmod{L_y}.
+\end{equation}
+The metric is the RMS minimum-image tracer-position error over all tracer records.  Velocity conservation is reported when tracer velocity output is available.
+
+\IfFileExists{\CaseOutputDir/periodic_advection_results.tex}{\input{\CaseOutputDir/periodic_advection_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_periodicBoundaries.py} after the GEOS job finishes.}

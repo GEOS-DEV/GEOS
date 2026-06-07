@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd)
+PYTHON_CMD=${PFW_PYTHON:-${PYTHON:-/usr/tce/bin/python3}}
+exec "$PYTHON_CMD" "$PFW_ROOT/mpm_vv_single_folder_runner.py" \
+  --source-dir "$SCRIPT_DIR" \
+  --input "pfw_input_czPeriodicTension.py" \
+  --output-prefix "czPeriodicTension" \
+  "$@"

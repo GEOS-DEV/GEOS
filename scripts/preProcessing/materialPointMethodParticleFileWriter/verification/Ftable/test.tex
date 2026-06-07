@@ -1,0 +1,19 @@
+\subsection{Elastic F-table boundary switch}
+\label{sec:verification:elastic-f-table}
+
+This test isolates prescribed F-table deformation, boundary-condition-table switching, reaction output, and box-average stress output.  A unit elastic cube is stretched in the $x$ direction.  During the first segment all faces are kinematically constrained; after $t=0.5$ the lateral faces are released while the $x$ stretch continues.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{\CaseSourceDir/setup_elastic_f_table.png}
+  \caption{Elastic F-table setup.  The first interval uses constrained lateral faces, then the boundary-condition table releases the lateral faces while the axial F-table remains active.}
+\end{figure}
+
+For small strain, the expected axial stress is piecewise linear.  Before lateral release,
+\begin{equation}
+  \sigma_{xx}=M\epsilon_{xx}, \qquad
+  M=\frac{E(1-\nu)}{(1+\nu)(1-2\nu)}.
+\end{equation}
+After release, incremental stress changes are compared with the Young's modulus $E$ while preserving stress continuity at the switching time.  The metric is RMS and maximum axial box-average stress error.
+
+\IfFileExists{\CaseOutputDir/elastic_f_table_results.tex}{\input{\CaseOutputDir/elastic_f_table_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_elasticBlockUni.py} after the GEOS job finishes.}

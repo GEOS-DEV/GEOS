@@ -2854,6 +2854,27 @@ verificationVonMises["materialString"] = generateMaterialString(verificationVonM
 
 
 ###################################################################################################
+# CONTACT SURFACE/GAP-CLOSURE HYPERELASTIC VERIFICATION MATERIAL:
+# Dimensionless Neo-Hookean material used by verification/contactSurfaceGapClosure.  The values are
+# intentionally soft so the compact quasistatic contact variants run quickly while retaining a
+# clear uniaxial-strain reaction slope after the curved profiles mate.
+contactGapClosureHyperelastic = {}
+contactGapClosureHyperelastic["name"] = "contactGapClosureHyperelastic"
+contactGapClosureHyperelastic["version"] = 2606050004
+contactGapClosureHyperelastic["model"] = "HyperelasticMMS"
+contactGapClosureHyperelastic["defaultDensity"] = 1.0
+contactGapClosureHyperelastic["defaultYoungModulus"] = 10.0
+contactGapClosureHyperelastic["defaultPoissonRatio"] = 0.25
+contactGapClosureHyperelastic["defaultLambda"] = (contactGapClosureHyperelastic["defaultYoungModulus"] * contactGapClosureHyperelastic["defaultPoissonRatio"] /
+                                                  ((1.0 + contactGapClosureHyperelastic["defaultPoissonRatio"]) *
+                                                   (1.0 - 2.0 * contactGapClosureHyperelastic["defaultPoissonRatio"])))
+contactGapClosureHyperelastic["defaultShearModulus"] = contactGapClosureHyperelastic["defaultYoungModulus"]/(2.0*(1.0 + contactGapClosureHyperelastic["defaultPoissonRatio"]))
+contactGapClosureHyperelastic["waveSpeed"] = float(np.sqrt((contactGapClosureHyperelastic["defaultLambda"] + 2.0*contactGapClosureHyperelastic["defaultShearModulus"])/contactGapClosureHyperelastic["defaultDensity"]))
+contactGapClosureHyperelastic["materialString"] = generateMaterialString(contactGapClosureHyperelastic)
+# #################################################################################################
+
+
+###################################################################################################
 # PBC COMPACTION MOMENTUM VERIFICATION MATERIALS:
 # Dimensionless, intentionally soft material cards used by verification/pbcCompactionMomentumTest.
 # The elastic and plastic subcases share density, Young's modulus, and Poisson's ratio so that any
@@ -2939,6 +2960,7 @@ exampleSuiteMaterials = [
 
 verificationMaterials = [
     verificationElastic,
+    contactGapClosureHyperelastic,
     verificationQuartz,
     verificationVonMises,
     pbcCompactionElastic,

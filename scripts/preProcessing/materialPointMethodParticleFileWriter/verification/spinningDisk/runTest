@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "pic",
+        "label": "PIC",
+        "case_name": "spinningDiskConservation_pic",
+        "env": {
+            "SPINNING_DISK_CASE_NAME": "spinningDiskConservation_pic",
+            "SPINNING_DISK_VARIANT_LABEL": "PIC",
+            "SPINNING_DISK_UPDATE_METHOD": "PIC",
+            "SPINNING_DISK_UPDATE_ORDER": "",
+        },
+    },
+    {
+        "name": "flip",
+        "label": "FLIP",
+        "case_name": "spinningDiskConservation_flip",
+        "env": {
+            "SPINNING_DISK_CASE_NAME": "spinningDiskConservation_flip",
+            "SPINNING_DISK_VARIANT_LABEL": "FLIP",
+            "SPINNING_DISK_UPDATE_METHOD": "FLIP",
+            "SPINNING_DISK_UPDATE_ORDER": "",
+        },
+    },
+    {
+        "name": "fmpm2",
+        "label": "FMPM2",
+        "case_name": "spinningDiskConservation_fmpm2",
+        "env": {
+            "SPINNING_DISK_CASE_NAME": "spinningDiskConservation_fmpm2",
+            "SPINNING_DISK_VARIANT_LABEL": "FMPM2",
+            "SPINNING_DISK_UPDATE_METHOD": "FMPM",
+            "SPINNING_DISK_UPDATE_ORDER": "2",
+        },
+    },
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_spinningDiskConservation.py", post_script="postProcess_spinningDisk.py", variants=VARIANTS, default_case_id="spinningDisk", description="Run spinning-disk conservation verification variants"))

@@ -1,0 +1,22 @@
+\subsection{Contact surface and gap-closure verification}
+\label{sec:contactSurfaceGapClosure}
+
+This verification problem exercises two-dimensional plane-strain MPM contact for curved surfaces that close a known initial gap and then carry compressive load.  The geometry contains two hyperelastic blocks.  The lower block has a circular concave recess and the upper block has the matching circular convex lobe.  The two profiles are vertical translations of one another, so ideal rigid motion closes the entire curved gap at the same imposed displacement.  The top and bottom boundaries then continue moving quasistatically, compressing the mated solid.
+
+The exact idealized response is piecewise simple.  Before the gap closes, the blocks are separated and the y-reaction stress should be zero.  After the profiles mate, the two blocks should respond as a single hyperelastic solid in uniaxial strain.  The primary metric is therefore the compressive y-reaction stress plotted against imposed y-displacement,
+\begin{equation}
+  \sigma_R(d) = 0 \quad (d \leq g_0),
+\end{equation}
+followed by the plane-strain Neo-Hookean compression response of the shared material for $d>g_0$.  The post-processor reports the post-closure root-mean-square reaction-stress error and the final reaction-stress error for each contact variant.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{\CaseSourceDir/setup_gap_closure.png}
+  \caption{Contact surface/gap-closure setup.  The left schematic shows the initial separated curved profiles.  The right schematic shows the mated configuration before additional compression.  The test measures y-reaction stress during further quasistatic compression.}
+\end{figure}
+
+The single PFW input in this folder supports a small contact matrix.  The default suite run uses three representative variants: multi-field contact with explicit particle surface fields and softened gap correction, DFG contact with implicit surface detection and implicit gap correction, and DFG contact with explicit particle surface fields and softened gap correction.  The full 12-case matrix can still be requested from \texttt{runTest} with \texttt{--all-variants}; it spans multi-field versus DFG contact, implicit versus explicit surface descriptions, and \texttt{Simple}, \texttt{Implicit}, and \texttt{Softened} gap correction.  The source input defines the resolution through \texttt{refine}, \texttt{cpp}, and \texttt{ppc} parameters.  The initial gap is chosen large enough that the first state is genuinely separated, and the loading duration is chosen as one hundred elastic-wave transit times across the specimen height to keep inertial reaction contributions small.
+
+When VisIt is available, the post-processor renders four particle von-Mises stress frames overlaid on the background grid for a representative subcase.  It also renders four surface-diagnostic frames that plot particle surface flags with the background grid and overlay vectors for particle surface normal and particle surface position.  The frames show the initially separated zero-stress state, the near-closure state, a post-closure compression state, and the final compression state.
+
+\IfFileExists{\CaseOutputDir/contact_surface_gap_closure_results.tex}{\input{\CaseOutputDir/contact_surface_gap_closure_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_contactSurfaceGapClosure.py} after the GEOS jobs finish.}

@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-MPM_CPDI_RENDERER_VERSION = 6
+MPM_CPDI_RENDERER_VERSION = 9
 
 
 def parse_args(argv):
@@ -58,6 +58,10 @@ def parse_args(argv):
     parser.add_argument("--color-min", type=float, default=None, help="Explicit pseudocolor minimum; implies --range-mode explicit when paired with --color-max")
     parser.add_argument("--color-max", type=float, default=None, help="Explicit pseudocolor maximum; implies --range-mode explicit when paired with --color-min")
     parser.add_argument("--strict-variable", action="store_true", help="Fail instead of falling back to unrelated variables when the requested variable cannot be plotted")
+    parser.add_argument("--vector-variable", action="append", default=[], help="Vector variable to overlay. May be repeated.")
+    parser.add_argument("--vector-scale", type=float, default=0.25, help="VisIt vector glyph scale for overlay vectors")
+    parser.add_argument("--vector-count", type=int, default=500, help="Target vector glyph count when supported by VisIt")
+    parser.add_argument("--vector-stride", type=int, default=1, help="Stride for vector glyphs when stride mode is enabled")
     parser.add_argument("--no-annotations", action="store_true")
     parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=True, help="Add VisIt TimeSlider annotation")
     parser.add_argument("--no-time-slider", dest="time_slider", action="store_false", help="Disable TimeSlider annotation")
@@ -260,11 +264,17 @@ def metadata_variable_names(database):
         md = call_visit("GetMetaData", database)
     except Exception as exc:
         print("Could not query VisIt metadata: {0}".format(exc))
-        return [], [], []
+        return [], [], [], [], []
     scalars = metadata_entries(md, "GetNumScalars", "GetScalars")
     vectors = metadata_entries(md, "GetNumVectors", "GetVectors")
     meshes = metadata_entries(md, "GetNumMeshes", "GetMeshes")
-    return scalars, vectors, meshes
+    arrays = metadata_entries(md, "GetNumArrays", "GetArrays")
+    tensors = metadata_entries(md, "GetNumTensors", "GetTensors")
+    # Some VisIt versions split symmetric tensors into a separate metadata
+    # category.  Query it opportunistically so expression construction can find
+    # native tensor variables when they are present.
+    tensors += [name for name in metadata_entries(md, "GetNumSymmetricTensors", "GetSymmetricTensors") if name not in tensors]
+    return scalars, vectors, meshes, arrays, tensors
 
 
 def compact_name(name):
@@ -341,6 +351,164 @@ def _define_scalar_expression(name, expression):
     return name
 
 
+def _define_tensor_expression(name, expression):
+    print("Defining tensor expression {0} = {1}".format(name, expression))
+    call_visit("DefineTensorExpression", name, expression)
+    return name
+
+
+def _unique_keep_order(values):
+    out = []
+    seen = set()
+    for value in values:
+        if value and value not in seen:
+            out.append(value)
+            seen.add(value)
+    return out
+
+
+def _quoted_candidate(path):
+    return _quote_visit_var(path)
+
+
+def _indexed_candidate(path, index=0):
+    # VisIt's [] operator extracts a scalar component from vector-valued
+    # expressions.  This is needed for GEOS/Silo particleStress component leaves
+    # on VisIt 3.5, where paths such as particleStress/XX are shown in scalar
+    # menus but are evaluated by the engine as vector variables.
+    return "{0}[{1}]".format(_quote_visit_var(path), int(index))
+
+
+def _array_decompose_candidate(path, index):
+    return "array_decompose({0},{1})".format(_quote_visit_var(path), int(index))
+
+
+def _stress_base_candidates(all_names):
+    candidates = [
+        "ParticleRegion1_ParticleDomains_ParticleFields/particleStress",
+        "particleStress",
+    ]
+    for name in all_names:
+        cname = _compact_name(name)
+        if cname.endswith("particlestress") or cname == "particlestress":
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _stress_leaf_candidates(all_names, label, legacy_index):
+    labels = [label, label.lower(), label.upper(), str(legacy_index)]
+    candidates = []
+    for base in _stress_base_candidates(all_names):
+        for leaf in labels:
+            candidates.append("{0}/{1}".format(base, leaf))
+        candidates.append("{0}_{1}".format(base, legacy_index))
+    suffixes = _component_suffix_candidates("Stress", label.lower(), legacy_index)
+    for name in all_names:
+        cname = _compact_name(name)
+        if "stress" not in cname:
+            continue
+        if any(cname.endswith(_compact_name(suffix)) for suffix in suffixes):
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _stress_component_expression_candidates(all_names, label, legacy_index):
+    expressions = []
+
+    # Preferred path: decompose the native GEOS Voigt stress array.  This creates
+    # true scalar component expressions without adding any solver-side scalar
+    # fields.
+    for base in _stress_base_candidates(all_names):
+        expressions.append(_array_decompose_candidate(base, legacy_index))
+
+    # Fallback path for VisIt/Silo outputs that only expose component leaves.
+    # The vector-index form handles component leaves that appear in scalar menus
+    # but evaluate as vector variables.  The direct form remains useful for older
+    # outputs where the leaves are genuine scalars.
+    for leaf in _stress_leaf_candidates(all_names, label, legacy_index):
+        expressions.append(_indexed_candidate(leaf, 0))
+        expressions.append(_array_decompose_candidate(leaf, 0))
+        expressions.append(_quoted_candidate(leaf))
+
+    return _unique_keep_order(expressions)
+
+
+def _define_stress_component_expression(name, all_names, label, legacy_index):
+    names = []
+    for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index)):
+        expr_name = name if i == 0 else "{0}_candidate{1}".format(name, i)
+        _define_scalar_expression(expr_name, expression)
+        names.append(expr_name)
+    return names
+
+
+def _define_particle_stress_tensor_candidates(all_names):
+    component_info = (
+        ("XX", 0, "particleStressXX"),
+        ("YY", 1, "particleStressYY"),
+        ("ZZ", 2, "particleStressZZ"),
+        ("YZ", 3, "particleStressYZ"),
+        ("XZ", 4, "particleStressXZ"),
+        ("XY", 5, "particleStressXY"),
+    )
+    component_candidates = {}
+    for label, index, base_name in component_info:
+        component_candidates[label] = _define_stress_component_expression(base_name, all_names, label, index)
+
+    tensor_names = []
+    max_candidates = max(len(v) for v in component_candidates.values())
+    for i in range(max_candidates):
+        def pick(label):
+            candidates = component_candidates[label]
+            return candidates[min(i, len(candidates) - 1)]
+
+        sxx = pick("XX")
+        syy = pick("YY")
+        szz = pick("ZZ")
+        syz = pick("YZ")
+        sxz = pick("XZ")
+        sxy = pick("XY")
+        tensor_name = "particleStressTensor" if i == 0 else "particleStressTensor_candidate{0}".format(i)
+        # Full symmetric 3x3 tensor in VisIt's row-major tensor expression
+        # syntax.  VisIt's effective_tensor() then computes sqrt(3*J2), i.e.
+        # the von-Mises equivalent stress, from this tensor-valued expression.
+        tensor_expr = "{{{{{sxx},{sxy},{sxz}}},{{{sxy},{syy},{syz}}},{{{sxz},{syz},{szz}}}}}".format(
+            sxx=sxx, syy=syy, szz=szz, syz=syz, sxz=sxz, sxy=sxy,
+        )
+        _define_tensor_expression(tensor_name, tensor_expr)
+        tensor_names.append(tensor_name)
+    return tensor_names
+
+
+def _derive_particle_stress_component(all_names, requested):
+    key = _compact_name(requested or "")
+    component_map = {
+        "particlestressxx": ("XX", 0),
+        "stressxx": ("XX", 0),
+        "sigmaxx": ("XX", 0),
+        "particlestressyy": ("YY", 1),
+        "stressyy": ("YY", 1),
+        "sigmayy": ("YY", 1),
+        "particlestresszz": ("ZZ", 2),
+        "stresszz": ("ZZ", 2),
+        "sigmazz": ("ZZ", 2),
+        "particlestressyz": ("YZ", 3),
+        "stressyz": ("YZ", 3),
+        "sigmayz": ("YZ", 3),
+        "particlestressxz": ("XZ", 4),
+        "stressxz": ("XZ", 4),
+        "sigmaxz": ("XZ", 4),
+        "particlestressxy": ("XY", 5),
+        "stressxy": ("XY", 5),
+        "sigmaxy": ("XY", 5),
+    }
+    for compact, value in component_map.items():
+        if key == compact or compact in key:
+            label, index = value
+            return _define_stress_component_expression("particleStress{0}".format(label), all_names, label, index)
+    return None
+
+
 def _derive_pressure(scalars):
     # Prefer particle stress components.  Support both grouped Silo components
     # such as particleStress/xx and legacy flat components such as particleStress_0.
@@ -364,6 +532,18 @@ def _derive_pressure(scalars):
         return None
     expression = "-(({0}) + ({1}) + ({2}))/3.0".format(_quote_visit_var(sxx), _quote_visit_var(syy), _quote_visit_var(szz))
     return _define_scalar_expression("pressure", expression)
+
+
+def _derive_particle_von_mises_stress(all_names):
+    tensor_names = _define_particle_stress_tensor_candidates(all_names)
+    if not tensor_names:
+        print("Could not derive particleVonMisesStress; no particleStress array/component candidates found")
+        return None
+    vm_names = []
+    for i, tensor_name in enumerate(tensor_names):
+        name = "particleVonMisesStress" if i == 0 else "particleVonMisesStress_candidate{0}".format(i)
+        vm_names.append(_define_scalar_expression(name, "effective_tensor({0})".format(tensor_name)))
+    return vm_names
 
 
 def _derive_plastic_strain_magnitude(scalars):
@@ -501,11 +681,20 @@ def _derive_particle_displacement_magnitude(scalars, meshes):
     return _define_scalar_expression("particleDisplacementMagnitude", expression)
 
 
-def prepare_derived_requested_variable(scalars, requested, meshes=None):
+def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=None, tensors=None, vectors=None):
     meshes = meshes or []
+    arrays = arrays or []
+    tensors = tensors or []
+    vectors = vectors or []
+    all_names = _unique_keep_order(list(scalars or []) + list(vectors or []) + list(arrays or []) + list(tensors or []))
     key = _compact_name(requested or "")
+    stress_component = _derive_particle_stress_component(all_names, requested)
+    if stress_component:
+        return stress_component
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
+    if key in ("particlevonmisesstress", "vonmisesstress", "vonmises", "equivalentstress", "misesstress"):
+        return _derive_particle_von_mises_stress(all_names)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
         return _derive_plastic_strain_magnitude(scalars)
     if key in ("griddisplacementmagnitude", "griddisplacement", "backgrounddisplacement"):
@@ -631,6 +820,14 @@ def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="uni
     try:
         call_visit("AddPlot", "Pseudocolor", variable)
         configure_pseudocolor(point_size_pixels, colortable, range_mode, color_min=color_min, color_max=color_max)
+        # VisIt often accepts an expression at AddPlot time and only discovers
+        # rank/type errors when the engine draws the plot.  Validate each
+        # candidate immediately so strict render requests can fall through to
+        # the next stress-component expression instead of saving a blank/error
+        # frame.
+        result = call_visit("DrawPlots")
+        if result == 0:
+            raise RuntimeError("DrawPlots returned failure")
         return True
     except Exception as exc:
         print("Could not add Pseudocolor plot for {0}: {1}".format(variable, exc))
@@ -675,6 +872,110 @@ def try_add_mesh(mesh_variable):
         return True
     except Exception as exc:
         print("Could not add mesh overlay {0}: {1}".format(mesh_variable, exc))
+        return False
+
+
+def _find_best_vector(vectors, suffixes=(), contains=()):
+    matches = []
+    compact_suffixes = [_compact_name(s) for s in suffixes]
+    compact_contains = [_compact_name(c) for c in contains]
+    for name in vectors or []:
+        cname = _compact_name(name)
+        if compact_suffixes and not any(cname.endswith(s) for s in compact_suffixes):
+            continue
+        if compact_contains and not all(c in cname for c in compact_contains):
+            continue
+        matches.append(name)
+    if not matches:
+        return None
+    return sorted(matches, key=_derived_priority)[0]
+
+
+def _known_vector_paths(requested):
+    key = _compact_name(requested or "")
+    if key in ("particlesurfacenormal", "surfacenormal", "surfaceNormal"):
+        return [
+            "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfaceNormal",
+            "particleSurfaceNormal",
+        ]
+    if key in ("particlesurfaceposition", "surfaceposition", "surfacePosition"):
+        return [
+            "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfacePosition",
+            "particleSurfacePosition",
+        ]
+    if key in ("particlevelocity", "velocity"):
+        return [
+            "ParticleRegion1_ParticleDomains_ParticleFields/particleVelocity",
+            "particleVelocity",
+        ]
+    return [str(requested)] if requested else []
+
+
+def choose_vector(vectors, requested):
+    requested = str(requested or "").strip()
+    if not requested:
+        return None
+    candidates = []
+    if requested in vectors:
+        candidates.append(requested)
+    found = _find_best_vector(vectors, suffixes=(requested,), contains=())
+    if found and found not in candidates:
+        candidates.append(found)
+    found = _find_best_vector(vectors, contains=(requested,))
+    if found and found not in candidates:
+        candidates.append(found)
+    for candidate in _known_vector_paths(requested):
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return candidates[0] if candidates else None
+
+
+def configure_vector(scale, vector_count, stride):
+    try:
+        VectorAttributes = globals()["VectorAttributes"]
+        SetPlotOptions = globals()["SetPlotOptions"]
+    except KeyError:
+        try:
+            import __main__
+            VectorAttributes = getattr(__main__, "VectorAttributes")
+            SetPlotOptions = getattr(__main__, "SetPlotOptions")
+        except Exception:
+            return
+    try:
+        attrs = VectorAttributes()
+        for attr, value in (
+            ("scale", float(scale)),
+            ("nVectors", int(vector_count)),
+            ("stride", max(1, int(stride))),
+            ("useStride", 0),
+            ("autoScale", 1),
+            ("scaleByMagnitude", 1),
+            ("origOnly", 1),
+            ("legendFlag", 1),
+            ("useLegend", 1),
+        ):
+            if hasattr(attrs, attr):
+                try:
+                    setattr(attrs, attr, value)
+                except Exception:
+                    pass
+        SetPlotOptions(attrs)
+    except Exception as exc:
+        print("Could not configure Vector attributes: {0}".format(exc))
+
+
+def try_add_vector(vector_variable, vectors, scale, vector_count, stride):
+    resolved = choose_vector(vectors, vector_variable)
+    if not resolved:
+        print("Could not resolve requested vector overlay: {0}".format(vector_variable))
+        return False
+    try:
+        call_visit("AddPlot", "Vector", resolved)
+        configure_vector(scale, vector_count, stride)
+        print("Added vector overlay: {0}".format(resolved))
+        return True
+    except Exception as exc:
+        print("Could not add Vector plot for {0}: {1}".format(resolved, exc))
         return False
 
 
@@ -980,9 +1281,11 @@ def main(argv=None):
     print("Output directory: {0}".format(output_dir))
     database = open_database_from_candidates(run_dir, args.database, args.list_databases)
 
-    scalars, vectors, meshes = metadata_variable_names(database)
+    scalars, vectors, meshes, arrays, tensors = metadata_variable_names(database)
     print("Scalar variables: {0}".format(scalars if scalars else "<none reported>"))
     print("Vector variables: {0}".format(vectors if vectors else "<none reported>"))
+    print("Array variables: {0}".format(arrays if arrays else "<none reported>"))
+    print("Tensor variables: {0}".format(tensors if tensors else "<none reported>"))
     print("Meshes: {0}".format(meshes if meshes else "<none reported>"))
     if args.dry_run:
         return 0
@@ -992,19 +1295,37 @@ def main(argv=None):
     except Exception:
         pass
 
-    derived_variable = prepare_derived_requested_variable(scalars, args.variable, meshes)
+    derived_variable = prepare_derived_requested_variable(
+        scalars,
+        args.variable,
+        meshes,
+        arrays=arrays,
+        tensors=tensors,
+        vectors=vectors,
+    )
     candidates = []
     if derived_variable:
-        candidates.append(derived_variable)
+        if isinstance(derived_variable, (list, tuple)):
+            for variable in derived_variable:
+                if variable not in candidates:
+                    candidates.append(variable)
+        else:
+            candidates.append(derived_variable)
     if not args.strict_variable:
         for candidate in ordered_scalar_candidates(scalars, args.variable):
             if candidate not in candidates:
                 candidates.append(candidate)
-    elif not candidates and args.variable:
+    elif args.variable:
+        req = compact_name(args.variable)
+        for candidate in scalars:
+            cname = compact_name(candidate)
+            if (req == cname or req in cname or cname in req) and candidate not in candidates:
+                candidates.append(candidate)
         # A strict requested variable should fail loudly instead of silently
         # plotting damage or material type.  Add the literal request as a last
         # chance for exact VisIt variable names supplied by the caller.
-        candidates.append(args.variable)
+        if args.variable not in candidates:
+            candidates.append(args.variable)
     print("Scalar candidate order: {0}".format(candidates[:12]))
 
     plotted_variable = None
@@ -1027,6 +1348,9 @@ def main(argv=None):
     mesh_variable = choose_mesh(meshes, args.mesh)
     if mesh_variable:
         try_add_mesh(mesh_variable)
+
+    for vector_variable in args.vector_variable:
+        try_add_vector(vector_variable, vectors, args.vector_scale, args.vector_count, args.vector_stride)
 
     call_visit("DrawPlots")
 
