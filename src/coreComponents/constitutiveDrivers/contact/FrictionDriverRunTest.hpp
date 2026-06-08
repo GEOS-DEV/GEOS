@@ -21,6 +21,7 @@
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 
+#include <cmath>
 #include <conduit.hpp>
 
 namespace geos
@@ -33,15 +34,7 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
 {
 
   array1d< integer > const ghostRank( 1 ); ghostRank[0] = -1;
-  array1d< real64 > const normalDisplacementTol( 1 ); normalDisplacementTol[0]=m_normalDispTol;//normalDispTol should scale as 1/E
-  array1d< real64 > const normalTractionTol( 1 ); normalTractionTol[0]=m_normalTracTol;
-  array1d< real64 > const slidingTol( 1 ); slidingTol[0]=m_slidingTol;
 
-  real64 kt = 1e7;
-  array2d< real64 > const iterPen( 1, 5 );
-  iterPen[0][0] = 100*kt;
-  iterPen[0][1] = kt;
-  iterPen[0][2] = kt; iterPen[0][3] = kt; iterPen[0][4] = 0.;
   array1d< integer > fractureState( 1 );
 
   fractureState[0] = fields::contact::FractureState::Stick;
@@ -51,6 +44,21 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
 
   bool isSimultaneous = m_isSimultaneous;
   real64 const slidingCheckTol = .05; //default
+  real64 cos_phi = cos( m_phi * M_PI/180 );
+  real64 cos_theta = cos( m_theta * M_PI/180 );
+  real64 sin_phi = sin( m_phi * M_PI/180 );
+  real64 sin_theta = sin( m_theta * M_PI/180 );
+
+  real64 normalDispTolFac = m_normalDispTolFac;
+  real64 normalTracTolFac = m_normalTracTolFac;
+  real64 slidingTolFac = m_slidingTolFac;
+  real64 iterPenNFac = 100;
+  real64 iterPenTFac = 100;
+
+  real64 area = m_area;
+  real64 volumes[2]{m_volume[0], m_volume[1]};
+  real64 shearModuli[2]{m_shearModulus[0], m_shearModulus[1]};
+  real64 bulkModuli[2]{m_bulkModulus[0], m_bulkModulus[1]};
 
   //TODO computeTolerance eleme to Elem
   typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
@@ -58,7 +66,12 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   integer const numRows = m_table.size( 0 );
   forAll< parallelDevicePolicy<> >( numRows,
                                     [&friction, &table, &kernelWrapper,
-                                     &ghostRank, &normalDisplacementTol, &normalTractionTol, &slidingTol, &iterPen,
+                                     &ghostRank,
+                                     //  &normalDisplacementTol, &normalTractionTol, &slidingTol,
+                                     &normalDispTolFac, &normalTracTolFac, &slidingTolFac,
+                                     &iterPenNFac, &iterPenTFac,
+                                     &area, &volumes, &bulkModuli, &shearModuli,
+                                     &cos_phi, &sin_phi, &cos_theta, &sin_theta,
                                      &slidingCheckTol, &isSimultaneous,
                                      &jump, &djump,
                                      &fractureState, &traction ]
@@ -84,13 +97,47 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
                                        traction[0],
                                        fractureState[0] );
 
+    real64 normalDispTol{}, slidingTol{}, normalTractionTol{};
+    real64 iterativePen[2]{};
+
+
+    array2d< real64 > rotationMatrix( 3, 3 );
+    rotationMatrix[0][0] = cos_phi;  rotationMatrix[0][1] = 0.;  rotationMatrix[0][1] = sin_phi;
+    rotationMatrix[1][0] = sin_theta*sin_phi;  rotationMatrix[1][1] = cos_theta;  rotationMatrix[1][1] = -sin_theta*cos_phi;
+    rotationMatrix[2][0] = -cos_theta*sin_phi;  rotationMatrix[2][1] = sin_theta;  rotationMatrix[2][1] = cos_theta*cos_phi;
+
+    SolidMechanicsAugmentedLagrangianContact::computeTolerancePerFace( area,
+                                                                       volumes,
+                                                                       bulkModuli,
+                                                                       shearModuli,
+                                                                       rotationMatrix,
+                                                                       normalDispTolFac,
+                                                                       normalTracTolFac,
+                                                                       slidingTol,
+                                                                       iterPenNFac,
+                                                                       iterPenTFac,
+                                                                       normalDispTol,
+                                                                       slidingTol,
+                                                                       normalTractionTol,
+                                                                       iterativePen );
+
+    //small adapter
+    array2d< real64 > const iterPen( 1, 5 );
+    iterPen[0][0] = iterativePen[0];
+    iterPen[0][1] = iterativePen[1];
+    iterPen[0][2] = iterativePen[1]; iterPen[0][3] = iterativePen[1]; iterPen[0][4] = 0.;
+
+    array1d< real64 > const a_normalDisplacementTol( 1 ); a_normalDisplacementTol[0]=normalDispTol;//normalDispTol should scale as 1/E
+    array1d< real64 > const a_normalTractionTol( 1 ); a_normalTractionTol[0]=normalTractionTol;
+    array1d< real64 > const a_slidingTol( 1 ); a_slidingTol[0]=slidingTol;
+
     auto [newTraction, condCov] = SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck( 1,
                                                                                                               friction,
                                                                                                               isSimultaneous,
                                                                                                               slidingCheckTol,
-                                                                                                              normalDisplacementTol,
-                                                                                                              normalTractionTol,
-                                                                                                              slidingTol,
+                                                                                                              a_normalDisplacementTol,
+                                                                                                              a_normalTractionTol,
+                                                                                                              a_slidingTol,
                                                                                                               iterPen,
                                                                                                               jump,
                                                                                                               djump,
@@ -108,6 +155,9 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     table( ei, NEWTRAC ) = newTraction[0][0];
     table( ei, SNEWTRAC0 ) = newTraction[0][1];
     table( ei, SNEWTRAC1 ) = newTraction[0][2];
+
+    table( ei, ITERPEN0 ) = iterPen[0][0];
+    table( ei, ITERPEN1 ) = iterPen[0][1];
 
   } );
 }

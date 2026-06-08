@@ -12,12 +12,20 @@
       tractionControl="tFunction"
       steps="10"
       simultaneous="1"
-      tolJumpN="1e-10"
+      tolJumpN="1e-15"
       tolJumpT="1e-5"
       tolNormalTrac="1e2"
+      faceArea="1"
+      neighborsVolume="{1,1}"
+      neighborsShear="{1e9,1e9}"
+      neighborsBulk="{1e7,1e7}"
       output="frictionDriver_Coulomb.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->
+   <!-- area = F -->
+   <!-- bulkModulus = {L,R}-->
+   <!-- shearModulus = {L,R} -->
+   <!-- volume = {L,R} -->
 
   <Included>
     <File name="./frictionDriver_base.xml"/>

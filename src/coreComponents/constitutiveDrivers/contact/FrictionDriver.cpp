@@ -62,18 +62,37 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
     setDescription( "y-Tilt angle in degree" );
 
   //first batch of parameters
-  registerWrapper( viewKeyStruct::normalDispTol(), &m_normalDispTol ).
+  registerWrapper( viewKeyStruct::normalDispTolFac(), &m_normalDispTolFac ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "normal Displacement Tolerance (scale as inverse of average Young modulus)." );
 
-  registerWrapper( viewKeyStruct::normalTractionTol(), &m_normalTracTol ).
+  registerWrapper( viewKeyStruct::normalTractionTolFac(), &m_normalTracTolFac ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "normal Traction Tolerance" );
 
-  registerWrapper( viewKeyStruct::slidingTol(), &m_slidingTol ).
+  registerWrapper( viewKeyStruct::slidingTolFac(), &m_slidingTolFac ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "tangential Displacement Tolerance" );
 
+
+  //geometry
+  registerWrapper( viewKeyStruct::area(), &m_area ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Face area" );
+
+  registerWrapper( viewKeyStruct::volume(), &m_volume ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Neighboring cells' volume" );
+
+  registerWrapper( viewKeyStruct::bulk(), &m_bulkModulus ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Neighboring cells' bulk Modulus" );
+
+  registerWrapper( viewKeyStruct::shear(), &m_shearModulus ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Neighboring cells' shear Modulus" );
+
+  //algo tune
   registerWrapper( viewKeyStruct::simultaneous(), &m_isSimultaneous ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "isSimultaneous" );
@@ -172,6 +191,8 @@ void FrictionDriver::getColumnNames( string_array & columnNames ) const
   columnNames.emplace_back( "newtraction,normal" );
   columnNames.emplace_back( "newtraction,tangent1" );
   columnNames.emplace_back( "newtraction,tangent2" );
+  columnNames.emplace_back( "iterative penalty, normal" );
+  columnNames.emplace_back( "iterative penalty, tangent" );
 
   if( dynamic_cast< CoulombFriction const * >(&getFriction()) != nullptr )
   {

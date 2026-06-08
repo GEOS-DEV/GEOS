@@ -82,14 +82,27 @@ private:
     constexpr static char const * phiString()
     { return "yTiltAngle";}
 
-    constexpr static char const * normalDispTol()
+    constexpr static char const * normalDispTolFac()
     { return "tolJumpN"; }
 
-    constexpr static char const * normalTractionTol()
+    constexpr static char const * normalTractionTolFac()
     { return "tolNormalTrac"; }
 
-    constexpr static char const * slidingTol()
+    constexpr static char const * slidingTolFac()
     { return "tolJumpT"; }
+
+    //geometry
+    constexpr static char const * area()
+    { return "faceArea"; }
+
+    constexpr static char const * volume()
+    { return "neighborsVolume"; }
+
+    constexpr static char const * shear()
+    { return "neighborsShear"; }
+
+    constexpr static char const * bulk()
+    { return "neighborsBulk"; }
 
     constexpr static char const * simultaneous()
     { return "simultaneous"; }
@@ -98,7 +111,7 @@ private:
   };
 
   // Time is defined in base class
-  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NJUMP, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, CC, FS, NEWTRAC, SNEWTRAC0, SNEWTRAC1, TLIM };
+  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NJUMP, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, CC, FS, NEWTRAC, SNEWTRAC0, SNEWTRAC1, ITERPEN0, ITERPEN1, TLIM };
 
   string m_jumpFunctionName; ///<
   string m_dJumpFunctionName; ///<
@@ -107,9 +120,15 @@ private:
   real64 m_theta{0.0}; ///< x-tilt of fault
   real64 m_phi{0.0};  ///< y-tilt of fault
 
-  real64 m_normalDispTol{1.e-8};
-  real64 m_normalTracTol{100.};
-  real64 m_slidingTol{1e-5};
+  real64 m_normalDispTolFac{1.e-8};
+  real64 m_normalTracTolFac{100.};
+  real64 m_slidingTolFac{1e-5};
+
+  //geometry for iterPen
+  real64 m_area{0.0};
+  array1d< real64 > m_volume{};
+  array1d< real64 > m_shearModulus{};
+  array1d< real64 > m_bulkModulus{};
 
   integer m_isSimultaneous{1};
 

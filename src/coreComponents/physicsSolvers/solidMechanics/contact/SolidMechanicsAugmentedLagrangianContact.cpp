@@ -1969,20 +1969,20 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
 
 }
 
-void SolidMechanicsAugmentedLagrangianContact::_computeTolerances( real64 const area,
-                                                                    real64 const (&volume)[2],
-                                                                    real64 const (&bulkModulus)[2],
-                                                                    real64 const (&shearModulus)[2],
-                                                                    arraySlice2d< real64 const> const &faceRotationMatrix,
-                                                                    real64 const tolJumpDispNFac,
-                                                                    real64 const tolJumpDispTFac,
-                                                                    real64 const tolNormalTracFac,
-                                                                    real64 const iterPenaltyNFac,
-                                                                    real64 const iterPenaltyTFac,
-                                                                    real64 & normalDisplacementTolerance,
-                                                                    real64 & slidingTolerance,
-                                                                    real64 & normalTractionTolerance,
-                                                                    real64 (&iterativePenalty)[2] )
+void SolidMechanicsAugmentedLagrangianContact::computeTolerancePerFace( real64 const area,
+                                                                        real64 const (&volume)[2],
+                                                                        real64 const (&bulkModulus)[2],
+                                                                        real64 const (&shearModulus)[2],
+                                                                        arraySlice2d< real64 const > const & faceRotationMatrix,
+                                                                        real64 const tolJumpDispNFac,
+                                                                        real64 const tolJumpDispTFac,
+                                                                        real64 const tolNormalTracFac,
+                                                                        real64 const iterPenaltyNFac,
+                                                                        real64 const iterPenaltyTFac,
+                                                                        real64 & normalDisplacementTolerance,
+                                                                        real64 & slidingTolerance,
+                                                                        real64 & normalTractionTolerance,
+                                                                        real64 (& iterativePenalty)[2] )
 {
   // approximation of the stiffness along coordinate directions
   // ( first, second ) index -> ( element index, direction )
@@ -2120,20 +2120,20 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
             real64 iterativePenaltyKfe[2]{};
 
-            _computeTolerances( faceArea[kfe],
-                                volume,
-                                bulk,
-                                shear,
-                                faceRotationMatrix[kfe],
-                                tolJumpDispNFac,
-                                tolJumpDispTFac,
-                                tolNormalTracFac,
-                                iterPenaltyNFac,
-                                iterPenaltyTFac,
-                                normalDisplacementTolerance[kfe],
-                                slidingTolerance[kfe],
-                                normalTractionTolerance[kfe],
-                                iterativePenaltyKfe );
+            computeTolerancePerFace( faceArea[kfe],
+                                     volume,
+                                     bulk,
+                                     shear,
+                                     faceRotationMatrix[kfe],
+                                     tolJumpDispNFac,
+                                     tolJumpDispTFac,
+                                     tolNormalTracFac,
+                                     iterPenaltyNFac,
+                                     iterPenaltyTFac,
+                                     normalDisplacementTolerance[kfe],
+                                     slidingTolerance[kfe],
+                                     normalTractionTolerance[kfe],
+                                     iterativePenaltyKfe );
 
             iterativePenalty[kfe][0] = iterativePenaltyKfe[0];
             iterativePenalty[kfe][1] = iterativePenaltyKfe[1];
