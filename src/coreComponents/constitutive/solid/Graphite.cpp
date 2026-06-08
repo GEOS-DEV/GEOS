@@ -45,6 +45,8 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_alphaL(),
   m_alphaT(),
   m_damage(),
+  m_basalPlaneDamage(),
+  m_comminutionDamage(),
   m_temperature(),
   m_temperatureRate(),
   m_jacobian(),
@@ -54,8 +56,10 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_maximumPrincipalStressDamage(),
   m_crackSpeed(),
   m_scaleFractureEnergyReleaseRate(),
+  m_fractureEnergyStrengthScaleExponent(),
   m_basalPlaneFractureEnergyReleaseRate(),
   m_totalFractureEnergyReleaseRate(),
+  m_damageEvolutionExponent(),
   m_damagedMaterialFrictionalSlope(),
   m_distortionShearResponseX2(),
   m_distortionShearResponseY1(),
@@ -117,17 +121,22 @@ Graphite::Graphite( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::maximumPrincipalStressDamageString(), &m_maximumPrincipalStressDamage ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to apply Max principal Stress Failure / Damage criterion" );  
+    setDescription( "Flag to apply Max principal Stress Failure / Damage criterion" );
 
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Crack speed for brittle failure" );  
+    setDescription( "Crack speed for brittle failure" );
 
   registerWrapper( viewKeyStruct::scaleFractureEnergyReleaseRateString(), &m_scaleFractureEnergyReleaseRate ).
     setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Flag to apply strength-scale to fracture energy release rate" );  
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Legacy flag used to initialize fractureEnergyStrengthScaleExponent when that exponent is not supplied" );
+
+  registerWrapper( viewKeyStruct::fractureEnergyStrengthScaleExponentString(), &m_fractureEnergyStrengthScaleExponent ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Exponent eta_G in effective fracture energy G_f^eff = G_f * strengthScale^eta_G; negative default derives eta_G from scaleFractureEnergyReleaseRate" );
 
   registerWrapper( viewKeyStruct::basalPlaneFractureEnergyReleaseRateString(), &m_basalPlaneFractureEnergyReleaseRate ).
     setApplyDefaultValue( DBL_MAX ).
@@ -137,6 +146,11 @@ Graphite::Graphite( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::totalFractureEnergyReleaseRateString(), &m_totalFractureEnergyReleaseRate ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Fracture Energy Release Rate for non-basal shear and normal modes" );
+
+  registerWrapper( viewKeyStruct::damageEvolutionExponentString(), &m_damageEvolutionExponent ).
+    setApplyDefaultValue( 32.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Exponent used in work-based damage evolution D = min(1, W/(G_f/l))^n" );
 
   registerWrapper( viewKeyStruct::damagedMaterialFrictionalSlopeString(), &m_damagedMaterialFrictionalSlope ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -247,12 +261,12 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Basal Plane Plastic Work" );
-  
+
   registerWrapper( viewKeyStruct::plasticWorkString(), &m_plasticWork ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Plastic Work" );
-  
+
   registerWrapper( viewKeyStruct::alphaLString(), &m_alphaL ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -266,7 +280,17 @@ Graphite::Graphite( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Array of quadrature point damage values" );
+    setDescription( "Host-visible DFG damage/failure indicator" );
+
+  registerWrapper( viewKeyStruct::basalPlaneDamageString(), &m_basalPlaneDamage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Internal basal-plane fracture damage used to degrade basal opening/sliding strength" );
+
+  registerWrapper( viewKeyStruct::comminutionDamageString(), &m_comminutionDamage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Internal comminution/powder damage used to transition strengths to residual powder response" );
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setApplyDefaultValue( 300.0 ).
@@ -328,6 +352,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_basalPlanePlasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_plasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_basalPlaneDamage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_comminutionDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_temperature.resize( 0 );
   m_temperatureRate.resize( 0 );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
@@ -392,11 +418,17 @@ void Graphite::postInputInitialization()
                m_maximumPrincipalStressDamage != 1, "Max Princ. Stress Damage flag should be 0 or 1", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0, "Crack speed should be positive", InputError );
   GEOS_THROW_IF( m_scaleFractureEnergyReleaseRate != 0 && m_scaleFractureEnergyReleaseRate != 1,  "Fracture energy scale flag should be 0 or 1", InputError );
+  if( m_fractureEnergyStrengthScaleExponent < 0.0 )
+  {
+    m_fractureEnergyStrengthScaleExponent = ( m_scaleFractureEnergyReleaseRate == 1 ) ? 1.0 : 0.0;
+  }
+  GEOS_THROW_IF( m_fractureEnergyStrengthScaleExponent < 0.0, "fractureEnergyStrengthScaleExponent must be non-negative.", InputError );
 
   GEOS_THROW_IF( m_enableCrackTipStressConcentration != 0 &&  m_enableCrackTipStressConcentration != 1,  "Crack tip flag should be 0 or 1", InputError );
 
   GEOS_THROW_IF( m_basalPlaneFractureEnergyReleaseRate <= 0.0, "Basal plane fracture energy release rate must be a positive number.", InputError );
   GEOS_THROW_IF( m_totalFractureEnergyReleaseRate <= 0.0, "Total Fracture Energy Release Rate must be a positive number.", InputError );
+  GEOS_THROW_IF( m_damageEvolutionExponent <= 0.0, "damageEvolutionExponent must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 

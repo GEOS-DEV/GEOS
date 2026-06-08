@@ -14,10 +14,18 @@
 
 /**
  * @file Graphite.hpp
- * @brief Simple damage model transversely isotropic graphitic materials
+ * @brief Transversely isotropic strength and damage model for graphitic materials.
  *
- * Model for graphitic materials with a weak plan and transverse anisotropy.  Includes
- * pressure dependent TI elasticity, strength, and damage models.
+ * The model represents a graphite-like layered solid whose first material-direction
+ * row is the normal to the basal/weak planes.  The elastic predictor is
+ * transversely isotropic.  The inelastic corrector decomposes stress into
+ * distortion, in-plane shear, and coupled basal-shear modes and limits the
+ * combined modal stress with a quadratic TI strength index.  The scalar
+ * @c damage field is retained as the host-visible DFG failure/separation
+ * indicator; it may reach one for either a resolved fracture or a comminuted
+ * powder cloud.  Internal basal-plane and comminution damage variables control
+ * how the strength degrades mechanically so that a damaged material point can
+ * still carry pressure-dependent residual powder strength under confinement.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
@@ -57,19 +65,23 @@ public:
    * @param[in] plasticWork The ArrayView holding the total plastic work for each quadrature point.
    * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
    * @param[in] alphaT Thermal expansion transverse to crystal symmetry axis
-   * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] damage The ArrayView holding the host-visible DFG damage for each quadrature point.
+   * @param[in] basalPlaneDamage The ArrayView holding basal-plane fracture damage for each quadrature point.
+   * @param[in] comminutionDamage The ArrayView holding comminution/powder damage for each quadrature point.
    * @param[in] temperature The ArrayView holding the temperature for each element/particle.
    * @param[in] temperatureRate The ArrayView holding the temperature rate for each element/particle.
-   * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
+   * @param[in] jacobian The ArrayView holding the jacobian for each quadrature point.
    * @param[in] materialDirection The ArrayView holding the material direction for each element/particle.
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
    * @param[in] strengthScale The ArrayView holding the strength scale for each element.
    * @param[in] failureStrength The failure strength.
    * @param[in] maxPrincipalStressDamage Flag to activate max tensile stress damage evolution
-   * @param[in] crackSpeed  Damage evolution rate
-   * @param[in] scaleFractureEnergyReleaseRate flag to apply strength scale to fracture energy release rate.
-   * @param[in] basalPlaneFractureEnergyReleaseRate Fracture energy release rate for basal plane separation 
+   * @param[in] crackSpeed Damage evolution rate
+   * @param[in] scaleFractureEnergyReleaseRate legacy flag used to initialize fractureEnergyStrengthScaleExponent when the exponent is not supplied.
+   * @param[in] fractureEnergyStrengthScaleExponent exponent eta_G in G_f^{eff}=G_f strengthScale^{eta_G}.
+   * @param[in] basalPlaneFractureEnergyReleaseRate Fracture energy release rate for basal plane separation
    * @param[in] totalFractureEnergyReleaseRate Used to determine amount of plastic work needed to generate a damage surface
+   * @param[in] damageEvolutionExponent exponent used by the work-based damage law.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
@@ -96,6 +108,8 @@ public:
                    real64 const & alphaL,
                    real64 const & alphaT,
                    arrayView2d< real64 > const & damage,
+                   arrayView2d< real64 > const & basalPlaneDamage,
+                   arrayView2d< real64 > const & comminutionDamage,
                    arrayView1d< real64 > const & temperature,
                    arrayView1d< real64 > const & temperatureRate,
                    arrayView2d< real64 > const & jacobian,
@@ -105,8 +119,10 @@ public:
                    int const & maximumPrincipalStressDamage,
                    real64 const & crackSpeed,
                    int const & scaleFractureEnergyReleaseRate,
+                   real64 const & fractureEnergyStrengthScaleExponent,
                    real64 const & basalPlaneFractureEnergyReleaseRate,
                    real64 const & totalFractureEnergyReleaseRate,
+                   real64 const & damageEvolutionExponent,
                    real64 const & damagedMaterialFrictionalSlope,
                    real64 const & distortionShearResponseX2,
                    real64 const & distortionShearResponseY1,
@@ -158,6 +174,8 @@ public:
     m_alphaL( alphaL ),
     m_alphaT( alphaT ),
     m_damage( damage ),
+    m_basalPlaneDamage( basalPlaneDamage ),
+    m_comminutionDamage( comminutionDamage ),
     m_temperature( temperature ),
     m_temperatureRate( temperatureRate ),
     m_jacobian( jacobian ),
@@ -167,8 +185,10 @@ public:
     m_maximumPrincipalStressDamage( maximumPrincipalStressDamage ),
     m_crackSpeed( crackSpeed ),
     m_scaleFractureEnergyReleaseRate( scaleFractureEnergyReleaseRate ),
+    m_fractureEnergyStrengthScaleExponent( fractureEnergyStrengthScaleExponent ),
     m_basalPlaneFractureEnergyReleaseRate( basalPlaneFractureEnergyReleaseRate ),
     m_totalFractureEnergyReleaseRate( totalFractureEnergyReleaseRate ),
+    m_damageEvolutionExponent( damageEvolutionExponent ),
     m_damagedMaterialFrictionalSlope( damagedMaterialFrictionalSlope ),
     m_distortionShearResponseX2( distortionShearResponseX2 ),
     m_distortionShearResponseY1( distortionShearResponseY1 ),
@@ -331,6 +351,24 @@ public:
                       const real64 y2,
                       const real64 m1 ) const;
 
+
+  GEOS_HOST_DEVICE
+  real64 evaluatePressureDependentStrength( const real64 pressure,
+                                            const real64 x2,
+                                            const real64 y1,
+                                            const real64 y2,
+                                            const real64 m1 ) const;
+
+  GEOS_HOST_DEVICE
+  real64 evaluateGraphiteModeStrength( const real64 pressure,
+                                        const real64 damage,
+                                        const real64 strengthScale,
+                                        const real64 x2,
+                                        const real64 y1,
+                                        const real64 y2,
+                                        const real64 m1,
+                                        const real64 strainHardeningMultiplier ) const;
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
@@ -389,8 +427,19 @@ private:
   // thermal expansion in direction transverse to crystal symmetry
   real64 const m_alphaT;
 
-  /// A reference to the ArrayView holding the damage for each quadrature point.
+  /// Host-visible DFG damage for each quadrature point. This scalar is intentionally
+  /// allowed to reach one for either fracture or comminution so the DFG solver can
+  /// split velocity fields, open/slip surfaces, and separate powder clouds.
   arrayView2d< real64 > const m_damage;
+
+  /// Mode-resolved basal-plane fracture damage. This internal variable degrades
+  /// basal opening/sliding-related strength without forcing the whole material
+  /// point to behave as a fully comminuted powder.
+  arrayView2d< real64 > const m_basalPlaneDamage;
+
+  /// Internal comminution/powder damage. This variable blends the crystal strength
+  /// to the residual pressure-dependent powder envelope for all shear modes.
+  arrayView2d< real64 > const m_comminutionDamage;
 
   /// A reference to the ArrayView holding the temperature for each quadrature point.
   arrayView1d< real64 > const m_temperature;
@@ -414,9 +463,11 @@ private:
   int const m_maximumPrincipalStressDamage;
   real64 const m_crackSpeed;
 
-  int const m_scaleFractureEnergyReleaseRate;   // Apply strength-scale to fracture energy parameters.
+  int const m_scaleFractureEnergyReleaseRate;   // Legacy flag used to initialize the fracture-energy scale exponent.
+  real64 const m_fractureEnergyStrengthScaleExponent;
   real64 const m_basalPlaneFractureEnergyReleaseRate;
   real64 const m_totalFractureEnergyReleaseRate;
+  real64 const m_damageEvolutionExponent;
 
   // The damaged material frictional slope
   real64 const m_damagedMaterialFrictionalSlope;
@@ -643,7 +694,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // Update effective elastic properties
   m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));  // prevent negative k or division by 0
   m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
-  
+
   // TODO: make elastic properties safe to avoid floating point errors.
   m_wavespeed[k][0] = LvArray::math::sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
 
@@ -676,7 +727,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                            oldStress,            // stress at start of step
                                            D,                    // D=sym(L)
                                            stress,               // stress at end of step
-                                           k );             
+                                           k );
 
 
   // CC: debug
@@ -724,10 +775,22 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // Trial pressure to compute pressure-dependence of strength
   real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
-  // scale fracture energy release rate with strength scale also, so strain
-  // to fracture doesn't increase as strength scale decreases.
-  real64 basalPlaneFractureEnergyReleaseRate = ( m_scaleFractureEnergyReleaseRate == 1 ) ? m_basalPlaneFractureEnergyReleaseRate * m_strengthScale[k] : m_basalPlaneFractureEnergyReleaseRate;
-  real64 totalFractureEnergyReleaseRate = ( m_scaleFractureEnergyReleaseRate == 1 ) ? m_totalFractureEnergyReleaseRate * m_strengthScale[k] : m_totalFractureEnergyReleaseRate;
+  // strengthScale is a particle-scale strength multiplier supplied by the
+  // host code.  It modifies low-pressure flaw-controlled strengths and slopes,
+  // but it does not modify the high-pressure Y2 plateaus.  The Y2 values
+  // represent confined strength after defects and microcracks close and are
+  // shared by the intact and comminuted-powder branches.  Fracture energy
+  // scaling is controlled independently through
+  // G_f^eff = G_f * strengthScale^eta_G.
+  real64 const strengthScale = LvArray::math::max( m_strengthScale[k], 1.0e-12 );
+  real64 const fractureEnergyScale = LvArray::math::pow( strengthScale, m_fractureEnergyStrengthScaleExponent );
+  real64 const basalPlaneFractureEnergyReleaseRate =
+    ( m_basalPlaneFractureEnergyReleaseRate < DBL_MAX ) ?
+    m_basalPlaneFractureEnergyReleaseRate * fractureEnergyScale : DBL_MAX;
+  real64 const totalFractureEnergyReleaseRate =
+    ( m_totalFractureEnergyReleaseRate < DBL_MAX ) ?
+    m_totalFractureEnergyReleaseRate * fractureEnergyScale : DBL_MAX;
+  real64 const failureStrength = m_failureStrength * strengthScale;
 
   // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
   // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
@@ -735,11 +798,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // switch this back later to reduce memory footprint of the model.
   // real64 crackTipStressConcentration = 1.0;
   m_crackTipStressConcentration[k] = 1.0;
-  if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
+  if( ( m_enableCrackTipStressConcentration == 1 ) and
+      ( m_distanceToCrackTip[k] > 0 ) and
+      ( basalPlaneFractureEnergyReleaseRate < DBL_MAX ) and
+      ( totalFractureEnergyReleaseRate < DBL_MAX ) )
   {
-    real64 fractureEnergyReleaseRate = 0.5*( m_basalPlaneFractureEnergyReleaseRate + m_totalFractureEnergyReleaseRate );
+    real64 fractureEnergyReleaseRate = 0.5*( basalPlaneFractureEnergyReleaseRate + totalFractureEnergyReleaseRate );
     real64 constrainedModulus =  m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k];
-    real64 nominalIntactStrength = m_failureStrength;
+    real64 nominalIntactStrength = failureStrength;
 
     real64 fractureProcessZoneRadius =
       LvArray::math::max( 1.e-12, constrainedModulus * fractureEnergyReleaseRate /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
@@ -757,7 +823,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // Check for tensile failure in preferred direction
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
-  real64 failureStrength = m_failureStrength * m_strengthScale[k];
   int basalModeIFracture = 0;
 
   if( planeNormalStress > failureStrength )
@@ -783,26 +848,45 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     if( maximumPrincipalStress*m_crackTipStressConcentration[k] > failureStrength )
     {
-      real64 newDamage = m_damage[k][q] + m_crackSpeed * timeIncrement / m_lengthScale[k];
-      m_damage[k][q] = LvArray::math::max( 0.0, LvArray::math::min( 1.0, LvArray::math::max( m_damage[k][q], newDamage )));
+      real64 const newBasalPlaneDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] + m_crackSpeed * timeIncrement / m_lengthScale[k] ) );
+      m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], newBasalPlaneDamage );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], newBasalPlaneDamage );
     }
   }
 
 
-  // Test if damage is exactly 0 but there is significant accumulated plastic work.  
-  // This should only occur if the damage has been healed by an event in the solver, 
+  // Test if damage is exactly 0 but there is significant accumulated plastic work.
+  // This should only occur if the damage has been healed by an event in the solver,
   // in which case we need to also reset the accumulated plastic work so it
   // doesn't immediately re-damage.
   //
-  if ( isZero( m_damage[k][q] ) && ( (m_plasticWork[k][q] > ( 1.e-3*totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) || 
+  if ( isZero( m_damage[k][q] ) && ( (m_plasticWork[k][q] > ( 1.e-3*totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) ||
                                     (m_basalPlanePlasticWork[k][q] > ( 1.e-3*basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) ) )
                                     {
                                       m_plasticWork[k][q] = 0.0;
                                       m_basalPlanePlasticWork[k][q] = 0.0;
+                                      m_basalPlaneDamage[k][q] = 0.0;
+                                      m_comminutionDamage[k][q] = 0.0;
                                     }
 
-  // strength scale factor, combining plastic softening and damage
-  real64 damageMultiplier = (1.0 - m_damage[k][q]);
+  // The public damage field is the host-visible failure variable consumed by
+  // DFG.  It is allowed to reach one for either a resolved fracture surface or a
+  // comminuted powder cloud.  The constitutive strength degradation below uses
+  // the mode-resolved internal damage variables instead: basalPlaneDamage
+  // weakens basal opening/sliding modes, while comminutionDamage blends all
+  // shear modes toward a pressure-dependent powder residual.  This separation
+  // lets DFG split velocity fields and prevent damaged/intact smearing without
+  // forcing every fractured particle to become a zero-strength material.
+  real64 const basalPlaneDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] ) );
+  real64 const comminutionDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_comminutionDamage[k][q] ) );
+  real64 const dfgDamage = LvArray::math::max( LvArray::math::max( basalPlaneDamage, comminutionDamage ),
+                                               LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_damage[k][q] ) ) );
+  m_damage[k][q] = dfgDamage;
+
+  real64 const tensileStressMultiplier = 1.0 - smoothStep( dfgDamage, 0.0, 1.0 );
+
+  // flags indicating whether plastic strain needs to be updated.
+  bool plastic = false;
 
   // find in-plane isotropic and deviatoric stress
   real64 inPlaneIso[6];
@@ -813,12 +897,18 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::copy< 6 >( inPlaneDev, sigma4 );
   LvArray::tensorOps::subtract< 6 >( inPlaneDev, inPlaneIso );
 
-  // Enforce damage, no tensile stress on plane
-  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+  // Plane-normal tension is limited by the intact Weibull-scaled tensile
+  // strength and is then continuously degraded by damage.  Compression is left
+  // intact so that damaged material can compact and develop frictional strength.
+  if( planeNormalStress > 0.0 )
   {
-    if( planeNormalStress > 0 )
+    real64 const tensileCapMultiplier =
+      LvArray::math::min( 1.0, failureStrength / LvArray::math::max( planeNormalStress, 1.0e-20 ) );
+    real64 const planeNormalMultiplier = tensileStressMultiplier * tensileCapMultiplier;
+    if( planeNormalMultiplier < 0.999999999999 )
     {
-      LvArray::tensorOps::scale< 6 >( sigma1, 0.0 );
+      LvArray::tensorOps::scale< 6 >( sigma1, planeNormalMultiplier );
+      plastic = true;
     }
   }
 
@@ -838,125 +928,64 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
   LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
 
-  // We will scale stress components and reconstruct so:
-  //   newStress = distortion_iso + distortion_dev + inPlaneDev +sigma5
-  //
-  //   distortion_iso: This is also the isotropic part of the full stress tensor. With damage, should be 0 if tensile.
-  //.  distortion_de
-
-
-  // We don't want spherical tension in-plane for damaged material, so here we force that to be zero if it would otherwise
-  // be tensile.  along with the sigma1 scaling above and the deviatoric scaling below this should give a no-strength damaged
-  // material while still having anisotropic strength in compression.
-  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+  // Remove spherical tensile strength smoothly as damage grows, while leaving
+  // compressive pressure untouched.  This gives a fully damaged powder no
+  // cohesive opening resistance but still allows pressure-dependent granular
+  // shear strength under confinement.
+  if( distortionMeanStress > 0.0 && tensileStressMultiplier < 1.0 )
   {
-    if( distortionMeanStress > 0 )
-    {
-      LvArray::tensorOps::scale< 6 >( distortion_iso, 0.0 );
-    }
+    LvArray::tensorOps::scale< 6 >( distortion_iso, tensileStressMultiplier );
+    plastic = true;
   }
 
-  // Define 3 pressure-dependent shear strengths for different shear modes.
-  real64 inPlaneShearStrength, coupledYieldStrength, totalShearStrength;
-  real64 x1, x2, y1, y2, m1;
-  real64 strainHardeningMultiplier;
+  // Define three pressure-dependent mode strengths.  A basal fracture degrades
+  // the plane-normal distortion and coupled weak-plane shear modes.  A
+  // comminution damage state degrades all modes toward residual powder strength.
+  // In the fully comminuted limit each mode has zero cohesion, uses
+  // damagedMaterialFrictionalSlope, and retains its unscaled Y2 plateau.
+  real64 const distortionDamage = LvArray::math::max( basalPlaneDamage, comminutionDamage );
+  real64 const coupledDamage = LvArray::math::max( basalPlaneDamage, comminutionDamage );
+  real64 const inPlaneDamage = comminutionDamage;
 
-  // -------------------------------
-  // "distortion" shear relating sigma normal and in-plane iso"
-  x1 = 0;
-  x2 = m_distortionShearResponseX2;
-  y1 = m_distortionShearResponseY1 * m_strengthScale[k];
-  y2 = m_distortionShearResponseY2 * m_strengthScale[k];
-  m1 = m_distortionShearResponseM1;
-  strainHardeningMultiplier = 1 + (m_distortionStrainHardeningC0 - 1)*smoothStep( m_relaxation[k][q], 0, 1 );
+  real64 const distortionHardeningMultiplier =
+    1.0 + ( m_distortionStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
+  real64 const totalShearStrength =
+    evaluateGraphiteModeStrength( pressure, distortionDamage, strengthScale,
+                                  m_distortionShearResponseX2,
+                                  m_distortionShearResponseY1,
+                                  m_distortionShearResponseY2,
+                                  m_distortionShearResponseM1,
+                                  distortionHardeningMultiplier );
 
-  // damage or softening reduces cohesion and reduces slope to failed value.
-  y1 *= damageMultiplier*strainHardeningMultiplier;
-  y2 *= strainHardeningMultiplier;
-  m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-  m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
+  real64 const coupledHardeningMultiplier =
+    1.0 + ( m_coupledStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
+  real64 const coupledYieldStrength =
+    evaluateGraphiteModeStrength( pressure, coupledDamage, strengthScale,
+                                  m_coupledShearResponseX2,
+                                  m_coupledShearResponseY1,
+                                  m_coupledShearResponseY2,
+                                  m_coupledShearResponseM1,
+                                  coupledHardeningMultiplier );
 
-  if( pressure < x1 )
-  {
-    totalShearStrength=LvArray::math::max( 0.0, y1-(x1-pressure)*m1 );
-    // totalShearStrength=LvArray::math::max(0.0,y1-(x2-pressure)*m1);
-  }
-  else if( pressure < x2 )
-  {
-    totalShearStrength=slopePoint0( pressure, x1, x2, y1, y2, m1 );
-  }
-  else
-  {
-    totalShearStrength=y2;
-  }
-
-  // -------------------------------------------
-  // Coupled shear response (slip on weak plane)
-  x1 = 0;
-  x2 = m_coupledShearResponseX2;
-  y1 = m_coupledShearResponseY1 * m_strengthScale[k];
-  y2 = m_coupledShearResponseY2 * m_strengthScale[k];
-  m1 = m_coupledShearResponseM1;
-  strainHardeningMultiplier = 1 + (m_coupledStrainHardeningC0 - 1)*smoothStep( m_relaxation[k][q], 0, 1 );
-
-  // damage or softening reduces cohesion and reduces slope to failed value.
-  y1 *= damageMultiplier*strainHardeningMultiplier;
-  y2 *= strainHardeningMultiplier;
-  m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-  m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
-
-  if( pressure<x1 )
-  {
-    coupledYieldStrength=LvArray::math::max( 0.0, y1-(x1-pressure)*m1 );
-    // coupledYieldStrength=LvArray::math::max(0.0,y1-(x2-pressure)*m1);
-  }
-  else if( pressure<x2 )
-  {
-    coupledYieldStrength=slopePoint0( pressure, x1, x2, y1, y2, m1 );
-  }
-  else
-  {
-    coupledYieldStrength=y2;
-  }
-
-  // -------------------------------
-  // In-plane shear response
-  x1 = 0;
-  x2 = m_inPlaneShearResponseX2;
-  y1 = m_inPlaneShearResponseY1 * m_strengthScale[k];
-  y2 = m_inPlaneShearResponseY2 * m_strengthScale[k];
-  m1 = m_inPlaneShearResponseM1;
-  strainHardeningMultiplier = 1 + (m_inPlaneStrainHardeningC0 - 1)*smoothStep( m_relaxation[k][q], 0, 1 );
-
-  // damage or softening reduces cohesion and reduces slope to failed value.
-  y1 *= damageMultiplier*strainHardeningMultiplier;
-  y2 *= strainHardeningMultiplier;
-  m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-  m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
-
-  if( pressure < x1 )
-  {
-    inPlaneShearStrength=LvArray::math::max( 0.0, y1  -( x1 - pressure ) * m1 );
-    // inPlaneShearStrength=LvArray::math::max(0.0, y1  -( x2 - pressure ) * m1 );
-  }
-  else if( pressure < x2 )
-  {
-    inPlaneShearStrength=slopePoint0( pressure, x1, x2, y1, y2, m1 );
-  }
-  else
-  {
-    inPlaneShearStrength = y2;
-  }
+  real64 const inPlaneHardeningMultiplier =
+    1.0 + ( m_inPlaneStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
+  real64 const inPlaneShearStrength =
+    evaluateGraphiteModeStrength( pressure, inPlaneDamage, strengthScale,
+                                  m_inPlaneShearResponseX2,
+                                  m_inPlaneShearResponseY1,
+                                  m_inPlaneShearResponseY2,
+                                  m_inPlaneShearResponseM1,
+                                  inPlaneHardeningMultiplier );
 
   // Enforce strength ---------------------------------------------
 
-  // CC: add check to make sure strength is some small value to avoid floating point error for dmg = 1.0 initially in strength computations
-
-  // flags indicating whether plastic strain needs to be updated.
-  bool plastic = false;
-
-  // Enforce distortion strain yield
-  //For symmetric matrix need to double off diagonal elements for l2Norm?
+  // Compute the three TI modal stress measures.  The scaling constants are
+  // chosen so that these measures coincide with von-Mises-equivalent stress
+  // for the corresponding deviatoric subspaces when the mode strengths are
+  // equal.  The normalized quadratic sum below is a transversely-isotropic
+  // extension of the distortional-energy idea in a von-Mises model.  Mixed-mode
+  // loading consumes a shared strength budget rather than independent budgets
+  // for distortion, in-plane shear, and coupled weak-plane shear.
   distortion_dev[3] *= 1.41421356237;
   distortion_dev[4] *= 1.41421356237;
   distortion_dev[5] *= 1.41421356237;
@@ -964,14 +993,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   distortion_dev[3] /= 1.41421356237;
   distortion_dev[4] /= 1.41421356237;
   distortion_dev[5] /= 1.41421356237;
-  if( totalShearStress > totalShearStrength )
-  {
-    LvArray::tensorOps::scale< 6 >( distortion_dev, totalShearStrength / totalShearStress );
-    plastic = true;
-  }
 
-  // enforce in-plane yield
-  //For symmetric matrix need to double off diagonal elements for l2Norm?
   inPlaneDev[3] *= 1.41421356237;
   inPlaneDev[4] *= 1.41421356237;
   inPlaneDev[5] *= 1.41421356237;
@@ -979,14 +1001,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   inPlaneDev[3] /= 1.41421356237;
   inPlaneDev[4] /= 1.41421356237;
   inPlaneDev[5] /= 1.41421356237;
-  if( inPlaneShearStress > inPlaneShearStrength )
-  {
-    LvArray::tensorOps::scale< 6 >( inPlaneDev, inPlaneShearStrength / inPlaneShearStress );
-    plastic = true;
-  }
 
-  // enforce coupled yield
-  //For symmetric matrix need to double off diagonal elements for l2Norm?
   sigma5[3] *= 1.41421356237;
   sigma5[4] *= 1.41421356237;
   sigma5[5] *= 1.41421356237;
@@ -994,9 +1009,18 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   sigma5[3] /= 1.41421356237;
   sigma5[4] /= 1.41421356237;
   sigma5[5] /= 1.41421356237;
-  if( coupledShearStress > coupledYieldStrength )
+
+  real64 const equivalentStrengthRatioSquared =
+    ( totalShearStress * totalShearStress ) / ( totalShearStrength * totalShearStrength ) +
+    ( inPlaneShearStress * inPlaneShearStress ) / ( inPlaneShearStrength * inPlaneShearStrength ) +
+    ( coupledShearStress * coupledShearStress ) / ( coupledYieldStrength * coupledYieldStrength );
+
+  if( equivalentStrengthRatioSquared > 1.0 )
   {
-    LvArray::tensorOps::scale< 6 >( sigma5, coupledYieldStrength / coupledShearStress );
+    real64 const radialReturnScale = 1.0 / LvArray::math::sqrt( equivalentStrengthRatioSquared );
+    LvArray::tensorOps::scale< 6 >( distortion_dev, radialReturnScale );
+    LvArray::tensorOps::scale< 6 >( inPlaneDev, radialReturnScale );
+    LvArray::tensorOps::scale< 6 >( sigma5, radialReturnScale );
     plastic = true;
   }
 
@@ -1089,34 +1113,45 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // increment relaxation
     // For symmetric matrix need to double off diagonal elements for l2Norm?
-    real64 plasticStrainIncrementForNorm[6] = { plasticStrainIncrement[0], 
-                                                plasticStrainIncrement[1], 
-                                                plasticStrainIncrement[2], 
-                                                plasticStrainIncrement[3] / 1.41421356237, 
-                                                plasticStrainIncrement[3] / 1.41421356237, 
-                                                plasticStrainIncrement[3] / 1.41421356237 };
+    real64 plasticStrainIncrementForNorm[6] = { plasticStrainIncrement[0],
+                                                plasticStrainIncrement[1],
+                                                plasticStrainIncrement[2],
+                                                plasticStrainIncrement[3] / 1.41421356237,
+                                                plasticStrainIncrement[4] / 1.41421356237,
+                                                plasticStrainIncrement[5] / 1.41421356237 };
     m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrementForNorm ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
 
-    if ( m_crackSpeed < DBL_MAX ) 
-    { 
-      real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
-      m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+    if( m_crackSpeed < DBL_MAX )
+    {
+      real64 const timeToFailure = m_lengthScale[k] / m_crackSpeed;
+      if( basalModeIFracture == 1 )
+      {
+        real64 const rateDamage = LvArray::math::min( m_basalPlaneDamage[k][q] + timeIncrement / timeToFailure, 1.0 );
+        m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], rateDamage );
+        m_damage[k][q] = LvArray::math::max( m_damage[k][q], rateDamage );
+      }
+      else
+      {
+        real64 const rateDamage = LvArray::math::min( m_comminutionDamage[k][q] + timeIncrement / timeToFailure, 1.0 );
+        m_comminutionDamage[k][q] = LvArray::math::max( m_comminutionDamage[k][q], rateDamage );
+        m_damage[k][q] = LvArray::math::max( m_damage[k][q], rateDamage );
+      }
     }
 
     // If we have exceeded the tensile strength for normal stress, incement the plane-normal plastic
     // work that is used to compute damage.
-    if ( m_basalPlaneFractureEnergyReleaseRate < DBL_MAX ) 
-    { 
+    if ( m_basalPlaneFractureEnergyReleaseRate < DBL_MAX )
+    {
       if( ( basalModeIFracture == 1 ) and ( pressure < m_distortionShearResponseX2 ) )
       {
       // Mode I basal plane fracture:
       real64 dEpsilonIJnJ[3] = {};
-      real64 plasticStrainIncrementForTensorOp[6] = { plasticStrainIncrement[0], 
-                                                      plasticStrainIncrement[1], 
-                                                      plasticStrainIncrement[2], 
-                                                      plasticStrainIncrement[3] * 0.5, 
-                                                      plasticStrainIncrement[4] * 0.5, 
+      real64 plasticStrainIncrementForTensorOp[6] = { plasticStrainIncrement[0],
+                                                      plasticStrainIncrement[1],
+                                                      plasticStrainIncrement[2],
+                                                      plasticStrainIncrement[3] * 0.5,
+                                                      plasticStrainIncrement[4] * 0.5,
                                                       plasticStrainIncrement[5] * 0.5 };
       LvArray::tensorOps::Ri_eq_symAijBj< 3 >(dEpsilonIJnJ, plasticStrainIncrementForTensorOp, unrotatedMaterialDirection);
 
@@ -1133,10 +1168,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
         }
       }
 
-      // Compare accumulated work to specified effective fracture energy release rate normalized by length scale
-      // The power will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], LvArray::math::pow( normalizedWork, 32.0 ) );      
+      // Compare accumulated work to the effective basal fracture energy
+      // normalized by the host-provided length scale.  The exponent controls how
+      // sharply the work ratio approaches the DFG-visible failed state.
+      real64 const normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      real64 const newBasalPlaneDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], newBasalPlaneDamage );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], m_basalPlaneDamage[k][q] );
     }
 
     // Compute total plastic work and compare to the effective value for the fracture energy release
@@ -1144,7 +1182,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // new fracture surfaces).  Only evolve damage if pressure is below a brittle-ductile limit
     // defined as the X2 parameters for the distortion shear response.
     if( ( m_totalFractureEnergyReleaseRate < DBL_MAX ) and ( pressure < m_distortionShearResponseX2 ) )
-    { 
+    {
       // Increment in total plastic work.
       for ( int i = 0; i < 6; ++i )
       {
@@ -1154,11 +1192,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
         m_plasticWork[k][q] += LvArray::math::max( 0.0, dWp );
       }
 
-      // Damage is ( Wp/(Gf/l) )^k, where k=32, and we allow only increase in damage.
-      // This will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32. ) );      
+      // Comminution damage is driven by the non-basal plastic work budget and
+      // blends all modal strengths toward the pressure-dependent residual powder
+      // branch.  The public damage is still updated so DFG can introduce strong
+      // discontinuities and separate powder clouds.
+      real64 const normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      real64 const newComminutionDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      m_comminutionDamage[k][q] = LvArray::math::max( m_comminutionDamage[k][q], newComminutionDamage );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], m_comminutionDamage[k][q] );
     }
+
+    m_damage[k][q] = LvArray::math::max( m_damage[k][q],
+                                         LvArray::math::max( m_basalPlaneDamage[k][q],
+                                                             m_comminutionDamage[k][q] ) );
   }
 }
 
@@ -1429,6 +1475,114 @@ real64 GraphiteUpdates::slopePoint0( const real64 x,
   return y2 + (y1-y2)*LvArray::math::pow( (x-x2)/(x1-x2), m1*(x1-x2)/(y1-y2) );
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::evaluatePressureDependentStrength( const real64 pressure,
+                                                           const real64 x2,
+                                                           const real64 y1,
+                                                           const real64 y2,
+                                                           const real64 m1 ) const
+{
+  // The graphite strength envelopes use a point-slope curve with x1=0.
+  // This helper is used for both the intact crystal branch and the
+  // comminuted-powder branch.  The high-pressure strength y2 is treated as
+  // the fixed pressure-dominated limit.  The low-pressure intercept y1 and
+  // initial slope m1 may be scaled before entering this helper; they are then
+  // limited here so the envelope remains monotone and concave up to the
+  // plateau.  The small slope margin makes the curve tangent to the plateau
+  // rather than exactly linear to it.
+  real64 const x1 = 0.0;
+  real64 const safeDx = LvArray::math::max( x2 - x1, 1.0e-20 );
+  real64 const safeY2 = LvArray::math::max( y2, 1.0e-20 );
+  real64 const maxY1 = ( 1.0 - 1.0e-12 ) * safeY2;
+  real64 const safeY1 = LvArray::math::max( 0.0, LvArray::math::min( y1, maxY1 ) );
+  real64 const minimumConcaveSlope = ( 1.0 + 1.0e-12 ) * ( safeY2 - safeY1 ) / safeDx;
+  real64 const safeSlope = LvArray::math::max( m1, minimumConcaveSlope );
+
+  if( pressure < x1 )
+  {
+    return LvArray::math::max( 0.0, safeY1 - ( x1 - pressure ) * safeSlope );
+  }
+  else if( pressure < x2 )
+  {
+    return slopePoint0( pressure, x1, x2, safeY1, safeY2, safeSlope );
+  }
+  else
+  {
+    return safeY2;
+  }
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::evaluateGraphiteModeStrength( const real64 pressure,
+                                                       const real64 damage,
+                                                       const real64 strengthScale,
+                                                       const real64 x2,
+                                                       const real64 y1,
+                                                       const real64 y2,
+                                                       const real64 m1,
+                                                       const real64 strainHardeningMultiplier ) const
+{
+  // strengthScale is a particle-scale Weibull/aleatory multiplier for the
+  // low-pressure, flaw-controlled part of the intact crystal strength.  The
+  // high-pressure plateau Y2 is not scaled: at sufficiently high confinement
+  // the effect of pre-existing microcracks and weak flaws is assumed to close
+  // out, so the intact branch and the comminuted powder branch share the same
+  // mode-specific Y2.  This prevents a weak particle with strengthScale < 1
+  // from hardening merely because damage blends it into the powder residual.
+  //
+  // The low-pressure ordinate and tangent slope are scaled by strengthScale
+  // and the relaxation hardening multiplier, but are then limited so the
+  // point-slope envelope remains a concave, monotone cap in p-q space.  The
+  // scaled Y1 cannot exceed the fixed Y2 plateau, and the scaled M1 is raised
+  // to at least the secant slope (Y2-Y1)/X2 when required.
+  //
+  // The fully damaged branch represents a comminuted granular residual.  It
+  // has zero cohesion at p=0, uses damagedMaterialFrictionalSlope as the
+  // low-pressure frictional slope, and retains the same unscaled mode-specific
+  // Y2 plateau.
+  real64 const hDamage = smoothStep( LvArray::math::max( 0.0, LvArray::math::min( 1.0, damage ) ), 0.0, 1.0 );
+  real64 const safeStrengthScale = LvArray::math::max( strengthScale, 1.0e-12 );
+  real64 const safeHardeningMultiplier = LvArray::math::max( strainHardeningMultiplier, 0.0 );
+  real64 const safeY2 = LvArray::math::max( y2, 1.0e-20 );
+  real64 const safeX2 = LvArray::math::max( x2, 1.0e-20 );
+
+  real64 const maxY1 = safeY2 * ( 1.0 - 1.0e-12 );
+  real64 const intactY1 = LvArray::math::max( 0.0,
+                                              LvArray::math::min( safeStrengthScale * safeHardeningMultiplier * y1, maxY1 ) );
+  real64 const intactSecantSlope = ( safeY2 - intactY1 ) / safeX2;
+  real64 const intactM1 = LvArray::math::max( safeStrengthScale * safeHardeningMultiplier * m1, intactSecantSlope );
+
+  real64 const intactStrength = evaluatePressureDependentStrength( pressure,
+                                                                   x2,
+                                                                   intactY1,
+                                                                   safeY2,
+                                                                   intactM1 );
+
+  // The powder branch is also limited from above by the intact branch at
+  // the same pressure.  Without this upper bound a weak particle with
+  // strengthScale < 1, or a large damagedMaterialFrictionalSlope, could gain
+  // shear strength as damage blends the response toward the powder residual.
+  // For the point-slope curve used here, Y_powder(p) <= Y_intact(p) on
+  // 0 <= p <= X2 is guaranteed when the powder exponent is no larger than
+  // the intact exponent.  The resulting upper bound on the powder tangent is
+  // M_powder <= M_intact * Y2 / (Y2 - Y1_intact), while the lower bound
+  // M_powder >= Y2 / X2 preserves the monotone/concave cap to the plateau.
+  real64 const powderMinimumSlope = safeY2 / safeX2;
+  real64 const powderMaximumSlope = intactM1 * safeY2 / LvArray::math::max( safeY2 - intactY1, 1.0e-20 );
+  real64 const powderM1 = LvArray::math::min( LvArray::math::max( m_damagedMaterialFrictionalSlope, powderMinimumSlope ),
+                                              LvArray::math::max( powderMinimumSlope, powderMaximumSlope ) );
+
+  real64 const powderStrength = evaluatePressureDependentStrength( pressure,
+                                                                   x2,
+                                                                   0.0,
+                                                                   safeY2,
+                                                                   powderM1 );
+
+  return LvArray::math::max( 1.0e-20, ( 1.0 - hDamage ) * intactStrength + hDamage * powderStrength );
+}
+
 
 /**
  * @class Graphite
@@ -1533,8 +1687,14 @@ public:
     /// constant for thermal expansion transverse to symmetry axis
     static constexpr char const * alphaTString() { return "alphaT"; }
 
-    /// string/key for quadrature point damage value
+    /// string/key for host-visible quadrature point damage value used by DFG.
     static constexpr char const * damageString() { return "damage"; }
+
+    /// string/key for internal basal-plane damage state.
+    static constexpr char const * basalPlaneDamageString() { return "basalPlaneDamage"; }
+
+    /// string/key for internal comminution damage state.
+    static constexpr char const * comminutionDamageString() { return "comminutionDamage"; }
 
     /// string/key for quadrature point temperature value
     static constexpr char const * temperatureString() { return "temperature"; }
@@ -1556,18 +1716,24 @@ public:
 
     /// string/key for flag to apply max principal stress failure criterion
     static constexpr char const * maximumPrincipalStressDamageString() { return "maximumPrincipalStressDamage"; }
-    
+
     /// string/key for damage evolution rate parameters
     static constexpr char const * crackSpeedString() { return "crackSpeed"; }
 
-    /// string/key for flag to apply strength scale to fracture energy release rate.
+    /// string/key for legacy flag to apply strength scale to fracture energy release rate.
     static constexpr char const * scaleFractureEnergyReleaseRateString() { return "scaleFractureEnergyReleaseRate"; }
+
+    /// string/key for exponent used to scale fracture energy with strengthScale.
+    static constexpr char const * fractureEnergyStrengthScaleExponentString() { return "fractureEnergyStrengthScaleExponent"; }
 
     /// string/key for fracture energy release rate basal plane shear and normal modes
     static constexpr char const * basalPlaneFractureEnergyReleaseRateString() { return "basalPlaneFractureEnergyReleaseRate"; }
 
     /// string/key for totalFractureEnergyReleaseRate
     static constexpr char const * totalFractureEnergyReleaseRateString() { return "totalFractureEnergyReleaseRate"; }
+
+    /// string/key for the damage-evolution exponent applied to regularized plastic work.
+    static constexpr char const * damageEvolutionExponentString() { return "damageEvolutionExponent"; }
 
     /// string/key for damaged material frictional slope
     static constexpr char const * damagedMaterialFrictionalSlopeString() { return "damagedMaterialFrictionalSlope"; }
@@ -1654,6 +1820,8 @@ public:
                             m_alphaL,
                             m_alphaT,
                             m_damage,
+                            m_basalPlaneDamage,
+                            m_comminutionDamage,
                             m_temperature,
                             m_temperatureRate,
                             m_jacobian,
@@ -1663,8 +1831,10 @@ public:
                             m_maximumPrincipalStressDamage,
                             m_crackSpeed,
                             m_scaleFractureEnergyReleaseRate,
+                            m_fractureEnergyStrengthScaleExponent,
                             m_basalPlaneFractureEnergyReleaseRate,
                             m_totalFractureEnergyReleaseRate,
+                            m_damageEvolutionExponent,
                             m_damagedMaterialFrictionalSlope,
                             m_distortionShearResponseX2,
                             m_distortionShearResponseY1,
@@ -1723,6 +1893,8 @@ public:
                           m_alphaL,
                           m_alphaT,
                           m_damage,
+                          m_basalPlaneDamage,
+                          m_comminutionDamage,
                           m_temperature,
                           m_temperatureRate,
                           m_jacobian,
@@ -1732,8 +1904,10 @@ public:
                           m_maximumPrincipalStressDamage,
                           m_crackSpeed,
                           m_scaleFractureEnergyReleaseRate,
+                          m_fractureEnergyStrengthScaleExponent,
                           m_basalPlaneFractureEnergyReleaseRate,
                           m_totalFractureEnergyReleaseRate,
+                          m_damageEvolutionExponent,
                           m_damagedMaterialFrictionalSlope,
                           m_distortionShearResponseX2,
                           m_distortionShearResponseY1,
@@ -1958,8 +2132,14 @@ protected:
   /// Material parameter: transverse thermal expansion coefficient
   real64 m_alphaT;
 
-  /// State variable: The damage values for each quadrature point
+  /// State variable: Host-visible DFG damage values for each quadrature point.
   array2d< real64 > m_damage;
+
+  /// State variable: basal-plane fracture damage for each quadrature point.
+  array2d< real64 > m_basalPlaneDamage;
+
+  /// State variable: comminution/powder damage for each quadrature point.
+  array2d< real64 > m_comminutionDamage;
 
   /// State variable: The temperature values for each element/particle
   array1d< real64 > m_temperature;
@@ -1985,8 +2165,10 @@ protected:
 
   /// Material parameter: The value of fracture energy release rate
   int m_scaleFractureEnergyReleaseRate;
+  real64 m_fractureEnergyStrengthScaleExponent;
   real64 m_basalPlaneFractureEnergyReleaseRate;
   real64 m_totalFractureEnergyReleaseRate;
+  real64 m_damageEvolutionExponent;
 
   /// Material parameter: The value of the damaged material frictional slope
   real64 m_damagedMaterialFrictionalSlope;
