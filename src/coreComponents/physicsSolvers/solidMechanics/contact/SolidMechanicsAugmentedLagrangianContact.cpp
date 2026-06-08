@@ -1969,6 +1969,77 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
 
 }
 
+void SolidMechanicsAugmentedLagrangianContact::_computeTolerances( real64 const area,
+                                                                    real64 const (&volume)[2],
+                                                                    real64 const (&bulkModulus)[2],
+                                                                    real64 const (&shearModulus)[2],
+                                                                    arraySlice2d< real64 const> const &faceRotationMatrix,
+                                                                    real64 const tolJumpDispNFac,
+                                                                    real64 const tolJumpDispTFac,
+                                                                    real64 const tolNormalTracFac,
+                                                                    real64 const iterPenaltyNFac,
+                                                                    real64 const iterPenaltyTFac,
+                                                                    real64 & normalDisplacementTolerance,
+                                                                    real64 & slidingTolerance,
+                                                                    real64 & normalTractionTolerance,
+                                                                    real64 (&iterativePenalty)[2] )
+{
+  // approximation of the stiffness along coordinate directions
+  // ( first, second ) index -> ( element index, direction )
+  // 1. T -> top (index 0), B -> bottom (index 1)
+  // 2. the coordinate direction (x, y, z)
+  real64 stiffDiagApprox[ 2 ][ 3 ];
+  real64 averageYoungModulus = 0.0;
+  real64 averageConstrainedModulus = 0.0;
+  real64 averageCharLength = 0.0;
+
+  for( localIndex i = 0; i < 2; ++i )
+  {
+    // Get linear elastic isotropic constitutive parameters for the element
+    real64 const K = bulkModulus[i];
+    real64 const G = shearModulus[i];
+    real64 const E = 9.0 * K * G / ( 3.0 * K + G );
+    real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
+    real64 const M = K + 4.0 / 3.0 * G;
+
+    real64 const charLength = pow( volume[i], 1.0 / 3.0 );
+
+    // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
+    }
+
+    averageYoungModulus += 0.5*E;
+    averageConstrainedModulus += 0.5*M;
+    averageCharLength += 0.5*charLength;
+  }
+
+  // Average the stiffness and compute the inverse
+  real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
+  for( localIndex j = 0; j < 3; ++j )
+  {
+    invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
+  }
+
+  // Rotate in the local reference system, computing R^T * (invK) * R
+  real64 temp[ 3 ][ 3 ];
+  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix, invStiffApprox );
+  real64 rotatedInvStiffApprox[ 3 ][ 3 ];
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix );
+  LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
+
+  // Finally, compute tolerances and iterative penalties for the given fracture element
+  normalDisplacementTolerance = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus * tolJumpDispNFac;
+  slidingTolerance = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
+                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 ) ) * averageYoungModulus * tolJumpDispTFac;
+  normalTractionTolerance = tolNormalTracFac * ( averageConstrainedModulus / averageCharLength ) *
+                            normalDisplacementTolerance;
+
+  iterativePenalty[0] = iterPenaltyNFac * averageConstrainedModulus / averageCharLength;
+  iterativePenalty[1] = iterPenaltyTFac * averageConstrainedModulus / averageCharLength;
+}
+
 void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
@@ -2021,20 +2092,19 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+        real64 const tolJumpDispNFac = m_tolJumpDispNFac;
+        real64 const tolJumpDispTFac = m_tolJumpDispTFac;
+        real64 const tolNormalTracFac = m_tolNormalTracFac;
+        real64 const iterPenaltyNFac = m_iterPenaltyNFac;
+        real64 const iterPenaltyTFac = m_iterPenaltyTFac;
+
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-
           if( ghostRank[kfe] < 0 )
           {
-            real64 const area = faceArea[kfe];
-            // approximation of the stiffness along coordinate directions
-            // ( first, second ) index -> ( element index, direction )
-            // 1. T -> top (index 0), B -> bottom (index 1)
-            // 2. the coordinate direction (x, y, z)
-            real64 stiffDiagApprox[ 2 ][ 3 ];
-            real64 averageYoungModulus = 0.0;
-            real64 averageConstrainedModulus = 0.0;
-            real64 averageCharLength = 0.0;
+            real64 volume[2]{};
+            real64 bulk[2]{};
+            real64 shear[2]{};
 
             for( localIndex i = 0; i < 2; ++i )
             {
@@ -2043,51 +2113,30 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               localIndex const esr = faceToElemSubRegion[faceIndex][0];
               localIndex const ei = faceToElemIndex[faceIndex][0];
 
-              real64 const volume = elemVolume[er][esr][ei];
-
-              // Get linear elastic isotropic constitutive parameters for the element
-              real64 const K = bulkModulus[er][esr][ei];
-              real64 const G = shearModulus[er][esr][ei];
-              real64 const E = 9.0 * K * G / ( 3.0 * K + G );
-              real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
-              real64 const M = K + 4.0 / 3.0 * G;
-
-              real64 const charLength = pow( volume, 1.0 / 3.0 );
-
-              // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
-              }
-
-              averageYoungModulus += 0.5*E;
-              averageConstrainedModulus += 0.5*M;
-              averageCharLength += 0.5*charLength;
+              volume[i] = elemVolume[er][esr][ei];
+              bulk[i] = bulkModulus[er][esr][ei];
+              shear[i] = shearModulus[er][esr][ei];
             }
 
-            // Average the stiffness and compute the inverse
-            real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
-            }
+            real64 iterativePenaltyKfe[2]{};
 
-            // Rotate in the local reference system, computing R^T * (invK) * R
-            real64 temp[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
-            real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
-            LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
+            _computeTolerances( faceArea[kfe],
+                                volume,
+                                bulk,
+                                shear,
+                                faceRotationMatrix[kfe],
+                                tolJumpDispNFac,
+                                tolJumpDispTFac,
+                                tolNormalTracFac,
+                                iterPenaltyNFac,
+                                iterPenaltyTFac,
+                                normalDisplacementTolerance[kfe],
+                                slidingTolerance[kfe],
+                                normalTractionTolerance[kfe],
+                                iterativePenaltyKfe );
 
-            // Finally, compute tolerances for the given fracture element
-            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus * m_tolJumpDispNFac;
-            slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
-                                          pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus * m_tolJumpDispTFac;
-            normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageCharLength) *
-                                           (normalDisplacementTolerance[kfe]);
-
-            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageCharLength);
-            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageCharLength);
+            iterativePenalty[kfe][0] = iterativePenaltyKfe[0];
+            iterativePenalty[kfe][1] = iterativePenaltyKfe[1];
           }
         } );
       }

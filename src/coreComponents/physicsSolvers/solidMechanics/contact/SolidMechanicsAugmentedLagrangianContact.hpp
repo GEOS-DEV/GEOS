@@ -217,7 +217,9 @@ public:
   void createBubbleCellList( DomainPartition & domain ) const;
 
 
+  //TODO (change return idiom to passed through interface)
   static
+  GEOS_HOST_DEVICE
   std::tuple< array2d< real64 >, array1d< int > > updateTractionAndConstraintCheck( std::ptrdiff_t const rsize,
                                                                                     constitutive::FrictionBase const & frictionLaw,
                                                                                     bool isSimultaneous,
@@ -231,6 +233,40 @@ public:
                                                                                     arrayView1d< integer const > const & ghostRank,
                                                                                     arrayView1d< integer const > const & fractureState,
                                                                                     arrayView2d< real64 > const & traction );
+
+
+  /**
+   * @brief Compute the augmented-Lagrangian tolerances and iterative penalties for a single
+   *        fracture (contact interface) element.
+   * @param area area of the fracture element
+   * @param volume volume of the two adjacent cells (index 0/1 -> top/bottom)
+   * @param bulkModulus bulk modulus of the two adjacent cells
+   * @param shearModulus shear modulus of the two adjacent cells
+   * @param faceRotationMatrix rotation matrix bringing global -> local (fault) reference frame
+   * @param tolJumpDispNFac factor for the normal displacement jump tolerance
+   * @param tolJumpDispTFac factor for the tangential displacement jump (sliding) tolerance
+   * @param tolNormalTracFac factor for the normal traction tolerance
+   * @param iterPenaltyNFac factor for the normal iterative penalty
+   * @param iterPenaltyTFac factor for the tangential iterative penalty
+   * @param[out] normalDisplacementTolerance normal displacement jump tolerance for this element
+   * @param[out] slidingTolerance sliding (tangential displacement jump) tolerance for this element
+   * @param[out] normalTractionTolerance normal traction tolerance for this element
+   * @param[out] iterativePenalty iterative penalties (normal, tangential) for this element
+   */
+  static GEOS_HOST_DEVICE void _computeTolerances( real64 const area,
+                                  real64 const (&volume)[2],
+                                  real64 const (&bulkModulus)[2],
+                                  real64 const (&shearModulus)[2],
+                                  arraySlice2d< real64 const> const &faceRotationMatrix,
+                                  real64 const tolJumpDispNFac,
+                                  real64 const tolJumpDispTFac,
+                                  real64 const tolNormalTracFac,
+                                  real64 const iterPenaltyNFac,
+                                  real64 const iterPenaltyTFac,
+                                  real64 & normalDisplacementTolerance,
+                                  real64 & slidingTolerance,
+                                  real64 & normalTractionTolerance,
+                                  real64 (&iterativePenalty)[2] );                                                                             
 
 private:
 
