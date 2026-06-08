@@ -50,20 +50,22 @@ public:
                                arrayView1d< real64 > const & mineralBulkModulus,
                                arrayView1d< real64 > const & mineralPressure,
                                arrayView1d< real64 > const & mineralPressure_n,
-                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k ): ReactivePorosityBaseUpdates( newPorosity,
-                                                                                                                            porosity_n,
-                                                                                                                            dPorosity_dPressure,
-                                                                                                                            dPorosity_dTemperature,
-                                                                                                                            initialPorosity,
-                                                                                                                            referencePorosity,
-                                                                                                                            volumeFractions,
-                                                                                                                            initialVolumeFractions,
-                                                                                                                            volumeFractions_n,
-                                                                                                                            numKineticReactions,
-                                                                                                                            molarWeights,
-                                                                                                                            mineralDensities,
-                                                                                                                            bulkModulus,
-                                                                                                                            meanEffectiveStressIncrement_k ),
+                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
+                               integer const fixedPorosity ): ReactivePorosityBaseUpdates( newPorosity,
+                                                                                            porosity_n,
+                                                                                            dPorosity_dPressure,
+                                                                                            dPorosity_dTemperature,
+                                                                                            initialPorosity,
+                                                                                            referencePorosity,
+                                                                                            volumeFractions,
+                                                                                            initialVolumeFractions,
+                                                                                            volumeFractions_n,
+                                                                                            numKineticReactions,
+                                                                                            molarWeights,
+                                                                                            mineralDensities,
+                                                                                            bulkModulus,
+                                                                                            meanEffectiveStressIncrement_k,
+                                                                                            fixedPorosity ),
     m_grainBulkModulus( grainBulkModulus ),
     m_biotCoefficient( biotCoefficient ),
     m_mineralBulkModulus( mineralBulkModulus ),
@@ -100,13 +102,17 @@ public:
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / grainBulkModulus;
     real64 const porosityMultiplierInverse = 1 / ( 1 + biotSkeletonModulusInverse*mineralBulkModulus/referencePorosity );
 
+    real64 const anelasticStrainIncrement = -reactionPorosityIncrement;
+
     porosity = porosity_n
                // change due to stress increment
                + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus * porosityMultiplierInverse
                // change due to pressure increment
                + biotSkeletonModulusInverse * ( pressure - pressure_n ) * porosityMultiplierInverse
                // change due to mineral pressure increment
-               + biotSkeletonModulusInverse * reactionPorosityIncrement * mineralBulkModulus * porosityMultiplierInverse;
+               + biotSkeletonModulusInverse * 3 * anelasticStrainIncrement * mineralBulkModulus * porosityMultiplierInverse
+               // change due to mineral volume fraction increment
+               + reactionPorosityIncrement;  
 
     dPorosity_dPressure = biotSkeletonModulusInverse * porosityMultiplierInverse;
   }
@@ -131,7 +137,7 @@ public:
 
     mineralPressure = mineralPressure_n
                       // change due to inelastic strain increment
-                      + mineralPressureMultiplier * referencePorosity * anelasticStrainIncrement
+                      + mineralPressureMultiplier * referencePorosity * anelasticStrainIncrement * 3
                       // change due to stress increment
                       - mineralPressureMultiplier * biotCoefficient * meanEffectiveStressIncrement / bulkModulus
                       // change due to pressure increment
@@ -191,17 +197,20 @@ public:
     // 2. Update the porosity due to solid, pore mineral, and pore fluid pressure
     // Currently ignore thermal effects
     GEOS_UNUSED_VAR( temperature, temperature_k, temperature_n );
-    computePorosityFixedStress( pressure, pressure_k, pressure_n,
-                                m_porosity_n[k][q],
-                                m_referencePorosity[k],
-                                m_newPorosity[k][q],
-                                m_dPorosity_dPressure[k][q],
-                                m_biotCoefficient[k],
-                                m_meanEffectiveStressIncrement_k[k][q],
-                                m_bulkModulus[k],
-                                m_grainBulkModulus[k],
-                                m_mineralBulkModulus[k],
-                                reactionPorosityIncrement );
+    if( !m_fixedPorosity )
+    {
+      computePorosityFixedStress( pressure, pressure_k, pressure_n,
+                                  m_porosity_n[k][q],
+                                  m_referencePorosity[k],
+                                  m_newPorosity[k][q],
+                                  m_dPorosity_dPressure[k][q],
+                                  m_biotCoefficient[k],
+                                  m_meanEffectiveStressIncrement_k[k][q],
+                                  m_bulkModulus[k],
+                                  m_grainBulkModulus[k],
+                                  m_mineralBulkModulus[k],
+                                  reactionPorosityIncrement );
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -285,7 +294,8 @@ public:
                           m_mineralBulkModulus,
                           m_mineralPressure,
                           m_mineralPressure_n,
-                          m_meanEffectiveStressIncrement_k );
+                          m_meanEffectiveStressIncrement_k,
+                          m_fixedPorosity );
   }
 
 protected:

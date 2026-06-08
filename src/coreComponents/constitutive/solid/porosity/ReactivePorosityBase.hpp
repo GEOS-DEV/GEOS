@@ -46,7 +46,8 @@ public:
                                arrayView1d< real64 const > const & molarWeights,
                                arrayView1d< real64 const > const & mineralDensities,
                                arrayView1d< real64 > const & bulkModulus,
-                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k ):
+                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
+                               integer const fixedPorosity ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
                          dPorosity_dPressure,
@@ -60,7 +61,8 @@ public:
     m_molarWeights( molarWeights ),
     m_mineralDensities( mineralDensities ),
     m_bulkModulus( bulkModulus ),
-    m_meanEffectiveStressIncrement_k( meanEffectiveStressIncrement_k )
+    m_meanEffectiveStressIncrement_k( meanEffectiveStressIncrement_k ),
+    m_fixedPorosity( fixedPorosity )
   {}
 
   GEOS_HOST_DEVICE
@@ -96,15 +98,18 @@ public:
                                  m_molarWeights,
                                  m_mineralDensities );
 
-    m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
+    if( !m_fixedPorosity )
+    {
+      m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
 
-    if( m_newPorosity[k][q] < 0 )
-    {
-      m_newPorosity[k][q] = 0;
-    }
-    else if( m_newPorosity[k][q] > 1.0 )
-    {
-      m_newPorosity[k][q] = 1.0;
+      if( m_newPorosity[k][q] < 0 )
+      {
+        m_newPorosity[k][q] = 0;
+      }
+      else if( m_newPorosity[k][q] > 1.0 )
+      {
+        m_newPorosity[k][q] = 1.0;
+      }
     }
   }
 
@@ -136,17 +141,20 @@ public:
                                  m_mineralDensities );
 
     // 2. Update the porosity due to solid deformation
-    m_newPorosity[k][q] = m_porosity_n[k][q]
-                          + reactionPorosityIncrement;
-    // + m_meanEffectiveStressIncrement_k[k][q]/m_bulkModulus[k];
+    if( !m_fixedPorosity )
+    {
+      m_newPorosity[k][q] = m_porosity_n[k][q]
+                            + reactionPorosityIncrement;
+      // + m_meanEffectiveStressIncrement_k[k][q]/m_bulkModulus[k];
 
-    if( m_newPorosity[k][q] < 0 )
-    {
-      m_newPorosity[k][q] = 0;
-    }
-    else if( m_newPorosity[k][q] > 1.0 )
-    {
-      m_newPorosity[k][q] = 1.0;
+      if( m_newPorosity[k][q] < 0 )
+      {
+        m_newPorosity[k][q] = 0;
+      }
+      else if( m_newPorosity[k][q] > 1.0 )
+      {
+        m_newPorosity[k][q] = 1.0;
+      }
     }
   }
 
@@ -209,6 +217,8 @@ protected:
 
   arrayView1d< real64 > const m_bulkModulus;
   arrayView2d< real64 > const m_meanEffectiveStressIncrement_k;
+
+  integer const m_fixedPorosity;
 };
 
 
@@ -245,6 +255,7 @@ public:
     static constexpr char const * mineralDensitiesString() { return "mineralDensities"; }
     static constexpr char const * solidBulkModulusString() { return "solidBulkModulus"; }
     static constexpr char const * meanEffectiveStressIncrement_kString() { return "meanEffectiveStressIncrement_k"; }
+    static constexpr char const * fixedPorosityString() { return "fixedPorosity"; }
   } viewKeys;
 
 
@@ -269,7 +280,8 @@ public:
                           m_molarWeights,
                           m_mineralDensities,
                           m_bulkModulus,
-                          m_meanEffectiveStressIncrement_k );
+                          m_meanEffectiveStressIncrement_k,
+                          m_fixedPorosity );
   }
 
 
@@ -290,6 +302,8 @@ protected:
 
   array1d< real64 > m_bulkModulus;
   array2d< real64 > m_meanEffectiveStressIncrement_k;
+
+  integer m_fixedPorosity;
 };
 
 
