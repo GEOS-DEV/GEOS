@@ -1038,28 +1038,32 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
                                                                    WellElementSubRegion const & subRegion )
 
     {
-      globalIndex const rankOffset = dofManager.rankOffset();
-      // get the degree of freedom numbers on well elements
-      arrayView1d< globalIndex const > const & dofNumber =
-        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      WellControls const & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen())
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        // get the degree of freedom numbers on well elements
+        arrayView1d< globalIndex const > const & dofNumber =
+          subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+        arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-      // get a reference to the primary variables on well elements
-      arrayView1d< real64 const > const & pres =
-        subRegion.getField< well::pressure >();
+        // get a reference to the primary variables on well elements
+        arrayView1d< real64 const > const & pres =
+          subRegion.getField< well::pressure >();
 
-      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
+        auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-      auto const results = singlePhaseBaseKernels::SolutionCheckKernel::
-                             launch< parallelDevicePolicy<> >( localSolution,
-                                                               rankOffset,
-                                                               dofNumber,
-                                                               ghostRank,
-                                                               pres,
-                                                               scalingFactor,
-                                                               negPresCollector );
+        auto const results = singlePhaseBaseKernels::SolutionCheckKernel::
+                               launch< parallelDevicePolicy<> >( localSolution,
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 pres,
+                                                                 scalingFactor,
+                                                                 negPresCollector );
 
-      minNegPres = std::min( minNegPres, results.minNegPres );
+        minNegPres = std::min( minNegPres, results.minNegPres );
+      }
     } );
   } );
 
