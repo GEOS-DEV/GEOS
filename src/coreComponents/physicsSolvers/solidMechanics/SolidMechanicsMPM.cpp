@@ -3356,6 +3356,9 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
   array1d< SortedArray< localIndex > > & bufferNodes =
     nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
 
+  // First copy constrained boundary-node components for all faces. Buffer/control
+  // nodes are rebuilt in a second pass so that a thin direction cannot reflect
+  // from an opposite boundary node that still contains its pre-BC value.
   for( int face = 0; face < 6; ++face )
   {
     int const boundaryType =
@@ -3377,9 +3380,6 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
 
     int const dir2 =
       ( dir0 + 2 ) % 3;
-
-    int const positiveNormal =
-      face % 2;
 
     bool const constrainTransverseComponents =
       boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
@@ -3414,6 +3414,38 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
         }
       }
     }
+  }
+
+  // Rebuild constrained buffer/control components after all face boundary values
+  // have been copied into destinationVelocity.
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
+                   "FMPM boundary contact requires a dedicated incremental boundary-contact law." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    int const positiveNormal =
+      face % 2;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
 
     SortedArrayView< localIndex const > const bufferNodesView =
       bufferNodes[face].toView();
@@ -3521,6 +3553,8 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
   array1d< SortedArray< localIndex > > & bufferNodes =
     nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
 
+  // First zero constrained boundary-node increments on all faces. Buffer/control
+  // increments are rebuilt in a second pass from the final constrained boundary state.
   for( int face = 0; face < 6; ++face )
   {
     int const boundaryType =
@@ -3542,9 +3576,6 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
 
     int const dir2 =
       ( dir0 + 2 ) % 3;
-
-    int const positiveNormal =
-      face % 2;
 
     bool const constrainTransverseComponents =
       boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
@@ -3579,6 +3610,38 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
         }
       }
     }
+  }
+
+  // Then rebuild constrained buffer/control increments. This mirrors the two-pass
+  // ordering used by applyEssentialBCs().
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
+                   "FMPM with boundary contact requires a dedicated per-increment boundary-contact correction." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    int const positiveNormal =
+      face % 2;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
 
     SortedArrayView< localIndex const > const bufferNodesView =
       bufferNodes[face].toView();
@@ -19198,77 +19261,114 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
             } );
 
-            // Perform field reflection on buffer nodes for constrained components.
-            // Normal components use the moving/odd extension required for the
-            // prescribed wall motion. Prescribed tangential components use the
-            // same odd/moving extension. Unconstrained tangential components are
-            // not modified here: leaving them as produced by the grid update
-            // avoids applying an artificial tangential boundary impulse through
-            // massive buffer/control nodes.
-            bool const constrainTransverseComponents =
-              boundaryConditionTypes[face] == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
-              enablePrescribedBoundaryTransverseVelocities[face] == 1;
-            SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
-            int const numBufferNodes = bufferNodes.size();
-            // Possibly not a big enough loop to warrant parallelization
-            forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
-            {
-              int const g = bufferNodes[gg];
-
-              // Initialize grid ijk indices
-              int ijk[3];
-              ijk[dir1] = LvArray::math::round((gridPosition[g][dir1] - xLocalMin[dir1]) / hEl[dir1] );
-              ijk[dir2] = LvArray::math::round((gridPosition[g][dir2] - xLocalMin[dir2]) / hEl[dir2] );
-
-              // Grab the node index that we're copying from
-              ijk[dir0] = positiveNormal * (nEl[dir0] - 2) + (1 - positiveNormal) * (2);
-              localIndex gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-              // Grab the associated boundary node index for moving boundary correction
-              ijk[dir0] = positiveNormal * (nEl[dir0] - 1) + (1 - positiveNormal) * (1);
-              localIndex gBoundary = ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-              //Store previous velocity to compute change in velocity
-              real64 gridPreviousVelocity[3] = {};
-              gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
-              gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
-              gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
-
-              // Calculate velocity. Constrained components use an odd/moving extension
-              // about the boundary control value. Unconstrained tangential components are
-              // left untouched: changing them on mass-bearing buffer/control nodes is a
-              // real tangential impulse, not a harmless ghost fill.
-              gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
-              if( constrainTransverseComponents )
-              {
-                gridVelocity[g][fieldIndex][dir1] = -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1];
-                gridVelocity[g][fieldIndex][dir2] = -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2];
-              }
-
-              // Compute change in velocity for XPIC calculations. Free tangential components
-              // are not modified above, so they must not receive a boundary-induced dVelocity.
-              gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
-              if( constrainTransverseComponents )
-              {
-                gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
-                gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
-              }
-
-              // Calculate acceleration with the same component-wise extension. Free
-              // tangential accelerations remain those produced by the dynamics.
-              gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
-              if( constrainTransverseComponents )
-              {
-                gridAcceleration[g][fieldIndex][dir1] = -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1];
-                gridAcceleration[g][fieldIndex][dir2] = -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2];
-              }
-            } );
+            // Buffer/control nodes for Moving and Contact faces are filled in a
+            // second pass after all constrained boundary nodes on all faces have
+            // been updated.  This keeps the mirror extension independent of the
+            // x-, x+, y-, y+, z-, z+ face-processing order.
           }
         }
         break;
       default:
         GEOS_ERROR( "Unrecognized boundary condition type in MPM Solver!" );
         break;
+    }
+  }
+
+  // Fill moving/contact buffer nodes after all boundary-node values are final.
+  // This two-phase ordering is important for thin domains and wide-stencil
+  // particle types.  For example, when a non-periodic direction has only one
+  // physical cell, the interior source node for one face's buffer extension can
+  // be the opposite face's boundary node.  Updating every boundary face before
+  // rebuilding any moving/contact buffer values prevents a deterministic minus-
+  // face/plus-face bias.
+  for( int face = 0; face < 6; ++face )
+  {
+    if( boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+        boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Contact ) )
+    {
+      continue;
+    }
+
+    if( !( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 ||
+           m_stressControl[2] == 1 ||
+           boundaryConditionTypes[face] == static_cast< int >( mpm::BoundaryConditionOption::Contact ) ) )
+    {
+      continue;
+    }
+
+    int const dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+    int const dir1 = ( dir0 + 1 ) % 3;   // 1, 1, 2, 2, 0, 0
+    int const dir2 = ( dir0 + 2 ) % 3;   // 2, 2, 0, 0, 1, 1
+    int const positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+
+    bool const constrainTransverseComponents =
+      boundaryConditionTypes[face] == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
+    int const numBufferNodes = bufferNodes.size();
+
+    for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+    {
+      // Possibly not a big enough loop to warrant parallelization.
+      forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
+      {
+        int const g = bufferNodes[gg];
+
+        // Initialize grid ijk indices.
+        int ijk[3];
+        ijk[dir1] = LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+        ijk[dir2] = LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+        // Grab the node index that we're copying from.
+        ijk[dir0] = positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * 2;
+        localIndex const gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+        // Grab the associated boundary node index for moving boundary correction.
+        ijk[dir0] = positiveNormal * ( nEl[dir0] - 1 ) + ( 1 - positiveNormal ) * 1;
+        localIndex const gBoundary = ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+        // Store previous velocity to compute change in velocity.
+        real64 gridPreviousVelocity[3] = {};
+        gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
+        gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
+        gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
+
+        // Calculate velocity. Constrained components use an odd/moving extension
+        // about the boundary control value. Unconstrained tangential components are
+        // left untouched: changing them on mass-bearing buffer/control nodes is a
+        // real tangential impulse, not a harmless ghost fill.
+        gridVelocity[g][fieldIndex][dir0] =
+          -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
+        if( constrainTransverseComponents )
+        {
+          gridVelocity[g][fieldIndex][dir1] =
+            -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1];
+          gridVelocity[g][fieldIndex][dir2] =
+            -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2];
+        }
+
+        // Compute change in velocity for XPIC calculations. Free tangential components
+        // are not modified above, so they must not receive a boundary-induced dVelocity.
+        gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
+        if( constrainTransverseComponents )
+        {
+          gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
+          gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
+        }
+
+        // Calculate acceleration with the same component-wise extension. Free
+        // tangential accelerations remain those produced by the dynamics.
+        gridAcceleration[g][fieldIndex][dir0] =
+          -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
+        if( constrainTransverseComponents )
+        {
+          gridAcceleration[g][fieldIndex][dir1] =
+            -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1];
+          gridAcceleration[g][fieldIndex][dir2] =
+            -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2];
+        }
+      } );
     }
   }
 

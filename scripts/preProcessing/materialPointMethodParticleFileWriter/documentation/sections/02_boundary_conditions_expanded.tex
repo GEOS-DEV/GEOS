@@ -216,36 +216,42 @@ The buffer-node extension is centered on the prescribed boundary value.  For the
   v_{G\alpha,d}=-v_{J(G)\alpha,d}+2v_{B(G)\alpha,d}.
   \label{eq:bc-moving-buffer-normal}
 \end{equation}
-For tangential components, the code chooses either the same moving odd extension when transverse velocities are prescribed or a free-slip even extension otherwise:
+For tangential components, the code applies the same moving odd extension when transverse velocities are prescribed and otherwise leaves the tangential buffer values unchanged:
 \begin{equation}
   v_{G\alpha,d_k}=\begin{cases}
     -v_{J(G)\alpha,d_k}+2v_{B(G)\alpha,d_k}, & \text{prescribed transverse component active},\\
-     v_{J(G)\alpha,d_k}, & \text{transverse component free},
+     v_{G\alpha,d_k}^{\mathrm{trial}}, & \text{transverse component free},
   \end{cases}
   \qquad k=1,2.
   \label{eq:bc-moving-buffer-tangent}
 \end{equation}
-The same component-wise extension is applied to the acceleration.  This construction gives the interpolation stencil a boundary-consistent field: constrained components are odd about the prescribed control value, while unconstrained tangential components remain even.
+The same component-wise extension is applied to the acceleration for constrained components.  Free tangential components are not overwritten on buffer/control nodes.  This avoids applying a real tangential impulse through mass-bearing buffer nodes; their values remain those produced by the grid dynamics, contact, and synchronization steps before essential boundary enforcement.
+
+Moving and contact faces are enforced in two phases.  The solver first updates all constrained boundary-node values on all faces and accumulates reactions.  It then rebuilds the moving/contact buffer-node values for all faces using the now-final boundary-node data.  This ordering makes the moving mirror extension independent of the face-processing order.  The distinction is normally negligible in well-resolved domains, but it is important for wide-stencil particle types in very thin non-periodic directions.  If a direction contains only one physical cell after the two non-periodic buffer cells are removed, the source node for the buffer extension on one face may be the boundary node on the opposite face; a one-pass boundary-plus-buffer loop can then give different results on the minus and plus faces simply because the faces are processed in the order $x^-,x^+,y^-,y^+,z^-,z^+$.
 
 \begin{lstlisting}[caption={Moving-face enforcement.}]
-for field alpha and boundary node I:
-  x_end = (1 + domainL[d]*dt) * gridPosition[I,d]
-  v_bc = domainL[d] * x_end
+for face in all faces:
+  for field alpha and boundary node I:
+    x_end = (1 + domainL[d]*dt) * gridPosition[I,d]
+    v_bc = domainL[d] * x_end
 
-  if transverse velocities enabled on this face:
-    set velocity[I,alpha,t1] and velocity[I,alpha,t2]
-    update dVelocity and acceleration corrections in t1,t2
+    if transverse velocities enabled on this face:
+      set velocity[I,alpha,t1] and velocity[I,alpha,t2]
+      update dVelocity and acceleration corrections in t1,t2
 
-  dVelocity[I,alpha,d] = v_bc - velocity[I,alpha,d]
-  acceleration[I,alpha,d] += (v_bc - velocity[I,alpha,d]) / dt
-  velocity[I,alpha,d] = v_bc
+    dVelocity[I,alpha,d] = v_bc - velocity[I,alpha,d]
+    acceleration[I,alpha,d] += (v_bc - velocity[I,alpha,d]) / dt
+    velocity[I,alpha,d] = v_bc
 
-for buffer node G:
-  J = reflected interior node
-  B = boundary node at same tangential indices
-  velocity[G,d] = -velocity[J,d] + 2*velocity[B,d]
-  velocity[G,t] = moving extension if tangential constrained, else even extension
+for face in all faces:
+  for buffer node G:
+    J = reflected interior node
+    B = boundary node at same tangential indices
+    velocity[G,d] = -velocity[J,d] + 2*velocity[B,d]
+    velocity[G,t] = moving extension if tangential constrained, else unchanged
 \end{lstlisting}
+
+
 
 \subsection{Boundary contact faces}
 \label{subsec:bc-contact-wall}

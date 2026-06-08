@@ -643,9 +643,9 @@ parameters = {
                'needsNeighborList': ( None, True ),  # MPM: build particle neighbor list.
                'needsNodalNeighborList': ( None, True ),  # MPM: build nodal neighbor list.
                'neighborRadius': ( None, True ),  # MPM: SPH/contact neighbor radius.
-               'nI': ( 5, False ),  # PFW: interior cell count in x.
-               'nJ': ( 5, False ),  # PFW: interior cell count in y.
-               'nK': ( 5, False ),  # PFW: interior cell count in z.
+               'nI': ( 5, False ),  # PFW: total cell count in x; non-periodic interior is nI-2.
+               'nJ': ( 5, False ),  # PFW: total cell count in y; non-periodic interior is nJ-2.
+               'nK': ( 5, False ),  # PFW: total cell count in z; non-periodic interior is nK-2.
                'normalAndPositionMethod': ( None, True ),  # MPM: surface normal/position method.
                'numSurfaceIntegrationPoints': ( None, True ),  # MPM: surface integration points per cohesive node.
                'objects': ( None, False ),  # PFW: geometric objects used to create particles.

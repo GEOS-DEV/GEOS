@@ -109,7 +109,13 @@ The practical challenge in parallel PFW generation is to keep each MPI partition
   N_x-2, & \text{non-periodic in }x,
   \end{cases}
 \end{equation}
-and analogously for \(y\) and \(z\), except that plane strain always uses the reduced through-thickness treatment described below.  The interior spacings are then
+and analogously for \(y\) and \(z\), except that plane strain always uses the reduced through-thickness treatment described below.  Thus, in a non-periodic direction, an input such as \texttt{nJ=3} means one physical/interior cell plus one buffer cell on each side, not three physical cells.  When an input parameter is intended to mean ``physical cells through the sample,'' set the PFW total cell count to that value plus two in each non-periodic direction:
+\begin{lstlisting}[language=Python,caption={Converting physical cells to PFW total cells in a non-periodic direction.}]
+physical_y_cells = 8
+pfw["periodic"] = [False, False, False]
+pfw["nJ"] = physical_y_cells + 2
+\end{lstlisting}
+The interior spacings are then
 \begin{equation}
   \Delta x = \frac{x_{\max}-x_{\min}}{n_x^{\mathrm{int}}}, \qquad
   \Delta y = \frac{y_{\max}-y_{\min}}{n_y^{\mathrm{int}}}, \qquad
@@ -653,7 +659,7 @@ pfw["materialPropertyString"] = custom["materialString"]
 \index{solver controls}
 \index{ParticleFileWriter!solver controls}
 \providecommand{\pfwidx}[1]{\index{PFW parameter!#1@\texttt{#1}}}
-\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
+\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
 
 The PFW parameter catalogue in Appendix~\ref{app:pfw} lists all keys discovered in \texttt{particleFileWriter.py}; Appendix~\ref{app:solver-attributes} lists the corresponding solver-side wrappers discovered from \texttt{SolidMechanics\_MPM}.  This section gives copyable solver-control fragments from the verification, validation, and example inputs, but it intentionally avoids re-documenting controls that are treated in detail elsewhere in this chapter.  Geometry construction is described in Sections~\ref{sec:pfw-geometry-objects} and~\ref{sec:pfw-materials}; boundary, F-table, and stress-control inputs are described in Section~\ref{sec:pfw-boundary-controls}; diagnostics are described in Section~\ref{sec:pfw-diagnostics}; and output controls are described in Section~\ref{sec:pfw-output-controls}.  The examples below are therefore fragments to be placed into a complete \texttt{pfw\_input} file after the grid, material, and object definitions have been supplied.
 
@@ -773,7 +779,7 @@ If explicit surface normals or positions are requested but the corresponding par
 \index{CPDI!PFW example}
 \index{DFG!PFW example}
 \index{damage!PFW example}
-\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{disableSurfaceNormalsAndPositionsOnCPDIScaling}\pfwidx{plotUnscaledParticles}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{particleFileFields}
+\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{disableSurfaceNormalsAndPositionsOnCPDIScaling}\pfwidx{plotUnscaledParticles}\pfwidx{particleFileFields}
 
 The Brazilian-disk FLIP example is representative of CPDI damage simulations.  CPDI domain scaling improves contact/fracture behavior for distorted domains; DFG contact introduces two fields when the damage-gradient criteria are met; and the neighbor list is typically required by damage models, field-gradient partitioning, or surface reconstruction.
 
@@ -788,8 +794,6 @@ pfw["separabilityMinDamage"] = 0.5
 pfw["treatFullyDamagedAsSingleField"] = 1
 pfw["resetDefGradForFullyDamagedParticles"] = 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 1
-pfw["useDamageAsSurfaceFlag"] = 0
-
 # Useful output during development of CPDI scaling and DFG contact.
 pfw["plotUnscaledParticles"] = 1
 pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
@@ -797,12 +801,12 @@ pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "RVector"]
 \end{lstlisting}
 
-Set \texttt{useDamageAsSurfaceFlag=1} only when the initial \texttt{Damage} field is intended to seed surface flags.  For many continuum-damage runs, surface flags are painted geometrically while the evolving damage field controls DFG separability.
+Initial surface flags are supplied explicitly through geometry painting or the \texttt{SurfaceFlag} particle-file field.  The evolving damage field still controls DFG separability.
 
 \subsection{Example: notched bar with crack-tip correction controls}
 \index{notched bar!PFW example}
 \index{crack-tip detection!PFW}
-\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{useDamageAsSurfaceFlag}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{particleFileFields}
+\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{particleFileFields}
 
 The notched-bar verification input constructs an initial notch by painting damage and surface data on particles.  Solver-side crack-tip controls are direct pass-through keys: they are registered by \texttt{SolidMechanics\_MPM} even though they are not part of the older PFW default table.  This is the normal pattern for newly added solver controls.
 
@@ -818,8 +822,6 @@ pfw["useCrackTipDetection"] = 1
 pfw["crackTipDetectionThreshold"] = 0.75
 pfw["surfaceQualityThreshold"] = 0.2
 pfw["thinFeatureDFGThreshold"] = 1.5
-pfw["useDamageAsSurfaceFlag"] = 1
-
 pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "SurfaceFlag", "Damage", "StrengthScale",
                              "RVector", "SurfaceNormal", "SurfacePosition"]
@@ -973,7 +975,7 @@ Single-field contact & \texttt{damageFieldPartitioning=0}, same object \texttt{g
 Group contact and friction & \texttt{frictionCoefficient}, \texttt{frictionCoefficientTable}, \texttt{frictionCoefficientRuleOfMixtures} & Two-material friction example\\
 Contact normals and gap closure & \texttt{contactGapCorrection}, \texttt{contactNormalType}, \texttt{contactNormalExponent}, \texttt{useSurfacePositionForContact}, \texttt{explicitSurfaceNormalInfluence} & Two-material friction example; B-spline/FMPM example\\
 CPDI and DFG damage & \texttt{cpdiDomainScaling}, \texttt{damageFieldPartitioning}, \texttt{needsNeighborList}, \texttt{separabilityMinDamage}, \texttt{treatFullyDamagedAsSingleField} & CPDI/FLIP damage example\\
-Damage-derived surfaces & \texttt{useDamageAsSurfaceFlag}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
+Painted surface flags & \texttt{particleFileFields}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
 Crack-tip controls & \texttt{useCrackTipDetection}, \texttt{crackTipDetectionThreshold} & Notched-bar example\\
 Logistic-regression surface reconstruction & \texttt{normalAndPositionMethod}, \texttt{maxLRIterations}, \texttt{LRtolerance} & B-spline/FMPM example\\
 Cohesive-zone event controls & \texttt{useEvents}, \texttt{mpmEventsString}, \texttt{cohesiveFieldPartitioning}, \texttt{preventCZInterpenetration} & Cohesive-zone example\\
@@ -1035,6 +1037,9 @@ pfw["fTable"] = [
 ]
 \end{lstlisting}
 PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
+
+\paragraph{Resolution guidance for moving boundaries.}
+Higher-order particle-grid transfers, including CPDI and single-point B-splines, require data on boundary and buffer/control nodes to support their interpolation stencils.  Avoid using the minimum non-periodic total count \texttt{n=3} in a direction that is actively driven by \texttt{Moving} faces unless the goal is a deliberately one-cell-thick numerical smoke test.  For quantitative strip, plane-strain, compression, or stress-control calculations, use several physical cells between the two boundary layers; a practical lower bound is about eight interior cells in the actively loaded or constrained direction.  For example, use \texttt{nJ = physical\_y\_cells + 2} for a non-periodic \(y\) direction.  This gives B-spline/CPDI particles true interior support and reduces sensitivity to boundary and buffer-node treatment.
 
 \subsection{Periodic homogeneous deformation}
 \index{prescribedFTable}
@@ -1117,7 +1122,7 @@ PFW exposes several lightweight CSV diagnostics that are separate from plot-file
 \toprule
 Diagnostic & Principal PFW controls \\
 \midrule
-Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInteralForceAsFaceReaction} \\
+Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInternalForceAsFaceReaction} \\
 Box averages & \texttt{boxAverageHistory}, \texttt{boxAverageWriteInterval}, \texttt{boxAverageMin}, \texttt{boxAverageMax}, \texttt{boxAverageResizeWithDomain} \\
 Profiles & \texttt{profileHistory}, \texttt{profileDirection}, \texttt{profileVariables}, \texttt{profileNumSlices}, \texttt{profileWriteInterval}, \texttt{profileCycleInterval} \\
 Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVariables}, \texttt{tracerWriteInterval}, \texttt{tracerCycleInterval}, \texttt{tracerOutputPrefix} \\
@@ -1130,7 +1135,7 @@ Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVari
 \subsection{Reaction history}
 \label{subsec:pfw-reaction-history}
 \index{reactionHistory}
-\pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInteralForceAsFaceReaction}
+\pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInternalForceAsFaceReaction}
 
 Boundary reactions are enabled with \texttt{reactionHistory}.  The write cadence is controlled by \texttt{reactionWriteInterval}; if this interval is zero or omitted, the solver can write every step.  The output is \path{reactionHistory.csv}.  Section~\ref{subsec:bc-reactions-internals} describes the internal accumulation algorithm, and Section~\ref{sec:csv-histories} summarizes the reaction file layout and post-processing conventions.
 
@@ -1139,17 +1144,17 @@ pfw["reactionHistory"] = 1
 pfw["reactionWriteInterval"] = stopTime / 1000.0
 
 # Default behavior: reaction comes from the imposed nodal velocity correction.
-pfw["useInteralForceAsFaceReaction"] = 0
+pfw["useInternalForceAsFaceReaction"] = 0
 \end{lstlisting}
 
-The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInteralForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The name preserves the current solver spelling.
+The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInternalForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The spelling matches the current GEOS solver attribute.
 
 \begin{lstlisting}[language=Python,caption={Reaction-history controls using the boundary internal-force component.}]
 pfw["reactionHistory"] = 1
 pfw["reactionWriteInterval"] = stopTime / 2000.0
 
 # Spelling matches the current GEOS solver attribute.
-pfw["useInteralForceAsFaceReaction"] = 1
+pfw["useInternalForceAsFaceReaction"] = 1
 \end{lstlisting}
 
 The internal-force option is a diagnostic correction; it does not change the boundary condition.  An APIC-consistent boundary mapping would address the same issue more directly, because the affine part of the particle velocity field would be represented during the boundary projection rather than being corrected only after the velocity has been mapped to the grid.
