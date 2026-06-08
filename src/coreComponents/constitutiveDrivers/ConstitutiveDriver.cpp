@@ -137,7 +137,7 @@ void ConstitutiveDriver::outputToFile() const
 
   integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
   file << std::scientific << std::setprecision( precision );
-  integer const width =  precision+7;
+  integer const width =  precision+7+1;//spacing for minus sign
 
   for( integer step = 0; step <= m_numSteps; ++step )
   {
