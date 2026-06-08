@@ -7554,9 +7554,9 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--defaultCohesion => Default cohesion value-->
-		<xsd:attribute name="defaultCohesion" type="real64" default="1e+06" />
+		<xsd:attribute name="defaultCohesion" type="real64" use="required" />
 		<!--defaultFrictionCoefficient => Default friction coefficient value-->
-		<xsd:attribute name="defaultFrictionCoefficient" type="real64" default="0.4" />
+		<xsd:attribute name="defaultFrictionCoefficient" type="real64" use="required" />
 		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
 		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
