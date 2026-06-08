@@ -953,9 +953,12 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
       integer const matchedRanks = MpiWrapper::sum( resElemFound ? 1 : 0 );
       if( 1 < matchedRanks )
       {
-        globalIndex const minId = MpiWrapper::min( giMatched < 0 ? LvArray::NumericLimits< globalIndex >::max : giMatched );
+        // Reduction for pairs (globalIndex, int) seems unsupported. We will cast the rank to globalIndex
+        globalIndex const rank = resElemFound ? static_cast< globalIndex >(MpiWrapper::commRank()) : LvArray::NumericLimits< globalIndex >::max;
+        MpiWrapper::PairType< globalIndex, globalIndex > match = { resElemFound ? giMatched : rank, rank };
+        match = MpiWrapper::min( match );
         // If this process does not have the lowest Id we will say it hasn't found the element
-        if( minId != giMatched )
+        if( match.first != giMatched || match.second != rank )
         {
           resElemFound = 0;
         }
@@ -990,7 +993,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
     }
 
     // We will issue this only as a warning to capture all failed perforations.
-    // If the feailure is irrecoverable, an error will be issued in WellElementRegion
+    // If the failure is irrecoverable, an error will be issued in WellElementRegion
     GEOS_WARNING_IF( !perfFound && MpiWrapper::commRank() == 0,
                      GEOS_FMT( "Failed to locate perforation {} for well {} with location ({}, {}, {}). "
                                "This is because the perforation is on a section of the well polyline located outside the domain.",
