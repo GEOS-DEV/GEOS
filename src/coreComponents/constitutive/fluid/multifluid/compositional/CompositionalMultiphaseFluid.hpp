@@ -43,23 +43,36 @@ namespace constitutive
 /**
  * @brief A general compositional fluid model.
  * @tparam FLASH Class describing the phase equilibrium model
- * @tparam PHASE1 Class describing the phase property models for the first phase.
- * @tparam PHASE2 Class describing the phase property models for the second phase.
- * @tparam PHASE3 Class describing the phase property models for the possible third phase.
+ * @tparam PHASES Classes describing the phase property models for each phase.
  */
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 = compositional::NullPhaseModel >
+template< typename FLASH, typename ... PHASES >
 class CompositionalMultiphaseFluid : public MultiFluidBase
 {
 public:
   using FlashModel = FLASH;
-  using Phase1Model = PHASE1;
-  using Phase2Model = PHASE2;
-  using Phase3Model = PHASE3;
 
   // Get the number of phases
-  static constexpr integer NUM_PHASES = FlashModel::KernelWrapper::getNumberOfPhases();
-  // Currently restrict to 2 or 3 phases
-  static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
+  static constexpr integer NUM_PHASES = static_cast< integer >(sizeof...(PHASES));
+
+  // Ensure that the number of phases matches the flash object
+  static_assert( NUM_PHASES == FlashModel::KernelWrapper::getNumberOfPhases(),
+                 "Number of phases should match the flash" );
+
+  // Check if all phase models have a valid enthalpy model
+  static constexpr bool isThermalType()
+  {
+    return (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
+  }
+
+  // Check if all phase models do not provide an enthalpy model
+  static constexpr bool isIsoThermalType()
+  {
+    return (std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
+  }
+
+  // Either all phases are thermal or all are not
+  static_assert( ( isThermalType() || isIsoThermalType() ),
+                 "All phase models must either use NullModel for Enthalpy, or none should." );
 
 public:
   CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
@@ -74,8 +87,6 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
-
-  static constexpr bool isThermalType(){ return false; }
 
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
   /**
@@ -100,7 +111,7 @@ public:
   };
 
 public:
-  using KernelWrapper = CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >;
+  using KernelWrapper = CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -118,6 +129,14 @@ private:
   // Create the fluid models
   void createModels();
 
+  // Create each of the phase models
+  template< std::size_t... Is >
+  void createPhaseModels( std::index_sequence< Is... > );
+
+  // Helper to create the kernel wrappers
+  template< std::size_t... Is >
+  KernelWrapper createKernelWrapper( std::index_sequence< Is... > );
+
   array1d< integer > getPhaseTypes() const;
 
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
@@ -130,9 +149,7 @@ private:
   array1d< integer > m_phaseType{};
 
   // Phase models
-  std::unique_ptr< PHASE1 > m_phase1{};
-  std::unique_ptr< PHASE2 > m_phase2{};
-  std::unique_ptr< PHASE3 > m_phase3{};
+  camp::tuple< std::unique_ptr< PHASES >... > m_phases{};
 
   // Standard EOS component input
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
@@ -146,29 +163,29 @@ private:
 
 using CompositionalTwoPhaseConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity > >;
 using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
 using CompositionalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
 using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::ImmiscibleWaterFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity >,
+  compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity > >;
 using CompositionalKValueLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::KValueFlashModel< 2 >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
 using CompositionalKValuePhillipsBrine = CompositionalMultiphaseFluid<
   compositional::KValueFlashModel< 2 >,
-  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
 
 } /* namespace constitutive */
 
