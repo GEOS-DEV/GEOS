@@ -45,6 +45,7 @@ def main() -> int:
     source_dir = Path(args.source_dir); output_dir = Path(args.output_dir); output_dir.mkdir(parents=True, exist_ok=True)
     manifest = load_manifest(source_dir, output_dir, args.case_id, DEFAULT_NAME, VARIANTS)
     rows_out, summaries = [], []
+    visit_tex = []
     series_y = []
     target_y_series = None
     for subcase in manifest.get("subcases", []):
@@ -69,7 +70,8 @@ def main() -> int:
             series_y.append((str(subcase.get("label")), times, measured_y)); target_y_series = ("target", times, target_y)
         else:
             summaries.append({"variant": subcase.get("name"), "label": subcase.get("label"), "num_samples": 0, "error": "stress columns not found"})
-        render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Stress", states="initial,middle,final", view="auto", range_mode="auto")
+        frames = render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Stress", states="initial,middle,final", view="auto", range_mode="auto")
+        visit_tex.extend(visit_frames_tex(frames, output_dir, "Particle stress frames for a representative stress-control subcase show the initial, intermediate, and final states."))
     if target_y_series:
         series_y.insert(0, target_y_series)
     plot_metric(output_dir, "stress_control_sigma_y.png", "Stress-control tracking", "time", "sigma_y", series_y)
@@ -83,6 +85,7 @@ def main() -> int:
     tex.append(r"\bottomrule\end{tabular}}")
     for name in ["stress_control_sigma_y.png", "stress_control_error_norm.png"]:
         if (output_dir / name).is_file(): tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.extend(visit_tex)
     (output_dir / "stress_control_results.tex").write_text("\n".join(tex) + "\n")
     return 0
 

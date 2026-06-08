@@ -40,6 +40,7 @@ def main() -> int:
 
     rows_out: list[dict] = []
     summaries: list[dict] = []
+    visit_tex = []
     position_series: list[tuple[str, list[float], list[float]]] = []
     velocity_series: list[tuple[str, list[float], list[float]]] = []
 
@@ -112,7 +113,8 @@ def main() -> int:
         else:
             summaries.append({"variant": subcase.get("name"), "label": subcase.get("label"), "num_time_samples": 0, "error": "no tracer data found"})
 
-        render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Velocity", states="initial,middle,final", view="auto", colortable="bluehot", range_mode="auto")
+        frames = render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Velocity", states="initial,middle,final", view="auto", colortable="bluehot", range_mode="auto")
+        visit_tex.extend(visit_frames_tex(frames, output_dir, "Particle velocity frames for the partition-crossing subcase show the initial, intermediate, and final states."))
 
     plot_metric(output_dir, "partition_crossing_position_error.png", "Partition crossing position error", "time", "RMS position error", position_series)
     plot_metric(output_dir, "partition_crossing_velocity_error.png", "Partition crossing velocity error", "time", "RMS velocity error", velocity_series)
@@ -127,6 +129,7 @@ def main() -> int:
     for name in ["partition_crossing_position_error.png", "partition_crossing_velocity_error.png"]:
         if (output_dir / name).is_file():
             tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.extend(visit_tex)
     (output_dir / "partition_crossing_results.tex").write_text("\n".join(tex) + "\n")
     return 0
 

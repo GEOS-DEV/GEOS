@@ -64,6 +64,7 @@ def main() -> int:
 
     rows_out: list[dict] = []
     summaries: list[dict] = []
+    visit_tex = []
     stress_series: list[tuple[str, list[float], list[float]]] = []
     expected_series: tuple[str, list[float], list[float]] | None = None
     plastic_series: list[tuple[str, list[float], list[float]]] = []
@@ -148,7 +149,8 @@ def main() -> int:
         else:
             summaries.append({"variant": subcase.get("name"), "label": subcase.get("label"), "num_stress_samples": 0, "error": "stress column not found"})
 
-        render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "PlasticStrainMagnitude", states="initial,middle,final", view="auto", colortable="hot_desaturated", range_mode="auto")
+        frames = render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "PlasticStrainMagnitude", states="initial,middle,final", view="auto", colortable="hot_desaturated", range_mode="auto")
+        visit_tex.extend(visit_frames_tex(frames, output_dir, "Particle plastic-strain frames for the uniaxial plasticity subcase show the initial, intermediate, and final states."))
 
     if expected_series:
         stress_series.insert(0, expected_series)
@@ -167,6 +169,7 @@ def main() -> int:
     for name in ["von_mises_stress_strain.png", "von_mises_plastic_strain.png"]:
         if (output_dir / name).is_file():
             tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.extend(visit_tex)
     (output_dir / "von_mises_results.tex").write_text("\n".join(tex) + "\n")
     return 0
 

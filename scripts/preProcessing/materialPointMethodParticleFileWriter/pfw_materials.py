@@ -255,8 +255,10 @@ def generateGraphiteMaterialString(material):
         'maximumPrincipalStressDamage',
         'crackSpeed',
         'scaleFractureEnergyReleaseRate',
+        'fractureEnergyStrengthScaleExponent',
         'basalPlaneFractureEnergyReleaseRate',
         'totalFractureEnergyReleaseRate',
+        'damageEvolutionExponent',
         'damagedMaterialFrictionalSlope',
         'distortionShearResponseX2',
         'distortionShearResponseY1',
@@ -2052,8 +2054,10 @@ graphiteSingleCrystal['failureStrength'] = 0.035
 graphiteSingleCrystal['maximumPrincipalStressDamage'] = 1
 graphiteSingleCrystal['crackSpeed'] = 4.14
 graphiteSingleCrystal['scaleFractureEnergyReleaseRate'] = 0
+graphiteSingleCrystal['fractureEnergyStrengthScaleExponent'] = 0.0
 graphiteSingleCrystal['basalPlaneFractureEnergyReleaseRate'] = 4.0e-7
 graphiteSingleCrystal['totalFractureEnergyReleaseRate'] = 1.0e-5
+graphiteSingleCrystal['damageEvolutionExponent'] = 32.0
 graphiteSingleCrystal['damagedMaterialFrictionalSlope'] = 0.30
 graphiteSingleCrystal['distortionShearResponseX2'] = 0.10
 graphiteSingleCrystal['distortionShearResponseY1'] = 0.025
@@ -2096,8 +2100,10 @@ graphitePyrolytic['failureStrength'] = 0.030
 graphitePyrolytic['maximumPrincipalStressDamage'] = 1
 graphitePyrolytic['crackSpeed'] = 4.00
 graphitePyrolytic['scaleFractureEnergyReleaseRate'] = 0
+graphitePyrolytic['fractureEnergyStrengthScaleExponent'] = 0.0
 graphitePyrolytic['basalPlaneFractureEnergyReleaseRate'] = 8.0e-7
 graphitePyrolytic['totalFractureEnergyReleaseRate'] = 1.5e-5
+graphitePyrolytic['damageEvolutionExponent'] = 32.0
 graphitePyrolytic['damagedMaterialFrictionalSlope'] = 0.30
 graphitePyrolytic['distortionShearResponseX2'] = 0.10
 graphitePyrolytic['distortionShearResponseY1'] = 0.020
@@ -2140,8 +2146,10 @@ graphiteFineGrainIso['failureStrength'] = 0.035
 graphiteFineGrainIso['maximumPrincipalStressDamage'] = 1
 graphiteFineGrainIso['crackSpeed'] = 2.50
 graphiteFineGrainIso['scaleFractureEnergyReleaseRate'] = 0
+graphiteFineGrainIso['fractureEnergyStrengthScaleExponent'] = 0.0
 graphiteFineGrainIso['basalPlaneFractureEnergyReleaseRate'] = 2.0e-5
 graphiteFineGrainIso['totalFractureEnergyReleaseRate'] = 3.0e-5
+graphiteFineGrainIso['damageEvolutionExponent'] = 32.0
 graphiteFineGrainIso['damagedMaterialFrictionalSlope'] = 0.35
 graphiteFineGrainIso['distortionShearResponseX2'] = 0.10
 graphiteFineGrainIso['distortionShearResponseY1'] = 0.035
@@ -2854,6 +2862,37 @@ verificationVonMises["materialString"] = generateMaterialString(verificationVonM
 
 
 ###################################################################################################
+# VERIFICATION MATERIAL-SWAP MATERIALS:
+# Dimensionless elastic cards with identical density and Poisson ratio but different stiffness.  The
+# material-swap verification uses them to make the event visible in material type and stress/strain
+# diagnostics without introducing a density-driven momentum jump.
+verificationMaterialSwapSoft = {}
+verificationMaterialSwapSoft["name"] = "verificationMaterialSwapSoft"
+verificationMaterialSwapSoft["version"] = 2606050002
+verificationMaterialSwapSoft["model"] = "ElasticIsotropic"
+verificationMaterialSwapSoft["defaultDensity"] = 1.0
+verificationMaterialSwapSoft["defaultYoungModulus"] = 1.0
+verificationMaterialSwapSoft["defaultPoissonRatio"] = 0.25
+verificationMaterialSwapSoft["defaultBulkModulus"] = verificationMaterialSwapSoft["defaultYoungModulus"]/(3.0*(1.0 - 2.0*verificationMaterialSwapSoft["defaultPoissonRatio"]))
+verificationMaterialSwapSoft["defaultShearModulus"] = verificationMaterialSwapSoft["defaultYoungModulus"]/(2.0*(1.0 + verificationMaterialSwapSoft["defaultPoissonRatio"]))
+verificationMaterialSwapSoft["waveSpeed"] = float(np.sqrt((verificationMaterialSwapSoft["defaultBulkModulus"] + 4.0/3.0*verificationMaterialSwapSoft["defaultShearModulus"])/verificationMaterialSwapSoft["defaultDensity"]))
+verificationMaterialSwapSoft["materialString"] = generateMaterialString(verificationMaterialSwapSoft)
+
+verificationMaterialSwapStiff = {}
+verificationMaterialSwapStiff["name"] = "verificationMaterialSwapStiff"
+verificationMaterialSwapStiff["version"] = 2606050003
+verificationMaterialSwapStiff["model"] = "ElasticIsotropic"
+verificationMaterialSwapStiff["defaultDensity"] = verificationMaterialSwapSoft["defaultDensity"]
+verificationMaterialSwapStiff["defaultYoungModulus"] = 4.0 * verificationMaterialSwapSoft["defaultYoungModulus"]
+verificationMaterialSwapStiff["defaultPoissonRatio"] = verificationMaterialSwapSoft["defaultPoissonRatio"]
+verificationMaterialSwapStiff["defaultBulkModulus"] = verificationMaterialSwapStiff["defaultYoungModulus"]/(3.0*(1.0 - 2.0*verificationMaterialSwapStiff["defaultPoissonRatio"]))
+verificationMaterialSwapStiff["defaultShearModulus"] = verificationMaterialSwapStiff["defaultYoungModulus"]/(2.0*(1.0 + verificationMaterialSwapStiff["defaultPoissonRatio"]))
+verificationMaterialSwapStiff["waveSpeed"] = float(np.sqrt((verificationMaterialSwapStiff["defaultBulkModulus"] + 4.0/3.0*verificationMaterialSwapStiff["defaultShearModulus"])/verificationMaterialSwapStiff["defaultDensity"]))
+verificationMaterialSwapStiff["materialString"] = generateMaterialString(verificationMaterialSwapStiff)
+# #################################################################################################
+
+
+###################################################################################################
 # CONTACT SURFACE/GAP-CLOSURE HYPERELASTIC VERIFICATION MATERIAL:
 # Dimensionless Neo-Hookean material used by verification/contactSurfaceGapClosure.  The values are
 # intentionally soft so the compact quasistatic contact variants run quickly while retaining a
@@ -2961,6 +3000,8 @@ exampleSuiteMaterials = [
 verificationMaterials = [
     verificationElastic,
     contactGapClosureHyperelastic,
+    verificationMaterialSwapSoft,
+    verificationMaterialSwapStiff,
     verificationQuartz,
     verificationVonMises,
     pbcCompactionElastic,

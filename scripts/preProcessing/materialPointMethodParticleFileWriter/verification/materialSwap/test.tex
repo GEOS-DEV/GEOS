@@ -1,0 +1,25 @@
+\subsection{MaterialSwap event}
+\label{sec:verification:material-swap-event}
+
+This test isolates the \texttt{MaterialSwap} MPM event.  A stationary elastic block is generated in \texttt{ParticleRegion1}.  A matching, initially empty destination subregion is generated for \texttt{ParticleRegion2}.  At $t_s=0.5$ the event transfers the active particles from the source region to the destination region.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.70\linewidth]{\CaseSourceDir/setup_material_swap.png}
+  \caption{MaterialSwap setup.  The source block initially occupies \texttt{ParticleRegion1}; a zero-volume destination object creates the matched destination subregion without initial particles.  The center tracer is used to check the material-type step and stationary kinematics.}
+\end{figure}
+
+There is no applied load, so the ideal kinematic solution is
+\begin{equation}
+  \mathbf{x}(t)=\mathbf{x}_0, \qquad \mathbf{v}(t)=\mathbf{0}.
+\end{equation}
+The event-specific ideal solution is the tracer material-type step
+\begin{equation}
+  m(t)=\begin{cases}
+  0, & t < t_s,\\
+  1, & t \ge t_s.
+  \end{cases}
+\end{equation}
+The primary metric is the material-type mismatch count away from the event-output coincidence window.  Secondary metrics are maximum tracer displacement and maximum velocity norm.
+
+\IfFileExists{\CaseOutputDir/material_swap_results.tex}{\input{\CaseOutputDir/material_swap_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_materialSwap.py} after the GEOS job finishes.}

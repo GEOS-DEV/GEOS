@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "identity",
+        "label": "identity kinematics",
+        "case_name": "materialSwapEvent_identity",
+        "env": {
+            "MATERIAL_SWAP_CASE_NAME": "materialSwapEvent_identity",
+            "MATERIAL_SWAP_VARIANT_LABEL": "identity kinematics",
+            "MATERIAL_SWAP_TIME": "0.50",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_materialSwapEvent.py", post_script="postProcess_materialSwap.py", variants=VARIANTS, default_case_id="materialSwap", description="Run the MaterialSwap event verification"))

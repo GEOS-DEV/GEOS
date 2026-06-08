@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "linear",
+        "label": "linear temperature table",
+        "case_name": "temperatureProfileEvent_linear",
+        "env": {
+            "TEMPERATURE_PROFILE_CASE_NAME": "temperatureProfileEvent_linear",
+            "TEMPERATURE_PROFILE_VARIANT_LABEL": "linear temperature table",
+            "TEMPERATURE_PROFILE_T0": "300.0",
+            "TEMPERATURE_PROFILE_TMID": "260.0",
+            "TEMPERATURE_PROFILE_TFINAL": "380.0",
+        },
+    }
+]
+
+if __name__ == "__main__":
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR, input_file="pfw_input_temperatureProfileEvent.py", post_script="postProcess_temperatureTable.py", variants=VARIANTS, default_case_id="temperatureTable", description="Run the TemperatureProfile table verification"))

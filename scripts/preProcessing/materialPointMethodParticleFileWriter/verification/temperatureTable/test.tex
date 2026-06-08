@@ -1,0 +1,23 @@
+\subsection{TemperatureProfile table interpolation}
+\label{sec:verification:temperature-profile-event}
+
+This test isolates solver-level temperature-table interpolation and the \texttt{TemperatureProfile} event.  A stationary elastic cube is assigned a three-point temperature history.  The event is active for the full run and copies the interpolated table value and table slope to the particle temperature and temperature-rate fields.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.70\linewidth]{\CaseSourceDir/setup_temperature_profile.png}
+  \caption{TemperatureProfile setup.  The cube remains stationary while a spatially uniform table-driven temperature is imposed.  A center tracer and box-average history provide quantitative checks.}
+\end{figure}
+
+The analytical temperature is the piecewise-linear interpolation of the table
+\begin{equation}
+  (t,T)=\{(0,300),\ (0.4,260),\ (1,380)\}.
+\end{equation}
+On each table segment,
+\begin{equation}
+  T(t)=T_i+\frac{T_{i+1}-T_i}{t_{i+1}-t_i}(t-t_i), \qquad
+  \dot T=\frac{T_{i+1}-T_i}{t_{i+1}-t_i}.
+\end{equation}
+The primary metric is the RMS and maximum temperature error from tracer or box-average history.  Temperature-rate error is also reported, excluding samples within one output interval of the table kink.
+
+\IfFileExists{\CaseOutputDir/temperature_profile_results.tex}{\input{\CaseOutputDir/temperature_profile_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_temperatureTable.py} after the GEOS job finishes.}

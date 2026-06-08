@@ -432,7 +432,12 @@ def collect_case_status(c: Case) -> dict:
 
     pngs = list(outdir.glob("*.png"))
     csvs = list(outdir.glob("*.csv"))
-    job_or_product_evidence = bool(pngs or csvs or data.get("geos_job_id") or data.get("post_job_id"))
+    json_products = [p for p in outdir.glob("*.json") if not p.name.endswith("_jobs.json")]
+    tex_products = list(outdir.glob("*_results.tex"))
+    timing_rows = data.get("timing_rows", []) or []
+    completed_timing_rows = [row for row in timing_rows if row.get("geos_state") == "COMPLETED"]
+    geos_job_evidence = bool(data.get("geos_job_id") or completed_timing_rows or any(row.get("geos_job_id") for row in timing_rows))
+    job_or_product_evidence = bool(pngs or csvs or json_products or tex_products or geos_job_evidence or data.get("post_job_id"))
     subcases = data.get("subcases", []) or []
     subcase_failures = [s for s in subcases if int(s.get("returncode", 0) or 0) != 0]
     subcase_scheduler_failures = [row for row in data.get("timing_rows", []) if scheduler_failure_state(row.get("geos_state", ""))]
@@ -497,7 +502,14 @@ def collect_case_status(c: Case) -> dict:
             data["warnings"].append("Generic products exist; optional legacy plotting traceback ignored for pass/fail status.")
         else:
             data["status"] = "passed"
-    elif geos.get("State") == "COMPLETED" or data.get("geos_job_id"):
+    elif pngs or csvs or json_products or tex_products:
+        if soft_fail_re.search(soft_text):
+            data["status"] = "passed-with-warnings"
+            data["issue"] = "verification products exist; optional plotting warning found"
+            data["warnings"].append("Verification products exist; optional plotting traceback ignored for pass/fail status.")
+        else:
+            data["status"] = "passed"
+    elif geos.get("State") == "COMPLETED" or geos_job_evidence:
         if soft_fail_re.search(soft_text):
             data["status"] = "completed-no-figures"
             data["issue"] = "GEOS completed; optional plot script failed and no PNG products were found"

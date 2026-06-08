@@ -13,6 +13,17 @@ import sys
 from pathlib import Path
 
 
+def _env_truthy(name: str) -> bool:
+    return str(os.environ.get(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, ""))
+    except Exception:
+        return default
+
+
 def parse_common_args(description: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--suite", default="verification")
@@ -21,7 +32,19 @@ def parse_common_args(description: str) -> argparse.Namespace:
     parser.add_argument("--case-id", required=True)
     parser.add_argument("--python", dest="python_cmd", default=sys.executable)
     parser.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
-    parser.add_argument("--no-visit", action="store_true")
+    parser.add_argument("--no-visit", action="store_true", help="Skip optional VisIt field renders.")
+    parser.add_argument(
+        "--visit-timeout",
+        type=float,
+        default=_env_float("MPM_VV_VISIT_TIMEOUT", 60.0),
+        help="Maximum seconds for one optional VisIt render command before it is skipped. Field renders are best-effort and never make the numerical post-process fail.",
+    )
+    parser.add_argument(
+        "--visit-all-variants",
+        action="store_true",
+        default=_env_truthy("MPM_VV_VISIT_ALL_VARIANTS"),
+        help="Render field frames for every variant. By default common post-processors render only the first available variant so the report gets a visual smoke check without making post-processing slow.",
+    )
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -208,6 +231,8 @@ def detect_visit(requested: str) -> str | None:
 def render_visit_frames(args: argparse.Namespace, run_dir: Path, output_dir: Path, case_name: str, variable: str, states: str = "initial,middle,final", view: str = "auto", colortable: str = "hot_desaturated", range_mode: str = "auto", color_min: float | None = None, color_max: float | None = None) -> list[str]:
     if args.no_visit:
         return []
+    if getattr(args, "_mpm_vv_visit_rendered", False) and not getattr(args, "visit_all_variants", False):
+        return []
     visit = detect_visit(args.visit_cmd)
     script = run_dir / "pfw_visit_render.py"
     if not visit or not script.is_file():
@@ -228,9 +253,43 @@ def render_visit_frames(args: argparse.Namespace, run_dir: Path, output_dir: Pat
     ]
     if color_min is not None and color_max is not None:
         cmd += ["--color-min", str(color_min), "--color-max", str(color_max), "--range-mode", "explicit"]
-    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (output_dir / f"{case_name}_visit_render.log").write_text(proc.stdout + f"\nreturncode={proc.returncode}\n")
+    log_path = output_dir / f"{case_name}_visit_render.log"
+    setattr(args, "_mpm_vv_visit_rendered", True)
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=run_dir,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=max(1.0, float(getattr(args, "visit_timeout", 60.0))),
+        )
+        log_path.write_text(proc.stdout + f"\nreturncode={proc.returncode}\n")
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode(errors="replace")
+        log_path.write_text(
+            partial
+            + f"\nVisIt render skipped after timeout={getattr(args, 'visit_timeout', 60.0)} seconds. Numerical post-processing continues.\nreturncode=124\n"
+        )
+        return []
+    except Exception as exc:
+        log_path.write_text(f"VisIt render failed before completion: {exc}\nNumerical post-processing continues.\nreturncode=1\n")
+        return []
     return [str(p) for p in sorted(frame_dir.glob(f"{case_name}_*.png"))]
+
+
+def visit_frames_tex(frame_paths: list[str | Path], output_dir: Path, description: str, width: str = "0.31\\linewidth", max_frames: int = 3) -> list[str]:
+    paths = [Path(p) for p in frame_paths if Path(p).is_file()][:max_frames]
+    if not paths:
+        return []
+    lines = [r"\paragraph{Field renderings.} " + description, r"\begin{center}"]
+    for path in paths:
+        rel = Path(os.path.relpath(path, output_dir)).as_posix()
+        lines.append(r"\includegraphics[width=" + width + r"]{\CaseOutputDir/" + rel + r"}")
+    lines.append(r"\end{center}")
+    return lines
 
 
 def include_graphics(paths: list[Path], report_dir: Path, width: str = "0.31\\linewidth") -> str:

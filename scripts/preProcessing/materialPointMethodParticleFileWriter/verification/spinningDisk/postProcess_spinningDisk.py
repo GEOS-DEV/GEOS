@@ -49,6 +49,7 @@ def main() -> int:
 
     rows_out: list[dict] = []
     summaries: list[dict] = []
+    visit_tex = []
     angular_series: list[tuple[str, list[float], list[float]]] = []
     energy_series: list[tuple[str, list[float], list[float]]] = []
 
@@ -113,7 +114,8 @@ def main() -> int:
         else:
             summaries.append({"variant": subcase.get("name"), "label": subcase.get("label"), "num_time_samples": 0, "error": "no tracer velocity data found"})
 
-        render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Velocity", states="initial,middle,final", view="auto", colortable="bluehot", range_mode="auto")
+        frames = render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Velocity", states="initial,middle,final", view="auto", colortable="bluehot", range_mode="auto")
+        visit_tex.extend(visit_frames_tex(frames, output_dir, "Particle velocity frames for a representative spinning-disk subcase show the initial, intermediate, and final states."))
 
     plot_metric(output_dir, "spinning_disk_angular_momentum_drift.png", "Spinning disk angular-momentum drift", "time", "relative drift", angular_series)
     plot_metric(output_dir, "spinning_disk_kinetic_energy_drift.png", "Spinning disk kinetic-energy drift", "time", "relative drift", energy_series)
@@ -128,6 +130,7 @@ def main() -> int:
     for name in ["spinning_disk_angular_momentum_drift.png", "spinning_disk_kinetic_energy_drift.png"]:
         if (output_dir / name).is_file():
             tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.extend(visit_tex)
     (output_dir / "spinning_disk_results.tex").write_text("\n".join(tex) + "\n")
     return 0
 

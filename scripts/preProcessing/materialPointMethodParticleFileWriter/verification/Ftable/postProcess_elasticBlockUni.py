@@ -62,6 +62,7 @@ def main() -> int:
     manifest = load_manifest(source_dir, output_dir, args.case_id, DEFAULT_NAME, VARIANTS)
     rows_out = []
     summaries = []
+    visit_tex = []
     plot_series = []
     expected_series = None
     for subcase in manifest.get("subcases", []):
@@ -87,7 +88,8 @@ def main() -> int:
             expected_series = ("expected", times, expected)
         else:
             summaries.append({"variant": subcase.get("name"), "label": subcase.get("label"), "num_samples": 0, "error": "boxAverageHistory stress column not found"})
-        render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Stress", states="initial,middle,final", view="auto", colortable="hot_desaturated", range_mode="auto")
+        frames = render_visit_frames(args, run_dir, output_dir, str(subcase.get("case_name")), "Stress", states="initial,middle,final", view="auto", colortable="hot_desaturated", range_mode="auto")
+        visit_tex.extend(visit_frames_tex(frames, output_dir, "Particle stress frames for a representative F-table subcase show the initial, intermediate, and final states."))
     if expected_series:
         plot_series.insert(0, expected_series)
     plot_metric(output_dir, "elastic_f_table_stress_error.png", "Elastic F-table boundary switch", "time", "sigma_x", plot_series)
@@ -102,6 +104,7 @@ def main() -> int:
     for name in ["elastic_f_table_stress_error.png", "elastic_f_table_error.png"]:
         if (output_dir / name).is_file():
             tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.extend(visit_tex)
     (output_dir / "elastic_f_table_results.tex").write_text("\n".join(tex) + "\n")
     return 0
 
