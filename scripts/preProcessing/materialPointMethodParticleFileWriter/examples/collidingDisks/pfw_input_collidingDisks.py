@@ -9,7 +9,7 @@
 
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
-# [pfw_dependency] pfw_materials.py
+# [pfw_dependency] pfw:pfw_materials.py
 import importlib
 matdb = importlib.import_module('pfw_materials')
 
