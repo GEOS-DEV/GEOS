@@ -70,17 +70,20 @@ public:
    * @param outputStream The target output stream for rank 0, to output the table string representation
    *                     of the TableData. Each rank contributing to the common rank 0 output stream
    *                     with their local data. It may be the log or a file stream.
-   * @note This method must be called by all MPI ranks.
+   * @note This method must be called by all MPI ranks. 
+   *       Row ordering is set with setSortingFunc().
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const;
 
   /**
-   * @brief Set the Sorting Func object
+   * @brief Set the row sorting function
    * @param func The callable comparison function object
+   * @note If no sorting function is set, rows keep their original ordering and are grouped and
+   *       ordered by MPI rank (rank 0 rows first, then rank 1, etc).
    */
   void setSortingFunc( SortingFunc && func )
-  { m_sortingFunctor = std::make_unique< SortingFunc >( std::move( func )); }
+  { m_sortingFunctor = std::move( func ); }
 
 
 private:
@@ -99,7 +102,8 @@ private:
   TableMpiLayout m_mpiLayout;
 
   /// The custom comparison function object for std::sort
-  std::unique_ptr< SortingFunc > m_sortingFunctor;
+  /// If not set, rows are ordered by adding order, then MPI rank (rank 0 first, then rank 1, etc.).
+  std::optional< SortingFunc > m_sortingFunctor;
 
   /**
    * @brief Expend the columns width to accomodate with the content of all MPI ranks.

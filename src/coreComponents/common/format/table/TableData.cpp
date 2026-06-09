@@ -59,26 +59,44 @@ TableData & TableData::operator=( TableData const & other )
 
 bool TableData::operator<( TableData const & other ) const
 {
-  if( other.getCellsData().size()!= getCellsData().size())
-    return false;
-
-  for( size_t i = 0; i < getCellsData().size(); i++ )
+  // Compare row by row
+  for( size_t i = 0; i < std::min( m_rows.size(), other.m_rows.size() ); ++i )
   {
-    if( getCellsData()[i].data()->value > other.getCellsData()[i].data()->value )
-      return false;
+    // Compare cells in current row
+    for( size_t j = 0; j < std::min( m_rows[i].size(), other.m_rows[i].size() ); ++j )
+    {
+      if( m_rows[i][j].value < other.m_rows[i][j].value )
+        return true;
+      if( m_rows[i][j].value > other.m_rows[i][j].value )
+        return false;
+    }
+
+    // If all compared cells are equal, the shorter row is considered less
+    if( m_rows[i].size() != other.m_rows[i].size() )
+      return m_rows[i].size() < other.m_rows[i].size();
   }
-  return true;
+
+  // If all compared rows are equal, the table with fewer rows is considered less
+  return m_rows.size() < other.m_rows.size();
 }
 
-bool TableData::operator==( TableData const & comparingTable ) const
+bool TableData::operator==( TableData const & other ) const
 {
-  if( comparingTable.getCellsData().size()!= getCellsData().size())
+  if( m_rows.size() != other.m_rows.size() )
     return false;
-  for( size_t i = 0; i < getCellsData().size(); i++ )
+
+  for( size_t i = 0; i < m_rows.size(); ++i )
   {
-    if( getCellsData()[i].data()->value  != comparingTable.getCellsData()[i].data()->value )
+    if( m_rows[i].size() != other.m_rows[i].size() )
       return false;
+
+    for( size_t j = 0; j < m_rows[i].size(); ++j )
+    {
+      if( m_rows[i][j].value != other.m_rows[i][j].value )
+        return false;
+    }
   }
+
   return true;
 }
 
