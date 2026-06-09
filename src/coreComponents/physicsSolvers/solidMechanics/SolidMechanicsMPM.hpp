@@ -351,6 +351,7 @@ public:
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
                                                               real64 const dt,
+                                                              int const cycleNumber,
                                                               ParticleManager & particleManager );
 
   void resizeGridAndCleanParticlesForExplicitStep( real64 const dt,
