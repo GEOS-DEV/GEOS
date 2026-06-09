@@ -19,6 +19,7 @@
 
 #include "PhaseType.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {

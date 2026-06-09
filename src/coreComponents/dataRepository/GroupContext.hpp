@@ -71,9 +71,9 @@ private:
 
   /**
    * @brief Return contextual information here it is a data path
-   * @return ErrorContext ErrorLogger instance updated with context information
+   * @return DiagnosticContext ErrorLogger instance updated with context information
    */
-  ErrorContext getContextInfo() const override;
+  DiagnosticContext getContextInfo() const override;
 
   /**
    * @copydoc DataContext::getToStringInfo()

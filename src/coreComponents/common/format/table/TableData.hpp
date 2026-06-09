@@ -110,7 +110,8 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( stdVector< CellData > const & row );
+  void addRow( stdVector< CellData > const & row )
+  { m_rows.push_back( row ); }
 
   /**
    * @brief Add a line separator to the table
@@ -282,6 +283,7 @@ private:
  */
 template< typename T >
 constexpr bool isCellType = std::is_same_v< T, CellType >;
+
 
 template< typename ... Args >
 void TableData::addRow( Args const &... args )

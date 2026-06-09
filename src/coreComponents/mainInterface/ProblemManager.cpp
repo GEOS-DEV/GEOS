@@ -269,7 +269,7 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
+  LogPart meshGenerationLog( "Mesh Generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
   generateMesh();
   meshGenerationLog.end();

@@ -154,13 +154,6 @@ void TableData::serialize( stdVector< buffer_unit_type > & serializedTableData )
   }
 }
 
-
-
-void TableData::addRow( stdVector< TableData::CellData > const & row )
-{
-  m_rows.push_back( row );
-}
-
 void TableData::addSeparator()
 {
   if( m_rows.empty())

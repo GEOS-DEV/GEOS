@@ -19,6 +19,7 @@
 #include "common/MpiWrapper.hpp"
 #include "codingUtilities/RTTypes.hpp"
 #include "common/format/EnumStrings.hpp"
+#include "common/logger/Logger.hpp"
 #include "dataRepository/Group.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
@@ -383,10 +384,9 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
                                                   stdVector< real64 > const & subStepDts ) const
 {
-  LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+  LogPart logpart( "Time step", MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );
   logpart.addEndDescription( "- N substeps ", numOfSubSteps );
-
   std::stringstream logMessage;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {

@@ -59,6 +59,13 @@ int main( int argc, char *argv[] )
 
     MemoryLogging::getInstance().memoryStatsReport();
 
+    ErrorLogger::global().getLoggerHistory().gatherRecordsRank0();
+    if( MpiWrapper::commRank() == 0 )
+    {
+      TableTextFormatter tableReportFormatter;
+      GEOS_LOG( tableReportFormatter.toString< LogHistory >( ErrorLogger::global().getLoggerHistory() ));
+    }
+
     basicCleanup( false );
 
     std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();

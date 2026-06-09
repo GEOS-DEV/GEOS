@@ -28,7 +28,6 @@
 #include "common/format/StringUtilities.hpp"
 // #include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 #include "common/format/Format.hpp"
 
 #include <iostream>
@@ -40,6 +39,25 @@ namespace geos
 
 namespace internal
 {
+
+/**
+ * @brief Raise a throw error in case of bad use of enum::toString
+ * @param index The index of the enum causing the error
+ * @param typeName The enum name
+ * @param size The size of the enum
+ */
+void EnumErrorMessageToString( size_t index, string_view typeName, std::size_t size );
+
+/**
+ * @brief Raise a throw error in case of bad use of enum::FromString
+ * @param s The string that not belonging to the enum
+ * @param typeName The enum name
+ * @param size The string concatenation of the enum
+ */
+void EnumErrorMessageFromString( string_view s,
+                                 string_view typeName,
+                                 string_view concat );
+
 /**
  * @brief Simple compile-time variadic function that counts its arguments.
  * @tparam ARGS variadic pack of argument types
@@ -152,12 +170,10 @@ struct EnumStrings
     auto const & strings = get();
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
-    GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
-                   GEOS_FMT( "Invalid value {} of type {}. Valid range is 0..{}",
-                             index,
-                             getEnumTypeNameString( enum_type{} ),
-                             size - 1 ),
-                   InputError );
+    if( index >= LvArray::integerConversion< base_type >( size ))
+    {
+      internal::EnumErrorMessageToString( index, getEnumTypeNameString( enum_type{} ), size - 1 );
+    }
     return strings[ index ];
   }
 
@@ -170,12 +186,10 @@ struct EnumStrings
   {
     auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
-    GEOS_THROW_IF( it == std::end( strings ),
-                   GEOS_FMT( "Invalid value '{}' of type {}. Valid options are: {}",
-                             s,
-                             getEnumTypeNameString( enum_type{} ),
-                             concat( ", " ) ),
-                   InputError );
+    if( it == std::end( strings ))
+    {
+      internal::EnumErrorMessageFromString( s, getEnumTypeNameString( enum_type{} ), EnumStrings::concat( ", " ));
+    }
     enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }

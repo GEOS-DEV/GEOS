@@ -19,7 +19,7 @@
 #include "ScotchInterface.hpp"
 
 #include "common/TimingMacros.hpp"
-
+#include "common/logger/Logger.hpp"
 #include <scotch.h>
 
 static_assert( std::is_same< SCOTCH_Num, int64_t >::value,

@@ -63,15 +63,15 @@ public:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorContext
+   * @return DiagnosticContext
    */
-  virtual ErrorContext getContextInfo() const = 0;
+  virtual DiagnosticContext getContextInfo() const = 0;
 
   /**
-   * @brief Conversion operator to ErrorContext
-   * @return ErrorContext
+   * @brief Conversion operator to DiagnosticContext
+   * @return DiagnosticContext
    */
-  explicit operator ErrorContext() const {
+  explicit operator DiagnosticContext() const {
     return getContextInfo();
   }
 
@@ -172,9 +172,9 @@ public:
 
   /**
    * @brief Return contextual information (file and line of the input file where the error occured)
-   * @return ErrorContext ErrorLogger instance updated with context information
+   * @return DiagnosticContext ErrorLogger instance updated with context information
    */
-  ErrorContext getContextInfo() const override;
+  DiagnosticContext getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

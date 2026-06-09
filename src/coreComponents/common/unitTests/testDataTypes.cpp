@@ -16,7 +16,10 @@
 // Source includes
 
 #include "common/DataTypes.hpp"
-// TPL includes
+#include "common/StdContainerWrappers.hpp"
+
+
+// // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
 
@@ -24,8 +27,7 @@ using namespace geos;
 
 TEST( testDataTypes, testBoundChecking )
 {
-  internal::StdVectorWrapper< std::string,
-                              std::allocator< std::string >,
+  internal::StdVectorWrapper< std::string, std::allocator< std::string >,
                               true > vectorBoundsChecking = {"test"};
   EXPECT_THROW( {
     try

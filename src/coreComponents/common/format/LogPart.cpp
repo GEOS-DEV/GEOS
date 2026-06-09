@@ -18,18 +18,22 @@
 
 #include "LogPart.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/ErrorHandling.hpp"
 #include <algorithm>
 
 using namespace geos::stringutilities;
 namespace geos
 {
 
-LogPart::LogPart( string_view logPartTitle, bool enableOutput )
+LogPart::LogPart( string_view logpartName, bool enableOutput )
 {
-  m_formattedStartDescription.m_title = logPartTitle;
-  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+  m_formattedStartDescription.m_title = logpartName;
+  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logpartName );
 
   m_enableOutput = enableOutput;
+
+  ErrorLogger::global().setCurrentLogPart( std::string( logpartName ) );
+
 }
 
 void LogPart::addDescription( string_view description )
