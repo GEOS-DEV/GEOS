@@ -268,6 +268,71 @@ for fixed-point iteration:
 store stress, plasticStrain, yieldStrength, damage
 \end{lstlisting}
 
+
+
+\subsubsection{\texttt{SurfaceInformedPolymer}}
+\label{subsubsec:surface-informed-polymer-model}
+\index{constitutiveModels!SurfaceInformedPolymer}
+\index{temperature!surface-informed polymer model}
+
+\texttt{SurfaceInformedPolymer} is a reference-temperature, corotational polymer plasticity model for explicit MPM.  It preserves the elastic predictor and deviatoric radial-return structure used by the other small-strain/corotational solid models, but replaces parameter-specific logistic thermal factors with one normalized thermal scale and adds a weak pressure-sensitive strength correction.
+
+The thermal scale is normalized at the supplied transition/reference temperature,
+\begin{equation}
+  S_T(T_g)=1,
+\end{equation}
+\begin{equation}
+  \log S_T(T)=a_c\max(T_g-T,0)-a_h\max(T-T_g,0)
+  -J\left[\frac{1}{1+\exp[-(T-T_g)/w_T]}-\frac{1}{2}\right].
+  \label{eq:surface-informed-temperature-scale}
+\end{equation}
+Elastic moduli and yield strength may also depend on crystallinity,
+\begin{equation}
+  C_E=1+\beta_E(X_c-X_{c,g})A_X(T),\qquad
+  C_Y=1+\beta_Y(X_c-X_{c,g})A_X(T),
+\end{equation}
+\begin{equation}
+  A_X(T)=\frac{1}{1+\exp[-(T-T_g)/w_X]}.
+\end{equation}
+The effective properties are
+\begin{equation}
+  K=K_gS_TC_E,\qquad G=G_gS_TC_E,\qquad Y=Y_gS_TC_Y,
+\end{equation}
+while the hardening slope follows
+\begin{equation}
+  H(T)=H_g S_T(T)^{p_H}.
+\end{equation}
+The scalar strength before pressure correction is
+\begin{equation}
+  \sigma_f^0 = Y(T,X_c) + S_{soft,g}S_T
+  \exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
+  + H(T)\left(\lambda_{eff}^2-\frac{1}{\lambda_{eff}}\right),
+\end{equation}
+where \(\kappa\) is the equivalent plastic strain-like history variable and \(\lambda_{eff}=\max(\lambda_{max},1)\).  The maximum principal stretch is computed from the right stretch tensor obtained from \(F^TF\), so rigid-body rotation does not enter the hardening measure.
+
+The pressure-sensitive yield function is
+\begin{equation}
+  \Phi=q+\eta(T)p_t-\sigma_f^0\le 0,\qquad
+  \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_\eta}\right)^2\right],
+\end{equation}
+where \(p_t\) is positive in hydrostatic tension.  The implemented return is non-associated: the trial mean stress is retained and the deviatoric stress is radially scaled to the pressure-adjusted scalar surface.
+
+\begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
+scale K and G with S_T(T) and C_E(T,X_c)
+stress_trial = elasticIsotropicUpdate(oldStress, strainIncrement)
+(p_trial, q_trial, n_trial) = stressInvariants(stress_trial)
+lambda_max = maxPrincipalStretchFrom(F^T F)
+for fixed-point iteration:
+  kappa = norm(plasticStrainOld + plasticStrainIncrement)
+  sigma_f = Y(T,Xc) + softening(T,kappa) + H(T)*stretchMeasure(lambda_max)
+  phi = q_trial + eta(T)*p_trial - sigma_f
+  if phi <= 0 and first iteration: break elastic
+  q_return = min(q_trial, max(sigma_f - eta(T)*p_trial, 0))
+  stress = recomposeStress(p_trial, q_return, n_trial)
+  plasticStrainIncrement = strainIncrement - elasticStrainIncrement(stress-oldStress)
+store stress, plastic strain, equivalent plastic strain, yield strength, damage
+\end{lstlisting}
+
 \subsubsection{\texttt{CeramicDamage}}
 \label{subsubsec:ceramic-damage-model}
 \index{constitutiveModels!CeramicDamage}
@@ -1186,7 +1251,7 @@ Because porosity can be both an input descriptor and a constitutive state variab
 \index{TemperatureProfile event}
 \index{TemperatureRamp event}
 
-\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \texttt{TemperatureProfile} can prescribe domain-wide histories from a solver-level table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \texttt{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
+\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \texttt{TemperatureProfile} can prescribe domain-wide histories from an event-local table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \texttt{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
 
 In a purely mechanical run, temperature may be prescribed externally or inferred internally by a constitutive model from plastic work, strain energy, or an equation of state.  In future coupled runs, a heat-transfer solver could become the authoritative updater.  Until those ownership rules are formalized for a given application, input files should make clear whether temperature is a fixed initial condition, an event-prescribed history, a material-model output, or a field reserved for later coupling.
 

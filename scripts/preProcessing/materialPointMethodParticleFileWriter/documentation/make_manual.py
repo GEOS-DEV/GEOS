@@ -1553,7 +1553,7 @@ Because porosity can be both an input descriptor and a constitutive state variab
 \index{TemperatureProfile event}
 \index{TemperatureRamp event}
 
-\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \texttt{TemperatureProfile} can prescribe domain-wide histories from a solver-level table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \texttt{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
+\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \texttt{TemperatureProfile} can prescribe domain-wide histories from an event-local table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \texttt{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
 
 In a purely mechanical run, temperature may be prescribed externally or inferred internally by a constitutive model from plastic work, strain energy, or an equation of state.  In future coupled runs, a heat-transfer solver could become the authoritative updater.  Until those ownership rules are formalized for a given application, input files should make clear whether temperature is a fixed initial condition, an event-prescribed history, a material-model output, or a field reserved for later coupling.
 
@@ -3865,12 +3865,12 @@ later in cleanup step:
 \paragraph{Inputs.}
 \begin{description}[leftmargin=*,style=nextline]
 \item[\textbf{Required.}] \texttt{startTime}.
-\item[\textbf{Optional.}] \texttt{endTime}.
-\item[\textbf{Solver-level dependencies.}] The event has no event-specific temperature values.  It uses the solver's \texttt{temperatureTable} and \texttt{temperatureTableInterpType} controls.
+\item[\textbf{Optional.}] \texttt{endTime}, \texttt{interpolationType}.
+\item[\textbf{Required.}] \texttt{temperatureTable}, supplied as rows \texttt{\{ time, temperature \}} relative to the event start time.
 \end{description}
 
 \paragraph{Algorithm.}
-When active, \texttt{TemperatureProfile} interpolates the solver-level temperature table to obtain a domain temperature $T(t^n)$ and temperature rate $\dot{T}(t^n)$.  It then assigns these values to every active particle and writes the temperature to every cohesive-zone entry:
+When active, \texttt{TemperatureProfile} interpolates its event-local temperature table to obtain a domain temperature $T(t^n)$ and temperature rate $\dot{T}(t^n)$.  It then assigns these values to every active particle and writes the temperature to every cohesive-zone entry:
 \begin{equation}
   T_p\leftarrow T(t^n),
   \qquad
@@ -3906,7 +3906,7 @@ The current branch does not set \texttt{isComplete} for \texttt{TemperatureProfi
 \end{description}
 
 \paragraph{Registered behavior and current runtime status.}
-\texttt{TemperatureRamp} is registered as an event input class and validates the start/end temperatures and interpolation type, but the reviewed solver's \texttt{triggerEvents} dispatch does not contain a \texttt{TemperatureRamp} branch.  Therefore, in the current codebase, a \texttt{TemperatureRamp} block can be parsed but does not change particle or cohesive-zone temperatures during a run.  Users should use \texttt{TemperatureProfile} with a solver-level \texttt{temperatureTable} for executable temperature histories unless the runtime dispatch is extended.
+\texttt{TemperatureRamp} is registered as an event input class and validates the start/end temperatures and interpolation type, but the reviewed solver's \texttt{triggerEvents} dispatch does not contain a \texttt{TemperatureRamp} branch.  Therefore, in the current codebase, a \texttt{TemperatureRamp} block can be parsed but does not change particle or cohesive-zone temperatures during a run.  Users should use \texttt{TemperatureProfile} with an event-local \texttt{temperatureTable} for executable temperature histories unless the runtime dispatch is extended.
 
 \paragraph{Intended algorithm if activated.}
 The natural event-level ramp would evaluate
@@ -3999,7 +3999,7 @@ Table~\ref{tab:events-manual-summary} summarizes the user-facing inputs discusse
 \eventtwoline{Material}{Swap} & \texttt{sourceRegion}, \texttt{destinationRegion} & One-shot particle/material-state transfer.\\
 \eventtwoline{Polymer}{Heal} & \texttt{targetRegion} & One-shot reset for \texttt{StrainHardeningPolymer} damaged particles.\\
 \eventthreeline{Reset}{Deformation}{Gradient} & None & Schedules later deformation-gradient reset; one-shot.\\
-\eventtwoline{Temperature}{Profile} & None & Uses solver-level \texttt{temperatureTable}; active-window uniform temperature update.\\
+\eventtwoline{Temperature}{Profile} & \texttt{temperatureTable} & Uses an event-local temperature table; active-window uniform temperature update.\\
 \eventtwoline{Temperature}{Ramp} & \texttt{startTemperature}, \texttt{endTemperature} & \texttt{interpType}; registered but not triggered in current solver dispatch.\\
 \eventtwoline{Transform}{Particles} & None & Fixed $\pi$ rotation about $z$; handled in later event pass; one-shot.\\
 \end{longtable}
@@ -7282,16 +7282,16 @@ pfw["mpmEventsString"] = """
 \subsubsection{\texttt{TemperatureProfile}}
 \eventidx{TemperatureProfile}\index{temperature table!event controls}
 
-\texttt{TemperatureProfile} copies the solver's domain temperature table value to active particles and cohesive-zone points during the active event window.  The event itself only needs the time window; the temperature history is supplied through the solver/domain temperature-table controls used by the thermal material model.
+\texttt{TemperatureProfile} copies its event-local temperature-table value to active particles and cohesive-zone points during the active event window.  The event owns the time window, interpolation type, and temperature table; there is no solver-level \texttt{temperatureTable} control.
 
 \begin{lstlisting}[language=Python,caption={Temperature-profile event.}]
 pfw["useEvents"] = 1
-# The domain temperature table is supplied by the thermal solver controls.
-pfw["temperatureTable"] = "{ {0.0, 293.0}, {1.0, 373.0} }"
 pfw["mpmEventsString"] = """
 <TemperatureProfile
   startTime="0.0"
-  endTime="1.0"/>
+  endTime="1.0"
+  temperatureTable="{ {0.0, 293.0}, {1.0, 373.0} }"
+  interpolationType="Linear"/>
 """
 \end{lstlisting}
 

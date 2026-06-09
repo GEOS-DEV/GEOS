@@ -1,0 +1,8 @@
+\subsection{Surface-informed polymer layer}
+\label{sec:surfaceInformedPolymerLayer}
+
+This verification folder exercises the surface-informed polymer as both a continuum material and a finite-thickness cohesive-zone material.  Four variants are run from one input: continuum tension, continuum compression, cohesive-zone tension, and cohesive-zone compression.  Each variant places a thin polymer layer between two stiff elastic blocks and imposes uniaxial-strain loading in the vertical direction.
+
+The comparison curve is a one-dimensional thin-film reconstruction using the same constrained modulus, softening law, and stretch-hardening law as the constitutive update.  The post-processor plots loading-direction stress versus reconstructed film strain and equivalent plastic strain versus reconstructed film strain.  When VisIt is available, it also renders loading-direction stress and equivalent plastic strain at four output states for each variant.
+
+\IfFileExists{\CaseOutputDir/surface_polymer_layer_results.tex}{\input{\CaseOutputDir/surface_polymer_layer_results.tex}}{\paragraph{Generated results.} Results are produced by \texttt{postProcess\_surfaceInformedPolymerLayer.py} after the GEOS jobs finish.}

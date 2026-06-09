@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Dispatch the surface-informed polymer layer verification variants."""
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+
+VARIANTS = [
+    {
+        "name": "continuum_tension",
+        "label": "Continuum tension",
+        "case_name": "surfaceInformedPolymerLayer_continuum_tension",
+        "env": {
+            "SURFACE_POLYMER_CASE_NAME": "surfaceInformedPolymerLayer_continuum_tension",
+            "SURFACE_POLYMER_VARIANT_LABEL": "Continuum tension",
+            "SURFACE_POLYMER_MODEL_KIND": "continuum",
+            "SURFACE_POLYMER_LOADING": "tension",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.10",
+        },
+    },
+    {
+        "name": "continuum_compression",
+        "label": "Continuum compression",
+        "case_name": "surfaceInformedPolymerLayer_continuum_compression",
+        "env": {
+            "SURFACE_POLYMER_CASE_NAME": "surfaceInformedPolymerLayer_continuum_compression",
+            "SURFACE_POLYMER_VARIANT_LABEL": "Continuum compression",
+            "SURFACE_POLYMER_MODEL_KIND": "continuum",
+            "SURFACE_POLYMER_LOADING": "compression",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.08",
+        },
+    },
+    {
+        "name": "cohesive_tension",
+        "label": "Cohesive-zone tension",
+        "case_name": "surfaceInformedPolymerLayer_cohesive_tension",
+        "env": {
+            "SURFACE_POLYMER_CASE_NAME": "surfaceInformedPolymerLayer_cohesive_tension",
+            "SURFACE_POLYMER_VARIANT_LABEL": "Cohesive-zone tension",
+            "SURFACE_POLYMER_MODEL_KIND": "cohesive",
+            "SURFACE_POLYMER_LOADING": "tension",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.10",
+        },
+    },
+    {
+        "name": "cohesive_compression",
+        "label": "Cohesive-zone compression",
+        "case_name": "surfaceInformedPolymerLayer_cohesive_compression",
+        "env": {
+            "SURFACE_POLYMER_CASE_NAME": "surfaceInformedPolymerLayer_cohesive_compression",
+            "SURFACE_POLYMER_VARIANT_LABEL": "Cohesive-zone compression",
+            "SURFACE_POLYMER_MODEL_KIND": "cohesive",
+            "SURFACE_POLYMER_LOADING": "compression",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.08",
+        },
+    },
+]
+
+if __name__ == "__main__":
+    raise SystemExit(
+        run_folder(
+            source_dir=SOURCE_DIR,
+            input_file="pfw_input_surfaceInformedPolymerLayer.py",
+            post_script="postProcess_surfaceInformedPolymerLayer.py",
+            variants=VARIANTS,
+            default_case_id="surfaceInformedPolymerLayer",
+            description="Run surface-informed polymer continuum and cohesive-zone layer verification",
+        )
+    )

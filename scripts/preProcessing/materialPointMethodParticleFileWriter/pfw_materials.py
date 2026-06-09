@@ -319,6 +319,59 @@ def generateStrainHardeningPolymerMaterialString(material):
     ])
 
 
+
+def generateSurfaceInformedPolymerMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+        'defaultYieldStrength',
+        'shearSofteningMagnitude',
+        'shearSofteningShapeParameter1',
+        'shearSofteningShapeParameter2',
+        'strainHardeningSlope',
+        'hardeningScaleExponent',
+        'maximumStretch',
+        'glassTransitionTemperature',
+        'temperatureColdSlope',
+        'temperatureHotSlope',
+        'temperatureTransitionMagnitude',
+        'temperatureTransitionWidth',
+        'crystallinity',
+        'referenceCrystallinity',
+        'crystallinityTransitionWidth',
+        'elasticCrystallinityCoeff',
+        'yieldStrengthCrystallinityCoeff',
+        'pressureAsymmetryAmplitude',
+        'pressureAsymmetryWidth',
+    ])
+
+
+def generateSurfaceInformedPolymerCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'thickness',
+        'bulkModulus',
+        'shearModulus',
+        'defaultYieldStrength',
+        'shearSofteningMagnitude',
+        'shearSofteningShapeParameter1',
+        'shearSofteningShapeParameter2',
+        'strainHardeningSlope',
+        'hardeningScaleExponent',
+        'maximumStretch',
+        'glassTransitionTemperature',
+        'temperatureColdSlope',
+        'temperatureHotSlope',
+        'temperatureTransitionMagnitude',
+        'temperatureTransitionWidth',
+        'crystallinity',
+        'referenceCrystallinity',
+        'crystallinityTransitionWidth',
+        'elasticCrystallinityCoeff',
+        'yieldStrengthCrystallinityCoeff',
+        'pressureAsymmetryAmplitude',
+        'pressureAsymmetryWidth',
+    ])
+
+
 def generateHyperelasticMaterialString(material):
     return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
         'defaultDrainedLinearTEC',
@@ -387,6 +440,8 @@ MATERIAL_STRING_GENERATORS = {
     'Geomechanics': generateGeomechanicsMaterialString,
     'Graphite': generateGraphiteMaterialString,
     'StrainHardeningPolymer': generateStrainHardeningPolymerMaterialString,
+    'SurfaceInformedPolymer': generateSurfaceInformedPolymerMaterialString,
+    'SurfaceInformedPolymerCohesiveZone': generateSurfaceInformedPolymerCohesiveZoneMaterialString,
     'Hyperelastic': generateHyperelasticMaterialString,
     'HyperelasticMMS': generateHyperelasticMMSMaterialString,
     'Chiumenti': generateChiumentiMaterialString,
@@ -2266,6 +2321,88 @@ def _set_polymer_wave_properties(material):
     material['waveSpeed'] = float(np.sqrt((material['defaultBulkModulus'] + 4.0/3.0*material['defaultShearModulus'])/material['defaultDensity']))
 
 
+
+def _set_surface_polymer_model_defaults(material):
+    # Parameters are in the MPM validation unit system: mm, us, mg, K, so stress is GPa.
+    # The thermal scale is normalized to unity at glassTransitionTemperature.  Default values here
+    # leave room-temperature response unchanged above the mechanical transition and stiffen only for
+    # temperatures below the transition when a cold slope is supplied.
+    material['hardeningScaleExponent'] = 1.0
+    material['glassTransitionTemperature'] = 258.15
+    material['temperatureColdSlope'] = 0.030
+    material['temperatureHotSlope'] = 0.0
+    material['temperatureTransitionMagnitude'] = 0.0
+    material['temperatureTransitionWidth'] = 10.0
+    material['crystallinity'] = 0.0
+    material['referenceCrystallinity'] = 0.0
+    material['crystallinityTransitionWidth'] = 10.0
+    material['elasticCrystallinityCoeff'] = 0.0
+    material['yieldStrengthCrystallinityCoeff'] = 0.0
+    material['pressureAsymmetryAmplitude'] = 0.0
+    material['pressureAsymmetryWidth'] = 10.0
+
+
+###################################################################################################
+# VITON/FKM 75 SHORE A FLUOROELASTOMER:
+# Representative 75A fluoroelastomer parameterization for the SurfaceInformedPolymer model.  The
+# elastic shear modulus is estimated from a published 100% modulus using an incompressible rubber
+# relation for nominal tensile stress at lambda=2.  Strength and maximum stretch are selected from
+# published tensile strength and elongation-at-break values for 75A FKM/Viton compound data.  The
+# plastic softening and hardening coefficients are validation parameters chosen so that the reduced
+# one-dimensional response passes through the same order of stress at 100% strain and at failure.
+# Use batch-specific test data when available.
+#
+vitonFKM75SurfacePolymer = {}
+vitonFKM75SurfacePolymer['name'] = 'vitonFKM75SurfacePolymer'
+vitonFKM75SurfacePolymer['version'] = 2606091329
+vitonFKM75SurfacePolymer['model'] = 'SurfaceInformedPolymer'
+vitonFKM75SurfacePolymer['defaultDensity'] = 1.85
+_set_polymer_elastic_constants(vitonFKM75SurfacePolymer, 0.01577, 0.49)
+vitonFKM75SurfacePolymer['defaultDrainedLinearTEC'] = 1.8e-4
+vitonFKM75SurfacePolymer['defaultYieldStrength'] = 0.0030
+vitonFKM75SurfacePolymer['shearSofteningMagnitude'] = 0.0030
+vitonFKM75SurfacePolymer['shearSofteningShapeParameter1'] = 0.30
+vitonFKM75SurfacePolymer['shearSofteningShapeParameter2'] = 1.25
+vitonFKM75SurfacePolymer['strainHardeningSlope'] = 0.0020
+vitonFKM75SurfacePolymer['maximumStretch'] = 2.60
+_set_surface_polymer_model_defaults(vitonFKM75SurfacePolymer)
+_set_polymer_wave_properties(vitonFKM75SurfacePolymer)
+# #################################################################################################
+
+###################################################################################################
+# VITON/FKM 75 SHORE A FLUOROELASTOMER COHESIVE ZONE:
+# Thin-film cohesive projection of vitonFKM75SurfacePolymer.  The thickness is a validation default
+# and should normally be changed to the physical film or bond-line thickness used in a model.
+#
+vitonFKM75SurfacePolymerCohesiveZone = {}
+vitonFKM75SurfacePolymerCohesiveZone['name'] = 'vitonFKM75SurfacePolymerCohesiveZone'
+vitonFKM75SurfacePolymerCohesiveZone['version'] = 2606091329
+vitonFKM75SurfacePolymerCohesiveZone['model'] = 'SurfaceInformedPolymerCohesiveZone'
+vitonFKM75SurfacePolymerCohesiveZone['thickness'] = 0.10
+vitonFKM75SurfacePolymerCohesiveZone['bulkModulus'] = vitonFKM75SurfacePolymer['defaultBulkModulus']
+vitonFKM75SurfacePolymerCohesiveZone['shearModulus'] = vitonFKM75SurfacePolymer['defaultShearModulus']
+vitonFKM75SurfacePolymerCohesiveZone['defaultYieldStrength'] = vitonFKM75SurfacePolymer['defaultYieldStrength']
+vitonFKM75SurfacePolymerCohesiveZone['shearSofteningMagnitude'] = vitonFKM75SurfacePolymer['shearSofteningMagnitude']
+vitonFKM75SurfacePolymerCohesiveZone['shearSofteningShapeParameter1'] = vitonFKM75SurfacePolymer['shearSofteningShapeParameter1']
+vitonFKM75SurfacePolymerCohesiveZone['shearSofteningShapeParameter2'] = vitonFKM75SurfacePolymer['shearSofteningShapeParameter2']
+vitonFKM75SurfacePolymerCohesiveZone['strainHardeningSlope'] = vitonFKM75SurfacePolymer['strainHardeningSlope']
+vitonFKM75SurfacePolymerCohesiveZone['hardeningScaleExponent'] = vitonFKM75SurfacePolymer['hardeningScaleExponent']
+vitonFKM75SurfacePolymerCohesiveZone['maximumStretch'] = vitonFKM75SurfacePolymer['maximumStretch']
+vitonFKM75SurfacePolymerCohesiveZone['glassTransitionTemperature'] = vitonFKM75SurfacePolymer['glassTransitionTemperature']
+vitonFKM75SurfacePolymerCohesiveZone['temperatureColdSlope'] = vitonFKM75SurfacePolymer['temperatureColdSlope']
+vitonFKM75SurfacePolymerCohesiveZone['temperatureHotSlope'] = vitonFKM75SurfacePolymer['temperatureHotSlope']
+vitonFKM75SurfacePolymerCohesiveZone['temperatureTransitionMagnitude'] = vitonFKM75SurfacePolymer['temperatureTransitionMagnitude']
+vitonFKM75SurfacePolymerCohesiveZone['temperatureTransitionWidth'] = vitonFKM75SurfacePolymer['temperatureTransitionWidth']
+vitonFKM75SurfacePolymerCohesiveZone['crystallinity'] = vitonFKM75SurfacePolymer['crystallinity']
+vitonFKM75SurfacePolymerCohesiveZone['referenceCrystallinity'] = vitonFKM75SurfacePolymer['referenceCrystallinity']
+vitonFKM75SurfacePolymerCohesiveZone['crystallinityTransitionWidth'] = vitonFKM75SurfacePolymer['crystallinityTransitionWidth']
+vitonFKM75SurfacePolymerCohesiveZone['elasticCrystallinityCoeff'] = vitonFKM75SurfacePolymer['elasticCrystallinityCoeff']
+vitonFKM75SurfacePolymerCohesiveZone['yieldStrengthCrystallinityCoeff'] = vitonFKM75SurfacePolymer['yieldStrengthCrystallinityCoeff']
+vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryAmplitude'] = vitonFKM75SurfacePolymer['pressureAsymmetryAmplitude']
+vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryWidth'] = vitonFKM75SurfacePolymer['pressureAsymmetryWidth']
+# #################################################################################################
+
+
 ###################################################################################################
 # POLYCARBONATE:
 # Ductile engineering thermoplastic with high impact resistance.
@@ -2658,6 +2795,7 @@ graphiteMaterials = [
 ]
 
 engineeringPolymers = [
+    vitonFKM75SurfacePolymer,
     polymerPolycarbonate,
     polymerABS,
     polymerNylon66,
@@ -2666,6 +2804,10 @@ engineeringPolymers = [
     polymerPMMA,
     polymerHDPE,
     polymerPolypropylene,
+]
+
+cohesiveZoneMaterials = [
+    vitonFKM75SurfacePolymerCohesiveZone,
 ]
 
 engineeringMaterials = engineeringMetals + engineeringCeramics + graphiteMaterials + engineeringPolymers
@@ -3053,6 +3195,7 @@ engineeringCeramics = _refresh_material_list(engineeringCeramics)
 graphiteMaterials = _refresh_material_list(graphiteMaterials)
 engineeringPolymers = _refresh_material_list(engineeringPolymers)
 mpmExplicitSolidMaterials = _refresh_material_list(mpmExplicitSolidMaterials)
+cohesiveZoneMaterials = _refresh_material_list(cohesiveZoneMaterials)
 engineeringMaterials = engineeringMetals + engineeringCeramics + graphiteMaterials + engineeringPolymers
 
 exampleSuiteMaterials = [
@@ -3072,7 +3215,7 @@ verificationMaterials = [
     pbcCompactionPlastic,
 ]
 
-allMaterials = engineeringMaterials + mpmExplicitSolidMaterials + exampleSuiteMaterials + verificationMaterials
+allMaterials = engineeringMaterials + mpmExplicitSolidMaterials + cohesiveZoneMaterials + exampleSuiteMaterials + verificationMaterials
 materialDatabase = {material['name']: material for material in allMaterials}
 
 

@@ -175,6 +175,7 @@ set( constitutive_headers
      cohesiveZone/UncoupledCohesiveZone.hpp
      cohesiveZone/CoupledCohesiveZone.hpp
      cohesiveZone/PolymerCohesiveZone.hpp
+     cohesiveZone/SurfaceInformedPolymerCohesiveZone.hpp
      cohesiveZone/BicrystalCohesiveZone.hpp
      contact/BartonBandis.hpp
      contact/CoulombFriction.hpp
@@ -345,6 +346,8 @@ set( constitutive_headers
      solid/Graphite.hpp
      solid/Geomechanics.hpp
      solid/StrainHardeningPolymer.hpp
+     solid/SurfaceInformedPolymer.hpp
+     solid/SurfaceInformedPolymerHelpers.hpp
      solid/Chiumenti.hpp
      solid/VonMisesJ.hpp
      solid/CeramicDamage.hpp
@@ -385,6 +388,7 @@ set( constitutive_sources
      cohesiveZone/UncoupledCohesiveZone.cpp
      cohesiveZone/CoupledCohesiveZone.cpp
      cohesiveZone/PolymerCohesiveZone.cpp
+     cohesiveZone/SurfaceInformedPolymerCohesiveZone.cpp
      cohesiveZone/BicrystalCohesiveZone.cpp
      contact/BartonBandis.cpp
      contact/CoulombFriction.cpp
@@ -496,6 +500,7 @@ set( constitutive_sources
      solid/Graphite.cpp
      solid/Geomechanics.cpp
      solid/StrainHardeningPolymer.cpp
+     solid/SurfaceInformedPolymer.cpp
      solid/Chiumenti.cpp
      solid/VonMisesJ.cpp
      solid/MetalPlasticity.cpp
@@ -527,6 +532,7 @@ if( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY )
        cohesiveZone/UncoupledCohesiveZone.cpp
        cohesiveZone/CoupledCohesiveZone.cpp
        cohesiveZone/PolymerCohesiveZone.cpp
+       cohesiveZone/SurfaceInformedPolymerCohesiveZone.cpp
        cohesiveZone/BicrystalCohesiveZone.cpp
        solid/SolidBase.cpp
        solid/ElasticIsotropic.cpp
@@ -537,6 +543,7 @@ if( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY )
        solid/Graphite.cpp
        solid/Geomechanics.cpp
        solid/StrainHardeningPolymer.cpp
+       solid/SurfaceInformedPolymer.cpp
        solid/Chiumenti.cpp
        solid/VonMisesJ.cpp
        solid/CeramicDamage.cpp )

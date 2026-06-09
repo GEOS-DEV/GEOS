@@ -124,7 +124,7 @@ Fully damaged cohesive nodes are propagated back to their supporting particles. 
 \index{BicrystalCohesiveZone}
 \index{PolymerCohesiveZone}
 
-GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers four executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, and \texttt{PolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
+GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers five executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, \texttt{PolymerCohesiveZone}, and \texttt{SurfaceInformedPolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
 
 \paragraph{\texttt{UncoupledCohesiveZone}.}
 This is a linear uncoupled spring law with independent normal and tangential failure thresholds.  Required inputs are \texttt{normalForceConstant}, \texttt{shearForceConstant}, \texttt{maxNormalDisplacement}, and \texttt{maxTangentialDisplacement}.  The law is
@@ -157,6 +157,19 @@ The polymer law represents a finite-thickness cohesive layer with bulk and shear
 \end{equation}
 where $h$ is the layer thickness, updates temperature-dependent moduli and strengths, computes a yield-limited traction scale, and tracks previous stretch and plastic-strain-like history.  Damage is activated when the stretch exceeds the temperature-adjusted maximum stretch.
 
+
+\paragraph{\texttt{SurfaceInformedPolymerCohesiveZone}.}
+This law is the thin-film projection of \texttt{SurfaceInformedPolymer}.  It converts normal opening and tangential slip to film strains, evaluates the same normalized thermal scale, crystallinity factors, softening term, stretch-hardening term, and pressure-sensitive strength correction as the continuum model, and returns cohesive tractions using the established cohesive-zone sign convention.  With tensile film stress taken as positive,
+\begin{equation}
+  q=\sqrt{\sigma_n^2+3\tau^2},\qquad p_t=\frac{\sigma_n}{3},
+\end{equation}
+and the return surface is
+\begin{equation}
+  q+\eta(T)p_t = Y(T,X_c) + S_{soft}(T)\exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
+  + H_gS_T(T)^{p_H}\left(\lambda_{eff}^2-\lambda_{eff}^{-1}\right).
+\end{equation}
+The required inputs are \texttt{thickness}, \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{defaultYieldStrength}, \texttt{shearSofteningMagnitude}, \texttt{shearSofteningShapeParameter1}, \texttt{shearSofteningShapeParameter2}, and \texttt{strainHardeningSlope}.  Optional inputs define the thermal scale, crystallinity scale, hardening exponent, pressure asymmetry, and maximum stretch.  The state includes equivalent plastic strain, plastic normal film strain, plastic tangential film strain, previous stretch, temperature, and damage.
+
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
 \caption{Cohesive-zone constitutive model summary.}\label{tab:cz-model-summary}\\
 \toprule
@@ -173,6 +186,7 @@ Model & Principal required inputs & Notes \\
 \texttt{Coupled}\newline\texttt{CohesiveZone} & Normal and tangential characteristic displacements; peak normal and shear stresses; optional displacement cutoffs. & Needleman--Xu-style coupled exponential cohesive law. \\
 \texttt{Bicrystal}\newline\texttt{CohesiveZone} & Inherits \texttt{CoupledCohesiveZone} inputs; requires a valid misorientation state for strength scaling. & Coupled law with misorientation-dependent peak-strength scaling. \\
 \texttt{Polymer}\newline\texttt{CohesiveZone} & Layer thickness; temperature-dependent bulk, shear, yield, rate/softening, \texttt{Gr}, and maximum-stretch parameters. & Finite-thickness polymer-interface law with thermal softening and stretch-based failure. \\
+\texttt{SurfaceInformedPolymer}\newline\texttt{CohesiveZone} & Layer thickness; reference bulk, shear, yield, softening, hardening, thermal-scale, crystallinity, pressure-asymmetry, and maximum-stretch parameters. & Thin-film projection of the surface-informed continuum polymer model with shared material functions. \\
 \end{longtable}
 
 

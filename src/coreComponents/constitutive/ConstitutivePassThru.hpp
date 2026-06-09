@@ -29,6 +29,7 @@
 #include "cohesiveZone/UncoupledCohesiveZone.hpp"
 #include "cohesiveZone/CoupledCohesiveZone.hpp"
 #include "cohesiveZone/PolymerCohesiveZone.hpp"
+#include "cohesiveZone/SurfaceInformedPolymerCohesiveZone.hpp"
 #include "cohesiveZone/BicrystalCohesiveZone.hpp"
 #include "gas/Gas.hpp"
 #include "solid/Damage.hpp"
@@ -53,6 +54,7 @@
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/StrainHardeningPolymer.hpp"
+#include "solid/SurfaceInformedPolymer.hpp"
 #include "solid/Chiumenti.hpp"
 #include "solid/CeramicDamage.hpp"
 #include "solid/VonMisesJ.hpp"
@@ -247,6 +249,7 @@ struct ConstitutivePassThruMPM< ContinuumBase >
                                  CeramicDamage,
                                  Chiumenti,
                                  StrainHardeningPolymer,
+                                 SurfaceInformedPolymer,
                                  PerfectlyPlastic,
                                  ElasticTransverseIsotropic,
                                  VonMisesJ,
@@ -284,6 +287,7 @@ struct ConstitutivePassThruCohesiveZone< CohesiveZoneBase >
     ConstitutivePassThruHandler< GEOS_EXTERNAL_CONSTITUTIVE_MPM_COHESIVE_ZONE_MODEL_TYPES
                                  BicrystalCohesiveZone,
                                  PolymerCohesiveZone,
+                                 SurfaceInformedPolymerCohesiveZone,
                                  CoupledCohesiveZone,
                                  UncoupledCohesiveZone >::execute( constitutiveRelation,
                                                                    std::forward< LAMBDA >( lambda ) );
