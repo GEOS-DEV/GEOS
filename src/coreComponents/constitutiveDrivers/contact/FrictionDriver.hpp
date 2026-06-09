@@ -117,7 +117,10 @@ private:
   };
 
   // Time is defined in base class
-  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NJUMP, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, CC, FS, NEWTRAC, SNEWTRAC0, SNEWTRAC1, ITERPEN0, ITERPEN1, TLIM };
+  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NJUMP, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, CC, FS, 
+                  NEWTRAC, SNEWTRAC0, SNEWTRAC1, 
+                  NTOL, TTOL, NTRACTOL,
+                  ITERPEN0, ITERPEN1, TLIM };
 
   string m_jumpFunctionName; ///<
   string m_dJumpFunctionName; ///<

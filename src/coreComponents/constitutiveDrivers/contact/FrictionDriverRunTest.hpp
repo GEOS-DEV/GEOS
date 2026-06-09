@@ -156,6 +156,11 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     table( ei, SNEWTRAC0 ) = newTraction[0][1];
     table( ei, SNEWTRAC1 ) = newTraction[0][2];
 
+
+    table( ei, NTOL ) = normalDispTol;
+    table( ei, TTOL ) = slidingTol;
+    table( ei, NTRACTOL ) = normalTractionTol;
+
     table( ei, ITERPEN0 ) = iterPen[0][0];
     table( ei, ITERPEN1 ) = iterPen[0][1];
 

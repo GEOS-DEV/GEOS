@@ -200,6 +200,9 @@ void FrictionDriver::getColumnNames( string_array & columnNames ) const
   columnNames.emplace_back( "newtraction,normal" );
   columnNames.emplace_back( "newtraction,tangent1" );
   columnNames.emplace_back( "newtraction,tangent2" );
+  columnNames.emplace_back( "derived disp tol, normal" );
+  columnNames.emplace_back( "derived disp tol, tangent" );
+  columnNames.emplace_back( "derived traction tol, normal" );
   columnNames.emplace_back( "iterative penalty, normal" );
   columnNames.emplace_back( "iterative penalty, tangent" );
 
