@@ -31,9 +31,6 @@ LogPart::LogPart( string_view logpartName, bool enableOutput )
   m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logpartName );
 
   m_enableOutput = enableOutput;
-
-  ErrorLogger::global().setCurrentLogPart( std::string( logpartName ) );
-
 }
 
 void LogPart::addDescription( string_view description )
@@ -190,9 +187,10 @@ string LogPart::outputTitle( LogPart::FormattedDescription & formattedDescriptio
 
 void LogPart::begin( std::ostream & os )
 {
+  ErrorLogger::global().setCurrentLogPart( m_formattedStartDescription.m_title );
+
   if( !m_enableOutput )
     return;
-
 
   if( !m_startDescription.m_names.empty())
   {

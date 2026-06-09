@@ -274,11 +274,13 @@ void ProblemManager::problemSetup()
   generateMesh();
   meshGenerationLog.end();
 
-//  initialize_postMeshGeneration();
-  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
-  numericalMethodLog.begin();
-  applyNumericalMethods();
-  numericalMethodLog.end();
+  // initialize_postMeshGeneration();
+  {
+    LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
+    numericalMethodLog.begin();
+    applyNumericalMethods();
+    numericalMethodLog.end();
+  }
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
@@ -288,7 +290,7 @@ void ProblemManager::problemSetup()
   logHypredriveInputs( *m_physicsSolverManager, getDomainPartition() );
 #endif
 
-  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  LogPart importFieldsLog( "Import Fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
   importFields();
   importFieldsLog.end();

@@ -36,7 +36,7 @@ public:
   /**
    * @brief Initialize a LogPart given a title
    * @param logPartTitle The title who will be used for top and bottom LogPart
-   * @param enableOutput Boolean to activate or not csv output
+   * @param enableOutput Boolean to activate or not log output
    */
   LogPart( string_view logPartTitle, bool enableOutput );
 

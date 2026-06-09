@@ -22,11 +22,8 @@
 
 #include "common/DataTypes.hpp"
 #include "common/StdContainerWrappers.hpp"
-#include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "DiagnosticMessage.hpp"
-#include <string>
-
 
 namespace geos
 {
