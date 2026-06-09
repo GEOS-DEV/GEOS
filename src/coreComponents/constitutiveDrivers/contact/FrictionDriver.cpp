@@ -228,18 +228,18 @@ void FrictionDriver::initializeTable()
     real64 const time = m_table( index, TIME );
 
     real64 const traction = tractionFunction.evaluate( &time );
-    m_table( index, NTRAC ) = traction*sin_theta;
-    m_table( index, STRAC0 ) = traction*cos_theta*cos_phi;
-    m_table( index, STRAC1 ) = traction*cos_theta*sin_phi;
+    m_table( index, NTRAC ) =   traction*cos_phi;
+    m_table( index, STRAC0 ) =  traction*sin_theta*sin_phi;
+    m_table( index, STRAC1 ) = -traction*cos_theta*sin_phi;
 
     real64 const jump = jumpFunction.evaluate( &time );
-    m_table( index, NJUMP ) = jump*sin_theta;
-    m_table( index, SLIP0 ) = jump*cos_theta*cos_phi;
+    m_table( index, NJUMP ) = jump*cos_phi;
+    m_table( index, SLIP0 ) = jump*sin_theta*sin_phi;
     m_table( index, SLIP1 ) = jump*cos_theta*sin_phi;
 
     real64 const dJump = dJumpFunction.evaluate( &time );
-    m_table( index, NDJUMP ) = dJump*sin_theta;
-    m_table( index, DSLIP0 ) = dJump*cos_theta*cos_phi;
+    m_table( index, NDJUMP ) = dJump*cos_phi;
+    m_table( index, DSLIP0 ) = dJump*sin_theta*sin_phi;
     m_table( index, DSLIP1 ) = dJump*cos_theta*sin_phi;
 
     m_table( index, CC )    = 0;
