@@ -632,19 +632,26 @@ The distortion stress is the combination of the plane-normal and in-plane-isotro
   \operatorname{dev}\boldsymbol{\sigma}_{\mathrm{dist}}.
   \label{eq:graphite-distortion-stress}
 \end{equation}
-The corresponding mode invariants are evaluated with a Mandel-consistent norm,
+The signed distortion invariant is
 \begin{equation}
-  q_{\mathrm{dist}} = \sqrt{\frac{3}{2}}\,\|\boldsymbol{\sigma}_{\mathrm{dist}}^{\mathrm{dev}}\|,
+  I_d = \sigma_{aa} - \frac{\sigma_{bb}+\sigma_{cc}}{2},
   \qquad
+  I_d^+ = \langle I_d\rangle_+,
+  \qquad
+  I_d^- = \langle -I_d\rangle_+,
+  \label{eq:graphite-signed-distortion}
+\end{equation}
+where \(\mathbf a\) is the basal-plane normal and \(\mathbf b,\mathbf c\) span the basal plane.  The scalar \(|I_d|\) is equal to \(\sqrt{3/2}\|\boldsymbol{\sigma}_{\mathrm{dist}}^{\mathrm{dev}}\|\), but the split form allows the model to assign different strengths to basal-normal relative compression and basal-normal relative extension/opening-like distortion.  The remaining mode invariants use Mandel-consistent norms,
+\begin{equation}
   q_{\mathrm{ip}} = \sqrt{\frac{3}{2}}\,\|\boldsymbol{\sigma}_{\mathrm{ip}}^{\mathrm{dev}}\|,
   \qquad
   q_{\mathrm{c}} = \sqrt{\frac{3}{2}}\,\|\boldsymbol{\sigma}_5\|.
   \label{eq:graphite-mode-invariants}
 \end{equation}
-These are the internal stress measures corresponding to distortion shear, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled separately by comparing \(\sigma_n=\mathbf a\cdot\boldsymbol{\sigma}\mathbf a\) with \texttt{failureStrength}.
+These are the internal stress measures corresponding to signed normal distortion, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled separately by comparing \(\sigma_n=\mathbf a\cdot\boldsymbol{\sigma}\mathbf a\) with \texttt{failureStrength}.
 
 \paragraph{Pressure-dependent point-slope strengths.}
-Each shear mode \(m\in\{\mathrm{dist},\mathrm{ip},\mathrm{c}\}\) has an independent pressure-dependent strength curve controlled by \texttt{*ResponseX2}, \texttt{*ResponseY1}, \texttt{*ResponseY2}, and \texttt{*ResponseM1}.  With \(x_1=0\), \(x_2>0\), \(Y_1\ge 0\), \(Y_2>Y_1\), and low-pressure tangent slope \(M_1\), the code uses a point-slope form
+Each active strength branch \(m\in\{d-,d+,\mathrm{ip},\mathrm{c}\}\) has a pressure-dependent strength curve controlled by \texttt{*ResponseX2}, \texttt{*ResponseY1}, \texttt{*ResponseY2}, and \texttt{*ResponseM1}.  The existing \texttt{distortionShearResponse*} inputs define the \(I_d^-\) branch.  The optional \texttt{positiveDistortionShearResponse*} inputs define the \(I_d^+\) branch and default to the corresponding \texttt{distortionShearResponse*} values when omitted, so old input files recover the previous unsigned distortion response.  With \(x_1=0\), \(x_2>0\), \(Y_1\ge 0\), \(Y_2>Y_1\), and low-pressure tangent slope \(M_1\), the code uses a point-slope form
 \begin{equation}
 Y_m(p)=
 \begin{cases}
@@ -664,33 +671,37 @@ After damage and hardening modifications the implementation enforces this condit
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\linewidth]{figures/graphite_point_slope_strength.png}
-  \caption{Pressure-dependent point-slope strength form used independently for the distortion, in-plane shear, and coupled weak-plane shear modes.  The orange transition is constructed to be tangent to the low-pressure branch at \((x_1,Y_1)\) and tangent to the high-pressure plateau at \((x_2,Y_2)\); convexity requires \(M_1>(Y_2-Y_1)/(x_2-x_1)\).}
+  \caption{Pressure-dependent point-slope strength form used for each active graphite strength branch, including the signed distortion branches, in-plane shear, and coupled weak-plane shear.  The orange transition is constructed to be tangent to the low-pressure branch at \((x_1,Y_1)\) and tangent to the high-pressure plateau at \((x_2,Y_2)\); convexity requires \(M_1>(Y_2-Y_1)/(x_2-x_1)\).}
   \label{fig:graphite-point-slope-strength}
 \end{figure}
 
-Damage, strength scaling, and hardening modify the raw input strengths before Eq.~\eqref{eq:graphite-point-slope-strength} is evaluated.  Let \(s_p=\texttt{strengthScale}\), \(D\in[0,1]\) be scalar damage, \(\chi=\texttt{relaxation}\in[0,1]\) be the accumulated plastic-strain hardening coordinate, and
+Damage, strength scaling, and hardening modify the raw input strengths before Eq.~\eqref{eq:graphite-point-slope-strength} is evaluated.  Let \(s_p=\texttt{strengthScale}\), \(D_m\in[0,1]\) be the internal mode damage used for a branch, \(\chi=\texttt{relaxation}\in[0,1]\) be the accumulated plastic-strain hardening coordinate, and
 \begin{equation}
   S(\chi)=3\chi^2-2\chi^3,
   \qquad
   H_m(\chi)=1+(C_m-1)S(\chi).
   \label{eq:graphite-hardening-multiplier}
 \end{equation}
-Here \(C_m\) is one of \texttt{distortionStrainHardeningC0}, \texttt{inPlaneStrainHardeningC0}, or \texttt{coupledStrainHardeningC0}.  The low-pressure cohesion-like strength is scaled as
+Here \(C_m\) is one of \texttt{distortionStrainHardeningC0}, \texttt{inPlaneStrainHardeningC0}, or \texttt{coupledStrainHardeningC0}; both signed distortion branches use the distortion hardening multiplier.  The intact low-pressure ordinate and tangent slope are scaled by \(s_pH_m\), but the high-pressure plateau is not strength-scale multiplied:
 \begin{equation}
-  Y_1 \leftarrow Y_1^{0}s_p(1-D)H_m,
+  Y_{1,\mathrm{intact}} = \min\left(s_pH_mY_1^0,(1-\epsilon)Y_2^0\right),
   \qquad
-  Y_2 \leftarrow Y_2^{0}s_pH_m,
+  Y_{2,\mathrm{intact}} = Y_2^0.
   \label{eq:graphite-strengthscale-damage}
 \end{equation}
-while the low-pressure slope is interpolated toward the failed-material friction slope,
-\begin{equation}
-  M_1 \leftarrow (1-D)M_1^{0}H_m + D\,M_{\mathrm{failed}}.
-  \label{eq:graphite-damaged-slope}
-\end{equation}
-The key distinction is that damage removes cohesive low-pressure strength and changes the low-pressure slope, while strain hardening raises the active envelope through the relaxation coordinate.  The use of \texttt{strengthScale} should be read together with the shared Weibull modifier in Section~\ref{subsubsec:strength-scale-weibull}; the graphite model applies the scale to \texttt{failureStrength} and to the three pressure-dependent mode strengths, and can optionally scale fracture-energy parameters through \texttt{scaleFractureEnergyReleaseRate}.
+The intact slope is raised as needed to satisfy the convexity condition in Eq.~\eqref{eq:graphite-point-slope-convexity}.  The fully comminuted powder branch has zero cohesion, uses \texttt{damagedMaterialFrictionalSlope} subject to the same slope limits, and retains the same unscaled branch-specific \(Y_2^0\) plateau.  The active strength is a smooth blend of the intact and powder branches using the internal damage variable for that mode.  This makes \texttt{strengthScale} a flaw-controlled low-pressure multiplier while preserving a common pressure-dominated high-confinement strength for intact and comminuted material.  Fracture energies may be scaled separately through \(G_f^{\mathrm{eff}}=G_f\,s_p^{\eta_G}\), where \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).
 
 \paragraph{Mode return and reconstruction.}
-The inelastic correction is a component-wise radial cap in each mode rather than a single closest-point return to a coupled anisotropic yield surface.  If \(q_m>Y_m(p)\), the corresponding stress part is scaled by \(Y_m/q_m\).  After all active mode caps are applied, the stress is reconstructed as
+The inelastic correction uses a single quadratic TI strength index,
+\begin{equation}
+  R^2 =
+  \left(\frac{I_d^+}{Y_{d+}(p)}\right)^2+
+  \left(\frac{I_d^-}{Y_{d-}(p)}\right)^2+
+  \left(\frac{q_{\mathrm{ip}}}{Y_{\mathrm{ip}}(p)}\right)^2+
+  \left(\frac{q_{\mathrm{c}}}{Y_{\mathrm{c}}(p)}\right)^2 .
+  \label{eq:graphite-quadratic-ti-yield}
+\end{equation}
+When \(R>1\), the deviatoric distortion, in-plane, and coupled weak-plane stress parts are scaled by \(1/R\).  This is a radial projection onto a coupled anisotropic strength index rather than a full closest-point plasticity return.  After the correction, the stress is reconstructed as
 \begin{equation}
   \boldsymbol{\sigma}^{n+1} =
   \boldsymbol{\sigma}_{\mathrm{dist}}^{\mathrm{iso}}
@@ -737,12 +748,12 @@ where \(\sigma_f=\texttt{failureStrength}\) and \(C_{\mathrm{tip}}=\texttt{crack
 Third, the model accumulates basal-plane plastic work and non-basal plastic work.  The basal work combines Mode-I basal-plane plastic opening work and basal-plane shear work; the total work path excludes the basal plane-normal and basal shear parts.  These work measures are regularized by fracture energy per unit characteristic length,
 \begin{equation}
   D \leftarrow \max\left(D,
-     \left[\min\left(1,\frac{W_b}{G_b/\ell}\right)\right]^{32},
-     \left[\min\left(1,\frac{W_t}{G_t/\ell}\right)\right]^{32}
+     \left[\min\left(1,\frac{W_b}{G_b/\ell}\right)\right]^{n_D},
+     \left[\min\left(1,\frac{W_t}{G_t/\ell}\right)\right]^{n_D}
   \right),
   \label{eq:graphite-work-damage}
 \end{equation}
-where \(G_b=\texttt{basalPlaneFractureEnergyReleaseRate}\) and \(G_t=\texttt{totalFractureEnergyReleaseRate}\).  If \texttt{scaleFractureEnergyReleaseRate=1}, these fracture-energy values are multiplied by \texttt{strengthScale} before the work ratio is evaluated.  Equation~\eqref{eq:graphite-work-damage} makes damage remain near zero until the accumulated work approaches the specified regularized fracture-work threshold, then rapidly ramps it toward one.
+where \(G_b=\texttt{basalPlaneFractureEnergyReleaseRate}\), \(G_t=\texttt{totalFractureEnergyReleaseRate}\), and \(n_D=\texttt{damageEvolutionExponent}\).  The effective fracture energy uses \(G_f^{\mathrm{eff}}=G_f s_p^{\eta_G}\), where \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).  If the exponent is omitted, the legacy \texttt{scaleFractureEnergyReleaseRate} flag initializes it to either zero or one.  Equation~\eqref{eq:graphite-work-damage} makes damage remain near zero until the accumulated work approaches the specified regularized fracture-work threshold, then ramps it toward one.
 
 \paragraph{Thermal effects.}
 Thermal effects in the current model enter through anisotropic thermal expansion in Eq.~\eqref{eq:graphite-trial-stress} and through any temperature-dependent parameter paths exposed by the material model.  In the current solver workflow, \texttt{temperature} and \texttt{temperatureRate} are normally imposed by global events, such as a \texttt{TemperatureProfile} or \texttt{TemperatureRamp}, to represent a prescribed transient thermal response.  The graphite constitutive update consumes \texttt{temperatureRate} to subtract \(\boldsymbol{\alpha}\dot T\) from the mechanical rate of deformation.  Local temperature fields could instead be supplied in the future by a coupled heat-transfer solver, because temperature is already a particle field shared by PFW initialization, events, output, and constitutive models as described in Section~\ref{subsubsec:constitutive-temperature}.
@@ -758,13 +769,13 @@ stress_trial = oldStress + C_TI : (D - alpha * temperatureRate) * dt
 if inelasticity is disabled: accept stress_trial
 
 decompose stress_trial into sigma1, sigma2, sigma4, sigma5
-compute distortion, in-plane, and coupled shear invariants
-for each mode:
-  compute strength Y_m(p) from the point-slope curve
-  apply strengthScale, damage softening, failed slope, and hardening multiplier
-  if q_m > Y_m: radially scale that stress part to q_m = Y_m
-reconstruct stress from capped distortion, in-plane, and coupled parts
-if fully damaged: remove tensile plane-normal and spherical tensile strength
+compute signed distortion Id+/Id-, in-plane, and coupled shear invariants
+compute branch strengths Y_d-, Y_d+, Y_ip, Y_c from point-slope curves
+apply strengthScale to low-pressure intact branch only; keep Y2 unscaled
+blend intact strengths toward pressure-dependent powder residual using internal damage
+if R^2 = sum((mode stress)/(mode strength))^2 > 1: scale deviatoric TI modes by 1/R
+reconstruct stress from corrected distortion, in-plane, and coupled parts
+as damage grows: remove tensile plane-normal and spherical tensile strength
 
 if any mode yielded:
   compute plastic strain increment from total strain increment minus TI elastic increment
@@ -774,7 +785,7 @@ store stress, damage, relaxation, plastic strain, plastic work, and diagnostics
 \end{lstlisting}
 
 \paragraph{Capabilities and limitations.}
-The model is useful when the important physics are anisotropic graphitic weak planes, pressure-dependent shear strength, basal-plane slip/opening, thermal expansion anisotropy, and coupling to DFG fracture/contact.  It is not a general porous geomaterial model: continuum porosity, pore collapse, pressure-solution creep, and pore-pressure coupling should be handled by the \texttt{Geomechanics} family or by a future coupled model.  It is also not a fully coupled anisotropic plasticity return algorithm in the sense of a single convex yield surface with a consistent flow rule; instead, it applies radial caps to independent mode stresses and then reconstructs the stress.  The strict stored-energy hyperelastic interpretation is likewise limited, because the reviewed code computes a corotational rate-form trial stress.  Finally, the constitutive update uses only the first material-direction row as the basal-plane normal, so users should initialize unused material-basis rows sensibly for robust kinematic transport and output, even though they do not directly alter the graphite strength calculation.
+The model is useful when the important physics are anisotropic graphitic weak planes, pressure-dependent shear strength, basal-plane slip/opening, thermal expansion anisotropy, and coupling to DFG fracture/contact.  It is not a general porous geomaterial model: continuum porosity, pore collapse, pressure-solution creep, and pore-pressure coupling should be handled by the \texttt{Geomechanics} family or by a future coupled model.  It is also not a fully coupled anisotropic plasticity return algorithm with a documented associated flow rule; the correction is a radial projection to a coupled TI strength index.  The strict stored-energy hyperelastic interpretation is likewise limited, because the reviewed code computes a corotational rate-form trial stress.  Finally, the constitutive update uses only the first material-direction row as the basal-plane normal, so users should initialize unused material-basis rows sensibly for robust kinematic transport and output, even though they do not directly alter the graphite strength calculation.
 
 \begingroup
 \footnotesize
@@ -792,7 +803,8 @@ The model is useful when the important physics are anisotropic graphitic weak pl
 \texttt{defaultPoissonRatioAxialTransverse}\newline \texttt{defaultPoissonRatioTransverse} & Poisson couplings for the TI elastic law.\\
 \texttt{*PressureDerivative} & Optional pressure slopes for \(E_z\), \(E_p\), and \(G_{zp}\).\\
 \texttt{failureStrength}\newline \texttt{maximumPrincipalStressDamage}\newline \texttt{enableCrackTipStressConcentration} & Tensile/principal-stress damage controls and crack-tip modifier coupling.\\
-\texttt{distortionShearResponse*} & Point-slope parameters for the distortion shear envelope.\\
+\texttt{distortionShearResponse*} & Point-slope parameters for the negative signed-distortion branch \(I_d^-\).\\
+\texttt{positiveDistortionShearResponse*} & Optional point-slope parameters for the positive signed-distortion branch \(I_d^+\); omitted values default to \texttt{distortionShearResponse*}.\\
 \texttt{inPlaneShearResponse*} & Point-slope parameters for basal-plane in-plane shear.\\
 \texttt{coupledShearResponse*} & Point-slope parameters for coupled shear/slip involving the weak plane normal.\\
 \texttt{distortionStrainHardeningC0}\newline \texttt{inPlaneStrainHardeningC0}\newline \texttt{coupledStrainHardeningC0}\newline \texttt{maximumPlasticStrain} & Plastic-strain hardening controls through the relaxation coordinate.\\

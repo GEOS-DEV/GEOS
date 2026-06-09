@@ -32,6 +32,8 @@ def parse_args():
     p.add_argument("--skip-render", action="store_true")
     p.add_argument("--copy-only", action="store_true")
     p.add_argument("--skip-slurm-check", action="store_true")
+    p.add_argument("--visit-timeout", type=float, default=float(os.environ.get("MPM_VV_VISIT_TIMEOUT", "60")),
+                   help="Maximum seconds allowed for each optional VisIt render command. A timeout is reported as a warning and does not make numerical post-processing fail.")
     p.add_argument("--force", "-y", action="store_true")
     return p.parse_args()
 
@@ -171,11 +173,26 @@ def run_visit_one(args, run_dir: Path, frame_dir: Path, state: str, variable: st
     ]
     log(args, "running VisIt: " + " ".join(cmd))
     logf.write("Running: " + " ".join(cmd) + "\n")
-    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    logf.write(proc.stdout)
-    print(proc.stdout, end="")
-    if proc.returncode != 0:
-        warn(args, f"VisIt exited with {proc.returncode}; continuing to copy any PNGs")
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=run_dir,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=max(1.0, float(args.visit_timeout)),
+        )
+        logf.write(proc.stdout)
+        print(proc.stdout, end="")
+        if proc.returncode != 0:
+            warn(args, f"VisIt exited with {proc.returncode}; continuing to copy any PNGs")
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode(errors="replace")
+        logf.write(partial)
+        logf.write(f"\nVisIt render for state={state} variable={variable} skipped after timeout={args.visit_timeout} seconds.\n")
+        warn(args, f"VisIt render for {state}/{variable} timed out after {args.visit_timeout}s; continuing")
 
 
 def run_visit(args, run_dir: Path, frame_dir: Path, geos_ok: bool):
@@ -184,9 +201,14 @@ def run_visit(args, run_dir: Path, frame_dir: Path, geos_ok: bool):
     frame_dir.mkdir(parents=True, exist_ok=True)
     initial, final = choose_variables(args)
     log_path = run_dir / f"{args.output_prefix}_visit_render.log"
+    final_range = "unit" if "damage" in final.lower() else "auto"
     with log_path.open("w") as logf:
+        # One visual smoke test is required for every current-standard folder.
+        # Render a small initial/middle/final sequence by default; each command
+        # is bounded by --visit-timeout so a broken VisIt session cannot make
+        # an otherwise good numerical reduction hang indefinitely.
         run_visit_one(args, run_dir, frame_dir, "initial", initial, "auto", logf)
-        final_range = "unit" if "damage" in final.lower() else "auto"
+        run_visit_one(args, run_dir, frame_dir, "middle", final, final_range, logf)
         run_visit_one(args, run_dir, frame_dir, "final", final, final_range, logf)
 
 
@@ -215,13 +237,20 @@ def run_case_post_script(args, run_dir: Path, source_dir: Path, output_dir: Path
         "--output-prefix", args.output_prefix,
         "--python", args.python_cmd,
         "--visit-cmd", args.visit_cmd,
+        "--visit-timeout", str(args.visit_timeout),
     ]
     if args.no_visit or args.skip_render:
         cmd.append("--no-visit")
     if args.force:
         cmd.append("--force")
     log(args, "running case post-processor: " + script.name)
-    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    env = os.environ.copy()
+    # Several split-folder postProcess stubs intentionally delegate to this
+    # generic post-processor.  Mark the subprocess so that delegation falls
+    # through to generic history plots and VisIt smoke renders instead of
+    # rediscovering the same local postProcess*.py and recursing forever.
+    env["MPM_VV_IN_CASE_POSTPROCESS"] = "1"
+    proc = subprocess.run(cmd, cwd=run_dir, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log_file = run_dir / f"{args.output_prefix}_{script.stem}.log"
     log_file.write_text(proc.stdout + f"\nreturncode={proc.returncode}\n")
     print(proc.stdout, end="")
@@ -277,6 +306,37 @@ def copy_products(args, run_dir: Path, output_dir: Path, frame_dir: Path):
     log(args, f"copied {len(copied)} product(s) to {output_dir}")
 
 
+def write_generic_results_tex(args, output_dir: Path) -> None:
+    """Write a small LaTeX fragment for generic one-input folders.
+
+    Folder-specific postprocessors can provide richer analytical comparisons.
+    The generic fallback still guarantees that current-standard folders have a
+    visible history plot and a VisIt smoke-render block in the suite report when
+    the corresponding products exist.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pngs = sorted(output_dir.glob("*.png"))
+    history = [p for p in pngs if any(tok in p.name.lower() for tok in ("reaction", "history", "box", "stress", "pressure", "strain", "temperature", "momentum", "velocity", "damage")) and "visit" not in p.name.lower()]
+    frames = [p for p in pngs if p not in history]
+    tex = [r"\paragraph{Generated generic diagnostics.} The common post-processor creates history plots from available reaction and box-average CSV output and renders bounded VisIt smoke frames for a representative field."]
+    if history:
+        tex.append(r"\begin{center}")
+        for p in history[:4]:
+            tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + p.name + r"}")
+        tex.append(r"\end{center}")
+    else:
+        tex.append(r"\emph{No generic history PNG was produced; check that the input enables reactionHistory, boxAverageHistory, tracerHistory, profileHistory, or logMomentum for this case.}")
+    if frames:
+        tex.append(r"\paragraph{VisIt smoke render.}")
+        tex.append(r"\begin{center}")
+        for p in frames[:6]:
+            tex.append(r"\includegraphics[width=0.31\linewidth]{\CaseOutputDir/" + p.name + r"}")
+        tex.append(r"\end{center}")
+    else:
+        tex.append(r"\emph{No VisIt frame was produced.  If the numerical run passed, inspect the render log or rerun with VISIT_COMMAND set.}")
+    (output_dir / f"{args.output_prefix}_results.tex").write_text("\n".join(tex) + "\n")
+
+
 def main():
     args = parse_args()
     run_dir = Path(os.path.expanduser(os.path.expandvars(args.run_dir))).resolve()
@@ -285,11 +345,13 @@ def main():
     frame_dir = run_dir / "visit_frames"
     geos_ok = check_geos_completed(args, run_dir)
     if not args.copy_only:
-        used_case_post = run_case_post_script(args, run_dir, source_dir, output_dir)
+        inside_delegating_case_post = os.environ.get("MPM_VV_IN_CASE_POSTPROCESS") == "1"
+        used_case_post = False if inside_delegating_case_post else run_case_post_script(args, run_dir, source_dir, output_dir)
         if not used_case_post:
             generate_plots(args, run_dir, source_dir)
             run_visit(args, run_dir, frame_dir, geos_ok)
     copy_products(args, run_dir, output_dir, frame_dir)
+    write_generic_results_tex(args, output_dir)
     return 0
 
 

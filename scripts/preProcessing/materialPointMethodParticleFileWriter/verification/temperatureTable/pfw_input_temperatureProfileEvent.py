@@ -87,6 +87,9 @@ pfw["temperatureTable"] = [
 ]
 pfw["temperatureTableInterpType"] = "Linear"
 
+def _temperature_table_xml(table):
+    return "{ " + ", ".join("{ " + str(row[0]) + ", " + str(row[1]) + " }" for row in table) + " }"
+
 tracers.set_tracers(
     pfw,
     points=[[0.0, 0.0, 0.0]],
@@ -99,7 +102,9 @@ pfw["useEvents"] = 1
 pfw["mpmEventsString"] = f"""
 <TemperatureProfile
   time="0.0"
-  interval="{stop_time}"/>
+  interval="{stop_time}"
+  temperatureTable="{_temperature_table_xml(pfw["temperatureTable"])}"
+  interpolationType="Linear"/>
 """
 
 pfw_expected = {

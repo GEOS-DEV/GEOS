@@ -655,6 +655,16 @@ def write_report(args, cases: list[Case]) -> None:
             tex.append(r"\def\CaseSourceDir{" + str(rel_source_dir).replace("\\", "/") + r"}")
             tex.append(r"\def\CaseOutputDir{" + str(rel_output_dir).replace("\\", "/") + r"}")
             tex.append(r"\input{" + str(rel_case_tex).replace("\\", "/") + r"}")
+            case_tex_text = case_tex.read_text(errors="replace")
+            if "_results.tex" not in case_tex_text:
+                # Split-folder placeholders often rely on the common generic
+                # post-processor.  Include its generated fragment here so every
+                # current-standard folder can show at least one history plot and
+                # one VisIt smoke-render when products are available.
+                generic_results = sorted(outdir.glob("*_results.tex"))
+                if generic_results:
+                    rel_result = Path(os.path.relpath(generic_results[0], report_dir))
+                    tex.append(r"\input{" + str(rel_result).replace("\\", "/") + r"}")
             tex.append(r"\endgroup")
             if st.get("status") in {"failed", "expected-fail", "completed-no-figures"}:
                 tex.append(diagnostics_latex(st, max_chars=3500))

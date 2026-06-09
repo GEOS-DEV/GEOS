@@ -54,6 +54,11 @@ pfw["zmax"] = 0.5*domainLength # mm
 
 pfw["endTime"]=stopTime
 pfw["plotInterval"]=stopTime/200
+
+# Silo output is required by the verification-suite VisIt smoke renderer.
+pfw["outputType"] = "silo"
+pfw["plotGridFields"] = 1
+pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
 pfw["restartInterval"]=stopTime*100 # Don't need restarts for now
 
 pfw["timeIntegrationOption"]="ExplicitDynamic"

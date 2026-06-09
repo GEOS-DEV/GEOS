@@ -2,6 +2,7 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+#[pfw_dependency] pfw:pfw_materials.py
 import pfw_materials as matdb
 
 # This is currently just a smoke test to see if the geomechanics model is implemented
@@ -56,6 +57,11 @@ pfw["mSubmitJobs"]=False
 
 pfw["endTime"]=stopTime
 pfw["plotInterval"]=stopTime/100
+
+# Silo output is required by the verification-suite VisIt smoke renderer.
+pfw["outputType"] = "silo"
+pfw["plotGridFields"] = 1
+pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
 pfw["restartInterval"]=stopTime/25
 pfw['lastRestartBufferInSeconds'] = 0.
 

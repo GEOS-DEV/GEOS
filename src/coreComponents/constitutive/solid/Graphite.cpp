@@ -65,6 +65,10 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_distortionShearResponseY1(),
   m_distortionShearResponseY2(),
   m_distortionShearResponseM1(),
+  m_positiveDistortionShearResponseX2(),
+  m_positiveDistortionShearResponseY1(),
+  m_positiveDistortionShearResponseY2(),
+  m_positiveDistortionShearResponseM1(),
   m_inPlaneShearResponseX2(),
   m_inPlaneShearResponseY1(),
   m_inPlaneShearResponseY2(),
@@ -158,19 +162,39 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::distortionShearResponseX2String(), &m_distortionShearResponseX2 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Distortion Shear Response X2" );
+    setDescription( "Negative signed-distortion response X2 for I_d^- = max(-I_d,0)" );
 
   registerWrapper( viewKeyStruct::distortionShearResponseY1String(), &m_distortionShearResponseY1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Distortion Shear Response Y1" );
+    setDescription( "Negative signed-distortion response Y1 for I_d^- = max(-I_d,0)" );
 
   registerWrapper( viewKeyStruct::distortionShearResponseY2String(), &m_distortionShearResponseY2 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Distortion Shear Response Y2" );
+    setDescription( "Negative signed-distortion response Y2 for I_d^- = max(-I_d,0)" );
 
   registerWrapper( viewKeyStruct::distortionShearResponseM1String(), &m_distortionShearResponseM1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Distortion Shear Response M1" );
+    setDescription( "Negative signed-distortion response M1 for I_d^- = max(-I_d,0)" );
+
+  registerWrapper( viewKeyStruct::positiveDistortionShearResponseX2String(), &m_positiveDistortionShearResponseX2 ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional positive signed-distortion response X2 for I_d^+ = max(I_d,0); negative default copies distortionShearResponseX2" );
+
+  registerWrapper( viewKeyStruct::positiveDistortionShearResponseY1String(), &m_positiveDistortionShearResponseY1 ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional positive signed-distortion response Y1 for I_d^+ = max(I_d,0); negative default copies distortionShearResponseY1" );
+
+  registerWrapper( viewKeyStruct::positiveDistortionShearResponseY2String(), &m_positiveDistortionShearResponseY2 ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional positive signed-distortion response Y2 for I_d^+ = max(I_d,0); negative default copies distortionShearResponseY2" );
+
+  registerWrapper( viewKeyStruct::positiveDistortionShearResponseM1String(), &m_positiveDistortionShearResponseM1 ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional positive signed-distortion response M1 for I_d^+ = max(I_d,0); negative default copies distortionShearResponseM1" );
 
   registerWrapper( viewKeyStruct::inPlaneShearResponseX2String(), &m_inPlaneShearResponseX2 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -436,6 +460,27 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY2 <= m_distortionShearResponseY1, "Distortion shear response y2 must > y1.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseM1 < 0.0, "Distortion shear response m1 must be a positive number.", InputError );
+
+  if( m_positiveDistortionShearResponseX2 < 0.0 )
+  {
+    m_positiveDistortionShearResponseX2 = m_distortionShearResponseX2;
+  }
+  if( m_positiveDistortionShearResponseY1 < 0.0 )
+  {
+    m_positiveDistortionShearResponseY1 = m_distortionShearResponseY1;
+  }
+  if( m_positiveDistortionShearResponseY2 < 0.0 )
+  {
+    m_positiveDistortionShearResponseY2 = m_distortionShearResponseY2;
+  }
+  if( m_positiveDistortionShearResponseM1 < 0.0 )
+  {
+    m_positiveDistortionShearResponseM1 = m_distortionShearResponseM1;
+  }
+  GEOS_THROW_IF( m_positiveDistortionShearResponseX2 <= 0.0, "Positive distortion shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_positiveDistortionShearResponseY1 < 0.0, "Positive distortion shear response y1 must be non-negative.", InputError );
+  GEOS_THROW_IF( m_positiveDistortionShearResponseY2 <= m_positiveDistortionShearResponseY1, "Positive distortion shear response y2 must be greater than y1.", InputError );
+  GEOS_THROW_IF( m_positiveDistortionShearResponseM1 < 0.0, "Positive distortion shear response m1 must be non-negative.", InputError );
 
   GEOS_THROW_IF( m_inPlaneShearResponseX2 <= 0.0, "In plane shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_inPlaneShearResponseY1 < 0.0, "In plane shear response y1 must be a positive number.", InputError );

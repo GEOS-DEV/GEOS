@@ -19,8 +19,11 @@
  * The model represents a graphite-like layered solid whose first material-direction
  * row is the normal to the basal/weak planes.  The elastic predictor is
  * transversely isotropic.  The inelastic corrector decomposes stress into
- * distortion, in-plane shear, and coupled basal-shear modes and limits the
- * combined modal stress with a quadratic TI strength index.  The scalar
+ * signed distortion, in-plane shear, and coupled basal-shear modes and
+ * limits the combined modal stress with a quadratic TI strength index.  The
+ * signed distortion invariant separates states where the basal-plane normal is
+ * relatively more compressed from states where it is relatively less compressed
+ * or closer to opening.  The scalar
  * @c damage field is retained as the host-visible DFG failure/separation
  * indicator; it may reach one for either a resolved fracture or a comminuted
  * powder cloud.  Internal basal-plane and comminution damage variables control
@@ -128,6 +131,10 @@ public:
                    real64 const & distortionShearResponseY1,
                    real64 const & distortionShearResponseY2,
                    real64 const & distortionShearResponseM1,
+                   real64 const & positiveDistortionShearResponseX2,
+                   real64 const & positiveDistortionShearResponseY1,
+                   real64 const & positiveDistortionShearResponseY2,
+                   real64 const & positiveDistortionShearResponseM1,
                    real64 const & inPlaneShearResponseX2,
                    real64 const & inPlaneShearResponseY1,
                    real64 const & inPlaneShearResponseY2,
@@ -194,6 +201,10 @@ public:
     m_distortionShearResponseY1( distortionShearResponseY1 ),
     m_distortionShearResponseY2( distortionShearResponseY2 ),
     m_distortionShearResponseM1( distortionShearResponseM1 ),
+    m_positiveDistortionShearResponseX2( positiveDistortionShearResponseX2 ),
+    m_positiveDistortionShearResponseY1( positiveDistortionShearResponseY1 ),
+    m_positiveDistortionShearResponseY2( positiveDistortionShearResponseY2 ),
+    m_positiveDistortionShearResponseM1( positiveDistortionShearResponseM1 ),
     m_inPlaneShearResponseX2( inPlaneShearResponseX2 ),
     m_inPlaneShearResponseY1( inPlaneShearResponseY1 ),
     m_inPlaneShearResponseY2( inPlaneShearResponseY2 ),
@@ -472,11 +483,22 @@ private:
   // The damaged material frictional slope
   real64 const m_damagedMaterialFrictionalSlope;
 
-  /// Material parameters: The values controlling the failure envelope
+  /// Material parameters: The values controlling the failure envelope.
+  /// The distortionShearResponse* inputs define the negative signed
+  /// distortion branch I_d^- = max(-I_d,0), where
+  /// I_d = sigma_aa - (sigma_bb + sigma_cc)/2.
   real64 const m_distortionShearResponseX2;
   real64 const m_distortionShearResponseY1;
   real64 const m_distortionShearResponseY2;
   real64 const m_distortionShearResponseM1;
+
+  /// Optional positive signed-distortion branch I_d^+ = max(I_d,0).
+  /// When omitted, these parameters default to the negative branch values,
+  /// which gives the unsigned distortion response |I_d|/Y_d.
+  real64 const m_positiveDistortionShearResponseX2;
+  real64 const m_positiveDistortionShearResponseY1;
+  real64 const m_positiveDistortionShearResponseY2;
+  real64 const m_positiveDistortionShearResponseM1;
 
   real64 const m_inPlaneShearResponseX2;
   real64 const m_inPlaneShearResponseY1;
@@ -938,23 +960,37 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     plastic = true;
   }
 
-  // Define three pressure-dependent mode strengths.  A basal fracture degrades
-  // the plane-normal distortion and coupled weak-plane shear modes.  A
-  // comminution damage state degrades all modes toward residual powder strength.
-  // In the fully comminuted limit each mode has zero cohesion, uses
+  // Define pressure-dependent mode strengths.  A basal fracture degrades the
+  // plane-normal distortion and coupled weak-plane shear modes.  A comminution
+  // damage state degrades all modes toward residual powder strength.  In the
+  // fully comminuted limit each mode has zero cohesion, uses
   // damagedMaterialFrictionalSlope, and retains its unscaled Y2 plateau.
+  //
+  // The distortion mode is signed.  I_d = sigma_aa - (sigma_bb+sigma_cc)/2
+  // distinguishes basal-normal relative extension/weak opening-like distortion
+  // from basal-normal relative compression.  The
+  // distortionShearResponse* inputs define I_d^- = max(-I_d,0).  The optional
+  // positiveDistortionShearResponse* inputs define I_d^+ = max(I_d,0).  When
+  // both branches use the same parameters, the surface reduces to |I_d|/Y_d.
   real64 const distortionDamage = LvArray::math::max( basalPlaneDamage, comminutionDamage );
   real64 const coupledDamage = LvArray::math::max( basalPlaneDamage, comminutionDamage );
   real64 const inPlaneDamage = comminutionDamage;
 
   real64 const distortionHardeningMultiplier =
     1.0 + ( m_distortionStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
-  real64 const totalShearStrength =
+  real64 const negativeDistortionStrength =
     evaluateGraphiteModeStrength( pressure, distortionDamage, strengthScale,
                                   m_distortionShearResponseX2,
                                   m_distortionShearResponseY1,
                                   m_distortionShearResponseY2,
                                   m_distortionShearResponseM1,
+                                  distortionHardeningMultiplier );
+  real64 const positiveDistortionStrength =
+    evaluateGraphiteModeStrength( pressure, distortionDamage, strengthScale,
+                                  m_positiveDistortionShearResponseX2,
+                                  m_positiveDistortionShearResponseY1,
+                                  m_positiveDistortionShearResponseY2,
+                                  m_positiveDistortionShearResponseM1,
                                   distortionHardeningMultiplier );
 
   real64 const coupledHardeningMultiplier =
@@ -979,21 +1015,20 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Enforce strength ---------------------------------------------
 
-  // Compute the three TI modal stress measures.  The scaling constants are
-  // chosen so that these measures coincide with von-Mises-equivalent stress
-  // for the corresponding deviatoric subspaces when the mode strengths are
-  // equal.  The normalized quadratic sum below is a transversely-isotropic
-  // extension of the distortional-energy idea in a von-Mises model.  Mixed-mode
-  // loading consumes a shared strength budget rather than independent budgets
-  // for distortion, in-plane shear, and coupled weak-plane shear.
-  distortion_dev[3] *= 1.41421356237;
-  distortion_dev[4] *= 1.41421356237;
-  distortion_dev[5] *= 1.41421356237;
-  real64 totalShearStress = 1.224744871391589 * LvArray::tensorOps::l2Norm< 6 >( distortion_dev );
-  distortion_dev[3] /= 1.41421356237;
-  distortion_dev[4] /= 1.41421356237;
-  distortion_dev[5] /= 1.41421356237;
-
+  // Compute the TI modal stress measures.  The in-plane and coupled shear
+  // scaling constants are chosen so that those measures coincide with
+  // von-Mises-equivalent stress for their deviatoric subspaces when all mode
+  // strengths are equal.  The distortion mode is one-dimensional; its
+  // von-Mises-equivalent measure is the signed scalar
+  // I_d = sigma_aa - (sigma_bb+sigma_cc)/2.  Splitting I_d into positive and
+  // negative parts gives tension/compression-like asymmetry for normal
+  // distortion and reduces to an unsigned distortion measure when both branch
+  // strengths are equal.
+  real64 const currentPlaneNormalStress = sigma1[0] + sigma1[1] + sigma1[2];
+  real64 const currentInPlaneMeanStress = 0.5 * ( inPlaneIso[0] + inPlaneIso[1] + inPlaneIso[2] );
+  real64 const signedDistortionStress = currentPlaneNormalStress - currentInPlaneMeanStress;
+  real64 const positiveDistortionStress = LvArray::math::max( signedDistortionStress, 0.0 );
+  real64 const negativeDistortionStress = LvArray::math::max( -signedDistortionStress, 0.0 );
   inPlaneDev[3] *= 1.41421356237;
   inPlaneDev[4] *= 1.41421356237;
   inPlaneDev[5] *= 1.41421356237;
@@ -1011,7 +1046,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   sigma5[5] /= 1.41421356237;
 
   real64 const equivalentStrengthRatioSquared =
-    ( totalShearStress * totalShearStress ) / ( totalShearStrength * totalShearStrength ) +
+    ( positiveDistortionStress * positiveDistortionStress ) / ( positiveDistortionStrength * positiveDistortionStrength ) +
+    ( negativeDistortionStress * negativeDistortionStress ) / ( negativeDistortionStrength * negativeDistortionStrength ) +
     ( inPlaneShearStress * inPlaneShearStress ) / ( inPlaneShearStrength * inPlaneShearStrength ) +
     ( coupledShearStress * coupledShearStress ) / ( coupledYieldStrength * coupledYieldStrength );
 
@@ -1046,7 +1082,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ": PlaneNormalStress: " << planeNormalStress << ", " <<
-    //                                      "TotalShearStress: " << totalShearStress << " (" << totalShearStrength << ")" << ", " <<
+    //                                      "SignedDistortionStress: " << signedDistortionStress << ", " <<
+    //                                      "PositiveDistortionStrength: " << positiveDistortionStrength << ", " <<
+    //                                      "NegativeDistortionStrength: " << negativeDistortionStrength << ", " <<
     //                                      "inPlaneShearStress: " << inPlaneShearStress << " (" << inPlaneShearStrength << ")" << ", " <<
     //                                      "coupledShearStress: " << coupledShearStress << " (" << coupledYieldStrength << ")");
 
@@ -1750,6 +1788,18 @@ public:
     // string/key for distortion shear response parameter m1
     static constexpr char const * distortionShearResponseM1String() { return "distortionShearResponseM1"; }
 
+    // string/key for positive signed-distortion response parameter x2
+    static constexpr char const * positiveDistortionShearResponseX2String() { return "positiveDistortionShearResponseX2"; }
+
+    // string/key for positive signed-distortion response parameter y1
+    static constexpr char const * positiveDistortionShearResponseY1String() { return "positiveDistortionShearResponseY1"; }
+
+    // string/key for positive signed-distortion response parameter y2
+    static constexpr char const * positiveDistortionShearResponseY2String() { return "positiveDistortionShearResponseY2"; }
+
+    // string/key for positive signed-distortion response parameter m1
+    static constexpr char const * positiveDistortionShearResponseM1String() { return "positiveDistortionShearResponseM1"; }
+
     // string/key for in plane shear response x2
     static constexpr char const * inPlaneShearResponseX2String() { return "inPlaneShearResponseX2"; }
 
@@ -1840,6 +1890,10 @@ public:
                             m_distortionShearResponseY1,
                             m_distortionShearResponseY2,
                             m_distortionShearResponseM1,
+                            m_positiveDistortionShearResponseX2,
+                            m_positiveDistortionShearResponseY1,
+                            m_positiveDistortionShearResponseY2,
+                            m_positiveDistortionShearResponseM1,
                             m_inPlaneShearResponseX2,
                             m_inPlaneShearResponseY1,
                             m_inPlaneShearResponseY2,
@@ -1913,6 +1967,10 @@ public:
                           m_distortionShearResponseY1,
                           m_distortionShearResponseY2,
                           m_distortionShearResponseM1,
+                          m_positiveDistortionShearResponseX2,
+                          m_positiveDistortionShearResponseY1,
+                          m_positiveDistortionShearResponseY2,
+                          m_positiveDistortionShearResponseM1,
                           m_inPlaneShearResponseX2,
                           m_inPlaneShearResponseY1,
                           m_inPlaneShearResponseY2,
@@ -2173,11 +2231,18 @@ protected:
   /// Material parameter: The value of the damaged material frictional slope
   real64 m_damagedMaterialFrictionalSlope;
 
-  /// Material parameters: The values controlling the failure envelope
+  /// Material parameters: The values controlling the failure envelope.
+  /// The distortion branch is the negative signed-distortion branch and the
+  /// optional positive branch defaults to these values when omitted.
   real64 m_distortionShearResponseX2;
   real64 m_distortionShearResponseY1;
   real64 m_distortionShearResponseY2;
   real64 m_distortionShearResponseM1;
+
+  real64 m_positiveDistortionShearResponseX2;
+  real64 m_positiveDistortionShearResponseY1;
+  real64 m_positiveDistortionShearResponseY2;
+  real64 m_positiveDistortionShearResponseM1;
 
   real64 m_inPlaneShearResponseX2;
   real64 m_inPlaneShearResponseY1;
