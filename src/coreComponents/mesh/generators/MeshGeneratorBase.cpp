@@ -147,7 +147,7 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   //      counted exactly once.
 
   using EdgeKey = std::pair< globalIndex, globalIndex >;
-  using FaceKey = std::vector< globalIndex >;
+  using FaceKey = stdVector< globalIndex >;
 
   arrayView1d< globalIndex const > const localToGlobal = nodeManager.localToGlobalMap();
   arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
@@ -185,7 +185,7 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
         ++numOwnedCells;
 
       localIndex const npe = elemToNodeMap.size( 1 );
-      std::vector< globalIndex > gn( npe );
+      stdVector< globalIndex > gn( npe );
       for( localIndex ni = 0; ni < npe; ++ni )
       {
         gn[ni] = localToGlobal[ elemToNodeMap[ei][ni] ];
@@ -284,17 +284,22 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
       ++ownedV;
   }
 
+  // --- Strict Edge Ownership ---
   localIndex ownedE = 0;
   for( EdgeKey const & e : allEdges )
   {
-    if( nodeIsOwned( e.first ) )   // e.first is the min global ID (sorted)
+    // e.first is the minimum global node ID for the edge because makeEdge() sorted the pair
+    if( nodeIsOwned( e.first ) )
+    {
       ++ownedE;
+    }
   }
 
   localIndex ownedF = 0;
   for( FaceKey const & f : allFaces )
   {
-    if( nodeIsOwned( f[0] ) )      // f[0] is the min global ID (sorted)
+    // f ([0] is the minimum global node ID for the face because makeFace() sorts the node list
+    if( nodeIsOwned( f[0] ) )
       ++ownedF;
   }
 
