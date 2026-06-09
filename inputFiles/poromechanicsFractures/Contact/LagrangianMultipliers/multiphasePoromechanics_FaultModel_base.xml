@@ -18,8 +18,8 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt" />
+      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas.txt, ../../MULTIPHASE_TABLES/pvtliquid.txt }"
+      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -29,74 +29,41 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
-      
-    <!-- Material inside the fault -->
+      <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm" />
+      permeabilityModelName="fracturePerm"/>
 
     <PressurePorosity
       name="fracturePorosity"
-      defaultReferencePorosity="1.0"
+      defaultReferencePorosity="1.00"
       referencePressure="0e6"
-      compressibility="0.0" />
+      compressibility="0.0"/>
 
     <ParallelPlatesPermeability
-      name="fracturePerm" />
+      name="fracturePerm"/>
 
     <Coulomb
       name="fractureContact"
       cohesion="40.0e6"
-      frictionCoefficient="0.01" />
+      frictionCoefficient="0.01"/>
 
     <HydraulicApertureTable
     name="hApertureModel"
-    apertureTableName="apertureTable" />   
+    apertureTableName="apertureTable"/>   
 
     <NullModel
-      name="nullSolid" />
+      name="nullSolid"/>
 
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
-                                            gasRelativePermeabilityTable }" />
+                                            gasRelativePermeabilityTable }"/>
 
   </Constitutive>
-  
-  <Geometry>
-    <Box
-      name="xposFace"
-      xMin="{ 5999.99,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }" />
-
-    <Box
-      name="xnegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{-5999.99,   6000.01,      0.01 }" />
-
-    <Box
-      name="yposFace"
-      xMin="{-6000.01,   5999.99,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }" />
-
-    <Box
-      name="ynegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,  -5999.99,      0.01 }" />
-
-    <Box
-      name="zposFace"
-      xMin="{-6000.01,  -6000.01,     -0.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }" />
-
-    <Box
-      name="znegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,  -3999.99 }" />
-  </Geometry>
 
   <FieldSpecifications>
 
@@ -106,7 +73,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
       fieldName="fracturePorosity_porosity"
-      scale="1.0" />
+      scale="1.00"/>
 
     <FieldSpecification
       name="xconstraint"
@@ -137,7 +104,7 @@
       objectPath="faceManager"
       tractionType="normal"
       scale="-1e7"      
-      setNames="{ zposFace }" />
+      setNames="{ zposFace }"/>
 
     <HydrostaticEquilibrium
       name="equil"
@@ -148,24 +115,28 @@
       componentNames="{ co2, water }"
       componentFractionVsElevationTableNames="{ initCO2CompFracTable,
                                                 initWaterCompFracTable }"
-      temperatureVsElevationTableName="initTempTable" />
+      temperatureVsElevationTableName="initTempTable"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions"
+      component="0"
+      scale="-1e5"
+      setNames="{ source }"/>
+
   </FieldSpecifications>
 
   <ElementRegions>
     <CellElementRegion
       name="Region"
       cellBlocks="{ 2_hexahedra, 1_hexahedra, 0_hexahedra }"
-      materialList="{ fluid, relperm, porousRock }" />  
+      materialList="{ fluid, relperm, porousRock }"/>  
 
     <SurfaceElementRegion
       name="Fault"
       faceBlock="fracture"
       materialList="{ fluid, relperm, faultFilling, fractureContact, hApertureModel }"
-      defaultAperture="1e-3" />
-
-    <WellElementRegion
-      name="wellInjector"
-      materialList="{ fluid, relperm }" />      
+      defaultAperture="1e-3"/>
   </ElementRegions>
 
   <NumericalMethods>
@@ -177,17 +148,17 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFA" />
+        name="TPFA"/>
       <TwoPointFluxApproximation
-        name="TPFA_stab" />  
+        name="TPFA_stab"/>  
     </FiniteVolume>
   </NumericalMethods>
 
   <Tasks>
-    <CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization 
-      logLevel="1" 
-      name="poroelasticityPreEquilibrationStep"  
-      poromechanicsSolverName="reservoirSolver" />
+      <MultiphasePoromechanicsConformingFracturesInitialization 
+        logLevel="1" 
+        name="poroelasticityPreEquilibrationStep"  
+        poromechanicsSolverName="poroFractureSolver"/>
   </Tasks>
 
   <Outputs>
@@ -196,40 +167,41 @@
       fieldNames="{ initialPressure}" />
 
     <Restart
-      name="restartOutput" />
+      name="restartOutput"/>
   </Outputs>
 
   <Functions>
 
     <TableFunction
       name="initCO2CompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initCO2CompFrac.txt" />
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initCO2CompFrac.txt"/>
 
     <TableFunction
       name="initWaterCompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initWaterCompFrac.txt" />       
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initWaterCompFrac.txt"/>       
     
     <TableFunction
       name="initTempTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initTemp.txt" />        
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initTemp.txt"/>        
 
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 1.0e-3, 1.0e-3 }" />
+      values="{ 1.0e-3, 1.0e-3 }"
+    />
 
     <TableFunction
       name="waterRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_water.txt }"
-      voxelFile="relPerm_water.txt" />
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/phaseVolFraction_water.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/relPerm_water.txt"/>
 
     <TableFunction
       name="gasRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_gas.txt }"
-      voxelFile="relPerm_gas.txt" />       
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/phaseVolFraction_gas.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/relPerm_gas.txt"/>       
 
   </Functions>
 </Problem>
