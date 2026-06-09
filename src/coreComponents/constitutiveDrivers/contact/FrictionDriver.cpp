@@ -74,6 +74,14 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "tangential Displacement Tolerance" );
 
+  registerWrapper( viewKeyStruct::iterPenNFac(), &m_iterPenNFac ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "normal Penalty Factor" );
+
+  registerWrapper( viewKeyStruct::iterPenTFac(), &m_iterPenTFac ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "tangential Penatly Factor" );
+
 
   //geometry
   registerWrapper( viewKeyStruct::area(), &m_area ).

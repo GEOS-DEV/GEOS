@@ -52,8 +52,8 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   real64 normalDispTolFac = m_normalDispTolFac;
   real64 normalTracTolFac = m_normalTracTolFac;
   real64 slidingTolFac = m_slidingTolFac;
-  real64 iterPenNFac = 100;
-  real64 iterPenTFac = 100;
+  real64 iterPenNFac = m_iterPenNFac;
+  real64 iterPenTFac = m_iterPenTFac;
 
   real64 area = m_area;
   real64 volumes[2]{m_volume[0], m_volume[1]};

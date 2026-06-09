@@ -91,6 +91,12 @@ private:
     constexpr static char const * slidingTolFac()
     { return "tolJumpT"; }
 
+    constexpr static char const * iterPenNFac()
+    { return "iterPenNFac"; }
+
+    constexpr static char const * iterPenTFac()
+    { return "iterPenTFac"; }
+
     //geometry
     constexpr static char const * area()
     { return "faceArea"; }
@@ -123,6 +129,9 @@ private:
   real64 m_normalDispTolFac{1.e-8};
   real64 m_normalTracTolFac{100.};
   real64 m_slidingTolFac{1e-5};
+
+  real64 m_iterPenNFac{100};
+  real64 m_iterPenTFac{1};
 
   //geometry for iterPen
   real64 m_area{0.0};
