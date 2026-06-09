@@ -656,12 +656,12 @@ later in cleanup step:
 \paragraph{Inputs.}
 \begin{description}[leftmargin=*,style=nextline]
 \item[\textbf{Required.}] \texttt{startTime}.
-\item[\textbf{Optional.}] \texttt{endTime}.
-\item[\textbf{Solver-level dependencies.}] The event has no event-specific temperature values.  It uses the solver's \texttt{temperatureTable} and \texttt{temperatureTableInterpType} controls.
+\item[\textbf{Optional.}] \texttt{endTime}, \texttt{interpolationType}.
+\item[\textbf{Required.}] \texttt{temperatureTable}, supplied as rows \texttt{\{ time, temperature \}} relative to the event start time.
 \end{description}
 
 \paragraph{Algorithm.}
-When active, \texttt{TemperatureProfile} interpolates the solver-level temperature table to obtain a domain temperature $T(t^n)$ and temperature rate $\dot{T}(t^n)$.  It then assigns these values to every active particle and writes the temperature to every cohesive-zone entry:
+When active, \texttt{TemperatureProfile} interpolates its event-local temperature table to obtain a domain temperature $T(t^n)$ and temperature rate $\dot{T}(t^n)$.  It then assigns these values to every active particle and writes the temperature to every cohesive-zone entry:
 \begin{equation}
   T_p\leftarrow T(t^n),
   \qquad
@@ -697,7 +697,7 @@ The current branch does not set \texttt{isComplete} for \texttt{TemperatureProfi
 \end{description}
 
 \paragraph{Registered behavior and current runtime status.}
-\texttt{TemperatureRamp} is registered as an event input class and validates the start/end temperatures and interpolation type, but the reviewed solver's \texttt{triggerEvents} dispatch does not contain a \texttt{TemperatureRamp} branch.  Therefore, in the current codebase, a \texttt{TemperatureRamp} block can be parsed but does not change particle or cohesive-zone temperatures during a run.  Users should use \texttt{TemperatureProfile} with a solver-level \texttt{temperatureTable} for executable temperature histories unless the runtime dispatch is extended.
+\texttt{TemperatureRamp} is registered as an event input class and validates the start/end temperatures and interpolation type, but the reviewed solver's \texttt{triggerEvents} dispatch does not contain a \texttt{TemperatureRamp} branch.  Therefore, in the current codebase, a \texttt{TemperatureRamp} block can be parsed but does not change particle or cohesive-zone temperatures during a run.  Users should use \texttt{TemperatureProfile} with an event-local \texttt{temperatureTable} for executable temperature histories unless the runtime dispatch is extended.
 
 \paragraph{Intended algorithm if activated.}
 The natural event-level ramp would evaluate
@@ -790,7 +790,7 @@ Table~\ref{tab:events-manual-summary} summarizes the user-facing inputs discusse
 \eventtwoline{Material}{Swap} & \texttt{sourceRegion}, \texttt{destinationRegion} & One-shot particle/material-state transfer.\\
 \eventtwoline{Polymer}{Heal} & \texttt{targetRegion} & One-shot reset for \texttt{StrainHardeningPolymer} damaged particles.\\
 \eventthreeline{Reset}{Deformation}{Gradient} & None & Schedules later deformation-gradient reset; one-shot.\\
-\eventtwoline{Temperature}{Profile} & None & Uses solver-level \texttt{temperatureTable}; active-window uniform temperature update.\\
+\eventtwoline{Temperature}{Profile} & \texttt{temperatureTable} & Uses an event-local temperature table; active-window uniform temperature update.\\
 \eventtwoline{Temperature}{Ramp} & \texttt{startTemperature}, \texttt{endTemperature} & \texttt{interpType}; registered but not triggered in current solver dispatch.\\
 \eventtwoline{Transform}{Particles} & None & Fixed $\pi$ rotation about $z$; handled in later event pass; one-shot.\\
 \end{longtable}

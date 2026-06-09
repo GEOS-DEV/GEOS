@@ -6749,7 +6749,7 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
       {
         localIndex const p = activeParticleIndices[pp];
 
-        if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Interior ) || 
+        if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Interior ) &&
             particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::FullyDamaged ) ) // Add check to determine if we want to override existing particle surface normal (e.g. normal mag
         {
           // Tensor condition: ||particleSurfaceNormal[p]|| > 1e-20 && m_overwriteExistingNormalsAndPositions == 0.
@@ -8001,7 +8001,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
-          if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || 
+          if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) &&
               particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ) //  3 and 4 denote cohesive surface flags (still a binder interface)
           {
             particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::Interior );
@@ -8070,7 +8070,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
             ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( targetSubRegion, solidMaterialName );
 
-            if( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" )
+            if( ( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getCatalogName() == "SurfaceInformedPolymer" ) )
             {
               // Particle fields
               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
@@ -12526,8 +12526,8 @@ void SolidMechanicsMPM::updateSurfaceFlagOverload( ParticleManager & particleMan
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-      if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
-          particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+      if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Surface ) &&
+          particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) &&
           particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
       {
         if( particleDamage[p] > 0.0 ) // Activate damage field if any particles in domain have damage.
@@ -13457,7 +13457,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
         real64 particleContributionToGrid;
 
-        if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) && 
+        if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) &&
             particleCZTag[p] == czTag )
         {
           for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
@@ -15700,7 +15700,7 @@ void SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce( real64 const time_
       shearModulus = hyperelasticMMS.shearModulus();
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" || constitutiveModelName == "VonMisesJ" )
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" || constitutiveModelName == "SurfaceInformedPolymer" || constitutiveModelName == "VonMisesJ" )
     {
       ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic & >( constitutiveModel );
       shearModulus = elasticIsotropic.shearModulus();
@@ -19069,7 +19069,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
         } );
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer"  || constitutiveModelName == "VonMisesJ" )
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" || constitutiveModelName == "SurfaceInformedPolymer" || constitutiveModelName == "VonMisesJ" )
     {
       // TODO: We should change this to something like: if( constitutiveModel.elasticIsotropic() == True )
       const ElasticIsotropic & elasticIsotropic = dynamic_cast< const ElasticIsotropic & >( constitutiveModel );
@@ -20676,8 +20676,8 @@ void SolidMechanicsMPM::czSurfaceFlagUpdate( ParticleManager & particleManager )
         localIndex const p = activeParticleIndices[pp];
 
         // Change the particle surface flag of damaged particles not already flagged as cohesive
-        if( particleDamageHessianL2Norm[p] > normalizedThreshold && 
-            //particleCohesiveZoneFlag[p] == 0 && 
+        if( particleDamageHessianL2Norm[p] > normalizedThreshold &&
+            //particleCohesiveZoneFlag[p] == 0 &&
             !( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || 
                particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ) )
         {

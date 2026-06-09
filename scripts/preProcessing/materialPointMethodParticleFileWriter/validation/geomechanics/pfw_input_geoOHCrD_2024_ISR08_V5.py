@@ -303,7 +303,7 @@ pfw["objects"]=[block]
 
 
 
-pfw["temperatureTable"]=[[(stopTime*0.00e+00), (2.03e+01)+273.15],
+temperatureTable = [[(stopTime*0.00e+00), (2.03e+01)+273.15],
 [(stopTime*1.51e-01), (2.03e+01)+273.15],
 [(stopTime*1.64e-01), (4.08e+01)+273.15],
 [(stopTime*3.79e-01), (4.10e+01)+273.15],
@@ -317,7 +317,10 @@ pfw["temperatureTable"]=[[(stopTime*0.00e+00), (2.03e+01)+273.15],
 [(stopTime*9.62e-01), (2.63e+01)+273.15],
 [(stopTime*9.87e-01), (2.10e+01)+273.15]]
 
-pfw["temperatureTableInterpType"] = 'Linear'
+temperatureTableInterpType = 'Linear'
+
+def _temperature_table_xml(table):
+    return '{ ' + ', '.join('{ ' + str(row[0]) + ', ' + str(row[1]) + ' }' for row in table) + ' }'
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
@@ -325,6 +328,8 @@ pfw["mpmEventsString"]="""
         time=
 """ + '"' + str(0.0) + '"' + """
         interval=""" + '"' + str(stopTime) + '"' + """
+        temperatureTable=""" + '"' + _temperature_table_xml(temperatureTable) + '"' + """
+        interpolationType=""" + '"' + temperatureTableInterpType + '"' + """
         />
 </MPMEvents>
 """

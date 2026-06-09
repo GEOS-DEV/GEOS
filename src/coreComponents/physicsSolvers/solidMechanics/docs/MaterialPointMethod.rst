@@ -289,6 +289,29 @@ A tpyical paramterization for the model is as follows, where stress has the unit
 StrainHardeningPolymer
 -------------------------
 
+SurfaceInformedPolymer
+-------------------------
+
+A corotational explicit-MPM polymer model that shares a reference-temperature material surface with a thin-film cohesive-zone projection.  The model uses a normalized thermal scale :math:`S_T(T_g)=1`, optional crystallinity multipliers on stiffness and yield strength, a decaying plastic-softening term, stretch hardening, and a weak pressure-sensitive correction for tension/compression asymmetry.
+
+.. math::
+
+   \Phi = q + \eta(T)p_t - \sigma_f^0 \le 0
+
+with tensile mean stress :math:`p_t`, von-Mises stress :math:`q`, and
+
+.. math::
+
+   \sigma_f^0 = Y(T,X_c) + S_{soft}(T)\exp[-(\kappa/r_1)^{r_2}]
+              + H_g S_T(T)^{p_H}\left(\lambda_{eff}^2-\lambda_{eff}^{-1}\right).
+
+The pressure-sensitive term modifies the yield strength while the plastic correction remains non-associated and radial in deviatoric stress.  Required strength inputs are :code:`defaultYieldStrength`, :code:`shearSofteningMagnitude`, :code:`shearSofteningShapeParameter1`, :code:`shearSofteningShapeParameter2`, and :code:`strainHardeningSlope`; the model also uses the elastic constants and density inherited from :code:`ElasticIsotropic`.
+
+SurfaceInformedPolymerCohesiveZone
+-----------------------------------
+
+A finite-thickness cohesive-zone projection of :code:`SurfaceInformedPolymer`.  The jump components are converted to film strains :math:`\epsilon_n=\delta_n/h_0` and :math:`\gamma=\delta_t/h_0`, then returned to the same scalar surface using :math:`q=\sqrt{\sigma_n^2+3\tau^2}` and :math:`p_t=\sigma_n/3`.  Opening follows the existing cohesive-zone sign convention and returns negative normal stress.  Once :code:`maximumStretch` is exceeded the model sets damage to one and returns zero traction.
+
 CeramicDamage
 -------------------------
 

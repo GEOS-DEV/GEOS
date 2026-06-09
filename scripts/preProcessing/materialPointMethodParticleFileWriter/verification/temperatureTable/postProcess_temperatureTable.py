@@ -198,7 +198,7 @@ def main() -> int:
     write_rows(output_dir / "temperature_profile_metrics.csv", metric_rows)
     write_json(output_dir / "temperature_profile_summary.json", {"summaries": summaries, "temperature_table": TEMPERATURE_TABLE, "visit_frames": visit_frames})
 
-    tex = [r"\paragraph{Quantitative result.} The expected temperature is the piecewise-linear interpolation of the solver-level temperature table. Temperature-rate errors are not scored within one output interval of the table kink."]
+    tex = [r"\paragraph{Quantitative result.} The expected temperature is the piecewise-linear interpolation of the TemperatureProfile event table. Temperature-rate errors are not scored within one output interval of the table kink."]
     tex.append(r"{\scriptsize\begin{tabular}{lrrrr}\toprule Variant & samples & RMS $T$ error & max $T$ error & RMS $\dot T$ error \\\midrule")
     for s in summaries:
         tex.append(latex_escape(s.get("label", s.get("variant", ""))) + " & " + compact_float(s.get("num_samples", 0), 0) + " & " + compact_float(s.get("rms_temperature_error")) + " & " + compact_float(s.get("max_abs_temperature_error")) + " & " + compact_float(s.get("rms_temperature_rate_error")) + r" \\")

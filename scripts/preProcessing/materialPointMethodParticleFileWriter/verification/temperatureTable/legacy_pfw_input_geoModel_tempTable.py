@@ -177,12 +177,15 @@ pfw["objects"]=[block]
 # no deformation just a prescribed temp we can view in paraview.
 
 # MPM EVENTS -------------------------------------------------------------------------------
-pfw["temperatureTable"]=[
+temperatureTable = [
     [0,	       300.],
     [0.5*stopTime, 200.],
     [stopTime, 400.]
     ]
-pfw["temperatureTableInterpType"] = 'Linear'
+temperatureTableInterpType = 'Linear'
+
+def _temperature_table_xml(table):
+    return '{ ' + ', '.join('{ ' + str(row[0]) + ', ' + str(row[1]) + ' }' for row in table) + ' }'
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
@@ -190,6 +193,8 @@ pfw["mpmEventsString"]="""
         time=
 """ + '"' + str(0.0) + '"' + """
         interval=""" + '"' + str(stopTime) + '"' + """
+        temperatureTable=""" + '"' + _temperature_table_xml(temperatureTable) + '"' + """
+        interpolationType=""" + '"' + temperatureTableInterpType + '"' + """
         />
 </MPMEvents>
 """

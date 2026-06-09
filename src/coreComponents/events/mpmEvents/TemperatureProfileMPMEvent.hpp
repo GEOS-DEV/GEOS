@@ -28,7 +28,7 @@ namespace geos
 /**
  * @class TemperatureProfileMPMEvent
  *
- * This class implements the material swap mpm event for the solid mechanics material point method solver
+ * This class implements a uniform temperature-table event for the solid mechanics material point method solver
  */
 class TemperatureProfileMPMEvent : public MPMEventBase
 {

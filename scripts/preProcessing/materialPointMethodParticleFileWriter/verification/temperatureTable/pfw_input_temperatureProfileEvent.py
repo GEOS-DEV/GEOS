@@ -80,12 +80,12 @@ block = geom.box(
 )
 pfw["objects"] = [block]
 
-pfw["temperatureTable"] = [
+temperature_table = [
     [0.0, t0],
     [mid_time, t_mid],
     [stop_time, t_final],
 ]
-pfw["temperatureTableInterpType"] = "Linear"
+temperature_table_interp_type = "Linear"
 
 def _temperature_table_xml(table):
     return "{ " + ", ".join("{ " + str(row[0]) + ", " + str(row[1]) + " }" for row in table) + " }"
@@ -103,14 +103,14 @@ pfw["mpmEventsString"] = f"""
 <TemperatureProfile
   time="0.0"
   interval="{stop_time}"
-  temperatureTable="{_temperature_table_xml(pfw["temperatureTable"])}"
-  interpolationType="Linear"/>
+  temperatureTable="{_temperature_table_xml(temperature_table)}"
+  interpolationType="{temperature_table_interp_type}"/>
 """
 
 pfw_expected = {
     "variant_label": variant_label,
-    "temperature_table": pfw["temperatureTable"],
-    "temperature_table_interp_type": pfw["temperatureTableInterpType"],
+    "temperature_table": temperature_table,
+    "temperature_table_interp_type": temperature_table_interp_type,
     "expected_uniform_temperature": True,
     "stop_time": stop_time,
 }

@@ -32,13 +32,13 @@ TemperatureProfileMPMEvent::TemperatureProfileMPMEvent( const string & name,
   registerWrapper( viewKeyStruct::temperatureTableString(), &m_temperatureTable ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Temperature table");
+    setDescription( "Event-local temperature table with rows { time, temperature } relative to the event start time" );
 
   registerWrapper( viewKeyStruct::interpolationTypeString(), &m_interpolationType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_interpolationType ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Interpolation type of temperature table" );
+    setDescription( "Interpolation type of the event-local temperature table" );
 }
 
 TemperatureProfileMPMEvent::~TemperatureProfileMPMEvent()
@@ -52,11 +52,11 @@ void TemperatureProfileMPMEvent::postInputInitialization()
   GEOS_ERROR_IF( numRows == 0, "Temperature table must have at least one entry" );
   for( int i = 0; i < numRows; ++i )
   {
-    GEOS_ERROR_IF( m_temperatureTable[i].size() != 2, "F table row " << i+1 << " must have 2 elements." );
+    GEOS_ERROR_IF( m_temperatureTable[i].size() != 2, "Temperature table row " << i+1 << " must have 2 elements." );
 
     if( i == 0 )
     {
-      GEOS_ERROR_IF( m_temperatureTable[0][0] > 0.0, "Temperature table times must be positive." );
+      GEOS_ERROR_IF( m_temperatureTable[0][0] > 0.0, "The first temperature-table time must be zero or earlier than the event start time." );
     }
     else
     {

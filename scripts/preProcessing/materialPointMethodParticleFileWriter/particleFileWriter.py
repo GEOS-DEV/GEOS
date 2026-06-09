@@ -706,8 +706,6 @@ parameters = {
                'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
                'surfaceQualityThreshold': ( None, True ),  # MPM: DFG alignment quality threshold.
                'surfaceTensionCoefficient': ( None, True ),  # MPM: surface-tension coefficient.
-               'temperatureTable': ( None, True ),  # MPM: time-dependent domain-temperature table.
-               'temperatureTableInterpType': ( None, True ),  # MPM: interpolation type for temperatureTable.
                'thinFeatureDFGThreshold': ( None, True ),  # MPM: thin-feature damage threshold.
                'timeIntegrationOption': ( None, True ),  # MPM: time-integration method.
                'totalBinderVolume': ( None, True ),  # MPM: total binder volume.

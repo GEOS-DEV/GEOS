@@ -287,16 +287,16 @@ pfw["mpmEventsString"] = """
 \subsubsection{\texttt{TemperatureProfile}}
 \eventidx{TemperatureProfile}\index{temperature table!event controls}
 
-\texttt{TemperatureProfile} copies the solver's domain temperature table value to active particles and cohesive-zone points during the active event window.  The event itself only needs the time window; the temperature history is supplied through the solver/domain temperature-table controls used by the thermal material model.
+\texttt{TemperatureProfile} copies its event-local temperature-table value to active particles and cohesive-zone points during the active event window.  The event owns the time window, interpolation type, and temperature table; there is no solver-level \texttt{temperatureTable} control.
 
 \begin{lstlisting}[language=Python,caption={Temperature-profile event.}]
 pfw["useEvents"] = 1
-# The domain temperature table is supplied by the thermal solver controls.
-pfw["temperatureTable"] = "{ {0.0, 293.0}, {1.0, 373.0} }"
 pfw["mpmEventsString"] = """
 <TemperatureProfile
   startTime="0.0"
-  endTime="1.0"/>
+  endTime="1.0"
+  temperatureTable="{ {0.0, 293.0}, {1.0, 373.0} }"
+  interpolationType="Linear"/>
 """
 \end{lstlisting}
 
