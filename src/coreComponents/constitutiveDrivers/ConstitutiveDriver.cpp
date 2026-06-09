@@ -141,9 +141,10 @@ void ConstitutiveDriver::outputToFile() const
 
   for( integer step = 0; step <= m_numSteps; ++step )
   {
-    for( integer col = 0; col < numColumns; ++col )
+    file << std::setw( width ) << m_table( step, 0 );
+    for( integer col = 1; col < numColumns; ++col )
     {
-      file << std::setw( width ) << m_table( step, col );
+      file << " " << std::setw( width ) << m_table( step, col );
     }
     file << "\n";
   }

@@ -2,18 +2,6 @@
 set( gtest_geosx_tests
      testRelPermHysteresis.cpp )
 
-set( gtest_triaxial_xmls
-     testTriaxial_druckerPragerExtended.xml
-     testTriaxial_elasticIsotropic.xml
-     testTriaxial_elasticIsotropicPressureDependent.xml
-     testTriaxial_modifiedCamClay.xml
-     testTriaxial_delftEggUseLinear.xml
-     testTriaxial_modifiedCamClayVolumetric.xml
-     testTriaxial_delftEggLoadPathDryUseLinear.xml
-     testTriaxial_delftEggLoadPathWetUseLinear.xml
-     testTriaxial_delftEggCase1.xml
-     testTriaxial_delftEggCase2.xml )
-
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface  )
