@@ -155,7 +155,12 @@
         krylovTol="1.0e-8"
         logLevel="1"/>
     </SinglePhaseFVM>
-    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Domain, Fault}" fractureRegion="Fault" initialRockToughness="1.0"/>
+    <SurfaceGenerator 
+        name="SurfaceGen" 
+        targetRegions="{ Domain, Fault}" 
+        fractureRegion="Fault" 
+        initialRockToughness="1.0"
+        mpiCommOrder="1"/>
   </Solvers>
 <!-- SPHINX_SINGLEPHASEFVM_END -->
 
