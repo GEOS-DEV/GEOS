@@ -100,6 +100,9 @@ public:
                    real64 const defaultYoungModulusTransversePressureDerivative,
                    real64 const defaultYoungModulusAxialPressureDerivative,
                    real64 const defaultShearModulusAxialTransversePressureDerivative,
+                   real64 const defaultYoungModulusTransversePressureScale,
+                   real64 const defaultYoungModulusAxialPressureScale,
+                   real64 const defaultShearModulusAxialTransversePressureScale,
                    arrayView3d< real64 > const & velocityGradient,
                    arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
@@ -170,6 +173,9 @@ public:
     m_defaultYoungModulusTransversePressureDerivative( defaultYoungModulusTransversePressureDerivative ),
     m_defaultYoungModulusAxialPressureDerivative( defaultYoungModulusAxialPressureDerivative ),
     m_defaultShearModulusAxialTransversePressureDerivative( defaultShearModulusAxialTransversePressureDerivative ),
+    m_defaultYoungModulusTransversePressureScale( defaultYoungModulusTransversePressureScale ),
+    m_defaultYoungModulusAxialPressureScale( defaultYoungModulusAxialPressureScale ),
+    m_defaultShearModulusAxialTransversePressureScale( defaultShearModulusAxialTransversePressureScale ),
     m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
@@ -364,6 +370,10 @@ public:
 
 
   GEOS_HOST_DEVICE
+  real64 evaluateSaturatingPressureArgument( const real64 pressureArgument,
+                                             const real64 pressureScale ) const;
+
+  GEOS_HOST_DEVICE
   real64 evaluatePressureDependentStrength( const real64 pressure,
                                             const real64 x2,
                                             const real64 y1,
@@ -410,6 +420,12 @@ private:
   real64 const m_defaultYoungModulusAxialPressureDerivative;
 
   real64 const m_defaultShearModulusAxialTransversePressureDerivative;
+
+  real64 const m_defaultYoungModulusTransversePressureScale;
+
+  real64 const m_defaultYoungModulusAxialPressureScale;
+
+  real64 const m_defaultShearModulusAxialTransversePressureScale;
 
   /// A reference to the ArrayView holding the velocity gradient for each element/particle.
   arrayView3d< real64 > const m_velocityGradient;
@@ -703,18 +719,64 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // This is a transversely isotropic material for graphite-like crystals having
   // some weak plane with plane-normal-stress- and pressure-dependent elastic properties:
 
-  // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
-  // need to ask him about that
-  real64 Ez = LvArray::math::max( 0.001*m_defaultYoungModulusAxial, m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure ) );
-  real64 Ep = LvArray::math::max( 0.001*m_defaultYoungModulusTransverse, m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure ) );
-  real64 Gzp  = LvArray::math::max( 0.001*m_defaultShearModulusAxialTransverse, m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure ) );
+  // The elastic moduli use non-negative pressure-like arguments from the
+  // beginning-of-step stress.  A rational saturation function can be applied
+  // independently to each modulus,
+  //
+  //     f(xi; P) = xi / (1 + xi/P),
+  //
+  // so that finite P gives monotone pressure stiffening with a bounded
+  // derivative, while P=DBL_MAX recovers the original linear dependence.
+  // The axial modulus uses a mixed mean-pressure/plane-normal argument so
+  // that compression normal to the graphitic planes can stiffen the axial
+  // response more directly than purely in-plane confinement.
+  real64 const axialPressureArgument = LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure );
+  real64 const meanPressureArgument = LvArray::math::max( 0.0, oldPressure );
+
+  real64 Ez = LvArray::math::max( 0.001*m_defaultYoungModulusAxial,
+                                  m_defaultYoungModulusAxial +
+                                  m_defaultYoungModulusAxialPressureDerivative *
+                                  evaluateSaturatingPressureArgument( axialPressureArgument,
+                                                                      m_defaultYoungModulusAxialPressureScale ) );
+  real64 Ep = LvArray::math::max( 0.001*m_defaultYoungModulusTransverse,
+                                  m_defaultYoungModulusTransverse +
+                                  m_defaultYoungModulusTransversePressureDerivative *
+                                  evaluateSaturatingPressureArgument( meanPressureArgument,
+                                                                      m_defaultYoungModulusTransversePressureScale ) );
+  real64 Gzp  = LvArray::math::max( 0.001*m_defaultShearModulusAxialTransverse,
+                                    m_defaultShearModulusAxialTransverse +
+                                    m_defaultShearModulusAxialTransversePressureDerivative *
+                                    evaluateSaturatingPressureArgument( meanPressureArgument,
+                                                                        m_defaultShearModulusAxialTransversePressureScale ) );
   real64 nuzp = LvArray::math::min( 0.4999, m_defaultPoissonRatioAxialTransverse );
   real64 nup = LvArray::math::min( 0.4999, m_defaultPoissonRatioTransverse );
 
-  // BUGFIX: add checks to limit scaling of moduli so stiffness is positive definite
+  // Maintain positive definiteness of the actual pressure-dependent TI
+  // stiffness used in the update.  The input checks guarantee that the
+  // reference stiffness is admissible, but independent pressure dependence of
+  // Ez and Ep can otherwise violate
+  //
+  //     1 - nu_p - 2*(Ep/Ez)*nu_zp^2 > 0
+  //
+  // at high pressure.  If needed, cap Ep just below the admissible limit while
+  // preserving the monotone pressure-stiffening trends of the other moduli.
+  real64 const stabilityTolerance = 1.0e-12;
+  real64 const nuzpSquared = nuzp*nuzp;
+  if( nuzpSquared > 0.0 )
+  {
+    real64 const maximumStableEp = LvArray::math::max( 1.0e-12*m_defaultYoungModulusTransverse,
+                                                       ( 1.0 - nup - stabilityTolerance ) * Ez /
+                                                       ( 2.0*nuzpSquared ) );
+    Ep = LvArray::math::min( Ep, maximumStableEp );
+  }
 
-  // Update effective elastic properties
-  m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));  // prevent negative k or division by 0
+  // Update effective elastic properties.  The denominator should be negative
+  // for a positive-definite TI stiffness; the guard avoids a non-positive or
+  // singular effective bulk modulus in wave-speed diagnostics if a parameter
+  // set is very near the stability boundary.
+  real64 const bulkDenominator = 2*Ez*( nup+nuzp-1 ) + Ep*( 2*nuzp-1 );
+  real64 const safeBulkDenominator = LvArray::math::min( bulkDenominator, -1.0e-20 );
+  m_effectiveBulkModulus[k] = -Ep*Ez/safeBulkDenominator;
   m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
 
   // TODO: make elastic properties safe to avoid floating point errors.
@@ -1515,6 +1577,25 @@ real64 GraphiteUpdates::slopePoint0( const real64 x,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
+real64 GraphiteUpdates::evaluateSaturatingPressureArgument( const real64 pressureArgument,
+                                                            const real64 pressureScale ) const
+{
+  real64 const positivePressureArgument = LvArray::math::max( 0.0, pressureArgument );
+
+  // A very large scale is the default and recovers the original linear law.
+  // The branch also avoids overflow in the product form below for DBL_MAX.
+  if( pressureScale > 1.0e100 )
+  {
+    return positivePressureArgument;
+  }
+
+  real64 const safePressureScale = LvArray::math::max( pressureScale, 1.0e-20 );
+  return positivePressureArgument * safePressureScale /
+         ( positivePressureArgument + safePressureScale );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 GraphiteUpdates::evaluatePressureDependentStrength( const real64 pressure,
                                                            const real64 x2,
                                                            const real64 y1,
@@ -1695,8 +1776,17 @@ public:
     /// string/key for default axial Young's modulus presssure derivative
     static constexpr char const * defaultYoungModulusAxialPressureDerivativeString() { return "defaultYoungModulusAxialPressureDerivative"; }
 
-    /// string/key for default axial Young's modulus presssure derivative
+    /// string/key for default axial-transverse shear modulus presssure derivative
     static constexpr char const * defaultShearModulusAxialTransversePressureDerivativeString() { return "defaultShearModulusAxialTransversePressureDerivative"; }
+
+    /// string/key for transverse Young's modulus pressure scale
+    static constexpr char const * defaultYoungModulusTransversePressureScaleString() { return "defaultYoungModulusTransversePressureScale"; }
+
+    /// string/key for axial Young's modulus pressure scale
+    static constexpr char const * defaultYoungModulusAxialPressureScaleString() { return "defaultYoungModulusAxialPressureScale"; }
+
+    /// string/key for axial-transverse shear modulus pressure scale
+    static constexpr char const * defaultShearModulusAxialTransversePressureScaleString() { return "defaultShearModulusAxialTransversePressureScale"; }
 
     //string/key for element/particle velocityGradient value
     static constexpr char const * velocityGradientString() { return "velocityGradient"; }
@@ -1859,6 +1949,9 @@ public:
                             m_defaultYoungModulusTransversePressureDerivative,
                             m_defaultYoungModulusAxialPressureDerivative,
                             m_defaultShearModulusAxialTransversePressureDerivative,
+                            m_defaultYoungModulusTransversePressureScale,
+                            m_defaultYoungModulusAxialPressureScale,
+                            m_defaultShearModulusAxialTransversePressureScale,
                             m_velocityGradient,
                             m_plasticStrain,
                             m_relaxation,
@@ -1936,6 +2029,9 @@ public:
                           m_defaultYoungModulusTransversePressureDerivative,
                           m_defaultYoungModulusAxialPressureDerivative,
                           m_defaultShearModulusAxialTransversePressureDerivative,
+                          m_defaultYoungModulusTransversePressureScale,
+                          m_defaultYoungModulusAxialPressureScale,
+                          m_defaultShearModulusAxialTransversePressureScale,
                           m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
@@ -2165,6 +2261,15 @@ protected:
 
   /// The default value of the axial transverse Shear modulus pressure derivative for new allocations.
   real64 m_defaultShearModulusAxialTransversePressureDerivative;
+
+  /// Pressure scale for saturating transverse Young's modulus pressure dependence.
+  real64 m_defaultYoungModulusTransversePressureScale;
+
+  /// Pressure scale for saturating axial Young's modulus pressure dependence.
+  real64 m_defaultYoungModulusAxialPressureScale;
+
+  /// Pressure scale for saturating axial-transverse shear modulus pressure dependence.
+  real64 m_defaultShearModulusAxialTransversePressureScale;
 
   ///State variable: The velocity gradient for each element/particle
   array3d< real64 > m_velocityGradient;

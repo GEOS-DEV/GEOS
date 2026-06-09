@@ -251,6 +251,9 @@ def generateGraphiteMaterialString(material):
         'defaultYoungModulusTransversePressureDerivative',
         'defaultYoungModulusAxialPressureDerivative',
         'defaultShearModulusAxialTransversePressureDerivative',
+        'defaultYoungModulusTransversePressureScale',
+        'defaultYoungModulusAxialPressureScale',
+        'defaultShearModulusAxialTransversePressureScale',
         'failureStrength',
         'maximumPrincipalStressDamage',
         'crackSpeed',
@@ -2129,6 +2132,62 @@ _set_graphite_auxiliary_properties(graphitePyrolytic)
 # #################################################################################################
 
 ###################################################################################################
+# PRESSURE-SENSITIVE GRAPHITIC CRYSTAL:
+# Representative layered graphitic crystal parameterization using the signed-distortion
+# strength split and saturating pressure-dependent elastic moduli.  The pressure scales below recover
+# nearly linear stiffening when large and saturating stiffening when comparable to the pressure range.
+# Fracture and post-failure parameters are placeholder validation values and should be calibrated for
+# production simulations involving fracture propagation or fully comminuted flow.
+#
+graphitePressureSensitiveCrystal = {}
+graphitePressureSensitiveCrystal['name'] = 'graphitePressureSensitiveCrystal'
+graphitePressureSensitiveCrystal['version'] = 2606090002
+graphitePressureSensitiveCrystal['model'] = 'Graphite'
+graphitePressureSensitiveCrystal['defaultDensity'] = 1.50
+graphitePressureSensitiveCrystal['defaultYoungModulusTransverse'] = 43.69846
+graphitePressureSensitiveCrystal['defaultYoungModulusAxial'] = 15.46671
+graphitePressureSensitiveCrystal['defaultPoissonRatioTransverse'] = 0.0
+graphitePressureSensitiveCrystal['defaultPoissonRatioAxialTransverse'] = 0.2471611
+graphitePressureSensitiveCrystal['defaultShearModulusAxialTransverse'] = 0.9568250
+graphitePressureSensitiveCrystal['defaultYoungModulusTransversePressureDerivative'] = 18.31736
+graphitePressureSensitiveCrystal['defaultYoungModulusAxialPressureDerivative'] = 9.316295
+graphitePressureSensitiveCrystal['defaultShearModulusAxialTransversePressureDerivative'] = 0.5230170
+graphitePressureSensitiveCrystal['defaultYoungModulusTransversePressureScale'] = 5.952545
+graphitePressureSensitiveCrystal['defaultYoungModulusAxialPressureScale'] = 71.25111
+graphitePressureSensitiveCrystal['defaultShearModulusAxialTransversePressureScale'] = 33.57501
+graphitePressureSensitiveCrystal['failureStrength'] = 0.25
+graphitePressureSensitiveCrystal['maximumPrincipalStressDamage'] = 1
+graphitePressureSensitiveCrystal['crackSpeed'] = 4.0
+graphitePressureSensitiveCrystal['scaleFractureEnergyReleaseRate'] = 0
+graphitePressureSensitiveCrystal['fractureEnergyStrengthScaleExponent'] = 0.0
+graphitePressureSensitiveCrystal['basalPlaneFractureEnergyReleaseRate'] = 1.0e-4
+graphitePressureSensitiveCrystal['totalFractureEnergyReleaseRate'] = 1.0e-4
+graphitePressureSensitiveCrystal['damageEvolutionExponent'] = 32.0
+graphitePressureSensitiveCrystal['damagedMaterialFrictionalSlope'] = 0.20
+graphitePressureSensitiveCrystal['distortionShearResponseX2'] = 31.726211302217223
+graphitePressureSensitiveCrystal['distortionShearResponseY1'] = 1.1436120660995532
+graphitePressureSensitiveCrystal['distortionShearResponseY2'] = 4.136203368288201
+graphitePressureSensitiveCrystal['distortionShearResponseM1'] = 0.2
+graphitePressureSensitiveCrystal['positiveDistortionShearResponseX2'] = 31.726211302217223
+graphitePressureSensitiveCrystal['positiveDistortionShearResponseY1'] = 0.0
+graphitePressureSensitiveCrystal['positiveDistortionShearResponseY2'] = 0.6093923874824587
+graphitePressureSensitiveCrystal['positiveDistortionShearResponseM1'] = 0.2
+graphitePressureSensitiveCrystal['inPlaneShearResponseX2'] = 31.726211302217223
+graphitePressureSensitiveCrystal['inPlaneShearResponseY1'] = 0.1360119464627108
+graphitePressureSensitiveCrystal['inPlaneShearResponseY2'] = 4.426039768025678
+graphitePressureSensitiveCrystal['inPlaneShearResponseM1'] = 0.2
+graphitePressureSensitiveCrystal['coupledShearResponseX2'] = 31.726211302217223
+graphitePressureSensitiveCrystal['coupledShearResponseY1'] = 0.3855532087924691
+graphitePressureSensitiveCrystal['coupledShearResponseY2'] = 3.7463651992725477
+graphitePressureSensitiveCrystal['coupledShearResponseM1'] = 0.2
+graphitePressureSensitiveCrystal['distortionStrainHardeningC0'] = 1.00
+graphitePressureSensitiveCrystal['inPlaneStrainHardeningC0'] = 1.00
+graphitePressureSensitiveCrystal['coupledStrainHardeningC0'] = 1.00
+graphitePressureSensitiveCrystal['maximumPlasticStrain'] = 0.020
+_set_graphite_auxiliary_properties(graphitePressureSensitiveCrystal)
+# #################################################################################################
+
+###################################################################################################
 # FINE-GRAIN ISOTROPIC GRAPHITE:
 # Engineering-grade near-isotropic graphite.  The Graphite model is still transversely isotropic, so
 # the axial and transverse moduli are set close together rather than exactly equal.
@@ -2594,6 +2653,7 @@ engineeringCeramics = [
 graphiteMaterials = [
     graphiteSingleCrystal,
     graphitePyrolytic,
+    graphitePressureSensitiveCrystal,
     graphiteFineGrainIso,
 ]
 

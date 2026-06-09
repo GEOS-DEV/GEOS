@@ -34,6 +34,9 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_defaultYoungModulusTransversePressureDerivative(),
   m_defaultYoungModulusAxialPressureDerivative(),
   m_defaultShearModulusAxialTransversePressureDerivative(),
+  m_defaultYoungModulusTransversePressureScale(),
+  m_defaultYoungModulusAxialPressureScale(),
+  m_defaultShearModulusAxialTransversePressureScale(),
   m_velocityGradient(),
   m_plasticStrain(),
   m_relaxation(),
@@ -117,6 +120,21 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setApplyDefaultValue( 0. ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Axial transverse shear modulus pressure derivative" );
+
+  registerWrapper( viewKeyStruct::defaultYoungModulusTransversePressureScaleString(), &m_defaultYoungModulusTransversePressureScale ).
+    setApplyDefaultValue( DBL_MAX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Pressure scale for saturating transverse Young's modulus pressure dependence; DBL_MAX recovers the linear law" );
+
+  registerWrapper( viewKeyStruct::defaultYoungModulusAxialPressureScaleString(), &m_defaultYoungModulusAxialPressureScale ).
+    setApplyDefaultValue( DBL_MAX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Pressure scale for saturating axial Young's modulus pressure dependence; DBL_MAX recovers the linear law" );
+
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransversePressureScaleString(), &m_defaultShearModulusAxialTransversePressureScale ).
+    setApplyDefaultValue( DBL_MAX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Pressure scale for saturating axial-transverse shear modulus pressure dependence; DBL_MAX recovers the linear law" );
 
   registerWrapper( viewKeyStruct::failureStrengthString(), &m_failureStrength ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -400,6 +418,9 @@ void Graphite::postInputInitialization()
   //                  "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" <<
   //                  "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" <<
   //                  "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" <<
+  //                  "Ep pressure scale: " << m_defaultYoungModulusTransversePressureScale << "\n" <<
+  //                  "Ez pressure scale: " << m_defaultYoungModulusAxialPressureScale << "\n" <<
+  //                  "Gzp pressure scale: " << m_defaultShearModulusAxialTransversePressureScale << "\n" <<
   //                  "sigmaFail: " << m_failureStrength << "\n" <<
   //                  "basalPlaneFractureEnergyReleaseRate: " << m_basalPlaneFractureEnergyReleaseRate << "\n" <<
   //                  "ds X2: " << m_distortionShearResponseX2 << "\n" <<
@@ -423,6 +444,9 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_defaultYoungModulusAxialPressureDerivative < 0.0, "defaultYoungModulusAxialPressureDerivative must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYoungModulusTransversePressureDerivative < 0.0, "defaultYoungModulusTransversePressureDerivative must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultShearModulusAxialTransversePressureDerivative < 0.0, "defaultShearModulusAxialTransversePressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusAxialPressureScale <= 0.0, "defaultYoungModulusAxialPressureScale must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransversePressureScale <= 0.0, "defaultYoungModulusTransversePressureScale must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransversePressureScale <= 0.0, "defaultShearModulusAxialTransversePressureScale must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse < -0.499999,  "defaultPoissonRatioAxialTransverse must be > -0.5 ", InputError );
   GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse > 0.499999,  "defaultPoissonRatioAxialTransverse must be < 0.5 ", InputError );
   GEOS_THROW_IF( m_defaultPoissonRatioTransverse < -0.499999,  "defaultPoissonRatioTransverse must be > -0.5 ", InputError );

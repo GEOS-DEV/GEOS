@@ -542,20 +542,32 @@ where \(\mathbf P\) projects onto the basal plane.  In the current implementatio
 then transposes and normalizes the rows to recover the particle \texttt{MaterialDirection}.  Inside the constitutive update, the beginning-of-step rotation is removed before evaluating the transversely isotropic elastic and inelastic laws, so the mode decomposition is performed in a corotational material frame.  This path is consistent with the general rule that anisotropic constitutive models must evolve their material directions under superposed rigid motion and finite distortion, rather than treating a fixed laboratory axis as a material property~\cite{brannon2017rotation}.
 
 \paragraph{Elastic trial stress.}
-The reviewed code path is a finite-deformation MPM update followed by a corotational transversely isotropic elastic predictor.  The implementation is compatible with the hyperelastic transversely isotropic interpretation of the model, but the update evaluated here is algorithmically a pressure-dependent rate-form trial stress expressed in the evolving material frame.  The pressure-dependent moduli are computed from the beginning-of-step pressure \(p^n=-\operatorname{tr}\boldsymbol{\sigma}^n/3\) and the beginning-of-step plane-normal stress \(\sigma_n^n=\mathbf a\cdot\boldsymbol{\sigma}^n\mathbf a\):
+The reviewed code path is a finite-deformation MPM update followed by a corotational transversely isotropic elastic predictor.  The implementation is compatible with the hyperelastic transversely isotropic interpretation of the model, but the update evaluated here is algorithmically a pressure-dependent rate-form trial stress expressed in the evolving material frame.  The pressure-dependent moduli are computed from the beginning-of-step pressure \(p^n=-\operatorname{tr}\boldsymbol{\sigma}^n/3\) and the beginning-of-step plane-normal stress \(\sigma_n^n=\mathbf a\cdot\boldsymbol{\sigma}^n\mathbf a\).  Define the non-negative arguments
+\begin{equation}
+  \xi_z = \max\left(0,\frac{p^n-\sigma_n^n}{2}\right),
+  \qquad
+  \xi_p = \max(0,p^n),
+  \label{eq:graphite-elastic-pressure-arguments}
+\end{equation}
+and the saturating pressure function
+\begin{equation}
+  f(\xi;P)=\frac{\xi}{1+\xi/P}.
+  \label{eq:graphite-saturating-pressure-function}
+\end{equation}
+Then
 \begin{align}
   E_z &= \max\left(10^{-3}E_z^0,
-       E_z^0 + E_z'\max\left(0,\frac{p^n-\sigma_n^n}{2}\right)\right),\\
+       E_z^0 + E_z' f(\xi_z;P_z)\right),\\
   E_p &= \max\left(10^{-3}E_p^0,
-       E_p^0 + E_p'\max(0,p^n)\right),\\
+       E_p^0 + E_p' f(\xi_p;P_p)\right),\\
   G_{zp} &= \max\left(10^{-3}G_{zp}^0,
-       G_{zp}^0 + G_{zp}'\max(0,p^n)\right),\\
+       G_{zp}^0 + G_{zp}' f(\xi_p;P_g)\right),\\
   \nu_{zp} &= \min(0.4999,\nu_{zp}^0),
   \qquad
   \nu_p = \min(0.4999,\nu_p^0).
   \label{eq:graphite-pressure-dependent-moduli}
 \end{align}
-Here \(z\) denotes the preferred-axis direction and \(p\) denotes the transverse plane.  The implementation also forms effective isotropic moduli for wave-speed and stress-control purposes,
+Here \(z\) denotes the preferred-axis direction and \(p\) denotes the transverse plane.  The optional pressure scales \(P_z\), \(P_p\), and \(P_g\) are supplied by \texttt{defaultYoungModulusAxialPressureScale}, \texttt{defaultYoungModulusTransversePressureScale}, and \texttt{defaultShearModulusAxialTransversePressureScale}.  When a pressure scale is omitted, its default is effectively infinite and \(f(\xi;P)\to\xi\), recovering the linear pressure dependence.  Finite positive scales give monotone pressure stiffening with decreasing tangent modulus increment at high pressure.  The implementation also locally limits the pressure-dependent TI moduli if needed so the stiffness remains positive definite at the current pressure state.  The implementation also forms effective isotropic moduli for wave-speed and stress-control purposes,
 \begin{equation}
   K_{\mathrm{eff}} =
   -\frac{E_pE_z}{2E_z(\nu_p+\nu_{zp}-1)+E_p(2\nu_{zp}-1)},
@@ -763,7 +775,7 @@ Thermal effects in the current model enter through anisotropic thermal expansion
 read old stress, velocity gradient, F, materialDirection, damage, temperatureRate
 transport/normalize material direction; use first row as basal-plane normal a
 unrotate L and a into the corotational material frame
-compute pressure p, plane-normal stress sigma_n, and pressure-dependent TI moduli
+compute pressure p, plane-normal stress sigma_n, and saturating pressure-dependent TI moduli
 construct TI stiffness from Brannon basis tensors B1...B5
 stress_trial = oldStress + C_TI : (D - alpha * temperatureRate) * dt
 if inelasticity is disabled: accept stress_trial
@@ -801,7 +813,7 @@ The model is useful when the important physics are anisotropic graphitic weak pl
 \endhead
 \texttt{defaultYoungModulusAxial}\newline \texttt{defaultYoungModulusTransverse}\newline \texttt{defaultShearModulusAxialTransverse} & Baseline transversely isotropic elastic moduli along the basal-plane normal, in the basal plane, and in mixed axial-transverse shear.\\
 \texttt{defaultPoissonRatioAxialTransverse}\newline \texttt{defaultPoissonRatioTransverse} & Poisson couplings for the TI elastic law.\\
-\texttt{*PressureDerivative} & Optional pressure slopes for \(E_z\), \(E_p\), and \(G_{zp}\).\\
+\texttt{*PressureDerivative}\newline \texttt{*PressureScale} & Optional pressure slopes and saturation scales for \(E_z\), \(E_p\), and \(G_{zp}\).  Omitted pressure scales recover the linear pressure dependence.\\
 \texttt{failureStrength}\newline \texttt{maximumPrincipalStressDamage}\newline \texttt{enableCrackTipStressConcentration} & Tensile/principal-stress damage controls and crack-tip modifier coupling.\\
 \texttt{distortionShearResponse*} & Point-slope parameters for the negative signed-distortion branch \(I_d^-\).\\
 \texttt{positiveDistortionShearResponse*} & Optional point-slope parameters for the positive signed-distortion branch \(I_d^+\); omitted values default to \texttt{distortionShearResponse*}.\\
