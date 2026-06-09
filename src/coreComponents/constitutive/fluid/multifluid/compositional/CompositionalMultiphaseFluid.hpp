@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/CompositionalEnthalpy.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
@@ -186,6 +187,18 @@ using CompositionalKValuePhillipsBrine = CompositionalMultiphaseFluid<
   compositional::KValueFlashModel< 2 >,
   compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
+using CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
+using CompositionalThermalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::CompositionalEnthalpy >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
+using CompositionalThermalKValuePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::CompositionalEnthalpy >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
 
 } /* namespace constitutive */
 
