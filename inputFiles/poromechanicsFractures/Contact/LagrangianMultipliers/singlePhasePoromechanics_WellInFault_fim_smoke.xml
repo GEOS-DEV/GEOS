@@ -53,31 +53,29 @@
       targetRegions="{ wellRegion1, wellRegion2 }">
       <SinglePhaseWell
         name="wellControls1"
-        control="BHP"
         logLevel="2"
-        writeCSV="1"
-        type="producer">
+        type="producer"
+        control="BHP">
         <MinimumBHPConstraint
           name="minbhp"
           targetBHP="1e7"
           referenceElevation="-2500"/>
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
-          volumeRate="1e10"/>
+          volumeRate="1e-3"/>
       </SinglePhaseWell>
       <SinglePhaseWell
         name="wellControls2"
-        control="BHP"
         logLevel="2"
-        writeCSV="1"
-        type="injector">
+        type="injector"
+        control="BHP">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="10e7"
           referenceElevation="-2500"/>
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
-          volumeRate="1e10"/>
+          volumeRate="1e-3"/>
       </SinglePhaseWell>
     </WellManager>
   </Solvers>

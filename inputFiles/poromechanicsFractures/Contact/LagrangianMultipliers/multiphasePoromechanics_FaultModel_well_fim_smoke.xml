@@ -52,8 +52,8 @@
     <WellManager
       name="wellSolver"
       targetRegions="{ wellInjector }"
-      useMass="1"
-      logLevel="2">
+      logLevel="2"
+      useMass="1">
       <CompositionalMultiphaseWell
         name="injectorControls"
         type="injector"

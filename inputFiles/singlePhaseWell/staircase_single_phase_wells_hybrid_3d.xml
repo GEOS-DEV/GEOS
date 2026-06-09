@@ -40,9 +40,9 @@
       <SinglePhaseWell
         name="wellControls2"
         type="injector"
+        control="totalVolRate"
         useSurfaceConditions="1"
-        surfacePressure="101325"
-        control="totalVolRate">
+        surfacePressure="101325">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e7"

@@ -77,10 +77,10 @@
         name="wellControls2"
         logLevel="1"
         type="injector"
+        control="totalVolRate"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="totalVolRate"
         maxCompFractionChange="0.2">
         <MaximumBHPConstraint
           name="maxbhp"
