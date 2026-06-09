@@ -55,11 +55,12 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "x-Tilt angle in degree" );
+    setDescription( "y-Tilt angle in degree" );
 
   registerWrapper( viewKeyStruct::phiString(), &m_phi ).
-    setInputFlag( InputFlags::INVALID ).
-    setDescription( "y-Tilt angle in degree" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue(0.).
+    setDescription( "z-Tilt angle in degree" );
 
   //first batch of parameters
   registerWrapper( viewKeyStruct::normalDispTolFac(), &m_normalDispTolFac ).
@@ -228,19 +229,19 @@ void FrictionDriver::initializeTable()
     real64 const time = m_table( index, TIME );
 
     real64 const traction = tractionFunction.evaluate( &time );
-    m_table( index, NTRAC ) =   traction*cos_phi;
-    m_table( index, STRAC0 ) =  traction*sin_theta*sin_phi;
-    m_table( index, STRAC1 ) = -traction*cos_theta*sin_phi;
+    m_table( index, NTRAC ) =   traction*cos_phi*cos_theta;
+    m_table( index, STRAC0 ) =  traction*cos_theta*sin_phi;
+    m_table( index, STRAC1 ) = -traction*sin_theta;
 
     real64 const jump = jumpFunction.evaluate( &time );
-    m_table( index, NJUMP ) = jump*cos_phi;
-    m_table( index, SLIP0 ) = jump*sin_theta*sin_phi;
-    m_table( index, SLIP1 ) = jump*cos_theta*sin_phi;
+    m_table( index, NJUMP ) = jump*cos_phi*cos_theta;
+    m_table( index, SLIP0 ) = jump*cos_theta*sin_phi;
+    m_table( index, SLIP1 ) = jump*sin_theta;
 
     real64 const dJump = dJumpFunction.evaluate( &time );
-    m_table( index, NDJUMP ) = dJump*cos_phi;
-    m_table( index, DSLIP0 ) = dJump*sin_theta*sin_phi;
-    m_table( index, DSLIP1 ) = dJump*cos_theta*sin_phi;
+    m_table( index, NDJUMP ) = dJump*cos_phi*cos_theta;
+    m_table( index, DSLIP0 ) = dJump*cos_theta*sin_phi;
+    m_table( index, DSLIP1 ) = dJump*sin_theta;
 
     m_table( index, CC )    = 0;
     m_table( index, FS )    = fields::contact::FractureState::Stick;

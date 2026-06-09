@@ -77,10 +77,10 @@ private:
     { return "tractionControl"; }
 
     constexpr static char const * thetaString()
-    { return "xTiltAngle";}
+    { return "yTiltAngle";}
 
     constexpr static char const * phiString()
-    { return "yTiltAngle";}
+    { return "zTiltAngle";}
 
     constexpr static char const * normalDispTolFac()
     { return "tolJumpN"; }

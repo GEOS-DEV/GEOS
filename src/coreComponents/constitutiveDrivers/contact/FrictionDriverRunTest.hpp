@@ -102,9 +102,9 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
 
 
     array2d< real64 > rotationMatrix( 3, 3 );
-    rotationMatrix[0][0] = cos_phi;  rotationMatrix[0][1] = 0.;  rotationMatrix[0][2] = sin_phi;
-    rotationMatrix[1][0] = sin_theta*sin_phi;  rotationMatrix[1][1] = cos_theta;  rotationMatrix[1][2] = -sin_theta*cos_phi;
-    rotationMatrix[2][0] = -cos_theta*sin_phi;  rotationMatrix[2][1] = sin_theta;  rotationMatrix[2][2] = cos_theta*cos_phi;
+    rotationMatrix[0][0] = cos_phi*cos_theta;  rotationMatrix[0][1] = -sin_phi;  rotationMatrix[0][2] = cos_phi*sin_theta;
+    rotationMatrix[1][0] = sin_phi*sin_theta;  rotationMatrix[1][1] = cos_phi;  rotationMatrix[1][2] = sin_theta*sin_phi;
+    rotationMatrix[2][0] = -sin_theta;  rotationMatrix[2][1] = 0.;  rotationMatrix[2][2] = cos_theta;
 
     SolidMechanicsAugmentedLagrangianContact::computeTolerancePerFace( area,
                                                                        volumes,
