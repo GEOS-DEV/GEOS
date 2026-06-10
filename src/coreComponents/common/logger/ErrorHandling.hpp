@@ -139,9 +139,9 @@ struct DiagnosticMsg
   /// the source location line (default is 0)
   integer m_line = 0;
   /// Additional information about the diagnostic in the input file
-  std::vector< ErrorContext > m_contextsInfo;
+  stdVector< ErrorContext > m_contextsInfo;
   /// the stack trace
-  std::vector< std::string > m_sourceCallStack;
+  stdVector< std::string > m_sourceCallStack;
   /// Indicates whether the stored call stack trace is valid and usable.
   bool m_isValidStackTrace = false;
 };

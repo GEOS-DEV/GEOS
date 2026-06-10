@@ -28,6 +28,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
+#include "constitutive/diffusion/DiffusionBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -574,6 +576,22 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
     }
+
+    string const thermalCondModelName = getConstitutiveName< SinglePhaseThermalConductivityBase >( fractureSubRegion );
+    if( !thermalCondModelName.empty() )
+    {
+      // if a thermal conductivity model exists we need to set the intial value to something meaningful
+      SinglePhaseThermalConductivityBase & thermalCondModel = getConstitutiveModel< SinglePhaseThermalConductivityBase >( fractureSubRegion, thermalCondModelName );
+      thermalCondModel.initializeState();
+    }
+
+    string const diffusionModelName = getConstitutiveName< DiffusionBase >( fractureSubRegion );
+    if( !diffusionModelName.empty() )
+    {
+      DiffusionBase & diffusionModel = getConstitutiveModel< DiffusionBase >( fractureSubRegion, diffusionModelName );
+      arrayView1d< real64 const > const temperature = fractureSubRegion.template getField< flow::temperature >();
+      diffusionModel.initializeTemperatureState( temperature );
+    }
   } );
 
   return rval;
@@ -975,7 +993,7 @@ bool SurfaceGenerator::processNode( const localIndex nodeID,
     std::set< localIndex > facialRupturePath;
     map< localIndex, int > edgeLocations;
     map< localIndex, int > faceLocations;
-    map< std::pair< CellElementSubRegion const *, localIndex >, int > elemLocations;
+    ElemLocMapType elemLocations;
 
     fracturePlaneFlag = findFracturePlanes( nodeID,
                                             nodeManager,
@@ -1027,7 +1045,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
                                            std::set< localIndex > & separationPathFaces,
                                            map< localIndex, int > & edgeLocations,
                                            map< localIndex, int > & faceLocations,
-                                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                           ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1474,7 +1492,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   for( auto k = nodeToElementMaps.cbegin(); k != nodeToElementMaps.cend(); ++k )
   {
-    elemLocations[*k] = INT_MIN;
+    elemLocations.get_inserted( *k ) = INT_MIN;
   }
 
 
@@ -1567,7 +1585,7 @@ bool SurfaceGenerator::assignLocationsBFS( std::set< localIndex > const & separa
                                            map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                                            map< localIndex, int > & edgeLocations,
                                            map< localIndex, int > & faceLocations,
-                                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                           ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1817,7 +1835,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                         const std::set< localIndex > & separationPathFaces,
                                         const map< localIndex, int > & edgeLocations,
                                         const map< localIndex, int > & faceLocations,
-                                        const map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                        const ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2133,7 +2151,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< localIndex > const & childFaceIndex = faceManager.getField< fields::childIndex >();
 
   // 1) loop over all elements attached to the nodeID
-  for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
+  for( ElemLocMapType::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
   {
     const int & location = iter_elem->second;
 
@@ -2497,7 +2515,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
                                             EdgeManager const & edgeManager,
                                             FaceManager const & faceManager,
                                             ElementRegionManager const & elementManager,
-                                            map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations )
+                                            ElemLocMapType const & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2526,7 +2544,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   {
     std::cout << "CONSISTENCY CHECKING OF THE MAPS" << std::endl;
 
-    for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
+    for( ElemLocMapType::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
     {
       const std::pair< CellElementSubRegion const *, localIndex > & elem = iter_elem->first;
 
@@ -4149,7 +4167,7 @@ void SurfaceGenerator::markRuptureFaceFromNode( localIndex const nodeIndex,
           edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
           LvArray::tensorOps::subtract< 3 >( direction, edgeCenter );
           LvArray::tensorOps::normalize< 3 >( direction );
-          faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[faceIndex] ));
+          faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[faceIndex] )) + 1e-108;
 
           faceSIFToToughnessRatio.emplace_back( SIFonFace[faceIndex]/faceToughness );
           highestSIF = std::max( highestSIF, SIFonFace[faceIndex]/faceToughness );
@@ -4402,25 +4420,25 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   }
 
   // Union-Find data structure (map-based so we don't need a dense array).
-  // std::map is used instead of std::unordered_map to guarantee deterministic
+  // stdMap is used instead of std::unordered_map to guarantee deterministic
   // iteration order across platforms (libstdc++ vs libc++) and MPI runs.
-  std::map< localIndex, localIndex > parent;
-  std::map< localIndex, localIndex > rank;
+  stdMap< localIndex, localIndex > parent;
+  stdMap< localIndex, localIndex > rank;
 
   for( localIndex const fi : allFaces )
   {
-    parent[fi] = fi;
-    rank[fi] = 0;
+    parent.get_inserted( fi ) = fi;
+    rank.get_inserted( fi ) = 0;
   }
 
   // Find with path compression.
   std::function< localIndex( localIndex ) > findRoot = [&]( localIndex x ) -> localIndex
   {
-    if( parent[x] != x )
+    if( parent.at( x ) != x )
     {
-      parent[x] = findRoot( parent[x] );
+      parent.get_inserted( x ) = findRoot( parent.at( x ) );
     }
-    return parent[x];
+    return parent.at( x );
   };
 
   // Union by rank.
@@ -4430,11 +4448,11 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
     localIndex rb = findRoot( b );
     if( ra == rb )
       return;
-    if( rank[ra] < rank[rb] )
+    if( rank.at( ra ) < rank.at( rb ) )
       std::swap( ra, rb );
-    parent[rb] = ra;
-    if( rank[ra] == rank[rb] )
-      ++rank[ra];
+    parent.get_inserted( rb ) = ra;
+    if( rank.at( ra ) == rank.at( rb ) )
+      ++rank.get_inserted( ra );
   };
 
   // Two ruptured faces sharing a node belong to the same fracture set.
@@ -4456,12 +4474,12 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   }
 
   // Gather connected components.
-  // std::map guarantees deterministic iteration order (by sorted key),
+  // stdMap guarantees deterministic iteration order (by sorted key),
   // so the result vector is built in the same order on every platform/rank.
-  std::map< localIndex, std::set< localIndex > > components;
+  stdMap< localIndex, std::set< localIndex > > components;
   for( localIndex const fi : allFaces )
   {
-    components[findRoot( fi )].insert( fi );
+    components.get_inserted( findRoot( fi )).insert( fi );
   }
 
   // Convert to a vector.
@@ -4766,6 +4784,8 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 {
   GEOS_MARK_FUNCTION;
 
+  real64 constexpr timeTolerance = 1.0e-14;
+
   real64 maxRuptureRate = 0;
   FaceElementSubRegion & subRegion = faceElementRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
@@ -4787,8 +4807,8 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
         localIndex const faceElem1 = fractureConnectorEdgesToFaceElements( kfc, kfe1 );
         if( !( m_faceElemsRupturedThisSolve.count( faceElem0 ) && m_faceElemsRupturedThisSolve.count( faceElem1 ) ) )
         {
-          real64 const deltaRuptureTime = fabs( ruptureTime( faceElem0 ) - ruptureTime( faceElem1 ));
-          if( deltaRuptureTime > 1.0e-14 * (ruptureTime( faceElem0 ) + ruptureTime( faceElem1 )) )
+          real64 const deltaRuptureTime = LvArray::math::abs( ruptureTime( faceElem0 ) - ruptureTime( faceElem1 ) );
+          if( deltaRuptureTime > timeTolerance )
           {
             real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elemCenter[ faceElem0 ] );
             LvArray::tensorOps::subtract< 3 >( distance, elemCenter[ faceElem1 ] );
