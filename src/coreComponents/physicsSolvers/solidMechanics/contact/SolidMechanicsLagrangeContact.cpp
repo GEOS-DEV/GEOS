@@ -1587,8 +1587,7 @@ void SolidMechanicsLagrangeContact::
                 }
 
                 real64 dLimitTau_dNormalTraction = 0;
-                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( frictionWrapper.getCohesion( kfe ),
-                                                                                            frictionWrapper.getFrictionCoefficient( kfe ),
+                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( kfe,
                                                                                             traction[kfe][0],
                                                                                             dLimitTau_dNormalTraction );
 
@@ -2296,8 +2295,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                frictionWrapper.computeLimitTangentialTractionNorm( frictionWrapper.getCohesion( kfe ),
-                                                                    frictionWrapper.getFrictionCoefficient( kfe ),
+                frictionWrapper.computeLimitTangentialTractionNorm( kfe,
                                                                     traction[kfe][0],
                                                                     dLimitTangentialTractionNorm_dTraction );
 

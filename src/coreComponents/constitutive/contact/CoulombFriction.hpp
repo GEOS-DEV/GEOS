@@ -75,16 +75,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  real64 getCohesion( localIndex const k ) const { return m_cohesion[k]; }
-
-  GEOS_HOST_DEVICE
-  inline
-  real64 getFrictionCoefficient( localIndex const k ) const { return m_frictionCoefficient[k]; }
-
-  GEOS_HOST_DEVICE
-  inline
-  virtual real64 computeLimitTangentialTractionNorm( real64 const cohesion,
-                                                     real64 const frictionCoefficient,
+  virtual real64 computeLimitTangentialTractionNorm( localIndex const k,
                                                      real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
@@ -246,13 +237,12 @@ private:
 
 
 GEOS_HOST_DEVICE
-real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( real64 const cohesion,
-                                                                   real64 const frictionCoefficient,
+real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( localIndex const k,
                                                                    real64 const & normalTraction,
                                                                    real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
-  dLimitTangentialTractionNorm_dTraction = -frictionCoefficient;
-  return ( cohesion - normalTraction * frictionCoefficient );
+  dLimitTangentialTractionNorm_dTraction = -m_frictionCoefficient[k];
+  return ( m_cohesion[k] - normalTraction * m_frictionCoefficient[k] );
 }
 
 
@@ -293,7 +283,7 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
       // Plastic tangential deformation
 
       real64 dLimitTau_dNormalTraction;
-      real64 const limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], tractionVector[0],
+      real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                                   dLimitTau_dNormalTraction );
 
       real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
@@ -334,7 +324,7 @@ inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
     real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
     real64 dLimitTau_dNormalTraction;
-    real64 const limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], tractionVector[0],
+    real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                                 dLimitTau_dNormalTraction );
 
     // Yield function (not necessary but makes it clearer)
@@ -430,12 +420,12 @@ inline void CoulombFrictionUpdates::updateTraction( localIndex const k,
   // Compute limit Tau
   if( fixedLimitTau )
   {
-    limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], traction[0],
+    limitTau = computeLimitTangentialTractionNorm( k, traction[0],
                                                    dLimitTangentialTractionNorm_dTraction );
   }
   else
   {
-    limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], tractionNew[0],
+    limitTau = computeLimitTangentialTractionNorm( k, tractionNew[0],
                                                    dLimitTangentialTractionNorm_dTraction );
   }
 
@@ -542,7 +532,7 @@ inline void CoulombFrictionUpdates::updateTractionOnly( localIndex const k,
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], tractionNew[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionNew[0],
                                                               dLimitTangentialTractionNorm_dTraction );
 
   // Compute psi
@@ -596,7 +586,7 @@ inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( m_cohesion[k], m_frictionCoefficient[k], tractionVector[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                               dLimitTangentialTractionNorm_dTraction );
 
   condConv = 0;
