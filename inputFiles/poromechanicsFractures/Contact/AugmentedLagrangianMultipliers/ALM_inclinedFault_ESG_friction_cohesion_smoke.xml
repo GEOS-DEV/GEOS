@@ -7,84 +7,6 @@
      <File name="ALM_inclinedFault_base.xml"/>
   </Included>
 
-  <!-- SPHINX_ELEMENTREGIONS -->
-  <ElementRegions>
-    <CellElementRegion
-      name="Domain"
-      cellBlocks="{ 94_hexahedra, 95_hexahedra, 96_hexahedra, 97_hexahedra }"
-      materialList="{ water, porousRock }"/>
-
-    <SurfaceElementRegion
-      name="Fault"
-      faceBlock="fracture"
-      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
-      defaultAperture="1e-3"/>
-  </ElementRegions>
-  <!-- SPHINX_ELEMENTREGIONS_END -->
-
-  <!-- SPHINX_MATERIAL -->
-  <Constitutive>
-    <PorousElasticIsotropic
-      name="porousRock"
-      solidModelName="rock"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
-    <ElasticIsotropic
-      name="rock"
-      defaultDensity="2700"
-      defaultYoungModulus="14.95e9"
-      defaultPoissonRatio="0.15"/>
-
-    <CompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0e6"
-      referenceDensity="1000"
-      compressibility="2.09028227021e-10"
-      referenceViscosity="0.001"
-      viscosibility="0.0"/>
-
-    <BiotPorosity
-      name="rockPorosity"
-      defaultGrainBulkModulus="7.12e10"
-      defaultReferencePorosity="0.3"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
-
-    <!-- Material inside the fault -->
-    <CompressibleSolidParallelPlatesPermeability
-      name="faultFilling"
-      solidModelName="nullSolid"
-      porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm"/>
-
-    <PressurePorosity
-      name="fracturePorosity"
-      defaultReferencePorosity="1.00"
-      referencePressure="0e6"
-      compressibility="0.0"/>
-
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
-
-    <Coulomb
-      name="fractureContact"
-      defaultCohesion="0.1e6"
-      defaultFrictionCoefficient="0.5"/>
-
-    <HydraulicApertureTable
-      name="hApertureModel"
-      apertureTableName="apertureTable"/>
-
-    <NullModel
-      name="nullSolid"/>
-  </Constitutive>
-  <!-- SPHINX_MATERIAL_END -->
-
 <!-- SPHINX_POROMECHANICSSOLVER -->
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
 
@@ -165,9 +87,89 @@
       useGlobalIds="1"
       faceBlocks="{ fracture }"
       file="../../MESH/fault_contact_hex.vtm"
+      surfacicFieldsToImport="{ cohesion, frictionCoefficient }"
+      surfacicFieldsInGEOS="{ fractureContact_cohesion, fractureContact_frictionCoefficient }"
       regionAttribute="CellEntityIds"/>
   </Mesh> 
 <!-- SPHINX_MESH_END -->
+
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ 94_hexahedra, 95_hexahedra, 96_hexahedra, 97_hexahedra }"
+      materialList="{ water, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fault"
+      faceBlock="fracture"
+      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
+      defaultAperture="1e-3"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0e6"
+      referenceDensity="1000"
+      compressibility="2.09028227021e-10"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="7.12e10"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
+
+    <!-- Material inside the fault -->
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="fractureContact"
+      defaultCohesion="0.1e6"
+      defaultFrictionCoefficient="0.5"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+
+    <NullModel
+      name="nullSolid"/>
+  </Constitutive>
+<!-- SPHINX_MATERIAL_END -->
 
 <!-- SPHINX_INJECTION -->
   <FieldSpecifications>
@@ -189,25 +191,51 @@
   </FieldSpecifications>
 <!-- SPHINX_INJECTION_END -->
 
-    <Functions>
-        <TableFunction
-            name="apertureTable"
-            coordinates="{ -1.0e-3, 0.0 }"
-            values="{ 1.0e-3, 1.0e-3 }"/>
-    </Functions>
+<!-- SPHINX_FUNCTIONS -->
+  <Functions>
+      <TableFunction
+          name="apertureTable"
+          coordinates="{ -1.0e-3, 0.0 }"
+          values="{ 1.0e-3, 1.0e-3 }"/>
+  </Functions>
 
-    <Tasks>
-        <PackCollection
-            name="tractionCollection"
-            objectPath="ElementRegions/Fault/fracture"
-            fieldName="traction"/>
+  <Tasks>
+      <PackCollection
+          name="tractionCollection"
+          objectPath="ElementRegions/Fault/fracture"
+          fieldName="traction"/>
 
-        <PackCollection
-            name="displacementJumpCollection"
-            objectPath="ElementRegions/Fault/fracture"
-            fieldName="displacementJump"/>   
-    </Tasks>
+      <PackCollection
+          name="displacementJumpCollection"
+          objectPath="ElementRegions/Fault/fracture"
+          fieldName="displacementJump"/>   
+  </Tasks>
+<!-- SPHINX_FUNCTIONS_END -->
 
+<!-- SPHINX_OUTPUT -->  
+  <Outputs>
+    <VTK 
+      name="vtkOutput"
+      plotFileRoot="faultModel"
+      fieldNames="{ fractureContact_cohesion, fractureContact_frictionCoefficient }"/>
+
+    <TimeHistory
+      name="tractionOutput"
+      sources="{/Tasks/tractionCollection}"
+      filename="traction_history" />
+
+    <TimeHistory
+      name="displacementJumpOutput"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_history" />
+
+    <Restart
+      name="restartOutput"/>  
+
+  </Outputs>
+<!-- SPHINX_OUTPUT_END -->
+
+<!-- SPHINX_EVENT -->
   <Events maxTime="2.0">
     <PeriodicEvent
       name="outputs"
@@ -241,5 +269,6 @@
       timeFrequency="2.0"
       target="/Outputs/restartOutput"/>
   </Events>
+<!-- SPHINX_EVENT_END -->
 
 </Problem>
