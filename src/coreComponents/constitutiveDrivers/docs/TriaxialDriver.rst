@@ -21,7 +21,7 @@ XML Structure
 -------------
 A typical XML file to run the triaxial driver will have the following key elements.  We present the whole file first, before digging into the individual blocks.
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testTriaxial_druckerPragerExtended.xml
+.. literalinclude:: ../../integrationTests/constitutiveTests/testTriaxial_druckerPragerExtended.xml
   :language: xml
 
 The first thing to note is that the XML structure is identical to a standard GEOS input deck.  In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  This makes it easy to go back and forth between calibration and simulation.
@@ -114,18 +114,18 @@ The last two columns of the output file contain information about the convergenc
 
 We generally spend a lot of time vetting the material model implementations (#4).  When you first encounter a problem, it is therefore good to explore the other three scenarios first.  If you find something unusual in the model implementation or are just really stuck, please submit an issue on our issue tracker so we can help resolve any bugs.
 
-Unit Testing
-------------
+Integration Testing
+-------------------
 
 The development team also uses the Triaxial Driver to perform unit testing on the various material models within GEOS.  The optional argument ``baseline`` can be used to point to a previous output file that has been validated  (e.g. against analytical or experimental benchmarks).  If such a file is specified, the driver will perform a loading run and then compare the new results against the baseline.  In this way, any regressions in the material models can be quickly identified.
 
-Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/unitTests``. Adding additional tests is straightforward:
+Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/integrationTests``. Adding additional tests is straightforward:
 
-1. Create a new xml file for your test in ``src/coreComponents/constitutive/unitTests``.  There are several examples is this directory already to use as a template.  We suggest using the naming convention ``testTriaxial_myTest.xml``, so that all triaxial tests will be grouped together alphabetically.  Set the ``output`` file to ``testTriaxial_myTest.txt``, and run your test.  Validate the results however is appropriate.
+1. Create a new xml file for your test in ``src/coreComponents/constitutive/integrationTests``.  There are several examples is this directory already to use as a template.  We suggest using the naming convention ``testTriaxial_myTest.xml``, so that all triaxial tests will be grouped together alphabetically.  Set the ``output`` file to ``testTriaxial_myTest.txt``, and run your test.  Validate the results however is appropriate.
 
 2. This output file will now become your new baseline.  Replace the ``output`` key with ``baseline`` so that the driver can read in your file as a baseline for comparison.  Make sure there is no remaining ``output`` key, or set ``output=none``, to suppress further file output.  While you can certainly write a new output for debugging purposes, during our automated unit tests we prefer to suppress file output.  Re-run the triaxial driver to confirm that the comparison test passes.
 
-3. Modify ``src/coreComponents/constitutive/unitTests/CMakeLists.txt`` to enable your new test in the unit test suite.  In particular, you will need to add your new XML file to the existing list in the ``gtest_triaxial_xmls`` variable:
+3. Modify ``src/coreComponents/constitutive/integrationTests/CMakeLists.txt`` to enable your new test in the unit test suite.  In particular, you will need to add your new XML file to the existing list in the ``gtest_triaxial_xmls`` variable:
 
 .. code:: sh
 

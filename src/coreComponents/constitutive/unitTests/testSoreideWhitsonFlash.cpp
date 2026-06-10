@@ -64,14 +64,14 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
   /* UNCRUSTIFY-OFF */
   // Soreide-Whitson correlations work only with "true" values of component parameters
   // kij_NA is the binary interation coefficient in the gas phase (see Table 5 Soreide-Whitson (1992))
-  std::unordered_map<integer, std::array<real64 const, 6> const> const componentDatabase = {
+  stdUnorderedMap<integer, std::array<real64 const, 6> const> const componentDatabase = {
     //             Mw            Pc            Tc            Vc            Ac           kij_NA
     {Fluid::H2O, { 1.80153e-02,  2.20640e+07,  6.47096e+02,  5.59480e-05,  3.44300e-01, 0.0000 }},
     {Fluid::CO2, { 4.40095e-02,  7.37730e+06,  3.04128e+02,  9.41185e-05,  2.23940e-01, 0.1896 }},
     {Fluid::N2,  { 2.80134e-02,  3.39580e+06,  1.26192e+02,  8.94142e-05,  3.72000e-02, 0.4778 }},
     {Fluid::H2S, { 3.40809e-02,  9.00000e+06,  3.73100e+02,  9.81354e-05,  1.00500e-01, 0.0000 }},
-    {Fluid::C1,  { 1.60425e-02,  4.59920e+06,  1.90564e+02,  9.86278e-05,  1.14200e-02, 0.4850 }},
-    {Fluid::C2,  { 3.00690e-02,  4.87220e+06,  3.05322e+02,  1.45839e-04,  9.95000e-02, 0.4920 }},
+    {Fluid::CH4, { 1.60425e-02,  4.59920e+06,  1.90564e+02,  9.86278e-05,  1.14200e-02, 0.4850 }},
+    {Fluid::C2H6,{ 3.00690e-02,  4.87220e+06,  3.05322e+02,  1.45839e-04,  9.95000e-02, 0.4920 }},
     {Fluid::H2,  { 2.01588e-03,  1.29640e+06,  3.31450e+01,  6.44828e-05, -2.19000e-01, 0.0000 }},
   };
   /* UNCRUSTIFY-ON */
@@ -117,6 +117,9 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
   kValues( 0, 0 ) = 100.0;
   kValues( 0, 1 ) = 0.01;
 
+  auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+  auto const * flashParameters = parameters->get< FlashParameters >();
+
   bool status = NegativeTwoPhaseFlash::compute(
     numComps,
     pressure,
@@ -124,6 +127,8 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
     totalComposition.toSliceConst(),
     componentProperties,
     flashData,
+    flashParameters->m_continuousParameters,
+    flashParameters->m_discreteParameters,
     kValues.toSlice(),
     vapourFraction,
     liquidComposition,
@@ -161,22 +166,22 @@ INSTANTIATE_TEST_SUITE_P( SoreideWhitsonFlashTest, SoreideWhitsonSolubilityTestF
   ::testing::ValuesIn< SolubilityData >({
     // CH4 data from O'Sullivan & Smith (1970)
     // Digitized from Fig 14 of Soreide & Whitson (1992)
-    { 1.0039e+07, 376.15, 0.0, Fluid::C1,  1.352e-03, 1.246435e-03 }, 
-    { 2.0079e+07, 376.15, 0.0, Fluid::C1,  2.197e-03, 2.139535e-03 }, 
-    { 3.0118e+07, 376.15, 0.0, Fluid::C1,  2.873e-03, 2.815925e-03 }, 
-    { 4.0157e+07, 376.15, 0.0, Fluid::C1,  3.320e-03, 3.359950e-03 }, 
-    { 5.0059e+07, 376.15, 0.0, Fluid::C1,  3.847e-03, 3.810142e-03 }, 
-    { 6.0373e+07, 376.15, 0.0, Fluid::C1,  4.195e-03, 4.213468e-03 }, 
-    { 2.0079e+07, 376.15, 1.0, Fluid::C1,  1.690e-03, 1.667933e-03 }, 
-    { 3.0118e+07, 376.15, 1.0, Fluid::C1,  2.207e-03, 2.190537e-03 }, 
-    { 4.0295e+07, 376.15, 1.0, Fluid::C1,  2.565e-03, 2.614429e-03 }, 
-    { 5.0196e+07, 376.15, 1.0, Fluid::C1,  2.893e-03, 2.958925e-03 }, 
-    { 6.0373e+07, 376.15, 1.0, Fluid::C1,  3.201e-03, 3.262970e-03 }, 
-    { 2.0216e+07, 376.15, 4.0, Fluid::C1,  8.350e-04, 7.711673e-04 }, 
-    { 3.0118e+07, 376.15, 4.0, Fluid::C1,  1.083e-03, 1.003461e-03 }, 
-    { 4.0157e+07, 376.15, 4.0, Fluid::C1,  1.223e-03, 1.190968e-03 }, 
-    { 5.0196e+07, 376.15, 4.0, Fluid::C1,  1.332e-03, 1.346522e-03 }, 
-    { 6.0236e+07, 376.15, 4.0, Fluid::C1,  1.451e-03, 1.479266e-03 }, 
+    { 1.0039e+07, 376.15, 0.0, Fluid::CH4, 1.352e-03, 1.246435e-03 }, 
+    { 2.0079e+07, 376.15, 0.0, Fluid::CH4, 2.197e-03, 2.139535e-03 }, 
+    { 3.0118e+07, 376.15, 0.0, Fluid::CH4, 2.873e-03, 2.815925e-03 }, 
+    { 4.0157e+07, 376.15, 0.0, Fluid::CH4, 3.320e-03, 3.359950e-03 }, 
+    { 5.0059e+07, 376.15, 0.0, Fluid::CH4, 3.847e-03, 3.810142e-03 }, 
+    { 6.0373e+07, 376.15, 0.0, Fluid::CH4, 4.195e-03, 4.213468e-03 }, 
+    { 2.0079e+07, 376.15, 1.0, Fluid::CH4, 1.690e-03, 1.667933e-03 }, 
+    { 3.0118e+07, 376.15, 1.0, Fluid::CH4, 2.207e-03, 2.190537e-03 }, 
+    { 4.0295e+07, 376.15, 1.0, Fluid::CH4, 2.565e-03, 2.614429e-03 }, 
+    { 5.0196e+07, 376.15, 1.0, Fluid::CH4, 2.893e-03, 2.958925e-03 }, 
+    { 6.0373e+07, 376.15, 1.0, Fluid::CH4, 3.201e-03, 3.262970e-03 }, 
+    { 2.0216e+07, 376.15, 4.0, Fluid::CH4, 8.350e-04, 7.711673e-04 }, 
+    { 3.0118e+07, 376.15, 4.0, Fluid::CH4, 1.083e-03, 1.003461e-03 }, 
+    { 4.0157e+07, 376.15, 4.0, Fluid::CH4, 1.223e-03, 1.190968e-03 }, 
+    { 5.0196e+07, 376.15, 4.0, Fluid::CH4, 1.332e-03, 1.346522e-03 }, 
+    { 6.0236e+07, 376.15, 4.0, Fluid::CH4, 1.451e-03, 1.479266e-03 }, 
     // CO2 data from Takenouchi & Kennedy (1964)
     // Digitized from Fig 16 of Soreide & Whitson (1992)
     { 1.0031e+07, 423.15, 0.0, Fluid::CO2, 1.290e-02, 1.177661e-02 }, 

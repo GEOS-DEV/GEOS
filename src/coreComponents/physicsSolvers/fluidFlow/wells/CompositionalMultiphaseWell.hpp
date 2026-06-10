@@ -20,6 +20,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -138,10 +140,10 @@ public:
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
+   * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  void updateVolRatesForConstraint( WellElementSubRegion & subRegion );
+  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -183,7 +185,7 @@ public:
    */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -310,6 +312,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -338,10 +341,16 @@ protected:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   void printRates( real64 const & time_n,
                    real64 const & dt,

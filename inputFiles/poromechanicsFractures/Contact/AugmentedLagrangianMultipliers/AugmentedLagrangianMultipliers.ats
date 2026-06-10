@@ -1,0 +1,59 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+glue(collection='poromechanicsFractures')
+
+restartcheck_params = {'atol': 1e-07, 'rtol': 4e-06}
+
+decks = [
+    TestDeck(
+        name="PoroElastic_ALM_conformingFracture_2d_openingFrac_horizontal_sequential_smoke",
+        description='PoroElastic ALM conformingFracture 2d case (sequential)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PoroElastic_ALM_conformingFracture_2d_openingFrac_vertical_sequential_smoke",
+        description='PoroElastic ALM conformingFracture 2d case (sequential)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ALM_singlephasePoromechanics_curvedFrac_smoke",
+        description='PoroElastic ALM conformingFracture with two curved fractures and singlePhase',
+        partitions=((1, 1, 1), (4, 1, 1)),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="ALM_multiphasePoromechanics_curvedFrac_smoke",
+        description='PoroElastic ALM conformingFracture with two curved fractures and multiPhase',
+        partitions=((1, 1, 1), (4, 1, 1)),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="ALM_inclinedFault_ISG_smoke",
+        description='PoroElastic ALM inclined fault with internal surface generator (elastic)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ALM_inclinedFault_ESG_smoke",
+        description='PoroElastic ALM inclined fault with external surface generator (elastic)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ALM_inclinedFault_ISG_DruckerPrager_smoke",
+        description='PoroElastic ALM inclined fault with internal surface generator (DruckerPrager plastic)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+]
+
+generate_geos_tests(decks)

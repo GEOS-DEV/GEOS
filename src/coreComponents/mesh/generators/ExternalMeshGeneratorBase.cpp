@@ -62,39 +62,40 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postInputInitialization()
 {
-  auto const checkSizes = [this]( string_array const & from, string_array const & to,
-                                  string const & fromKey, string const & toKey )
+  auto const checkSizes = [&]( string_array const & from, string_array const & to,
+                               string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
-                          getWrapperDataContext( fromKey ) <<
-                          " and " << getWrapperDataContext( toKey ) <<
-                          " must contain the same number of values.",
+                          GEOS_FMT( "{} and {} must contain the same number of values.",
+                                    getWrapperDataContext( fromKey ),
+                                    getWrapperDataContext( toKey ) ),
                           InputError );
   };
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSString() );
 
-  auto const checkDuplicates = [this]( string_array const & v, string const & key )
+  auto const checkDuplicates = [&]( string_array const & v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
     GEOS_THROW_IF( hasDuplicates,
-                   getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
-                   "' already present in list of fields to import.",
-                   InputError );
+                   GEOS_FMT( "{}: '{}' already present in list of fields to import.",
+                             getWrapperDataContext( key ),
+                             stringutilities::join( v, ", " ) ),
+                   InputError, getWrapperDataContext( key ) );
   };
   checkDuplicates( m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsInGEOSString() );
   checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );
 
   // Building the fields mapping from the two separated input/output vectors.
   auto const buildMapping = [&]( string_array const & from,
-                                 string_array const & to ) -> std::map< string, string >
+                                 string_array const & to ) -> stdMap< string, string >
   {
-    std::map< string, string > mapping;
+    stdMap< string, string > mapping;
     for( size_t i = 0; i < from.size(); i++ )
     {
-      mapping[from[i]] = to[i];
+      mapping.insert( {from[i], to[i]} );
     }
     return mapping;
   };

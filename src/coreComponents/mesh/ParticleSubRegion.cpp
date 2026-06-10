@@ -22,13 +22,11 @@
 namespace geos
 {
 using namespace dataRepository;
-using namespace constitutive;
 
 ParticleSubRegion::ParticleSubRegion( string const & name, Group * const parent ):
   ParticleSubRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
-    setSizedFromParent( 0 );
+  // Left blank
 }
 
 ParticleSubRegion::~ParticleSubRegion()

@@ -42,7 +42,6 @@
 
     <SolidMechanicsLagrangeContactBubbleStab
       name="contactSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="2"
       writeLinearSystem="0"
       discretization="FE1"

@@ -19,10 +19,8 @@
 
 #include "EventBase.hpp"
 #include <cstring>
-
 #include "events/LogLevelsInfo.hpp"
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 
 namespace geos
 {
@@ -106,7 +104,7 @@ EventBase::EventBase( const string & name,
   registerWrapper( viewKeyStruct::isTargetExecutingString(), &m_targetExecFlag ).
     setDescription( "Index of the current subevent" );
 
-  addLogLevel< logInfo::SubEventExecution >();
+  addLogLevel< logInfo::EventExecution >();
 }
 
 
@@ -153,8 +151,14 @@ void EventBase::getTargetReferences()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                        getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
+
+      ErrorLogger::global().modifyCurrentExceptionMessage()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo()
+                           .setPriority( 1 ));
+      throw InputError( e, errorMsg );
     }
   }
 
@@ -179,7 +183,10 @@ void EventBase::checkEvents( real64 const time,
     }
     else
     {
-      this->setForecast( int( ( m_beginTime - time ) / dt ) );
+      real64 constexpr min_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::min);
+      real64 constexpr max_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::max);
+
+      this->setForecast( static_cast< integer >(std::clamp(( m_beginTime - time ) / dt, min_ratio, max_ratio )) );
     }
   }
   else if( time >= m_endTime )
@@ -244,9 +251,10 @@ bool EventBase::execute( real64 const time_n,
     EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
-    GEOS_LOG_LEVEL_RANK_0( logInfo::SubEventExecution,
-                           "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
-                           subEvent->getForecast() );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::EventExecution,
+                           GEOS_FMT( "          SubEvent {} (no.{}): dt_request={}, forecast={}",
+                                     subEvent->getName(), m_currentSubEvent,
+                                     subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
 
     if( subEvent->isReadyForExec() )
     {

@@ -87,10 +87,9 @@ protected:
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                             getDataContext(),
+                   GEOS_FMT( "Could not find solver '{}' of type {}",
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
-                   InputError );
+                   InputError, getDataContext() );
 
     // create dir for output
     if( m_writeCSV > 0 )

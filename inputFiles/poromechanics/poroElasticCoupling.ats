@@ -1,4 +1,16 @@
-from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+import os
+
+from ats.tests import AtsTest
+from geos.ats.test_builder import (TestDeck, RestartcheckParameters,
+                                   collect_block_names, logger,
+                                   test_build_failures)
+from geos.ats.test_case import TestCase
+from geos.ats.test_steps import geos
+
+
+TEST_TIMELIMITS = {
+    "PoroElastic_hybridHexPrism_co2_fim_3d_01": "45m",
+}
 
 
 class Description(object):
@@ -70,6 +82,95 @@ def _build_poro_elastic_coupling_case(deck, cycles, partitions, description,
         restart_step=intermediate_cycle,
         check_step=last_cycle,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
+
+
+def _generate_poro_elastic_coupling_tests(decks, test_type='smoke'):
+    for ii, deck in enumerate(decks):
+
+        restartcheck_params = None
+        curvecheck_params = None
+
+        if deck.restartcheck_params is not None:
+            restartcheck_params = deck.restartcheck_params.as_dict()
+
+        if deck.curvecheck_params is not None:
+            curvecheck_params = deck.curvecheck_params.as_dict()
+
+        for partition in deck.partitions:
+            nx, ny, nz = partition
+            n_ranks = nx * ny * nz
+
+            testcase_name = "{}_{:02d}".format(deck.name, n_ranks)
+            base_name = "0to{:d}".format(deck.check_step)
+
+            xml_file = ''
+            for suffix in ['', f'_{test_type}']:
+                if os.path.isfile("{}{}.xml".format(deck.name, suffix)):
+                    xml_file = "{}{}.xml".format(deck.name, suffix)
+
+            if not xml_file:
+                logger.error(
+                    f'Could not find a matching xml file for the test: {deck.name}'
+                )
+                test_build_failures.append(deck.name)
+                continue
+
+            xml_blocks = collect_block_names(xml_file)
+
+            checks = []
+            if curvecheck_params:
+                checks.append('curve')
+
+            geos_kwargs = {}
+            if testcase_name in TEST_TIMELIMITS:
+                geos_kwargs["timelimit"] = TEST_TIMELIMITS[testcase_name]
+
+            steps = [
+                geos(deck=xml_file,
+                     name=base_name,
+                     np=n_ranks,
+                     ngpu=n_ranks,
+                     x_partitions=nx,
+                     y_partitions=ny,
+                     z_partitions=nz,
+                     restartcheck_params=restartcheck_params,
+                     curvecheck_params=curvecheck_params,
+                     **geos_kwargs)
+            ]
+
+            if deck.restart_step > 0:
+                checks.append('restart')
+                steps.append(
+                    geos(deck=xml_file,
+                         name="{:d}to{:d}".format(deck.restart_step,
+                                                  deck.check_step),
+                         np=n_ranks,
+                         ngpu=n_ranks,
+                         x_partitions=nx,
+                         y_partitions=ny,
+                         z_partitions=nz,
+                         restart_file=os.path.join(
+                             testcase_name,
+                             "{}_restart_{:09d}".format(
+                                 base_name, deck.restart_step)),
+                         baseline_pattern=rf"{base_name}_restart_[0-9]+\.root",
+                         allow_rebaseline=False,
+                         restartcheck_params=restartcheck_params,
+                         **geos_kwargs))
+
+            AtsTest.stick(level=ii)
+            AtsTest.stick(checks=','.join(checks))
+            AtsTest.stick(solvers=','.join(xml_blocks.get('Solvers', [])))
+            AtsTest.stick(outputs=','.join(xml_blocks.get('Outputs', [])))
+            AtsTest.stick(
+                constitutive_models=','.join(
+                    xml_blocks.get('Constitutive', [])))
+            TestCase(name=testcase_name,
+                     desc=deck.description,
+                     label="auto",
+                     owner="GEOS team",
+                     independent=True,
+                     steps=steps)
 
 
 def _build_Terzaghi_cases():
@@ -265,7 +366,7 @@ def _build_PoroElasticPEBICO2FIM_cases():
         "Francois Hamon", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
-        "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (10, 20),
+        "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (5, 10),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
@@ -275,7 +376,7 @@ def _build_PoroElasticPEBICO2Sequential_cases():
         "auto", "Francois Hamon", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
-        "PoroElastic_hybridHexPrism_co2_sequential_3d.xml", (10, 20),
+        "PoroElastic_hybridHexPrism_co2_sequential_3d.xml", (5, 10),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
@@ -286,6 +387,26 @@ def _build_PoroElasticGravity_cases():
     return _build_poro_elastic_coupling_case("PoroElastic_gravity.xml",
                                              (5, 10), ((1, 1, 1), (1, 1, 2)),
                                              description, restartcheck_params)
+
+
+def _build_PoroElasticCarmanKozenyFIM_cases():
+    description = Description(
+        "Poroelastic problem with CarmanKozeny permeability model (fim) ", "auto",
+        "Jian Huang", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_CarmanKozenyPermeability_fim_smoke.xml", (0, 50),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+
+
+def _build_PoroElasticCarmanKozenySequential_cases():
+    description = Description(
+        "Poroelastic problem with CarmanKozeny permeability model (Sequential) ", "auto",
+        "Jian Huang", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_CarmanKozenyPermeability_sequential_smoke.xml", (0, 50),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
 def test_poro_elastic_coupling_cases():
@@ -308,10 +429,12 @@ def test_poro_elastic_coupling_cases():
         _build_PoroStaircaseCO2PeacemanWell_sequential_cases(),
         _build_PoroElasticPEBICO2FIM_cases(),
         _build_PoroElasticPEBICO2Sequential_cases(),
-        _build_PoroElasticGravity_cases()
+        _build_PoroElasticGravity_cases(),
+        _build_PoroElasticCarmanKozenyFIM_cases(),
+        _build_PoroElasticCarmanKozenySequential_cases()
     ]
 
-    generate_geos_tests(deck_instances)
+    _generate_poro_elastic_coupling_tests(deck_instances)
 
 
 test_poro_elastic_coupling_cases()

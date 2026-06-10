@@ -59,7 +59,7 @@ public:
    * @param nearNullKernel the user-provided near null kernel
    */
   TrilinosPreconditioner( LinearSolverParameters params,
-                          array1d< Vector > const & nearNullKernel );
+                          arrayView1d< Vector const > nearNullKernel );
 
   /**
    * @brief Destructor.

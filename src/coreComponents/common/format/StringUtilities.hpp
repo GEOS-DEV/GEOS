@@ -152,8 +152,8 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
  * @return The container of the divided substrings.
  */
 template< template< class ... > class CONTAINER = stdVector >
-CONTAINER< string > tokenize( string const & str,
-                              string const & delimiters,
+CONTAINER< string > tokenize( string_view str,
+                              string_view delimiters,
                               bool const treatConsecutiveDelimAsOne = true,
                               bool const preTrimStr = false )
 {
@@ -197,7 +197,7 @@ CONTAINER< string > tokenize( string const & str,
  * @return CONTAINER< string > The list of the subdivided substrings (stdVector< string > for instance).
  */
 template< template< class ... > class CONTAINER = stdVector >
-CONTAINER< string > tokenizeBySpaces( string const & str )
+CONTAINER< string > tokenizeBySpaces( string_view str )
 {
   return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );
 }
@@ -266,6 +266,17 @@ stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value );
 template< typename STRING_T >
 stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                            size_t & maxLineLength );
+
+/**
+ * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
+ * If a word has a greater size than maxLength, it will be cut in one or many parts.
+ * @param text The input text to wrap
+ * @param maxLineLength [inout] The max length a line can have.
+ *                      The value is then set to the effective maximum line length
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector containing the lines wrapped.
+ */
+string wrapTextToMaxLength( string_view text, size_t maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

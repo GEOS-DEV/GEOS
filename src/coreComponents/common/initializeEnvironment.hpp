@@ -48,6 +48,10 @@ struct CommandLineOptions
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;
 
+  /// If true, GEOS will only do the loading phase, and not actual simulation.
+  /// Useful to validate GEOS inputs.
+  bool onlyValidateInput = false;
+
   /// The path to the restart file, if specified.
   string restartFileName;
 
@@ -131,9 +135,16 @@ void setupMPI( int argc, char * argv[] );
 
 /**
  * @brief Finalize MPI.
+ * @param inError inError Indicate if the simulation end with an exception.
+ * By default set to false
  */
-void finalizeMPI();
+void finalizeMPI( bool inError = false );
 
+/**
+ * @brief Setup CUDA
+ * @details Will set up CUDA environment values if required
+ */
+void setupCUDA();
 
 /**
  * @brief Setup/init the environment.
@@ -144,8 +155,9 @@ void setupEnvironment( int argc, char * argv[] );
 
 /**
  * @brief Cleanup/finalize the environment.
+ * @param inError indicate if an exception occurred
  */
-void cleanupEnvironment();
+void cleanupEnvironment( bool inError = false );
 
 #if defined( GEOS_USE_CALIPER )
 

@@ -55,6 +55,12 @@ std::string & Path:: pathPrefix()
 
 std::string getAbsolutePath( std::string const & path )
 {
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  // Resolving filesystem paths is a host-only operation.
+  GEOS_UNUSED_VAR( path );
+  GEOS_THROW( "getAbsolutePath() is not supported in device compilation.", InputError );
+  return {};
+#else
   char buf[ PATH_MAX ];
   if( realpath( path.data(), buf ) )
   {
@@ -81,6 +87,7 @@ std::string getAbsolutePath( std::string const & path )
                         "Current working directory is: {}.\n",
                         path, reason, cwd ),
               InputError );
+#endif
 }
 
 std::istream & operator>>( std::istream & is, Path & p )
@@ -140,7 +147,9 @@ void makeDirectory( std::string const & path )
 {
   constexpr mode_t mode = 0770; // user and group rwx permissions
   int const err = mkdir( path.c_str(), mode );
-  GEOS_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
+  GEOS_THROW_IF( err && ( errno != EEXIST ),
+                 GEOS_FMT( "Failed to create directory: {}", path ),
+                 geos::RuntimeError );
 }
 
 void makeDirsForPath( std::string const & path )

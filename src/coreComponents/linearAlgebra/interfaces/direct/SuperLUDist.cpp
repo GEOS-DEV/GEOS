@@ -22,6 +22,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/Stopwatch.hpp"
+#include "common/TimingMacros.hpp"
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/Arnoldi.hpp"
@@ -50,13 +51,13 @@ namespace
 {
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist columns permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::ColPerm::none, NATURAL },
     { LinearSolverParameters::Direct::ColPerm::MMD_AtplusA, MMD_AT_PLUS_A },
@@ -66,24 +67,26 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
     { LinearSolverParameters::Direct::ColPerm::parmetis, PARMETIS },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist columns permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist rows permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::RowPerm::none, NOROWPERM },
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist rows permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -113,7 +116,6 @@ struct SuperLUDistData
   array1d< int_t > rowPtr{};          ///< row pointers
   array1d< int_t > colIndices{};      ///< column indices
   array1d< double > values{};         ///< values
-  array1d< double > rhs{};            ///< rhs/solution vector values
   SuperMatrix mat{};                  ///< SuperLU_Dist matrix format
   dScalePermstruct_t scalePerm{};     ///< data structure to scale and permute the matrix
   dLUstruct_t lu{};                   ///< data structure to store the LU factorization
@@ -130,7 +132,6 @@ struct SuperLUDistData
     rowPtr.resize( numLocalRows + 1 );
     colIndices.resize( numLocalNonzeros );
     values.resize( numLocalNonzeros );
-    rhs.resize( numLocalRows );
     dScalePermstructInit( numGlobalRows, numGlobalRows, &scalePerm );
     dLUstructInit( numGlobalRows, &lu );
     PStatInit( &stat );
@@ -212,6 +213,8 @@ template< typename LAI >
 void SuperLUDist< LAI >::apply( Vector const & src,
                                 Vector & dst ) const
 {
+  GEOS_MARK_FUNCTION;
+
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( src.ready() );
   GEOS_LAI_ASSERT( dst.ready() );
@@ -221,10 +224,10 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  // Export the rhs to a host-based array (this is required when vector is on GPU)
-  typename Matrix::Export vecExport;
-  vecExport.exportVector( src, m_data->rhs );
-  m_data->rhs.move( hostMemorySpace, true );
+  // pdgssvx operates on rhs/sol vector in-place
+  arrayView1d< real64 > const solution = dst.open();
+  solution.setValues< serialPolicy >( src.values() );
+  solution.move( hostMemorySpace, true );
 
   // Call the linear equation solver to solve the matrix.
   real64 berr = 0.0;
@@ -234,8 +237,8 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   pdgssvx( &m_data->options,
            &m_data->mat,
            &m_data->scalePerm,
-           m_data->rhs.data(),
-           m_data->rhs.size(),
+           solution.data(),
+           solution.size(),
            1,
            &m_data->grid,
            &m_data->lu,
@@ -248,8 +251,7 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   GEOS_LAI_ASSERT( !std::isnan( berr ) );
   GEOS_LAI_ASSERT( !std::isinf( berr ) );
 
-  // Import the solution back into the vector
-  vecExport.importVector( m_data->rhs, dst );
+  dst.close();
 }
 
 template< typename LAI >
@@ -289,8 +291,9 @@ void SuperLUDist< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 )
         {
-          GEOS_WARNING( "SuperLUDist: failed to reduce residual below tolerance.\n"
-                        "Condition number estimate: " << condEst );
+          GEOS_WARNING( GEOS_FMT( "SuperLUDist: failed to reduce residual below tolerance.\n"
+                                  "Condition number estimate: {}",
+                                  condEst ) );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }
@@ -320,7 +323,7 @@ void SuperLUDist< LAI >::setOptions()
 {
   // Initialize options.
   set_default_options_dist( &m_data->options );
-  m_data->options.PrintStat = m_params.logLevel > 1 ? YES : NO;
+  m_data->options.PrintStat = m_params.logLevel >= 3 ? YES : NO;
   m_data->options.Equil = m_params.direct.equilibrate ? YES : NO;
   m_data->options.ColPerm = getColPermType( m_params.direct.colPerm );
   m_data->options.RowPerm = getRowPermType( m_params.direct.rowPerm );
@@ -328,7 +331,7 @@ void SuperLUDist< LAI >::setOptions()
   m_data->options.ReplaceTinyPivot = m_params.direct.replaceTinyPivot ? YES : NO;
   m_data->options.IterRefine = m_params.direct.iterativeRefine ? SLU_DOUBLE : NOREFINE;
 
-  if( m_params.logLevel > 0 )
+  if( m_params.logLevel > 3 && MpiWrapper::commRank( m_data->grid.comm ) == 0 )
   {
     print_sp_ienv_dist( &m_data->options );
     print_options_dist( &m_data->options );
@@ -386,7 +389,6 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
   {
     real64 const * const R = m_data->scalePerm.R;
     real64 const * const C = m_data->scalePerm.C;
-    int_t const * const perm_c = m_data->scalePerm.perm_c;
 
     real64 minU = std::numeric_limits< real64 >::lowest();
     real64 maxU = std::numeric_limits< real64 >::max();
@@ -395,7 +397,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
 
     for( int_t i = 0; i < m_data->mat.nrow; ++i )
     {
-      real64 const u = std::abs( diagU[perm_c[i]] / C[i] );
+      real64 const u = std::abs( diagU[m_data->scalePerm.perm_c[i]] / C[i] );
       minU = std::min( u, minU );
       maxU = std::max( u, maxU );
       real64 const l = std::abs( 1.0 / R[i] );
@@ -424,7 +426,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberAdvanced() const
   GEOS_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
-  NormalOperator< LAI > const normalOperator( matrix() );
+  NormalOperator< Matrix > const normalOperator( matrix() );
   real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
   InverseNormalOperator< LAI, SuperLUDist > const inverseNormalOperator( matrix(), *this );

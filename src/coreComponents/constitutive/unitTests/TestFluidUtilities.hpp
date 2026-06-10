@@ -113,6 +113,69 @@ void testNumericalDerivative( real64 const x,
   }
 }
 
+/**
+ * @brief Tests a multi-valued function against a second derivative
+ * @details Will calculate the left-sided and the right-sided numerical second derivatives of a function
+ *          and compare this against a analytically calculated values provided.
+ * @tparam numValues the number of values that the function returns
+ * @tparam FUNCTION the type of function (typically a lambda)
+ * @param x The value at which the function should be evaluated
+ * @param dx The value to use to perturb @c x in the calculation of the numerical derivatives
+ * @param derivatives The values of the analytically calculated derivatives to use for comparison
+ * @param function The function which is being tested. This should be a function that takes 2 parameters.
+ *       The first is the value at which the function is being evaluated (x) and the second is an array
+ *       of size @c numValues which is the result of the execution of the function.
+ * @param absTolerance The absolute tolerance to use for the comparison
+ * @param relTolerance The relative tolerance to use for the comparison
+ */
+template< integer numValues, typename FUNCTION >
+void testNumericalSecondDerivative( real64 const x,
+                                    real64 const dx,
+                                    arraySlice1d< real64 const > const & derivatives,
+                                    FUNCTION && function,
+                                    real64 const absTolerance = absTol,
+                                    real64 const relTolerance = relTol )
+{
+  stackArray2d< real64, 5*numValues > values( 5, numValues );
+  function( x-2.0*dx, values[0] );
+  function( x-dx, values[1] );
+  function( x, values[2] );
+  function( x+dx, values[3] );
+  function( x+2.0*dx, values[4] );
+
+  real64 constexpr stencils[6][5] = {
+    {1.0, -2.0, 1.0, 0.0, 0.0},
+    {-1.0, 4.0, -5.0, 2.0, 0.0},
+    {-1.0/12.0, 16.0/12.0, -30.0/12.0, 16.0/12.0, -1.0/12.0},
+    {0.0, 1.0, -2.0, 1.0, 0.0},
+    {0.0, -1.0, 4.0, -5.0, 2.0},
+    {0.0, 0.0, 1.0, -2.0, 1.0},
+  };
+  real64 const invdx2 = 1.0 / (dx*dx);
+  for( integer i = 0; i < numValues; ++i )
+  {
+    real64 minError = LvArray::NumericLimits< real64 >::max;
+    real64 selectedDerivative = 0.0;
+    for( integer si = 0; si < 6; si++ )
+    {
+      real64 deriv = 0.0;
+      for( integer ci = 0; ci < 5; ci++ )
+      {
+        deriv += stencils[si][ci]*values( ci, i );
+      }
+      deriv *= invdx2;
+      real64 const error = LvArray::math::abs( deriv - derivatives[i] );
+      if( error < minError )
+      {
+        minError = error;
+        selectedDerivative = deriv;
+      }
+    }
+    checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
+                        GEOS_FMT( "Numerical derivative for component {}", i ) );
+  }
+}
+
 }// namespace internal
 
 }// namespace testing

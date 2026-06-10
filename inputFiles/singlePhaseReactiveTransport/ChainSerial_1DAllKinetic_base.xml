@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Medium, Source }"
+      initialDt="1e-5"
+      writeLinearSystem="0"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-10"
+        maxTimeStepCuts="8"
+        maxSubSteps="400"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        timeStepIncreaseFactor="2"
+        logLevel="1"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="1"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb-0_0_0 }"
+      materialList="{ water, rock, diffusion }"/>
+
+    <CellElementRegion
+      name="Medium"
+      cellBlocks="{ cb-1_0_0 }"
+      materialList="{ water, rock, diffusion }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      chemicalSystemType="chainSerialAllKinetic"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="1.0"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 0.18, 0.18, 0.18 }"/>
+  </Constitutive>
+</Problem>

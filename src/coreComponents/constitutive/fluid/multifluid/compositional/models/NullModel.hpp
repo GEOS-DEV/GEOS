@@ -76,8 +76,6 @@ public:
     GEOS_UNUSED_VAR( modelParameters );
   }
 
-  virtual ~NullModel() override = default;
-
   static string catalogName() { return "NullPVTModel"; }
 
   static constexpr FunctionType function(){ return FunctionType::UNKNOWN; }

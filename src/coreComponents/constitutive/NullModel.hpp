@@ -34,16 +34,10 @@ public:
   NullModel( string const & name,
              Group * const parent );
 
-  /// Destrutor
-  virtual ~NullModel();
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "NullModel";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "NullModel"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

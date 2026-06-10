@@ -13,15 +13,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+
+#include "RelpermDriver.hpp"
 
 namespace geos
 {
@@ -53,8 +53,7 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  addLogLevel< logInfo::Initialisation >();
-  addLogLevel< logInfo::Results >();
+  addLogLevel< logInfo::LogOutput >();
 }
 
 
@@ -91,10 +90,10 @@ void RelpermDriver::outputResults()
 
 void RelpermDriver::postInputInitialization()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
   m_numPhases = baseRelperm.numFluidPhases();
 
@@ -111,21 +110,21 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", geos::RuntimeError );
 
 
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Relperm Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Relperm .................. " << m_relpermName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseRelperm.getCatalogName() );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Relperm Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Relperm .................. " << m_relpermName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseRelperm.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -164,12 +163,12 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  using PT = constitutive::RelativePermeabilityBase::PhaseType;
+  using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
   integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
   integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
@@ -177,20 +176,20 @@ void RelpermDriver::resizeTables()
   real64 minSw = 0., minSnw = 0.;
   if( baseRelperm.numFluidPhases() > 2 )
   {
-    minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
-    minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+    minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
+    minSnw = baseRelperm.getNonWettingMinVolumeFraction();
   }
   else
   {
     if( ipWater < 0 )// a.k.a o/g
     {
       minSw = 0;
-      minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+      minSnw = baseRelperm.getNonWettingMinVolumeFraction();
     }
     else if( ipGas < 0 || ipOil < 0 )// a.k.a w/o or w/g
     {
       minSnw = 0;
-      minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
+      minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
     }
   }
 
@@ -245,7 +244,7 @@ void RelpermDriver::resizeTables()
 
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
@@ -260,7 +259,7 @@ RelpermDriver::resizeTable()
 }
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
@@ -280,7 +279,9 @@ void RelpermDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 
@@ -302,27 +303,27 @@ void RelpermDriver::compareWithBaseline()
   {
     for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
-                                                                                         << " (row "
-                                                                                         << row + m_numColumns
-                                                                                         << " with header)"
-                                                                                         << " and column " << col + 1,
-                     std::runtime_error );
+      GEOS_THROW_IF( error > m_baselineTol,
+                     GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                               row + 1,
+                               row + m_numColumns,
+                               col + 1 ),
+                     geos::RuntimeError );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

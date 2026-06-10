@@ -20,18 +20,15 @@
 #include "EmbeddedSurfaceGenerator.hpp"
 #include "EmbeddedSurfacesParallelSynchronization.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/utilities/CIcomputationKernel.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/Rectangle.hpp"
@@ -286,6 +283,14 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( t
       {
         gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
       } );
+    }
+
+    string const thermalCondModelName = getConstitutiveName< SinglePhaseThermalConductivityBase >( fractureSubRegion );
+    if( !thermalCondModelName.empty() )
+    {
+      // if a thermal conductivity model exists we need to set the initial value to something meaningful
+      SinglePhaseThermalConductivityBase & thermalCondModel = getConstitutiveModel< SinglePhaseThermalConductivityBase >( fractureSubRegion, thermalCondModelName );
+      thermalCondModel.initializeState();
     }
   } );
 

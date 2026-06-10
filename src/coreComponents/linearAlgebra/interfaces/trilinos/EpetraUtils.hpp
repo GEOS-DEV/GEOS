@@ -33,7 +33,7 @@ namespace geos
 namespace trilinos
 {
 
-// Check matching requirements on index/value types between GEOSX and PETSc
+// Check matching requirements on index/value types between GEOS and PETSc
 
 static_assert( sizeof( long long ) == sizeof( geos::globalIndex ),
                "long long and geos::globalIndex must have the same size" );
@@ -53,7 +53,7 @@ using EpetraComm = Epetra_SerialComm;
 #endif
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to Epetra long long
+ * @brief Converts a non-const array from GEOS globalIndex type to Epetra long long
  * @param[in] index the input array
  * @return the converted array
  */
@@ -63,7 +63,7 @@ inline long long * toEpetraLongLong( globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to Epetra long long
+ * @brief Converts a const array from GEOS globalIndex type to Epetra long long
  * @param[in] index the input array
  * @return the converted array
  */

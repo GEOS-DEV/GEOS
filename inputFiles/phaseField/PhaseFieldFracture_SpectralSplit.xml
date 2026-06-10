@@ -17,7 +17,6 @@
 
     <SolidMechanicsLagrangianFEM
       name="SolidMechSolve"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"

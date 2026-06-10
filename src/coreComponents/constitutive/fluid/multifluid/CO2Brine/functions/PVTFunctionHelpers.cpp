@@ -18,7 +18,6 @@
  */
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "LvArray/src/sortedArrayManipulation.hpp"
 
 namespace geos
 {
@@ -36,7 +35,7 @@ BlackOilTables::readTable( string const & fileName,
 {
   std::ifstream is( fileName );
   GEOS_ERROR_IF( !is.is_open(),
-                 "BlackOilTables: could not open file: " << fileName );
+                 GEOS_FMT( "BlackOilTables: could not open file: {}", fileName ) );
 
   // Read line-by-line until eof
   string str;
@@ -68,8 +67,10 @@ BlackOilTables::readTable( string const & fileName,
   for( localIndex i = 0; i < data.size(); ++i )
   {
     GEOS_ERROR_IF( data[i].size() < minRowLength,
-                   "BlackOilTables: too few entries in row " << i << " of table " << fileName
-                                                             << ", minimum " << std::to_string( minRowLength ) << " required" );
+                   GEOS_FMT( "BlackOilTables: too few entries in row {} of table {}, minimum {} required",
+                             i,
+                             fileName,
+                             minRowLength ) );
   }
 }
 

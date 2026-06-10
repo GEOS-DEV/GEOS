@@ -42,7 +42,7 @@ template< typename FIRST, typename SECOND >
 struct PairTestCase
 {
   string_view testName;
-  std::vector< std::vector< MpiWrapper::PairType< FIRST, SECOND > > > pairs; // Pair set for each rank
+  stdVector< stdVector< MpiWrapper::PairType< FIRST, SECOND > > > pairs; // Pair set for each rank
   MpiWrapper::PairType< FIRST, SECOND > expectedMin; // Expected result for Min reduction
   MpiWrapper::PairType< FIRST, SECOND > expectedMax; // Expected result for Max reduction
 };
@@ -66,7 +66,7 @@ namespace pairTestCases
 template< typename FIRST, typename SECOND >
 void runAllTestCases( int const rankId )
 {
-  std::vector< PairTestCase< FIRST, SECOND > > const testCases = {
+  stdVector< PairTestCase< FIRST, SECOND > > const testCases = {
     {
       "Basic case with distinct values",
       { { { 9, 23 }, { 18, 886 }, { 19, 26 }, { 8, 549 } } }, // pairs
@@ -126,7 +126,7 @@ template< typename FIRST, typename SECOND >
 void runTestCase( PairTestCase< FIRST, SECOND > const & testCase, int rankId, int nbRanks )
 {
   // Create local pairs for 1 or n ranks
-  std::vector< MpiWrapper::PairType< FIRST, SECOND > > localPairs;
+  stdVector< MpiWrapper::PairType< FIRST, SECOND > > localPairs;
   if( nbRanks == 1 )
   {
     // Special case when we test on only one rank : all rank data are combined
@@ -156,7 +156,7 @@ template< typename FIRST, typename SECOND >
 void runAllTestCases( int rankId, int nbRanks )
 {
   // the set of cases is designed for 4 ranks
-  std::vector< PairTestCase< FIRST, SECOND > > const testCases = {
+  stdVector< PairTestCase< FIRST, SECOND > > const testCases = {
     {
       "Basic case with distinct values",
       { { { 55, 549 }, { 34, 886 } }, { { 68, 23 }, { 10, 6 } }, { { 59, -781 }, { 64, 823 } }, { { 15, 543 }, { 22, 363 } } }, // pairs

@@ -24,7 +24,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
-
+#include "functions/TableFunction.hpp"
 namespace geos
 {
 
@@ -39,6 +39,15 @@ class WellElementSubRegion;
 class PerforationData : public ObjectManagerBase
 {
 public:
+
+  /**
+   * @brief enumeration for values element state
+   */
+  enum PerforationStatus : unsigned
+  {
+    CLOSED = 0,            //  no flow in element
+    OPEN = 1
+  };
 
   /**
    * @name Constructor / Destructor
@@ -207,6 +216,43 @@ public:
   arrayView1d< real64 > getWellSkinFactor() { return m_wellSkinFactor; }
 
 
+  /**
+   * @brief Get perforation name
+   * @return array of names
+   */
+  string_array & getPerfName() { return m_perfName; }
+
+  /**
+   * @brief Get perforation name
+   * @return array of names
+   */
+  string_array const & getPerfName() const { return m_perfName; }
+
+  /**
+   * @brief Get perforation status table name
+   * @return array of names
+   */
+  string_array & getPerfStatusTableName() { return m_perfStatusTableName; }
+
+  /**
+   * @brief Get perforation status table name
+   * @return array of names
+   */
+  string_array const & getPerfStatusTableName() const { return m_perfStatusTableName; }
+
+  /**
+   * @brief Get perforation's status
+   * @return status array
+   */
+  arrayView1d< localIndex const > getLocalPerfStatus() const { return m_localPerfStatus; }
+
+
+  /**
+   * @brief Get perforation's status
+   * @return status array
+   */
+  arrayView1d< localIndex > getLocalPerfStatus() { return m_localPerfStatus; }
+
   ///@}
 
   /**
@@ -251,6 +297,10 @@ public:
   {
     /// @return String key for the global number of perforations
     static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
+    /// @return String key for perforation names
+    static constexpr char const * perforationStatusTableName() { return "perforationStatusTableName"; }
+    /// @return String key for perforation names
+    static constexpr char const * perforationName() { return "perforationName"; }
   }
   /// ViewKey struct for the PerforationData class
   viewKeysPerforationData;
@@ -300,6 +350,15 @@ private:
 
   /// Well skin factor at the perforations
   array1d< real64 > m_wellSkinFactor;
+
+  /// Name of perforations
+  string_array m_perfName;
+
+  /// Name of perforation table function defining perforation status as a function of time
+  string_array m_perfStatusTableName;
+
+  /// The status (open or closed) of perforations belonging to mesh partition for this rank
+  array1d< localIndex > m_localPerfStatus;
 
 };
 

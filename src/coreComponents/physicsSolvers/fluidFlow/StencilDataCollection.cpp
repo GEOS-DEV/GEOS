@@ -28,7 +28,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -36,7 +35,7 @@ namespace geos
 
 using namespace constitutive;
 using namespace dataRepository;
-
+using namespace fields;
 
 StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
@@ -70,10 +69,8 @@ void StencilDataCollection::postInputInitialization()
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "{}: Could not find flow solver named '{}'.",
-                             getDataContext(),
-                             m_solverName ),
-                   InputError );
+                   GEOS_FMT( "Could not find flow solver named '{}'.", m_solverName ),
+                   InputError, getDataContext() );
   }
 
   { // find mesh & discretization
@@ -92,8 +89,9 @@ void StencilDataCollection::postInputInitialization()
     } catch( BadTypeError const & e )
     {
       // only TPFA is supported for now
-      GEOS_ERROR( GEOS_FMT( "{}: target discretization is not supported by {} (for now, only '{}' is).",
-                            getDataContext(), catalogName(), TwoPointFluxApproximation::catalogName() ) );
+      GEOS_ERROR( GEOS_FMT( "target discretization is not supported by {} (for now, only '{}' is).",
+                            catalogName(), TwoPointFluxApproximation::catalogName() ),
+                  getDataContext() );
     }
   }
 }
@@ -114,10 +112,10 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
                                       getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
-  GEOS_ERROR_IF( supportedStencilCount == 0,
-                 GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
-  GEOS_ERROR_IF( supportedStencilCount > 1,
-                 GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
+  GEOS_ERROR_IF( supportedStencilCount == 0, "No compatible discretization was found.",
+                 getDataContext() );
+  GEOS_ERROR_IF( supportedStencilCount > 1, "Multiple discretization was found.",
+                 getDataContext() );
 }
 
 
@@ -151,7 +149,7 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability >;
+                                                          permeability::permeability >;
 
 
   /**
@@ -209,7 +207,7 @@ StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWra
   typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
 
   Kernel::launch< parallelDevicePolicy<> >( kernelData.toView(), stencilWrapper,
-                                            accessor.get< fields::permeability::permeability >() );
+                                            accessor.get< permeability::permeability >() );
 
   return kernelData;
 }
@@ -268,8 +266,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 
   { // data storing
     GEOS_ERROR_IF_NE_MSG( size_t( m_cellAGlobalId.size() ), size_t( sortedData.size() ),
-                          GEOS_FMT( "{}: Unexpected stencil size!\n{}",
-                                    getDataContext(), formatKernelDataExtract( kernelData, 8 ) ) );
+                          GEOS_FMT( "Unexpected stencil size!\n{}", formatKernelDataExtract( kernelData, 8 ) ),
+                          getDataContext() );
     globalIndex i = 0;
     for( ConnectionData const & conn : sortedData )
     {

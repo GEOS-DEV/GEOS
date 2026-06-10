@@ -55,13 +55,20 @@ protected:
 
   /**
    * @brief Constructor for the class performing the thermal conductivity updates
+   * @param referenceThermalConductivity the array of cell-wise reference conductivities in the subregion
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
+   * @param dEffectiveConductivity_dT the array of cell-wise derivatives of the effective conductivities w.r.t. temperature in the subregion
    */
-  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
+  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & referenceThermalConductivity,
+                                            arrayView3d< real64 > const & effectiveConductivity,
                                             arrayView3d< real64 > const & dEffectiveConductivity_dT )
-    : m_effectiveConductivity( effectiveConductivity ),
+    : m_referenceThermalConductivity( referenceThermalConductivity ),
+    m_effectiveConductivity( effectiveConductivity ),
     m_dEffectiveConductivity_dT( dEffectiveConductivity_dT )
   {}
+
+  /// View on the cell-wise reference conductivities
+  arrayView3d< real64 > m_referenceThermalConductivity;
 
   /// View on the cell-wise effective conductivities
   arrayView3d< real64 > m_effectiveConductivity;
@@ -96,8 +103,7 @@ public:
    */
   SinglePhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
@@ -146,18 +152,15 @@ public:
    */
   arrayView3d< real64 const > dEffectiveConductivity_dT() const { return m_dEffectiveConductivity_dT; }
 
-private:
-
   /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   * @brief Initialize the thermal conductivity state
    */
-  void resizeFields( localIndex const size, localIndex const numPts );
+  virtual void initializeState() const;
 
 protected:
 
-  virtual void postInputInitialization() override;
+  /// cell-wise reference conductivities in the subregion
+  array3d< real64 > m_referenceThermalConductivity;
 
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;

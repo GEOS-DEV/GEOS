@@ -483,6 +483,7 @@ private:
   integer m_writeCSV;
 };
 /// @cond DO_NOT_DOCUMENT
+
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE

@@ -24,7 +24,6 @@
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "ExplicitQDRateAndState.hpp"
 
@@ -33,7 +32,6 @@ namespace geos
 
 using namespace dataRepository;
 using namespace fields;
-using namespace constitutive;
 using namespace rateAndStateKernels;
 
 template< typename RSSOLVER_TYPE >

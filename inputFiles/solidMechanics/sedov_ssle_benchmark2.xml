@@ -41,6 +41,7 @@
   <Solvers>
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
+      timeIntegrationOption="ExplicitDynamic"
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region2 }"
