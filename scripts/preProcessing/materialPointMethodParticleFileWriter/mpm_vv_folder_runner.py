@@ -52,8 +52,43 @@ def variant_case_id(folder_case_id: str, variant: dict) -> str:
 
 
 def run_command(cmd: list[str], cwd: Path, env: dict[str, str]) -> tuple[int, str]:
-    proc = subprocess.run(cmd, cwd=cwd, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return proc.returncode, proc.stdout
+    """Run a child verification command while streaming its output.
+
+    Folder runners dispatch one subcase at a time through mpm_vv_case_runner.py.
+    The earlier implementation captured the entire child log with
+    subprocess.run(..., stdout=PIPE) and printed it only after the child exited.
+    That made a legitimate overwrite prompt from mpm_vv_case_runner invisible to
+    the user and made the folder run appear to hang.  Stream the child output one
+    character at a time so prompts without trailing newlines are visible, while
+    still retaining the full log for the manifest.
+    """
+    env = dict(env)
+    env.setdefault("PYTHONUNBUFFERED", "1")
+    proc = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        text=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+    )
+    output_parts: list[str] = []
+    assert proc.stdout is not None
+    while True:
+        chunk = proc.stdout.read(1)
+        if chunk:
+            output_parts.append(chunk)
+            print(chunk, end="", flush=True)
+            continue
+        if proc.poll() is not None:
+            tail = proc.stdout.read()
+            if tail:
+                output_parts.append(tail)
+                print(tail, end="" if tail.endswith("\n") else "\n", flush=True)
+            break
+    return proc.wait(), "".join(output_parts)
 
 
 def read_variant_jobs(source_dir: Path, folder_case_id: str, variant: dict) -> dict:
@@ -100,11 +135,12 @@ def dispatch_variant(args: argparse.Namespace, source_dir: Path, runner: Path, i
         cmd += ["--walltime", args.walltime]
 
     start_time = time.time()
+    print(f"[{args.case_id}] starting {variant['name']} with command: {' '.join(cmd)}", flush=True)
     code, output = run_command(cmd, source_dir, env)
     elapsed_seconds = round(time.time() - start_time, 3)
     print(f"[{args.case_id}] {variant['name']} returncode={code} dispatchElapsed={elapsed_seconds}s", flush=True)
-    if output:
-        print(output, end="" if output.endswith("\n") else "\n", flush=True)
+    # The child log has already been streamed by run_command; keep the captured
+    # text only for the manifest excerpt.
     jobs = read_variant_jobs(source_dir, args.case_id, variant)
     return {
         "name": variant["name"],

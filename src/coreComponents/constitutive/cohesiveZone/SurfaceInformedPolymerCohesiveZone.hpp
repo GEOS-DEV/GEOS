@@ -23,16 +23,23 @@
  *   eps_n = delta_n / h0,  gamma = delta_t / h0,
  *
  * and elastic trial tractions are computed from the same temperature/crystallinity-scaled moduli used
- * by the continuum polymer.  The trial film stress state is then returned to the same scalar surface
- * used by the continuum model,
+ * by the continuum polymer.  The normal film response is decomposed into a retained volumetric mean
+ * stress p_t=K eps_n and a return-mapped deviatoric normal stress s_n.  This is important for thin
+ * layers in uniaxial-strain loading: the cohesive projection must preserve the large constrained
+ * volumetric traction carried by the corresponding continuum layer instead of limiting the total
+ * normal traction to the flow stress.
+ *
+ * The deviatoric film stress state is then returned to the same scalar surface used by the continuum
+ * model,
  *
  *   q + eta(T) p_t = Y(T,Xc) + S_soft(T) exp[-(kappa/r1)^r2]
  *                    + H_g S_T(T)^p_H [lambda_eff^2 - lambda_eff^{-1}],
  *
- * where q=sqrt(sigma_n^2+3 tau^2) and p_t=sigma_n/3 with tensile sign convention.  The sign returned
- * to the MPM cohesive infrastructure is the existing GEOS cohesive sign convention: opening produces a
- * negative normal stress value.  A separate maximumStretch parameter is retained as a cohesive failure
- * cutoff; once exceeded, the law returns zero traction in that update.
+ * where q=sqrt((3 s_n/2)^2+3 tau^2) for the reduced normal-shear film state and p_t is positive in
+ * tension.  The sign returned to the MPM cohesive infrastructure is the existing GEOS cohesive sign
+ * convention: opening produces a negative normal stress value.  A separate maximumStretch parameter
+ * is retained as a cohesive failure cutoff; once exceeded, the law returns zero traction in that
+ * update.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SURFACEINFORMEDPOLYMERCOHESIVEZONE_HPP_
@@ -176,7 +183,6 @@ public:
 
     real64 const K = m_bulkModulus * ST * CE;
     real64 const G = m_shearModulus * ST * CE;
-    real64 const M = K + 4.0 * G / 3.0;
 
     real64 const yield0 = m_defaultYieldStrength * ST * CY;
     real64 const softeningMagnitude = m_shearSofteningMagnitude * ST;
@@ -191,14 +197,22 @@ public:
     real64 const plasticTangential0 = m_plasticTangentialStrain[k];
     real64 const kappa0 = m_equivalentPlasticStrain[k];
 
-    real64 const sigmaNTrial = M * ( normalStrain - plasticNormal0 );
+    // The cohesive film is a reduced normal-shear representation of a finite-thickness continuum
+    // layer.  For the normal part, use the uniaxial-strain split of the corresponding continuum
+    // response: p_t=K eps_n is retained as a volumetric stress, while only the deviatoric normal
+    // stress s_n=(4/3)G(eps_n-eps_n^p) participates in the radial return.  This keeps a nearly
+    // incompressible film stiff in constrained tension/compression while still allowing plastic
+    // flow of the deviatoric part.
+    real64 const pTrial = K * normalStrain;
+    real64 const normalDeviatoricModulus = 4.0 * G / 3.0;
+    real64 const sNTrial = normalDeviatoricModulus * ( normalStrain - plasticNormal0 );
     real64 const tauTrial = G * ( tangentialStrain - plasticTangential0 );
-    real64 const qTrial = LvArray::math::sqrt( sigmaNTrial * sigmaNTrial + 3.0 * tauTrial * tauTrial );
-    real64 const pTrial = sigmaNTrial / 3.0;
+    real64 const qTrial = LvArray::math::sqrt( 2.25 * sNTrial * sNTrial + 3.0 * tauTrial * tauTrial );
 
     real64 kappa = kappa0;
-    real64 sigmaN = sigmaNTrial;
+    real64 sN = sNTrial;
     real64 tau = tauTrial;
+    real64 sigmaN = pTrial + sNTrial;
     bool plastic = false;
 
     for( int iter = 0; iter < 16; ++iter )
@@ -209,39 +223,43 @@ public:
                                                                                          m_shearSofteningShapeParameter1,
                                                                                          m_shearSofteningShapeParameter2 ) +
                                   stretchHardening;
-      real64 const denominator = qTrial + pressureAsymmetry * pTrial;
-      if( denominator <= flowStrength || denominator <= 1.0e-16 )
+      real64 const yieldMeasure = qTrial + pressureAsymmetry * pTrial;
+      if( yieldMeasure <= flowStrength || qTrial <= 1.0e-16 )
       {
         plastic = false;
-        sigmaN = sigmaNTrial;
+        sN = sNTrial;
         tau = tauTrial;
+        sigmaN = pTrial + sN;
         kappa = kappa0;
         break;
       }
 
       plastic = true;
-      real64 const scale = LvArray::math::min( 1.0, LvArray::math::max( 0.0, flowStrength / denominator ) );
-      real64 const sigmaNNew = scale * sigmaNTrial;
+      real64 const returnedQ = LvArray::math::min( qTrial,
+                                                   LvArray::math::max( flowStrength - pressureAsymmetry * pTrial, 0.0 ) );
+      real64 const scale = returnedQ / qTrial;
+      real64 const sNNew = scale * sNTrial;
       real64 const tauNew = scale * tauTrial;
-      real64 const qNew = LvArray::math::sqrt( sigmaNNew * sigmaNNew + 3.0 * tauNew * tauNew );
-      real64 const deltaKappa = LvArray::math::max( 0.0, ( qTrial - qNew ) / ( 3.0 * LvArray::math::max( G, 1.0e-16 ) ) );
+      real64 const deltaKappa = LvArray::math::max( 0.0, ( qTrial - returnedQ ) / ( 3.0 * LvArray::math::max( G, 1.0e-16 ) ) );
       real64 const kappaNew = kappa0 + deltaKappa;
 
       if( LvArray::math::abs( kappaNew - kappa ) <= 1.0e-10 * LvArray::math::max( 1.0, kappaNew ) )
       {
-        sigmaN = sigmaNNew;
+        sN = sNNew;
         tau = tauNew;
+        sigmaN = pTrial + sN;
         kappa = kappaNew;
         break;
       }
       kappa = kappaNew;
-      sigmaN = sigmaNNew;
+      sN = sNNew;
       tau = tauNew;
+      sigmaN = pTrial + sN;
     }
 
     if( plastic )
     {
-      m_plasticNormalStrain[k] = normalStrain - sigmaN / LvArray::math::max( M, 1.0e-16 );
+      m_plasticNormalStrain[k] = normalStrain - sN / LvArray::math::max( normalDeviatoricModulus, 1.0e-16 );
       m_plasticTangentialStrain[k] = tangentialStrain - tau / LvArray::math::max( G, 1.0e-16 );
       m_equivalentPlasticStrain[k] = LvArray::math::max( m_equivalentPlasticStrain[k], kappa );
     }

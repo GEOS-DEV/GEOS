@@ -207,12 +207,42 @@ if "mWallTime" not in pfw:
 def run_pfw(args, run_dir: Path):
     cmd = [args.python_cmd, "particleFileWriter.py", Path(args.input).name]
     log(args.case_id, "running particleFileWriter in " + str(run_dir))
-    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    print(proc.stdout, end="")
-    (run_dir / f"{args.output_prefix}_pfw.log").write_text(proc.stdout)
-    if proc.returncode != 0:
-        fail(args.case_id, f"particleFileWriter failed with exit code {proc.returncode}")
-    return proc.stdout
+
+    # Stream PFW output rather than buffering it until completion.  This keeps
+    # progress visible during long particle-generation steps and prevents any
+    # prompt without a trailing newline from being hidden behind stdout capture.
+    env = os.environ.copy()
+    env.setdefault("PYTHONUNBUFFERED", "1")
+    proc = subprocess.Popen(
+        cmd,
+        cwd=run_dir,
+        env=env,
+        text=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+    )
+    output_parts = []
+    assert proc.stdout is not None
+    while True:
+        chunk = proc.stdout.read(1)
+        if chunk:
+            output_parts.append(chunk)
+            print(chunk, end="", flush=True)
+            continue
+        if proc.poll() is not None:
+            tail = proc.stdout.read()
+            if tail:
+                output_parts.append(tail)
+                print(tail, end="" if tail.endswith("\n") else "\n", flush=True)
+            break
+    output = "".join(output_parts)
+    returncode = proc.wait()
+    (run_dir / f"{args.output_prefix}_pfw.log").write_text(output)
+    if returncode != 0:
+        fail(args.case_id, f"particleFileWriter failed with exit code {returncode}")
+    return output
 
 
 def extract_job_id(text: str) -> str:

@@ -158,10 +158,11 @@ The polymer law represents a finite-thickness cohesive layer with bulk and shear
 where $h$ is the layer thickness, updates temperature-dependent moduli and strengths, computes a yield-limited traction scale, and tracks previous stretch and plastic-strain-like history.  Damage is activated when the stretch exceeds the temperature-adjusted maximum stretch.
 
 
+
 \paragraph{\texttt{SurfaceInformedPolymerCohesiveZone}.}
-This law is the thin-film projection of \texttt{SurfaceInformedPolymer}.  It converts normal opening and tangential slip to film strains, evaluates the same normalized thermal scale, crystallinity factors, softening term, stretch-hardening term, and pressure-sensitive strength correction as the continuum model, and returns cohesive tractions using the established cohesive-zone sign convention.  With tensile film stress taken as positive,
+This law is the thin-film projection of \texttt{SurfaceInformedPolymer}.  It converts normal opening and tangential slip to film strains, evaluates the same normalized thermal scale, crystallinity factors, softening term, stretch-hardening term, and pressure-sensitive strength correction as the continuum model, and returns cohesive tractions using the established cohesive-zone sign convention.  The normal film response is split into a retained mean stress and a return-mapped deviatoric normal stress, so the cohesive projection preserves the constrained volumetric traction of a nearly incompressible thin continuum layer.  With tensile film stress taken as positive,
 \begin{equation}
-  q=\sqrt{\sigma_n^2+3\tau^2},\qquad p_t=\frac{\sigma_n}{3},
+  p_t=K\epsilon_n,\qquad s_n=\sigma_n-p_t,\qquad q=\sqrt{\left(\frac{3}{2}s_n\right)^2+3\tau^2},
 \end{equation}
 and the return surface is
 \begin{equation}

@@ -2354,7 +2354,7 @@ def _set_surface_polymer_model_defaults(material):
 #
 vitonFKM75SurfacePolymer = {}
 vitonFKM75SurfacePolymer['name'] = 'vitonFKM75SurfacePolymer'
-vitonFKM75SurfacePolymer['version'] = 2606091329
+vitonFKM75SurfacePolymer['version'] = 2606091655
 vitonFKM75SurfacePolymer['model'] = 'SurfaceInformedPolymer'
 vitonFKM75SurfacePolymer['defaultDensity'] = 1.85
 _set_polymer_elastic_constants(vitonFKM75SurfacePolymer, 0.01577, 0.49)
@@ -2376,7 +2376,7 @@ _set_polymer_wave_properties(vitonFKM75SurfacePolymer)
 #
 vitonFKM75SurfacePolymerCohesiveZone = {}
 vitonFKM75SurfacePolymerCohesiveZone['name'] = 'vitonFKM75SurfacePolymerCohesiveZone'
-vitonFKM75SurfacePolymerCohesiveZone['version'] = 2606091329
+vitonFKM75SurfacePolymerCohesiveZone['version'] = 2606091655
 vitonFKM75SurfacePolymerCohesiveZone['model'] = 'SurfaceInformedPolymerCohesiveZone'
 vitonFKM75SurfacePolymerCohesiveZone['thickness'] = 0.10
 vitonFKM75SurfacePolymerCohesiveZone['bulkModulus'] = vitonFKM75SurfacePolymer['defaultBulkModulus']
