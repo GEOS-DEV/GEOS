@@ -146,6 +146,13 @@ void IterationsStatistics::writeIterationStatsToTable()
   if( m_numTimeSteps == 0 || !m_logOutputRequest )
     return;
 
+  real64 const setupTime = m_setupTime;
+  real64 const solveTime = m_solveTime;
+  resetSolverLinearTime();
+
+  if( !m_CSVOutputRequest || MpiWrapper::commRank() != 0 )
+    return;
+
   m_iterationData.addRow( m_numTimeSteps,
                           m_numTimeStepCuts,
                           m_numSuccessfulConfigIterations,
@@ -154,26 +161,22 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_numDiscardedConfigIterations,
                           m_numDiscardedNonlinearIterations,
                           m_numDiscardedLinearIterations,
-                          m_setupTime,
-                          m_solveTime );
+                          setupTime,
+                          solveTime );
 
-  if( MpiWrapper::commRank() == 0 )
+  if( !m_CSVOutputOpened )
   {
-    if( !m_CSVOutputOpened )
-    {
-      m_logStream.open( m_iterationsFilename );
-      m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
-      m_logStream << m_iterationCSVFormatter->headerToString( );
-      m_CSVOutputOpened  = true;
-    }
-
-    m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
-    m_logStream.flush();
+    m_logStream.open( m_iterationsFilename );
+    m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
+    m_logStream << m_iterationCSVFormatter->headerToString( );
+    m_CSVOutputOpened = true;
   }
 
+  m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
+  m_logStream.flush();
   m_iterationData.clear();
-  resetSolverLinearTime();
 }
+
 
 void IterationsStatistics::outputStatistics() const
 {
