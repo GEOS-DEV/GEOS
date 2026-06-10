@@ -86,6 +86,7 @@ set( common_sources
      MemoryInfos.cpp
      MpiWrapper.cpp
      Path.cpp
+     StdContainerWrappers.cpp
      initializeEnvironment.cpp
      Units.cpp
    )

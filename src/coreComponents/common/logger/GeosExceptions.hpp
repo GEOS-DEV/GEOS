@@ -206,6 +206,41 @@ struct BadTypeError : public geos::Exception
 };
 
 /**
+ * @brief Exception class used to report out-of-range access
+ */
+struct OutOfRangeError : public geos::Exception
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  OutOfRangeError( std::string const & what ):
+    geos::Exception( what )
+  {}
+
+  /**
+   * @brief Default constructor
+   */
+  OutOfRangeError(): geos::Exception(){}
+
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  OutOfRangeError( char const * const what ):
+    geos::Exception( what )
+  {}
+
+  /**
+   * @brief Construct an OutOfRangeError from an underlying exception.
+   * @param subException An exception to base this new one on.
+   * @param msgToInsert The error message.
+   * It will be inserted before the error message inside of subException.
+   */
+  OutOfRangeError( std::exception const & subException, std::string const & msgToInsert );
+};
+
+/**
  * @brief Exception class used for special control flow.
  */
 class NotAnError : public geos::Exception

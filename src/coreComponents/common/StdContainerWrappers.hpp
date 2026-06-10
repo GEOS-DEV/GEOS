@@ -55,6 +55,13 @@ template< typename T >
 using DefaultAllocator = std::allocator< T >;
 
 /**
+ * @brief Rethrow an exception with a stack trace.
+ * @param cause The original exception to rethrow
+ */
+[[noreturn]] void rethrowStdOutOfRange( const char * where,
+                                        std::out_of_range const & cause );
+
+/**
  * Wrapper for std::vector that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
  * @tparam T Type of elements in the vector.
@@ -117,11 +124,14 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      if( index >= this->size() )
+      try
       {
-        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+        return Base::at( index );  // Throws std::out_of_range if out of bounds.
       }
-      return Base::at( index );  // Throws std::out_of_range if out of bounds.
+      catch( std::out_of_range const & e )
+      {
+        rethrowStdOutOfRange( "StdVectorWrapper::operator[]", e );
+      }
     }
     else
     {
@@ -139,11 +149,14 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      if( index >= this->size() )
+      try
       {
-        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+        return Base::at( index );  // Throws std::out_of_range if out of bounds.
       }
-      return Base::at( index );  // Throws std::out_of_range if out of bounds.
+      catch( std::out_of_range const & e )
+      {
+        rethrowStdOutOfRange( "StdVectorWrapper::operator[]", e );
+      }
     }
     else
     {
@@ -198,7 +211,14 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return this->at( key );  // Throws std::out_of_range if key is missing
+      try
+      {
+        return this->at( key );  // Throws std::out_of_range if key is missing
+      }
+      catch( std::out_of_range const & e )
+      {
+        rethrowStdOutOfRange( "StdMapWrapper::operator[]", e );
+      }
     }
     else
     {
@@ -217,7 +237,14 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return this->at( key );
+      try
+      {
+        return this->at( key );  // Throws std::out_of_range if key is missing
+      }
+      catch( std::out_of_range const & e )
+      {
+        rethrowStdOutOfRange( "StdMapWrapper::operator[]", e );
+      }
     }
     else
     {

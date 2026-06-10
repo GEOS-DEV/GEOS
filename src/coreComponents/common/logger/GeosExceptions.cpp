@@ -72,4 +72,8 @@ SimulationError::SimulationError( std::exception const & subException, std::stri
   geos::Exception( insertExMsg( subException.what(), msgToInsert ) )
 {}
 
+OutOfRangeError::OutOfRangeError( std::exception const & subException, std::string const & msgToInsert ):
+  geos::Exception( insertExMsg( subException.what(), msgToInsert ) )
+{}
+
 }
