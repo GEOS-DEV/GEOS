@@ -152,7 +152,7 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
     real64 strainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
 
-    for( integer n = 1; n <= numRows; ++n )
+    for( integer n = 1; n < numRows; ++n )
     {
       strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
       strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
