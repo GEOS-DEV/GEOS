@@ -137,14 +137,14 @@ decks = [
         name="dome_soreide_whitson_smoke",
         description="Injection into a depleted reservoir using the Soreide Whitson EoS",
         partitions=[(1, 1, 1), (2, 2, 1)],
-        restart_step=50,
+        restart_step=100,
         check_step=150,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="dome_kvalue_smoke",
         description="Injection into a depleted reservoir using a K-Value model",
         partitions=[(1, 1, 1), (2, 2, 1)],
-        restart_step=50,
+        restart_step=100,
         check_step=150,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))         
 ]
