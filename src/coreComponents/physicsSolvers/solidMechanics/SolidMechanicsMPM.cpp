@@ -2009,7 +2009,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
   // Declare bin key and bins data structure
   BinKey binKey;
-  std::unordered_map< BinKey, stdVector< localIndex >, BinKeyHash > bins;
+  stdUnorderedMap< BinKey, stdVector< localIndex >, BinKeyHash > bins;
 
   // Reverse entries in bins based on even distribution of particles in partition - OPTIONAL
   particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region ) // idk why this requires a template argument and the
@@ -2029,7 +2029,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
           for( int k=0; k<nzbins; k++ )
           {
             binKey.binIndex = i + j * nxbins + k * nxbins * nybins;
-            bins[binKey].reserve( numReserved );
+            bins.get_inserted( binKey ).reserve( numReserved );
           }
         }
       }
@@ -2060,7 +2060,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
         binKey.binIndex = i + j * nxbins + k * nxbins * nybins;
 
         // Add particle to bin
-        bins[binKey].push_back( p );
+        bins.get_inserted( binKey ).push_back( p );
       } );
     } );
   } );
