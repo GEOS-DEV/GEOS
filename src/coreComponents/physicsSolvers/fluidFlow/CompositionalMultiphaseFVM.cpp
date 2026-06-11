@@ -1338,64 +1338,59 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
-        isothermalCompositionalMultiphaseFVMKernels::
-          DirichletFluxComputeZFormulationKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     kernelFlags,
-                                                     elemDofKey,
-                                                     getName(),
-                                                     faceManager,
-                                                     elemManager,
-                                                     stencilWrapper,
-                                                     multiFluidBase,
-                                                     dt,
-                                                     localMatrix,
-                                                     localRhs );
+        using KernelType = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeZFormulationKernelFactory< parallelDevicePolicy<> >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
 
+      }
+      else if( m_isThermal )
+      {
+        //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
+        using KernelType = thermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory<
+          parallelDevicePolicy<>,
+          BoundaryStencilWrapper >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
       }
       else
       {
-        if( m_isThermal )
-        {
-          //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
-          thermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       elemDofKey,
-                                                       getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       multiFluidBase,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       elemDofKey,
-                                                       getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       multiFluidBase,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
-        }
+        using KernelType = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< parallelDevicePolicy<> >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
       }
-
     } );
   } );
 }
