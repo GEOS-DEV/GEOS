@@ -775,9 +775,7 @@ MultiFluidBase::KernelWrapper::
   for( integer ic = 0; ic < numComps; ++ic )
   {
     // component weight can not be zero, checked in MultiFluidBase::postInputInitialization
-    real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
-    compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
-    dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
+    compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
     totalMolality += compMoleFrac[ic];
   }
 
@@ -788,8 +786,9 @@ MultiFluidBase::KernelWrapper::
 
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
-      dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
+      real64 const delta = ic == jc ? 1.0 : 0.0;
+      dCompMoleFrac_dCompMassFrac[ic][jc] =
+        ( delta - compMoleFrac[ic] ) * totalMolalityInv / m_componentMolarWeight[jc];
     }
   }
 }
