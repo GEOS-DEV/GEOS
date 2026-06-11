@@ -4,6 +4,7 @@ Name                              Type      Default  Description
 ================================= ========= ======== ===============================================================================
 bulkModulus                       real64    required Reference bulk modulus at glassTransitionTemperature
 crystallinity                     real64    0        Current crystallinity measure used by the optional crystallinity multipliers
+compressivePressureStrengtheningCap             real64    -1       Magnitude of the compressive mean-stress cap applied to the pressure-asymmetry term
 defaultYieldStrength              real64    required Reference yield strength at glassTransitionTemperature
 elasticCrystallinityCoeff         real64    0        Linear crystallinity coefficient for bulk and shear moduli
 glassTransitionTemperature        real64    300      Reference transition temperature for the normalized thermal scale

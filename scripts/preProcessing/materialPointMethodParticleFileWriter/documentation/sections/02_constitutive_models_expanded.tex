@@ -308,26 +308,27 @@ The scalar strength before pressure correction is
   \exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
   + H(T)\left(\lambda_{eff}^2-\frac{1}{\lambda_{eff}}\right),
 \end{equation}
-where \(\kappa\) is the equivalent plastic strain-like history variable and \(\lambda_{eff}=\max(\lambda_{max},1)\).  The maximum principal stretch is computed from the right stretch tensor obtained from \(F^TF\), so rigid-body rotation does not enter the hardening measure.
+where \(\kappa\) is the equivalent plastic strain-like history variable and \(\lambda_{eff}\) is the larger of the tensile maximum principal stretch and the isochoric maximum stretch.  The stretch is computed from the right stretch tensor obtained from \(F^TF\), so rigid-body rotation does not enter the hardening measure.  Hydrostatic compression therefore does not activate chain hardening, while constrained compression and shear under pressure can still reach the maximum-stretch failure limit.
 
 The pressure-sensitive yield function is
 \begin{equation}
   \Phi=q+\eta(T)p_t-\sigma_f^0\le 0,\qquad
   \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_\eta}\right)^2\right],
 \end{equation}
-where \(p_t\) is positive in hydrostatic tension.  The implemented return is non-associated: the trial mean stress is retained and the deviatoric stress is radially scaled to the pressure-adjusted scalar surface.
+where \(p_t\) is positive in hydrostatic tension and \(p_c\) is the optional compressive pressure-strengthening cap.  The implemented return is non-associated: the trial mean stress is retained and the deviatoric stress is radially scaled to the pressure-adjusted scalar surface.
 
 \begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
 scale K and G with S_T(T) and C_E(T,X_c)
 stress_trial = elasticIsotropicUpdate(oldStress, strainIncrement)
 (p_trial, q_trial, n_trial) = stressInvariants(stress_trial)
-lambda_max = maxPrincipalStretchFrom(F^T F)
+lambda_chain = max(maxPrincipalStretchFrom(F^T F), isochoricMaxPrincipalStretchFrom(F^T F))
+p_eff = max(p_trial, -compressivePressureStrengtheningCap)
 for fixed-point iteration:
   kappa = norm(plasticStrainOld + plasticStrainIncrement)
-  sigma_f = Y(T,Xc) + softening(T,kappa) + H(T)*stretchMeasure(lambda_max)
-  phi = q_trial + eta(T)*p_trial - sigma_f
+  sigma_f = Y(T,Xc) + softening(T,kappa) + H(T)*stretchMeasure(lambda_chain)
+  phi = q_trial + eta(T)*p_eff - sigma_f
   if phi <= 0 and first iteration: break elastic
-  q_return = min(q_trial, max(sigma_f - eta(T)*p_trial, 0))
+  q_return = min(q_trial, max(sigma_f - eta(T)*p_eff, 0))
   stress = recomposeStress(p_trial, q_return, n_trial)
   plasticStrainIncrement = strainIncrement - elasticStrainIncrement(stress-oldStress)
 store stress, plastic strain, equivalent plastic strain, yield strength, damage

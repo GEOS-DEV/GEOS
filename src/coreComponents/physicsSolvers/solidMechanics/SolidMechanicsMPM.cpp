@@ -83,6 +83,142 @@ string normalizeProfileInput( string const & input )
   return normalized;
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 clampValue( real64 const value,
+                   real64 const lower,
+                   real64 const upper )
+{
+  return LvArray::math::min( upper, LvArray::math::max( value, lower ) );
+}
+
+real64 vectorInfinityNorm3( real64 const (& value)[3] )
+{
+  return LvArray::math::max( LvArray::math::abs( value[0] ),
+                             LvArray::math::max( LvArray::math::abs( value[1] ),
+                                                  LvArray::math::abs( value[2] ) ) );
+}
+
+void capVectorInfinityNorm3( real64 (& value)[3],
+                             real64 const cap )
+{
+  if( cap < 0.0 )
+  {
+    return;
+  }
+
+  real64 const norm = vectorInfinityNorm3( value );
+  if( norm > cap && norm > 0.0 )
+  {
+    real64 const scale = cap / norm;
+    value[0] *= scale;
+    value[1] *= scale;
+    value[2] *= scale;
+  }
+}
+
+bool solveSmallLinearSystem3( int const size,
+                              real64 (& matrix)[3][3],
+                              real64 (& rhs)[3],
+                              real64 (& solution)[3] )
+{
+  solution[0] = 0.0;
+  solution[1] = 0.0;
+  solution[2] = 0.0;
+
+  if( size <= 0 )
+  {
+    return true;
+  }
+
+  for( int column = 0; column < size; ++column )
+  {
+    int pivotRow = column;
+    real64 pivotMagnitude = LvArray::math::abs( matrix[column][column] );
+    for( int row = column + 1; row < size; ++row )
+    {
+      real64 const magnitude = LvArray::math::abs( matrix[row][column] );
+      if( magnitude > pivotMagnitude )
+      {
+        pivotMagnitude = magnitude;
+        pivotRow = row;
+      }
+    }
+
+    if( pivotMagnitude <= 0.0 )
+    {
+      return false;
+    }
+
+    if( pivotRow != column )
+    {
+      for( int j = column; j < size; ++j )
+      {
+        std::swap( matrix[column][j], matrix[pivotRow][j] );
+      }
+      std::swap( rhs[column], rhs[pivotRow] );
+    }
+
+    real64 const pivot = matrix[column][column];
+    for( int row = column + 1; row < size; ++row )
+    {
+      real64 const factor = matrix[row][column] / pivot;
+      matrix[row][column] = 0.0;
+      for( int j = column + 1; j < size; ++j )
+      {
+        matrix[row][j] -= factor * matrix[column][j];
+      }
+      rhs[row] -= factor * rhs[column];
+    }
+  }
+
+  for( int row = size - 1; row >= 0; --row )
+  {
+    real64 sum = rhs[row];
+    for( int j = row + 1; j < size; ++j )
+    {
+      sum -= matrix[row][j] * solution[j];
+    }
+    solution[row] = sum / matrix[row][row];
+  }
+
+  return true;
+}
+
+void dampedLeastSquaresSolve3( int const size,
+                               real64 const (& c )[3][3],
+                               real64 const (& rhs )[3],
+                               real64 const damping,
+                               real64 (& solution)[3] )
+{
+  real64 normalMatrix[3][3] = {};
+  real64 normalRhs[3] = {};
+
+  for( int i = 0; i < size; ++i )
+  {
+    for( int j = 0; j < size; ++j )
+    {
+      for( int row = 0; row < size; ++row )
+      {
+        normalMatrix[i][j] += c[row][i] * c[row][j];
+      }
+    }
+    normalMatrix[i][i] += damping * damping;
+
+    for( int row = 0; row < size; ++row )
+    {
+      normalRhs[i] += c[row][i] * rhs[row];
+    }
+  }
+
+  if( !solveSmallLinearSystem3( size, normalMatrix, normalRhs, solution ) )
+  {
+    solution[0] = 0.0;
+    solution[1] = 0.0;
+    solution[2] = 0.0;
+  }
+}
+
 string canonicalProfileVariableName( string const & input )
 {
   string const name = normalizeProfileInput( input );
@@ -721,11 +857,44 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_smallMass( DBL_MAX ),
   m_solverProfiling( 0 ),
   m_stressControl(),
+  m_stressControlAdaptiveSeek( 0 ),
+  m_stressControlAdaptiveInitialized( 0 ),
+  m_stressControlWaveWarningIssued( 0 ),
+  m_stressControlSeekWarningIssued( 0 ),
   m_stressControlITerm(),
   m_stressControlKd( 0.0 ),
   m_stressControlKi( 0.0 ),
   m_stressControlKp( 0.1 ),
   m_stressControlLastError(),
+  m_stressControlFilteredStress(),
+  m_stressControlWindowStartStress(),
+  m_stressControlPreviousDomainL(),
+  m_stressControlAccumulatedStrain(),
+  m_stressControlSeekStrain(),
+  m_stressControlReengageStrain(),
+  m_stressControlAdaptiveState(),
+  m_stressControlTangent(),
+  m_stressControlResponseStrain( 1.0e-2 ),
+  m_stressControlFilterStrain( 1.0e-3 ),
+  m_stressControlAdaptStrainWindow( 5.0e-4 ),
+  m_stressControlAdaptGain( 5.0e-2 ),
+  m_stressControlMaxRateRatio( 5.0 ),
+  m_stressControlMaxFeedbackRateRatio( 2.0 ),
+  m_stressControlSeekRateRatio( 0.5 ),
+  m_stressControlMaxSeekRateRatio( 2.0 ),
+  m_stressControlMinStrainRate( 1.0e-30 ),
+  m_stressControlMaxSeekStrain( 5.0e-2 ),
+  m_stressControlMaxSeekStrainIncrement( 1.0e-4 ),
+  m_stressControlJammingPressureRatio( 2.0e-2 ),
+  m_stressControlReengageTangentRatio( 5.0e-3 ),
+  m_stressControlReengageRampStrain( 5.0e-3 ),
+  m_stressControlWaveWarnRatio( 5.0e-2 ),
+  m_stressControlWaveCutbackRatio( 1.0e-1 ),
+  m_stressControlStressFloor( 0.0 ),
+  m_stressControlTangentFloorRatio( 1.0e-3 ),
+  m_stressControlTangentCeilingRatio( 1.0e2 ),
+  m_stressControlMaxCouplingRatio( 10.0 ),
+  m_stressControlSolverDampingRatio( 5.0e-2 ),
   m_stressTable(),
   m_stressTableInterpType( mpm::InterpolationOption::Linear ),
   m_subdivideParticles( 0 ),
@@ -1441,6 +1610,29 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether stress control using box averages is enabled" );
 
+  registerWrapper( "stressControlAdaptiveSeek", &m_stressControlAdaptiveSeek ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlAdaptiveSeek ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Use the adaptive-seek stress controller for normal stress-control components. "
+                    "This opt-in controller learns a normal stress tangent, filters box stress over a strain scale, "
+                    "and enters a bounded compression seek mode when a compressive target has no load path." );
+
+  registerWrapper( "stressControlAdaptiveInitialized", &m_stressControlAdaptiveInitialized ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal initialization flag for adaptive-seek stress control." );
+
+  registerWrapper( "stressControlWaveWarningIssued", &m_stressControlWaveWarningIssued ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal one-shot wave/inertia warning flag for adaptive-seek stress control." );
+
+  registerWrapper( "stressControlSeekWarningIssued", &m_stressControlSeekWarningIssued ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal one-shot seek/unreachable warning flag for adaptive-seek stress control." );
+
   registerWrapper( "stressControlITerm", &m_stressControlITerm ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -1465,6 +1657,172 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stress control error from previous timestep" );
+
+  registerWrapper( "stressControlFilteredStress", &m_stressControlFilteredStress ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Filtered stress used by adaptive-seek stress control." );
+
+  registerWrapper( "stressControlWindowStartStress", &m_stressControlWindowStartStress ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Filtered stress at the start of the current adaptive tangent update window." );
+
+  registerWrapper( "stressControlPreviousDomainL", &m_stressControlPreviousDomainL ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Previous applied domain velocity-gradient diagonal used for adaptive stress-control tangent learning." );
+
+  registerWrapper( "stressControlAccumulatedStrain", &m_stressControlAccumulatedStrain ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Accumulated normal strain increments for the current adaptive stress-control tangent update window." );
+
+  registerWrapper( "stressControlSeekStrain", &m_stressControlSeekStrain ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Accumulated bounded seek strain in each normal stress-control direction." );
+
+  registerWrapper( "stressControlReengageStrain", &m_stressControlReengageStrain ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Accumulated strain used to blend bounded seek mode back to adaptive active control." );
+
+  registerWrapper( "stressControlAdaptiveState", &m_stressControlAdaptiveState ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal adaptive-seek stress-control state per normal direction." );
+
+  registerWrapper( "stressControlTangent", &m_stressControlTangent ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Learned normal tangent d(sigma_ii)/d(epsilon_jj) used by adaptive-seek stress control." );
+
+  registerWrapper( "stressControlResponseStrain", &m_stressControlResponseStrain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlResponseStrain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Macroscopic strain interval over which adaptive stress control removes filtered stress error." );
+
+  registerWrapper( "stressControlFilterStrain", &m_stressControlFilterStrain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlFilterStrain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Macroscopic strain interval used to low-pass filter stress for adaptive stress control." );
+
+  registerWrapper( "stressControlAdaptStrainWindow", &m_stressControlAdaptStrainWindow ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlAdaptStrainWindow ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Accumulated macroscopic strain window for each adaptive tangent update." );
+
+  registerWrapper( "stressControlAdaptGain", &m_stressControlAdaptGain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlAdaptGain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Normalized rank-one update gain for the adaptive stress-control tangent." );
+
+  registerWrapper( "stressControlMaxRateRatio", &m_stressControlMaxRateRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxRateRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum active stress-control strain-rate norm divided by the prescribed/reference strain-rate norm." );
+
+  registerWrapper( "stressControlMaxFeedbackRateRatio", &m_stressControlMaxFeedbackRateRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxFeedbackRateRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum feedback strain-rate norm divided by the prescribed/reference strain-rate norm." );
+
+  registerWrapper( "stressControlSeekRateRatio", &m_stressControlSeekRateRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlSeekRateRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Bounded seek strain-rate ratio used while a compressive target has no load path." );
+
+  registerWrapper( "stressControlMaxSeekRateRatio", &m_stressControlMaxSeekRateRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxSeekRateRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum seek strain-rate norm divided by the prescribed/reference strain-rate norm." );
+
+  registerWrapper( "stressControlMinStrainRate", &m_stressControlMinStrainRate ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMinStrainRate ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum reference strain rate for adaptive stress control when no prescribed deformation rate is active." );
+
+  registerWrapper( "stressControlMaxSeekStrain", &m_stressControlMaxSeekStrain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxSeekStrain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum accumulated seek strain before a compressive target is declared unreachable." );
+
+  registerWrapper( "stressControlMaxSeekStrainIncrement", &m_stressControlMaxSeekStrainIncrement ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxSeekStrainIncrement ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum absolute stress-control strain increment in one step during adaptive/seek control." );
+
+  registerWrapper( "stressControlJammingPressureRatio", &m_stressControlJammingPressureRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlJammingPressureRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Fraction of target compressive pressure indicating that a load path has appeared during seek mode." );
+
+  registerWrapper( "stressControlReengageTangentRatio", &m_stressControlReengageTangentRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlReengageTangentRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Fraction of initial tangent scale needed to re-engage active control after seek mode." );
+
+  registerWrapper( "stressControlReengageRampStrain", &m_stressControlReengageRampStrain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlReengageRampStrain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Macroscopic strain interval over which seek mode is blended back to adaptive active control." );
+
+  registerWrapper( "stressControlWaveWarnRatio", &m_stressControlWaveWarnRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlWaveWarnRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Raw-minus-filtered stress ratio that warns about inertial/wave dominated stress control." );
+
+  registerWrapper( "stressControlWaveCutbackRatio", &m_stressControlWaveCutbackRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlWaveCutbackRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Raw-minus-filtered stress ratio above which tangent adaptation remains frozen during re-engagement." );
+
+  registerWrapper( "stressControlStressFloor", &m_stressControlStressFloor ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlStressFloor ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Stress floor used in adaptive stress-control ratios. If zero, a target-based floor is used." );
+
+  registerWrapper( "stressControlTangentFloorRatio", &m_stressControlTangentFloorRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlTangentFloorRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Lower bound for learned tangent diagonals as a fraction of the initial tangent scale." );
+
+  registerWrapper( "stressControlTangentCeilingRatio", &m_stressControlTangentCeilingRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlTangentCeilingRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Upper bound for learned tangent diagonals as a fraction of the initial tangent scale." );
+
+  registerWrapper( "stressControlMaxCouplingRatio", &m_stressControlMaxCouplingRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxCouplingRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum absolute learned off-diagonal normal tangent divided by the corresponding diagonal tangent." );
+
+  registerWrapper( "stressControlSolverDampingRatio", &m_stressControlSolverDampingRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlSolverDampingRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Damping used in the small damped least-squares solve for active adaptive stress control." );
 
   registerWrapper( "stressTable", &m_stressTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1912,6 +2270,59 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3." );
   }
 
+  if( m_stressControlAdaptiveSeek == 1 )
+  {
+    for( int k = 0; k < 3; ++k )
+    {
+      GEOS_ERROR_IF( m_stressControl[k] == 2,
+                     "stressControlAdaptiveSeek currently supports stressControl entries 0 or 1 only. "
+                     "Use the legacy controller for one-sided stressControl=2." );
+    }
+
+    GEOS_ERROR_IF( m_stressControlResponseStrain <= 0.0,
+                   "stressControlResponseStrain must be positive." );
+    GEOS_ERROR_IF( m_stressControlFilterStrain <= 0.0,
+                   "stressControlFilterStrain must be positive." );
+    GEOS_ERROR_IF( m_stressControlAdaptStrainWindow <= 0.0,
+                   "stressControlAdaptStrainWindow must be positive." );
+    GEOS_ERROR_IF( m_stressControlAdaptGain < 0.0,
+                   "stressControlAdaptGain must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxRateRatio < 0.0,
+                   "stressControlMaxRateRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxFeedbackRateRatio < 0.0,
+                   "stressControlMaxFeedbackRateRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlSeekRateRatio < 0.0,
+                   "stressControlSeekRateRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxSeekRateRatio < 0.0,
+                   "stressControlMaxSeekRateRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMinStrainRate < 0.0,
+                   "stressControlMinStrainRate must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxSeekStrain < 0.0,
+                   "stressControlMaxSeekStrain must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxSeekStrainIncrement < 0.0,
+                   "stressControlMaxSeekStrainIncrement must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlJammingPressureRatio < 0.0,
+                   "stressControlJammingPressureRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlReengageTangentRatio < 0.0,
+                   "stressControlReengageTangentRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlReengageRampStrain <= 0.0,
+                   "stressControlReengageRampStrain must be positive." );
+    GEOS_ERROR_IF( m_stressControlWaveWarnRatio <= 0.0,
+                   "stressControlWaveWarnRatio must be positive." );
+    GEOS_ERROR_IF( m_stressControlWaveCutbackRatio <= 0.0,
+                   "stressControlWaveCutbackRatio must be positive." );
+    GEOS_ERROR_IF( m_stressControlStressFloor < 0.0,
+                   "stressControlStressFloor must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlTangentFloorRatio <= 0.0,
+                   "stressControlTangentFloorRatio must be positive." );
+    GEOS_ERROR_IF( m_stressControlTangentCeilingRatio <= m_stressControlTangentFloorRatio,
+                   "stressControlTangentCeilingRatio must be greater than stressControlTangentFloorRatio." );
+    GEOS_ERROR_IF( m_stressControlMaxCouplingRatio < 0.0,
+                   "stressControlMaxCouplingRatio must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlSolverDampingRatio < 0.0,
+                   "stressControlSolverDampingRatio must be non-negative." );
+  }
+
   if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     // Reads the FTable directly from the xml
@@ -2016,6 +2427,59 @@ void SolidMechanicsMPM::postInputInitialization()
     m_stressControlITerm.resize( 3 );
     // Tensor equation: m_stressControlITerm = 0.0 component-wise.
     LvArray::tensorOps::fill< 3 >( m_stressControlITerm, 0.0 );
+  }
+
+  if( m_stressControlFilteredStress.size() == 0 )
+  {
+    m_stressControlFilteredStress.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlFilteredStress, 0.0 );
+  }
+
+  if( m_stressControlWindowStartStress.size() == 0 )
+  {
+    m_stressControlWindowStartStress.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlWindowStartStress, 0.0 );
+  }
+
+  if( m_stressControlPreviousDomainL.size() == 0 )
+  {
+    m_stressControlPreviousDomainL.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlPreviousDomainL, 0.0 );
+  }
+
+  if( m_stressControlAccumulatedStrain.size() == 0 )
+  {
+    m_stressControlAccumulatedStrain.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlAccumulatedStrain, 0.0 );
+  }
+
+  if( m_stressControlSeekStrain.size() == 0 )
+  {
+    m_stressControlSeekStrain.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlSeekStrain, 0.0 );
+  }
+
+  if( m_stressControlReengageStrain.size() == 0 )
+  {
+    m_stressControlReengageStrain.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlReengageStrain, 0.0 );
+  }
+
+  if( m_stressControlAdaptiveState.size() == 0 )
+  {
+    m_stressControlAdaptiveState.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_stressControlAdaptiveState, 0 );
+  }
+
+  if( m_stressControlTangent.size( 0 ) == 0 )
+  {
+    m_stressControlTangent.resize( 3, 3 );
+    LvArray::tensorOps::fill< 3, 3 >( m_stressControlTangent, 0.0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( !( m_stressControlTangent.size( 0 ) == 3 && m_stressControlTangent.size( 1 ) == 3 ),
+                   "Internal stressControlTangent must have dimensions 3 x 3." );
   }
 
   if( m_stressControl[0] > 0 || m_stressControl[1] > 0 || m_stressControl[2] > 0 )
@@ -19059,6 +19523,16 @@ void SolidMechanicsMPM::stressControl( real64 dt,
   // Could some numerical artifact ever produce a negative relative density? Do I need a check for that or clip is to 0
   real64 relativeDensity = LvArray::math::min( 1.0, boxMaterialVolume / ( m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2] ) );
 
+  if( m_stressControlAdaptiveSeek == 1 )
+  {
+    adaptiveSeekStressControl( dt,
+                               targetStress,
+                               currentStress.toViewConst(),
+                               boxMaterialVolume,
+                               maximumBulkModulus );
+    return;
+  }
+
   // This will drive the response towards the desired stress but may be
   // unstable.
   // CC: TODO Use 1- domain porosity to make uncompacted region more stable
@@ -19144,6 +19618,421 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       }
     }
   }
+}
+
+/**
+ * @brief Adaptive normal stress controller with bounded seek mode.
+ *
+ * This opt-in controller is intended for mixed prescribed-F / stress-control
+ * RVE-style loading.  It controls only the diagonal components supported by the
+ * existing domainF/domainL data model.  The learned normal tangent is
+ *
+ *   d sigma_ii ~= C_ij d epsilon_jj,
+ *
+ * so prescribed directions are included as feed-forward coupling terms and
+ * stress-controlled directions are solved as a small damped system.  When a
+ * compressive target has nearly zero measured pressure, the controller does not
+ * invert the tangent; it seeks a load path by closing at a bounded rate until
+ * pressure/tangent appears, then blends back to active control.
+ */
+void SolidMechanicsMPM::adaptiveSeekStressControl( const real64 dt,
+                                                   real64 const (& targetStress)[3],
+                                                   arrayView1d< real64 const > const currentStress,
+                                                   real64 const boxMaterialVolume,
+                                                   real64 const maximumBulkModulus )
+{
+  GEOS_MARK_FUNCTION;
+
+  constexpr int ACTIVE_CONTROL = 0;
+  constexpr int SEEK_LOAD_PATH = 1;
+  constexpr int REENGAGE_PENDING = 2;
+  constexpr int PASSIVE_SATISFIED = 3;
+  constexpr int UNREACHABLE = 4;
+
+  real64 const boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+  real64 const relativeDensity = boxVolume > 0.0 ? clampValue( boxMaterialVolume / boxVolume, 0.0, 1.0 ) : 1.0;
+
+  real64 targetMagnitude = 0.0;
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] == 1 )
+    {
+      targetMagnitude = LvArray::math::max( targetMagnitude, LvArray::math::abs( targetStress[i] ) );
+    }
+  }
+
+  real64 const stressFloor = m_stressControlStressFloor > 0.0 ?
+                             m_stressControlStressFloor :
+                             LvArray::math::max( 1.0e-30, 1.0e-6 * targetMagnitude );
+
+  real64 const initialTangentScale = LvArray::math::max( stressFloor,
+                                                         maximumBulkModulus * LvArray::math::max( relativeDensity, 1.0e-3 ) );
+  real64 const tangentFloor = m_stressControlTangentFloorRatio * initialTangentScale;
+  real64 const tangentCeiling = m_stressControlTangentCeilingRatio * initialTangentScale;
+
+  if( m_stressControlAdaptiveInitialized == 0 )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      m_stressControlFilteredStress[i] = currentStress[i];
+      m_stressControlWindowStartStress[i] = currentStress[i];
+      m_stressControlPreviousDomainL[i] = m_domainL[i];
+      m_stressControlAccumulatedStrain[i] = 0.0;
+      m_stressControlSeekStrain[i] = 0.0;
+      m_stressControlReengageStrain[i] = 0.0;
+      m_stressControlAdaptiveState[i] = ACTIVE_CONTROL;
+      for( int j = 0; j < 3; ++j )
+      {
+        m_stressControlTangent[i][j] = 0.0;
+      }
+      m_stressControlTangent[i][i] = initialTangentScale;
+    }
+
+    m_stressControlAdaptiveInitialized = 1;
+    GEOS_LOG_RANK_0( "MPM adaptive-seek stress control initialized with tangent scale " << initialTangentScale );
+  }
+
+  for( int i = 0; i < 3; ++i )
+  {
+    m_stressControlAccumulatedStrain[i] += m_stressControlPreviousDomainL[i] * dt;
+  }
+
+  real64 referenceRate = m_stressControlMinStrainRate;
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] != 1 )
+    {
+      referenceRate = LvArray::math::max( referenceRate, LvArray::math::abs( m_domainL[i] ) );
+    }
+    referenceRate = LvArray::math::max( referenceRate, LvArray::math::abs( m_stressControlPreviousDomainL[i] ) );
+  }
+
+  real64 const filterAlpha = clampValue( referenceRate * dt / m_stressControlFilterStrain, 0.0, 1.0 );
+  for( int i = 0; i < 3; ++i )
+  {
+    m_stressControlFilteredStress[i] += filterAlpha * ( currentStress[i] - m_stressControlFilteredStress[i] );
+  }
+
+  real64 waveRatio = 0.0;
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] == 1 )
+    {
+      real64 const denom = LvArray::math::max( stressFloor,
+                                               LvArray::math::max( LvArray::math::abs( targetStress[i] ),
+                                                                    LvArray::math::abs( m_stressControlFilteredStress[i] ) ) );
+      waveRatio = LvArray::math::max( waveRatio,
+                                      LvArray::math::abs( currentStress[i] - m_stressControlFilteredStress[i] ) / denom );
+    }
+  }
+
+  bool const waveOrInertiaHigh = waveRatio > m_stressControlWaveWarnRatio;
+  if( waveOrInertiaHigh && m_stressControlWaveWarningIssued == 0 )
+  {
+    GEOS_LOG_RANK_0( "MPM adaptive-seek stress-control warning: raw stress differs from filtered stress by "
+                     << waveRatio
+                     << " of the active stress scale. Slowing feedback and freezing tangent updates while this persists." );
+    m_stressControlWaveWarningIssued = 1;
+  }
+
+  bool anySeekLikeState = false;
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] != 1 )
+    {
+      continue;
+    }
+
+    real64 const pressureTarget = -targetStress[i];
+    real64 const pressureMeasured = -m_stressControlFilteredStress[i];
+    real64 const pressureDeficit = pressureTarget - pressureMeasured;
+    real64 const pressureTolerance = LvArray::math::max( stressFloor, 1.0e-4 * LvArray::math::abs( pressureTarget ) );
+    real64 const jammingPressure = LvArray::math::max( stressFloor,
+                                                       m_stressControlJammingPressureRatio * LvArray::math::abs( pressureTarget ) );
+    bool const compressiveTarget = pressureTarget > pressureTolerance;
+    bool const underPressed = pressureDeficit > pressureTolerance;
+    bool const pressureAppeared = pressureMeasured > jammingPressure;
+    bool const targetAlreadySatisfied = LvArray::math::abs( targetStress[i] - m_stressControlFilteredStress[i] ) <= pressureTolerance;
+    bool const lowAuthority = LvArray::math::abs( m_stressControlTangent[i][i] ) <
+                              m_stressControlReengageTangentRatio * initialTangentScale;
+
+    if( m_stressControlAdaptiveState[i] == UNREACHABLE )
+    {
+      anySeekLikeState = true;
+      continue;
+    }
+
+    if( compressiveTarget && underPressed && ( pressureMeasured < jammingPressure || lowAuthority ) &&
+        m_stressControlAdaptiveState[i] != REENGAGE_PENDING )
+    {
+      m_stressControlAdaptiveState[i] = SEEK_LOAD_PATH;
+      anySeekLikeState = true;
+      if( m_stressControlSeekWarningIssued == 0 )
+      {
+        GEOS_LOG_RANK_0( "MPM adaptive-seek stress control entering bounded seek mode in direction " << i
+                         << ": target pressure=" << pressureTarget
+                         << ", filtered pressure=" << pressureMeasured << "." );
+        m_stressControlSeekWarningIssued = 1;
+      }
+    }
+    else if( targetAlreadySatisfied && !compressiveTarget && lowAuthority )
+    {
+      m_stressControlAdaptiveState[i] = PASSIVE_SATISFIED;
+      m_stressControlSeekStrain[i] = 0.0;
+    }
+
+    if( m_stressControlAdaptiveState[i] == SEEK_LOAD_PATH &&
+        pressureAppeared &&
+        waveRatio < m_stressControlWaveCutbackRatio )
+    {
+      m_stressControlAdaptiveState[i] = REENGAGE_PENDING;
+      m_stressControlReengageStrain[i] = 0.0;
+    }
+
+    if( m_stressControlAdaptiveState[i] == PASSIVE_SATISFIED && compressiveTarget && underPressed )
+    {
+      m_stressControlAdaptiveState[i] = SEEK_LOAD_PATH;
+      anySeekLikeState = true;
+    }
+
+    if( m_stressControlAdaptiveState[i] == SEEK_LOAD_PATH ||
+        m_stressControlAdaptiveState[i] == REENGAGE_PENDING ||
+        m_stressControlAdaptiveState[i] == UNREACHABLE )
+    {
+      anySeekLikeState = true;
+    }
+  }
+
+  real64 accumulatedStrainNorm = 0.0;
+  for( int i = 0; i < 3; ++i )
+  {
+    accumulatedStrainNorm += LvArray::math::abs( m_stressControlAccumulatedStrain[i] );
+  }
+
+  if( accumulatedStrainNorm >= m_stressControlAdaptStrainWindow )
+  {
+    if( !waveOrInertiaHigh )
+    {
+      real64 const regularization = 1.0e-24 + 1.0e-6 * m_stressControlAdaptStrainWindow * m_stressControlAdaptStrainWindow;
+      real64 denom = regularization;
+      for( int j = 0; j < 3; ++j )
+      {
+        denom += m_stressControlAccumulatedStrain[j] * m_stressControlAccumulatedStrain[j];
+      }
+
+      for( int i = 0; i < m_numDims; ++i )
+      {
+        if( m_stressControl[i] != 1 || m_stressControlAdaptiveState[i] != ACTIVE_CONTROL )
+        {
+          continue;
+        }
+
+        real64 const dSigma = m_stressControlFilteredStress[i] - m_stressControlWindowStartStress[i];
+        real64 prediction = 0.0;
+        for( int j = 0; j < 3; ++j )
+        {
+          prediction += m_stressControlTangent[i][j] * m_stressControlAccumulatedStrain[j];
+        }
+        real64 const residual = dSigma - prediction;
+
+        for( int j = 0; j < 3; ++j )
+        {
+          m_stressControlTangent[i][j] += m_stressControlAdaptGain * residual * m_stressControlAccumulatedStrain[j] / denom;
+        }
+
+        m_stressControlTangent[i][i] = clampValue( m_stressControlTangent[i][i], tangentFloor, tangentCeiling );
+        for( int j = 0; j < 3; ++j )
+        {
+          if( j != i )
+          {
+            real64 const couplingCap = m_stressControlMaxCouplingRatio * LvArray::math::abs( m_stressControlTangent[i][i] );
+            m_stressControlTangent[i][j] = clampValue( m_stressControlTangent[i][j], -couplingCap, couplingCap );
+          }
+        }
+      }
+    }
+
+    for( int i = 0; i < 3; ++i )
+    {
+      m_stressControlAccumulatedStrain[i] = 0.0;
+      m_stressControlWindowStartStress[i] = m_stressControlFilteredStress[i];
+    }
+  }
+
+  real64 const slowdown = clampValue( 1.0 + ( waveRatio * waveRatio ) /
+                                      ( m_stressControlWaveWarnRatio * m_stressControlWaveWarnRatio ),
+                                      1.0,
+                                      10.0 );
+  real64 const effectiveResponseStrain = m_stressControlResponseStrain * slowdown;
+  real64 const feedbackRateScale = referenceRate / effectiveResponseStrain;
+
+  real64 plannedL[3] = {};
+  real64 seekL[3] = {};
+  real64 activeL[3] = {};
+  for( int i = 0; i < 3; ++i )
+  {
+    plannedL[i] = m_domainL[i];
+  }
+
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] != 1 )
+    {
+      continue;
+    }
+
+    real64 const pressureTarget = -targetStress[i];
+    real64 const pressureMeasured = -m_stressControlFilteredStress[i];
+    real64 const pressureDeficit = pressureTarget - pressureMeasured;
+    real64 const pressureScale = LvArray::math::max( stressFloor, LvArray::math::abs( pressureTarget ) );
+    real64 const deficitRatio = clampValue( pressureDeficit / pressureScale, 0.0, 1.0 );
+    real64 const seekRate = LvArray::math::min( m_stressControlSeekRateRatio,
+                                               m_stressControlMaxSeekRateRatio ) * referenceRate;
+    seekL[i] = -seekRate * deficitRatio;
+
+    if( m_stressControlAdaptiveState[i] == SEEK_LOAD_PATH )
+    {
+      plannedL[i] = seekL[i];
+    }
+    else if( m_stressControlAdaptiveState[i] == PASSIVE_SATISFIED ||
+             m_stressControlAdaptiveState[i] == UNREACHABLE )
+    {
+      plannedL[i] = 0.0;
+    }
+  }
+
+  int activeIndices[3] = { -1, -1, -1 };
+  int numActive = 0;
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] == 1 &&
+        ( m_stressControlAdaptiveState[i] == ACTIVE_CONTROL ||
+          m_stressControlAdaptiveState[i] == REENGAGE_PENDING ) )
+    {
+      activeIndices[numActive++] = i;
+    }
+  }
+
+  if( numActive > 0 )
+  {
+    real64 cActive[3][3] = {};
+    real64 rhsFeedForward[3] = {};
+    real64 rhsFeedback[3] = {};
+
+    for( int rowLocal = 0; rowLocal < numActive; ++rowLocal )
+    {
+      int const row = activeIndices[rowLocal];
+      rhsFeedback[rowLocal] = ( targetStress[row] - m_stressControlFilteredStress[row] ) * feedbackRateScale;
+
+      for( int colLocal = 0; colLocal < numActive; ++colLocal )
+      {
+        int const col = activeIndices[colLocal];
+        cActive[rowLocal][colLocal] = m_stressControlTangent[row][col];
+      }
+
+      for( int col = 0; col < 3; ++col )
+      {
+        bool colIsActive = false;
+        for( int colLocal = 0; colLocal < numActive; ++colLocal )
+        {
+          colIsActive = colIsActive || ( activeIndices[colLocal] == col );
+        }
+        if( !colIsActive )
+        {
+          rhsFeedForward[rowLocal] -= m_stressControlTangent[row][col] * plannedL[col];
+        }
+      }
+    }
+
+    real64 activeDiagScale = tangentFloor;
+    for( int local = 0; local < numActive; ++local )
+    {
+      activeDiagScale = LvArray::math::max( activeDiagScale,
+                                            LvArray::math::abs( cActive[local][local] ) );
+    }
+    real64 const damping = m_stressControlSolverDampingRatio * activeDiagScale;
+
+    real64 localFeedForward[3] = {};
+    real64 localFeedback[3] = {};
+    dampedLeastSquaresSolve3( numActive, cActive, rhsFeedForward, damping, localFeedForward );
+    dampedLeastSquaresSolve3( numActive, cActive, rhsFeedback, damping, localFeedback );
+
+    capVectorInfinityNorm3( localFeedback, m_stressControlMaxFeedbackRateRatio * referenceRate );
+
+    real64 localTotal[3] = {};
+    for( int local = 0; local < numActive; ++local )
+    {
+      localTotal[local] = localFeedForward[local] + localFeedback[local];
+    }
+    capVectorInfinityNorm3( localTotal, m_stressControlMaxRateRatio * referenceRate );
+
+    for( int local = 0; local < numActive; ++local )
+    {
+      activeL[activeIndices[local]] = localTotal[local];
+    }
+  }
+
+  for( int i = 0; i < m_numDims; ++i )
+  {
+    if( m_stressControl[i] != 1 )
+    {
+      continue;
+    }
+
+    if( m_stressControlAdaptiveState[i] == ACTIVE_CONTROL )
+    {
+      plannedL[i] = activeL[i];
+      real64 const pressureTarget = -targetStress[i];
+      real64 const pressureMeasured = -m_stressControlFilteredStress[i];
+      real64 const pressureTolerance = LvArray::math::max( stressFloor, 1.0e-4 * LvArray::math::abs( pressureTarget ) );
+      if( pressureTarget - pressureMeasured <= pressureTolerance )
+      {
+        m_stressControlSeekStrain[i] = 0.0;
+      }
+    }
+    else if( m_stressControlAdaptiveState[i] == REENGAGE_PENDING )
+    {
+      real64 const blend = clampValue( m_stressControlReengageStrain[i] / m_stressControlReengageRampStrain, 0.0, 1.0 );
+      plannedL[i] = ( 1.0 - blend ) * seekL[i] + blend * activeL[i];
+      m_stressControlReengageStrain[i] += LvArray::math::abs( plannedL[i] ) * dt;
+      if( m_stressControlReengageStrain[i] >= m_stressControlReengageRampStrain )
+      {
+        m_stressControlAdaptiveState[i] = ACTIVE_CONTROL;
+        m_stressControlSeekStrain[i] = 0.0;
+      }
+    }
+
+    if( m_stressControlAdaptiveState[i] == SEEK_LOAD_PATH )
+    {
+      m_stressControlSeekStrain[i] += LvArray::math::abs( plannedL[i] ) * dt;
+      if( m_stressControlSeekStrain[i] > m_stressControlMaxSeekStrain )
+      {
+        m_stressControlAdaptiveState[i] = UNREACHABLE;
+        plannedL[i] = 0.0;
+        GEOS_LOG_RANK_0( "MPM adaptive-seek stress-control warning: direction " << i
+                         << " exceeded max seek strain " << m_stressControlMaxSeekStrain
+                         << " without reaching the compressive target. Holding this controlled rate at zero." );
+      }
+    }
+
+    if( m_stressControlMaxSeekStrainIncrement > 0.0 )
+    {
+      real64 const incrementCap = m_stressControlMaxSeekStrainIncrement / dt;
+      plannedL[i] = clampValue( plannedL[i], -incrementCap, incrementCap );
+    }
+
+    real64 const cflCap = m_cflFactor * ( m_hEl[i] / dt ) / ( m_xGlobalMax[i] - m_xGlobalMin[i] );
+    plannedL[i] = clampValue( plannedL[i], -cflCap, cflCap );
+    m_domainL[i] = plannedL[i];
+    m_stressControlLastError[i] = targetStress[i] - m_stressControlFilteredStress[i];
+  }
+
+  for( int i = 0; i < 3; ++i )
+  {
+    m_stressControlPreviousDomainL[i] = m_domainL[i];
+  }
+
+  GEOS_UNUSED_VAR( anySeekLikeState );
 }
 
 /**

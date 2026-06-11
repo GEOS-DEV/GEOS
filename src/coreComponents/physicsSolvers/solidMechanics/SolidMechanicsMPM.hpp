@@ -720,6 +720,12 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
+  void adaptiveSeekStressControl( const real64 dt,
+                                  real64 const (& targetStress)[3],
+                                  arrayView1d< real64 const > const currentStress,
+                                  real64 const boxMaterialVolume,
+                                  real64 const maximumBulkModulus );
+
   void initializeParticleFields( ParticleManager & particleManager );
 
   void initializeConstitutiveModelDependencies( ParticleManager & particleManager );
@@ -1318,11 +1324,44 @@ protected:
   real64 m_smallMass;
   int m_solverProfiling;
   array1d< int > m_stressControl;
+  int m_stressControlAdaptiveSeek;
+  int m_stressControlAdaptiveInitialized;
+  int m_stressControlWaveWarningIssued;
+  int m_stressControlSeekWarningIssued;
   array1d< real64 > m_stressControlITerm;
   real64 m_stressControlKd;
   real64 m_stressControlKi;
   real64 m_stressControlKp;
   array1d< real64 > m_stressControlLastError;
+  array1d< real64 > m_stressControlFilteredStress;
+  array1d< real64 > m_stressControlWindowStartStress;
+  array1d< real64 > m_stressControlPreviousDomainL;
+  array1d< real64 > m_stressControlAccumulatedStrain;
+  array1d< real64 > m_stressControlSeekStrain;
+  array1d< real64 > m_stressControlReengageStrain;
+  array1d< int > m_stressControlAdaptiveState;
+  array2d< real64 > m_stressControlTangent;
+  real64 m_stressControlResponseStrain;
+  real64 m_stressControlFilterStrain;
+  real64 m_stressControlAdaptStrainWindow;
+  real64 m_stressControlAdaptGain;
+  real64 m_stressControlMaxRateRatio;
+  real64 m_stressControlMaxFeedbackRateRatio;
+  real64 m_stressControlSeekRateRatio;
+  real64 m_stressControlMaxSeekRateRatio;
+  real64 m_stressControlMinStrainRate;
+  real64 m_stressControlMaxSeekStrain;
+  real64 m_stressControlMaxSeekStrainIncrement;
+  real64 m_stressControlJammingPressureRatio;
+  real64 m_stressControlReengageTangentRatio;
+  real64 m_stressControlReengageRampStrain;
+  real64 m_stressControlWaveWarnRatio;
+  real64 m_stressControlWaveCutbackRatio;
+  real64 m_stressControlStressFloor;
+  real64 m_stressControlTangentFloorRatio;
+  real64 m_stressControlTangentCeilingRatio;
+  real64 m_stressControlMaxCouplingRatio;
+  real64 m_stressControlSolverDampingRatio;
   array2d< real64 > m_stressTable;
   mpm::InterpolationOption m_stressTableInterpType;
   int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided

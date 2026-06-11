@@ -135,7 +135,9 @@ real64 crystallinityScale( real64 const temperature,
  * The pressure term is intended to modify the scalar yield envelope, not to introduce volumetric
  * plastic flow by itself.  The continuum update uses a non-associated radial return that keeps the
  * mean stress from the elastic trial state.  The cohesive-zone projection uses the same scalar term
- * with the film normal stress as the local one-dimensional mean-stress proxy.
+ * with the film normal stress as the local one-dimensional mean-stress proxy.  The raw pressure
+ * sensitivity is a low-pressure asymmetry and should be bounded before it is extrapolated into
+ * strongly confined compression.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -150,6 +152,27 @@ real64 pressureAsymmetry( real64 const temperature,
   }
   real64 const x = ( temperature - glassTransitionTemperature ) / pressureAsymmetryWidth;
   return pressureAsymmetryAmplitude * LvArray::math::exp( boundedExpArgument( -0.5 * x * x ) );
+}
+
+/**
+ * @brief Mean stress used by the pressure-asymmetry term after compressive limiting.
+ *
+ * The polymer pressure-asymmetry coefficient is calibrated from low-pressure tension/compression
+ * differences.  If it is applied linearly at very large compressive pressure, it can create an
+ * unbounded shear strength that is not supported by the calibration data.  This helper keeps the
+ * tensile-positive mean stress unchanged in tension and clips only the compressive side.  A
+ * negative @p compressivePressureStrengtheningCap recovers the uncapped model.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 pressureStrengtheningMeanStress( real64 const meanStress,
+                                        real64 const compressivePressureStrengtheningCap )
+{
+  if( compressivePressureStrengtheningCap < 0.0 )
+  {
+    return meanStress;
+  }
+  return LvArray::math::max( meanStress, -compressivePressureStrengtheningCap );
 }
 
 /**
@@ -200,8 +223,8 @@ real64 strainMagnitude( real64 const ( &strain )[6] )
  * @brief Maximum principal stretch from an unrotated deformation gradient.
  *
  * The right stretch tensor is computed from C = F^T F.  This avoids treating the non-symmetric
- * deformation gradient itself as a stretch tensor and makes the hardening/failure driver independent
- * of superposed rigid-body rotation.
+ * deformation gradient itself as a stretch tensor and makes the stretch calculation independent of
+ * superposed rigid-body rotation.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -232,6 +255,27 @@ real64 maximumPrincipalStretch( real64 const ( &unrotatedDeformationGradient )[3
     maximumStretch = LvArray::math::max( maximumStretch, LvArray::math::sqrt( LvArray::math::max( principalStretchSquared[i], 0.0 ) ) );
   }
   return maximumStretch;
+}
+
+/**
+ * @brief Chain-stretch measure for hardening and finite-extensibility failure.
+ *
+ * The raw maximum principal stretch preserves the previous tensile calibration and captures ordinary
+ * tensile extension.  The isochoric branch J^{-1/3} lambda_max suppresses hydrostatic compression
+ * while still allowing constrained compression and shear under pressure to stretch chains.  The max
+ * of the two measures keeps pure hydrostatic compression at unity, keeps tensile behavior unchanged
+ * relative to the original maximum-principal-stretch driver, and makes finite-extensibility failure
+ * pressure independent.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 chainStretch( real64 const ( &unrotatedDeformationGradient )[3][3] )
+{
+  real64 const lambdaMax = maximumPrincipalStretch( unrotatedDeformationGradient );
+  real64 const J = LvArray::tensorOps::determinant< 3 >( unrotatedDeformationGradient );
+  real64 const Jsafe = LvArray::math::max( J, 1.0e-16 );
+  real64 const lambdaIsochoric = lambdaMax / LvArray::math::pow( Jsafe, 1.0 / 3.0 );
+  return LvArray::math::max( lambdaMax, lambdaIsochoric );
 }
 
 } // namespace surfaceInformedPolymerHelpers

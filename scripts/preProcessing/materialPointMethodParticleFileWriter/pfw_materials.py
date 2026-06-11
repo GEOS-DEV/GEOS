@@ -342,6 +342,7 @@ def generateSurfaceInformedPolymerMaterialString(material):
         'yieldStrengthCrystallinityCoeff',
         'pressureAsymmetryAmplitude',
         'pressureAsymmetryWidth',
+        'compressivePressureStrengtheningCap',
     ])
 
 
@@ -369,6 +370,7 @@ def generateSurfaceInformedPolymerCohesiveZoneMaterialString(material):
         'yieldStrengthCrystallinityCoeff',
         'pressureAsymmetryAmplitude',
         'pressureAsymmetryWidth',
+        'compressivePressureStrengtheningCap',
     ])
 
 
@@ -2340,6 +2342,7 @@ def _set_surface_polymer_model_defaults(material):
     material['yieldStrengthCrystallinityCoeff'] = 0.0
     material['pressureAsymmetryAmplitude'] = 0.0
     material['pressureAsymmetryWidth'] = 10.0
+    material['compressivePressureStrengtheningCap'] = 0.1 * material.get('defaultBulkModulus', 1.0e99)
 
 
 ###################################################################################################
@@ -2354,7 +2357,7 @@ def _set_surface_polymer_model_defaults(material):
 #
 vitonFKM75SurfacePolymer = {}
 vitonFKM75SurfacePolymer['name'] = 'vitonFKM75SurfacePolymer'
-vitonFKM75SurfacePolymer['version'] = 2606091655
+vitonFKM75SurfacePolymer['version'] = 2606101506
 vitonFKM75SurfacePolymer['model'] = 'SurfaceInformedPolymer'
 vitonFKM75SurfacePolymer['defaultDensity'] = 1.85
 _set_polymer_elastic_constants(vitonFKM75SurfacePolymer, 0.01577, 0.49)
@@ -2376,7 +2379,7 @@ _set_polymer_wave_properties(vitonFKM75SurfacePolymer)
 #
 vitonFKM75SurfacePolymerCohesiveZone = {}
 vitonFKM75SurfacePolymerCohesiveZone['name'] = 'vitonFKM75SurfacePolymerCohesiveZone'
-vitonFKM75SurfacePolymerCohesiveZone['version'] = 2606091655
+vitonFKM75SurfacePolymerCohesiveZone['version'] = 2606101506
 vitonFKM75SurfacePolymerCohesiveZone['model'] = 'SurfaceInformedPolymerCohesiveZone'
 vitonFKM75SurfacePolymerCohesiveZone['thickness'] = 0.10
 vitonFKM75SurfacePolymerCohesiveZone['bulkModulus'] = vitonFKM75SurfacePolymer['defaultBulkModulus']
@@ -2400,6 +2403,7 @@ vitonFKM75SurfacePolymerCohesiveZone['elasticCrystallinityCoeff'] = vitonFKM75Su
 vitonFKM75SurfacePolymerCohesiveZone['yieldStrengthCrystallinityCoeff'] = vitonFKM75SurfacePolymer['yieldStrengthCrystallinityCoeff']
 vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryAmplitude'] = vitonFKM75SurfacePolymer['pressureAsymmetryAmplitude']
 vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryWidth'] = vitonFKM75SurfacePolymer['pressureAsymmetryWidth']
+vitonFKM75SurfacePolymerCohesiveZone['compressivePressureStrengtheningCap'] = vitonFKM75SurfacePolymer['compressivePressureStrengtheningCap']
 # #################################################################################################
 
 

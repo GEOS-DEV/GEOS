@@ -32,14 +32,14 @@
  * The deviatoric film stress state is then returned to the same scalar surface used by the continuum
  * model,
  *
- *   q + eta(T) p_t = Y(T,Xc) + S_soft(T) exp[-(kappa/r1)^r2]
- *                    + H_g S_T(T)^p_H [lambda_eff^2 - lambda_eff^{-1}],
+ *   q + eta(T) p_eff = Y(T,Xc) + S_soft(T) exp[-(kappa/r1)^r2]
+ *                       + H_g S_T(T)^p_H [lambda_eff^2 - lambda_eff^{-1}],
  *
- * where q=sqrt((3 s_n/2)^2+3 tau^2) for the reduced normal-shear film state and p_t is positive in
- * tension.  The sign returned to the MPM cohesive infrastructure is the existing GEOS cohesive sign
- * convention: opening produces a negative normal stress value.  A separate maximumStretch parameter
- * is retained as a cohesive failure cutoff; once exceeded, the law returns zero traction in that
- * update.
+ * where q=sqrt((3 s_n/2)^2+3 tau^2) for the reduced normal-shear film state and p_eff is p_t after
+ * optional compressive clipping.  The sign returned to the MPM cohesive infrastructure is the
+ * existing GEOS cohesive sign convention: opening produces a negative normal stress value.  A
+ * separate maximumStretch parameter is retained as a cohesive failure cutoff; once exceeded, the law
+ * returns zero traction in that update.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SURFACEINFORMEDPOLYMERCOHESIVEZONE_HPP_
@@ -81,6 +81,7 @@ public:
                                              real64 const & yieldStrengthCrystallinityCoeff,
                                              real64 const & pressureAsymmetryAmplitude,
                                              real64 const & pressureAsymmetryWidth,
+                                             real64 const & compressivePressureStrengtheningCap,
                                              arrayView1d< real64 > const & damage,
                                              arrayView1d< real64 > const & temperature,
                                              arrayView1d< real64 > const & previousLambda,
@@ -117,6 +118,7 @@ public:
     m_yieldStrengthCrystallinityCoeff( yieldStrengthCrystallinityCoeff ),
     m_pressureAsymmetryAmplitude( pressureAsymmetryAmplitude ),
     m_pressureAsymmetryWidth( pressureAsymmetryWidth ),
+    m_compressivePressureStrengtheningCap( compressivePressureStrengtheningCap ),
     m_damage( damage ),
     m_temperature( temperature ),
     m_previousLambda( previousLambda ),
@@ -149,11 +151,15 @@ public:
     real64 const normalStrain = normalDisplacement / thickness;
     real64 const tangentialStrain = tangentialDisplacement / thickness;
 
-    real64 const lambda = LvArray::math::sqrt( LvArray::math::max( ( 1.0 + normalStrain ) * ( 1.0 + normalStrain ) +
-                                                                    tangentialStrain * tangentialStrain,
-                                                                    0.0 ) );
-    m_previousLambda[k] = lambda;
-    if( lambda > m_maximumStretch )
+    real64 filmDeformationGradient[3][3] = { { 0.0 } };
+    filmDeformationGradient[0][0] = 1.0;
+    filmDeformationGradient[0][1] = tangentialStrain;
+    filmDeformationGradient[1][1] = 1.0 + normalStrain;
+    filmDeformationGradient[2][2] = 1.0;
+
+    real64 const lambdaChain = surfaceInformedPolymerHelpers::chainStretch( filmDeformationGradient );
+    m_previousLambda[k] = lambdaChain;
+    if( lambdaChain > m_maximumStretch )
     {
       m_damage[k] = 1.0;
       normalStress = 0.0;
@@ -187,7 +193,7 @@ public:
     real64 const yield0 = m_defaultYieldStrength * ST * CY;
     real64 const softeningMagnitude = m_shearSofteningMagnitude * ST;
     real64 const hardeningSlope = m_strainHardeningSlope * LvArray::math::pow( LvArray::math::max( ST, 1.0e-16 ), m_hardeningScaleExponent );
-    real64 const stretchHardening = hardeningSlope * surfaceInformedPolymerHelpers::stretchHardeningMeasure( lambda );
+    real64 const stretchHardening = hardeningSlope * surfaceInformedPolymerHelpers::stretchHardeningMeasure( lambdaChain );
     real64 const pressureAsymmetry = surfaceInformedPolymerHelpers::pressureAsymmetry( T,
                                                                                       m_glassTransitionTemperature,
                                                                                       m_pressureAsymmetryAmplitude,
@@ -204,6 +210,8 @@ public:
     // incompressible film stiff in constrained tension/compression while still allowing plastic
     // flow of the deviatoric part.
     real64 const pTrial = K * normalStrain;
+    real64 const pressureStrengtheningP = surfaceInformedPolymerHelpers::pressureStrengtheningMeanStress( pTrial,
+                                                                                            m_compressivePressureStrengtheningCap );
     real64 const normalDeviatoricModulus = 4.0 * G / 3.0;
     real64 const sNTrial = normalDeviatoricModulus * ( normalStrain - plasticNormal0 );
     real64 const tauTrial = G * ( tangentialStrain - plasticTangential0 );
@@ -223,7 +231,7 @@ public:
                                                                                          m_shearSofteningShapeParameter1,
                                                                                          m_shearSofteningShapeParameter2 ) +
                                   stretchHardening;
-      real64 const yieldMeasure = qTrial + pressureAsymmetry * pTrial;
+      real64 const yieldMeasure = qTrial + pressureAsymmetry * pressureStrengtheningP;
       if( yieldMeasure <= flowStrength || qTrial <= 1.0e-16 )
       {
         plastic = false;
@@ -236,7 +244,7 @@ public:
 
       plastic = true;
       real64 const returnedQ = LvArray::math::min( qTrial,
-                                                   LvArray::math::max( flowStrength - pressureAsymmetry * pTrial, 0.0 ) );
+                                                   LvArray::math::max( flowStrength - pressureAsymmetry * pressureStrengtheningP, 0.0 ) );
       real64 const scale = returnedQ / qTrial;
       real64 const sNNew = scale * sNTrial;
       real64 const tauNew = scale * tauTrial;
@@ -293,6 +301,7 @@ private:
   real64 m_yieldStrengthCrystallinityCoeff;
   real64 m_pressureAsymmetryAmplitude;
   real64 m_pressureAsymmetryWidth;
+  real64 m_compressivePressureStrengtheningCap;
 
   arrayView1d< real64 > const m_damage;
   arrayView1d< real64 > const m_temperature;
@@ -344,6 +353,7 @@ public:
 
     static constexpr char const * pressureAsymmetryAmplitudeString() { return "pressureAsymmetryAmplitude"; }
     static constexpr char const * pressureAsymmetryWidthString() { return "pressureAsymmetryWidth"; }
+    static constexpr char const * compressivePressureStrengtheningCapString() { return "compressivePressureStrengtheningCap"; }
 
     static constexpr char const * damageString() { return "damage"; }
     static constexpr char const * temperatureString() { return "temperature"; }
@@ -388,6 +398,7 @@ public:
                                                       m_yieldStrengthCrystallinityCoeff,
                                                       m_pressureAsymmetryAmplitude,
                                                       m_pressureAsymmetryWidth,
+                                                      m_compressivePressureStrengtheningCap,
                                                       m_damage,
                                                       m_temperature,
                                                       m_previousLambda,
@@ -426,6 +437,7 @@ public:
                           m_yieldStrengthCrystallinityCoeff,
                           m_pressureAsymmetryAmplitude,
                           m_pressureAsymmetryWidth,
+                          m_compressivePressureStrengtheningCap,
                           m_damage,
                           m_temperature,
                           m_previousLambda,
@@ -463,6 +475,7 @@ protected:
   real64 m_yieldStrengthCrystallinityCoeff;
   real64 m_pressureAsymmetryAmplitude;
   real64 m_pressureAsymmetryWidth;
+  real64 m_compressivePressureStrengtheningCap;
 
   array1d< real64 > m_damage;
   array1d< real64 > m_temperature;

@@ -112,6 +112,17 @@ pfw["updateOrder"] = 4
 pfw["outputType"] = "silo"
 pfw["plotGridFields"] = 1
 pfw["gridFieldNames"] = ["gridMass", "gridVelocity", "gridInternalForce"]
+
+# GEOS/Silo output fields. These control what VisIt can plot.
+# Keep these separate from particleFileFields, which only controls fields
+# written to the initial particle file by PFW.
+pfw["plottableFields"] = [
+    "particleStress",
+    "particleDamage",
+    "particlePlasticStrain",
+]
+
+# PFW particle-file initialization fields.
 pfw["particleFileFields"] = [
     "Velocity",
     "MaterialType",

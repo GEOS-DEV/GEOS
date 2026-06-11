@@ -169,7 +169,7 @@ and the return surface is
   q+\eta(T)p_t = Y(T,X_c) + S_{soft}(T)\exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
   + H_gS_T(T)^{p_H}\left(\lambda_{eff}^2-\lambda_{eff}^{-1}\right).
 \end{equation}
-The required inputs are \texttt{thickness}, \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{defaultYieldStrength}, \texttt{shearSofteningMagnitude}, \texttt{shearSofteningShapeParameter1}, \texttt{shearSofteningShapeParameter2}, and \texttt{strainHardeningSlope}.  Optional inputs define the thermal scale, crystallinity scale, hardening exponent, pressure asymmetry, and maximum stretch.  The state includes equivalent plastic strain, plastic normal film strain, plastic tangential film strain, previous stretch, temperature, and damage.
+The required inputs are \texttt{thickness}, \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{defaultYieldStrength}, \texttt{shearSofteningMagnitude}, \texttt{shearSofteningShapeParameter1}, \texttt{shearSofteningShapeParameter2}, and \texttt{strainHardeningSlope}.  Optional inputs define the thermal scale, crystallinity scale, hardening exponent, pressure asymmetry, compressive pressure-strengthening cap, and maximum stretch.  The state includes equivalent plastic strain, plastic normal film strain, plastic tangential film strain, previous stretch, temperature, and damage.
 
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
 \caption{Cohesive-zone constitutive model summary.}\label{tab:cz-model-summary}\\

@@ -48,6 +48,7 @@ SurfaceInformedPolymerCohesiveZone::SurfaceInformedPolymerCohesiveZone( string c
   m_yieldStrengthCrystallinityCoeff( 0.0 ),
   m_pressureAsymmetryAmplitude( 0.0 ),
   m_pressureAsymmetryWidth( 1.0 ),
+  m_compressivePressureStrengtheningCap( -1.0 ),
   m_damage(),
   m_temperature(),
   m_previousLambda(),
@@ -156,6 +157,11 @@ SurfaceInformedPolymerCohesiveZone::SurfaceInformedPolymerCohesiveZone( string c
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature width of the pressure-sensitive yield-strength asymmetry" );
+
+  registerWrapper( viewKeyStruct::compressivePressureStrengtheningCapString(), &m_compressivePressureStrengtheningCap ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Magnitude of the compressive mean-stress cap applied only to the pressure-asymmetry term; a negative value disables the cap" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).

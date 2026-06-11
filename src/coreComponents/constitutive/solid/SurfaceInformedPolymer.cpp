@@ -51,7 +51,8 @@ SurfaceInformedPolymer::SurfaceInformedPolymer( string const & name, Group * con
   m_elasticCrystallinityCoeff( 0.0 ),
   m_yieldStrengthCrystallinityCoeff( 0.0 ),
   m_pressureAsymmetryAmplitude( 0.0 ),
-  m_pressureAsymmetryWidth( 1.0 )
+  m_pressureAsymmetryWidth( 1.0 ),
+  m_compressivePressureStrengtheningCap( -1.0 )
 {
   registerWrapper( viewKeyStruct::defaultYieldStrengthString(), &m_defaultYieldStrength ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -142,6 +143,11 @@ SurfaceInformedPolymer::SurfaceInformedPolymer( string const & name, Group * con
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature width of the pressure-sensitive yield-strength asymmetry" );
+
+  registerWrapper( viewKeyStruct::compressivePressureStrengtheningCapString(), &m_compressivePressureStrengtheningCap ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Magnitude of the compressive mean-stress cap applied only to the pressure-asymmetry term; a negative value disables the cap" );
 
   registerWrapper( viewKeyStruct::deformationGradientString(), &m_deformationGradient ).
     setApplyDefaultValue( 1.0 ).

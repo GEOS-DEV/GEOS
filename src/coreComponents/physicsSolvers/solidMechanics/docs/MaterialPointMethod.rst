@@ -296,16 +296,16 @@ A corotational explicit-MPM polymer model that shares a reference-temperature ma
 
 .. math::
 
-   \Phi = q + \eta(T)p_t - \sigma_f^0 \le 0
+   \Phi = q + \eta(T)p_{eff} - \sigma_f^0 \le 0
 
-with tensile mean stress :math:`p_t`, von-Mises stress :math:`q`, and
+with tensile mean stress clipped on the compressive side :math:`p_{eff}=\max(p_t,-p_c)`, von-Mises stress :math:`q`, and
 
 .. math::
 
    \sigma_f^0 = Y(T,X_c) + S_{soft}(T)\exp[-(\kappa/r_1)^{r_2}]
               + H_g S_T(T)^{p_H}\left(\lambda_{eff}^2-\lambda_{eff}^{-1}\right).
 
-The pressure-sensitive term modifies the yield strength while the plastic correction remains non-associated and radial in deviatoric stress.  Required strength inputs are :code:`defaultYieldStrength`, :code:`shearSofteningMagnitude`, :code:`shearSofteningShapeParameter1`, :code:`shearSofteningShapeParameter2`, and :code:`strainHardeningSlope`; the model also uses the elastic constants and density inherited from :code:`ElasticIsotropic`.
+The pressure-sensitive term modifies the yield strength while the plastic correction remains non-associated and radial in deviatoric stress.  :code:`compressivePressureStrengtheningCap` bounds pressure strengthening in confined compression; negative values recover the uncapped form.  The chain-stretch driver uses the larger of the tensile maximum principal stretch and the isochoric maximum stretch so hydrostatic compression does not trigger chain extension, but constrained compression and shear under pressure can still reach :code:`maximumStretch`.  Required strength inputs are :code:`defaultYieldStrength`, :code:`shearSofteningMagnitude`, :code:`shearSofteningShapeParameter1`, :code:`shearSofteningShapeParameter2`, and :code:`strainHardeningSlope`; the model also uses the elastic constants and density inherited from :code:`ElasticIsotropic`.
 
 SurfaceInformedPolymerCohesiveZone
 -----------------------------------

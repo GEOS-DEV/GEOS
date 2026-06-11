@@ -34,19 +34,21 @@
  *   sigma_f^0 = Y(T,Xc) + S_soft(T) exp[-(kappa/r1)^r2]
  *             + H_g S_T(T)^p_H [ lambda_eff^2 - lambda_eff^{-1} ],
  *
- * where kappa is the accumulated equivalent plastic strain-like state and lambda_eff is the maximum
- * tensile principal stretch obtained from the right stretch tensor.  The term S_soft initially raises
- * the flow stress and then decays with plastic strain, representing post-yield shear softening.  The
- * stretch term supplies large-strain hardening in tension.
+ * where kappa is the accumulated equivalent plastic strain-like state and lambda_eff is a chain-stretch
+ * measure based on the larger of the tensile maximum principal stretch and the isochoric stretch.  The
+ * term S_soft initially raises the flow stress and then decays with plastic strain, representing
+ * post-yield shear softening.  The stretch term supplies large-strain hardening when chains are
+ * extended by tension, constrained compression, or shear.
  *
  * The yield envelope uses a weak pressure-sensitive correction,
  *
- *   Phi = q + eta(T) p_t - sigma_f^0 <= 0,
+ *   Phi = q + eta(T) p_eff - sigma_f^0 <= 0,
  *
- * where q is the von Mises equivalent stress and p_t is the mean stress with tensile sign convention.
- * The update deliberately uses a non-associated radial return: the deviatoric stress is returned to
- * the pressure-adjusted scalar surface while the trial mean stress is retained.  This makes the term
- * a yield-strength asymmetry for tension and compression without adding volumetric plastic flow.
+ * where q is the von Mises equivalent stress and p_eff is the mean stress with tensile sign
+ * convention after clipping the compressive side to an optional cap.  The update deliberately uses a
+ * non-associated radial return: the deviatoric stress is returned to the pressure-adjusted scalar
+ * surface while the trial mean stress is retained.  This makes the term a bounded yield-strength
+ * asymmetry for tension and compression without adding volumetric plastic flow.
  *
  * Crystallinity, if supplied, scales elastic stiffness and yield strength through bounded linear
  * factors that can be smoothly activated near the transition temperature.  Setting the crystallinity
@@ -101,6 +103,7 @@ public:
                                  real64 const & yieldStrengthCrystallinityCoeff,
                                  real64 const & pressureAsymmetryAmplitude,
                                  real64 const & pressureAsymmetryWidth,
+                                 real64 const & compressivePressureStrengtheningCap,
                                  arrayView1d< real64 > const & bulkModulus,
                                  arrayView1d< real64 > const & shearModulus,
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
@@ -144,7 +147,8 @@ public:
     m_elasticCrystallinityCoeff( elasticCrystallinityCoeff ),
     m_yieldStrengthCrystallinityCoeff( yieldStrengthCrystallinityCoeff ),
     m_pressureAsymmetryAmplitude( pressureAsymmetryAmplitude ),
-    m_pressureAsymmetryWidth( pressureAsymmetryWidth )
+    m_pressureAsymmetryWidth( pressureAsymmetryWidth ),
+    m_compressivePressureStrengtheningCap( compressivePressureStrengtheningCap )
   {}
 
   SurfaceInformedPolymerUpdates() = delete;
@@ -239,6 +243,7 @@ private:
 
   real64 const m_pressureAsymmetryAmplitude;
   real64 const m_pressureAsymmetryWidth;
+  real64 const m_compressivePressureStrengtheningCap;
 };
 
 GEOS_HOST_DEVICE
@@ -377,9 +382,9 @@ void SurfaceInformedPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 
   real64 unrotatedDeformationGradient[3][3] = { { 0.0 } };
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
-  real64 const maximumPrincipalStretch = surfaceInformedPolymerHelpers::maximumPrincipalStretch( unrotatedDeformationGradient );
+  real64 const lambdaChain = surfaceInformedPolymerHelpers::chainStretch( unrotatedDeformationGradient );
 
-  if( maximumPrincipalStretch > m_maximumStretch )
+  if( lambdaChain > m_maximumStretch )
   {
     m_damage[k][q] = 1.0;
   }
@@ -404,7 +409,9 @@ void SurfaceInformedPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                                                     m_glassTransitionTemperature,
                                                                                     m_pressureAsymmetryAmplitude,
                                                                                     m_pressureAsymmetryWidth );
-  real64 const stretchHardening = hardeningSlope * surfaceInformedPolymerHelpers::stretchHardeningMeasure( maximumPrincipalStretch );
+  real64 const stretchHardening = hardeningSlope * surfaceInformedPolymerHelpers::stretchHardeningMeasure( lambdaChain );
+  real64 const pressureStrengtheningP = surfaceInformedPolymerHelpers::pressureStrengtheningMeanStress( trialP,
+                                                                                                  m_compressivePressureStrengtheningCap );
 
   real64 plasticStrainIncrement[6] = { 0.0 };
   real64 yieldStrengthOld = m_yieldStrength[k] > 0.0 ? m_yieldStrength[k] : yield0 + softeningMagnitude + stretchHardening;
@@ -426,11 +433,11 @@ void SurfaceInformedPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                                                           m_shearSofteningShapeParameter2 );
     yieldStrengthIter = yield0 + plasticSoftening + stretchHardening;
 
-    real64 const yieldFunction = trialQ + pressureAsymmetry * trialP - yieldStrengthIter;
+    real64 const yieldFunction = trialQ + pressureAsymmetry * pressureStrengtheningP - yieldStrengthIter;
     if( yieldFunction > 0.0 || iter > 0 )
     {
       real64 const returnedQ = LvArray::math::min( trialQ,
-                                                  LvArray::math::max( yieldStrengthIter - pressureAsymmetry * trialP, 0.0 ) );
+                                                  LvArray::math::max( yieldStrengthIter - pressureAsymmetry * pressureStrengtheningP, 0.0 ) );
 
       real64 stressTemp[6] = { 0.0 };
       twoInvariant::stressRecomposition( trialP, returnedQ, deviator, stressTemp );
@@ -574,6 +581,7 @@ public:
 
     static constexpr char const * pressureAsymmetryAmplitudeString() { return "pressureAsymmetryAmplitude"; }
     static constexpr char const * pressureAsymmetryWidthString() { return "pressureAsymmetryWidth"; }
+    static constexpr char const * compressivePressureStrengtheningCapString() { return "compressivePressureStrengtheningCap"; }
   };
 
   SurfaceInformedPolymerUpdates createKernelUpdates() const
@@ -606,6 +614,7 @@ public:
                                           m_yieldStrengthCrystallinityCoeff,
                                           m_pressureAsymmetryAmplitude,
                                           m_pressureAsymmetryWidth,
+                                          m_compressivePressureStrengtheningCap,
                                           m_bulkModulus,
                                           m_shearModulus,
                                           m_thermalExpansionCoefficient,
@@ -648,6 +657,7 @@ public:
                           m_yieldStrengthCrystallinityCoeff,
                           m_pressureAsymmetryAmplitude,
                           m_pressureAsymmetryWidth,
+                          m_compressivePressureStrengtheningCap,
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
@@ -691,6 +701,7 @@ protected:
 
   real64 m_pressureAsymmetryAmplitude;
   real64 m_pressureAsymmetryWidth;
+  real64 m_compressivePressureStrengtheningCap;
 };
 
 } // namespace constitutive

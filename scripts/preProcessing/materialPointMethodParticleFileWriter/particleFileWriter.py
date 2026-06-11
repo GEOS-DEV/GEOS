@@ -696,6 +696,28 @@ parameters = {
                'solverProfiling': ( None, True ),  # MPM: time solver subroutines.
                'sortObjects': ( False, False ),  # PFW: spatially sort geometry objects while writing particles.
                'stressControl': ( None, True ),  # MPM: enable stress-control driver.
+               'stressControlAdaptiveSeek': ( None, True ),  # MPM: enable adaptive-seek normal stress-control driver.
+               'stressControlResponseStrain': ( None, True ),  # MPM: strain interval for adaptive stress-error correction.
+               'stressControlFilterStrain': ( None, True ),  # MPM: strain interval for stress filtering in adaptive control.
+               'stressControlAdaptStrainWindow': ( None, True ),  # MPM: strain window for adaptive tangent updates.
+               'stressControlAdaptGain': ( None, True ),  # MPM: normalized adaptive tangent update gain.
+               'stressControlMaxRateRatio': ( None, True ),  # MPM: active stress-control rate cap relative to reference rate.
+               'stressControlMaxFeedbackRateRatio': ( None, True ),  # MPM: feedback stress-control rate cap relative to reference rate.
+               'stressControlSeekRateRatio': ( None, True ),  # MPM: bounded seek rate relative to reference rate.
+               'stressControlMaxSeekRateRatio': ( None, True ),  # MPM: maximum bounded seek rate relative to reference rate.
+               'stressControlMinStrainRate': ( None, True ),  # MPM: minimum reference strain rate for adaptive stress control.
+               'stressControlMaxSeekStrain': ( None, True ),  # MPM: maximum accumulated seek strain before declaring target unreachable.
+               'stressControlMaxSeekStrainIncrement': ( None, True ),  # MPM: maximum adaptive/seek strain increment per step.
+               'stressControlJammingPressureRatio': ( None, True ),  # MPM: pressure fraction indicating load-path appearance in seek mode.
+               'stressControlReengageTangentRatio': ( None, True ),  # MPM: tangent fraction used by adaptive seek re-engagement.
+               'stressControlReengageRampStrain': ( None, True ),  # MPM: strain interval for blending seek back to active control.
+               'stressControlWaveWarnRatio': ( None, True ),  # MPM: raw-filtered stress ratio warning threshold.
+               'stressControlWaveCutbackRatio': ( None, True ),  # MPM: raw-filtered stress ratio that freezes re-engagement/adaptation.
+               'stressControlStressFloor': ( None, True ),  # MPM: stress floor for adaptive stress-control ratios.
+               'stressControlTangentFloorRatio': ( None, True ),  # MPM: learned tangent lower-bound ratio.
+               'stressControlTangentCeilingRatio': ( None, True ),  # MPM: learned tangent upper-bound ratio.
+               'stressControlMaxCouplingRatio': ( None, True ),  # MPM: learned off-diagonal normal tangent cap.
+               'stressControlSolverDampingRatio': ( None, True ),  # MPM: damping ratio for active tangent solve.
                'stressControlKd': ( None, True ),  # MPM: stress-control derivative gain.
                'stressControlKi': ( None, True ),  # MPM: stress-control integral gain.
                'stressControlKp': ( None, True ),  # MPM: stress-control proportional gain.
