@@ -7,7 +7,7 @@ These notes should be in reverse-chronological order, and use the following time
 
 PR #4040 (2026-06-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16801-f0937f9.tar.gz>
 =====================
-Move relperm driver to use bew constitutive driver framework
+Move relperm driver to use new constitutive driver framework
 
 PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
 =====================
