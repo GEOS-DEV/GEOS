@@ -36,6 +36,21 @@ struct WellConstants
   static constexpr real64 defaultInjectorBHP = 1.01325e8;
 };
 
+enum class WellType : integer
+{
+  PRODUCER,    /**< A production well */
+  INJECTOR     /**< An injection well */
+};
+
+/** Status of wells
+ * Either open or closed
+ */
+enum class WellStatus : integer
+{
+  OPEN,    /**< flowing well */
+  CLOSED     /**< shutin well */
+};
+
 } //namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP

@@ -23,7 +23,7 @@
 
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
@@ -31,12 +31,12 @@ namespace geos
 /// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
 template< typename RESERVOIR_SOLVER = CompositionalMultiphaseBase >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                                                                      CompositionalMultiphaseWell >
+                                                                                      WellManager >
 {
 public:
 
   using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                             CompositionalMultiphaseWell >;
+                                             WellManager >;
   using Base::getLogLevel;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;

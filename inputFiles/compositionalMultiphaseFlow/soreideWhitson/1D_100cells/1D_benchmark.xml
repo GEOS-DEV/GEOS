@@ -1,294 +1,388 @@
 <?xml version="1.0" ?>
+
 <Problem>
-	<Solvers>
-		<CompositionalMultiphaseReservoir name="1D_HCGI"
-		                                  flowSolverName="FLOW.SOLVER"
-		                                  wellSolverName="WELL.SOLVER"
-		                                  targetRegions="{ reservoir, WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
-		                                  logLevel="1"
-		                                  initialDt="3600">
-			<NonlinearSolverParameters newtonTol="1.0e-3"
-			                           lineSearchAction="None"
-			                           timeStepIncreaseIterLimit="0.5"
-			                           timeStepDecreaseIterLimit="0.6"
-			                           maxTimeStepCuts="100"
-			                           maxSubSteps="1000"
-			                           newtonMaxIter="10"
-			                           logLevel="0"/>
-			<LinearSolverParameters directParallel="0"/>
-		</CompositionalMultiphaseReservoir>
-		<CompositionalMultiphaseFVM name="FLOW.SOLVER"
-		                            logLevel="2"
-		                            initialDt="8640"
-		                            discretization="FLUID.TPFA"
-		                            targetRegions="{ reservoir }"
-		                            temperature="349.15"
-		                            useMass="0">
-		</CompositionalMultiphaseFVM>
-		<CompositionalMultiphaseWell name="WELL.SOLVER"
-		                             useMass="0"
-		                             maxRelativePressureChange="0.5"
-		                             maxCompFractionChange="0.5"
-		                             targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
-		                             writeCSV="1"
-		                             timeStepFromTables="1"
-		                             logLevel="1">
-			<WellControls name="WATER.INJECTOR.CONTROL"
-			              type="injector"
-			              useSurfaceConditions="0"
-			              surfacePressure="1.013250e+05"
-			              surfaceTemperature="288.71"
-			              control="totalVolRate"
-			              enableCrossflow="0"
-			              targetPhaseName="oil"
-			              targetBHP="4.5e7"
-			              injectionTemperature="349.15"
-			              injectionStream="{ 0.0, 0.0, 1.0 }"
-			              targetTotalRateTableName="WATER.INJECTOR.RATE"
-			              referenceElevation="-2000.0"
-			              logLevel="0"/>
-			<WellControls name="GAS.INJECTOR.CONTROL"
-			              type="injector"
-			              useSurfaceConditions="0"
-			              surfacePressure="1.013250e+05"
-			              surfaceTemperature="288.71"
-			              control="totalVolRate"
-			              enableCrossflow="0"
-			              targetPhaseName="gas"
-			              targetBHP="4.5e7"
-			              injectionTemperature="349.15"
-			              injectionStream="{ 0.85, 0.15, 0.00 }"
-			              targetTotalRateTableName="GAS.INJECTOR.RATE"
-			              referenceElevation="-2000"
-			              logLevel="0"/>
-			<WellControls name="PRODUCER.CONTROL"
-			              type="producer"
-			              useSurfaceConditions="0"
-			              surfacePressure="1.013250e+05"
-			              surfaceTemperature="288.71"
-			              control="BHP"
-			              targetPhaseName="gas"
-			              targetPhaseRateTableName="PRODUCER.RATE"
-			              targetBHP="1.95e7"
-			              referenceElevation="-2000"
-			              logLevel="0"/>
-		</CompositionalMultiphaseWell>
-	</Solvers>
-	<Mesh>
-		<InternalMesh name="mesh"
-		              elementTypes="{ C3D8 }"
-		              xCoords="{ 0, 1000 }"
-		              yCoords="{ -5, 5 }"
-		              zCoords="{ -2010, -2000 }"
-		              nx="{ 100 }"
-		              ny="{ 1 }"
-		              nz="{ 1 }"
-		              cellBlockNames="{ hexahedra }">
-			<InternalWell logLevel="1"
-			              name="well.WATER.INJECTOR"
-			              wellRegionName="WATER.INJECTOR"
-			              wellControlsName="WATER.INJECTOR.CONTROL"
-			              polylineNodeCoords="{
-                { 5, 0.0, -2000.0 },
-                { 5, 0.0, -2010.0 } }"
-			              polylineSegmentConn="{{0,1}}"
-			              radius="0.083350"
-			              numElementsPerSegment="1">
-				<Perforation name="WATER.INJECTOR.1"
-				             distanceFromHead="5"/>
-			</InternalWell>
-			<InternalWell logLevel="1"
-			              name="well.GAS.INJECTOR"
-			              wellRegionName="GAS.INJECTOR"
-			              wellControlsName="GAS.INJECTOR.CONTROL"
-			              polylineNodeCoords="{
-                { 5, 0.0, -2000.0 },
-                { 5, 0.0, -2010.0 } }"
-			              polylineSegmentConn="{{0,1}}"
-			              radius="0.083350"
-			              numElementsPerSegment="1">
-				<Perforation name="GAS.INJECTOR.1"
-				             distanceFromHead="5"/>
-			</InternalWell>
-			<InternalWell logLevel="1"
-			              name="well.PRODUCER"
-			              wellRegionName="PRODUCER"
-			              wellControlsName="PRODUCER.CONTROL"
-			              polylineNodeCoords="{
-                { 995, 0.0, -2000.0 },
-                { 995, 0.0, -2010.0 } }"
-			              polylineSegmentConn="{{0,1}}"
-			              radius="0.083350"
-			              numElementsPerSegment="1">
-				<Perforation name="PRODUCER.1"
-				             distanceFromHead="5"/>
-			</InternalWell>
-		</InternalMesh>
-	</Mesh>
-	<NumericalMethods>
-		<FiniteVolume>
-			<TwoPointFluxApproximation name="FLUID.TPFA"/>
-		</FiniteVolume>
-	</NumericalMethods>
-	<ElementRegions>
-		<CellElementRegion name="reservoir"
-		                   cellBlocks="{ hexahedra }"
-		                   materialList="{ ROCK, FLUID, RELPERM }"/>
-		<WellElementRegion name="WATER.INJECTOR"
-		                   materialList="{ FLUID, RELPERM }"/>
-		<WellElementRegion name="GAS.INJECTOR"
-		                   materialList="{ FLUID, RELPERM }"/>
-		<WellElementRegion name="PRODUCER"
-		                   materialList="{ FLUID, RELPERM }"/>
-	</ElementRegions>
-	<Constitutive>
-		<NullModel name="NULL.SOLID"/>
-		<PressurePorosity name="ROCK.POROSITY"
-		                  defaultReferencePorosity="0.2"
-		                  referencePressure="3.0e+07"
-		                  compressibility="3.4E-10"/>
-		<ConstantPermeability name="ROCK.PERMEABILITY"
-		                      permeabilityComponents="{ 100e-15, 100e-15, 10e-15 }"/>
-		<CompressibleSolidConstantPermeability name="ROCK"
-		                                       solidModelName="NULL.SOLID"
-		                                       porosityModelName="ROCK.POROSITY"
-		                                       permeabilityModelName="ROCK.PERMEABILITY"/>
-		<CompositionalTwoPhaseFluidPhillipsBrine name="FLUID"
-		                                         phaseNames="{ oil, gas }"
-		                                         equationsOfState="{ SoreideWhitson, PengRobinson }"
-		                                         componentNames="{ CH4, CO2, H2O }"
-		                                         componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 1.80153e-02 }"
-		                                         componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 2.20640e+07 }"
-		                                         componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 6.47096e+02 }"
-		                                         componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 5.59480e-05 }"
-		                                         componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 3.44300e-01 }"
-		                                         componentBinaryCoeff="{
-                { 0.0000, 0.0000, 0.4850 },
-                { 0.0000, 0.0000, 0.1896 },
-                { 0.4850, 0.1896, 0.0000 }
-            }"
-		                                         pressureCoordinates="{
-                1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05,
-                1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07,
-                2.066e+07, 3.521e+07, 6.000e+07
-            }"
-		                                         temperatureCoordinates="{ 283.15, 334.15, 342.15, 346.15, 354.15 }"
-		                                         waterCompressibility="4.1483E-10"/>
-		<TableRelativePermeability name="RELPERM"
-		                           phaseNames="{ oil, gas }"
-		                           wettingNonWettingRelPermTableNames="{ KR, KR }"/>
-	</Constitutive>
-	<FieldSpecifications>
-		<FieldSpecification name="initialPressure"
-		                    initialCondition="1"
-		                    setNames="{ all }"
-		                    objectPath="ElementRegions/reservoir"
-		                    fieldName="pressure"
-		                    scale="2e7"/>
-		<FieldSpecification name="initialTemp"
-		                    initialCondition="1"
-		                    setNames="{ all }"
-		                    objectPath="ElementRegions/reservoir"
-		                    fieldName="temperature"
-		                    scale="349.15"/>
-		<FieldSpecification name="initialComposition_CH4"
-		                    initialCondition="1"
-		                    setNames="{ all }"
-		                    objectPath="ElementRegions/reservoir"
-		                    fieldName="globalCompFraction"
-		                    component="0"
-		                    scale="1.0"
-		                    functionName="CH4_VD"/>
-		<FieldSpecification name="initialComposition_CO2"
-		                    initialCondition="1"
-		                    setNames="{ all }"
-		                    objectPath="ElementRegions/reservoir"
-		                    fieldName="globalCompFraction"
-		                    component="1"
-		                    scale="1.0"
-		                    functionName="CO2_VD"/>
-		<FieldSpecification name="initialComposition_H2O"
-		                    initialCondition="1"
-		                    setNames="{ all }"
-		                    objectPath="ElementRegions/reservoir"
-		                    fieldName="globalCompFraction"
-		                    component="2"
-		                    scale="1.0"
-		                    functionName="H2O_VD"/>
-	</FieldSpecifications>
-	<Outputs>
-		<VTK name="VTK.OUTPUT"/>
-		<Restart name="restart"/>
-	</Outputs>
-	<Tasks>
-		<CompositionalMultiphaseStatistics name="FLOW.STATISTICS"
-		                                   flowSolverName="FLOW.SOLVER"
-		                                   logLevel="1"
-		                                   writeCSV="1"
-		                                   computeCFLNumbers="0"
-		                                   computeRegionStatistics="1"/>
-	</Tasks>
-	<Functions>
-		<TableFunction name="RELPERM.KRW"
-		               coordinates="{ 0.33, 0.3635, 0.397, 0.4305, 0.464, 0.4975, 0.531, 0.5645, 0.598, 0.6315, 0.665, 0.6985, 0.732, 0.7655, 0.799, 0.8325, 0.866, 0.8995, 0.933, 0.9665, 1 }"
-		               values="{ 0, 0.0025, 0.01, 0.0225, 0.04, 0.0625, 0.09, 0.1225, 0.16, 0.2025, 0.25, 0.3025, 0.36, 0.4225, 0.49, 0.5625, 0.64, 0.7225, 0.81, 0.9025, 1 }"/>
-		<TableFunction name="RELPERM.KRG"
-		               coordinates="{ 0, 0.0335, 0.067, 0.1005, 0.134, 0.1675, 0.201, 0.2345, 0.268, 0.3015, 0.335, 0.3685, 0.402, 0.4355, 0.469, 0.5025, 0.536, 0.5695, 0.603, 0.6365, 0.67  }"
-		               values="{ 0, 0.00884, 0.01768, 0.02652, 0.03536, 0.0442, 0.05304, 0.06188, 0.07072, 0.07956, 0.0884, 0.09724, 0.10608, 0.11492, 0.12376, 0.1326, 0.14144, 0.15028, 0.15912, 0.16796, 0.1768 }"/>
-		<TableFunction name="KR"
-		               coordinates="{ 0, 0.1, 1  }"
-		               values="{ 0, 0, 1 }"/>
-		<TableFunction name="TEMP_VS_DEPTH"
-		               coordinates="{ -1.0e10, 1.0e10 }"
-		               values="{ 349.15, 349.15 }"/>
-		<TableFunction name="CH4_VD"
-		               values="{0.000, 0.000 }"
-		               coordinates="{ -1.0e10, 1.0e10 }"/>
-		<TableFunction name="CO2_VD"
-		               values="{0.000, 0.000 }"
-		               coordinates="{ -1.0e10, 1.0e10 }"/>
-		<TableFunction name="H2O_VD"
-		               values="{1.000, 1.000 }"
-		               coordinates="{ -1.0e10, 1.0e10 }"/>
-		<TableFunction name="GAS.INJECTOR.RATE"
-		               interpolation="lower"
-		               inputVarNames="{ time }"
-		               coordinates="{ -31557600, 0, 43200000, 43286400, 86400000 }"
-		               values="{ 0, 0.0005, 0.0005, 0, 0 }"/>
-		<TableFunction name="PRODUCER.RATE"
-		               interpolation="lower"
-		               inputVarNames="{ time }"
-		               coordinates="{ -31557600, 86400000 }"
-		               values="{ 1, 1}"/>
-		<TableFunction name="WATER.INJECTOR.RATE"
-		               interpolation="lower"
-		               inputVarNames="{ time }"
-		               coordinates="{ -31557600, 0, 43200000, 86400000 }"
-		               values="{ 0, 0, 0.0005, 0.0005 }"/>
-		<TableFunction name="WATER.INJECTOR.BHP"
-		               interpolation="lower"
-		               inputVarNames="{ time }"
-		               coordinates="{ -31557600, 0, 43200000, 43286400, 43372800, 86400000 }"
-		               values="{ 0, 0, 0, 0, 3.5e7, 3.5e7 }"/>
-	</Functions>
-	<Events minTime="0"
-	        maxTime="86400000">
-		<PeriodicEvent name="VTK.OUTPUT.01"
-		               timeFrequency="8640000"
-		               targetExactTimestep="1"
-		               target="/Outputs/VTK.OUTPUT"/>
-		<PeriodicEvent name="STATISTICS.01"
-		               timeFrequency="8640000"
-		               targetExactTimestep="1"
-		               target="/Tasks/FLOW.STATISTICS"/>
-		<PeriodicEvent beginTime="0"
-		               endTime="86400000"
-		               maxEventDt="8640000"
-		               name="solverApplication"
-		               target="/Solvers/1D_HCGI"/>
-		<PeriodicEvent name="restarts"
-		               timeFrequency="8640000"
-		               targetExactTimestep="1"
-		               target="/Outputs/restart"/>
-	</Events>
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="1D_HCGI"
+      flowSolverName="FLOW.SOLVER"
+      wellSolverName="WELL.SOLVER"
+      targetRegions="{ reservoir, WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
+      logLevel="1"
+      initialDt="3600">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        lineSearchAction="None"
+        timeStepIncreaseIterLimit="0.5"
+        timeStepDecreaseIterLimit="0.6"
+        maxTimeStepCuts="100"
+        maxSubSteps="1000"
+        newtonMaxIter="10"
+        logLevel="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseFVM
+      name="FLOW.SOLVER"
+      logLevel="2"
+      initialDt="8640"
+      discretization="FLUID.TPFA"
+      targetRegions="{ reservoir }"
+      temperature="349.15"
+      useMass="0"/>
+
+    <WellManager
+      name="WELL.SOLVER"
+      useMass="0"
+      targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
+      timeStepFromTables="1"
+      logLevel="1">
+      <CompositionalMultiphaseWell
+        name="WATER.INJECTOR.CONTROL"
+        type="injector"
+        useSurfaceConditions="0"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        enableCrossflow="0"
+        logLevel="0"
+        control="totalVolRate"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="4.5e7"
+          referenceElevation="-2000.0"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="WATER.INJECTOR.RATE"
+          injectionStream="{ 0.0, 0.0, 1.0 }"
+          injectionTemperature="349.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="GAS.INJECTOR.CONTROL"
+        type="injector"
+        useSurfaceConditions="0"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        enableCrossflow="0"
+        logLevel="0"
+        control="totalVolRate"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="4.5e7"
+          referenceElevation="-2000"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="GAS.INJECTOR.RATE"
+          injectionStream="{ 0.85, 0.15, 0.00 }"
+          injectionTemperature="349.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="PRODUCER.CONTROL"
+        type="producer"
+        useSurfaceConditions="0"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        logLevel="0"
+        control="BHP"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxgasprod"
+          phaseName="gas"
+          constraintScheduleTableName="PRODUCER.RATE"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="1.95e7"
+          referenceElevation="-2000"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1000 }"
+      yCoords="{ -5, 5 }"
+      zCoords="{ -2010, -2000 }"
+      nx="{ 100 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ hexahedra }">
+      <InternalWell
+        logLevel="1"
+        name="well.WATER.INJECTOR"
+        wellRegionName="WATER.INJECTOR"
+        wellControlsName="WATER.INJECTOR.CONTROL"
+        polylineNodeCoords="{ { 5, 0.0, -2000.0 },
+                              { 5, 0.0, -2010.0 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.083350"
+        numElementsPerSegment="1">
+        <Perforation
+          name="WATER.INJECTOR.1"
+          distanceFromHead="5"/>
+      </InternalWell>
+      <InternalWell
+        logLevel="1"
+        name="well.GAS.INJECTOR"
+        wellRegionName="GAS.INJECTOR"
+        wellControlsName="GAS.INJECTOR.CONTROL"
+        polylineNodeCoords="{ { 5, 0.0, -2000.0 },
+                              { 5, 0.0, -2010.0 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.083350"
+        numElementsPerSegment="1">
+        <Perforation
+          name="GAS.INJECTOR.1"
+          distanceFromHead="5"/>
+      </InternalWell>
+      <InternalWell
+        logLevel="1"
+        name="well.PRODUCER"
+        wellRegionName="PRODUCER"
+        wellControlsName="PRODUCER.CONTROL"
+        polylineNodeCoords="{ { 995, 0.0, -2000.0 },
+                              { 995, 0.0, -2010.0 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.083350"
+        numElementsPerSegment="1">
+        <Perforation
+          name="PRODUCER.1"
+          distanceFromHead="5"/>
+      </InternalWell>
+    </InternalMesh>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="FLUID.TPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ hexahedra }"
+      materialList="{ ROCK, FLUID, RELPERM }"/>
+
+    <WellElementRegion
+      name="WATER.INJECTOR"
+      materialList="{ FLUID, RELPERM }"/>
+
+    <WellElementRegion
+      name="GAS.INJECTOR"
+      materialList="{ FLUID, RELPERM }"/>
+
+    <WellElementRegion
+      name="PRODUCER"
+      materialList="{ FLUID, RELPERM }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="NULL.SOLID"/>
+
+    <PressurePorosity
+      name="ROCK.POROSITY"
+      defaultReferencePorosity="0.2"
+      referencePressure="3.0e+07"
+      compressibility="3.4E-10"/>
+
+    <ConstantPermeability
+      name="ROCK.PERMEABILITY"
+      permeabilityComponents="{ 100e-15, 100e-15, 10e-15 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="ROCK"
+      solidModelName="NULL.SOLID"
+      porosityModelName="ROCK.POROSITY"
+      permeabilityModelName="ROCK.PERMEABILITY"/>
+
+    <CompositionalTwoPhaseFluidPhillipsBrine
+      name="FLUID"
+      phaseNames="{ water, gas }"
+      equationsOfState="{ SoreideWhitson, PengRobinson }"
+      componentNames="{ CH4, CO2, H2O }"
+      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 1.80153e-02 }"
+      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 3.44300e-01 }"
+      componentBinaryCoeff="{ { 0.0000, 0.0000, 0.4850 },
+                              { 0.0000, 0.0000, 0.1896 },
+                              { 0.4850, 0.1896, 0.0000 } }"
+      pressureCoordinates="{ 1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05, 1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07, 2.066e+07, 3.521e+07, 6.000e+07 }"
+      temperatureCoordinates="{ 283.15, 334.15, 342.15, 346.15, 354.15 }"
+      waterCompressibility="4.1483E-10"/>
+
+    <TableRelativePermeability
+      name="RELPERM"
+      phaseNames="{ oil, gas }"
+      wettingNonWettingRelPermTableNames="{ KR, KR }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="pressure"
+      scale="2e7"/>
+
+    <FieldSpecification
+      name="initialTemp"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="temperature"
+      scale="349.15"/>
+
+    <FieldSpecification
+      name="initialComposition_CH4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="1.0"
+      functionName="CH4_VD"/>
+
+    <FieldSpecification
+      name="initialComposition_CO2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0"
+      functionName="CO2_VD"/>
+
+    <FieldSpecification
+      name="initialComposition_H2O"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="1.0"
+      functionName="H2O_VD"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="VTK.OUTPUT"/>
+
+    <Restart
+      name="restart"/>
+  </Outputs>
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="FLOW.STATISTICS"
+      flowSolverName="FLOW.SOLVER"
+      logLevel="1"
+      writeCSV="1"
+      computeCFLNumbers="0"
+      computeRegionStatistics="1"/>
+  </Tasks>
+
+  <Functions>
+    <TableFunction
+      name="RELPERM.KRW"
+      coordinates="{ 0.33, 0.3635, 0.397, 0.4305, 0.464, 0.4975, 0.531, 0.5645, 0.598, 0.6315, 0.665, 0.6985, 0.732, 0.7655, 0.799, 0.8325, 0.866, 0.8995, 0.933, 0.9665, 1 }"
+      values="{ 0, 0.0025, 0.01, 0.0225, 0.04, 0.0625, 0.09, 0.1225, 0.16, 0.2025, 0.25, 0.3025, 0.36, 0.4225, 0.49, 0.5625, 0.64, 0.7225, 0.81, 0.9025, 1 }"/>
+
+    <TableFunction
+      name="RELPERM.KRG"
+      coordinates="{ 0, 0.0335, 0.067, 0.1005, 0.134, 0.1675, 0.201, 0.2345, 0.268, 0.3015, 0.335, 0.3685, 0.402, 0.4355, 0.469, 0.5025, 0.536, 0.5695, 0.603, 0.6365, 0.67 }"
+      values="{ 0, 0.00884, 0.01768, 0.02652, 0.03536, 0.0442, 0.05304, 0.06188, 0.07072, 0.07956, 0.0884, 0.09724, 0.10608, 0.11492, 0.12376, 0.1326, 0.14144, 0.15028, 0.15912, 0.16796, 0.1768 }"/>
+
+    <TableFunction
+      name="KR"
+      coordinates="{ 0, 0.1, 1 }"
+      values="{ 0, 0, 1 }"/>
+
+    <TableFunction
+      name="TEMP_VS_DEPTH"
+      coordinates="{ -1.0e10, 1.0e10 }"
+      values="{ 349.15, 349.15 }"/>
+
+    <TableFunction
+      name="CH4_VD"
+      values="{ 0.000, 0.000 }"
+      coordinates="{ -1.0e10, 1.0e10 }"/>
+
+    <TableFunction
+      name="CO2_VD"
+      values="{ 0.000, 0.000 }"
+      coordinates="{ -1.0e10, 1.0e10 }"/>
+
+    <TableFunction
+      name="H2O_VD"
+      values="{ 1.000, 1.000 }"
+      coordinates="{ -1.0e10, 1.0e10 }"/>
+
+    <TableFunction
+      name="GAS.INJECTOR.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 0, 43200000, 43286400, 86400000 }"
+      values="{ 0, 0.0005, 0.0005, 0, 0 }"/>
+
+    <TableFunction
+      name="PRODUCER.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 86400000 }"
+      values="{ 1, 1 }"/>
+
+    <TableFunction
+      name="WATER.INJECTOR.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 0, 43200000, 86400000 }"
+      values="{ 0, 0, 0.0005, 0.0005 }"/>
+
+    <TableFunction
+      name="WATER.INJECTOR.BHP"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 0, 43200000, 43286400, 43372800, 86400000 }"
+      values="{ 0, 0, 0, 0, 3.5e7, 3.5e7 }"/>
+  </Functions>
+
+  <Events
+    minTime="0"
+    maxTime="86400000">
+    <PeriodicEvent
+      name="VTK.OUTPUT.01"
+      timeFrequency="8640000"
+      targetExactTimestep="1"
+      target="/Outputs/VTK.OUTPUT"/>
+
+    <PeriodicEvent
+      name="STATISTICS.01"
+      timeFrequency="8640000"
+      targetExactTimestep="1"
+      target="/Tasks/FLOW.STATISTICS"/>
+
+    <PeriodicEvent
+      beginTime="0"
+      endTime="86400000"
+      maxEventDt="8640000"
+      name="solverApplication"
+      target="/Solvers/1D_HCGI"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="8640000"
+      targetExactTimestep="1"
+      target="/Outputs/restart"/>
+  </Events>
 </Problem>

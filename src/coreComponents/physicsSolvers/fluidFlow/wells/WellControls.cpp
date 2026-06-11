@@ -22,8 +22,10 @@
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
-
-
+#include "mesh/PerforationFields.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
+#include "functions/FunctionManager.hpp"
 namespace geos
 {
 
@@ -31,89 +33,54 @@ using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_type( Type::PRODUCER ),
-  m_refElevation( 0.0 ),
-  m_refGravCoef( 0.0 ),
+  m_type( WellType::PRODUCER ),
+  m_numPhases( 0 ),
+  m_numComponents( 0 ),
+  m_numDofPerWellElement( 0 ),
+  m_numDofPerResElement( 0 ),
+  m_isThermal( 0 ),
+  m_keepVariablesConstantDuringInitStep( false ),
+  //m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), "_rates" ) ),
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), parent->getName() + "_rates" ) ),
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ),
-  m_targetBHP( 0.0 ),
-  m_targetTotalRate( 0.0 ),
-  m_targetPhaseRate( 0.0 ),
-  m_targetMassRate( 0.0 ),
   m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 ),
+  m_surfacePres( -1.0 ),
+  m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
-  m_rateSign( -1.0 ),
-  m_targetTotalRateTable( nullptr ),
-  m_targetPhaseRateTable( nullptr ),
-  m_targetBHPTable( nullptr ),
+  m_currentConstraint( nullptr ),
+  m_wellStatus( WellStatus::OPEN ),
+  m_wellOpen( false ),
   m_statusTable( nullptr ),
-  m_wellStatus( WellControls::Status::OPEN ),
   m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
+    setDescription( "Well type. Valid options:\n* " + EnumStrings< WellType >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::inputControlString(), &m_inputControl ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
+
+
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "When set to 1, write the rates into a CSV file." );
+
+  this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Choose time step to honor rates/bhp tables time intervals" );
 
   registerWrapper( viewKeyStruct::currentControlString(), &m_currentControl ).
     setDefaultValue( Control::UNINITIALIZED ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Current well control" );
 
-  registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "The target bottom-hole pressure [Pa] for the well." );
-
-  registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
-  registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
-  registerWrapper( viewKeyStruct::targetMassRateString(), &m_targetMassRate ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target Mass Rate rate ( [kg^3/s])" );
-
-  registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setDefaultValue( "" ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Name of the target phase" );
-
-  registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
-    setDefaultValue( -1 ).
+  registerWrapper( viewKeyStruct::inputControlString(), &m_inputControl ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference elevation where BHP control is enforced [m]" );
-
-  registerWrapper( viewKeyStruct::injectionStreamString(), &m_injectionStream ).
-    setDefaultValue( -1 ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Defines the global component fractions of the injected fluid." );
-
-  registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
-    setDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream [K]" );
+    setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::useSurfaceConditionsString(), &m_useSurfaceConditions ).
     setDefaultValue( 0 ).
@@ -155,32 +122,6 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
-  registerWrapper( viewKeyStruct::targetBHPTableNameString(), &m_targetBHPTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the BHP table when the rate is a time dependent function" );
-
-  registerWrapper( viewKeyStruct::targetTotalRateTableNameString(), &m_targetTotalRateTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the total rate table when the rate is a time dependent function" );
-
-  registerWrapper( viewKeyStruct::targetPhaseRateTableNameString(), &m_targetPhaseRateTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the phase rate table when the rate is a time dependent function" );
-
-  registerWrapper( viewKeyStruct::targetMassRateTableNameString(), &m_targetMassRateTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the mass rate table when the rate is a time dependent function" );
-
-  registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
-                    "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
-
   addLogLevel< logInfo::WellControl >();
 }
 
@@ -188,28 +129,75 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
-void WellControls::switchToBHPControl( real64 const & val )
+Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-  m_currentControl = Control::BHP;
-  m_targetBHP = val;
+  Group * constraint = nullptr;
+  if( childKey == viewKeyStruct::minimumBHPConstraintString() )
+  {
+    BHPConstraint< BHPConstraintTypeId::MIN > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MIN > >( childName );
+    m_minBHPConstraint =   &bhpConstraint;
+    constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
+  {
+    BHPConstraint< BHPConstraintTypeId::MAX > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MAX > >( childName );
+    m_maxBHPConstraint =  &bhpConstraint;
+    constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
+  {
+    ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
+    m_productionRateConstraintList.emplace_back( &phaseConstraint );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::injectionPhaseVolumeRateConstraint() )
+  {
+
+    InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
+    m_injectionRateConstraintList.emplace_back( &phaseConstraint );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::productionVolumeRateConstraint() )
+  {
+    ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
+    m_productionRateConstraintList.emplace_back( &volConstraint );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::injectionVolumeRateConstraint() )
+  {
+    InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
+    m_injectionRateConstraintList.emplace_back( &volConstraint );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::productionMassRateConstraint() )
+  {
+    ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
+    m_productionRateConstraintList.emplace_back( &massConstraint );
+    constraint = &massConstraint;
+
+  }
+  else if( childKey == viewKeyStruct::injectionMassRateConstraint() )
+  {
+    InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
+    m_injectionRateConstraintList.emplace_back( &massConstraint );
+    constraint = &massConstraint;
+  }
+  else if( childKey == viewKeyStruct::productionLiquidRateConstraint() )
+  {
+    ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
+    m_productionRateConstraintList.emplace_back( &liquidConstraint );
+    constraint = &liquidConstraint;
+  }
+  return constraint;
 }
 
-void WellControls::switchToTotalRateControl( real64 const & val )
+void WellControls::expandObjectCatalogs()
 {
-  m_currentControl = Control::TOTALVOLRATE;
-  m_targetTotalRate = val;
-}
-
-void WellControls::switchToPhaseRateControl( real64 const & val )
-{
-  m_currentControl = Control::PHASEVOLRATE;
-  m_targetPhaseRate = val;
-}
-
-void WellControls::switchToMassRateControl( real64 const & val )
-{
-  m_currentControl = Control::MASSRATE;
-  m_targetMassRate = val;
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  for( auto & catalogIter: WellConstraintBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 namespace
@@ -234,9 +222,17 @@ TableFunction * createWellTable( string const & tableName,
 }
 
 }
-
+void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
+{
+  std::string const & regionName = subRegion.getName();
+  std::string addrWithMask( regionName );
+  std::size_t pos = addrWithMask.find( "UniqueSubRegion" );
+  std::string addr = addrWithMask.substr( 0, pos );
+  m_targetRegionNames.push_back( addr );
+}
 void WellControls::postInputInitialization()
 {
+  Group::postInputInitialization();
   // 0) Assign the value of the current well control
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
@@ -249,128 +245,14 @@ void WellControls::postInputInitialization()
     m_currentControl = m_inputControl;
   }
 
-  // 1.a) check target BHP
-  GEOS_THROW_IF( m_targetBHP < 0,
-                 "Target bottom-hole pressure is negative",
-                 InputError, getWrapperDataContext( viewKeyStruct::targetBHPString() ) );
 
-  // 1.b) check target rates
-  GEOS_THROW_IF( m_targetTotalRate < 0,
-                 "Target rate is negative",
-                 InputError, getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) );
-
-  GEOS_THROW_IF( m_targetPhaseRate < 0,
-                 "Target oil rate is negative",
-                 InputError, getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) );
-
-  GEOS_THROW_IF( m_targetMassRate < 0,
-                 "Target mass rate is negative",
-                 InputError, getWrapperDataContext( viewKeyStruct::targetMassRateString() ) );
-
-  GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
-                 (!m_injectionStream.empty() && m_injectionTemperature < 0),
-                 GEOS_FMT( "Both {} and {} must be specified for multiphase simulations",
-                           viewKeyStruct::injectionStreamString(),
-                           viewKeyStruct::injectionTemperatureString() ),
-                 InputError, getDataContext() );
-
-  // 1.c) Set the multiplier for the rates
-  if( isProducer() )
-  {
-    m_rateSign = -1.0;
-  }
-  else
-  {
-    m_rateSign = 1.0;
-  }
-
-  // 2) check injection stream
-  if( !m_injectionStream.empty())
-  {
-    real64 sum = 0.0;
-    for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
-    {
-      GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
-                     "Invalid injection stream",
-                     getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
-      sum += m_injectionStream[ic];
-    }
-    GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                   "Invalid injection stream",
-                   InputError, getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
-  }
 
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                  "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
-  // 4) check that at least one rate constraint has been defined
-  GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
-                  (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&
-                  (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
-                 GEOS_FMT( "You need to specify a phase, mass, or total rate constraint. \n"
-                           "The phase rate constraint can be specified using either {} or {}.\n"
-                           "The total rate constraint can be specified using .\n"
-                           "either {} or {}.\n"
-                           "The mass rate constraint can be specified using either {} or {}",
-                           viewKeyStruct::targetPhaseRateString(),
-                           viewKeyStruct::targetPhaseRateTableNameString(),
-                           viewKeyStruct::targetTotalRateString(),
-                           viewKeyStruct::targetTotalRateTableNameString(),
-                           viewKeyStruct::targetMassRateString(),
-                           viewKeyStruct::targetMassRateTableNameString() ),
-                 InputError, getDataContext() );
 
-  // 5) check whether redundant information has been provided
-  GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
-                 GEOS_FMT( "You have provided redundant information for well phase rate."
-                           " The keywords {} and {} cannot be specified together",
-                           viewKeyStruct::targetPhaseRateString(),
-                           viewKeyStruct::targetPhaseRateTableNameString() ),
-                 InputError, getDataContext() );
-
-  GEOS_THROW_IF( ((m_targetTotalRate > 0.0 && !m_targetTotalRateTableName.empty())),
-                 GEOS_FMT( "You have provided redundant information for well total rate."
-                           " The keywords {} and {} cannot be specified together",
-                           viewKeyStruct::targetTotalRateString(),
-                           viewKeyStruct::targetTotalRateTableNameString() ),
-                 InputError, getDataContext() );
-
-  GEOS_THROW_IF( ((m_targetBHP > 0.0 && !m_targetBHPTableName.empty())),
-                 GEOS_FMT( "You have provided redundant information for well BHP."
-                           " The keywords {} and {} cannot be specified together",
-                           viewKeyStruct::targetBHPString(),
-                           viewKeyStruct::targetBHPTableNameString() ),
-                 InputError, getDataContext() );
-
-  GEOS_THROW_IF( ((m_targetMassRate > 0.0 && !m_targetMassRateTableName.empty())),
-                 GEOS_FMT( "You have provided redundant information for well mass rate."
-                           " The keywords {} and {} cannot be specified together",
-                           viewKeyStruct::targetMassRateString(),
-                           viewKeyStruct::targetMassRateTableNameString() ),
-                 InputError, getDataContext() );
-
-  GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
-                 "Option only valid if useSurfaceConditions set to 1",
-                 InputError, getDataContext() );
-
-  // 6.1) If the well is under BHP control then the BHP must be specified.
-  //      Otherwise the BHP will be set to a default value.
-  if( m_currentControl == Control::BHP )
-  {
-    GEOS_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
-                   GEOS_FMT( "You have to provide well BHP by specifying either {} or {}",
-                             viewKeyStruct::targetBHPString(),
-                             viewKeyStruct::targetBHPTableNameString() ),
-                   InputError, getDataContext() );
-  }
-  else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
-  {
-    m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                           GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
-  }
 
   // 6.2) Check incoherent information
 
@@ -393,76 +275,7 @@ void WellControls::postInputInitialization()
                  InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
 
 
-  // 9) Create time-dependent BHP table
-  if( m_targetBHPTableName.empty() )
-  {
-    m_targetBHPTableName = getName()+"_ConstantBHP_table";
-    m_targetBHPTable = createWellTable( m_targetBHPTableName, m_targetBHP );
-  }
-  else
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetBHPTable = &(functionManager.getGroup< TableFunction const >( m_targetBHPTableName ));
 
-    GEOS_THROW_IF( m_targetBHPTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   GEOS_FMT( "The interpolation method for the time-dependent BHP table {} "
-                             "should be TableFunction::InterpolationType::Lower",
-                             m_targetBHPTable->getName() ),
-                   InputError, getDataContext() );
-  }
-
-  // 10) Create time-dependent total rate table
-  if( m_targetTotalRateTableName.empty() )
-  {
-    m_targetTotalRateTableName = getName()+"_ConstantTotalRate_table";
-    m_targetTotalRateTable = createWellTable( m_targetTotalRateTableName, m_targetTotalRate );
-  }
-  else
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetTotalRateTable = &(functionManager.getGroup< TableFunction const >( m_targetTotalRateTableName ));
-
-    GEOS_THROW_IF( m_targetTotalRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   GEOS_FMT( "The interpolation method for the time-dependent total rate table {} "
-                             "should be TableFunction::InterpolationType::Lower",
-                             m_targetTotalRateTable->getName() ),
-                   InputError, getDataContext() );
-  }
-
-  // 11) Create time-dependent phase rate table
-  if( m_targetPhaseRateTableName.empty() )
-  {
-    m_targetPhaseRateTableName = getName()+"_ConstantPhaseRate_table";
-    m_targetPhaseRateTable = createWellTable( m_targetPhaseRateTableName, m_targetPhaseRate );
-  }
-  else
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetPhaseRateTable = &(functionManager.getGroup< TableFunction const >( m_targetPhaseRateTableName ));
-
-    GEOS_THROW_IF( m_targetPhaseRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   GEOS_FMT( "The interpolation method for the time-dependent phase rate table {} "
-                             "should be TableFunction::InterpolationType::Lower",
-                             m_targetPhaseRateTable->getName() ),
-                   InputError, getDataContext() );
-  }
-  // Create time-dependent mass rate table
-  if( m_targetMassRateTableName.empty() )
-  {
-    m_targetMassRateTableName = getName()+"_ConstantMassRate_table";
-    m_targetMassRateTable = createWellTable( m_targetMassRateTableName, m_targetMassRate );
-  }
-  else
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
-    m_targetMassRateTable = &(functionManager.getGroup< TableFunction const >( m_targetMassRateTableName ));
-
-    GEOS_THROW_IF( m_targetMassRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   GEOS_FMT( "The interpolation method for the time-dependent mass rate table {} "
-                             "should be TableFunction::InterpolationType::Lower",
-                             m_targetMassRateTable->getName() ),
-                   InputError, getDataContext() );
-  }
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
   {
@@ -488,37 +301,104 @@ void WellControls::postInputInitialization()
   }
 
 }
-
-void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
+void WellControls::postRestartInitialization( )
+{}
+void WellControls::setWellStatus( real64 const & currentTime, WellStatus status )
 {
   m_wellStatus = status;
-  if( m_wellStatus == WellControls::Status::OPEN )
+  if( m_wellStatus == WellStatus::OPEN )
   {
-
-    if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-        && isZero( getTargetMassRate( currentTime ) ) )
+    if( isProducer())
     {
-      m_wellStatus =  WellControls::Status::CLOSED;
+      std::vector< WellConstraintBase * >  const constraints =  getProdRateConstraints();
+      for( auto const & constraint : constraints )
+      {
+        if( isZero( constraint->getConstraintValue( currentTime ) ) )
+        {
+          m_wellStatus =  WellStatus::CLOSED;
+          break;
+        }
+      }
     }
+    else
+    {
+      std::vector< WellConstraintBase * >  const constraints =  getInjRateConstraints();
+      for( auto const & constraint : constraints )
+      {
+        if( isZero( constraint->getConstraintValue( currentTime ) ) )
+        {
+          m_wellStatus =  WellStatus::CLOSED;
+          break;
+        }
+      }
+    }
+
     if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
     {
-      m_wellStatus =  WellControls::Status::CLOSED;
+      m_wellStatus =  WellStatus::CLOSED;
     }
   }
 }
+real64 WellControls::setNextDt( real64 const & currentTime,
+                                real64 const & currentDt,
+                                WellElementSubRegion & subRegion )
+{
+  real64 nextDt = currentDt;
+  real64 nextDt_perf=nextDt;
 
+  // Find min dt from perf status tables
+  PerforationData & perforationData = *subRegion.getPerforationData();
+  string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  // Get dt for local perforations
+  for( integer i=0; i<perforationData.size(); i++ )
+  {
+    TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+    setNextDtFromTable( tableFunction, currentTime, nextDt_perf );
+  }
+  nextDt = MpiWrapper::min< real64 >( nextDt_perf );
+  // Find min dt including rate and status tables
+  real64 const nextDt_orig = nextDt;
+  setNextDtFromTables( currentTime, nextDt );
+  //if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )
+  if( getLogLevel() > 0 && nextDt < nextDt_orig )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on tables coordinates = {}", getName(), nextDt ));
+  return nextDt;
+}
 bool WellControls::isWellOpen() const
 {
-  return getWellStatus() == WellControls::Status::OPEN;
+  return getWellStatus() == WellStatus::OPEN;
 }
 
+void WellControls::setWellState( bool open )
+{
+  m_wellOpen = open;
+}
+
+bool WellControls::getWellState() const
+{
+  return m_wellOpen;
+}
 
 void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
 {
-  WellControls::setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
-  WellControls::setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
-  WellControls::setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
-  WellControls::setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  if( isProducer() )
+  {
+    getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    for( auto const & constraint : m_productionRateConstraintList )
+    {
+      constraint->setNextDtFromTables( currentTime, nextDt );
+    }
+  }
+  else
+  {
+    getMaxBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    for( auto const & constraint : m_injectionRateConstraintList )
+    {
+      constraint->setNextDtFromTables( currentTime, nextDt );
+    }
+  }
+
   WellControls::setNextDtFromTable( m_statusTable, currentTime, nextDt );
 }
 
@@ -536,4 +416,188 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
   }
 }
 
+real64 WellControls::getTargetBHP( real64 const & targetTime ) const
+{
+  if( isProducer())
+  {
+    return m_minBHPConstraint->getConstraintValue( targetTime );
+  }
+  return m_maxBHPConstraint->getConstraintValue( targetTime );
+}
+
+
+real64 WellControls::getInjectionTemperature() const
+{
+  real64 injectionTemperature = 0.0;
+  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+  {
+    if( constraint.isConstraintActive())
+    {
+      injectionTemperature =  constraint.getInjectionTemperature();
+      return;
+    }
+  } );
+  return injectionTemperature;
+}
+
+
+arrayView1d< real64 const > WellControls::getInjectionStream() const
+{
+  arrayView1d< real64 const > injectionStream;
+  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+  {
+    if( constraint.isConstraintActive() )
+    {
+      injectionStream = constraint.getInjectionStream();
+      return;
+    }
+  } );
+
+  return injectionStream;
+}
+
+integer WellControls::getConstraintPhaseIndex() const
+{
+  integer phaseIndex = -1;
+
+  if( isProducer() )
+  {
+    forProductionConstraints< ProductionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    {
+      if( constraint.isConstraintActive() )
+      {
+        phaseIndex = constraint.getPhaseIndex();
+      }
+    } );
+  }
+  else
+  {
+    forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    {
+      if( constraint.isConstraintActive() )
+      {
+        phaseIndex = constraint.getPhaseIndex();
+      }
+    } );
+  }
+
+  return phaseIndex;
+}
+
+real64 WellControls::getReferenceElevation() const
+{
+  if( isProducer () )
+  {
+    return getMinBHPConstraint()->getReferenceElevation();
+  }
+  return getMaxBHPConstraint()->getReferenceElevation();
+}
+
+void WellControls::implicitStepSetup( real64 const & time_n,
+                                      real64 const & GEOS_UNUSED_PARAM( dt ),
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )
+{
+
+  GEOS_UNUSED_VAR( elemManager );
+  // Set perforation status
+  setPerforationStatus( time_n, subRegion );
+}
+void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // Set perforation status
+
+  PerforationData & perforationData = *subRegion.getPerforationData();
+  string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+  arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+  // for now set to open
+  for( integer i=0; i<perforationData.size(); i++ )
+  {
+    TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+    perfStatus[i]=PerforationData::PerforationStatus::OPEN;
+    if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
+    }
+  }
+
+  array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
+  // global index local elements (size == subregion.size)
+  arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+
+  arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
+  array1d< integer > & currentStatus = subRegion.getWellElementStatus();
+  // Local elements
+  array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
+
+  integer numLocalElements = subRegion.getNumLocalElements();
+  array1d< integer > segStatus( numLocalElements );
+
+  // Local perforations
+  for( integer j = 0; j < perforationData.size(); j++ )
+  {
+    localIndex const iwelem = perfWellElemIndex[j];
+    if( elemGhostRank[iwelem] < 0 )
+    {
+      if( perfStatus[j] )
+      {
+        segStatus[iwelem] +=1;
+      }
+    }
+  }
+  // Broadcast segment status so all cores have same well status
+  subRegion.setElementStatus( segStatus );
+  integer numOpenElements = 0;
+  array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
+  for( integer i=0; i<currentStatus.size(); i++ )
+  {
+    numOpenElements += updatedStatus[i];
+  }
+  numOpenElements>0 ?  setWellStatus( time_n, WellStatus::OPEN ) :  setWellStatus( time_n, WellStatus::CLOSED );
+
+
+  // Set local well element status array
+  for( integer i=0; i<subRegion.size(); i++ )
+  {
+    integer gi = globalWellElementIndex[i];
+    localElemStatus[i] = currentStatus[gi];
+  }
+
+}
+
+void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const & gravVector )
+{
+  PerforationData & perforationData = *subRegion.getPerforationData();
+
+  real64 const refElev =  getReferenceElevation();
+
+  arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
+  arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
+
+  arrayView2d< real64 const > const perfLocation = perforationData.getField< fields::perforation::location >();
+  arrayView1d< real64 > const perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
+
+  forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
+  {
+    // precompute the depth of the perforations
+    perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
+  } );
+
+  forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
+  {
+    // precompute the depth of the well elements
+    wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
+  } );
+
+  forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
+  {
+    // set the reference well element where the BHP control is applied
+    real64 const refElev1 = constraint.getReferenceElevation();
+    constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
+  } );
+  // set the reference well element where the BHP control is applied
+  setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
+}
 } //namespace geos

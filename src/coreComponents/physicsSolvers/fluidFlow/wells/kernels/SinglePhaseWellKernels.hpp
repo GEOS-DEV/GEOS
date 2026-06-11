@@ -20,18 +20,22 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
+#include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
+
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 
 namespace geos
@@ -185,13 +189,9 @@ struct PressureRelationKernel
   using TAG = singlePhaseWellKernels::ElemTag;
 
   template< integer IS_THERMAL >
-  static localIndex
+  static void
   launch( localIndex const size,
           globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          WellControls const & wellControls,
-          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -811,12 +811,19 @@ public:
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( time ) ),
-    m_targetRate( wellControls.getTargetTotalRate( time ) ),
-    m_targetMassRate( wellControls.getTargetMassRate( time ) ),
+    m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
-  {}
+  {
+    if( wellControls.isProducer() )
+    {
+      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+    }
+    else
+    {
+      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
+    }
+  }
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
@@ -838,12 +845,12 @@ public:
           else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
           {
             // this residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), m_minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
           else if( m_currentControl == WellControls::Control::MASSRATE )
           {
             // the residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetMassRate ), m_minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
         }
         // for the pressure difference equation, always normalize by the BHP
@@ -856,7 +863,7 @@ public:
       else // SinglePhaseWell::RowOffset::MASSBAL
       {
         // this residual entry is in mass units
-        normalizer = m_dt * LvArray::math::abs( m_targetRate ) * m_density_n[iwelem][0];
+        normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_density_n[iwelem][0];
 
         // to make sure that everything still works well if the rate is zero, we add this check
         normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_density_n[iwelem][0] );
@@ -894,9 +901,9 @@ protected:
 
   /// Controls
   WellControls::Control const m_currentControl;
-  real64 const m_targetBHP;
-  real64 const m_targetRate;
-  real64 const m_targetMassRate;
+  real64 const m_constraintValue;
+  real64 m_targetBHP;
+
 
   /// View on the volume
   arrayView1d< real64 const > const m_volume;

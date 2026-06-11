@@ -10,7 +10,7 @@
       initialDt="1e2"
       targetRegions="{ region, injwell }">
       <NonlinearSolverParameters
-         logLevel="4"
+        logLevel="4"
         newtonTol="1.0e-3"
         timeStepDecreaseIterLimit="0.41"
         newtonMaxIter="40"
@@ -29,30 +29,33 @@
       useMass="1"
       initialDt="1e2"
       maxCompFractionChange="0.5"
-      targetRegions="{ region }">
-    </CompositionalMultiphaseFVM>
+      targetRegions="{ region }"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
-      writeCSV="1"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="-0.01"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15"
-        targetBHPTableName="totalBHPTable"
-        targetTotalRateTableName="totalRateTable"
-        injectionTemperature="300.15"
-        injectionStream="{ 1.0, 0.000 }"/>
-     </CompositionalMultiphaseWell>
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          constraintScheduleTableName="totalBHPTable"
+          referenceElevation="-0.01"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="totalRateTable"
+          injectionStream="{ 1.0, 0.000 }"
+          injectionTemperature="300.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
@@ -82,10 +85,8 @@
         <Perforation
           name="injector1_perf17"
           distanceFromHead="1334.738"/>
-
       </InternalWell>
     </InternalMesh>
-
   </Mesh>
 
   <Geometry>
@@ -93,8 +94,6 @@
       name="sink"
       xMin="{ 89.99, 89.99, -0.01 }"
       xMax="{ 101.01, 101.01, 1.01 }"/>
-
-    
   </Geometry>
 
   <Events
@@ -116,23 +115,25 @@
   </Events>
 
   <Functions>
-   <TableFunction
-      name="totalBHPTable" 
-      inputVarNames="{time}"
-      coordinates="{  0 , 300, 10000,  50000, 75000, 125000}"
-      values="{       1.45e7,  1.0e7, 1.45e7, 1.45e7,  1.45e7,    1.45e7 }"
+    <TableFunction
+      name="totalBHPTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0 , 300, 10000, 50000, 75000, 125000 }"
+      values="{ 1.45e7, 1.0e7, 1.45e7, 1.45e7, 1.45e7, 1.45e7 }"
       interpolation="lower"/>
-   <TableFunction
-      name="totalMassRateTable" 
-      inputVarNames="{time}"
-      coordinates="{  0 , 300, 50000, 75000, 100000, 125000}"
-      values="{       0,  900, 940,  980., 800,  1200 }"
+
+    <TableFunction
+      name="totalMassRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0 , 300, 50000, 75000, 100000, 125000 }"
+      values="{ 0, 900, 940, 980., 800, 1200 }"
       interpolation="lower"/>
-   <TableFunction
-      name="totalRateTable" 
-      inputVarNames="{time}"
-      coordinates="{  0 , 300, 50000, 75000, 100000, 125000}"
-      values="{       0,  1.04705, 1.09358, 1.14012, 1.14012 , 1.1404 }"
+
+    <TableFunction
+      name="totalRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0 , 300, 50000, 75000, 100000, 125000 }"
+      values="{ 0, 1.04705, 1.09358, 1.14012, 1.14012 , 1.1404 }"
       interpolation="lower"/>
   </Functions>
 
@@ -148,25 +149,28 @@
       name="region"
       cellBlocks="{ cb }"
       materialList="{ fluid, rock, relperm }"/>
+
     <WellElementRegion
       name="injwell"
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
-
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
+
     <NullModel
       name="nullSolid"/>
+
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.2"
       referencePressure="0.0"
       compressibility="1.0e-9"/>
+
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
@@ -186,11 +190,9 @@
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -198,6 +200,7 @@
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
       scale="9e6"/>
+
     <FieldSpecification
       name="initialTemperature"
       initialCondition="1"
@@ -205,6 +208,7 @@
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
       scale="368.15"/>
+
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
@@ -213,6 +217,7 @@
       fieldName="globalCompFraction"
       component="0"
       scale="0.005"/>
+
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
@@ -221,7 +226,6 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.995"/>
-
   </FieldSpecifications>
 
   <Outputs>

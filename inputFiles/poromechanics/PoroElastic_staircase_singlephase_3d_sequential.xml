@@ -1,13 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Included>
-    <File name="./PoroElastic_staircase_singlephase_3d_base.xml"/>
-  </Included>  
+    <File
+      name="./PoroElastic_staircase_singlephase_3d_base.xml"/>
+  </Included>
 
   <Solvers>
-
     <SinglePhaseReservoirPoromechanics
       name="reservoirPoromechanics"
       solidSolverName="linearElasticity"
@@ -23,12 +22,12 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseReservoirPoromechanics>
-    
+
     <SolidMechanicsLagrangianFEM
       name="linearElasticity"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ channel, barrier  }"/>
+      targetRegions="{ channel, barrier }"/>
 
     <SinglePhaseReservoir
       name="reservoirSystem"
@@ -51,36 +50,44 @@
       targetRegions="{ channel, barrier }"
       temperature="300"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
-        logLevel="1"  
+        logLevel="1"
         type="producer"
-        control="BHP"
-        referenceElevation="62.5"
-        targetBHP="9e6"
-        targetTotalRateTableName="producerTotalRateTable"/>
-      <WellControls
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="9e6"
+          referenceElevation="62.5"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          constraintScheduleTableName="producerTotalRateTable"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
-        logLevel="1"      
+        logLevel="1"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="250"
-        targetBHP="5e7"
-        targetTotalRateTableName="injectorTotalRateTable"       
         useSurfaceConditions="1"
-        surfacePressure="101325"/>
-    </SinglePhaseWell>
-   
+        surfacePressure="101325"
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="5e7"
+          referenceElevation="250"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="injectorTotalRateTable"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Events
-      minTime="-1e11"
-      maxTime="1e7">
-    
+    minTime="-1e11"
+    maxTime="1e7">
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
@@ -91,7 +98,7 @@
       targetTime="-1e11"
       beginTime="-1e11"
       target="/Tasks/singlePhasePoroelasticityEquilibrationStep"/>
-    
+
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e6"
@@ -101,16 +108,16 @@
       name="linearElasticityStatistics"
       timeFrequency="1e6"
       target="/Tasks/linearElasticityStatistics"/>
+
     <PeriodicEvent
       name="singlePhaseFlowStatistics"
       timeFrequency="1e6"
       target="/Tasks/singlePhaseFlowStatistics"/>
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e6"
       target="/Outputs/restartOutput"/>
-
   </Events>
 
   <Tasks>
@@ -118,24 +125,25 @@
       name="linearElasticityStatistics"
       solidSolverName="linearElasticity"
       logLevel="1"/>
+
     <SinglePhaseStatistics
       name="singlePhaseFlowStatistics"
       flowSolverName="singlePhaseFlow"
       logLevel="1"/>
 
-    <SinglePhaseReservoirPoromechanicsInitialization 
-      logLevel="1"      
+    <SinglePhaseReservoirPoromechanicsInitialization
+      logLevel="1"
       name="singlePhasePoroelasticityEquilibrationStep"
       poromechanicsSolverName="reservoirPoromechanics"
       solidMechanicsStatisticsName="linearElasticityStatistics"/>
   </Tasks>
-  
+
   <Outputs>
     <VTK
       name="vtkOutput_seq"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>
 </Problem>
-

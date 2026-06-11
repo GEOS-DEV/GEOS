@@ -39,7 +39,8 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 
 namespace geos
 {
@@ -134,19 +135,19 @@ struct ControlEquationHelper
   inline
   static
   void
-  switchControl( bool const isProducer,
-                 WellControls::Control const & inputControl,
-                 WellControls::Control const & currentControl,
-                 integer const phasePhaseIndex,
-                 real64 const & targetBHP,
-                 real64 const & targetPhaseRate,
-                 real64 const & targetTotalRate,
-                 real64 const & targetMassRate,
-                 real64 const & currentBHP,
-                 arrayView1d< real64 const > const & currentPhaseVolRate,
-                 real64 const & currentTotalVolRate,
-                 real64 const & currentMassRate,
-                 WellControls::Control & newControl );
+  selectLimitingConstraint( bool const isProducer,
+                            WellControls::Control const & inputControl,
+                            WellControls::Control const & currentControl,
+                            integer const phasePhaseIndex,
+                            real64 const & targetBHP,
+                            real64 const & targetPhaseRate,
+                            real64 const & targetTotalRate,
+                            real64 const & targetMassRate,
+                            real64 const & currentBHP,
+                            arrayView1d< real64 const > const & currentPhaseVolRate,
+                            real64 const & currentTotalVolRate,
+                            real64 const & currentMassRate,
+                            WellControls::Control & newControl );
 
   template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
@@ -160,6 +161,7 @@ struct ControlEquationHelper
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
            real64 const & currentBHP,
+           real64 const & targetValue,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate,
@@ -200,11 +202,6 @@ struct PressureRelationKernel
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          integer const targetPhaseIndex,
-          WellControls const & wellControls,
-          real64 const & time,
           arrayView1d< integer const > const elemStatus,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
@@ -323,7 +320,6 @@ struct RateInitializationKernel
 
   static void
   launch( localIndex const subRegionSize,
-          integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & currentTime,
           arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens,
@@ -505,7 +501,6 @@ public:
                       arrayView1d< localIndex const > const & ghostRank,
                       integer const numComp,
                       integer const numDof,
-                      integer const targetPhaseIndex,
                       WellElementSubRegion const & subRegion,
                       constitutive::MultiFluidBase const & fluid,
                       WellControls const & wellControls,
@@ -519,20 +514,41 @@ public:
             minNormalizer ),
     m_numComp( numComp ),
     m_numDof( numDof ),
-    m_targetPhaseIndex( targetPhaseIndex ),
     m_dt( dt ),
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( time ) ),
-    m_targetTotalRate( wellControls.getTargetTotalRate( time ) ),
-    m_targetPhaseRate( wellControls.getTargetPhaseRate( time ) ),
-    m_targetMassRate( wellControls.getTargetMassRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
-  {}
+  {
+    if( m_isProducer )
+    {
+      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      // Note this assumes that there is only one   rate constraint
+      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+      // This is one of the reasons for restricting  constraint type for a production well
+      // another pr will remove fix this (so the cause for difference results is isolated to one change)
+      m_targetPhaseIndex =   wellControls.getConstraintPhaseIndex(  );
+      m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
+
+    }
+    else
+    {
+      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
+
+      // Note this assumes that there is only one     rate constraint
+      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+      // This is one of the reasons for restricting  constraint type for a production well
+      // another pr will remove fix this (so the cause for difference results is isolated to one change)
+      m_targetPhaseIndex = -1;
+      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
+
+    }
+
+
+  }
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
@@ -561,17 +577,17 @@ public:
           else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
           {
             // the residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetTotalRate ), m_minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
           else if( m_currentControl == WellControls::Control::PHASEVOLRATE )
           {
             // the residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetPhaseRate ), m_minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
           else if( m_currentControl == WellControls::Control::MASSRATE )
           {
             // the residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetMassRate ), m_minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
         }
         // for the pressure difference equation, always normalize by the BHP
@@ -586,18 +602,18 @@ public:
         if( m_isProducer ) // only PHASEVOLRATE is supported for now
         {
           // the residual is in mass units
-          normalizer = m_dt * LvArray::math::abs( m_targetPhaseRate ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
+          normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else // WellType::INJECTOR, only TOTALVOLRATE is supported for now
         {
           if( m_currentControl == WellControls::Control::MASSRATE )
           {
-            normalizer = m_dt * LvArray::math::abs( m_targetMassRate );
+            normalizer = m_dt * LvArray::math::abs( m_constraintValue );
           }
           else
           {
             // the residual is in mass units
-            normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
+            normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_totalDens_n[iwelem][0];
           }
 
         }
@@ -611,17 +627,17 @@ public:
         if( m_isProducer ) // only PHASEVOLRATE is supported for now
         {
           // the residual is in volume units
-          normalizer = m_dt * LvArray::math::abs( m_targetPhaseRate );
+          normalizer = m_dt * LvArray::math::abs( m_constraintValue );
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else // WellType::INJECTOR, only TOTALVOLRATE is supported for now
         {
           if( m_currentControl == WellControls::Control::MASSRATE )
           {
-            normalizer = m_dt * LvArray::math::abs( m_targetMassRate/  m_totalDens_n[iwelem][0] );
+            normalizer = m_dt * LvArray::math::abs( m_constraintValue/  m_totalDens_n[iwelem][0] );
           }
           else
           {
-            normalizer = m_dt * LvArray::math::abs( m_targetTotalRate );
+            normalizer = m_dt * LvArray::math::abs( m_constraintValue );
           }
 
         }
@@ -658,7 +674,7 @@ protected:
   integer const m_numDof;
 
   /// Index of the target phase
-  integer const m_targetPhaseIndex;
+  integer m_targetPhaseIndex;
 
   /// Time step size
   real64 const m_dt;
@@ -674,10 +690,9 @@ protected:
 
   /// Controls
   WellControls::Control const m_currentControl;
-  real64 const m_targetBHP;
-  real64 const m_targetTotalRate;
-  real64 const m_targetPhaseRate;
-  real64 const m_targetMassRate;
+  real64 m_constraintValue;
+  real64 m_targetBHP;
+
 
   /// View on the volume
   arrayView1d< real64 const > const m_volume;
@@ -700,7 +715,6 @@ public:
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] numComp number of fluid components
    * @param[in] numDof number of dofs per well element
-   * @param[in] targetPhaseIndex the index of the target phase (for phase volume control)
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
    * @param[in] localResidual the residual vector on my MPI rank
@@ -715,7 +729,6 @@ public:
   static void
   createAndLaunch( integer const numComp,
                    integer const numDof,
-                   integer const targetPhaseIndex,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
@@ -731,7 +744,7 @@ public:
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               numComp, numDof, targetPhaseIndex, subRegion, fluid, wellControls, time, dt, minNormalizer );
+                               numComp, numDof, subRegion, fluid, wellControls, time, dt, minNormalizer );
     ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 
@@ -1359,7 +1372,7 @@ public:
     m_wellElemDofNumber ( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_nextWellElemIndex ( subRegion.getReference< array1d< localIndex > >( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString()) ),
     m_elemStatus( subRegion.getLocalWellElementStatus() ),
-    m_connRate ( subRegion.getField< fields::well::mixtureConnectionRate >() ),
+    m_connRate ( subRegion.getField< fields::well::connectionRate >() ),
     m_wellElemCompFrac ( subRegion.getField< fields::well::globalCompFraction >() ),
     m_dWellElemCompFrac_dCompDens ( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_localMatrix( localMatrix ),

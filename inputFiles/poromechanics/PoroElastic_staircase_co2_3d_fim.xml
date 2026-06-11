@@ -1,13 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Included>
-    <File name="./PoroElastic_staircase_co2_3d_base.xml"/>
-  </Included>  
+    <File
+      name="./PoroElastic_staircase_co2_3d_base.xml"/>
+  </Included>
 
   <Solvers>
-
     <MultiphasePoromechanicsReservoir
       name="reservoirSystem"
       poromechanicsSolverName="multiphasePoroelasticity"
@@ -21,7 +20,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </MultiphasePoromechanicsReservoir>
-    
+
     <MultiphasePoromechanics
       name="multiphasePoroelasticity"
       solidSolverName="linearElasticity"
@@ -35,7 +34,7 @@
       name="linearElasticity"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ channel, barrier  }"/>
+      targetRegions="{ channel, barrier }"/>
 
     <CompositionalMultiphaseFVM
       name="twoPhaseFlow"
@@ -43,46 +42,55 @@
       discretization="fluidTPFA"
       targetRelativePressureChangeInTimeStep="1"
       targetPhaseVolFractionChangeInTimeStep="1"
-      targetRegions="{ channel  }"
+      targetRegions="{ channel }"
       temperature="300"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      maxCompFractionChange="0.2"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
-        logLevel="1"  
+        logLevel="1"
         type="producer"
         control="BHP"
-        referenceElevation="62.5"
-        targetBHP="9e6"
-        targetPhaseRateTableName="producerPhaseRateTable"
-        targetPhaseName="water"/>
-      <WellControls
+        maxCompFractionChange="0.2">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxwaterprod"
+          phaseName="water"
+          constraintScheduleTableName="producerPhaseRateTable"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="9e6"
+          referenceElevation="62.5"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
-        logLevel="1"      
+        logLevel="1"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="250"
-        targetBHP="1.5e7"
-        targetTotalRateTableName="injectorTotalRateTable"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        injectionTemperature="355"
-        injectionStream="{ 1.0, 0.0 }"/>
-    </CompositionalMultiphaseWell>
-    
+        control="totalVolRate"
+        maxCompFractionChange="0.2">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1.5e7"
+          referenceElevation="250"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="injectorTotalRateTable"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="355"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Events
-    minTime="-1e11"  
+    minTime="-1e11"
     maxTime="1e7">
-    
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
@@ -98,6 +106,7 @@
       name="solverApplications1"
       endTime="1e3"
       target="/Solvers/reservoirSystem"/>
+
     <PeriodicEvent
       name="solverApplications2"
       beginTime="1e3"
@@ -108,11 +117,12 @@
       name="linearElasticityStatistics"
       timeFrequency="1e6"
       target="/Tasks/linearElasticityStatistics"/>
+
     <PeriodicEvent
       name="twoPhaseFlowStatistics"
       timeFrequency="1e6"
       target="/Tasks/twoPhaseFlowStatistics"/>
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e6"
@@ -123,16 +133,17 @@
     <VTK
       name="vtkOutput"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>
 
   <Tasks>
-    
     <SolidMechanicsStatistics
       name="linearElasticityStatistics"
       solidSolverName="linearElasticity"
       logLevel="1"/>
+
     <CompositionalMultiphaseStatistics
       name="twoPhaseFlowStatistics"
       flowSolverName="twoPhaseFlow"
@@ -140,12 +151,10 @@
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
 
-    <MultiphasePoromechanicsInitialization 
-      logLevel="1"      
+    <MultiphasePoromechanicsInitialization
+      logLevel="1"
       name="multiphasePoroelasticityEquilibrationStep"
       poromechanicsSolverName="multiphasePoroelasticity"
       solidMechanicsStatisticsName="linearElasticityStatistics"/>
-    
   </Tasks>
-  
 </Problem>
