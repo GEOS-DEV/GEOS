@@ -21,4 +21,6 @@ known models.
    ModifiedCamClay
    DelftEgg
    Damage
-   ViscoPlasticity 
+   ViscoPlasticity
+   SurfaceInformedPolymer
+   SurfaceInformedPolymerCohesiveZone

@@ -109,13 +109,7 @@ The practical challenge in parallel PFW generation is to keep each MPI partition
   N_x-2, & \text{non-periodic in }x,
   \end{cases}
 \end{equation}
-and analogously for \(y\) and \(z\), except that plane strain always uses the reduced through-thickness treatment described below.  Thus, in a non-periodic direction, an input such as \texttt{nJ=3} means one physical/interior cell plus one buffer cell on each side, not three physical cells.  When an input parameter is intended to mean ``physical cells through the sample,'' set the PFW total cell count to that value plus two in each non-periodic direction:
-\begin{lstlisting}[language=Python,caption={Converting physical cells to PFW total cells in a non-periodic direction.}]
-physical_y_cells = 8
-pfw["periodic"] = [False, False, False]
-pfw["nJ"] = physical_y_cells + 2
-\end{lstlisting}
-The interior spacings are then
+and analogously for \(y\) and \(z\), except that plane strain always uses the reduced through-thickness treatment described below.  The interior spacings are then
 \begin{equation}
   \Delta x = \frac{x_{\max}-x_{\min}}{n_x^{\mathrm{int}}}, \qquad
   \Delta y = \frac{y_{\max}-y_{\min}}{n_y^{\mathrm{int}}}, \qquad
@@ -1037,9 +1031,6 @@ pfw["fTable"] = [
 ]
 \end{lstlisting}
 PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
-
-\paragraph{Resolution guidance for moving boundaries.}
-Higher-order particle-grid transfers, including CPDI and single-point B-splines, require data on boundary and buffer/control nodes to support their interpolation stencils.  Avoid using the minimum non-periodic total count \texttt{n=3} in a direction that is actively driven by \texttt{Moving} faces unless the goal is a deliberately one-cell-thick numerical smoke test.  For quantitative strip, plane-strain, compression, or stress-control calculations, use several physical cells between the two boundary layers; a practical lower bound is about eight interior cells in the actively loaded or constrained direction.  For example, use \texttt{nJ = physical\_y\_cells + 2} for a non-periodic \(y\) direction.  This gives B-spline/CPDI particles true interior support and reduces sensitivity to boundary and buffer-node treatment.
 
 \subsection{Periodic homogeneous deformation}
 \index{prescribedFTable}

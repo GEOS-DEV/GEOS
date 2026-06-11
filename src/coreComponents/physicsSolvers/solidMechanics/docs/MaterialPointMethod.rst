@@ -310,7 +310,7 @@ The pressure-sensitive term modifies the yield strength while the plastic correc
 SurfaceInformedPolymerCohesiveZone
 -----------------------------------
 
-A finite-thickness cohesive-zone projection of :code:`SurfaceInformedPolymer`.  The jump components are converted to film strains :math:`\epsilon_n=\delta_n/h_0` and :math:`\gamma=\delta_t/h_0`.  The normal response is split into retained mean stress :math:`p_t=K\epsilon_n` and deviatoric normal stress :math:`s_n=\sigma_n-p_t`, then the deviatoric normal/shear state is returned to the same scalar surface using :math:`q=\sqrt{(3s_n/2)^2+3\tau^2}`.  Opening follows the existing cohesive-zone sign convention and returns negative normal stress.  Once :code:`maximumStretch` is exceeded the model sets damage to one and returns zero traction.
+A finite-thickness cohesive-zone projection of :code:`SurfaceInformedPolymer`.  The jump components are converted to film strains :math:`\epsilon_n=\delta_n/h_0` and :math:`\gamma=\delta_t/h_0`.  The normal response is split into retained mean stress :math:`p_t=K\epsilon_n` and deviatoric normal stress :math:`s_n=\sigma_n-p_t`, then the deviatoric normal/shear state is returned to the same scalar surface using :math:`q=\sqrt{(3s_n/2)^2+3\tau^2}`.  The :code:`compressivePressureStrengtheningCap` limits only the pressure-strengthening part of that return; it does not cap the retained compressive film traction.  Opening follows the existing cohesive-zone sign convention and returns negative normal stress.  Once :code:`maximumStretch` is exceeded the model sets damage to one and returns zero traction, independent of the pressure state.
 
 CeramicDamage
 -------------------------

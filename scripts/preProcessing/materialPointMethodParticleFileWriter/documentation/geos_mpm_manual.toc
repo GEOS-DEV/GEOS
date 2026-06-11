@@ -114,266 +114,273 @@
 \contentsline {subsubsection}{\numberline {2.7.1.5}\texttt {VonMisesJ}}{41}{subsubsection.2.7.1.5}%
 \contentsline {subsubsection}{\numberline {2.7.1.6}\texttt {PerfectlyPlastic}}{42}{subsubsection.2.7.1.6}%
 \contentsline {subsubsection}{\numberline {2.7.1.7}\texttt {StrainHardeningPolymer}}{42}{subsubsection.2.7.1.7}%
-\contentsline {subsubsection}{\numberline {2.7.1.8}\texttt {CeramicDamage}}{43}{subsubsection.2.7.1.8}%
-\contentsline {paragraph}{Primary input parameters and state.}{43}{subsubsection.2.7.1.8}%
-\contentsline {paragraph}{Strength scaling, porosity scaling, and pressure.}{44}{table.2.3}%
-\contentsline {paragraph}{Yield surface and third-invariant dependence.}{45}{equation.2.7.105}%
-\contentsline {paragraph}{Return mapping.}{46}{figure.caption.8}%
-\contentsline {paragraph}{Damage regularization options.}{46}{equation.2.7.109}%
-\contentsline {paragraph}{Strength scale and crack-tip scaling.}{46}{equation.2.7.111}%
-\contentsline {paragraph}{DFG use and porosity interpretation.}{47}{equation.2.7.112}%
-\contentsline {paragraph}{Implementation pseudocode.}{48}{equation.2.7.112}%
-\contentsline {subsubsection}{\numberline {2.7.1.9}\texttt {Chiumenti}}{48}{subsubsection.2.7.1.9}%
-\contentsline {subsubsection}{\numberline {2.7.1.10}\texttt {Graphite}}{49}{subsubsection.2.7.1.10}%
-\contentsline {paragraph}{Kinematics and material basis.}{49}{figure.caption.9}%
-\contentsline {paragraph}{Elastic trial stress.}{49}{equation.2.7.117}%
-\contentsline {paragraph}{Mode decomposition of stress.}{51}{equation.2.7.131}%
-\contentsline {paragraph}{Pressure-dependent point-slope strengths.}{52}{equation.2.7.138}%
-\contentsline {paragraph}{Mode return and reconstruction.}{53}{equation.2.7.143}%
-\contentsline {paragraph}{Plastic strain, hardening, and damage evolution.}{53}{equation.2.7.144}%
-\contentsline {paragraph}{Thermal effects.}{54}{equation.2.7.149}%
-\contentsline {paragraph}{Update algorithm.}{54}{equation.2.7.149}%
-\contentsline {paragraph}{Capabilities and limitations.}{54}{lstnumber.2.50.22}%
-\contentsline {subsubsection}{\numberline {2.7.1.11}\texttt {Geomechanics}}{55}{subsubsection.2.7.1.11}%
-\contentsline {paragraph}{Stress measures and sign convention.}{55}{subsubsection.2.7.1.11}%
-\contentsline {paragraph}{Yield surface and cap.}{56}{equation.2.7.150}%
-\contentsline {paragraph}{Supported shear-limit parameterizations.}{56}{figure.caption.11}%
-\contentsline {paragraph}{Nonlinear elasticity.}{58}{equation.2.7.158}%
-\contentsline {paragraph}{Cap hardening, porosity, and crush curve.}{58}{equation.2.7.161}%
-\contentsline {paragraph}{Strain hardening and damage softening.}{58}{equation.2.7.163}%
-\contentsline {paragraph}{Optional creep relaxation.}{59}{equation.2.7.169}%
-\contentsline {paragraph}{Optional compaction/buckling multiplier.}{59}{equation.2.7.174}%
-\contentsline {paragraph}{Numerical update algorithm.}{60}{equation.2.7.175}%
-\contentsline {paragraph}{Input parameterization.}{60}{equation.2.7.177}%
-\contentsline {paragraph}{Implementation notes.}{61}{table.2.6}%
-\contentsline {subsection}{\numberline {2.7.2}Fluid models}{62}{subsection.2.7.2}%
-\contentsline {subsubsection}{\numberline {2.7.2.1}\texttt {Gas}}{62}{subsubsection.2.7.2.1}%
-\contentsline {subsubsection}{\numberline {2.7.2.2}Liquid-model placeholder}{62}{subsubsection.2.7.2.2}%
-\contentsline {subsection}{\numberline {2.7.3}Shared constitutive modifiers and particle state}{62}{subsection.2.7.3}%
-\contentsline {subsubsection}{\numberline {2.7.3.1}Strength scale and Weibull-type size effects}{63}{subsubsection.2.7.3.1}%
-\contentsline {subsubsection}{\numberline {2.7.3.2}Crack-tip stress concentration}{63}{subsubsection.2.7.3.2}%
-\contentsline {subsubsection}{\numberline {2.7.3.3}Porosity}{63}{subsubsection.2.7.3.3}%
-\contentsline {subsubsection}{\numberline {2.7.3.4}Temperature}{64}{subsubsection.2.7.3.4}%
-\contentsline {subsection}{\numberline {2.7.4}External material models}{64}{subsection.2.7.4}%
-\contentsline {section}{\numberline {2.8}Particle types and interpolation/update options}{65}{section.2.8}%
-\contentsline {subsection}{\numberline {2.8.1}Mapping notation and effective support}{65}{subsection.2.8.1}%
-\contentsline {subsection}{\numberline {2.8.2}Single-point particles with trilinear mapping}{66}{subsection.2.8.2}%
-\contentsline {subsection}{\numberline {2.8.3}Single-point particles with cubic B-spline mapping}{66}{subsection.2.8.3}%
-\contentsline {subsection}{\numberline {2.8.4}CPDI with trilinear background shape functions}{67}{subsection.2.8.4}%
-\contentsline {subsection}{\numberline {2.8.5}CPDI domain scaling}{69}{subsection.2.8.5}%
-\contentsline {subsection}{\numberline {2.8.6}CPTI and CPDI2 placeholders}{70}{subsection.2.8.6}%
-\contentsline {paragraph}{CPTI.}{70}{subsection.2.8.6}%
-\contentsline {paragraph}{CPDI2.}{70}{subsection.2.8.6}%
-\contentsline {subsection}{\numberline {2.8.7}Transfer operators used by update schemes}{70}{subsection.2.8.7}%
-\contentsline {subsection}{\numberline {2.8.8}PIC update}{70}{subsection.2.8.8}%
-\contentsline {subsection}{\numberline {2.8.9}FLIP update}{71}{subsection.2.8.9}%
-\contentsline {subsection}{\numberline {2.8.10}XPIC update}{72}{subsection.2.8.10}%
-\contentsline {subsection}{\numberline {2.8.11}FMPM update}{72}{subsection.2.8.11}%
-\contentsline {subsection}{\numberline {2.8.12}Implementation status summary}{73}{subsection.2.8.12}%
-\contentsline {section}{\numberline {2.9}Boundary conditions, prescribed deformation, and stress control}{74}{section.2.9}%
-\contentsline {subsection}{\numberline {2.9.1}Face convention and nodal data used by the boundary update}{74}{subsection.2.9.1}%
-\contentsline {subsection}{\numberline {2.9.2}Boundary-type state and time-dependent boundary-type switching}{75}{subsection.2.9.2}%
-\contentsline {subsection}{\numberline {2.9.3}Outflow faces}{76}{subsection.2.9.3}%
-\contentsline {subsection}{\numberline {2.9.4}Symmetry and free-slip reflection}{76}{subsection.2.9.4}%
-\contentsline {subsection}{\numberline {2.9.5}Prescribed domain deformation and F-table interpolation}{77}{subsection.2.9.5}%
-\contentsline {subsection}{\numberline {2.9.6}Moving faces}{77}{subsection.2.9.6}%
-\contentsline {subsection}{\numberline {2.9.7}Boundary contact faces}{79}{subsection.2.9.7}%
-\contentsline {subsection}{\numberline {2.9.8}Stress-control generated boundary motion}{80}{subsection.2.9.8}%
-\contentsline {subsection}{\numberline {2.9.9}Reaction accumulation and reaction-history output}{81}{subsection.2.9.9}%
-\contentsline {subsection}{\numberline {2.9.10}FMPM-specific boundary consistency}{81}{subsection.2.9.10}%
-\contentsline {subsection}{\numberline {2.9.11}Periodic boundaries as topology rather than face constraints}{81}{subsection.2.9.11}%
-\contentsline {section}{\numberline {2.10}Cohesive zone implementation}{82}{section.2.10}%
-\contentsline {subsection}{\numberline {2.10.1}Reference-interface representation}{82}{subsection.2.10.1}%
-\contentsline {subsection}{\numberline {2.10.2}Initialization algorithm}{82}{subsection.2.10.2}%
-\contentsline {subsection}{\numberline {2.10.3}Step-level cohesive force update}{83}{subsection.2.10.3}%
-\contentsline {subsection}{\numberline {2.10.4}Available cohesive constitutive models}{84}{subsection.2.10.4}%
-\contentsline {paragraph}{\texttt {UncoupledCohesiveZone}.}{84}{subsection.2.10.4}%
-\contentsline {paragraph}{\texttt {CoupledCohesiveZone}.}{85}{equation.2.10.266}%
-\contentsline {paragraph}{\texttt {BicrystalCohesiveZone}.}{85}{equation.2.10.267}%
-\contentsline {paragraph}{\texttt {PolymerCohesiveZone}.}{85}{equation.2.10.267}%
-\contentsline {subsection}{\numberline {2.10.5}Input controls and current limitations}{86}{subsection.2.10.5}%
-\contentsline {section}{\numberline {2.11}Contact options: fields, normals, gap closure, and overlap control}{86}{section.2.11}%
-\contentsline {subsection}{\numberline {2.11.1}Nodal contact state and activation}{86}{subsection.2.11.1}%
-\contentsline {subsection}{\numberline {2.11.2}Prescribed multi-field contact groups}{87}{subsection.2.11.2}%
-\contentsline {subsection}{\numberline {2.11.3}Damage-field-gradient partitioning}{89}{subsection.2.11.3}%
-\contentsline {subsection}{\numberline {2.11.4}Surface normals and surface positions}{89}{subsection.2.11.4}%
-\contentsline {subsection}{\numberline {2.11.5}Automatic particle normal and position reconstruction}{91}{subsection.2.11.5}%
-\contentsline {subsection}{\numberline {2.11.6}Logistic-regression surface reconstruction}{91}{subsection.2.11.6}%
-\contentsline {subsection}{\numberline {2.11.7}Volume method for contact surface position}{92}{subsection.2.11.7}%
-\contentsline {subsection}{\numberline {2.11.8}Pair-normal weighting between fields}{92}{subsection.2.11.8}%
-\contentsline {subsection}{\numberline {2.11.9}Separability criteria}{93}{subsection.2.11.9}%
-\contentsline {subsection}{\numberline {2.11.10}Gap closure and frictional contact}{93}{subsection.2.11.10}%
-\contentsline {subsection}{\numberline {2.11.11}Global and group-dependent friction coefficients}{94}{subsection.2.11.11}%
-\contentsline {subsection}{\numberline {2.11.12}Overdensification and overlap correction}{95}{subsection.2.11.12}%
-\contentsline {subsection}{\numberline {2.11.13}Summary examples and verification targets}{95}{subsection.2.11.13}%
-\contentsline {subsection}{\numberline {2.11.14}Input controls and cross references}{96}{subsection.2.11.14}%
-\contentsline {section}{\numberline {2.12}Robustness controls: deletion, deformation-gradient reset, and particle splitting}{97}{section.2.12}%
-\contentsline {subsection}{\numberline {2.12.1}Particle deletion and active-particle compaction}{98}{subsection.2.12.1}%
-\contentsline {subsection}{\numberline {2.12.2}Deformation-gradient reset}{99}{subsection.2.12.2}%
-\contentsline {subsection}{\numberline {2.12.3}Particle splitting}{100}{subsection.2.12.3}%
-\contentsline {chapter}{\numberline {3}ParticleFileWriter}{102}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Purpose and generated products}{102}{section.3.1}%
-\contentsline {section}{\numberline {3.2}The \texttt {pfw\_input} file}{102}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Input dependencies}{103}{section.3.3}%
-\contentsline {paragraph}{Python and PFW helper imports.}{103}{section.3.3}%
-\contentsline {paragraph}{PFW dependency comments.}{103}{lstnumber.3.2.5}%
-\contentsline {paragraph}{Generated dependency list.}{104}{lstnumber.3.3.5}%
-\contentsline {section}{\numberline {3.4}Background grid}{104}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}Parallel grid-generation constraints}{104}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Common \texttt {cpp}--\texttt {refine}--\texttt {ppc} pattern}{105}{subsection.3.4.2}%
-\contentsline {subsection}{\numberline {3.4.3}Plane-strain meshes}{106}{subsection.3.4.3}%
-\contentsline {subsection}{\numberline {3.4.4}Refinement and cost scaling}{106}{subsection.3.4.4}%
-\contentsline {section}{\numberline {3.5}Geometry objects}{106}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Creating objects and assembling the object list}{107}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}Object sorting in parallel PFW runs}{107}{subsection.3.5.2}%
-\contentsline {subsection}{\numberline {3.5.3}Geometry-object interface and particle fields}{108}{subsection.3.5.3}%
-\contentsline {subsection}{\numberline {3.5.4}Primitive analytic objects}{108}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {box}.}{108}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {box2}.}{108}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {notchedBar}.}{108}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {sphere}.}{108}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {sphericalInclusion}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {shell}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {ellipsoid}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {cone}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {cylinder}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {toroid}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {polygon}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {porousPolygon}.}{110}{subsection.3.5.4}%
-\contentsline {paragraph}{\texttt {fill}.}{110}{subsection.3.5.4}%
-\contentsline {subsection}{\numberline {3.5.5}Tooling, sample, and test-fixture objects}{110}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {indentor}.}{110}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {spherical\_indenter}.}{110}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {flatpunch\_indenter}.}{110}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {simple\_tensile\_gripper}.}{110}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {tensile\_gripper}.}{111}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {pillar}.}{111}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {pillarBase}.}{111}{subsection.3.5.5}%
-\contentsline {paragraph}{\texttt {whiskers}.}{111}{subsection.3.5.5}%
-\contentsline {subsection}{\numberline {3.5.6}Mesostructure and inclusion objects}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {crystal}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {foam}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {poissonDiskFoam}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {packedSphericalBed}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {twoMaterialBox}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {twoFieldBox}.}{111}{subsection.3.5.6}%
-\contentsline {paragraph}{\texttt {polygonInclusions}.}{111}{subsection.3.5.6}%
-\contentsline {subsection}{\numberline {3.5.7}Cohesive-zone and prill objects}{111}{subsection.3.5.7}%
-\contentsline {paragraph}{\texttt {czSphericalPrill}.}{111}{subsection.3.5.7}%
-\contentsline {paragraph}{\texttt {explicitBinderSphericalPrill}.}{112}{subsection.3.5.7}%
-\contentsline {paragraph}{\texttt {czCylindricalPrill}.}{112}{subsection.3.5.7}%
-\contentsline {paragraph}{\texttt {czPrill}.}{112}{subsection.3.5.7}%
-\contentsline {subsection}{\numberline {3.5.8}Voxel, image, and surface-import objects}{112}{subsection.3.5.8}%
-\contentsline {paragraph}{\texttt {stl}.}{112}{subsection.3.5.8}%
-\contentsline {paragraph}{\texttt {VCCTL}.}{112}{subsection.3.5.8}%
-\contentsline {paragraph}{\texttt {CT}.}{112}{subsection.3.5.8}%
-\contentsline {paragraph}{\texttt {bitmap}.}{112}{subsection.3.5.8}%
-\contentsline {paragraph}{\texttt {GrainStack}.}{112}{subsection.3.5.8}%
-\contentsline {subsection}{\numberline {3.5.9}Periodic and architected-structure objects}{112}{subsection.3.5.9}%
-\contentsline {paragraph}{\texttt {spinodal}.}{112}{subsection.3.5.9}%
-\contentsline {paragraph}{\texttt {tpms}.}{112}{subsection.3.5.9}%
-\contentsline {subsection}{\numberline {3.5.10}Boolean set operations}{112}{subsection.3.5.10}%
-\contentsline {paragraph}{\texttt {union}.}{112}{subsection.3.5.10}%
-\contentsline {paragraph}{\texttt {intersection}.}{113}{subsection.3.5.10}%
-\contentsline {paragraph}{\texttt {difference}.}{113}{subsection.3.5.10}%
-\contentsline {subsection}{\numberline {3.5.11}Geometry wrappers and field painters}{113}{subsection.3.5.11}%
-\contentsline {paragraph}{Basic field wrappers.}{113}{subsection.3.5.11}%
-\contentsline {paragraph}{Deletion and masking wrappers.}{113}{subsection.3.5.11}%
-\contentsline {paragraph}{Voronoi, Weibull, and material-direction wrappers.}{113}{subsection.3.5.11}%
-\contentsline {paragraph}{Box-local and crack-like wrappers.}{113}{subsection.3.5.11}%
-\contentsline {paragraph}{Coordinate-transform wrapper.}{113}{subsection.3.5.11}%
-\contentsline {section}{\numberline {3.6}Materials, groups, and particle types}{113}{section.3.6}%
-\contentsline {subsection}{\numberline {3.6.1}Particle-level assignments made by geometry objects}{114}{subsection.3.6.1}%
-\contentsline {subsection}{\numberline {3.6.2}Wrappers and field painters used for assignment}{115}{subsection.3.6.2}%
-\contentsline {subsection}{\numberline {3.6.3}Material directions for vector or tensor directions}{116}{subsection.3.6.3}%
-\contentsline {subsection}{\numberline {3.6.4}The \texttt {pfw\_materials.py} material library}{117}{subsection.3.6.4}%
-\contentsline {section}{\numberline {3.7}Solver controls}{119}{section.3.7}%
-\contentsline {subsection}{\numberline {3.7.1}Core time integration and update controls}{119}{subsection.3.7.1}%
-\contentsline {subsection}{\numberline {3.7.2}Example: hyperelastic single-field contact}{120}{subsection.3.7.2}%
-\contentsline {subsection}{\numberline {3.7.3}Example: two-material frictional contact with group-dependent coefficients}{121}{subsection.3.7.3}%
-\contentsline {subsection}{\numberline {3.7.4}Example: CPDI, FLIP, domain scaling, and damage-enabled DFG}{121}{subsection.3.7.4}%
-\contentsline {subsection}{\numberline {3.7.5}Example: notched bar with crack-tip correction controls}{122}{subsection.3.7.5}%
-\contentsline {subsection}{\numberline {3.7.6}Example: B-spline particles, FMPM, and DFG contact}{123}{subsection.3.7.6}%
-\contentsline {subsection}{\numberline {3.7.7}Example: cohesive-zone run controls}{123}{subsection.3.7.7}%
-\contentsline {subsection}{\numberline {3.7.8}Example: body force, manufactured solution, and miscellaneous pass-through controls}{124}{subsection.3.7.8}%
-\contentsline {subsection}{\numberline {3.7.9}Robustness guards commonly paired with solver controls}{125}{subsection.3.7.9}%
-\contentsline {subsection}{\numberline {3.7.10}Coverage map for solver-control examples}{125}{subsection.3.7.10}%
-\contentsline {section}{\numberline {3.8}Boundary conditions, F-table, and stress control}{126}{section.3.8}%
-\contentsline {subsection}{\numberline {3.8.1}Face ordering and boundary-condition types}{126}{subsection.3.8.1}%
-\contentsline {subsection}{\numberline {3.8.2}Time-dependent boundary-type switching}{126}{subsection.3.8.2}%
-\contentsline {subsection}{\numberline {3.8.3}Boundary-driven F-table deformation}{127}{subsection.3.8.3}%
-\contentsline {subsection}{\numberline {3.8.4}Periodic homogeneous deformation}{127}{subsection.3.8.4}%
-\contentsline {subsection}{\numberline {3.8.5}Prescribed tangential velocities on moving faces}{127}{subsection.3.8.5}%
-\contentsline {subsection}{\numberline {3.8.6}Boundary contact-wall controls}{128}{subsection.3.8.6}%
-\contentsline {subsection}{\numberline {3.8.7}Stress-control inputs}{128}{subsection.3.8.7}%
-\contentsline {section}{\numberline {3.9}Diagnostics}{129}{section.3.9}%
-\contentsline {subsection}{\numberline {3.9.1}Reaction history}{129}{subsection.3.9.1}%
-\contentsline {subsection}{\numberline {3.9.2}Box-average history}{130}{subsection.3.9.2}%
-\contentsline {subsection}{\numberline {3.9.3}Profiles}{130}{subsection.3.9.3}%
-\contentsline {subsection}{\numberline {3.9.4}Tracers}{131}{subsection.3.9.4}%
-\contentsline {section}{\numberline {3.10}Silo and VTK output controls}{133}{section.3.10}%
-\contentsline {subsection}{\numberline {3.10.1}PFW output-control keys}{133}{subsection.3.10.1}%
-\contentsline {subsection}{\numberline {3.10.2}VTK output for ParaView}{134}{subsection.3.10.2}%
-\contentsline {subsection}{\numberline {3.10.3}Silo output for VisIt}{134}{subsection.3.10.3}%
-\contentsline {subsection}{\numberline {3.10.4}Minimal plot-output examples}{135}{subsection.3.10.4}%
-\contentsline {subsection}{\numberline {3.10.5}Diagnostic grid-output examples}{135}{subsection.3.10.5}%
-\contentsline {subsection}{\numberline {3.10.6}Practical output guidance}{137}{subsection.3.10.6}%
-\contentsline {section}{\numberline {3.11}Event controls}{137}{section.3.11}%
-\contentsline {subsection}{\numberline {3.11.1}Examples by event type}{137}{subsection.3.11.1}%
-\contentsline {subsubsection}{\numberline {3.11.1.1}\texttt {Anneal}}{138}{subsubsection.3.11.1.1}%
-\contentsline {subsubsection}{\numberline {3.11.1.2}\texttt {BodyForceUpdate}}{138}{subsubsection.3.11.1.2}%
-\contentsline {subsubsection}{\numberline {3.11.1.3}\texttt {BoreholePressure}}{138}{subsubsection.3.11.1.3}%
-\contentsline {subsubsection}{\numberline {3.11.1.4}\texttt {CohesiveZone}}{138}{subsubsection.3.11.1.4}%
-\contentsline {subsubsection}{\numberline {3.11.1.5}\texttt {ConfiningPressure}}{139}{subsubsection.3.11.1.5}%
-\contentsline {subsubsection}{\numberline {3.11.1.6}\texttt {CrystalHeal}}{139}{subsubsection.3.11.1.6}%
-\contentsline {subsubsection}{\numberline {3.11.1.7}\texttt {DeformationUpdate}}{140}{subsubsection.3.11.1.7}%
-\contentsline {subsubsection}{\numberline {3.11.1.8}\texttt {FrictionCoefficientSwap}}{140}{subsubsection.3.11.1.8}%
-\contentsline {subsubsection}{\numberline {3.11.1.9}\texttt {Heal}}{140}{subsubsection.3.11.1.9}%
-\contentsline {subsubsection}{\numberline {3.11.1.10}\texttt {InitializeStress}}{141}{subsubsection.3.11.1.10}%
-\contentsline {subsubsection}{\numberline {3.11.1.11}\texttt {InsertPeriodicContactSurfaces}}{141}{subsubsection.3.11.1.11}%
-\contentsline {subsubsection}{\numberline {3.11.1.12}\texttt {MachineSample}}{141}{subsubsection.3.11.1.12}%
-\contentsline {subsubsection}{\numberline {3.11.1.13}\texttt {MaterialSwap}}{142}{subsubsection.3.11.1.13}%
-\contentsline {subsubsection}{\numberline {3.11.1.14}\texttt {PolymerHeal}}{142}{subsubsection.3.11.1.14}%
-\contentsline {subsubsection}{\numberline {3.11.1.15}\texttt {ResetDeformationGradient}}{142}{subsubsection.3.11.1.15}%
-\contentsline {subsubsection}{\numberline {3.11.1.16}\texttt {TemperatureProfile}}{142}{subsubsection.3.11.1.16}%
-\contentsline {subsubsection}{\numberline {3.11.1.17}\texttt {TemperatureRamp}}{143}{subsubsection.3.11.1.17}%
-\contentsline {subsubsection}{\numberline {3.11.1.18}\texttt {TransformParticles}}{143}{subsubsection.3.11.1.18}%
-\contentsline {subsection}{\numberline {3.11.2}Sequential staged event example}{143}{subsection.3.11.2}%
-\contentsline {subsection}{\numberline {3.11.3}Event-control checklist}{144}{subsection.3.11.3}%
-\contentsline {section}{\numberline {3.12}Restart controls}{145}{section.3.12}%
-\contentsline {subsection}{\numberline {3.12.1}Restart interval and disabling restarts}{145}{subsection.3.12.1}%
-\contentsline {subsection}{\numberline {3.12.2}Manual continuation from a known restart}{146}{subsection.3.12.2}%
-\contentsline {subsection}{\numberline {3.12.3}Automatic restart with \texttt {pfw\_check}}{146}{subsection.3.12.3}%
-\contentsline {subsection}{\numberline {3.12.4}Stopping before wall time ends}{147}{subsection.3.12.4}%
-\contentsline {subsection}{\numberline {3.12.5}Restart-control checklist}{148}{subsection.3.12.5}%
-\contentsline {chapter}{\numberline {4}Post-processing}{149}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Output families}{149}{section.4.1}%
-\contentsline {section}{\numberline {4.2}VisIt}{149}{section.4.2}%
-\contentsline {section}{\numberline {4.3}ParaView}{149}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Analysis scripts}{149}{section.4.4}%
-\contentsline {section}{\numberline {4.5}CSV histories}{150}{section.4.5}%
-\contentsline {chapter}{\numberline {5}Linked reports and suite organization}{151}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Verification report}{151}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Validation report}{151}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Examples report}{151}{section.5.3}%
-\contentsline {section}{\numberline {5.4}LLNL-specific material models and test suites}{151}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Maintaining and extending the documentation}{152}{chapter.6}%
-\contentsline {section}{\numberline {6.1}LaTeX source organization}{152}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Regenerating the PDF}{152}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Keeping tables consistent with code}{152}{section.6.3}%
-\contentsline {section}{\numberline {6.4}Sphinx migration path}{153}{section.6.4}%
-\contentsline {chapter}{\numberline {7}References and source inventory}{154}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Code source inventory}{158}{section.7.1}%
-\contentsline {chapter}{\numberline {A}Generated solver and schema reference}{160}{appendix.A}%
-\contentsline {paragraph}{Internal/non-input wrappers.}{163}{table.A.2}%
-\contentsline {section}{\numberline {A.1}Schema-generated reference tables}{163}{section.A.1}%
-\contentsline {chapter}{\numberline {B}Generated MPM events catalogue}{166}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Generated ParticleFileWriter reference}{170}{appendix.C}%
-\contentsline {section}{\numberline {C.1}Silo grid field presets}{172}{section.C.1}%
-\contentsline {paragraph}{Common preset.}{172}{section.C.1}%
-\contentsline {paragraph}{All preset.}{172}{section.C.1}%
-\contentsline {chapter}{\numberline {D}Generated particle-file reference}{173}{appendix.D}%
-\contentsline {chapter}{\numberline {E}Generated geometry and material catalogue}{175}{appendix.E}%
-\contentsline {chapter}{\numberline {F}Generated suite case catalogue}{178}{appendix.F}%
-\contentsline {chapter}{\numberline {G}Generated post-processing script catalogue}{184}{appendix.G}%
-\contentsline {chapter}{Index}{186}{section*.24}%
+\contentsline {subsubsection}{\numberline {2.7.1.8}\texttt {SurfaceInformedPolymer}}{43}{subsubsection.2.7.1.8}%
+\contentsline {subsubsection}{\numberline {2.7.1.9}\texttt {CeramicDamage}}{45}{subsubsection.2.7.1.9}%
+\contentsline {paragraph}{Primary input parameters and state.}{45}{subsubsection.2.7.1.9}%
+\contentsline {paragraph}{Strength scaling, porosity scaling, and pressure.}{46}{table.2.3}%
+\contentsline {paragraph}{Yield surface and third-invariant dependence.}{46}{equation.2.7.119}%
+\contentsline {paragraph}{Return mapping.}{48}{figure.caption.8}%
+\contentsline {paragraph}{Damage regularization options.}{48}{equation.2.7.123}%
+\contentsline {paragraph}{Strength scale and crack-tip scaling.}{48}{equation.2.7.125}%
+\contentsline {paragraph}{DFG use and porosity interpretation.}{49}{equation.2.7.126}%
+\contentsline {paragraph}{Implementation pseudocode.}{50}{equation.2.7.126}%
+\contentsline {subsubsection}{\numberline {2.7.1.10}\texttt {Chiumenti}}{50}{subsubsection.2.7.1.10}%
+\contentsline {subsubsection}{\numberline {2.7.1.11}\texttt {Graphite}}{51}{subsubsection.2.7.1.11}%
+\contentsline {paragraph}{Kinematics and material basis.}{51}{figure.caption.9}%
+\contentsline {paragraph}{Elastic trial stress.}{51}{equation.2.7.131}%
+\contentsline {paragraph}{Mode decomposition of stress.}{53}{equation.2.7.147}%
+\contentsline {paragraph}{Pressure-dependent point-slope strengths.}{54}{equation.2.7.155}%
+\contentsline {paragraph}{Mode return and reconstruction.}{55}{equation.2.7.159}%
+\contentsline {paragraph}{Plastic strain, hardening, and damage evolution.}{56}{equation.2.7.161}%
+\contentsline {paragraph}{Thermal effects.}{56}{equation.2.7.166}%
+\contentsline {paragraph}{Update algorithm.}{56}{equation.2.7.166}%
+\contentsline {paragraph}{Capabilities and limitations.}{57}{lstnumber.2.51.22}%
+\contentsline {subsubsection}{\numberline {2.7.1.12}\texttt {Geomechanics}}{58}{subsubsection.2.7.1.12}%
+\contentsline {paragraph}{Stress measures and sign convention.}{58}{subsubsection.2.7.1.12}%
+\contentsline {paragraph}{Yield surface and cap.}{58}{equation.2.7.167}%
+\contentsline {paragraph}{Supported shear-limit parameterizations.}{59}{figure.caption.11}%
+\contentsline {paragraph}{Nonlinear elasticity.}{59}{equation.2.7.175}%
+\contentsline {paragraph}{Cap hardening, porosity, and crush curve.}{61}{equation.2.7.178}%
+\contentsline {paragraph}{Strain hardening and damage softening.}{61}{equation.2.7.180}%
+\contentsline {paragraph}{Optional creep relaxation.}{62}{equation.2.7.186}%
+\contentsline {paragraph}{Optional compaction/buckling multiplier.}{62}{equation.2.7.191}%
+\contentsline {paragraph}{Numerical update algorithm.}{62}{equation.2.7.192}%
+\contentsline {paragraph}{Input parameterization.}{63}{equation.2.7.194}%
+\contentsline {paragraph}{Implementation notes.}{64}{table.2.6}%
+\contentsline {subsection}{\numberline {2.7.2}Fluid models}{65}{subsection.2.7.2}%
+\contentsline {subsubsection}{\numberline {2.7.2.1}\texttt {Gas}}{65}{subsubsection.2.7.2.1}%
+\contentsline {subsubsection}{\numberline {2.7.2.2}Liquid-model placeholder}{65}{subsubsection.2.7.2.2}%
+\contentsline {subsection}{\numberline {2.7.3}Shared constitutive modifiers and particle state}{65}{subsection.2.7.3}%
+\contentsline {subsubsection}{\numberline {2.7.3.1}Strength scale and Weibull-type size effects}{66}{subsubsection.2.7.3.1}%
+\contentsline {subsubsection}{\numberline {2.7.3.2}Crack-tip stress concentration}{66}{subsubsection.2.7.3.2}%
+\contentsline {subsubsection}{\numberline {2.7.3.3}Porosity}{66}{subsubsection.2.7.3.3}%
+\contentsline {subsubsection}{\numberline {2.7.3.4}Temperature}{67}{subsubsection.2.7.3.4}%
+\contentsline {subsection}{\numberline {2.7.4}External material models}{67}{subsection.2.7.4}%
+\contentsline {section}{\numberline {2.8}Particle types and interpolation/update options}{68}{section.2.8}%
+\contentsline {subsection}{\numberline {2.8.1}Mapping notation and effective support}{68}{subsection.2.8.1}%
+\contentsline {subsection}{\numberline {2.8.2}Single-point particles with trilinear mapping}{69}{subsection.2.8.2}%
+\contentsline {subsection}{\numberline {2.8.3}Single-point particles with cubic B-spline mapping}{69}{subsection.2.8.3}%
+\contentsline {subsection}{\numberline {2.8.4}CPDI with trilinear background shape functions}{70}{subsection.2.8.4}%
+\contentsline {subsection}{\numberline {2.8.5}CPDI domain scaling}{72}{subsection.2.8.5}%
+\contentsline {subsection}{\numberline {2.8.6}CPTI and CPDI2 placeholders}{73}{subsection.2.8.6}%
+\contentsline {paragraph}{CPTI.}{73}{subsection.2.8.6}%
+\contentsline {paragraph}{CPDI2.}{73}{subsection.2.8.6}%
+\contentsline {subsection}{\numberline {2.8.7}Transfer operators used by update schemes}{73}{subsection.2.8.7}%
+\contentsline {subsection}{\numberline {2.8.8}PIC update}{73}{subsection.2.8.8}%
+\contentsline {subsection}{\numberline {2.8.9}FLIP update}{74}{subsection.2.8.9}%
+\contentsline {subsection}{\numberline {2.8.10}XPIC update}{75}{subsection.2.8.10}%
+\contentsline {subsection}{\numberline {2.8.11}FMPM update}{75}{subsection.2.8.11}%
+\contentsline {subsection}{\numberline {2.8.12}Implementation status summary}{76}{subsection.2.8.12}%
+\contentsline {section}{\numberline {2.9}Boundary conditions, prescribed deformation, and stress control}{77}{section.2.9}%
+\contentsline {subsection}{\numberline {2.9.1}Face convention and nodal data used by the boundary update}{77}{subsection.2.9.1}%
+\contentsline {subsection}{\numberline {2.9.2}Boundary-type state and time-dependent boundary-type switching}{78}{subsection.2.9.2}%
+\contentsline {subsection}{\numberline {2.9.3}Outflow faces}{79}{subsection.2.9.3}%
+\contentsline {subsection}{\numberline {2.9.4}Symmetry and free-slip reflection}{79}{subsection.2.9.4}%
+\contentsline {subsection}{\numberline {2.9.5}Prescribed domain deformation and F-table interpolation}{80}{subsection.2.9.5}%
+\contentsline {subsection}{\numberline {2.9.6}Moving faces}{80}{subsection.2.9.6}%
+\contentsline {subsection}{\numberline {2.9.7}Boundary contact faces}{82}{subsection.2.9.7}%
+\contentsline {subsection}{\numberline {2.9.8}Stress-control generated boundary motion}{83}{subsection.2.9.8}%
+\contentsline {subsection}{\numberline {2.9.9}Adaptive-seek normal stress control}{84}{subsection.2.9.9}%
+\contentsline {paragraph}{Anisotropic plane-strain compression.}{85}{table.caption.14}%
+\contentsline {paragraph}{Initially sparse granular compaction.}{86}{lstnumber.2.69.16}%
+\contentsline {paragraph}{Triaxial compression of a geomaterial.}{86}{lstnumber.2.70.16}%
+\contentsline {paragraph}{Uniaxial-stress tension with hardening and damage.}{86}{lstnumber.2.71.11}%
+\contentsline {subsection}{\numberline {2.9.10}Reaction accumulation and reaction-history output}{87}{subsection.2.9.10}%
+\contentsline {subsection}{\numberline {2.9.11}FMPM-specific boundary consistency}{87}{subsection.2.9.11}%
+\contentsline {subsection}{\numberline {2.9.12}Periodic boundaries as topology rather than face constraints}{88}{subsection.2.9.12}%
+\contentsline {section}{\numberline {2.10}Cohesive zone implementation}{88}{section.2.10}%
+\contentsline {subsection}{\numberline {2.10.1}Reference-interface representation}{88}{subsection.2.10.1}%
+\contentsline {subsection}{\numberline {2.10.2}Initialization algorithm}{89}{subsection.2.10.2}%
+\contentsline {subsection}{\numberline {2.10.3}Step-level cohesive force update}{89}{subsection.2.10.3}%
+\contentsline {subsection}{\numberline {2.10.4}Available cohesive constitutive models}{91}{subsection.2.10.4}%
+\contentsline {paragraph}{\texttt {UncoupledCohesiveZone}.}{91}{subsection.2.10.4}%
+\contentsline {paragraph}{\texttt {CoupledCohesiveZone}.}{91}{equation.2.10.287}%
+\contentsline {paragraph}{\texttt {BicrystalCohesiveZone}.}{91}{equation.2.10.288}%
+\contentsline {paragraph}{\texttt {PolymerCohesiveZone}.}{91}{equation.2.10.288}%
+\contentsline {paragraph}{\texttt {SurfaceInformedPolymerCohesiveZone}.}{92}{equation.2.10.289}%
+\contentsline {subsection}{\numberline {2.10.5}Input controls and current limitations}{93}{subsection.2.10.5}%
+\contentsline {section}{\numberline {2.11}Contact options: fields, normals, gap closure, and overlap control}{93}{section.2.11}%
+\contentsline {subsection}{\numberline {2.11.1}Nodal contact state and activation}{93}{subsection.2.11.1}%
+\contentsline {subsection}{\numberline {2.11.2}Prescribed multi-field contact groups}{94}{subsection.2.11.2}%
+\contentsline {subsection}{\numberline {2.11.3}Damage-field-gradient partitioning}{94}{subsection.2.11.3}%
+\contentsline {subsection}{\numberline {2.11.4}Surface normals and surface positions}{96}{subsection.2.11.4}%
+\contentsline {subsection}{\numberline {2.11.5}Automatic particle normal and position reconstruction}{97}{subsection.2.11.5}%
+\contentsline {subsection}{\numberline {2.11.6}Logistic-regression surface reconstruction}{98}{subsection.2.11.6}%
+\contentsline {subsection}{\numberline {2.11.7}Volume method for contact surface position}{98}{subsection.2.11.7}%
+\contentsline {subsection}{\numberline {2.11.8}Pair-normal weighting between fields}{99}{subsection.2.11.8}%
+\contentsline {subsection}{\numberline {2.11.9}Separability criteria}{99}{subsection.2.11.9}%
+\contentsline {subsection}{\numberline {2.11.10}Gap closure and frictional contact}{100}{subsection.2.11.10}%
+\contentsline {subsection}{\numberline {2.11.11}Global and group-dependent friction coefficients}{101}{subsection.2.11.11}%
+\contentsline {subsection}{\numberline {2.11.12}Overdensification and overlap correction}{102}{subsection.2.11.12}%
+\contentsline {subsection}{\numberline {2.11.13}Summary examples and verification targets}{102}{subsection.2.11.13}%
+\contentsline {subsection}{\numberline {2.11.14}Input controls and cross references}{103}{subsection.2.11.14}%
+\contentsline {section}{\numberline {2.12}Robustness controls: deletion, deformation-gradient reset, and particle splitting}{104}{section.2.12}%
+\contentsline {subsection}{\numberline {2.12.1}Particle deletion and active-particle compaction}{105}{subsection.2.12.1}%
+\contentsline {subsection}{\numberline {2.12.2}Deformation-gradient reset}{106}{subsection.2.12.2}%
+\contentsline {subsection}{\numberline {2.12.3}Particle splitting}{107}{subsection.2.12.3}%
+\contentsline {chapter}{\numberline {3}ParticleFileWriter}{109}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Purpose and generated products}{109}{section.3.1}%
+\contentsline {section}{\numberline {3.2}The \texttt {pfw\_input} file}{109}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Input dependencies}{110}{section.3.3}%
+\contentsline {paragraph}{Python and PFW helper imports.}{110}{section.3.3}%
+\contentsline {paragraph}{PFW dependency comments.}{110}{lstnumber.3.2.5}%
+\contentsline {paragraph}{Generated dependency list.}{111}{lstnumber.3.3.5}%
+\contentsline {section}{\numberline {3.4}Background grid}{111}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Parallel grid-generation constraints}{111}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Common \texttt {cpp}--\texttt {refine}--\texttt {ppc} pattern}{112}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Plane-strain meshes}{113}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Refinement and cost scaling}{113}{subsection.3.4.4}%
+\contentsline {section}{\numberline {3.5}Geometry objects}{113}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Creating objects and assembling the object list}{114}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Object sorting in parallel PFW runs}{114}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Geometry-object interface and particle fields}{115}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Primitive analytic objects}{115}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {box}.}{115}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {box2}.}{115}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {notchedBar}.}{115}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {sphere}.}{115}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {sphericalInclusion}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {shell}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {ellipsoid}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {cone}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {cylinder}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {toroid}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {polygon}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {porousPolygon}.}{117}{subsection.3.5.4}%
+\contentsline {paragraph}{\texttt {fill}.}{117}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}Tooling, sample, and test-fixture objects}{117}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {indentor}.}{117}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {spherical\_indenter}.}{117}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {flatpunch\_indenter}.}{117}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {simple\_tensile\_gripper}.}{117}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {tensile\_gripper}.}{118}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {pillar}.}{118}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {pillarBase}.}{118}{subsection.3.5.5}%
+\contentsline {paragraph}{\texttt {whiskers}.}{118}{subsection.3.5.5}%
+\contentsline {subsection}{\numberline {3.5.6}Mesostructure and inclusion objects}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {crystal}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {foam}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {poissonDiskFoam}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {packedSphericalBed}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {twoMaterialBox}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {twoFieldBox}.}{118}{subsection.3.5.6}%
+\contentsline {paragraph}{\texttt {polygonInclusions}.}{118}{subsection.3.5.6}%
+\contentsline {subsection}{\numberline {3.5.7}Cohesive-zone and prill objects}{118}{subsection.3.5.7}%
+\contentsline {paragraph}{\texttt {czSphericalPrill}.}{118}{subsection.3.5.7}%
+\contentsline {paragraph}{\texttt {explicitBinderSphericalPrill}.}{119}{subsection.3.5.7}%
+\contentsline {paragraph}{\texttt {czCylindricalPrill}.}{119}{subsection.3.5.7}%
+\contentsline {paragraph}{\texttt {czPrill}.}{119}{subsection.3.5.7}%
+\contentsline {subsection}{\numberline {3.5.8}Voxel, image, and surface-import objects}{119}{subsection.3.5.8}%
+\contentsline {paragraph}{\texttt {stl}.}{119}{subsection.3.5.8}%
+\contentsline {paragraph}{\texttt {VCCTL}.}{119}{subsection.3.5.8}%
+\contentsline {paragraph}{\texttt {CT}.}{119}{subsection.3.5.8}%
+\contentsline {paragraph}{\texttt {bitmap}.}{119}{subsection.3.5.8}%
+\contentsline {paragraph}{\texttt {GrainStack}.}{119}{subsection.3.5.8}%
+\contentsline {subsection}{\numberline {3.5.9}Periodic and architected-structure objects}{119}{subsection.3.5.9}%
+\contentsline {paragraph}{\texttt {spinodal}.}{119}{subsection.3.5.9}%
+\contentsline {paragraph}{\texttt {tpms}.}{119}{subsection.3.5.9}%
+\contentsline {subsection}{\numberline {3.5.10}Boolean set operations}{119}{subsection.3.5.10}%
+\contentsline {paragraph}{\texttt {union}.}{119}{subsection.3.5.10}%
+\contentsline {paragraph}{\texttt {intersection}.}{120}{subsection.3.5.10}%
+\contentsline {paragraph}{\texttt {difference}.}{120}{subsection.3.5.10}%
+\contentsline {subsection}{\numberline {3.5.11}Geometry wrappers and field painters}{120}{subsection.3.5.11}%
+\contentsline {paragraph}{Basic field wrappers.}{120}{subsection.3.5.11}%
+\contentsline {paragraph}{Deletion and masking wrappers.}{120}{subsection.3.5.11}%
+\contentsline {paragraph}{Voronoi, Weibull, and material-direction wrappers.}{120}{subsection.3.5.11}%
+\contentsline {paragraph}{Box-local and crack-like wrappers.}{120}{subsection.3.5.11}%
+\contentsline {paragraph}{Coordinate-transform wrapper.}{120}{subsection.3.5.11}%
+\contentsline {section}{\numberline {3.6}Materials, groups, and particle types}{120}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Particle-level assignments made by geometry objects}{121}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Wrappers and field painters used for assignment}{122}{subsection.3.6.2}%
+\contentsline {subsection}{\numberline {3.6.3}Material directions for vector or tensor directions}{123}{subsection.3.6.3}%
+\contentsline {subsection}{\numberline {3.6.4}The \texttt {pfw\_materials.py} material library}{124}{subsection.3.6.4}%
+\contentsline {section}{\numberline {3.7}Solver controls}{126}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Core time integration and update controls}{126}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Example: hyperelastic single-field contact}{127}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.3}Example: two-material frictional contact with group-dependent coefficients}{128}{subsection.3.7.3}%
+\contentsline {subsection}{\numberline {3.7.4}Example: CPDI, FLIP, domain scaling, and damage-enabled DFG}{128}{subsection.3.7.4}%
+\contentsline {subsection}{\numberline {3.7.5}Example: notched bar with crack-tip correction controls}{129}{subsection.3.7.5}%
+\contentsline {subsection}{\numberline {3.7.6}Example: B-spline particles, FMPM, and DFG contact}{129}{subsection.3.7.6}%
+\contentsline {subsection}{\numberline {3.7.7}Example: cohesive-zone run controls}{130}{subsection.3.7.7}%
+\contentsline {subsection}{\numberline {3.7.8}Example: body force, manufactured solution, and miscellaneous pass-through controls}{131}{subsection.3.7.8}%
+\contentsline {subsection}{\numberline {3.7.9}Robustness guards commonly paired with solver controls}{132}{subsection.3.7.9}%
+\contentsline {subsection}{\numberline {3.7.10}Coverage map for solver-control examples}{132}{subsection.3.7.10}%
+\contentsline {section}{\numberline {3.8}Boundary conditions, F-table, and stress control}{133}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Face ordering and boundary-condition types}{133}{subsection.3.8.1}%
+\contentsline {subsection}{\numberline {3.8.2}Time-dependent boundary-type switching}{133}{subsection.3.8.2}%
+\contentsline {subsection}{\numberline {3.8.3}Boundary-driven F-table deformation}{134}{subsection.3.8.3}%
+\contentsline {subsection}{\numberline {3.8.4}Periodic homogeneous deformation}{134}{subsection.3.8.4}%
+\contentsline {subsection}{\numberline {3.8.5}Prescribed tangential velocities on moving faces}{134}{subsection.3.8.5}%
+\contentsline {subsection}{\numberline {3.8.6}Boundary contact-wall controls}{135}{subsection.3.8.6}%
+\contentsline {subsection}{\numberline {3.8.7}Stress-control inputs}{135}{subsection.3.8.7}%
+\contentsline {section}{\numberline {3.9}Diagnostics}{136}{section.3.9}%
+\contentsline {subsection}{\numberline {3.9.1}Reaction history}{136}{subsection.3.9.1}%
+\contentsline {subsection}{\numberline {3.9.2}Box-average history}{137}{subsection.3.9.2}%
+\contentsline {subsection}{\numberline {3.9.3}Profiles}{137}{subsection.3.9.3}%
+\contentsline {subsection}{\numberline {3.9.4}Tracers}{138}{subsection.3.9.4}%
+\contentsline {section}{\numberline {3.10}Silo and VTK output controls}{140}{section.3.10}%
+\contentsline {subsection}{\numberline {3.10.1}PFW output-control keys}{140}{subsection.3.10.1}%
+\contentsline {subsection}{\numberline {3.10.2}VTK output for ParaView}{141}{subsection.3.10.2}%
+\contentsline {subsection}{\numberline {3.10.3}Silo output for VisIt}{141}{subsection.3.10.3}%
+\contentsline {subsection}{\numberline {3.10.4}Minimal plot-output examples}{142}{subsection.3.10.4}%
+\contentsline {subsection}{\numberline {3.10.5}Diagnostic grid-output examples}{142}{subsection.3.10.5}%
+\contentsline {subsection}{\numberline {3.10.6}Practical output guidance}{144}{subsection.3.10.6}%
+\contentsline {section}{\numberline {3.11}Event controls}{144}{section.3.11}%
+\contentsline {subsection}{\numberline {3.11.1}Examples by event type}{144}{subsection.3.11.1}%
+\contentsline {subsubsection}{\numberline {3.11.1.1}\texttt {Anneal}}{145}{subsubsection.3.11.1.1}%
+\contentsline {subsubsection}{\numberline {3.11.1.2}\texttt {BodyForceUpdate}}{145}{subsubsection.3.11.1.2}%
+\contentsline {subsubsection}{\numberline {3.11.1.3}\texttt {BoreholePressure}}{145}{subsubsection.3.11.1.3}%
+\contentsline {subsubsection}{\numberline {3.11.1.4}\texttt {CohesiveZone}}{145}{subsubsection.3.11.1.4}%
+\contentsline {subsubsection}{\numberline {3.11.1.5}\texttt {ConfiningPressure}}{146}{subsubsection.3.11.1.5}%
+\contentsline {subsubsection}{\numberline {3.11.1.6}\texttt {CrystalHeal}}{146}{subsubsection.3.11.1.6}%
+\contentsline {subsubsection}{\numberline {3.11.1.7}\texttt {DeformationUpdate}}{147}{subsubsection.3.11.1.7}%
+\contentsline {subsubsection}{\numberline {3.11.1.8}\texttt {FrictionCoefficientSwap}}{147}{subsubsection.3.11.1.8}%
+\contentsline {subsubsection}{\numberline {3.11.1.9}\texttt {Heal}}{147}{subsubsection.3.11.1.9}%
+\contentsline {subsubsection}{\numberline {3.11.1.10}\texttt {InitializeStress}}{148}{subsubsection.3.11.1.10}%
+\contentsline {subsubsection}{\numberline {3.11.1.11}\texttt {InsertPeriodicContactSurfaces}}{148}{subsubsection.3.11.1.11}%
+\contentsline {subsubsection}{\numberline {3.11.1.12}\texttt {MachineSample}}{148}{subsubsection.3.11.1.12}%
+\contentsline {subsubsection}{\numberline {3.11.1.13}\texttt {MaterialSwap}}{149}{subsubsection.3.11.1.13}%
+\contentsline {subsubsection}{\numberline {3.11.1.14}\texttt {PolymerHeal}}{149}{subsubsection.3.11.1.14}%
+\contentsline {subsubsection}{\numberline {3.11.1.15}\texttt {ResetDeformationGradient}}{149}{subsubsection.3.11.1.15}%
+\contentsline {subsubsection}{\numberline {3.11.1.16}\texttt {TemperatureProfile}}{149}{subsubsection.3.11.1.16}%
+\contentsline {subsubsection}{\numberline {3.11.1.17}\texttt {TemperatureRamp}}{150}{subsubsection.3.11.1.17}%
+\contentsline {subsubsection}{\numberline {3.11.1.18}\texttt {TransformParticles}}{150}{subsubsection.3.11.1.18}%
+\contentsline {subsection}{\numberline {3.11.2}Sequential staged event example}{150}{subsection.3.11.2}%
+\contentsline {subsection}{\numberline {3.11.3}Event-control checklist}{151}{subsection.3.11.3}%
+\contentsline {section}{\numberline {3.12}Restart controls}{152}{section.3.12}%
+\contentsline {subsection}{\numberline {3.12.1}Restart interval and disabling restarts}{152}{subsection.3.12.1}%
+\contentsline {subsection}{\numberline {3.12.2}Manual continuation from a known restart}{153}{subsection.3.12.2}%
+\contentsline {subsection}{\numberline {3.12.3}Automatic restart with \texttt {pfw\_check}}{153}{subsection.3.12.3}%
+\contentsline {subsection}{\numberline {3.12.4}Stopping before wall time ends}{154}{subsection.3.12.4}%
+\contentsline {subsection}{\numberline {3.12.5}Restart-control checklist}{155}{subsection.3.12.5}%
+\contentsline {chapter}{\numberline {4}Post-processing}{156}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Output families}{156}{section.4.1}%
+\contentsline {section}{\numberline {4.2}VisIt}{156}{section.4.2}%
+\contentsline {section}{\numberline {4.3}ParaView}{156}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Analysis scripts}{156}{section.4.4}%
+\contentsline {section}{\numberline {4.5}CSV histories}{157}{section.4.5}%
+\contentsline {chapter}{\numberline {5}Linked reports and suite organization}{158}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Verification report}{158}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Validation report}{158}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Examples report}{158}{section.5.3}%
+\contentsline {section}{\numberline {5.4}LLNL-specific material models and test suites}{158}{section.5.4}%
+\contentsline {chapter}{\numberline {6}Maintaining and extending the documentation}{159}{chapter.6}%
+\contentsline {section}{\numberline {6.1}LaTeX source organization}{159}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Regenerating the PDF}{159}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Keeping tables consistent with code}{159}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Sphinx migration path}{160}{section.6.4}%
+\contentsline {chapter}{\numberline {7}References and source inventory}{161}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Code source inventory}{165}{section.7.1}%
+\contentsline {chapter}{\numberline {A}Generated solver and schema reference}{167}{appendix.A}%
+\contentsline {paragraph}{Internal/non-input wrappers.}{170}{table.A.2}%
+\contentsline {section}{\numberline {A.1}Schema-generated reference tables}{170}{section.A.1}%
+\contentsline {chapter}{\numberline {B}Generated MPM events catalogue}{173}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Generated ParticleFileWriter reference}{177}{appendix.C}%
+\contentsline {section}{\numberline {C.1}Silo grid field presets}{179}{section.C.1}%
+\contentsline {paragraph}{Common preset.}{179}{section.C.1}%
+\contentsline {paragraph}{All preset.}{179}{section.C.1}%
+\contentsline {chapter}{\numberline {D}Generated particle-file reference}{180}{appendix.D}%
+\contentsline {chapter}{\numberline {E}Generated geometry and material catalogue}{182}{appendix.E}%
+\contentsline {chapter}{\numberline {F}Generated suite case catalogue}{185}{appendix.F}%
+\contentsline {chapter}{\numberline {G}Generated post-processing script catalogue}{191}{appendix.G}%
+\contentsline {chapter}{Index}{193}{section*.25}%

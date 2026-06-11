@@ -3102,6 +3102,25 @@ verificationMaterialSwapStiff["materialString"] = generateMaterialString(verific
 # #################################################################################################
 
 
+
+###################################################################################################
+# SURFACE POLYMER VERIFICATION ELASTIC BLOCK:
+# Stiff elastic block used only by the surface-informed polymer layer cohesive-zone verification.
+# The blocks are not intended to represent a polymer; they provide inert, much stiffer adherends so
+# the finite-thickness cohesive law carries the deformation across the interface.
+surfacePolymerVerificationElasticBlock = {}
+surfacePolymerVerificationElasticBlock["name"] = "surfacePolymerVerificationElasticBlock"
+surfacePolymerVerificationElasticBlock["version"] = 2606101834
+surfacePolymerVerificationElasticBlock["model"] = "ElasticIsotropic"
+surfacePolymerVerificationElasticBlock["defaultDensity"] = 2.70
+surfacePolymerVerificationElasticBlock["defaultBulkModulus"] = 50.0
+surfacePolymerVerificationElasticBlock["defaultShearModulus"] = 20.0
+surfacePolymerVerificationElasticBlock["waveSpeed"] = float(np.sqrt((surfacePolymerVerificationElasticBlock["defaultBulkModulus"] +
+                                                                    4.0/3.0*surfacePolymerVerificationElasticBlock["defaultShearModulus"])/
+                                                                   surfacePolymerVerificationElasticBlock["defaultDensity"]))
+surfacePolymerVerificationElasticBlock["materialString"] = generateMaterialString(surfacePolymerVerificationElasticBlock)
+# #################################################################################################
+
 ###################################################################################################
 # CONTACT SURFACE/GAP-CLOSURE HYPERELASTIC VERIFICATION MATERIAL:
 # Dimensionless Neo-Hookean material used by verification/contactSurfaceGapClosure.  The values are
@@ -3211,6 +3230,7 @@ exampleSuiteMaterials = [
 verificationMaterials = [
     verificationElastic,
     contactGapClosureHyperelastic,
+    surfacePolymerVerificationElasticBlock,
     verificationMaterialSwapSoft,
     verificationMaterialSwapStiff,
     verificationQuartz,

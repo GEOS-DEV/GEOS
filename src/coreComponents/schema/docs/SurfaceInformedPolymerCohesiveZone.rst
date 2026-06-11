@@ -26,3 +26,7 @@ temperatureTransitionWidth        real64    1        Width of the smooth tempera
 thickness                         real64    required Cohesive film thickness
 yieldStrengthCrystallinityCoeff   real64    0        Linear crystallinity coefficient for yield strength
 ================================= ========= ======== ===============================================================================
+
+Notes
+-----
+The compressive pressure cap limits only pressure strengthening in the deviatoric return.  The retained volumetric film stress is not clipped by this input, and maximum-stretch failure remains active under pressure.

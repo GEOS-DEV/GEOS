@@ -635,6 +635,104 @@ for fixed-point iteration:
 store stress, plasticStrain, yieldStrength, damage
 \end{lstlisting}
 
+
+\subsubsection{\texttt{SurfaceInformedPolymer}}
+\label{subsubsec:surface-informed-polymer-model}
+\index{constitutiveModels!SurfaceInformedPolymer}
+\index{polymer model!surface-informed}
+\index{crystallinity!polymer model}
+\index{pressure strengthening!polymer model}
+
+\texttt{SurfaceInformedPolymer} is a finite-deformation polymer plasticity model intended to retain the useful shear-softening and chain-stretch-hardening structure of \texttt{StrainHardeningPolymer}, while using a clearer reference-temperature parameterization, an explicit crystallinity input, and a bounded pressure-sensitive flow correction.  It is suitable for thermoplastic or elastomeric polymer layers when the important response is a combination of rate-independent deviatoric flow, softening after yield, chain stretch hardening, and finite-extensibility failure.  It is not a substitute for a calibrated high-pressure equation of state; the pressure cap described below is an extrapolation guardrail for the shear-strength part of the model.
+
+The reference state is defined at \texttt{referenceTemperature} or, equivalently for many polymer fits, \texttt{glassTransitionTemperature}.  A scalar thermal scale \(S_T(T)\) is normalized so that
+\begin{equation}
+  S_T(T_{ref})=1 .
+\end{equation}
+The preferred input form is a table of temperatures and scale values with logarithmic monotone interpolation,
+\begin{equation}
+  \log S_T(T)=\operatorname{PCHIP}\left(T_i,\log S_i\right),
+  \label{eq:surface-polymer-temperature-scale}
+\end{equation}
+although the implementation may also support scalar compact forms.  Crystallinity effects are applied to elastic and yield-like quantities through smooth multipliers,
+\begin{align}
+  C_E(T,X_c) &= 1+\beta_E\left(X_c-X_{c,ref}\right)A_X(T),\\
+  C_Y(T,X_c) &= 1+\beta_Y\left(X_c-X_{c,ref}\right)A_X(T),\\
+  A_X(T) &= \left[1+\exp\left(-\frac{T-T_g}{w_X}\right)\right]^{-1}.
+  \label{eq:surface-polymer-crystallinity}
+\end{align}
+The scaled elastic and yield quantities are then
+\begin{align}
+  K(T,X_c) &= K_g S_T(T)C_E(T,X_c), &
+  G(T,X_c) &= G_g S_T(T)C_E(T,X_c),\\
+  Y(T,X_c) &= Y_g S_T(T)C_Y(T,X_c).
+  \label{eq:surface-polymer-scaled-elastic-yield}
+\end{align}
+The softening magnitude uses the same thermal scale, while the stretch-hardening modulus has its own exponent,
+\begin{equation}
+  S_{soft}(T)=S_{soft,g}S_T(T),
+  \qquad
+  H(T)=H_g S_T(T)^{p_H}.
+  \label{eq:surface-polymer-softening-hardening-scale}
+\end{equation}
+
+The base flow strength combines yield, decaying shear softening, and chain stretch hardening,
+\begin{equation}
+  \sigma_f^0 =
+  Y(T,X_c)
+  + S_{soft}(T)\exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
+  + H(T)\left\langle \lambda_{chain}^{2}-\lambda_{chain}^{-1}\right\rangle,
+  \label{eq:surface-polymer-base-flow}
+\end{equation}
+where \(\kappa\) is the accumulated plastic-strain-like history and \(\langle x\rangle=\max(x,0)\).  The chain stretch is based on the isochoric stretch rather than raw volumetric compression,
+\begin{equation}
+  \lambda_{chain}=\max_i\left(J^{-1/3}\lambda_i\right),
+  \label{eq:surface-polymer-chain-stretch}
+\end{equation}
+where \(\lambda_i\) are principal stretches.  This choice prevents pure hydrostatic compression from looking like chain extension, while still allowing constrained compression and shear under pressure to reach finite extensibility.
+
+The pressure-sensitive yield correction is written using tensile-positive mean stress \(p_t=\operatorname{tr}\boldsymbol{\sigma}/3\),
+\begin{equation}
+  \Phi=q+\eta(T)p_{eff}-\sigma_f^0\le 0,
+  \label{eq:surface-polymer-yield}
+\end{equation}
+with
+\begin{equation}
+  \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_{\eta}}\right)^2\right].
+  \label{eq:surface-polymer-pressure-asymmetry}
+\end{equation}
+The optional input \texttt{compressivePressureStrengtheningCap} limits only the pressure contribution to shear strength,
+\begin{equation}
+  p_{eff}=\max\left(p_t,-p_c\right),
+  \qquad
+  p_c=\texttt{compressivePressureStrengtheningCap}.
+  \label{eq:surface-polymer-pressure-cap}
+\end{equation}
+Negative cap values disable the cap.  The volumetric stress itself is not clipped by this control; only the pressure-strengthening term in the yield function is limited.  This distinction is important for high-pressure robustness: the material can still carry compressive mean stress, but low-pressure pressure-sensitivity parameters cannot create unbounded shear strength at extreme pressure.
+
+The finite-extensibility failure criterion remains independent of pressure,
+\begin{equation}
+  \lambda_{chain}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
+  \label{eq:surface-polymer-maximum-stretch-failure}
+\end{equation}
+Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  For visualization, the primitive plottable particle fields should include \texttt{particleStress}, \texttt{particleDamage}, and \texttt{particlePlasticStrain}.  Equivalent plastic strain should be constructed as a VisIt expression from the plastic-strain tensor components rather than stored as an additional derived particle field.
+
+\begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
+compute F, J, principal stretches, and lambda_chain=max_i(J^(-1/3)*lambda_i)
+compute S_T(T), crystallinity multipliers, K, G, Y, S_soft, H
+compute elastic trial stress and invariants q_trial, p_t_trial
+p_eff = max(p_t_trial, -compressivePressureStrengtheningCap)
+sigma_f0 = Y + S_soft*exp(-(kappa/r1)^r2)
+           + H*max(lambda_chain^2 - 1/lambda_chain, 0)
+if q_trial + eta*p_eff <= sigma_f0:
+  accept elastic trial stress
+else:
+  return deviatoric stress to capped pressure-sensitive surface
+if lambda_chain >= maximumStretch:
+  damage = 1
+store stress, plasticStrain, kappa, damage
+\end{lstlisting}
+
 \subsubsection{\texttt{CeramicDamage}}
 \label{subsubsec:ceramic-damage-model}
 \index{constitutiveModels!CeramicDamage}
@@ -3160,6 +3258,227 @@ for each controlled direction:
   domainF[i] = oldDomainF[i] + domainL[i]*oldDomainF[i]*dt
 apply moving-face constraints using domainL
 \end{lstlisting}
+
+\subsection{Adaptive-seek normal stress control}
+\label{subsec:bc-adaptive-seek-stress-control}
+\index{stress control!adaptive-seek}
+\index{stressControlAdaptiveSeek}
+
+The optional adaptive-seek controller is enabled by setting
+\texttt{stressControlAdaptiveSeek = 1}.  It replaces the legacy PID update in
+Subsection~\ref{subsec:bc-stress-control-internals} while preserving the same
+\texttt{stressControl} and \texttt{stressTable} interface.  The current
+implementation controls only the diagonal normal components represented by
+\texttt{domainL} and \texttt{domainF}; shear stress control and non-orthogonal
+periodic-cell control are outside its current scope.  In adaptive-seek mode,
+\texttt{stressControl[i]} entries must be either zero or one.  The legacy
+one-sided limiter value two is not supported by this controller.
+
+The adaptive controller is intended for mixed prescribed-F and stress-controlled
+RVE calculations where a scalar bulk-modulus normalization is a poor
+approximation.  It learns a small normal tangent,
+\begin{equation}
+  \Delta\sigma_i \approx \sum_{j=0}^{2} C_{ij}\Delta\epsilon_j,
+  \qquad i,j\in\{xx,yy,zz\},
+  \label{eq:bc-adaptive-seek-tangent}
+\end{equation}
+from filtered box-average stresses and the applied normal velocity-gradient
+history.  The diagonal tangent is initialized from the same maximum bulk or
+effective bulk modulus used by the legacy controller, multiplied by the relative
+material density; this is only an initial scale and is updated during loading.
+
+Let $A$ be the set of stress-controlled normal components and $P$ the remaining
+normal components.  The active controller computes a damped least-squares solve
+of the form
+\begin{equation}
+  \mathbf{L}_A = C_{AA}^{+}\left(
+    -C_{AP}\mathbf{L}_P
+    + \frac{\boldsymbol{\sigma}^{\mathrm{target}}_A-
+             \boldsymbol{\sigma}^{\mathrm{filtered}}_A}
+           {\epsilon_{\mathrm{response}}}
+      L_{\mathrm{ref}}
+  \right),
+  \label{eq:bc-adaptive-seek-active-law}
+\end{equation}
+where $C_{AA}^{+}$ denotes the damped small-system solve, not a raw inverse.
+The first term provides feed-forward coupling from prescribed F-table
+directions, and the second term removes filtered stress error over the strain
+interval \texttt{stressControlResponseStrain}.  The reference rate
+$L_{\mathrm{ref}}$ is the maximum of the prescribed/inactive normal rates, the
+previous controlled rates, and \texttt{stressControlMinStrainRate}.  Thus the
+controller bandwidth follows the macroscopic deformation path rather than the
+explicit timestep or an assumed wave speed.
+
+The raw stress is low-pass filtered over a strain interval,
+\begin{equation}
+  \alpha = \min\left(1,
+    \frac{L_{\mathrm{ref}}\Delta t}{\texttt{stressControlFilterStrain}}
+  \right),
+  \qquad
+  \sigma_i^{\mathrm{filtered}} \leftarrow
+  \sigma_i^{\mathrm{filtered}} +
+  \alpha(\sigma_i^{\mathrm{raw}}-\sigma_i^{\mathrm{filtered}}).
+  \label{eq:bc-adaptive-seek-filter}
+\end{equation}
+The largest normalized raw-minus-filtered stress difference over active
+components defines a wave or inertia indicator.  If it exceeds
+\texttt{stressControlWaveWarnRatio}, the controller prints a warning, slows the
+feedback response, and freezes tangent adaptation while the condition persists.
+This diagnostic is designed to detect cases where prescribed F-table loading is
+generating stress waves that dominate the measured box stress.
+
+If a compressive target has no current load path, a zero tangent should not be
+inverted.  The adaptive-seek controller therefore switches to bounded seek mode
+when the target pressure $p_i^{\mathrm{target}}=-\sigma_i^{\mathrm{target}}$ is
+compressive and the measured filtered pressure is too small.  In this state,
+\begin{equation}
+  L_i^{\mathrm{seek}} =
+  -L_{\mathrm{seek}}
+  \operatorname{clip}\left(
+    \frac{p_i^{\mathrm{target}}-p_i^{\mathrm{filtered}}}
+         {\max(|p_i^{\mathrm{target}}|,p_{\mathrm{floor}})},0,1
+  \right),
+  \label{eq:bc-adaptive-seek-seek-law}
+\end{equation}
+where $L_{\mathrm{seek}}$ is limited by \texttt{stressControlSeekRateRatio} and
+\texttt{stressControlMaxSeekRateRatio}.  Seek mode re-engages active control
+after a pressure fraction \texttt{stressControlJammingPressureRatio} appears and
+the wave indicator is below \texttt{stressControlWaveCutbackRatio}.  The return
+to active control is blended over \texttt{stressControlReengageRampStrain}.  If
+\texttt{stressControlMaxSeekStrain} is exceeded in a direction, that direction is
+marked unreachable and its controlled rate is held at zero.
+
+\begin{table}[h]
+\centering
+\caption{Main adaptive-seek stress-control parameters.}
+\label{tab:bc-adaptive-seek-parameters}
+\begin{tabular}{lll}
+\toprule
+Parameter & Default & Purpose \\
+\midrule
+\texttt{stressControlAdaptiveSeek} & 0 & Enable adaptive-seek control. \\
+\texttt{stressControlResponseStrain} & $10^{-2}$ & Strain interval for stress-error correction. \\
+\texttt{stressControlFilterStrain} & $10^{-3}$ & Strain interval for stress filtering. \\
+\texttt{stressControlAdaptStrainWindow} & $5\times10^{-4}$ & Strain window for tangent updates. \\
+\texttt{stressControlAdaptGain} & $5\times10^{-2}$ & Rank-one tangent update gain. \\
+\texttt{stressControlMaxRateRatio} & 5 & Total active rate cap relative to reference rate. \\
+\texttt{stressControlMaxFeedbackRateRatio} & 2 & Feedback-only rate cap. \\
+\texttt{stressControlSeekRateRatio} & 0.5 & Bounded seek rate ratio. \\
+\texttt{stressControlMaxSeekRateRatio} & 2 & Maximum seek rate ratio. \\
+\texttt{stressControlMinStrainRate} & $10^{-30}$ & Minimum reference rate. \\
+\texttt{stressControlMaxSeekStrain} & $5\times10^{-2}$ & Seek strain before declaring unreachable. \\
+\texttt{stressControlMaxSeekStrainIncrement} & $10^{-4}$ & Per-step strain increment cap. \\
+\texttt{stressControlJammingPressureRatio} & $2\times10^{-2}$ & Pressure fraction for load-path appearance. \\
+\texttt{stressControlReengageRampStrain} & $5\times10^{-3}$ & Seek-to-active blending strain. \\
+\texttt{stressControlWaveWarnRatio} & $5\times10^{-2}$ & Raw-filtered stress warning ratio. \\
+\texttt{stressControlWaveCutbackRatio} & $10^{-1}$ & Re-engagement/adaptation cutback ratio. \\
+\texttt{stressControlStressFloor} & 0 & Explicit stress floor; target-based if zero. \\
+\texttt{stressControlTangentFloorRatio} & $10^{-3}$ & Lower tangent bound ratio. \\
+\texttt{stressControlTangentCeilingRatio} & $10^{2}$ & Upper tangent bound ratio. \\
+\texttt{stressControlMaxCouplingRatio} & 10 & Off-diagonal tangent cap. \\
+\texttt{stressControlSolverDampingRatio} & $5\times10^{-2}$ & Damped-solve regularization. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For prescribed-F quasi-static tests, the default strain scales are suitable
+starting values.  For multiple controlled directions, use a smaller tangent
+adaptation gain, for example \texttt{stressControlAdaptGain = 1.0e-2}.  For
+zero-stress targets, such as uniaxial-stress tension, specify a nonzero
+\texttt{stressControlStressFloor} based on the material stress scale or measured
+stress noise.
+
+\paragraph{Anisotropic plane-strain compression.}
+For a plane-strain graphite block compressed in $Y$ with periodic relaxation in
+$X$, use a hydrostatic hold, prescribe $F_{yy}$, and stress-control only the
+free lateral direction:
+\begin{lstlisting}[caption={Plane-strain anisotropic compression with X pressure control.}]
+pfw["periodic"] = [True, False, False]
+pfw["planeStrain"] = 1
+pfw["prescribedBoundaryFTable"] = 1
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [
+  [0.0,                 1.0, 1.0,         1.0],
+  [hydrostaticHoldTime, 1.0, 1.0,         1.0],
+  [stopTime,            1.0, finalFyy,    1.0],
+]
+pfw["stressControl"] = [1, 0, 0]
+pfw["stressTable"] = [[0.0, -Pc, -Pc, -Pc], [stopTime, -Pc, -Pc, -Pc]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlKp"] = pfw["stressControlKi"] = pfw["stressControlKd"] = 0.0
+pfw["stressControlResponseStrain"] = 1.0e-2
+pfw["stressControlFilterStrain"] = 1.0e-3
+pfw["stressControlMaxSeekStrain"] = 5.0e-2
+\end{lstlisting}
+
+\paragraph{Initially sparse granular compaction.}
+For an initially unjammed granular body, stress-control all periodic directions
+and provide a physical reference strain rate because no prescribed F-table rate
+exists.  Estimate the per-direction seek allowance from the initial solid volume
+fraction $\phi_0$ and an expected jamming fraction $\phi_j$:
+\begin{lstlisting}[caption={Sparse granular compaction to hydrostatic pressure.}]
+phi0 = solidVolume / domainVolume
+phiJam = 0.58
+nSeek = 3
+maxSeek = 1.2 * max(0.0, math.log(phiJam / phi0)) / nSeek + 0.02
+
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stopTime, 1.0, 1.0, 1.0]]
+pfw["stressControl"] = [1, 1, 1]
+pfw["stressTable"] = [[0.0, -Ptarget, -Ptarget, -Ptarget],
+                      [stopTime, -Ptarget, -Ptarget, -Ptarget]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlMinStrainRate"] = seekStrainRate
+pfw["stressControlMaxSeekStrain"] = maxSeek
+pfw["stressControlSeekRateRatio"] = 1.0
+pfw["stressControlAdaptGain"] = 1.0e-2
+\end{lstlisting}
+
+\paragraph{Triaxial compression of a geomaterial.}
+For a 3D RVE with axial $Y$ compression and constant lateral confinement, control
+both lateral stresses.  Do not use this setup in plane strain unless $Z$ is free
+to deform:
+\begin{lstlisting}[caption={RVE triaxial compression with X/Z confining pressure.}]
+pfw["planeStrain"] = 0
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0],
+                 [holdTime, 1.0, 1.0, 1.0],
+                 [stopTime, 1.0, finalFyy, 1.0]]
+pfw["stressControl"] = [1, 0, 1]
+pfw["stressTable"] = [[0.0, -Pc, -Pc, -Pc], [stopTime, -Pc, -Pc, -Pc]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlAdaptGain"] = 1.0e-2
+pfw["stressControlMaxSeekStrain"] = 2.0e-2
+\end{lstlisting}
+
+\paragraph{Uniaxial-stress tension with hardening and damage.}
+For axial tension with zero lateral stress, control the lateral stresses to zero
+and set a finite stress floor.  Because the target is not compressive, seek mode
+does not compact the specimen after failure; if lateral stress falls to zero,
+the target is already satisfied:
+\begin{lstlisting}[caption={Uniaxial-stress tension with zero lateral stress.}]
+pfw["planeStrain"] = 0
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stopTime, 1.0, finalFyy, 1.0]]
+pfw["stressControl"] = [1, 0, 1]
+pfw["stressTable"] = [[0.0, 0.0, 0.0, 0.0], [stopTime, 0.0, 0.0, 0.0]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlStressFloor"] = max(1.0e-4 * E, 1.0e-3 * sigmaY)
+pfw["stressControlResponseStrain"] = 5.0e-3
+pfw["stressControlFilterStrain"] = 5.0e-4
+pfw["stressControlMaxSeekStrain"] = 0.0
+\end{lstlisting}
+
+Persistent wave warnings indicate that the controlled stress is dominated by
+transient stress waves rather than a quasi-static mean.  Increase
+\texttt{stressControlResponseStrain} and \texttt{stressControlFilterStrain},
+reduce rate caps, or slow the F-table ramp.  If seek mode exceeds
+\texttt{stressControlMaxSeekStrain}, the requested compressive target is not
+reachable within the allowed closure; for granular compaction increase the
+volume-fraction-based allowance only if it is physically justified.
 
 \subsection{Reaction accumulation and reaction-history output}
 \label{subsec:bc-reactions-internals}
@@ -6115,8 +6434,9 @@ Fully damaged cohesive nodes are propagated back to their supporting particles. 
 \index{CoupledCohesiveZone}
 \index{BicrystalCohesiveZone}
 \index{PolymerCohesiveZone}
+\index{SurfaceInformedPolymerCohesiveZone}
 
-GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers four executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, and \texttt{PolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
+GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers five executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, \texttt{PolymerCohesiveZone}, and \texttt{SurfaceInformedPolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
 
 \paragraph{\texttt{UncoupledCohesiveZone}.}
 This is a linear uncoupled spring law with independent normal and tangential failure thresholds.  Required inputs are \texttt{normalForceConstant}, \texttt{shearForceConstant}, \texttt{maxNormalDisplacement}, and \texttt{maxTangentialDisplacement}.  The law is
@@ -6149,6 +6469,31 @@ The polymer law represents a finite-thickness cohesive layer with bulk and shear
 \end{equation}
 where $h$ is the layer thickness, updates temperature-dependent moduli and strengths, computes a yield-limited traction scale, and tracks previous stretch and plastic-strain-like history.  Damage is activated when the stretch exceeds the temperature-adjusted maximum stretch.
 
+\paragraph{\texttt{SurfaceInformedPolymerCohesiveZone}.}
+This model is a finite-thickness cohesive projection of \texttt{SurfaceInformedPolymer}.  It uses the cohesive jump to construct a film strain,
+\begin{equation}
+  \epsilon_n=\frac{\delta_n}{h},
+  \qquad
+  \gamma=\frac{\delta_t}{h},
+  \label{eq:surface-polymer-cz-film-strain}
+\end{equation}
+where \(h=\texttt{thickness}\).  The normal volumetric film stress is retained, while the deviatoric normal and shear components are returned to the same surface-informed flow strength used by the continuum model.  In schematic form,
+\begin{align}
+  p_t &= K\epsilon_n,\\
+  q &= \sqrt{\left(\frac{3}{2}s_n\right)^2+3\tau^2},\\
+  \Phi &= q+\eta(T)p_{eff}-\sigma_f^0\le 0.
+  \label{eq:surface-polymer-cz-yield}
+\end{align}
+The optional \texttt{compressivePressureStrengtheningCap} has the same meaning as in the continuum model: it caps only pressure-assisted deviatoric strength, not the compressive normal traction carried by the finite-thickness layer.
+
+The cohesive chain stretch is computed from a thin-film deformation gradient formed from normal jump and tangential slip.  Maximum-stretch failure is not pressure-gated,
+\begin{equation}
+  \lambda_{chain}^{cz}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
+  \label{eq:surface-polymer-cz-failure}
+\end{equation}
+Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
+
+
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
 \caption{Cohesive-zone constitutive model summary.}\label{tab:cz-model-summary}\\
 \toprule
@@ -6165,6 +6510,7 @@ Model & Principal required inputs & Notes \\
 \texttt{Coupled}\newline\texttt{CohesiveZone} & Normal and tangential characteristic displacements; peak normal and shear stresses; optional displacement cutoffs. & Needleman--Xu-style coupled exponential cohesive law. \\
 \texttt{Bicrystal}\newline\texttt{CohesiveZone} & Inherits \texttt{CoupledCohesiveZone} inputs; requires a valid misorientation state for strength scaling. & Coupled law with misorientation-dependent peak-strength scaling. \\
 \texttt{Polymer}\newline\texttt{CohesiveZone} & Layer thickness; temperature-dependent bulk, shear, yield, rate/softening, \texttt{Gr}, and maximum-stretch parameters. & Finite-thickness polymer-interface law with thermal softening and stretch-based failure. \\
+\texttt{SurfaceInformed}\newline\texttt{PolymerCohesiveZone} & Layer thickness; reference-temperature scale; crystallinity controls; softening, hardening, pressure-asymmetry, pressure-cap, and maximum-stretch parameters. & Finite-thickness polymer cohesive projection consistent with \texttt{SurfaceInformedPolymer}; retains volumetric normal stress and caps only pressure-assisted deviatoric strengthening. \\
 \end{longtable}
 
 

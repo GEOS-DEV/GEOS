@@ -1413,31 +1413,27 @@ For tangential components, the code applies the same moving odd extension only w
 \end{equation}
 This construction constrains only the physical Dirichlet components.  Free tangential components are natural/slip degrees of freedom; overwriting them on mass-bearing buffer/control nodes can inject a real tangential impulse.
 
-Moving and contact faces are enforced in two phases.  The solver first updates all constrained boundary-node values on all faces and accumulates reactions.  It then rebuilds the moving/contact buffer-node values for all faces using the now-final boundary-node data.  This ordering makes the mirror extension independent of whether the opposite face has already been visited in the face loop.  The distinction is normally negligible in well-resolved domains, but it is important for wide-stencil particle types in very thin non-periodic directions.  If a direction contains only one physical cell after the two non-periodic buffer cells are removed, the source node for the buffer extension on one face may be the boundary node on the opposite face; a one-pass boundary-plus-buffer loop can then give different results on the minus and plus faces simply because the faces are processed in the order $x^-,x^+,y^-,y^+,z^-,z^+$.
-
 \begin{lstlisting}[caption={Moving-face enforcement.}]
-for face in all faces:
-  for field alpha and boundary node I:
-    x_end = (1 + domainL[d]*dt) * gridPosition[I,d]
-    v_bc = domainL[d] * x_end
+for field alpha and boundary node I:
+  x_end = (1 + domainL[d]*dt) * gridPosition[I,d]
+  v_bc = domainL[d] * x_end
 
-    if transverse velocities enabled on this face:
-      set velocity[I,alpha,t1] and velocity[I,alpha,t2]
-      update dVelocity and acceleration corrections in t1,t2
+  if transverse velocities enabled on this face:
+    set velocity[I,alpha,t1] and velocity[I,alpha,t2]
+    update dVelocity and acceleration corrections in t1,t2
 
-    dVelocity[I,alpha,d] = v_bc - velocity[I,alpha,d]
-    acceleration[I,alpha,d] += (v_bc - velocity[I,alpha,d]) / dt
-    velocity[I,alpha,d] = v_bc
+  dVelocity[I,alpha,d] = v_bc - velocity[I,alpha,d]
+  acceleration[I,alpha,d] += (v_bc - velocity[I,alpha,d]) / dt
+  velocity[I,alpha,d] = v_bc
 
-for face in all faces:
-  for buffer node G:
-    J = reflected interior node
-    B = boundary node at same tangential indices
-    velocity[G,d] = -velocity[J,d] + 2*velocity[B,d]
-    if tangential constrained:
-      velocity[G,t] = -velocity[J,t] + 2*velocity[B,t]
-    else:
-      leave velocity[G,t] unchanged
+for buffer node G:
+  J = reflected interior node
+  B = boundary node at same tangential indices
+  velocity[G,d] = -velocity[J,d] + 2*velocity[B,d]
+  if tangential constrained:
+    velocity[G,t] = -velocity[J,t] + 2*velocity[B,t]
+  else:
+    leave velocity[G,t] unchanged
 \end{lstlisting}
 
 \subsection{Boundary contact faces}
@@ -1557,6 +1553,227 @@ for each controlled direction:
   domainF[i] = oldDomainF[i] + domainL[i]*oldDomainF[i]*dt
 apply moving-face constraints using domainL
 \end{lstlisting}
+
+\subsection{Adaptive-seek normal stress control}
+\label{subsec:bc-adaptive-seek-stress-control}
+\index{stress control!adaptive-seek}
+\index{stressControlAdaptiveSeek}
+
+The optional adaptive-seek controller is enabled by setting
+\texttt{stressControlAdaptiveSeek = 1}.  It replaces the legacy PID update in
+Subsection~\ref{subsec:bc-stress-control-internals} while preserving the same
+\texttt{stressControl} and \texttt{stressTable} interface.  The current
+implementation controls only the diagonal normal components represented by
+\texttt{domainL} and \texttt{domainF}; shear stress control and non-orthogonal
+periodic-cell control are outside its current scope.  In adaptive-seek mode,
+\texttt{stressControl[i]} entries must be either zero or one.  The legacy
+one-sided limiter value two is not supported by this controller.
+
+The adaptive controller is intended for mixed prescribed-F and stress-controlled
+RVE calculations where a scalar bulk-modulus normalization is a poor
+approximation.  It learns a small normal tangent,
+\begin{equation}
+  \Delta\sigma_i \approx \sum_{j=0}^{2} C_{ij}\Delta\epsilon_j,
+  \qquad i,j\in\{xx,yy,zz\},
+  \label{eq:bc-adaptive-seek-tangent}
+\end{equation}
+from filtered box-average stresses and the applied normal velocity-gradient
+history.  The diagonal tangent is initialized from the same maximum bulk or
+effective bulk modulus used by the legacy controller, multiplied by the relative
+material density; this is only an initial scale and is updated during loading.
+
+Let $A$ be the set of stress-controlled normal components and $P$ the remaining
+normal components.  The active controller computes a damped least-squares solve
+of the form
+\begin{equation}
+  \mathbf{L}_A = C_{AA}^{+}\left(
+    -C_{AP}\mathbf{L}_P
+    + \frac{\boldsymbol{\sigma}^{\mathrm{target}}_A-
+             \boldsymbol{\sigma}^{\mathrm{filtered}}_A}
+           {\epsilon_{\mathrm{response}}}
+      L_{\mathrm{ref}}
+  \right),
+  \label{eq:bc-adaptive-seek-active-law}
+\end{equation}
+where $C_{AA}^{+}$ denotes the damped small-system solve, not a raw inverse.
+The first term provides feed-forward coupling from prescribed F-table
+directions, and the second term removes filtered stress error over the strain
+interval \texttt{stressControlResponseStrain}.  The reference rate
+$L_{\mathrm{ref}}$ is the maximum of the prescribed/inactive normal rates, the
+previous controlled rates, and \texttt{stressControlMinStrainRate}.  Thus the
+controller bandwidth follows the macroscopic deformation path rather than the
+explicit timestep or an assumed wave speed.
+
+The raw stress is low-pass filtered over a strain interval,
+\begin{equation}
+  \alpha = \min\left(1,
+    \frac{L_{\mathrm{ref}}\Delta t}{\texttt{stressControlFilterStrain}}
+  \right),
+  \qquad
+  \sigma_i^{\mathrm{filtered}} \leftarrow
+  \sigma_i^{\mathrm{filtered}} +
+  \alpha(\sigma_i^{\mathrm{raw}}-\sigma_i^{\mathrm{filtered}}).
+  \label{eq:bc-adaptive-seek-filter}
+\end{equation}
+The largest normalized raw-minus-filtered stress difference over active
+components defines a wave or inertia indicator.  If it exceeds
+\texttt{stressControlWaveWarnRatio}, the controller prints a warning, slows the
+feedback response, and freezes tangent adaptation while the condition persists.
+This diagnostic is designed to detect cases where prescribed F-table loading is
+generating stress waves that dominate the measured box stress.
+
+If a compressive target has no current load path, a zero tangent should not be
+inverted.  The adaptive-seek controller therefore switches to bounded seek mode
+when the target pressure $p_i^{\mathrm{target}}=-\sigma_i^{\mathrm{target}}$ is
+compressive and the measured filtered pressure is too small.  In this state,
+\begin{equation}
+  L_i^{\mathrm{seek}} =
+  -L_{\mathrm{seek}}
+  \operatorname{clip}\left(
+    \frac{p_i^{\mathrm{target}}-p_i^{\mathrm{filtered}}}
+         {\max(|p_i^{\mathrm{target}}|,p_{\mathrm{floor}})},0,1
+  \right),
+  \label{eq:bc-adaptive-seek-seek-law}
+\end{equation}
+where $L_{\mathrm{seek}}$ is limited by \texttt{stressControlSeekRateRatio} and
+\texttt{stressControlMaxSeekRateRatio}.  Seek mode re-engages active control
+after a pressure fraction \texttt{stressControlJammingPressureRatio} appears and
+the wave indicator is below \texttt{stressControlWaveCutbackRatio}.  The return
+to active control is blended over \texttt{stressControlReengageRampStrain}.  If
+\texttt{stressControlMaxSeekStrain} is exceeded in a direction, that direction is
+marked unreachable and its controlled rate is held at zero.
+
+\begin{table}[h]
+\centering
+\caption{Main adaptive-seek stress-control parameters.}
+\label{tab:bc-adaptive-seek-parameters}
+\begin{tabular}{lll}
+\toprule
+Parameter & Default & Purpose \\
+\midrule
+\texttt{stressControlAdaptiveSeek} & 0 & Enable adaptive-seek control. \\
+\texttt{stressControlResponseStrain} & $10^{-2}$ & Strain interval for stress-error correction. \\
+\texttt{stressControlFilterStrain} & $10^{-3}$ & Strain interval for stress filtering. \\
+\texttt{stressControlAdaptStrainWindow} & $5\times10^{-4}$ & Strain window for tangent updates. \\
+\texttt{stressControlAdaptGain} & $5\times10^{-2}$ & Rank-one tangent update gain. \\
+\texttt{stressControlMaxRateRatio} & 5 & Total active rate cap relative to reference rate. \\
+\texttt{stressControlMaxFeedbackRateRatio} & 2 & Feedback-only rate cap. \\
+\texttt{stressControlSeekRateRatio} & 0.5 & Bounded seek rate ratio. \\
+\texttt{stressControlMaxSeekRateRatio} & 2 & Maximum seek rate ratio. \\
+\texttt{stressControlMinStrainRate} & $10^{-30}$ & Minimum reference rate. \\
+\texttt{stressControlMaxSeekStrain} & $5\times10^{-2}$ & Seek strain before declaring unreachable. \\
+\texttt{stressControlMaxSeekStrainIncrement} & $10^{-4}$ & Per-step strain increment cap. \\
+\texttt{stressControlJammingPressureRatio} & $2\times10^{-2}$ & Pressure fraction for load-path appearance. \\
+\texttt{stressControlReengageRampStrain} & $5\times10^{-3}$ & Seek-to-active blending strain. \\
+\texttt{stressControlWaveWarnRatio} & $5\times10^{-2}$ & Raw-filtered stress warning ratio. \\
+\texttt{stressControlWaveCutbackRatio} & $10^{-1}$ & Re-engagement/adaptation cutback ratio. \\
+\texttt{stressControlStressFloor} & 0 & Explicit stress floor; target-based if zero. \\
+\texttt{stressControlTangentFloorRatio} & $10^{-3}$ & Lower tangent bound ratio. \\
+\texttt{stressControlTangentCeilingRatio} & $10^{2}$ & Upper tangent bound ratio. \\
+\texttt{stressControlMaxCouplingRatio} & 10 & Off-diagonal tangent cap. \\
+\texttt{stressControlSolverDampingRatio} & $5\times10^{-2}$ & Damped-solve regularization. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For prescribed-F quasi-static tests, the default strain scales are suitable
+starting values.  For multiple controlled directions, use a smaller tangent
+adaptation gain, for example \texttt{stressControlAdaptGain = 1.0e-2}.  For
+zero-stress targets, such as uniaxial-stress tension, specify a nonzero
+\texttt{stressControlStressFloor} based on the material stress scale or measured
+stress noise.
+
+\paragraph{Anisotropic plane-strain compression.}
+For a plane-strain graphite block compressed in $Y$ with periodic relaxation in
+$X$, use a hydrostatic hold, prescribe $F_{yy}$, and stress-control only the
+free lateral direction:
+\begin{lstlisting}[caption={Plane-strain anisotropic compression with X pressure control.}]
+pfw["periodic"] = [True, False, False]
+pfw["planeStrain"] = 1
+pfw["prescribedBoundaryFTable"] = 1
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [
+  [0.0,                 1.0, 1.0,         1.0],
+  [hydrostaticHoldTime, 1.0, 1.0,         1.0],
+  [stopTime,            1.0, finalFyy,    1.0],
+]
+pfw["stressControl"] = [1, 0, 0]
+pfw["stressTable"] = [[0.0, -Pc, -Pc, -Pc], [stopTime, -Pc, -Pc, -Pc]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlKp"] = pfw["stressControlKi"] = pfw["stressControlKd"] = 0.0
+pfw["stressControlResponseStrain"] = 1.0e-2
+pfw["stressControlFilterStrain"] = 1.0e-3
+pfw["stressControlMaxSeekStrain"] = 5.0e-2
+\end{lstlisting}
+
+\paragraph{Initially sparse granular compaction.}
+For an initially unjammed granular body, stress-control all periodic directions
+and provide a physical reference strain rate because no prescribed F-table rate
+exists.  Estimate the per-direction seek allowance from the initial solid volume
+fraction $\phi_0$ and an expected jamming fraction $\phi_j$:
+\begin{lstlisting}[caption={Sparse granular compaction to hydrostatic pressure.}]
+phi0 = solidVolume / domainVolume
+phiJam = 0.58
+nSeek = 3
+maxSeek = 1.2 * max(0.0, math.log(phiJam / phi0)) / nSeek + 0.02
+
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stopTime, 1.0, 1.0, 1.0]]
+pfw["stressControl"] = [1, 1, 1]
+pfw["stressTable"] = [[0.0, -Ptarget, -Ptarget, -Ptarget],
+                      [stopTime, -Ptarget, -Ptarget, -Ptarget]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlMinStrainRate"] = seekStrainRate
+pfw["stressControlMaxSeekStrain"] = maxSeek
+pfw["stressControlSeekRateRatio"] = 1.0
+pfw["stressControlAdaptGain"] = 1.0e-2
+\end{lstlisting}
+
+\paragraph{Triaxial compression of a geomaterial.}
+For a 3D RVE with axial $Y$ compression and constant lateral confinement, control
+both lateral stresses.  Do not use this setup in plane strain unless $Z$ is free
+to deform:
+\begin{lstlisting}[caption={RVE triaxial compression with X/Z confining pressure.}]
+pfw["planeStrain"] = 0
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0],
+                 [holdTime, 1.0, 1.0, 1.0],
+                 [stopTime, 1.0, finalFyy, 1.0]]
+pfw["stressControl"] = [1, 0, 1]
+pfw["stressTable"] = [[0.0, -Pc, -Pc, -Pc], [stopTime, -Pc, -Pc, -Pc]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlAdaptGain"] = 1.0e-2
+pfw["stressControlMaxSeekStrain"] = 2.0e-2
+\end{lstlisting}
+
+\paragraph{Uniaxial-stress tension with hardening and damage.}
+For axial tension with zero lateral stress, control the lateral stresses to zero
+and set a finite stress floor.  Because the target is not compressive, seek mode
+does not compact the specimen after failure; if lateral stress falls to zero,
+the target is already satisfied:
+\begin{lstlisting}[caption={Uniaxial-stress tension with zero lateral stress.}]
+pfw["planeStrain"] = 0
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stopTime, 1.0, finalFyy, 1.0]]
+pfw["stressControl"] = [1, 0, 1]
+pfw["stressTable"] = [[0.0, 0.0, 0.0, 0.0], [stopTime, 0.0, 0.0, 0.0]]
+pfw["stressControlAdaptiveSeek"] = 1
+pfw["stressControlStressFloor"] = max(1.0e-4 * E, 1.0e-3 * sigmaY)
+pfw["stressControlResponseStrain"] = 5.0e-3
+pfw["stressControlFilterStrain"] = 5.0e-4
+pfw["stressControlMaxSeekStrain"] = 0.0
+\end{lstlisting}
+
+Persistent wave warnings indicate that the controlled stress is dominated by
+transient stress waves rather than a quasi-static mean.  Increase
+\texttt{stressControlResponseStrain} and \texttt{stressControlFilterStrain},
+reduce rate caps, or slow the F-table ramp.  If seek mode exceeds
+\texttt{stressControlMaxSeekStrain}, the requested compressive target is not
+reachable within the allowed closure; for granular compaction increase the
+volume-fraction-based allowance only if it is physically justified.
 
 \subsection{Reaction accumulation and reaction-history output}
 \label{subsec:bc-reactions-internals}

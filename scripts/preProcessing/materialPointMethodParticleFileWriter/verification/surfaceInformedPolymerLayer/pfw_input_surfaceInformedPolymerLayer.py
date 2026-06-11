@@ -122,15 +122,26 @@ pfw["plottableFields"] = [
     "particlePlasticStrain",
 ]
 
-# PFW particle-file initialization fields.
-pfw["particleFileFields"] = [
-    "Velocity",
-    "MaterialType",
-    "SurfaceFlag",
-    "RVector",
-    "SurfaceNormal",
-    "SurfacePosition",
-]
+# PFW particle-file initialization fields.  These are not VisIt/Silo output controls.
+# The continuum patch has no initial surface flags, so it only needs the fields required
+# to initialize particle motion, material type, and CPDI particle domains.  The CZ branch
+# retains surface fields because the cohesive-zone event builds an interface from flagged
+# surfaces, surface normals, and surface positions.
+if model_kind == "continuum":
+    pfw["particleFileFields"] = [
+        "Velocity",
+        "MaterialType",
+        "RVector",
+    ]
+else:
+    pfw["particleFileFields"] = [
+        "Velocity",
+        "MaterialType",
+        "SurfaceFlag",
+        "RVector",
+        "SurfaceNormal",
+        "SurfacePosition",
+    ]
 
 # Uniaxial-strain loading.  Lateral faces follow F_xx=1 while the top and bottom faces impose the
 # y-stretch.  For the continuum branch the gage length equals the film thickness, so the table strain
@@ -152,18 +163,11 @@ pfw["prescribedBoundaryTransverseVelocities"] = [
     [0.0, 0.0],
 ]
 
-# Materials.  The continuum branch contains only the polymer patch.  The cohesive branch keeps the
-# elastic blocks because the interface law needs two flagged surfaces.
-block_density = 2.70
-block_K = 50.0
-block_G = 20.0
-block_xml = f"""
-<ElasticIsotropic
-    name="surfacePolymerElasticBlock"
-    defaultDensity="{block_density}"
-    defaultBulkModulus="{block_K}"
-    defaultShearModulus="{block_G}"/>
-"""
+# Materials.  The continuum branch contains only the polymer patch.  The cohesive branch keeps
+# non-polymer elastic blocks because the interface law needs two flagged surfaces.  The block card
+# lives in pfw_materials.py so the generated XML is consistent with the rest of the verification
+# material database rather than being assembled inline here.
+block = material_db.surfacePolymerVerificationElasticBlock.copy()
 polymer = material_db.vitonFKM75SurfacePolymer.copy()
 cohesive = material_db.vitonFKM75SurfacePolymerCohesiveZone.copy()
 
@@ -185,8 +189,8 @@ if model_kind == "continuum":
     pfw["objects"] = [layer]
 else:
     pfw["useEvents"] = 1
-    pfw["materials"] = ["surfacePolymerElasticBlock"]
-    pfw["materialPropertyString"] = block_xml + cohesive["materialString"]
+    pfw["materials"] = [block["name"]]
+    pfw["materialPropertyString"] = block["materialString"] + cohesive["materialString"]
     bottom = geom.box(
         "bottom_block",
         [pfw["xmin"], pfw["ymin"], pfw["zmin"]],
@@ -240,4 +244,7 @@ pfw_expected = {
     "hardening_scale_exponent": polymer["hardeningScaleExponent"],
     "maximum_stretch": polymer["maximumStretch"],
     "pressure_asymmetry_amplitude": polymer["pressureAsymmetryAmplitude"],
+    "compressive_pressure_strengthening_cap": polymer["compressivePressureStrengtheningCap"],
+    "block_bulk_modulus": block["defaultBulkModulus"] if model_kind != "continuum" else None,
+    "block_shear_modulus": block["defaultShearModulus"] if model_kind != "continuum" else None,
 }

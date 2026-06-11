@@ -123,6 +123,7 @@ Fully damaged cohesive nodes are propagated back to their supporting particles. 
 \index{CoupledCohesiveZone}
 \index{BicrystalCohesiveZone}
 \index{PolymerCohesiveZone}
+\index{SurfaceInformedPolymerCohesiveZone}
 
 GEOS-MPM dispatches cohesive laws through \texttt{ConstitutivePassThruCohesiveZone}.  The reviewed source registers five executable cohesive-zone model classes: \texttt{UncoupledCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{BicrystalCohesiveZone}, \texttt{PolymerCohesiveZone}, and \texttt{SurfaceInformedPolymerCohesiveZone}.  All inherit the base cohesive state interface, which stores normal and shear stresses and copies converged stresses to old stresses at the end of the update.
 
@@ -157,19 +158,30 @@ The polymer law represents a finite-thickness cohesive layer with bulk and shear
 \end{equation}
 where $h$ is the layer thickness, updates temperature-dependent moduli and strengths, computes a yield-limited traction scale, and tracks previous stretch and plastic-strain-like history.  Damage is activated when the stretch exceeds the temperature-adjusted maximum stretch.
 
-
-
 \paragraph{\texttt{SurfaceInformedPolymerCohesiveZone}.}
-This law is the thin-film projection of \texttt{SurfaceInformedPolymer}.  It converts normal opening and tangential slip to film strains, evaluates the same normalized thermal scale, crystallinity factors, softening term, stretch-hardening term, and pressure-sensitive strength correction as the continuum model, and returns cohesive tractions using the established cohesive-zone sign convention.  The normal film response is split into a retained mean stress and a return-mapped deviatoric normal stress, so the cohesive projection preserves the constrained volumetric traction of a nearly incompressible thin continuum layer.  With tensile film stress taken as positive,
+This model is a finite-thickness cohesive projection of \texttt{SurfaceInformedPolymer}.  It uses the cohesive jump to construct a film strain,
 \begin{equation}
-  p_t=K\epsilon_n,\qquad s_n=\sigma_n-p_t,\qquad q=\sqrt{\left(\frac{3}{2}s_n\right)^2+3\tau^2},
+  \epsilon_n=\frac{\delta_n}{h},
+  \qquad
+  \gamma=\frac{\delta_t}{h},
+  \label{eq:surface-polymer-cz-film-strain}
 \end{equation}
-and the return surface is
+where \(h=\texttt{thickness}\).  The normal volumetric film stress is retained, while the deviatoric normal and shear components are returned to the same surface-informed flow strength used by the continuum model.  In schematic form,
+\begin{align}
+  p_t &= K\epsilon_n,\\
+  q &= \sqrt{\left(\frac{3}{2}s_n\right)^2+3\tau^2},\\
+  \Phi &= q+\eta(T)p_{eff}-\sigma_f^0\le 0.
+  \label{eq:surface-polymer-cz-yield}
+\end{align}
+The optional \texttt{compressivePressureStrengtheningCap} has the same meaning as in the continuum model: it caps only pressure-assisted deviatoric strength, not the compressive normal traction carried by the finite-thickness layer.
+
+The cohesive chain stretch is computed from a thin-film deformation gradient formed from normal jump and tangential slip.  Maximum-stretch failure is not pressure-gated,
 \begin{equation}
-  q+\eta(T)p_t = Y(T,X_c) + S_{soft}(T)\exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
-  + H_gS_T(T)^{p_H}\left(\lambda_{eff}^2-\lambda_{eff}^{-1}\right).
+  \lambda_{chain}^{cz}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
+  \label{eq:surface-polymer-cz-failure}
 \end{equation}
-The required inputs are \texttt{thickness}, \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{defaultYieldStrength}, \texttt{shearSofteningMagnitude}, \texttt{shearSofteningShapeParameter1}, \texttt{shearSofteningShapeParameter2}, and \texttt{strainHardeningSlope}.  Optional inputs define the thermal scale, crystallinity scale, hardening exponent, pressure asymmetry, compressive pressure-strengthening cap, and maximum stretch.  The state includes equivalent plastic strain, plastic normal film strain, plastic tangential film strain, previous stretch, temperature, and damage.
+Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
+
 
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
 \caption{Cohesive-zone constitutive model summary.}\label{tab:cz-model-summary}\\
@@ -187,7 +199,7 @@ Model & Principal required inputs & Notes \\
 \texttt{Coupled}\newline\texttt{CohesiveZone} & Normal and tangential characteristic displacements; peak normal and shear stresses; optional displacement cutoffs. & Needleman--Xu-style coupled exponential cohesive law. \\
 \texttt{Bicrystal}\newline\texttt{CohesiveZone} & Inherits \texttt{CoupledCohesiveZone} inputs; requires a valid misorientation state for strength scaling. & Coupled law with misorientation-dependent peak-strength scaling. \\
 \texttt{Polymer}\newline\texttt{CohesiveZone} & Layer thickness; temperature-dependent bulk, shear, yield, rate/softening, \texttt{Gr}, and maximum-stretch parameters. & Finite-thickness polymer-interface law with thermal softening and stretch-based failure. \\
-\texttt{SurfaceInformedPolymer}\newline\texttt{CohesiveZone} & Layer thickness; reference bulk, shear, yield, softening, hardening, thermal-scale, crystallinity, pressure-asymmetry, and maximum-stretch parameters. & Thin-film projection of the surface-informed continuum polymer model with shared material functions. \\
+\texttt{SurfaceInformed}\newline\texttt{PolymerCohesiveZone} & Layer thickness; reference-temperature scale; crystallinity controls; softening, hardening, pressure-asymmetry, pressure-cap, and maximum-stretch parameters. & Finite-thickness polymer cohesive projection consistent with \texttt{SurfaceInformedPolymer}; retains volumetric normal stress and caps only pressure-assisted deviatoric strengthening. \\
 \end{longtable}
 
 

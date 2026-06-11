@@ -269,69 +269,101 @@ store stress, plasticStrain, yieldStrength, damage
 \end{lstlisting}
 
 
-
 \subsubsection{\texttt{SurfaceInformedPolymer}}
 \label{subsubsec:surface-informed-polymer-model}
 \index{constitutiveModels!SurfaceInformedPolymer}
-\index{temperature!surface-informed polymer model}
+\index{polymer model!surface-informed}
+\index{crystallinity!polymer model}
+\index{pressure strengthening!polymer model}
 
-\texttt{SurfaceInformedPolymer} is a reference-temperature, corotational polymer plasticity model for explicit MPM.  It preserves the elastic predictor and deviatoric radial-return structure used by the other small-strain/corotational solid models, but replaces parameter-specific logistic thermal factors with one normalized thermal scale and adds a weak pressure-sensitive strength correction.
+\texttt{SurfaceInformedPolymer} is a finite-deformation polymer plasticity model intended to retain the useful shear-softening and chain-stretch-hardening structure of \texttt{StrainHardeningPolymer}, while using a clearer reference-temperature parameterization, an explicit crystallinity input, and a bounded pressure-sensitive flow correction.  It is suitable for thermoplastic or elastomeric polymer layers when the important response is a combination of rate-independent deviatoric flow, softening after yield, chain stretch hardening, and finite-extensibility failure.  It is not a substitute for a calibrated high-pressure equation of state; the pressure cap described below is an extrapolation guardrail for the shear-strength part of the model.
 
-The thermal scale is normalized at the supplied transition/reference temperature,
+The reference state is defined at \texttt{referenceTemperature} or, equivalently for many polymer fits, \texttt{glassTransitionTemperature}.  A scalar thermal scale \(S_T(T)\) is normalized so that
 \begin{equation}
-  S_T(T_g)=1,
+  S_T(T_{ref})=1 .
 \end{equation}
+The preferred input form is a table of temperatures and scale values with logarithmic monotone interpolation,
 \begin{equation}
-  \log S_T(T)=a_c\max(T_g-T,0)-a_h\max(T-T_g,0)
-  -J\left[\frac{1}{1+\exp[-(T-T_g)/w_T]}-\frac{1}{2}\right].
-  \label{eq:surface-informed-temperature-scale}
+  \log S_T(T)=\operatorname{PCHIP}\left(T_i,\log S_i\right),
+  \label{eq:surface-polymer-temperature-scale}
 \end{equation}
-Elastic moduli and yield strength may also depend on crystallinity,
+although the implementation may also support scalar compact forms.  Crystallinity effects are applied to elastic and yield-like quantities through smooth multipliers,
+\begin{align}
+  C_E(T,X_c) &= 1+\beta_E\left(X_c-X_{c,ref}\right)A_X(T),\\
+  C_Y(T,X_c) &= 1+\beta_Y\left(X_c-X_{c,ref}\right)A_X(T),\\
+  A_X(T) &= \left[1+\exp\left(-\frac{T-T_g}{w_X}\right)\right]^{-1}.
+  \label{eq:surface-polymer-crystallinity}
+\end{align}
+The scaled elastic and yield quantities are then
+\begin{align}
+  K(T,X_c) &= K_g S_T(T)C_E(T,X_c), &
+  G(T,X_c) &= G_g S_T(T)C_E(T,X_c),\\
+  Y(T,X_c) &= Y_g S_T(T)C_Y(T,X_c).
+  \label{eq:surface-polymer-scaled-elastic-yield}
+\end{align}
+The softening magnitude uses the same thermal scale, while the stretch-hardening modulus has its own exponent,
 \begin{equation}
-  C_E=1+\beta_E(X_c-X_{c,g})A_X(T),\qquad
-  C_Y=1+\beta_Y(X_c-X_{c,g})A_X(T),
-\end{equation}
-\begin{equation}
-  A_X(T)=\frac{1}{1+\exp[-(T-T_g)/w_X]}.
-\end{equation}
-The effective properties are
-\begin{equation}
-  K=K_gS_TC_E,\qquad G=G_gS_TC_E,\qquad Y=Y_gS_TC_Y,
-\end{equation}
-while the hardening slope follows
-\begin{equation}
+  S_{soft}(T)=S_{soft,g}S_T(T),
+  \qquad
   H(T)=H_g S_T(T)^{p_H}.
+  \label{eq:surface-polymer-softening-hardening-scale}
 \end{equation}
-The scalar strength before pressure correction is
-\begin{equation}
-  \sigma_f^0 = Y(T,X_c) + S_{soft,g}S_T
-  \exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
-  + H(T)\left(\lambda_{eff}^2-\frac{1}{\lambda_{eff}}\right),
-\end{equation}
-where \(\kappa\) is the equivalent plastic strain-like history variable and \(\lambda_{eff}\) is the larger of the tensile maximum principal stretch and the isochoric maximum stretch.  The stretch is computed from the right stretch tensor obtained from \(F^TF\), so rigid-body rotation does not enter the hardening measure.  Hydrostatic compression therefore does not activate chain hardening, while constrained compression and shear under pressure can still reach the maximum-stretch failure limit.
 
-The pressure-sensitive yield function is
+The base flow strength combines yield, decaying shear softening, and chain stretch hardening,
 \begin{equation}
-  \Phi=q+\eta(T)p_t-\sigma_f^0\le 0,\qquad
-  \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_\eta}\right)^2\right],
+  \sigma_f^0 =
+  Y(T,X_c)
+  + S_{soft}(T)\exp\left[-\left(\frac{\kappa}{r_1}\right)^{r_2}\right]
+  + H(T)\left\langle \lambda_{chain}^{2}-\lambda_{chain}^{-1}\right\rangle,
+  \label{eq:surface-polymer-base-flow}
 \end{equation}
-where \(p_t\) is positive in hydrostatic tension and \(p_c\) is the optional compressive pressure-strengthening cap.  The implemented return is non-associated: the trial mean stress is retained and the deviatoric stress is radially scaled to the pressure-adjusted scalar surface.
+where \(\kappa\) is the accumulated plastic-strain-like history and \(\langle x\rangle=\max(x,0)\).  The chain stretch is based on the isochoric stretch rather than raw volumetric compression,
+\begin{equation}
+  \lambda_{chain}=\max_i\left(J^{-1/3}\lambda_i\right),
+  \label{eq:surface-polymer-chain-stretch}
+\end{equation}
+where \(\lambda_i\) are principal stretches.  This choice prevents pure hydrostatic compression from looking like chain extension, while still allowing constrained compression and shear under pressure to reach finite extensibility.
+
+The pressure-sensitive yield correction is written using tensile-positive mean stress \(p_t=\operatorname{tr}\boldsymbol{\sigma}/3\),
+\begin{equation}
+  \Phi=q+\eta(T)p_{eff}-\sigma_f^0\le 0,
+  \label{eq:surface-polymer-yield}
+\end{equation}
+with
+\begin{equation}
+  \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_{\eta}}\right)^2\right].
+  \label{eq:surface-polymer-pressure-asymmetry}
+\end{equation}
+The optional input \texttt{compressivePressureStrengtheningCap} limits only the pressure contribution to shear strength,
+\begin{equation}
+  p_{eff}=\max\left(p_t,-p_c\right),
+  \qquad
+  p_c=\texttt{compressivePressureStrengtheningCap}.
+  \label{eq:surface-polymer-pressure-cap}
+\end{equation}
+Negative cap values disable the cap.  The volumetric stress itself is not clipped by this control; only the pressure-strengthening term in the yield function is limited.  This distinction is important for high-pressure robustness: the material can still carry compressive mean stress, but low-pressure pressure-sensitivity parameters cannot create unbounded shear strength at extreme pressure.
+
+The finite-extensibility failure criterion remains independent of pressure,
+\begin{equation}
+  \lambda_{chain}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
+  \label{eq:surface-polymer-maximum-stretch-failure}
+\end{equation}
+Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  For visualization, the primitive plottable particle fields should include \texttt{particleStress}, \texttt{particleDamage}, and \texttt{particlePlasticStrain}.  Equivalent plastic strain should be constructed as a VisIt expression from the plastic-strain tensor components rather than stored as an additional derived particle field.
 
 \begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
-scale K and G with S_T(T) and C_E(T,X_c)
-stress_trial = elasticIsotropicUpdate(oldStress, strainIncrement)
-(p_trial, q_trial, n_trial) = stressInvariants(stress_trial)
-lambda_chain = max(maxPrincipalStretchFrom(F^T F), isochoricMaxPrincipalStretchFrom(F^T F))
-p_eff = max(p_trial, -compressivePressureStrengtheningCap)
-for fixed-point iteration:
-  kappa = norm(plasticStrainOld + plasticStrainIncrement)
-  sigma_f = Y(T,Xc) + softening(T,kappa) + H(T)*stretchMeasure(lambda_chain)
-  phi = q_trial + eta(T)*p_eff - sigma_f
-  if phi <= 0 and first iteration: break elastic
-  q_return = min(q_trial, max(sigma_f - eta(T)*p_eff, 0))
-  stress = recomposeStress(p_trial, q_return, n_trial)
-  plasticStrainIncrement = strainIncrement - elasticStrainIncrement(stress-oldStress)
-store stress, plastic strain, equivalent plastic strain, yield strength, damage
+compute F, J, principal stretches, and lambda_chain=max_i(J^(-1/3)*lambda_i)
+compute S_T(T), crystallinity multipliers, K, G, Y, S_soft, H
+compute elastic trial stress and invariants q_trial, p_t_trial
+p_eff = max(p_t_trial, -compressivePressureStrengtheningCap)
+sigma_f0 = Y + S_soft*exp(-(kappa/r1)^r2)
+           + H*max(lambda_chain^2 - 1/lambda_chain, 0)
+if q_trial + eta*p_eff <= sigma_f0:
+  accept elastic trial stress
+else:
+  return deviatoric stress to capped pressure-sensitive surface
+if lambda_chain >= maximumStretch:
+  damage = 1
+store stress, plasticStrain, kappa, damage
 \end{lstlisting}
 
 \subsubsection{\texttt{CeramicDamage}}
