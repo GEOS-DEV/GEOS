@@ -109,3 +109,7 @@ endif()
 if(EXISTS ${GEOS_TPL_DIR}/mathpresso)
   set(MATHPRESSO_DIR ${GEOS_TPL_DIR}/mathpresso CACHE PATH "" FORCE)
 endif()
+
+if(EXISTS ${GEOS_TPL_DIR}/cpptrace)
+  set(CPPTRACE_DIR ${GEOS_TPL_DIR}/cpptrace CACHE PATH "" FORCE)
+endif()

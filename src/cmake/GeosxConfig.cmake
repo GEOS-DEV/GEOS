@@ -1,5 +1,6 @@
 set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           CALIPER
+                          CPPTRACE
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT

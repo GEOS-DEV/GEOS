@@ -25,6 +25,7 @@ Adiak_        0.2.0      :code:`ENABLE_CALIPER`      :code:`ADIAK_DIR`          
 Caliper_      2.4.0      :code:`ENABLE_CALIPER`      :code:`CALIPER_DIR`           Instrumentation and performance profiling library.
 conduit_      0.5.0      *mandatory*                 :code:`CONDUIT_DIR`           Simplified Data Exchange for HPC Simulations.
 CHAI_         2.2.2      *mandatory*                 :code:`CHAI_DIR`              Copy-hiding array abstraction to automatically migrate data between memory spaces.
+cpptrace_     1.0.0      :code:`ENABLE_CPPTRACE`     :code:`CPPTRACE_DIR`          Optional stack trace library that captures full throw-site stack traces (including STL frames).
 RAJA_         0.12.1     *mandatory*                 :code:`RAJA_DIR`              Collection of C++ software abstractions that enable architecture portability for HPC applications.
 hdf5_         1.10.5     *mandatory*                 :code:`HDF5_DIR`              High-performance data management and storage suite.
 mathpresso_   2015-12-15 :code:`ENABLE_MATHPRESSO`   :code:`MATHPRESSO_DIR`        Mathematical Expression Parser and JIT Compiler.
@@ -56,6 +57,7 @@ uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABL
 .. _Caliper: https://github.com/LLNL/Caliper
 .. _conduit: https://github.com/LLNL/conduit
 .. _CHAI : https://github.com/LLNL/CHAI
+.. _cpptrace : https://github.com/jeremy-rifkin/cpptrace
 .. _RAJA : https://github.com/LLNL/RAJA
 .. _hdf5 : https://portal.hdfgroup.org/display/HDF5/HDF5
 .. _mathpresso : https://github.com/kobalicek/mathpresso

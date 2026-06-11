@@ -18,8 +18,11 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "Logger.hpp"
+#include "StackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/logger/StackTrace.hpp"
 #include "common/format/StringUtilities.hpp"
 
 #include <fstream>
@@ -66,7 +69,7 @@ DiagnosticMsgBuilder ErrorLogger::initCurrentExceptionMessage( MsgType msgType,
   m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
                                                          msgType, msgContent,
                                                          rank )
-                               .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                               .addCallStackInfo( StackTrace::stackTrace() )
                                .getDiagnosticMsg();
   return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
 }
@@ -201,30 +204,10 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
   return *this;
 }
 
-DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( StackTrace && stacktrace )
 {
-  std::string str = std::string( ossStackTrace );
-  std::istringstream iss( str );
-  std::string stackLine;
-  std::size_t index;
-
-  std::regex pattern( R"(Frame \d+: \S+)" );
-
-  while( std::getline( iss, stackLine ) )
-  {
-    if( std::regex_search( stackLine, pattern ))
-    {
-      m_errorMsg.m_isValidStackTrace = true;
-      index = stackLine.find( ':' );
-      m_errorMsg.m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
-    }
-  }
-
-  if( !m_errorMsg.m_isValidStackTrace )
-  {
-    m_errorMsg.m_sourceCallStack.push_back( str );
-  }
-
+  m_errorMsg.m_isValidStackTrace = stacktrace.isValidStackTrace();
+  m_errorMsg.m_sourceCallStack = std::move( stacktrace ).frames();
   return *this;
 }
 

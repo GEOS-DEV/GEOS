@@ -16,6 +16,9 @@
 // Source includes
 #include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/logger/StackTrace.hpp"
+#include "common/logger/StackTraceParams.hpp"
+#include "common/GeosxConfig.hpp"
 #include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
@@ -30,7 +33,7 @@ using namespace geos;
 
 int main( int argc, char *argv[] )
 {
-  try
+  auto runMain = [&]
   {
     std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -68,30 +71,59 @@ int main( int argc, char *argv[] )
     GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
+  };
 
-    return 0;
-  }
   // A NotAnError is thrown if "-h" or "--help" option is used.
-  catch( NotAnError const & )
+  auto onNotAnError = [&]( NotAnError const & )
   {
     basicCleanup( false );
-    return 0;
-  }
-  catch( geos::Exception & e )
+  };
+
+  auto onGeosException = [&]( geos::Exception &, StackTrace stacktrace )
   { // GEOS generated exceptions management
+    if( !stacktrace.frames().empty() )
+    {
+      ErrorLogger::global().modifyCurrentExceptionMessage().addCallStackInfo( std::move( stacktrace ) );
+    }
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
     LvArray::system::callErrorHandler();
-  }
-  catch( std::exception const & e )
+  };
+
+  auto onStdException = [&]( std::exception const & e, StackTrace stacktrace )
   { // native exceptions management
     ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
                                            MsgType::Exception, e.what(),
                                            ::geos::logger::internal::g_rank )
-                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                           .addCallStackInfo( std::move( stacktrace ) )
                                            .getDiagnosticMsg());
     basicCleanup( true );
     LvArray::system::callErrorHandler();
+  };
+
+#ifdef GEOS_USE_CPPTRACE
+  cpptrace::try_catch( runMain,
+                       onNotAnError,
+                       [&]( geos::Exception & e ) { onGeosException( e, StackTrace( GEOS_STACKTRACE_PARAMETERS ) ); },
+                       [&]( std::exception const & e ) { onStdException( e, StackTrace( GEOS_STACKTRACE_PARAMETERS ) ); } );
+#else
+  try
+  {
+    runMain();
   }
+  catch( NotAnError const & e )
+  {
+    onNotAnError();
+  }
+  catch( geos::Exception & e )
+  {
+    onGeosException( e, StackTrace( GEOS_STACKTRACE_PARAMETERS ) );
+  }
+  catch( std::exception const & e )
+  {
+    onStdException( e, StackTrace( GEOS_STACKTRACE_PARAMETERS ) );
+  }
+#endif
+
   return 0;
 }

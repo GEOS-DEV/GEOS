@@ -43,6 +43,8 @@ set( common_headers
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
+     logger/StackTrace.hpp
+     logger/StackTraceParams.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -82,6 +84,7 @@ set( common_sources
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp
+     logger/StackTrace.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
@@ -134,6 +137,10 @@ if( ENABLE_CALIPER )
   if (TARGET adiak)
     list( APPEND dependencyList adiak )
   endif()
+endif()
+
+if( ENABLE_CPPTRACE )
+  list( APPEND dependencyList cpptrace::cpptrace )
 endif()
 
 blt_add_library( NAME       common

@@ -70,6 +70,7 @@ Option                          Default   Explanation
 ``ENABLE_CUDA_NVTOOLSEXT``      ``OFF``   Enable CUDA NVTX user instrumentation (via GEOS_MARK_SCOPE or GEOS_MARK_FUNCTION macros)
 ``ENABLE_HIP``                  ``OFF``   Build with HIP/ROCM (also applies to TPLs)
 ``ENABLE_DOCS``                 ``ON``    Build documentation (Sphinx and Doxygen)
+``ENABLE_CPPTRACE``             ``OFF``   Enable cpptrace stack traces
 ``ENABLE_WARNINGS_AS_ERRORS``   ``ON``    Treat all warnings as errors
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``ENABLE_COV``                  ``OFF``   Enables code coverage

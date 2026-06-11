@@ -23,6 +23,7 @@
 // Source includes
 #include "LvArray/src/Macros.hpp"
 #include "common/logger/GeosExceptions.hpp"
+#include "common/logger/StackTrace.hpp"
 
 // System includes
 #include <stdexcept>
@@ -161,7 +162,7 @@
                                                       ::geos::logger::internal::g_rank ) \
         .setCodeLocation( __FILE__, __LINE__ ) \
         .setCause( __causemsgsoss.str() ) \
-        .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+        .addCallStackInfo( StackTrace::stackTrace() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
@@ -248,7 +249,7 @@
                                                                                     ::geos::logger::internal::g_rank ) \
                                      .setCodeLocation( __FILE__, __LINE__ ) \
                                      .setCause( __causemsgsoss.str() ) \
-                                     .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                     .addCallStackInfo( StackTrace::stackTrace() ) \
                                      .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
                                      .getDiagnosticMsg(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
@@ -341,7 +342,7 @@
                                                                     ::geos::logger::internal::g_rank ) \
                                           .setCodeLocation( __FILE__, __LINE__ ) \
                                           .setCause( __causemsgsoss.str() ) \
-                                          .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                          .addCallStackInfo( StackTrace::stackTrace() ) \
                                           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
                                           .getDiagnosticMsg() ); \
     } \

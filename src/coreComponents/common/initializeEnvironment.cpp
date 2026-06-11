@@ -22,6 +22,7 @@
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
+#include "logger/StackTrace.hpp"
 // TPL includes
 #include <umpire/ResourceManager.hpp>
 #include <umpire/Allocator.hpp>
@@ -86,12 +87,11 @@ void setupLogger()
       }
       else
       {
-        std::string const stackHistory = LvArray::system::stackTrace( true );
         DiagnosticMsg diagnosticMsg;
         ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                          MsgType::Error, errorMsg,
                                                                          ::geos::logger::internal::g_rank )
-                                               .addCallStackInfo( stackHistory )
+                                               .addCallStackInfo( StackTrace::stackTrace() )
                                                .addDetectionLocation( detectionLocation )
                                                .getDiagnosticMsg() );
 
@@ -109,13 +109,12 @@ void setupLogger()
       ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
-      std::string const stackHistory = LvArray::system::stackTrace( true );
       DiagnosticMsg diagnosticMsg;
       ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                        MsgType::ExternalError, "",
                                                                        ::geos::logger::internal::g_rank )
                                              .addSignal( signal )
-                                             .addCallStackInfo( stackHistory )
+                                             .addCallStackInfo( StackTrace::stackTrace() )
                                              .getDiagnosticMsg() );
 
       // call program termination

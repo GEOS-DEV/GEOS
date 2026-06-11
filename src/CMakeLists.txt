@@ -133,6 +133,10 @@ if( ENABLE_HIP )
   list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
+if( ENABLE_CPPTRACE )
+  list( APPEND extraComponentsLinkList cpptrace::cpptrace )
+endif()
+
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON geosx_core 

@@ -38,6 +38,9 @@
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #cmakedefine GEOS_USE_CHAI
 
+/// Enables use of Cpptrace (CMake option ENABLE_CPPTRACE)
+#cmakedefine GEOS_USE_CPPTRACE
+
 /// Enables use of Mathpresso library (CMake option ENABLE_MATHPRESSO)
 #cmakedefine GEOS_USE_MATHPRESSO
 
