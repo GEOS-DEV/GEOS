@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="test_3_phase_baker"
+      relperm="3_phase_baker"
+      output="testRelperm_3_phase_example_3_phase_baker.txt"
+      steps="160"
+      phaseNames="{ water, oil }"
+      saturationControls="{ waterSaturation, oilSaturation }"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_3_phase_stoneii"
+      relperm="3_phase_stoneii"
+      output="testRelperm_3_phase_example_3_phase_stoneii.txt"
+      steps="160"
+      phaseNames="{ water, oil }"
+      saturationControls="{ waterSaturation, oilSaturation }"
+      logLevel="1" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="event_3_phase_baker"
+      target="/Tasks/test_3_phase_baker" />
+    <SoloEvent
+      name="event_3_phase_stoneii"
+      target="/Tasks/test_3_phase_stoneii" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <Constitutive>
+    <TableRelativePermeability
+      name="3_phase_baker"
+      phaseNames="{ gas, oil, water }"
+      threePhaseInterpolator="BAKER"
+      nonWettingIntermediateRelPermTableNames="{ krg, krog }"
+      wettingIntermediateRelPermTableNames="{ krw, krow }" />
+    <TableRelativePermeability
+      name="3_phase_stoneii"
+      phaseNames="{ gas, oil, water }"
+      threePhaseInterpolator="STONEII"
+      nonWettingIntermediateRelPermTableNames="{ krg, krog }"
+      wettingIntermediateRelPermTableNames="{ krw, krow }" />
+  </Constitutive>
+
+  <Functions>
+    <!-- Water-Oil System (Coordinate: Sw) -->
+    <TableFunction
+      name="krw"
+      coordinates="{ 0.15000, 0.20000, 0.23500, 0.27750, 0.32000, 0.36250, 0.40500, 0.44750, 0.49000, 0.53250, 0.57500, 0.61750, 0.66000, 0.70250, 0.75000, 0.78750, 0.83000, 0.87250, 0.91500, 0.95750, 1.00000 }"
+      values="{ 0.00000, 0.00000, 0.00191, 0.00938, 0.02250, 0.04126, 0.06566, 0.09571, 0.13141, 0.17274, 0.21973, 0.27235, 0.33062, 0.39454, 0.47266, 0.53931, 0.62016, 0.70665, 0.79879, 0.89657, 1.00000 }"
+      interpolation="linear" />
+    <TableFunction
+      name="krow"
+      coordinates="{ 0.00000, 0.04250, 0.08500, 0.12750, 0.17000, 0.21250, 0.25000, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.76500, 0.80000, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00050, 0.00337, 0.01077, 0.02481, 0.04763, 0.08137, 0.12815, 0.19011, 0.26938, 0.36809, 0.48837, 0.63237, 0.77025, 1.00000 }"
+      interpolation="linear" />
+    
+    <!-- Gas-Oil System (Coordinate: Sg) -->
+    <TableFunction
+      name="krg"
+      coordinates="{ 0.00000, 0.05000, 0.08500, 0.12750, 0.17000, 0.21250, 0.25500, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.75000, 0.80750, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00144, 0.00704, 0.01688, 0.03094, 0.04925, 0.07178, 0.09855, 0.12956, 0.16479, 0.20427, 0.24797, 0.29591, 0.34808, 0.40448, 0.46512, 0.52999, 0.57422, 0.67243, 0.75000 }"
+      interpolation="linear" />
+    <TableFunction
+      name="krog"
+      coordinates="{ 0.00000, 0.04250, 0.10000, 0.12750, 0.17000, 0.21250, 0.25500, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.76500, 0.80000, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00000, 0.00702, 0.02851, 0.05809, 0.09395, 0.13513, 0.18102, 0.23117, 0.28525, 0.34300, 0.40419, 0.46864, 0.53619, 0.60670, 0.68006, 0.75617, 0.83491, 0.90169, 1.00000 }"
+      interpolation="linear" />
+
+    <TableFunction
+      name="waterSaturation"
+      coordinates="{ 0, 1, 2, 3, 4 }"
+      values="{ 0.22, 0.25, 0.35, 0.45, 0.45 }"
+      interpolation="lower" />
+    <TableFunction
+      name="oilSaturation"
+      coordinates="{ 0.00, 0.95, 1.00, 1.95, 2.00, 2.95, 3.00, 3.95, 4.00 }"
+      values="{ 0.00, 0.78, 0.00, 0.75, 0.00, 0.65, 0.00, 0.55, 0.55 }"
+      interpolation="linear" />
+    
+  </Functions>
+</Problem>
