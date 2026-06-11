@@ -198,6 +198,15 @@ def generateElasticIsotropicMaterialString(material):
     return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material))
 
 
+def generateUncoupledCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'normalForceConstant',
+        'shearForceConstant',
+        'maxNormalDisplacement',
+        'maxTangentialDisplacement',
+    ])
+
+
 def generateGeomechanicsMaterialString(material):
     return _format_material_xml(material, [
         'defaultDensity',
@@ -439,6 +448,7 @@ MATERIAL_STRING_GENERATORS = {
     'VonMisesJ': generateVonMisesJMaterialString,
     'CeramicDamage': generateCeramicDamageMaterialString,
     'ElasticIsotropic': generateElasticIsotropicMaterialString,
+    'UncoupledCohesiveZone': generateUncoupledCohesiveZoneMaterialString,
     'Geomechanics': generateGeomechanicsMaterialString,
     'Graphite': generateGraphiteMaterialString,
     'StrainHardeningPolymer': generateStrainHardeningPolymerMaterialString,
@@ -3122,6 +3132,24 @@ surfacePolymerVerificationElasticBlock["materialString"] = generateMaterialStrin
 # #################################################################################################
 
 ###################################################################################################
+# STIFF ELASTIC COHESIVE TIE FOR SURFACE POLYMER VERIFICATION:
+# Linear, non-polymer cohesive interface used to bond the continuum polymer layer to the stiff
+# elastic loading bars in surfaceInformedPolymerLayer.  The stiffnesses are in GPa/mm and are
+# intentionally much larger than the polymer film stiffness; the large displacement limits keep this
+# interface elastic during the verification.
+#
+surfacePolymerVerificationElasticTieCohesiveZone = {}
+surfacePolymerVerificationElasticTieCohesiveZone["name"] = "surfacePolymerVerificationElasticTieCohesiveZone"
+surfacePolymerVerificationElasticTieCohesiveZone["version"] = 2606101834
+surfacePolymerVerificationElasticTieCohesiveZone["model"] = "UncoupledCohesiveZone"
+surfacePolymerVerificationElasticTieCohesiveZone["normalForceConstant"] = 100.0
+surfacePolymerVerificationElasticTieCohesiveZone["shearForceConstant"] = 100.0
+surfacePolymerVerificationElasticTieCohesiveZone["maxNormalDisplacement"] = 1.0e6
+surfacePolymerVerificationElasticTieCohesiveZone["maxTangentialDisplacement"] = 1.0e6
+surfacePolymerVerificationElasticTieCohesiveZone["materialString"] = generateMaterialString(surfacePolymerVerificationElasticTieCohesiveZone)
+# #################################################################################################
+
+###################################################################################################
 # CONTACT SURFACE/GAP-CLOSURE HYPERELASTIC VERIFICATION MATERIAL:
 # Dimensionless Neo-Hookean material used by verification/contactSurfaceGapClosure.  The values are
 # intentionally soft so the compact quasistatic contact variants run quickly while retaining a
@@ -3231,6 +3259,7 @@ verificationMaterials = [
     verificationElastic,
     contactGapClosureHyperelastic,
     surfacePolymerVerificationElasticBlock,
+    surfacePolymerVerificationElasticTieCohesiveZone,
     verificationMaterialSwapSoft,
     verificationMaterialSwapStiff,
     verificationQuartz,

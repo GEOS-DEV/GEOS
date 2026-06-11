@@ -5169,10 +5169,11 @@ class packedSphericalBed(Geometry):
       triangular lattice in 2D or an FCC lattice in 3D.  ``grow_relax`` starts
       from the lattice path and applies local repulsive corrections.  ``dem`` is
       intentionally a placeholder for an external DEM import path.
-  contactGroupMode : {'color', 'greedyColor', 'hashColor', 'material', 'constant'}
-      ``color`` uses greedy graph coloring for modest N and a spatial hash for
-      large N.  Keep ``numContactColors * number_of_material_offsets <= 100`` if
-      the downstream solver has the usual MPM contact-group limit.
+  contactGroupMode : {'constant', 'color', 'greedyColor', 'hashColor', 'material'}
+      ``constant`` assigns one contact group to every generated grain.  ``color``
+      uses greedy graph coloring for modest N and a spatial hash for large N.
+      Keep ``numContactColors * number_of_material_offsets <= 100`` if the
+      downstream solver has the usual MPM contact-group limit.
 
   Notes
   -----
@@ -5197,9 +5198,9 @@ class packedSphericalBed(Geometry):
                jitterFraction=0.0,
                relaxIterations=0,
                relaxDamping=0.5,
-               contactGroupMode="color",
+               contactGroupMode="constant",
                numContactColors=16,
-               groupBase=_defaultGroup,
+               groupBase=None,
                materialGroupOffsets=False,
                maxContactGroups=100,
                colorGraphLimit=5000,
@@ -5258,7 +5259,7 @@ class packedSphericalBed(Geometry):
     self.numContactColors = int(numContactColors)
     if self.numContactColors <= 0:
       raise ValueError("numContactColors must be positive")
-    self.groupBase = int(groupBase if groupBase is not None else group)
+    self.groupBase = int(group if groupBase is None else groupBase)
     self.materialGroupOffsets = bool(materialGroupOffsets)
     self.maxContactGroups = int(maxContactGroups)
     self.colorGraphLimit = int(colorGraphLimit)

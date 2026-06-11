@@ -708,6 +708,8 @@ parameters = {
                'stressControlMinStrainRate': ( None, True ),  # MPM: minimum reference strain rate for adaptive stress control.
                'stressControlMaxSeekStrain': ( None, True ),  # MPM: maximum accumulated seek strain before declaring target unreachable.
                'stressControlMaxSeekStrainIncrement': ( None, True ),  # MPM: maximum adaptive/seek strain increment per step.
+               'stressControlCommandFilterStrain': ( None, True ),  # MPM: strain interval for smoothing adaptive stress-control commands.
+               'stressControlMaxRateChangeRatio': ( None, True ),  # MPM: maximum per-step command rate change relative to reference strain rate.
                'stressControlJammingPressureRatio': ( None, True ),  # MPM: pressure fraction indicating load-path appearance in seek mode.
                'stressControlReengageTangentRatio': ( None, True ),  # MPM: tangent fraction used by adaptive seek re-engagement.
                'stressControlReengageRampStrain': ( None, True ),  # MPM: strain interval for blending seek back to active control.

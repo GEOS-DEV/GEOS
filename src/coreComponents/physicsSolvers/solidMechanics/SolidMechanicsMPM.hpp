@@ -1352,6 +1352,8 @@ protected:
   real64 m_stressControlMinStrainRate;
   real64 m_stressControlMaxSeekStrain;
   real64 m_stressControlMaxSeekStrainIncrement;
+  real64 m_stressControlCommandFilterStrain;
+  real64 m_stressControlMaxRateChangeRatio;
   real64 m_stressControlJammingPressureRatio;
   real64 m_stressControlReengageTangentRatio;
   real64 m_stressControlReengageRampStrain;

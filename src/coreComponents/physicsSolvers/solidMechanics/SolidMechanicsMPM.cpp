@@ -885,6 +885,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlMinStrainRate( 1.0e-30 ),
   m_stressControlMaxSeekStrain( 5.0e-2 ),
   m_stressControlMaxSeekStrainIncrement( 1.0e-4 ),
+  m_stressControlCommandFilterStrain( 0.0 ),
+  m_stressControlMaxRateChangeRatio( 0.0 ),
   m_stressControlJammingPressureRatio( 2.0e-2 ),
   m_stressControlReengageTangentRatio( 5.0e-3 ),
   m_stressControlReengageRampStrain( 5.0e-3 ),
@@ -1764,6 +1766,20 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Maximum absolute stress-control strain increment in one step during adaptive/seek control." );
 
+  registerWrapper( "stressControlCommandFilterStrain", &m_stressControlCommandFilterStrain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlCommandFilterStrain ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Optional macroscopic strain interval used to smooth the applied adaptive stress-control strain rate. "
+                    "A value of zero disables command filtering." );
+
+  registerWrapper( "stressControlMaxRateChangeRatio", &m_stressControlMaxRateChangeRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_stressControlMaxRateChangeRatio ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Optional per-step cap on the change of an adaptive stress-control strain rate, divided by the reference strain rate. "
+                    "A value of zero disables this cap." );
+
   registerWrapper( "stressControlJammingPressureRatio", &m_stressControlJammingPressureRatio ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_stressControlJammingPressureRatio ).
@@ -2301,6 +2317,10 @@ void SolidMechanicsMPM::postInputInitialization()
                    "stressControlMaxSeekStrain must be non-negative." );
     GEOS_ERROR_IF( m_stressControlMaxSeekStrainIncrement < 0.0,
                    "stressControlMaxSeekStrainIncrement must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlCommandFilterStrain < 0.0,
+                   "stressControlCommandFilterStrain must be non-negative." );
+    GEOS_ERROR_IF( m_stressControlMaxRateChangeRatio < 0.0,
+                   "stressControlMaxRateChangeRatio must be non-negative." );
     GEOS_ERROR_IF( m_stressControlJammingPressureRatio < 0.0,
                    "stressControlJammingPressureRatio must be non-negative." );
     GEOS_ERROR_IF( m_stressControlReengageTangentRatio < 0.0,
@@ -20015,6 +20035,19 @@ void SolidMechanicsMPM::adaptiveSeekStressControl( const real64 dt,
       }
     }
 
+    if( m_stressControlMaxRateChangeRatio > 0.0 )
+    {
+      real64 const deltaCap = m_stressControlMaxRateChangeRatio * referenceRate;
+      real64 const previousL = m_stressControlPreviousDomainL[i];
+      plannedL[i] = clampValue( plannedL[i], previousL - deltaCap, previousL + deltaCap );
+    }
+
+    if( m_stressControlCommandFilterStrain > 0.0 )
+    {
+      real64 const commandAlpha = clampValue( referenceRate * dt / m_stressControlCommandFilterStrain, 0.0, 1.0 );
+      plannedL[i] = m_stressControlPreviousDomainL[i] + commandAlpha * ( plannedL[i] - m_stressControlPreviousDomainL[i] );
+    }
+
     if( m_stressControlMaxSeekStrainIncrement > 0.0 )
     {
       real64 const incrementCap = m_stressControlMaxSeekStrainIncrement / dt;
@@ -25196,6 +25229,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+    real64 const massNormalization = boxSums[6] > 0.0 ? boxSums[6] : 1.0;
+    real64 const materialVolumeNormalization = boxSums[17] > 0.0 ? boxSums[17] : 1.0;
 
     // Write to file
     std::ofstream file;
@@ -25226,25 +25261,25 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ","
          << boxSums[8] / boxSums[7] // damage (normalized by total particle reference volume, thus 1 if all material is damaged)
          << ", "
-         << boxSums[9] / boxSums[6] // internal energy
+         << boxSums[9] / massNormalization // internal energy
          << ", "
-         << boxSums[10] / boxSums[6] // kinetic energy
+         << boxSums[10] / massNormalization // kinetic energy
          << ", "
-         << boxSums[11] / boxSums[17] // ep_xx
+         << boxSums[11] / materialVolumeNormalization // ep_xx
          << ", "
-         << boxSums[12] / boxSums[17] // ep_yy
+         << boxSums[12] / materialVolumeNormalization // ep_yy
          << ", "
-         << boxSums[13] / boxSums[17] // ep_zz
+         << boxSums[13] / materialVolumeNormalization // ep_zz
          << ", "
-         << boxSums[14] / boxSums[17] //ep_xy
+         << boxSums[14] / materialVolumeNormalization //ep_xy
          << ", "
-         << boxSums[15] / boxSums[17] // ep_yz
+         << boxSums[15] / materialVolumeNormalization // ep_yz
          << ", "
-         << boxSums[16] / boxSums[17] // ep_xz
+         << boxSums[16] / materialVolumeNormalization // ep_xz
          << ", "
          << boxSums[17] // material volume
          << ", "
-         << boxSums[18] / boxSums[6]
+         << boxSums[18] / massNormalization
          << ", "
          << boxSums[19] / boxVolume
          << ", "

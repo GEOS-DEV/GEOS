@@ -18,7 +18,7 @@ VARIANTS = [
             "SURFACE_POLYMER_VARIANT_LABEL": "Continuum tension",
             "SURFACE_POLYMER_MODEL_KIND": "continuum",
             "SURFACE_POLYMER_LOADING": "tension",
-            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "1.00",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.10",
         },
     },
     {
@@ -30,7 +30,7 @@ VARIANTS = [
             "SURFACE_POLYMER_VARIANT_LABEL": "Continuum compression",
             "SURFACE_POLYMER_MODEL_KIND": "continuum",
             "SURFACE_POLYMER_LOADING": "compression",
-            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.80",
+            "SURFACE_POLYMER_FINAL_GLOBAL_STRAIN": "0.08",
         },
     },
     {
