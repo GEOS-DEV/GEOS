@@ -92,10 +92,18 @@ bool ConstitutiveDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // move table back to host for output
   m_table.move( hostMemorySpace );
 
-  validateResults();
+  if( !validateResults() )
+  {
+    // Execute result will be true if the task wants to exit the event loop
+    executeResult = true;
+  }
 
-  outputResults();
+  if( !executeResult )
+  {
+    outputResults();
+  }
 
+  // Return true if we want to exit the event loop
   return executeResult;
 }
 
