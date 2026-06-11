@@ -177,10 +177,7 @@ private:
   };
 
 protected:
-
   virtual void postInputInitialization() override;
-
-  virtual void initializePreSubGroups() override;
 
 private:
 
