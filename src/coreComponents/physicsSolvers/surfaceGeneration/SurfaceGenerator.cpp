@@ -993,7 +993,7 @@ bool SurfaceGenerator::processNode( const localIndex nodeID,
     std::set< localIndex > facialRupturePath;
     map< localIndex, int > edgeLocations;
     map< localIndex, int > faceLocations;
-    map< std::pair< CellElementSubRegion const *, localIndex >, int > elemLocations;
+    ElemLocMapType elemLocations;
 
     fracturePlaneFlag = findFracturePlanes( nodeID,
                                             nodeManager,
@@ -1045,7 +1045,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
                                            std::set< localIndex > & separationPathFaces,
                                            map< localIndex, int > & edgeLocations,
                                            map< localIndex, int > & faceLocations,
-                                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                           ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1492,7 +1492,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   for( auto k = nodeToElementMaps.cbegin(); k != nodeToElementMaps.cend(); ++k )
   {
-    elemLocations[*k] = INT_MIN;
+    elemLocations.get_inserted( *k ) = INT_MIN;
   }
 
 
@@ -1585,7 +1585,7 @@ bool SurfaceGenerator::assignLocationsBFS( std::set< localIndex > const & separa
                                            map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                                            map< localIndex, int > & edgeLocations,
                                            map< localIndex, int > & faceLocations,
-                                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                           ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1835,7 +1835,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                         const std::set< localIndex > & separationPathFaces,
                                         const map< localIndex, int > & edgeLocations,
                                         const map< localIndex, int > & faceLocations,
-                                        const map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                        const ElemLocMapType & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2151,7 +2151,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< localIndex > const & childFaceIndex = faceManager.getField< fields::childIndex >();
 
   // 1) loop over all elements attached to the nodeID
-  for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
+  for( ElemLocMapType::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
   {
     const int & location = iter_elem->second;
 
@@ -2515,7 +2515,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
                                             EdgeManager const & edgeManager,
                                             FaceManager const & faceManager,
                                             ElementRegionManager const & elementManager,
-                                            map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations )
+                                            ElemLocMapType const & elemLocations )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2544,7 +2544,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   {
     std::cout << "CONSISTENCY CHECKING OF THE MAPS" << std::endl;
 
-    for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
+    for( ElemLocMapType::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
     {
       const std::pair< CellElementSubRegion const *, localIndex > & elem = iter_elem->first;
 

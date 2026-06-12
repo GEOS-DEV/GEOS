@@ -55,26 +55,4 @@
       voxelFile="tables/radialStress.geos"/>
   </Functions>
   <!-- SPHINX_FUNCTION_END -->
-
-  <!-- SPHINX_MESH -->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
-  <!-- SPHINX_MESH_END -->
 </Problem>
