@@ -65,10 +65,12 @@ Saturation Assignment
 ---------------------
 The phase saturations are explicitly driven by user-defined functions over time. 
 
-To configure the driver, the user must specify a list of target phases via ``phaseNames`` and corresponding time-history functions via ``saturationControls``. For an $N$-phase model, exactly $N-1$ phases and saturation functions must be provided. The saturation of the remaining implicit phase is calculated automatically by the driver to ensure the phase volume fractions (saturations) always sum to exactly 1.0. 
+To configure the driver, the user must specify a list of target phases via ``phaseNames`` and corresponding time-history functions via ``saturationControls``. For an :math:`N`-phase model, exactly :math:`N-1` phases and saturation functions must be provided. The saturation of the remaining implicit phase is calculated automatically by the driver to ensure the phase volume fractions (saturations) always sum to exactly 1.0. 
 
 During execution, the driver evaluates the provided functions at each step. To ensure physical validity:
+
 * If a saturation function evaluates to a negative value at a given step, the saturation is clamped to zero.
+
 * If the evaluated saturations sum to a value greater than 1.0, they are proportionally scaled down so that their collective sum equals 1.0, and the implicit phase is assigned a saturation of zero.
 
 Examples and Hysteresis
@@ -150,7 +152,7 @@ As this shares the same usage pattern, only the constitutive blocks is highlight
 
 .. literalinclude:: ../../../../inputFiles/constitutiveDriver/testRelperm_3_phase_example.xml
   :language: xml
-  :start-after: <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_BEGIN -->
+  :start-after: <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_START -->
   :end-before: <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_END -->
 
 

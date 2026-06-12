@@ -15,6 +15,7 @@ With no arguments, defaults to the example StoneII-model table and kro.
 """
 
 import sys
+import os
 from pathlib import Path
 
 import numpy as np
@@ -105,10 +106,13 @@ def plot_ternary_surface(table, value='kro'):
     """Filled contour of `value` (one of 'krg', 'kro', 'krw') over the
     sampled (Sw, Sg) points on a ternary diagram, interpolated across the
     sampled legs via Delaunay triangulation."""
+    
+    plt.rcParams.update({'font.size': 12})
+
     x, y = ternary_coord(table['Sw'], table['Sg'])
 
     fig, ax = ternaryfigure()
-    cs = ax.tricontourf(x, y, table[value], levels=20, cmap='viridis')
+    cs = ax.tricontourf(x, y, table[value], levels=20, cmap='turbo')
     fig.colorbar(cs, ax=ax, label=KR_LABELS[value])
     ax.set_title(KR_LABELS[value])
 
@@ -116,8 +120,9 @@ def plot_ternary_surface(table, value='kro'):
 
 
 if __name__ == "__main__":
-    default_path = (Path(__file__).resolve().parents[0]
-                     / "testRelperm_3_phase_example_3_phase_stoneii.txt")
+    data_directory = os.path.normpath(os.path.abspath("."))
+    default_path = (Path(data_directory)
+                    / "testRelperm_3_phase_example_3_phase_stoneii.txt")
     table_path = sys.argv[1] if len(sys.argv) > 1 else default_path
     value = sys.argv[2] if len(sys.argv) > 2 else 'kro'
 

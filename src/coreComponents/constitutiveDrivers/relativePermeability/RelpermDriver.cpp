@@ -222,7 +222,7 @@ void RelpermDriver::initializeTable( RelativePermeabilityBase const & baseRelper
       m_table( step, phaseOrder[ip] + SATURATION ) = saturation;
       sumSaturation += saturation;
     }
-    if( 1.0 - sumSaturation < -LvArray::NumericLimits< real64 >::epsilon )
+    if( 1.0 < sumSaturation )
     {
       real64 const scale = 1.0 / sumSaturation;
       for( integer ip = 1; ip < numPhases; ip++ )
