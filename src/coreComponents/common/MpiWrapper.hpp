@@ -815,6 +815,12 @@ private:
    */
   template< typename T >
   static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOS );
+
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  /// Tag/counter of the latest MPI collective operation to detect MPI desynchronizations
+  inline static int g_currentMpiOperationTag = 0;
+#endif
+
 };
 
 namespace internal
