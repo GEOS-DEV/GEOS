@@ -38,31 +38,13 @@ MPI_Comm MPI_COMM_GEOS;
 int MPI_COMM_GEOS = 0;
 #endif
 
-void detectMPIDesync( MPI_Comm const & MPI_PARAM( comm ), int id )
-{
-#ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  int min_id = MpiWrapper::min( id );
-  int max_id = MpiWrapper::max( id );
-
-  std::cout << "(detectMPIDesync) my_id = " << id << '\n';
-  std::cout << "min_id = " << min_id << '\n';
-  std::cout << "max_id = " << max_id << std::endl;
-
-  if( min_id != max_id )
-  {
-    std::cerr << "MPI desync detected" << std::endl;
-    MPI_Abort( comm, 1 );
-  }
-#endif
-}
-
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
   int id = ++g_currentMpiOperationTag;
   MPI_Barrier( comm );
-  detectMPIDesync( comm, id );
+  detectMpiDesync( comm, id );
 #else
   MPI_Barrier( comm );
 #endif

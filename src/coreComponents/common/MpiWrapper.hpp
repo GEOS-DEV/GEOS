@@ -819,6 +819,18 @@ private:
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
   /// Tag/counter of the latest MPI collective operation to detect MPI desynchronizations
   inline static int g_currentMpiOperationTag = 0;
+
+  /**
+   * @brief Detects MPI desynchronization from MPI collective operations.
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @param[in] id The current collective operation counter of this rank.
+   */
+  inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int id )
+  {
+    int min_id = MpiWrapper::min( id );
+    int max_id = MpiWrapper::max( id );
+    if( min_id != max_id ) { MPI_Abort( comm, 1 ); }
+  }
 #endif
 
 };
