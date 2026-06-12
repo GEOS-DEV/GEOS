@@ -120,7 +120,7 @@ When written to a file, the file is a simple ASCII format with a brief header fo
    # column 1 = index
    # column 2 = saturation,gas
    # column 3 = saturation,water
-   # column 4 = relperm,gas`
+   # column 4 = relperm,gas
    # column 5 = relperm,water
     0.0000e+00 1.0000e+00 0.0000e+00 1.0000e+00 0.0000e+00
     2.0000e-01 8.0000e-01 2.0000e-01 7.0006e-01 7.1429e-04
