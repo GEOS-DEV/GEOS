@@ -131,4 +131,59 @@ When written to a file, the file is a simple ASCII format with a brief header fo
 
 The exact number of columns will depend on the phase count configured in the chosen model. If hysteresis is activated on the model, additional columns tracking historical extremum saturations will automatically be present between the instantaneous saturations and the calculated relative permeabilities. This file can be readily plotted using any number of plotting tools.  Each row corresponds to one timestep of the driver, starting from initial conditions in the first row.
 
+Exploring 3-phases data
+------------------------
 
+Another ability of ``RelpermDriver`` is to test 3-phases relperm interpolation models. GEOS offers an implementation for the ``Baker`` model and the ``StoneII`` model.
+The example input is gathered here,
+
+.. code-block:: sh
+
+   inputFiles/constitutiveDriver/testRelperm_3_phase_example.xml
+
+.. note::
+
+  Note :math:`S_g = 1 - S_o - S_w` and hence is not an input of the ``RelpermDriver``
+
+
+As this shares the same usage pattern, only the constitutive blocks is highlighted.
+
+.. literalinclude:: ../../../../inputFiles/constitutiveDriver/testRelperm_3_phase_example.xml
+  :language: xml
+  :start-after: <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_BEGIN -->
+  :end-before: <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_END -->
+
+
+Eventually, to run it, the ``waterSaturation`` and ``oilSaturation`` controls are simply browsing the full range of accessible water and oil saturations. 
+This results in a regular sampling that is further interpolated by the plotting tool.
+
+
+When written to a file, the output only differs by the additional `saturation,oil` and `relperm,oil` columns as in the following extract,
+
+.. code:: sh
+
+  # column 1 = index
+  # column 2 = saturation,gas
+  # column 3 = saturation,oil
+  # column 4 = saturation,water
+  # column 5 = relperm,gas
+  # column 6 = relperm,oil
+  # column 7 = relperm,water
+    0.0000e+00 1.0000e+00 0.0000e+00 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    1.0000e-03 9.9913e-01 8.6667e-04 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    2.0000e-03 9.9827e-01 1.7333e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    3.0000e-03 9.9740e-01 2.6000e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    4.0000e-03 9.9653e-01 3.4667e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    5.0000e-03 9.9567e-01 4.3333e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    6.0000e-03 9.9480e-01 5.2000e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    7.0000e-03 9.9393e-01 6.0667e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+    8.0000e-03 9.9307e-01 6.9333e-03 0.0000e+00 7.5000e-01 0.0000e+00 0.0000e+00
+
+
+
+Then a ternary diagram such as the following for ``StoneII`` model. 
+
+.. plot:: ../inputFiles/constitutiveDriver/testRelperm_data/plot_relperm_ternary_table.py
+
+
+While ``Baker`` constructs a weighted sum of linear interpolant :math:`kr_{ow}` and :math:`kr_{og}` (see :ref:`ThreePhaseRelativePermeability`) is an easier and more stable first approach, ``StoneII`` is more physically consistent in carbonates and sandstones. It exhibits the characteristic straight isoperm patterns (as shown above).
