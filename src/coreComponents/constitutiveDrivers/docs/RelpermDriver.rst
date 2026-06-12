@@ -134,7 +134,7 @@ The exact number of columns will depend on the phase count configured in the cho
 Exploring 3-phases data
 ------------------------
 
-Another ability of ``RelpermDriver`` is to test 3-phases relperm interpolation models. GEOS offers an implementation for ``Baker`` model and ``StoneII``.
+Another ability of ``RelpermDriver`` is to test 3-phases relperm interpolation models. GEOS offers an implementation for the ``Baker`` model and the ``StoneII`` model.
 The example input is gathered here,
 
 .. code-block:: sh
