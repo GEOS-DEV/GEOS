@@ -41,10 +41,10 @@ int MPI_COMM_GEOS = 0;
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  MPI_Barrier( comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_collectiveOperationCounter );
+  MpiDesyncGuard const mpiDesyncGuard( comm );
 #endif
+  MPI_Barrier( comm );
 #endif
 }
 
