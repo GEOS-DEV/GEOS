@@ -1,30 +1,6 @@
-set( gtest_triaxial_xmls
-     testTriaxial_druckerPragerExtended.xml
-     testTriaxial_elasticIsotropic.xml
-     testTriaxial_elasticIsotropicPressureDependent.xml
-     testTriaxial_modifiedCamClay.xml
-     testTriaxial_delftEggUseLinear.xml
-     testTriaxial_modifiedCamClayVolumetric.xml
-     testTriaxial_delftEggLoadPathDryUseLinear.xml
-     testTriaxial_delftEggLoadPathWetUseLinear.xml
-     testTriaxial_delftEggCase1.xml
-     testTriaxial_delftEggCase2.xml )
-
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface  )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
-
-# Add triaxial xml based tests
-blt_add_executable( NAME testTriaxial
-                    SOURCES testTriaxial.cpp
-                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz" ${tplDependencyList})
-
-foreach(test ${gtest_triaxial_xmls})
-    get_filename_component( test_name ${test} NAME_WE )
-    geos_add_test( NAME ${test_name}
-                   COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
-endforeach()
