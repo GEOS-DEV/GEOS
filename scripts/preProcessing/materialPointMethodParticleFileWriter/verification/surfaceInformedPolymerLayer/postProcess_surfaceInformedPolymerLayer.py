@@ -76,10 +76,13 @@ COHESIVE_GAGE_LENGTH = 1.0
 FILM_THICKNESS = 0.10
 CONTINUUM_GAGE_LENGTH = 1.0
 DOMAIN_WIDTH = FILM_THICKNESS
+DOMAIN_DEPTH = 0.01
+DOMAIN_VOLUME = DOMAIN_WIDTH * CONTINUUM_GAGE_LENGTH * DOMAIN_DEPTH
 # Fallback area for reaction histories when an older run does not write length_x/length_z.
 # Current inputs write both lengths, so this is only a defensive default.
 CROSS_SECTION_AREA = DOMAIN_WIDTH * 0.01
 STRESS_TO_MPA = 1000.0
+ANALYTICAL_SOURCE = os.environ.get("SURFACE_POLYMER_ANALYTICAL_SOURCE", "geos_card").strip().lower()
 ANALYTICAL_TEMPERATURE_C = float(os.environ.get("SURFACE_POLYMER_ANALYTICAL_TEMPERATURE_C", "21.0"))
 ANALYTICAL_CRYSTALLINITY_PCT = float(os.environ.get("SURFACE_POLYMER_ANALYTICAL_CRYSTALLINITY_PCT", "7.4"))
 ANALYTICAL_DRIVER_PARAMS = {
@@ -284,9 +287,17 @@ def softening(kappa: float) -> float:
     return SOFTENING_MAGNITUDE * math.exp(-ratio ** SOFTENING_R2)
 
 
-def stretch_hardening(film_strain: float) -> float:
-    lam = max(1.0 + film_strain, 1.0)
-    lam = min(lam, MAXIMUM_STRETCH)
+def chain_stretch_from_film_state(film_strain: float, tangential_strain: float = 0.0) -> float:
+    stretch = max(1.0 + film_strain, 1.0e-16)
+    F = np.array([[1.0, tangential_strain, 0.0], [0.0, stretch, 0.0], [0.0, 0.0, 1.0]], dtype=float)
+    principal_stretch = float(math.sqrt(max(np.linalg.eigvalsh(F.T @ F).max(), 0.0)))
+    J = max(float(np.linalg.det(F)), 1.0e-16)
+    return max(principal_stretch, principal_stretch / (J ** (1.0 / 3.0)))
+
+
+def stretch_hardening(film_strain: float, tangential_strain: float = 0.0) -> float:
+    lam = min(chain_stretch_from_film_state(film_strain, tangential_strain), MAXIMUM_STRETCH)
+    lam = max(lam, 1.0)
     return HARDENING_SLOPE * (lam * lam - 1.0 / lam)
 
 
@@ -341,7 +352,8 @@ def continuum_update(total_film_strain: float,
                      previous_film_strain: float,
                      stress_old: list[float],
                      plastic_strain_old: list[float],
-                     kappa_old: float) -> tuple[list[float], list[float], float]:
+                     kappa_old: float,
+                     hardening_film_strain: float | None = None) -> tuple[list[float], list[float], float]:
     """One-dimensional continuum update for the uniaxial-strain film.
 
     The continuum kernel is a J2 radial return with retained mean stress.  The
@@ -353,7 +365,8 @@ def continuum_update(total_film_strain: float,
     trial = [stress_old[i] + elastic_increment_uniaxial_strain(delta_film_strain)[i] for i in range(3)]
     p_trial, q_trial, direction = stress_decomposition(trial)
     plastic_increment = [0.0, 0.0, 0.0]
-    flow = YIELD_STRENGTH + softening(kappa_old) + stretch_hardening(total_film_strain)
+    hardening_strain = total_film_strain if hardening_film_strain is None else hardening_film_strain
+    flow = YIELD_STRENGTH + softening(kappa_old) + stretch_hardening(hardening_strain)
     stress_new = trial[:]
     plastic_new = plastic_strain_old[:]
     kappa_new = kappa_old
@@ -372,7 +385,7 @@ def continuum_update(total_film_strain: float,
         plastic_increment = [total_strain_increment[i] - elastic_strain_increment[i] for i in range(3)]
         plastic_candidate = [plastic_strain_old[i] + plastic_increment[i] for i in range(3)]
         kappa_candidate = strain_magnitude(plastic_candidate)
-        flow_candidate = YIELD_STRENGTH + softening(kappa_candidate) + stretch_hardening(total_film_strain)
+        flow_candidate = YIELD_STRENGTH + softening(kappa_candidate) + stretch_hardening(hardening_strain)
         stress_new = stress_candidate
         plastic_new = plastic_candidate
         kappa_new = kappa_candidate
@@ -408,7 +421,7 @@ def cohesive_update(film_strain: float,
     sigma_n = p_trial + s_n
     plastic = False
     for _ in range(16):
-        flow = YIELD_STRENGTH + softening(kappa) + stretch_hardening(film_strain)
+        flow = YIELD_STRENGTH + softening(kappa) + stretch_hardening(film_strain, tangential_strain)
         yield_measure = q_trial + PRESSURE_ASYMMETRY * p_trial
         if yield_measure <= flow or q_trial <= 1.0e-16:
             return sigma_n, plastic_normal_old, plastic_tangential_old, kappa_old
@@ -432,7 +445,48 @@ def cohesive_update(film_strain: float,
     plastic_tangential_new = tangential_strain - tau / max(POLYMER_SHEAR_MODULUS, 1.0e-16)
     return sigma_n, plastic_normal_new, plastic_tangential_new, max(kappa_old, kappa)
 
-def analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
+def geos_card_analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
+    xs: list[float] = []
+    stresses_mpa: list[float] = []
+    kappas: list[float] = []
+    previous_film_strain = 0.0
+    if model_kind == "continuum":
+        stress = [0.0, 0.0, 0.0]
+        plastic_strain = [0.0, 0.0, 0.0]
+        kappa = 0.0
+        previous_log_film_strain = 0.0
+        for i in range(n):
+            tfrac = i / max(n - 1, 1)
+            film_strain = imposed_film_strain(model_kind, final_strain * tfrac)
+            film_stretch = max(1.0 + film_strain, 1.0e-16)
+            log_film_strain = math.log(film_stretch)
+            stress, plastic_strain, kappa = continuum_update(
+                log_film_strain,
+                previous_log_film_strain,
+                stress,
+                plastic_strain,
+                kappa,
+                hardening_film_strain=film_strain,
+            )
+            previous_log_film_strain = log_film_strain
+            xs.append(film_strain)
+            stresses_mpa.append(stress[1] * STRESS_TO_MPA)
+            kappas.append(kappa)
+    else:
+        plastic_normal = 0.0
+        plastic_tangential = 0.0
+        kappa = 0.0
+        for i in range(n):
+            tfrac = i / max(n - 1, 1)
+            film_strain = imposed_film_strain(model_kind, final_strain * tfrac)
+            stress_scalar, plastic_normal, plastic_tangential, kappa = cohesive_update(film_strain, plastic_normal, plastic_tangential, kappa)
+            xs.append(film_strain)
+            stresses_mpa.append(stress_scalar * STRESS_TO_MPA)
+            kappas.append(kappa)
+    return xs, stresses_mpa, kappas
+
+
+def attached_driver_analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
     final_engineering_strain = imposed_film_strain(model_kind, final_strain)
     final_stretch = max(1.0 + final_engineering_strain, 1.0e-12)
     final_true_strain = math.log(final_stretch)
@@ -444,6 +498,12 @@ def analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tup
         ANALYTICAL_TEMPERATURE_C,
         ANALYTICAL_CRYSTALLINITY_PCT,
     )
+
+
+def analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
+    if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}:
+        return attached_driver_analytical_series(model_kind, final_strain, n)
+    return geos_card_analytical_series(model_kind, final_strain, n)
 
 
 def pick_stress_y(row: dict) -> float | None:
@@ -472,7 +532,42 @@ def pick_plastic(row: dict) -> float | None:
                 return float(row[key])
             except Exception:
                 pass
+    clean = {str(k).strip().lower().replace(" ", ""): v for k, v in row.items()}
+    component_keys = ["epxx", "epyy", "epzz", "epyz", "epxz", "epxy"]
+    components = []
+    found_component = False
+    for key in component_keys:
+        try:
+            components.append(float(clean[key]))
+            found_component = True
+        except Exception:
+            components.append(0.0)
+    if found_component:
+        return math.sqrt(sum(value * value for value in components))
     return None
+
+
+def box_material_volume(row: dict) -> float | None:
+    for key, value in row.items():
+        if str(key).strip().lower() == "volume":
+            try:
+                volume = float(value)
+                return volume if volume > 0.0 else None
+            except Exception:
+                return None
+    return None
+
+
+def pick_box_material_stress_y(row: dict) -> float | None:
+    stress = pick_stress_y(row)
+    volume = box_material_volume(row)
+    if stress is None:
+        return None
+    if volume is None:
+        return stress
+    # Existing GEOS box-average stress rows are stress*materialVolume/domainVolume.
+    # Correct them here so reports made from old runs still show the material average.
+    return stress * DOMAIN_VOLUME / max(volume, 1.0e-30)
 
 
 def history_time(row: dict) -> float:
@@ -518,6 +613,38 @@ def film_strain_from_history(model_kind: str, row: dict, final_strain: float) ->
     return time, imposed_film_strain(model_kind, global_strain_from_history(model_kind, row, final_strain, time))
 
 
+def domain_stretch_from_history(model_kind: str, row: dict, final_strain: float) -> tuple[float, float]:
+    time = history_time(row)
+    return time, 1.0 + global_strain_from_history(model_kind, row, final_strain, time)
+
+
+def reaction_stress_from_row(row: dict) -> float | None:
+    clean = {str(k).strip(): v for k, v in row.items()}
+    ry_minus = clean.get("Ry-", clean.get("reactionYMinus", None))
+    ry_plus = clean.get("Ry+", clean.get("reactionYPlus", None))
+    values = []
+    for value in [ry_minus, ry_plus]:
+        try:
+            values.append(float(value))
+        except Exception:
+            pass
+    if not values:
+        return None
+    # Boundary reactions have opposite signs on the two y faces.  Use the
+    # sign of the top reaction when possible so tension is positive and
+    # compression is negative in the verification plot.
+    signed_force = values[-1] if len(values) > 1 else values[0]
+    if len(values) > 1 and abs(values[0]) > abs(values[1]):
+        signed_force = -values[0]
+    try:
+        area = abs(float(clean.get("length_x", 0.0)) * float(clean.get("length_z", 0.0)))
+    except Exception:
+        area = 0.0
+    if area <= 1.0e-30:
+        area = CROSS_SECTION_AREA
+    return signed_force / max(area, 1.0e-30)
+
+
 def read_reaction_stress_y(run_dir: Path, model_kind: str, final_strain: float) -> list[tuple[float, float, float]]:
     path = find_first(run_dir, ["reactionHistory.csv"])
     if path is None:
@@ -527,34 +654,37 @@ def read_reaction_stress_y(run_dir: Path, model_kind: str, final_strain: float) 
     for row in rows:
         clean = {str(k).strip(): v for k, v in row.items()}
         time, film_strain = film_strain_from_history(model_kind, clean, final_strain)
-        ry_minus = clean.get("Ry-", clean.get("reactionYMinus", None))
-        ry_plus = clean.get("Ry+", clean.get("reactionYPlus", None))
-        values = []
-        for value in [ry_minus, ry_plus]:
-            try:
-                values.append(float(value))
-            except Exception:
-                pass
-        if values:
-            # Boundary reactions have opposite signs on the two y faces.  Use the
-            # sign of the top reaction when possible so tension is positive and
-            # compression is negative in the verification plot.
-            signed_force = values[-1] if len(values) > 1 else values[0]
-            if len(values) > 1 and abs(values[0]) > abs(values[1]):
-                signed_force = -values[0]
-            try:
-                area = abs(float(clean.get("length_x", 0.0)) * float(clean.get("length_z", 0.0)))
-            except Exception:
-                area = 0.0
-            if area <= 1.0e-30:
-                area = CROSS_SECTION_AREA
-            out.append((time, film_strain, signed_force / max(area, 1.0e-30)))
+        stress = reaction_stress_from_row(clean)
+        if stress is not None:
+            out.append((time, film_strain, stress))
     out.sort(key=lambda item: item[0])
     filtered: list[tuple[float, float, float]] = []
     last_t = -math.inf
     for time, film_strain, stress in out:
         if time > last_t:
             filtered.append((time, film_strain, stress))
+            last_t = time
+    return filtered
+
+
+def read_reaction_stress_domain_stretch_y(run_dir: Path, model_kind: str, final_strain: float) -> list[tuple[float, float, float]]:
+    path = find_first(run_dir, ["reactionHistory.csv"])
+    if path is None:
+        return []
+    rows = read_csv_numeric(path)
+    out: list[tuple[float, float, float]] = []
+    for row in rows:
+        clean = {str(k).strip(): v for k, v in row.items()}
+        time, domain_stretch = domain_stretch_from_history(model_kind, clean, final_strain)
+        stress = reaction_stress_from_row(clean)
+        if stress is not None:
+            out.append((time, domain_stretch, stress))
+    out.sort(key=lambda item: item[0])
+    filtered: list[tuple[float, float, float]] = []
+    last_t = -math.inf
+    for time, domain_stretch, stress in out:
+        if time > last_t:
+            filtered.append((time, domain_stretch, stress))
             last_t = time
     return filtered
 
@@ -589,23 +719,54 @@ def expected_at_time(model_kind: str, final_strain: float, time: float) -> tuple
 def normalize_measured_stress_units(measured: list[float], expected_mpa: list[float]) -> tuple[list[float], float]:
     """Return stresses in MPa and the scale applied to the measured series.
 
-    Continuum box averages are written in material stress units, while boundary
-    reaction histories in this verification workflow are already engineering
-    MPa after force/area reduction.  The ratio check keeps the post-processor
-    robust when a run provides only one of those two histories.
+    GEOS writes material stresses and force/area reaction reductions in the MPM
+    stress unit, GPa, for this verification.  Keep the conversion explicit
+    instead of inferring units from the expected curve magnitude; the inference
+    hid large cohesive-zone reaction errors when the wrong reaction measure was
+    being plotted.
     """
-    pairs = [(abs(m), abs(e)) for m, e in zip(measured, expected_mpa) if abs(m) > 1.0e-14 and abs(e) > 1.0e-8]
-    if not pairs:
-        return measured, 1.0
-    ratios = sorted(m / e for m, e in pairs)
-    ratio = ratios[len(ratios) // 2]
-    if ratio < 0.02:
-        scale = STRESS_TO_MPA
-    elif ratio > 50.0:
-        scale = 1.0 / STRESS_TO_MPA
-    else:
-        scale = 1.0
-    return [scale * value for value in measured], scale
+    return [STRESS_TO_MPA * value for value in measured], STRESS_TO_MPA
+
+
+def series_completion_status(model_kind: str, final_strain: float, measured_x: list[float]) -> tuple[str, bool, float | None, float]:
+    target = imposed_film_strain(model_kind, final_strain)
+    if not measured_x:
+        return "missing", False, None, target
+    final_x = measured_x[-1]
+    tolerance = max(1.0e-3, 2.0e-2 * abs(target))
+    complete = abs(final_x - target) <= tolerance
+    return ("complete" if complete else "incomplete"), complete, final_x, target
+
+
+def reaction_measure(run_dir: Path) -> str:
+    xml_path = find_first(run_dir, ["mpm_surfaceInformedPolymerLayer.xml"])
+    if xml_path is None:
+        return "unknown"
+    try:
+        text = xml_path.read_text(errors="ignore")
+    except Exception:
+        return "unknown"
+    if "useInternalForceAsFaceReaction=\"1\"" in text:
+        return "internal_force"
+    if "reactionHistory=\"1\"" in text:
+        return "velocity_correction"
+    return "unknown"
+
+
+def compact_or_na(value, precision: int = 6) -> str:
+    text = compact_float(value, precision)
+    return text if text else "--"
+
+
+def latex_plot_block(output_dir: Path, name: str, caption: str) -> list[str]:
+    if not (output_dir / name).is_file():
+        return []
+    return [
+        r"\begin{center}",
+        r"\includegraphics[width=0.92\linewidth]{\CaseOutputDir/" + name + "}",
+        r"{\footnotesize " + latex_escape(caption) + r"\par}",
+        r"\end{center}",
+    ]
 
 
 def plot_metric(output_dir: Path, file_name: str, title: str, x_label: str, y_label: str, series: list[tuple[str, list[float], list[float]]]) -> str | None:
@@ -671,6 +832,7 @@ def main() -> int:
     rows_out: list[dict] = []
     summaries: list[dict] = []
     stress_series: list[tuple[str, list[float], list[float]]] = []
+    domain_stress_series: list[tuple[str, list[float], list[float]]] = []
     plastic_series: list[tuple[str, list[float], list[float]]] = []
     visit_tex: list[str] = []
 
@@ -697,6 +859,7 @@ def main() -> int:
 
         final_strain = float(variant["final_global_strain"])
         reaction_series = read_reaction_stress_y(run_dir, str(variant["model_kind"]), final_strain)
+        domain_reaction_series = read_reaction_stress_domain_stretch_y(run_dir, str(variant["model_kind"]), final_strain)
         box_path = find_first(run_dir, ["boxAverageHistory.csv"])
         box_rows = read_csv_numeric(box_path) if box_path else []
 
@@ -704,6 +867,8 @@ def main() -> int:
         measured_stress: list[float] = []
         stress_expected: list[float] = []
         stress_errors: list[float] = []
+        domain_stretch_x: list[float] = []
+        domain_measured_stress: list[float] = []
         plastic_x: list[float] = []
         measured_plastic: list[float] = []
         plastic_expected: list[float] = []
@@ -714,6 +879,8 @@ def main() -> int:
         # for polymer state variables and as a stress fallback for incomplete runs.
         raw_rows: list[dict] = []
         use_reaction_stress = bool(reaction_series)
+        stress_source = "reactionHistory" if use_reaction_stress else "boxAverageHistory"
+        reaction_source = reaction_measure(run_dir)
 
         if use_reaction_stress:
             for time, film_strain, stress in reaction_series:
@@ -733,14 +900,15 @@ def main() -> int:
                         "measured_equivalent_plastic_strain": "",
                         "expected_equivalent_plastic_strain": expected_plastic,
                         "plastic_strain_error": "",
-                        "stress_source": "reactionHistory",
+                        "stress_source": stress_source,
+                        "reaction_measure": reaction_source,
                     }
                 )
         else:
             for row in box_rows:
                 time, film_strain = film_strain_from_history(str(variant["model_kind"]), row, final_strain)
                 _film_strain, expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain)
-                sy = pick_stress_y(row)
+                sy = pick_box_material_stress_y(row)
                 if sy is None:
                     continue
                 measured_x.append(film_strain)
@@ -758,18 +926,29 @@ def main() -> int:
                         "measured_equivalent_plastic_strain": "",
                         "expected_equivalent_plastic_strain": expected_plastic,
                         "plastic_strain_error": "",
-                        "stress_source": "boxAverageHistory",
+                        "stress_source": stress_source,
+                        "reaction_measure": reaction_source,
                     }
                 )
 
         measured_stress, measured_scale = normalize_measured_stress_units(measured_stress, stress_expected)
         stress_errors = [m - e for m, e in zip(measured_stress, stress_expected)]
+        if domain_reaction_series:
+            domain_stretch_x = [item[1] for item in domain_reaction_series]
+            domain_raw_stress = [item[2] for item in domain_reaction_series]
+            domain_measured_stress, _domain_scale = normalize_measured_stress_units(domain_raw_stress, [])
         for i, row in enumerate(raw_rows):
             if i < len(measured_stress):
                 row["measured_sigma_y"] = measured_stress[i]
                 row["stress_error"] = stress_errors[i]
                 row["measured_stress_scale_to_mpa"] = measured_scale
                 rows_out.append(row)
+
+        status, complete, final_measured_film_strain, target_film_strain = series_completion_status(
+            str(variant["model_kind"]),
+            final_strain,
+            measured_x,
+        )
 
         for row in box_rows:
             time, film_strain = film_strain_from_history(str(variant["model_kind"]), row, final_strain)
@@ -782,22 +961,31 @@ def main() -> int:
             plastic_expected.append(expected_plastic)
             plastic_errors.append(ep - expected_plastic)
 
+        measured_label_suffix = " measured" if complete else " measured (incomplete)"
         if measured_x:
-            stress_series.append((variant["label"] + " measured", measured_x, measured_stress))
+            stress_series.append((variant["label"] + measured_label_suffix, measured_x, measured_stress))
+        if domain_stretch_x:
+            domain_stress_series.append((variant["label"] + measured_label_suffix, domain_stretch_x, domain_measured_stress))
         if plastic_x:
-            plastic_series.append((variant["label"] + " measured", plastic_x, measured_plastic))
+            plastic_series.append((variant["label"] + measured_label_suffix, plastic_x, measured_plastic))
 
         summary = {
             "variant": variant_name,
             "label": variant["label"],
+            "status": status,
+            "complete": complete,
+            "stress_source": stress_source,
+            "reaction_measure": reaction_source,
+            "target_film_strain": target_film_strain,
+            "final_measured_film_strain": final_measured_film_strain,
             "num_stress_samples": len(stress_errors),
-            "rms_stress_error": math.sqrt(sum(e * e for e in stress_errors) / len(stress_errors)) if stress_errors else None,
-            "max_abs_stress_error": max((abs(e) for e in stress_errors), default=None),
+            "rms_stress_error": math.sqrt(sum(e * e for e in stress_errors) / len(stress_errors)) if complete and stress_errors else None,
+            "max_abs_stress_error": max((abs(e) for e in stress_errors), default=None) if complete else None,
             "final_measured_sigma_y": measured_stress[-1] if measured_stress else None,
             "final_expected_sigma_y": stress_expected[-1] if stress_expected else None,
             "num_plastic_samples": len(plastic_errors),
-            "rms_plastic_strain_error": math.sqrt(sum(e * e for e in plastic_errors) / len(plastic_errors)) if plastic_errors else None,
-            "max_abs_plastic_strain_error": max((abs(e) for e in plastic_errors), default=None),
+            "rms_plastic_strain_error": math.sqrt(sum(e * e for e in plastic_errors) / len(plastic_errors)) if complete and plastic_errors else None,
+            "max_abs_plastic_strain_error": max((abs(e) for e in plastic_errors), default=None) if complete else None,
             "final_measured_plastic_strain": measured_plastic[-1] if measured_plastic else None,
             "final_expected_plastic_strain": plastic_expected[-1] if plastic_expected else None,
         }
@@ -861,8 +1049,14 @@ def main() -> int:
         "sigma_y [MPa]",
         [series for series in stress_series if "cohesive" in series[0].lower()],
     )
+    plot_metric(output_dir, "surface_polymer_boundary_stress_domain_stretch.png", "Boundary stress vs domain stretch", "domain stretch F11", "boundary sigma_y [MPa]", domain_stress_series)
     plot_metric(output_dir, "surface_polymer_plastic_strain.png", "Equivalent plastic strain", "film strain", "equivalent plastic strain", plastic_series)
     write_rows(output_dir / "surface_polymer_layer_metrics.csv", rows_out)
+    analytical_model = (
+        "attached surface polymer curve driver, confined path"
+        if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}
+        else "GEOS material-card thin-film update"
+    )
     write_json(
         output_dir / "surface_polymer_layer_summary.json",
         {
@@ -870,43 +1064,67 @@ def main() -> int:
             "film_thickness": FILM_THICKNESS,
             "continuum_gage_length": CONTINUUM_GAGE_LENGTH,
             "cohesive_gage_length": COHESIVE_GAGE_LENGTH,
-            "analytical_model": "attached surface polymer curve driver, confined path",
+            "analytical_model": analytical_model,
+            "analytical_source": ANALYTICAL_SOURCE,
             "analytical_temperature_C": ANALYTICAL_TEMPERATURE_C,
             "analytical_crystallinity_pct": ANALYTICAL_CRYSTALLINITY_PCT,
-            "analytical_parameters": ANALYTICAL_DRIVER_PARAMS,
+            "analytical_parameters": ANALYTICAL_DRIVER_PARAMS if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"} else {
+                "bulk_modulus": POLYMER_BULK_MODULUS,
+                "shear_modulus": POLYMER_SHEAR_MODULUS,
+                "yield_strength": YIELD_STRENGTH,
+                "softening_magnitude": SOFTENING_MAGNITUDE,
+                "strain_hardening_slope": HARDENING_SLOPE,
+                "maximum_stretch": MAXIMUM_STRETCH,
+                "pressure_asymmetry": PRESSURE_ASYMMETRY,
+            },
         },
     )
 
+    if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}:
+        analytical_text = (
+            r"The analytical comparison uses the attached surface-polymer curve driver in confined thin-film mode at "
+            + compact_float(ANALYTICAL_TEMPERATURE_C)
+            + r"$^\circ$C and "
+            + compact_float(ANALYTICAL_CRYSTALLINITY_PCT)
+            + r"\% crystallinity."
+        )
+    else:
+        analytical_text = (
+            r"The analytical comparison uses the GEOS material card constants; the continuum expected curve integrates log film strain from the finite-strain update, while the cohesive expected curve uses normal jump divided by thickness as in the CZ law."
+        )
     tex = [
-        r"\paragraph{Quantitative result.} The continuum variants place a finite-thickness continuum polymer layer between elastic loading bars; the cohesive-zone variants place a finite-thickness polymer CZ between elastic blocks.  Both measured curves use boundary reactions.  The analytical comparison uses the attached surface-polymer curve driver in confined thin-film mode at "
-        + compact_float(ANALYTICAL_TEMPERATURE_C)
-        + r"$^\circ$C and "
-        + compact_float(ANALYTICAL_CRYSTALLINITY_PCT)
-        + r"\% crystallinity; the driver integrates true strain and the plots report engineering film strain for comparison with the GEOS deformation history.  Stresses are reported in MPa.",
-        r"{\scriptsize\begin{tabular}{lrrrr}\toprule Variant & samples & RMS stress error & max stress error & final stress \\\midrule",
+        r"\paragraph{Quantitative result.} The continuum variants place a finite-thickness continuum polymer layer between elastic loading bars; the cohesive-zone variants place a finite-thickness polymer CZ between elastic blocks.  Measured curves use boundary reactions when present and fall back to material-volume-corrected box averages otherwise.  "
+        + analytical_text
+        + r"  Cases that do not reach the target film strain are marked incomplete and excluded from error norms.  Stresses are reported in MPa.",
+        r"\begin{center}{\scriptsize\resizebox{\linewidth}{!}{\begin{tabular}{llllrrrrr}\toprule Variant & status & stress source & reaction measure & samples & final strain & target strain & RMS stress error & final stress \\\midrule",
     ]
     for s in summaries:
         tex.append(
             latex_escape(s.get("label", s.get("variant", "")))
             + " & "
-            + compact_float(s.get("num_stress_samples", 0), 0)
+            + latex_escape(s.get("status", ""))
             + " & "
-            + compact_float(s.get("rms_stress_error"))
+            + latex_escape(s.get("stress_source", ""))
             + " & "
-            + compact_float(s.get("max_abs_stress_error"))
+            + latex_escape(s.get("reaction_measure", ""))
             + " & "
-            + compact_float(s.get("final_measured_sigma_y"))
+            + compact_or_na(s.get("num_stress_samples", 0), 0)
+            + " & "
+            + compact_or_na(s.get("final_measured_film_strain"))
+            + " & "
+            + compact_or_na(s.get("target_film_strain"))
+            + " & "
+            + compact_or_na(s.get("rms_stress_error"))
+            + " & "
+            + compact_or_na(s.get("final_measured_sigma_y"))
             + r" \\"
         )
-    tex.append(r"\bottomrule\end{tabular}}")
-    for name in [
-        "surface_polymer_stress_strain.png",
-        "surface_polymer_stress_strain_continuum.png",
-        "surface_polymer_stress_strain_cohesive.png",
-        "surface_polymer_plastic_strain.png",
-    ]:
-        if (output_dir / name).is_file():
-            tex.append(r"\includegraphics[width=0.48\linewidth]{\CaseOutputDir/" + name + "}")
+    tex.append(r"\bottomrule\end{tabular}}}\end{center}")
+    tex.extend(latex_plot_block(output_dir, "surface_polymer_stress_strain.png", "All variants: stress-strain response."))
+    tex.extend(latex_plot_block(output_dir, "surface_polymer_stress_strain_continuum.png", "Continuum variants: stress-strain response."))
+    tex.extend(latex_plot_block(output_dir, "surface_polymer_stress_strain_cohesive.png", "Cohesive-zone variants: stress-strain response."))
+    tex.extend(latex_plot_block(output_dir, "surface_polymer_boundary_stress_domain_stretch.png", "Measured boundary stress versus imposed domain stretch; this plot uses F11 directly and does not convert the x-axis to film strain."))
+    tex.extend(latex_plot_block(output_dir, "surface_polymer_plastic_strain.png", "Equivalent plastic strain histories."))
     tex.extend(visit_tex)
     (output_dir / "surface_polymer_layer_results.tex").write_text("\n".join(tex) + "\n")
     return 0

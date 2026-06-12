@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  11 JUN 2026 13:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  11 JUN 2026 21:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -574,27 +574,7 @@ Overfull \hbox (105.4742pt too wide) in alignment at lines 19--19
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 20--20
-[]|\OT1/cmr/m/n/5 Continuum ten-sion:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/cmr/m/n/5 00:00:03; Con-tin-uum
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/cmr/m/n/5 com-pres-sion: 00:00:03;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/cmr/m/n/5 Cohesive-zone ten-sion:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 20--20
-\OT1/cmr/m/n/5 00:00:03; Cohesive-zone
+[]|\OT1/cmr/m/n/5 dispatch 4.942, 2.243,
  []
 
 
@@ -622,72 +602,75 @@ Overfull \hbox (81.7093pt too wide) in alignment at lines 23--28
 (../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
 mer_layer_results.tex
 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
-mer_stress_strain.png, id=76, 520.344pt x 303.534pt>
+mer_stress_strain.png, id=66, 520.344pt x 303.534pt>
 File: ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
 _polymer_stress_strain.png Graphic file (type png)
 <use ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
 polymer_stress_strain.png>
 Package pdftex.def Info: ../surfaceInformedPolymerLayer/output/surfaceInformedP
-olymerLayer/surface_polymer_stress_strain.png  used on input line 8.
-(pdftex.def)             Requested size: 256.70053pt x 149.74727pt.
+olymerLayer/surface_polymer_stress_strain.png  used on input line 9.
+(pdftex.def)             Requested size: 492.01277pt x 287.02176pt.
+ [6
+
+]
 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
-mer_stress_strain_continuum.png, id=78, 520.344pt x 303.534pt>
+mer_stress_strain_continuum.png, id=76, 520.344pt x 303.534pt>
 File: ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
 _polymer_stress_strain_continuum.png Graphic file (type png)
 <use ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
 polymer_stress_strain_continuum.png>
 Package pdftex.def Info: ../surfaceInformedPolymerLayer/output/surfaceInformedP
-olymerLayer/surface_polymer_stress_strain_continuum.png  used on input line 9.
-(pdftex.def)             Requested size: 256.70053pt x 149.74727pt.
+olymerLayer/surface_polymer_stress_strain_continuum.png  used on input line 13.
+
+(pdftex.def)             Requested size: 492.01277pt x 287.02176pt.
 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
-mer_stress_strain_cohesive.png, id=79, 520.344pt x 303.534pt>
+mer_stress_strain_cohesive.png, id=77, 520.344pt x 303.534pt>
 File: ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
 _polymer_stress_strain_cohesive.png Graphic file (type png)
 <use ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
 polymer_stress_strain_cohesive.png>
 Package pdftex.def Info: ../surfaceInformedPolymerLayer/output/surfaceInformedP
-olymerLayer/surface_polymer_stress_strain_cohesive.png  used on input line 10.
-(pdftex.def)             Requested size: 256.70053pt x 149.74727pt.
+olymerLayer/surface_polymer_stress_strain_cohesive.png  used on input line 17.
+(pdftex.def)             Requested size: 492.01277pt x 287.02176pt.
+ [7 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
+polymer_stress_strain.png> <../surfaceInformedPolymerLayer/output/surfaceInform
+edPolymerLayer/surface_polymer_stress_strain_continuum.png>]
 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
-mer_plastic_strain.png, id=80, 520.344pt x 303.534pt>
+mer_boundary_stress_domain_stretch.png, id=86, 520.344pt x 303.534pt>
+File: ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
+_polymer_boundary_stress_domain_stretch.png Graphic file (type png)
+<use ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
+polymer_boundary_stress_domain_stretch.png>
+Package pdftex.def Info: ../surfaceInformedPolymerLayer/output/surfaceInformedP
+olymerLayer/surface_polymer_boundary_stress_domain_stretch.png  used on input l
+ine 21.
+(pdftex.def)             Requested size: 492.01277pt x 287.02176pt.
+<../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_poly
+mer_plastic_strain.png, id=87, 520.344pt x 303.534pt>
 File: ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
 _polymer_plastic_strain.png Graphic file (type png)
 <use ../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
 polymer_plastic_strain.png>
 Package pdftex.def Info: ../surfaceInformedPolymerLayer/output/surfaceInformedP
-olymerLayer/surface_polymer_plastic_strain.png  used on input line 11.
-(pdftex.def)             Requested size: 256.70053pt x 149.74727pt.
-))
-Overfull \hbox (49.23888pt too wide) in paragraph at lines 1--48
-\OT1/cmr/m/n/10 GEOS de-for-ma-tion his-tory. Stresses are re-ported in MPa. []
-
- []
-
-
-Overfull \hbox (239.74846pt too wide) in paragraph at lines 1--48
-[] [] []
- []
-
-[6
-
-] [7 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface
-_polymer_stress_strain.png> <../surfaceInformedPolymerLayer/output/surfaceInfor
-medPolymerLayer/surface_polymer_stress_strain_continuum.png> <../surfaceInforme
-dPolymerLayer/output/surfaceInformedPolymerLayer/surface_polymer_stress_strain_
-cohesive.png> <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLaye
-r/surface_polymer_plastic_strain.png>] (./verification_suite_report.aux)
+olymerLayer/surface_polymer_plastic_strain.png  used on input line 25.
+(pdftex.def)             Requested size: 492.01277pt x 287.02176pt.
+ [8 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_
+polymer_stress_strain_cohesive.png> <../surfaceInformedPolymerLayer/output/surf
+aceInformedPolymerLayer/surface_polymer_boundary_stress_domain_stretch.png>])) 
+[9 <../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer/surface_p
+olymer_plastic_strain.png>] (./verification_suite_report.aux)
 Package rerunfilecheck Info: File `verification_suite_report.out' has not chang
 ed.
-(rerunfilecheck)             Checksum: 4B09909B8E3E366DEC8B3AA0363D9E2E;1319.
+(rerunfilecheck)             Checksum: 89B8510092944C54FABC5EA50B3B54C8;852.
  ) 
 Here is how much of TeX's memory you used:
- 11812 strings out of 478268
- 197275 string characters out of 5754030
- 516237 words of memory out of 5000000
- 29825 multiletter control sequences out of 15000+600000
- 475444 words of font info for 51 fonts, out of 8000000 for 9000
+ 11801 strings out of 478268
+ 197801 string characters out of 5754030
+ 487233 words of memory out of 5000000
+ 29828 multiletter control sequences out of 15000+600000
+ 475276 words of font info for 50 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,6n,63p,1497b,1070s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 60i,8n,63p,1497b,1067s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022032
 1-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cm
 bx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
@@ -708,18 +691,15 @@ linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij
 ions/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbco
 ex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/tce/backend/inst
 allations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstan
-spbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/tce/backen
-d/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyz
-zzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/tce
-/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
-r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></u
-sr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dv
-bmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.p
-fb>
-Output written on verification_suite_report.pdf (7 pages, 459023 bytes).
+spbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/tce/backend
+/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzz
+zstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/tce/
+backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr
+7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
+Output written on verification_suite_report.pdf (9 pages, 642115 bytes).
 PDF statistics:
- 182 PDF objects out of 1000 (max. 8388607)
- 137 compressed objects within 2 object streams
- 38 named destinations out of 1000 (max. 500000)
- 77 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 158 PDF objects out of 1000 (max. 8388607)
+ 111 compressed objects within 2 object streams
+ 24 named destinations out of 1000 (max. 500000)
+ 66 words of extra memory for PDF output out of 10000 (max. 10000000)
 

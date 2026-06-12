@@ -14248,6 +14248,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     // the particle surface
     // normal direction
     array2d< real64 > tempGridMassLocal( numCohesiveNodes, m_numVelocityFields );
+    array1d< real64 > tempGridTemperatureMassLocal( numCohesiveNodes );
     array1d< real64 > tempGridVolumeLocal( numCohesiveNodes );
     array3d< real64 > tempGridParticleSurfaceNormalLocal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridSurfacePositionLocal( numCohesiveNodes, m_numVelocityFields, 3 );
@@ -14256,6 +14257,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     // Initialize temporary grid fields to zero
     forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( int const g )
     {
+      tempGridTemperatureMassLocal[g] = 0.0;
       tempGridVolumeLocal[g] = 0.0;
       for( localIndex fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
       {
@@ -14277,6 +14279,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       arrayView1d< int const > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+      arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
       arrayView2d< int const > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex const > const particleReferenceGlobalNodeIndex = subRegion.getField< fields::mpm::particleReferenceGlobalNodeIndex >();
@@ -14292,6 +14295,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       forAll< serialPolicy >( activeParticleIndices.size(),
                               [=,
                               &tempGridMassLocal,
+                              &tempGridTemperatureMassLocal,
                               &tempGridVolumeLocal,
                               &tempGridParticleSurfaceNormalLocal,
                               &tempGridSurfacePositionLocal,
@@ -14317,7 +14321,9 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
               if( particleCohesiveZoneFlag[p] == 1 )
               {
-                tempGridMassLocal[nodeIndex][fieldIndex] += particleMass[p] * shapeFunctionValue;
+                real64 const massContribution = particleMass[p] * shapeFunctionValue;
+                tempGridMassLocal[nodeIndex][fieldIndex] += massContribution;
+                tempGridTemperatureMassLocal[nodeIndex] += massContribution * particleTemperature[p];
 
                 real64 surfacePositionRelativeToNode[3] = {};
                 // Tensor equation: surfacePositionRelativeToNode = particlePosition[p] -
@@ -14358,6 +14364,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
     // Sync temporary grid fields
     array2d< real64 > tempGridMassGlobal( numCohesiveNodes, m_numVelocityFields );
+    array1d< real64 > tempGridTemperatureMassGlobal( numCohesiveNodes );
     array1d< real64 > tempGridVolumeGlobal( numCohesiveNodes );
     array3d< real64 > tempGridParticleSurfaceNormalGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridSurfacePositionGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
@@ -14365,6 +14372,11 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
     MpiWrapper::allReduce( tempGridMassLocal,
                            tempGridMassGlobal,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
+
+    MpiWrapper::allReduce( tempGridTemperatureMassLocal,
+                           tempGridTemperatureMassGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
@@ -14389,10 +14401,18 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                            MPI_COMM_GEOS );
 
     forAll< serialPolicy >( numCohesiveNodes, [=,
+                                              &tempGridTemperatureMassGlobal,
                                               &tempGridParticleSurfaceNormalGlobal,
                                               &tempGridSurfacePositionGlobal,
                                               &tempGridMaterialDirectionGlobal] GEOS_HOST ( localIndex const g )
     {
+      real64 nodalMass = 0.0;
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        nodalMass += tempGridMassGlobal[g][fieldIndex];
+      }
+      czTemperature[g] = nodalMass > smallMass ? tempGridTemperatureMassGlobal[g] / nodalMass : m_domainTemperature;
+
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         if( tempGridMassGlobal[g][fieldIndex] > smallMass )
@@ -25227,10 +25247,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   MPI_Comm_rank( MPI_COMM_GEOS, &rank );
   if( rank == 0 )
   {
-    // Calculate the box volume
-    real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+    real64 const selectedBoxVolume =
+      LvArray::math::max( ( boxAverageMax[0] - boxAverageMin[0] ) *
+                          ( boxAverageMax[1] - boxAverageMin[1] ) *
+                          ( boxAverageMax[2] - boxAverageMin[2] ),
+                          1.0e-300 );
     real64 const massNormalization = boxSums[6] > 0.0 ? boxSums[6] : 1.0;
     real64 const materialVolumeNormalization = boxSums[17] > 0.0 ? boxSums[17] : 1.0;
+    real64 const stressNormalization = boxSums[17] > 0.0 ? boxSums[17] : selectedBoxVolume;
 
     // Write to file
     std::ofstream file;
@@ -25245,19 +25269,19 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     // | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | supplemental pressure | F00 | F11 | F22
     file << time_n + dt           // Time
          << ","
-         << boxSums[0] / boxVolume // sig_xx
+         << boxSums[0] / stressNormalization // sig_xx
          << ","
-         << boxSums[1] / boxVolume // sig_yy
+         << boxSums[1] / stressNormalization // sig_yy
          << ","
-         << boxSums[2] / boxVolume // sig_zz
+         << boxSums[2] / stressNormalization // sig_zz
          << ","
-         << boxSums[3] / boxVolume // sig_xy
+         << boxSums[3] / stressNormalization // sig_xy
          << ","
-         << boxSums[4] / boxVolume // sig_yz
+         << boxSums[4] / stressNormalization // sig_yz
          << ","
-         << boxSums[5] / boxVolume // sig_xz
+         << boxSums[5] / stressNormalization // sig_xz
          << ","
-         << boxSums[6] / boxVolume // density
+         << boxSums[6] / selectedBoxVolume // density
          << ","
          << boxSums[8] / boxSums[7] // damage (normalized by total particle reference volume, thus 1 if all material is damaged)
          << ", "
@@ -25281,7 +25305,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ", "
          << boxSums[18] / massNormalization
          << ", "
-         << boxSums[19] / boxVolume
+         << boxSums[19] / stressNormalization
          << ", "
          << m_domainF[0]
          << ", "

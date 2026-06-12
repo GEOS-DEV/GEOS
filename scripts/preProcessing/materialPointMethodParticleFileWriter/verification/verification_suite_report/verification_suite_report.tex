@@ -17,26 +17,15 @@ verification/runSuite report --python /usr/tce/bin/python3
 \end{lstlisting}
 \section{Timing and dispatch summary}
 \begin{landscape}{\tiny\begin{longtable}{p{0.25\linewidth}p{0.10\linewidth}p{0.19\linewidth}p{0.15\linewidth}p{0.10\linewidth}p{0.11\linewidth}p{0.13\linewidth}}\toprule Case & Status & Family & GEOS job(s) & GEOS state & GEOS wall & Issue \\ \midrule\endhead
-surfaceInformedPolymerLayer & failed & surfaceInformedPolymerLayer & 6281619, 6281620, 6281621, 6281622 & COMPLETED & Continuum tension: 00:00:03; Continuum compression: 00:00:03; Cohesive-zone tension: 00:00:03; Cohesive-zone compression: 00:09:52 & timeout \\
+surfaceInformedPolymerLayer & passed & surfaceInformedPolymerLayer & 6290987, 6290987, 6290987, 6290987 &  & dispatch 4.942, 2.243, 1.882, 1.866 s &  \\
 \bottomrule\end{longtable}}\end{landscape}
 \paragraph{Subcase timing detail.} Dispatch time is local wall time spent staging inputs, running PFW, and submitting the GEOS job. GEOS wall and CPU columns are populated from \texttt{sacct} when available.
 \begin{landscape}{\tiny\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.10\linewidth}p{0.07\linewidth}p{0.09\linewidth}}\toprule Case & Subcase & GEOS job & State & GEOS wall & Total CPU & NCPUS & Dispatch (s) \\ \midrule\endhead
-surfaceInformedPolymerLayer & Continuum tension & 6281619 & COMPLETED & 00:00:03 & 00:00:00 & 1 & 2.59 \\
-surfaceInformedPolymerLayer & Continuum compression & 6281620 & COMPLETED & 00:00:03 & 00:00:00 & 1 & 2.532 \\
-surfaceInformedPolymerLayer & Cohesive-zone tension & 6281621 & COMPLETED & 00:00:03 & 00:00:00 & 1 & 2.326 \\
-surfaceInformedPolymerLayer & Cohesive-zone compression & 6281622 & COMPLETED & 00:09:52 & 00:00:00 & 1 & 2.175 \\
+surfaceInformedPolymerLayer & Continuum tension & 6290987 &  &  &  &  & 4.942 \\
+surfaceInformedPolymerLayer & Continuum compression & 6290987 &  &  &  &  & 2.243 \\
+surfaceInformedPolymerLayer & Cohesive-zone tension & 6290987 &  &  &  &  & 1.882 \\
+surfaceInformedPolymerLayer & Cohesive-zone compression & 6290987 &  &  &  &  & 1.866 \\
 \bottomrule\end{longtable}}\end{landscape}
-\section{Failures, expected failures, and diagnostics}
-\subsection{surfaceInformedPolymerLayer}
-\textbf{Status:} failed\quad \textbf{Issue:} timeout
-\paragraph{Diagnostics.}\begin{lstlisting}[basicstyle=\tiny\ttfamily,breaklines=true]
---- surfaceInformedPolymerLayer_cohesive_tension_visit_render.log ---
-Traceback (most recent call last):
---- surfaceInformedPolymerLayer_continuum_compression_visit_render.log ---
-Traceback (most recent call last):
---- surfaceInformedPolymerLayer_continuum_tension_visit_render.log ---
-Traceback (most recent call last):
-\end{lstlisting}
 \section{Case studies}
 \subsection{surfaceInformedPolymerLayer}
 \begingroup
@@ -45,13 +34,5 @@ Traceback (most recent call last):
 \def\CaseOutputDir{../surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer}
 \input{../surfaceInformedPolymerLayer/test.tex}
 \endgroup
-\paragraph{Diagnostics.}\begin{lstlisting}[basicstyle=\tiny\ttfamily,breaklines=true]
---- surfaceInformedPolymerLayer_cohesive_tension_visit_render.log ---
-Traceback (most recent call last):
---- surfaceInformedPolymerLayer_continuum_compression_visit_render.log ---
-Traceback (most recent call last):
---- surfaceInformedPolymerLayer_continuum_tension_visit_render.log ---
-Traceback (most recent call last):
-\end{lstlisting}
 \clearpage
 \end{document}

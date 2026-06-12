@@ -87,6 +87,7 @@ pfw["damageFieldPartitioning"] = 1
 
 pfw["reactionHistory"] = 1
 pfw["reactionWriteInterval"] = stop_time / 250.0
+pfw["useInternalForceAsFaceReaction"] = 1
 pfw["boxAverageHistory"] = 1
 pfw["boxAverageWriteInterval"] = stop_time / 250.0
 
