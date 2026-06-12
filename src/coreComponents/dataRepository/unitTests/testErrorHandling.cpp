@@ -48,6 +48,14 @@ DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/fi
 DataFileContext const additionalContext = DataFileContext( "Additional Test Class", "/path/to/file.xml", 32 );
 DataFileContext const importantAdditionalContext = DataFileContext( "Important Additional Test Class", "/path/to/file.xml", 64 );
 
+// original error handler to backup to
+ErrorHandler defaultErrorhandler;
+
+/**
+ * @name Helper functions
+ */
+///@{
+
 /**
  * @brief begin a test with a local logger
  * @param errorLogger local error logger instance
@@ -105,11 +113,26 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
     fs::remove( filename );
 }
 
+template< typename LAMBDA >
+void beginLocalHandlerTest( LAMBDA && lambda )
+{
+  defaultErrorhandler = ErrorHandler::instance();
+  ErrorHandler::instance() = ErrorHandler();
+  ErrorHandler::instance().setProgramAborter( lambda );
+}
+
+void endLocalHandlerTest()
+{
+  ErrorHandler::instance() = defaultErrorhandler;
+}
+
+///@}
+
 TEST( ErrorHandling, testYamlFileWarningOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileWarningOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
@@ -170,7 +193,7 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
   ErrorLogger testErrorLogger;
-  string const file = "exceptionTestOutput.yaml";
+  string const file = "testYamlFileExceptionOutput.yaml";
   beginLocalLoggerTest( testErrorLogger, file );
   size_t line1;
 
@@ -241,7 +264,7 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "errorTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileErrorOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
                                      GEOS_FMT( "{}: option should be lower than {}.",
@@ -287,7 +310,6 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
   } );
 }
 
-
 TEST( ErrorHandling, testLogFileExceptionOutput )
 {
   ErrorLogger testErrorLogger;
@@ -327,7 +349,6 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
                                     "  Error message :\n{}"
                                     "  expected sequence :\n{}",
                                     oss.str(),
@@ -335,45 +356,67 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   }
 }
 
-TEST( ErrorHandling, testStdException )
+// testing the capture & processing of lvarray exceptions, also testing what happens in case of an
+// std::exception (as this is what lvarray throws).
+TEST( ErrorHandling, testLvArrayAndStdException )
 {
   ErrorLogger testErrorLogger;
+  size_t line1;
 
+  beginLocalLoggerTest( testErrorLogger, "testLvArrayAndStdException.yaml" );
+
+  // Standard exception thrown by LvArray
   try
   {
-
-    throw std::invalid_argument( "received negative value" );
+    // no ',' in between numbers will throw an exception
+    array1d< localIndex > dummy;
+    line1 = __LINE__; LvArray::input::stringToArray( dummy, "{123 456}" );
   }
-  catch( std::exception & e )
+  catch( geos::Exception & e )
   {
-
-    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(),
-                                                 ::geos::logger::internal::g_rank )
-      .addCallStackInfo( LvArray::system::stackTrace( true ) );
-
-    std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
-    string const streamExpected = GEOS_FMT(
-      "***** Exception\n"
-      "***** Rank 0\n"
-      "***** Message :\n"
-      "{}\n",
-      testErrorLogger.getCurrentExceptionMsg().m_msg );
-    GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
-                                    "  Error message :\n{}"
-                                    "  expected sequence :\n{}",
-                                    oss.str(),
-                                    streamExpected ) );
+    EXPECT_FALSE( true ) << "Exception not correctly handled.";
   }
+  catch( std::exception const & e )
+  {
+    // mimic "main()" exception logging behaviour
+    testErrorLogger.flushErrorMsg( testErrorLogger.initCurrentExceptionMessage(
+                                     MsgType::Exception, e.what(),
+                                                 ::geos::logger::internal::g_rank )
+                                     .setCause( "A dependency has thrown an exception" )
+                                     .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                     .getDiagnosticMsg() );
+
+    // we continue without aborting to check the yaml results
+  }
+  catch( ... )
+  {
+    EXPECT_FALSE( true ) << "Exception not correctly handled.";
+  }
+
+  // we have to inherint the LvArray formatting here
+  endLocalLoggerTest( testErrorLogger, {
+    R"(errors:)",
+
+    // LvArray Exception
+    R"(- type: Exception
+    rank: 0
+    message: >-)",
+    GEOS_FMT( "{}:{}", __FILE__, line1 ),
+    "Array value sequence specified without ',' delimiter: {123 456}",
+    R"(cause: >-
+      A dependency has thrown an exception)",
+    "sourceCallStack:",
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
+  } );
 }
 
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "assertTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileAssertOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
                                 GEOS_FMT( "{}: value should be between {} and {}, but is {}.",

@@ -88,6 +88,7 @@ int main( int argc, char *argv[] )
     ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
                                            MsgType::Exception, e.what(),
                                            ::geos::logger::internal::g_rank )
+                                           .setCause( "A dependency has thrown an exception" )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .getDiagnosticMsg());
     basicCleanup( true );

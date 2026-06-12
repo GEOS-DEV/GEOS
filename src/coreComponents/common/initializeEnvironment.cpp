@@ -68,7 +68,7 @@ void setupLogger()
   logger::InitializeLogger();
 #endif
 
-  { // setup error handling (using LvArray helper system functions)
+  { // setup error handling
 
     ///// set external error handling behaviour /////
     ExternalErrorHandler::instance().enableStderrPipeDeviation( true );

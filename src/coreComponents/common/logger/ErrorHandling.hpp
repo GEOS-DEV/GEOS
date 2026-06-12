@@ -430,6 +430,8 @@ public:
 
   static ErrorHandler & instance();
 
+  ErrorHandler();
+
   void setProgramAborter( std::function< void() > const & abortingFunctor )
   { m_abortingFunctor = abortingFunctor; }
 
@@ -442,11 +444,6 @@ public:
 private:
 
   std::function< void() > m_abortingFunctor;
-
-  /**
-   * @brief Static class, no public constructor
-   */
-  ErrorHandler();
 
 };
 
