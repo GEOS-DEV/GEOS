@@ -61,6 +61,36 @@ Because all inputs must be provided in molar units, if a user's specific heat ca
 .. math::
     a_{i,k} = \hat{a}_{i,k} M_i
 
+Implementing the Michaelides Model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The the Michaelides (1981) enthalpy model which is used for the CO2-brine model (:ref:`CO2-EOS`) can be implemented using the polynomial framework by setting specific values for the water component. 
+
+The rational function :math:`Y(m)` below serves as a universal algebraic template to compute the required simulator inputs as a function of the salt molality :math:`m` [mol/kg]. Because the underlying thermodynamic derivations rely on fixed mixing rules and molecular weights, the calculation for every target parameter condenses into this single functional form:
+
+.. math::
+    Y(m) = \frac{p_0 + p_1 m + p_2 m^2 + p_3 m^3}{m + 55.5247}
+
+To determine the input value for a specific simulator parameter, locate that parameter in the table below and substitute its corresponding row of coefficients (:math:`p_0` through :math:`p_3`) along with your desired molality :math:`m` into the :math:`Y(m)` equation. The evaluated result provides the direct numerical input required for the value.
+
+The values in the table are hard-coded to a reference temperature of 293.15K and molar weights of 18.01 g/mol for water and 58.44 g/mol for salt.
+
+=================== ============= ============= ============= =============
+Parameter           :math:`p_0`   :math:`p_1`   :math:`p_2`   :math:`p_3`
+=================== ============= ============= ============= =============
+:math:`H_{ref,w}`   6.49471e+04   -2.97460e+04  -1.19193e+04  8.46747e+02
+:math:`a_{w,0}`     4.64595e+03   4.69199e+02   2.29413e+02   -1.56721e+01
+:math:`a_{w,1}`     -7.53304e+00  -5.72452e+00  -2.69521e+00  1.84321e-01
+:math:`a_{w,2}`     3.73590e-02   1.20531e-02   9.02790e-03   -6.15000e-04
+:math:`a_{w,3}`     0.00000e+00   0.00000e+00   0.00000e+00   0.00000e+00
+:math:`a_{w,4}`     0.00000e+00   0.00000e+00   0.00000e+00   0.00000e+00
+=================== ============= ============= ============= =============
+
+.. note::
+    Because the original Michaelides enthalpy model relies on a 3rd-order polynomial fit with respect to temperature (Michaelides, 1981), the higher-order simulator heat capacity coefficients (:math:`a_{w,3}` and :math:`a_{w,4}`) evaluate exactly to zero.
+
+This formulation is bounded by specific thermodynamic assumptions: it achieves about ±3% accuracy relative to standard geothermal fluid tables, remains valid for saturation temperatures up to 320 °C (with possible divergence below 0 °C), and applies to salinity levels up to roughly 5-6 mol/kg using equivalent NaCl content. It further assumes fixed molar masses of 18.01 g/mol for water and 58.44 g/mol for NaCl, meaning any deviation without polynomial refitting will introduce scaling errors. Finally, the model is limited to liquid-phase (brine) enthalpy, and phase transitions such as flashing to vapor must be handled separately using appropriate gas mixing rules.
+
 Parameters
 ~~~~~~~~~~
 
