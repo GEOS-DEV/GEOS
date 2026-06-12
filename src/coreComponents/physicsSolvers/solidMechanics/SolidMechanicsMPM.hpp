@@ -141,6 +141,10 @@ public:
 
     // Contact
     static constexpr char const * gridContactForceString() { return "gridContactForce"; }
+    static constexpr char const * gridWeakInterfaceTraceActiveString() { return "gridWeakInterfaceTraceActive"; }
+    static constexpr char const * gridWeakInterfaceTraceForceString() { return "gridWeakInterfaceTraceForce"; }
+    static constexpr char const * gridWeakInterfaceTracePointString() { return "gridWeakInterfaceTracePoint"; }
+    static constexpr char const * gridWeakInterfaceTraceVelocityJumpString() { return "gridWeakInterfaceTraceVelocityJump"; }
 
     // Cohesive zone
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
@@ -473,6 +477,19 @@ public:
   void computeContactForces( real64 const dt,
                              ParticleManager & particleManager,
                              NodeManager & nodeManager );
+
+  void enforceWeakInterfaceTraceProjection( real64 const dt,
+                                            DomainPartition & domain,
+                                            NodeManager & nodeManager,
+                                            MeshLevel & mesh );
+
+  void zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager );
+
+  void computeWeakInterfaceTraceProjectionForces( real64 const dt,
+                                                  NodeManager & nodeManager );
+
+  void applyWeakInterfaceTraceProjectionForces( real64 const dt,
+                                                NodeManager & nodeManager );
 
   /**
    * @brief Computes the cumulative material-contact impulse target for FMPM Net contact.
@@ -1230,6 +1247,7 @@ protected:
   int m_enableBoreholePressure;
   int m_enableConfiningPressure;
   int m_enableContact;
+  int m_enableWeakInterfaceTraceProjection;
   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   int m_enableSurfaceTension;
   int m_exactJIntegration;
@@ -1391,6 +1409,11 @@ protected:
   int m_useNodePosForArea;
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
+  real64 m_weakInterfaceTraceGapStabilization;
+  real64 m_weakInterfaceTraceMinWeight;
+  array2d< int > m_weakInterfaceTracePairs;
+  real64 m_weakInterfaceTraceProjectionScale;
+  int m_weakInterfaceTraceSuppressNodalContact;
   int m_writeParticleData;
   array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
   array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
