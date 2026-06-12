@@ -2,6 +2,7 @@
 
 <Problem>
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
+<!-- SPHINX_POROMECHANICSSOLVER -->
     <SinglePhasePoromechanicsConformingFracturesALM
       name="poroFractureSolver"
       targetRegions="{ Region, Fault }"
@@ -24,7 +25,9 @@
         krylovTol="1.0e-8"
         logLevel="1" />
     </SinglePhasePoromechanicsConformingFracturesALM>
+<!-- SPHINX_POROMECHANICSSOLVER_END -->
 
+<!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanicsAugmentedLagrangianContact
       name="fractureMechSolver"
       logLevel="1"
@@ -52,7 +55,9 @@
         krylovTol="1.0e-8"
         logLevel="1" />
     </SolidMechanicsAugmentedLagrangianContact>
+<!-- SPHINX_MECHANICALSOLVER_END -->
 
+<!-- SPHINX_SINGLEPHASEFVM -->
     <SinglePhaseFVM
       name="singlePhaseFlowSolver"
       logLevel="1"
@@ -69,6 +74,7 @@
         krylovTol="1.0e-8"
         logLevel="1" />
     </SinglePhaseFVM>
+<!-- SPHINX_SINGLEPHASEFVM_END -->
   </Solvers>
 
   <ElementRegions>
@@ -126,6 +132,7 @@
       xMax="{  4500.01,  500.01,   150.01 }" />
   </Geometry>
 
+<!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -138,8 +145,10 @@
         order="1" />
     </FiniteElements>
   </NumericalMethods>
+<!-- SPHINX_NUMERICAL_END -->
 
   <FieldSpecifications>
+<!-- SPHINX_BC -->
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
@@ -214,13 +223,12 @@
       component="2"
       scale="-28.5e6" />
 
-    <FieldSpecification
-      name="zconstraintTop"
-      component="2"
-      setNames="{ zposFace }"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      scale="0.0" />
+    <Traction
+      name="tractionTop"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-70.0e6"      
+      setNames="{ zposFace }"/>
 
     <FieldSpecification
       name="reservoirPressure"
@@ -230,6 +238,7 @@
       fieldName="pressure"
       scale="10.0e6"
       functionName="timeFunction" />
+<!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
   <Functions>

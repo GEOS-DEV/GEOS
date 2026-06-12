@@ -14,3 +14,5 @@ Faults & fractures
    intersectFrac/Example
 
    faultVerification/Example
+
+   slippedVerticalFault/Example
