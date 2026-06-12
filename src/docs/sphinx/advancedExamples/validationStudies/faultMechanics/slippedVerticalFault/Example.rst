@@ -277,6 +277,7 @@ Inspecting results
 The figure below presents a comparison between GEOS simulations (dashed lines) and analytical solutions (solid curves) for shear slip along a frictionless fault plane. The results demonstrate that GEOS reliably captures the mechanical deformation of the faulted reservoir and achieves excellent agreement with the analytical solutions for both workflows. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/slippedVerticalFault/unstableFaultFigure.py
+  :width: 60%
 
 Furthermore, a mesh convergence study is also performed. For isotropic meshes (with near-unity aspect ratio in the x–z plane), the L2 error norm approaches the theoretical convergence rate, confirming the robustness and accuracy of the implemented ALM solver.
 

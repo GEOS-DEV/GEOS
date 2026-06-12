@@ -277,6 +277,7 @@ Inspecting results
 The figure below compares GEOS simulations (dashed lines) with analytical solutions (solid curves) for shear stress along a stable fault plane. The results show that GEOS accurately reproduces the mechanical response of the faulted reservoir and exhibits excellent agreement with the analytical solutions for both workflows. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/stableVerticalFault/stableFaultFigure.py
+  :width: 60%
 
 A convergence study is also performed. For isotropic meshes (aspect ratio ≈ 1 in the x–z plane), the L2 error norm closely follows the theoretical rate, validating the accuracy of the ALM solver.
 
