@@ -3562,9 +3562,9 @@ void writeStructuredIndex( vtkDataSet & mesh,
 }
 
 static void writePassthroughField( vtkDataSet & mesh,
-                                    Span< vtkIdType const > const cellIds,
-                                    string const & fieldName,
-                                    CellBlock & cellBlock )
+                                   Span< vtkIdType const > const cellIds,
+                                   string const & fieldName,
+                                   CellBlock & cellBlock )
 {
   vtkDataArray * srcArray = mesh.GetCellData()->GetArray( fieldName.c_str() );
   if( srcArray == nullptr )

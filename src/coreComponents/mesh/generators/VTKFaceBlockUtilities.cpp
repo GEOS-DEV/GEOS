@@ -645,7 +645,7 @@ static void writeFacePassthroughField( vtkDataSet & faceMesh,
                     : -1;
   int localNumComp = ( srcArray != nullptr ) ? srcArray->GetNumberOfComponents() : -1;
 
-  int const globalIsReal  = MpiWrapper::allReduce( localIsReal,  MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const globalIsReal  = MpiWrapper::allReduce( localIsReal, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
   int const globalNumComp = MpiWrapper::allReduce( localNumComp, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
 
   if( globalNumComp == -1 )
