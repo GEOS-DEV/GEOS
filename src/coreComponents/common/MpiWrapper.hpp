@@ -823,12 +823,12 @@ private:
   /**
    * @brief Detects MPI desynchronization from MPI collective operations.
    * @param[in] comm The MPI_Comm over which the gather operates.
-   * @param[in] id The current collective operation counter of this rank.
+   * @param[in] operationId The current collective operation counter of this rank.
    */
-  inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int id )
+  inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId )
   {
-    int minId = id; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
-    int maxId = id; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MAX, comm );
+    int minId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
+    int maxId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MAX, comm );
     if( minId != maxId ) { MPI_Abort( comm, 1 ); }
   }
 #endif
@@ -1008,7 +1008,7 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
                            recvbuf, recvcount, internal::getMpiType< T_RECV >(),
                            comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1033,7 +1033,7 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
                             recvbuf, recvcounts, displacements, internal::getMpiType< T_RECV >(),
                             comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1057,7 +1057,7 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm 
 
   MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
 
 #else
@@ -1083,7 +1083,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                            internal::getMpiType< T >(),
                            comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 
@@ -1119,7 +1119,7 @@ int MpiWrapper::allGatherv( arrayView1d< T const > const & sendValues,
                             internal::getMpiType< T >(),
                             comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 
@@ -1144,7 +1144,7 @@ int MpiWrapper::allReduce( T const * const sendbuf,
   MPI_Datatype const mpiType = internal::getMpiType< T >();
   int ret = MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1168,7 +1168,7 @@ int MpiWrapper::reduce( T const * const sendbuf,
   MPI_Datatype const mpiType = internal::getMpiType< T >();
   int ret = MPI_Reduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1190,7 +1190,7 @@ int MpiWrapper::scan( T const * const sendbuf,
 #ifdef GEOS_USE_MPI
   int ret = MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1209,7 +1209,7 @@ int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
 #ifdef GEOS_USE_MPI
   int ret = MPI_Exscan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1227,7 +1227,7 @@ int MpiWrapper::bcast( T * const MPI_PARAM( buffer ),
 #ifdef GEOS_USE_MPI
   int ret = MPI_Bcast( buffer, count, internal::getMpiType< T >(), root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1242,7 +1242,7 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 #ifdef GEOS_USE_MPI
   MPI_Bcast( &value, 1, internal::getMpiType< T >(), srcRank, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
 #endif
 }
@@ -1259,7 +1259,7 @@ void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
   value.resize( size );
   MPI_Bcast( const_cast< char * >( value.data() ), size, internal::getMpiType< char >(), srcRank, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
 #endif
 }
@@ -1277,7 +1277,7 @@ int MpiWrapper::gather( TS const * const sendbuf,
                         recvbuf, recvcount, internal::getMpiType< TR >(),
                         root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1305,7 +1305,7 @@ int MpiWrapper::gather( T const & value,
                         destValuesBuffer.data(), sizeof( T ), internal::getMpiType< uint8_t >(),
                         root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1328,7 +1328,7 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                          recvbuf, recvcounts, displs, internal::getMpiType< TR >(),
                          root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1356,7 +1356,7 @@ int MpiWrapper::scatter( TS const * const sendbuf,
                          recvbuf, recvcount, internal::getMpiType< TR >(),
                          root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1384,7 +1384,7 @@ int MpiWrapper::scatterv( TS const * const sendbuf,
                           recvbuf, recvcount, internal::getMpiType< TR >(),
                           root, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return ret;
 #else
@@ -1654,7 +1654,7 @@ MpiWrapper::allReduce( PairType< FIRST, SECOND > const & localPair, MPI_Comm com
   PairType< FIRST, SECOND > pair{ localPair.first, localPair.second };
   MPI_Allreduce( MPI_IN_PLACE, &pair, 1, type, mpiOp, comm );
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+  detectMpiDesync( comm, ++g_collectiveOperationCounter );
 #endif
   return pair;
 #else
