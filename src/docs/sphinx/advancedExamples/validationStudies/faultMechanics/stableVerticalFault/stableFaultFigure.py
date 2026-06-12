@@ -6,8 +6,8 @@ import os
 import sys
 import argparse
 
-# Import analytical functions from the top-level generate_analytical.py
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+# Import analytical functions from the local example directory.
+sys.path.insert(0, os.path.dirname(__file__))
 from generate_analytical import analytical_slip, analytical_traction, default_params
 
 

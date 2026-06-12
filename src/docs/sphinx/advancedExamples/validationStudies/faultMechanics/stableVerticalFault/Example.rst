@@ -8,7 +8,7 @@ Shear Stress Along a Stable Vertical Fault
 
 **Context**
 
-In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a friction and stable fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions and is coupled with a Coulomb friction law. Implemented in GEOS, the model computes stress perturbations (normal and shear components) along the stable fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
+In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a friction and stable fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions and is coupled with a Coulomb friction law. Implemented in GEOS, the model computes stress perturbations (normal and shear components) along the stable fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
 
 
 **Input file**
@@ -48,7 +48,7 @@ We simulate induced stresses and shear slip along a vertical fault in a depleted
 In conformity to the analytical set-up, the reservoir is divided into two parts by a vertical fault. The fault crosses and offsets the entire reservoir layer and well contained with the domain. The domain is infinite, homogeneous, isotropic, and elastic. The reservoir is depressurized uniformely upon depletion, and we neglect the transient effect of fluid flow. A pressure drop is applied to the reservoir layer located in the center of the domain. The overburden and underburden are impermeable, and no pressure changes occur in these layers. Due to poromechanical effects, pore pressure changes in the reservoir cause a mechanical deformation of the entire domain. This deformation leads to a stress (normal and shear) perturbation on the fault plane, potentially leading to fault reactivation. For verification, the numerical model considers plane strain deformation and the Coulomb failure criterion.
 
 
-.. _problemSketchUnstableVerticalFault:
+.. _problemSketchStableVerticalFault:
 .. figure:: geometry.PNG
    :align: center
    :width: 500
@@ -75,7 +75,7 @@ The following figure shows the mesh used in this problem.
 The domain modeled here measures 4,500 m x 4,500 m x 500 m and is discretized into 17,220 hexahedral elements. 
 The vertical fault plane is divided into 156 surface elements. The mesh is refined locally to match the geometry of the two reservoir compartments displaced by the vertical fault. The reservoir has a thickness of 225 m, and the fault throw is 75 m.
 
-.. _problemUnstableVerticalFault:
+.. _problemStableVerticalFault:
 .. figure:: mesh.PNG
    :align: center
    :width: 500
