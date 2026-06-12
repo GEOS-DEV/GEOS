@@ -1004,9 +1004,13 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
                            MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Allgather( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
-                        recvbuf, recvcount, internal::getMpiType< T_RECV >(),
-                        comm );
+  int ret = MPI_Allgather( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
+                           recvbuf, recvcount, internal::getMpiType< T_RECV >(),
+                           comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
@@ -1025,9 +1029,13 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
                             MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Allgatherv( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
-                         recvbuf, recvcounts, displacements, internal::getMpiType< T_RECV >(),
-                         comm );
+  int ret = MPI_Allgatherv( sendbuf, sendcount, internal::getMpiType< T_SEND >(),
+                            recvbuf, recvcounts, displacements, internal::getMpiType< T_RECV >(),
+                            comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgatherv() for serial run requires send and receive buffers are of the same type" );
@@ -1048,6 +1056,9 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm 
   MPI_Datatype const MPI_TYPE = internal::getMpiType< T >();
 
   MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
 
 #else
   allValues.resize( 1 );
@@ -1064,13 +1075,17 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 #ifdef GEOS_USE_MPI
   int const mpiSize = commSize( comm );
   allValues.resize( mpiSize * sendSize );
-  return MPI_Allgather( sendValues.data(),
-                        sendSize,
-                        internal::getMpiType< T >(),
-                        allValues.data(),
-                        sendSize,
-                        internal::getMpiType< T >(),
-                        comm );
+  int ret = MPI_Allgather( sendValues.data(),
+                           sendSize,
+                           internal::getMpiType< T >(),
+                           allValues.data(),
+                           sendSize,
+                           internal::getMpiType< T >(),
+                           comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 
 #else
   allValues.resize( sendSize );
@@ -1095,14 +1110,18 @@ int MpiWrapper::allGatherv( arrayView1d< T const > const & sendValues,
   array1d< int > displs( mpiSize + 1 );
   std::partial_sum( counts.begin(), counts.end(), displs.begin() + 1 );
   allValues.resize( displs.back() );
-  return MPI_Allgatherv( sendValues.data(),
-                         sendSize,
-                         internal::getMpiType< T >(),
-                         allValues.data(),
-                         counts.data(),
-                         displs.data(),
-                         internal::getMpiType< T >(),
-                         comm );
+  int ret = MPI_Allgatherv( sendValues.data(),
+                            sendSize,
+                            internal::getMpiType< T >(),
+                            allValues.data(),
+                            counts.data(),
+                            displs.data(),
+                            internal::getMpiType< T >(),
+                            comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 
 #else
   allValues.resize( sendSize );
@@ -1123,7 +1142,11 @@ int MpiWrapper::allReduce( T const * const sendbuf,
 {
 #ifdef GEOS_USE_MPI
   MPI_Datatype const mpiType = internal::getMpiType< T >();
-  return MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, comm );
+  int ret = MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   if( sendbuf != recvbuf )
   {
@@ -1143,7 +1166,11 @@ int MpiWrapper::reduce( T const * const sendbuf,
 {
 #ifdef GEOS_USE_MPI
   MPI_Datatype const mpiType = internal::getMpiType< T >();
-  return MPI_Reduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, root, comm );
+  int ret = MPI_Reduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   if( sendbuf != recvbuf )
   {
@@ -1161,7 +1188,11 @@ int MpiWrapper::scan( T const * const sendbuf,
                       MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
+  int ret = MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
+#ifdef GEOS_USE_MPI
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   memcpy( recvbuf, sendbuf, count*sizeof(T) );
   return 0;
@@ -1176,7 +1207,11 @@ int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
                         MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Exscan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
+  int ret = MPI_Exscan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   memset( recvbuf, 0, count*sizeof(T) );
   return 0;
@@ -1190,7 +1225,11 @@ int MpiWrapper::bcast( T * const MPI_PARAM( buffer ),
                        MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Bcast( buffer, count, internal::getMpiType< T >(), root, comm );
+  int ret = MPI_Bcast( buffer, count, internal::getMpiType< T >(), root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   return 0;
 #endif
@@ -1202,6 +1241,9 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 {
 #ifdef GEOS_USE_MPI
   MPI_Bcast( &value, 1, internal::getMpiType< T >(), srcRank, comm );
+// #ifdef GEOS_USE_MPI_DESYNC_DETECTION
+//   detectMpiDesync( comm, ++g_currentMpiOperationTag );
+// #endif
 #endif
 }
 
@@ -1216,6 +1258,9 @@ void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
   broadcast( size, srcRank, comm );
   value.resize( size );
   MPI_Bcast( const_cast< char * >( value.data() ), size, internal::getMpiType< char >(), srcRank, comm );
+// #ifdef GEOS_USE_MPI_DESYNC_DETECTION
+//   detectMpiDesync( comm, ++g_currentMpiOperationTag );
+// #endif
 #endif
 }
 
@@ -1228,9 +1273,13 @@ int MpiWrapper::gather( TS const * const sendbuf,
                         MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Gather( sendbuf, sendcount, internal::getMpiType< TS >(),
-                     recvbuf, recvcount, internal::getMpiType< TR >(),
-                     root, comm );
+  int ret = MPI_Gather( sendbuf, sendcount, internal::getMpiType< TS >(),
+                        recvbuf, recvcount, internal::getMpiType< TR >(),
+                        root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
@@ -1252,9 +1301,13 @@ int MpiWrapper::gather( T const & value,
     GEOS_ERROR_IF_LT_MSG( destValuesBuffer.size(), size_t( commSize() ),
                           "Receive buffer is not large enough to contain the values to receive." );
 #ifdef GEOS_USE_MPI
-  return MPI_Gather( &value, sizeof( T ), internal::getMpiType< uint8_t >(),
-                     destValuesBuffer.data(), sizeof( T ), internal::getMpiType< uint8_t >(),
-                     root, comm );
+  int ret = MPI_Gather( &value, sizeof( T ), internal::getMpiType< uint8_t >(),
+                        destValuesBuffer.data(), sizeof( T ), internal::getMpiType< uint8_t >(),
+                        root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   memcpy( destValuesBuffer.data(), &value, sendBufferSize );
   return 0;
@@ -1271,9 +1324,13 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                          MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Gatherv( sendbuf, sendcount, internal::getMpiType< TS >(),
-                      recvbuf, recvcounts, displs, internal::getMpiType< TR >(),
-                      root, comm );
+  int ret = MPI_Gatherv( sendbuf, sendcount, internal::getMpiType< TS >(),
+                         recvbuf, recvcounts, displs, internal::getMpiType< TR >(),
+                         root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
@@ -1295,9 +1352,13 @@ int MpiWrapper::scatter( TS const * const sendbuf,
                          MPI_Comm MPI_PARAM( comm ))
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Scatter( sendbuf, sendcount, internal::getMpiType< TS >(),
-                      recvbuf, recvcount, internal::getMpiType< TR >(),
-                      root, comm );
+  int ret = MPI_Scatter( sendbuf, sendcount, internal::getMpiType< TS >(),
+                         recvbuf, recvcount, internal::getMpiType< TR >(),
+                         root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::scatter() for serial run requires send and receive buffers are of the same type" );
@@ -1319,9 +1380,13 @@ int MpiWrapper::scatterv( TS const * const sendbuf,
                           MPI_Comm MPI_PARAM( comm ))
 {
 #ifdef GEOS_USE_MPI
-  return MPI_Scatterv( sendbuf, sendcounts, displs, internal::getMpiType< TS >(),
-                       recvbuf, recvcount, internal::getMpiType< TR >(),
-                       root, comm );
+  int ret = MPI_Scatterv( sendbuf, sendcounts, displs, internal::getMpiType< TS >(),
+                          recvbuf, recvcount, internal::getMpiType< TR >(),
+                          root, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
+  return ret;
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
