@@ -828,7 +828,7 @@ private:
   inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId )
   {
     int minId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
-    int maxId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MAX, comm );
+    int maxId = operationId; MPI_Allreduce( MPI_IN_PLACE, &maxId, 1, MPI_INT, MPI_MAX, comm );
     if( minId != maxId ) { MPI_Abort( comm, 1 ); }
   }
 #endif
