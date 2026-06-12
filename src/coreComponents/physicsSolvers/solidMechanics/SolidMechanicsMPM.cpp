@@ -7055,6 +7055,7 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
       ds /= LvArray::tensorOps::l2Norm< 3 >( hEl );
     }
 
+
     // GEOS_LOG_RANK("a: " << fieldA << ", " <<
     //               "b: " << fieldB << ", " <<
     //               "iter: " << iter << ", " <<
@@ -7070,16 +7071,19 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     //               "ds: " << ds );
 
     if( ds < LRtolerance )
-    // if( relativeChange < epsilon and relativeNormChange < 0.4 )
     {
-      // Need to do contact calculations
       // GEOS_LOG_RANK("Converged!");
+      converged = true;
+    }
+
+    // Whether it converges or reaches max iterations, copy normal and position over
+    if( converged || iter == maxLRIterations - 1 )
+    {
       // Tensor equations:
       //   surfacePosition = s_new.
       //   normal = n_new.
       LvArray::tensorOps::copy< 3 >( surfacePosition, s_new );
       LvArray::tensorOps::copy< 3 >( normal, n_new );
-      converged = true;
       break;
     }
 

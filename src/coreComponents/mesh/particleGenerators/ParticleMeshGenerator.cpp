@@ -222,6 +222,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
           defaultValue = 2.0;
           break;
         case ParticleColumnHeaders::CZTag:
+        case ParticleColumnHeaders::SurfaceFlag:
         case ParticleColumnHeaders::MaterialType:
         case ParticleColumnHeaders::ContactGroup:
         case ParticleColumnHeaders::Damage:

@@ -656,7 +656,7 @@ parameters = {
                'overwriteExistingNormalsAndPositions': ( None, True ),  # MPM: overwrite supplied surface geometry.
                'parallelThreads': ( None, False ),  # PFW: writer-side parallel particle generation threads.
                'particleDataWriteInterval': ( None, True ),  # MPM: particle-data write interval.
-               'particleFileFields': ( [ 'Velocity', 'MaterialType', 'ContactGroup', 'SurfaceFlag', 'RVector' ], False ),  # PFW: particle columns to write.
+               'particleFileFields': ( [], False ),  # PFW: particle columns to write.
                'particleRefinement': ( None, False ),  # PFW: particle refinement settings.
                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
                'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
@@ -854,6 +854,8 @@ mpmSolverParameterString = ''.join(parameterStrings)
 cohesiveZoneRegionString = ""
 
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
+particleFileFields.extend([ 'RVector' ]) # MaterialType, velocity, contact group, and surface flags should all default to 0 if unspecified in GEOS initialization
+particleFileFields = set(particleFileFields)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
 
 # Interior Domain
