@@ -19,6 +19,7 @@
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
 
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
@@ -32,13 +33,13 @@ namespace geos::vtk
  * @param faceMesh[in] The vtk mesh for the face block.
  * @param mesh[in] The vtk volumic mesh.
  * @param cellBlockManager[inout] The cell block manager that will receive the face block information.
- * @param regionAttributeName[in] The name of the region attribute in the VTK data (default: "attribute").
+ * @param passthroughFieldNames[in] Names of VTK CellData arrays to import and pass through to output as-is.
  */
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
                             CellBlockManager & cellBlockManager,
-                            string const & regionAttributeName = "attribute" );
+                            Span< string const > passthroughFieldNames = {} );
 }
 
 #endif // include guard

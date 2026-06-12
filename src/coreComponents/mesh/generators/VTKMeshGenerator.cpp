@@ -20,6 +20,7 @@
 #include "VTKMeshGenerator.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
 #include "mesh/ExternalDataSourceManager.hpp"
 #include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
@@ -97,6 +98,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   registerWrapper( viewKeyStruct::dataSourceString(), &m_dataSourceName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the VTK data source" );
+
+  registerWrapper( viewKeyStruct::passthroughFieldsString(), &m_passthroughFieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of VTK CellData arrays to import and pass through to output as-is, without mapping to a GEOS field." );
 
   addLogLevel< logInfo::VTKSteps >();
 }
@@ -234,7 +240,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, m_translate, m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
-  writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
+  writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager,
+              Span< string const >( m_passthroughFieldNames.begin(), m_passthroughFieldNames.end() ) );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing surfaces...", catalogName(), getName() ) );
   writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -248,7 +255,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
-    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager, m_regionAttributeName );
+    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager,
+                                Span< string const >( m_passthroughFieldNames.begin(), m_passthroughFieldNames.end() ) );
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );

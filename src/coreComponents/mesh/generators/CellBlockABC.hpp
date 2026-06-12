@@ -126,12 +126,6 @@ public:
     }
   }
 
-  /**
-   * @brief Get the region attribute for this cell block.
-   * @return The region attribute value, or -1 if not set.
-   */
-  virtual integer getRegionAttribute() const { return -1; }
-
 private:
   /**
    * @brief Returns the external properties under the form of WrapperBase pointers.

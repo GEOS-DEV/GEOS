@@ -78,11 +78,6 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
   this->resize( cellBlock.numElements() );
 
-  // Fill regionAttribute array with constant value from CellBlock
-  integer const regionAttr = cellBlock.getRegionAttribute();
-  m_regionAttribute.resize( cellBlock.numElements() );
-  m_regionAttribute.setValues< serialPolicy >( regionAttr );
-
   this->nodeList() = cellBlock.getElemToNodes();
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();
@@ -96,7 +91,9 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
     {
       using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
-      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >() ).reference();
+      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >() )
+                            .setPlotLevel( wrapper.getPlotLevel() )
+                            .reference();
       // This is a hack since Array's copy ctor does not accept ArrayView source
       dst.resize( ArrayType::NDIM, src.dims() );
       std::copy( src.data(), src.data() + src.size(), dst.data() );

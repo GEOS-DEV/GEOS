@@ -117,6 +117,7 @@ private:
     constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
+    constexpr static char const * passthroughFieldsString() { return "passThroughFields"; }
   };
 
   struct groupKeyStruct
@@ -179,6 +180,9 @@ private:
 
   /// Repository of VTK objects
   VTKHierarchicalDataSource * m_dataSource;
+
+  /// Names of VTK CellData arrays to import and pass through to output as-is
+  string_array m_passthroughFieldNames;
 
 };
 

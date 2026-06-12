@@ -61,13 +61,6 @@ public:
   array1d< globalIndex > localToGlobalMap() const override;
 
   /**
-   * @brief Get the region attribute for each 2d element.
-   * @return The region attribute values.
-   */
-  array1d< integer > getRegionAttribute() const override
-  { return m_regionAttribute; }
-
-  /**
    * @brief Defines the number of 2d elements.
    * @param num2DElements The input value.
    */
@@ -128,16 +121,35 @@ public:
   void set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets );
 
   /**
-   * @brief Defines the region attribute for each 2d element.
-   * @param regionAttribute The input array.
+   * @brief Add a property to the FaceBlock.
+   * @tparam T type of the property
+   * @param[in] propertyName the name of the property
+   * @return a non-const reference to the property
    */
-  void setRegionAttribute( array1d< integer > && regionAttribute )
-  { m_regionAttribute = std::move( regionAttribute ); }
+  template< typename T >
+  T & addProperty( string const & propertyName )
+  {
+    m_externalPropertyNames.emplace_back( propertyName );
+    return this->registerWrapper< T >( propertyName ).reference();
+  }
 
 private:
 
+  std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
+  {
+    std::list< dataRepository::WrapperBase const * > result;
+    for( string const & externalPropertyName : m_externalPropertyNames )
+    {
+      result.push_back( &this->getWrapperBase( externalPropertyName ) );
+    }
+    return result;
+  }
+
   localIndex m_num2dElements;
   localIndex m_num2dFaces;
+
+  /// Names of the properties registered from an external mesh
+  string_array m_externalPropertyNames;
 
   ArrayOfArrays< localIndex > m_2dElemToNodes;
   ArrayOfArrays< localIndex > m_2dElemToEdges;
@@ -149,9 +161,6 @@ private:
   array1d< localIndex > m_2dFaceToEdge;
 
   array1d< globalIndex > m_localToGlobalMap;
-
-  /// Region attribute for each 2d element
-  array1d< integer > m_regionAttribute;
 };
 
 

@@ -15,6 +15,7 @@
 
 #include "FaceElementSubRegion.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/TypeDispatch.hpp"
 
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
@@ -104,13 +105,6 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
 {
   localIndex const num2dElements = faceBlock.num2dElements();
   resize( num2dElements );
-
-  // Copy regionAttribute from FaceBlock
-  array1d< integer > const regionAttr = faceBlock.getRegionAttribute();
-  if( regionAttr.size() > 0 )
-  {
-    m_regionAttribute = regionAttr;
-  }
 
   m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
   m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
@@ -221,7 +215,20 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_newFaceElements.insert( i );
   }
 
-  // TODO We still need to be able to import fields on the FaceElementSubRegion.
+  faceBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
+  {
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+    {
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+      auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >() )
+                            .setPlotLevel( wrapper.getPlotLevel() )
+                            .reference();
+      // This is a hack since Array's copy ctor does not accept ArrayView source
+      dst.resize( ArrayType::NDIM, src.dims() );
+      std::copy( src.data(), src.data() + src.size(), dst.data() );
+    }, wrapper );
+  } );
 }
 
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )

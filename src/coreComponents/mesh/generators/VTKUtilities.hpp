@@ -288,12 +288,14 @@ void writeNodes( integer const logLevel,
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
  * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
+ * @param[in] passthroughFieldNames Names of VTK CellData arrays to import and pass through to output as-is.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
                  vtk::CellMapType const & cellMap,
                  string const & structuredIndexAttributeName,
-                 CellBlockManager & cellBlockManager );
+                 CellBlockManager & cellBlockManager,
+                 Span< string const > passthroughFieldNames = {} );
 
 /**
  * @brief Build the "surface" node sets from the surface information.

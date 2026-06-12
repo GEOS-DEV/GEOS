@@ -774,7 +774,6 @@ CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,
                                                  integer regionAttribute )
 {
   CellBlock & cb = this->getCellBlocks().registerGroup< CellBlock >( cellBlockName );
-  cb.setRegionAttribute( regionAttribute );
   m_regionAttributesCellBlocks.get_inserted( regionAttribute ).emplace( cellBlockName );
   return cb;
 }
