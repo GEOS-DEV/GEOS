@@ -92,6 +92,8 @@ endif()
 
 option( ENABLE_MPI "" ON )
 
+option( ENABLE_MPI_DESYNC_DETECTION "" OFF )
+
 option( ENABLE_CUDA "" OFF )
 
 option( ENABLE_HIP "" OFF )
