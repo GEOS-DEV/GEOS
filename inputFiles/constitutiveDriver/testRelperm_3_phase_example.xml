@@ -83,13 +83,12 @@
     <TableFunction
       name="waterSaturation"
       coordinates="{ 0, 1, 2, 3, 4 }"
-      values="{ 0.22, 0.25, 0.35, 0.45, 0.45 }"
+      values="{ 0.20, 0.25, 0.35, 0.45, 0.45 }"
       interpolation="lower" />
     <TableFunction
       name="oilSaturation"
       coordinates="{ 0.00, 0.95, 1.00, 1.95, 2.00, 2.95, 3.00, 3.95, 4.00 }"
-      values="{ 0.00, 0.78, 0.00, 0.75, 0.00, 0.65, 0.00, 0.55, 0.55 }"
+      values="{ 0.00, 0.80, 0.00, 0.75, 0.00, 0.65, 0.00, 0.55, 0.55 }"
       interpolation="linear" />
-    
   </Functions>
 </Problem>
