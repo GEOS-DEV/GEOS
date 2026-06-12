@@ -1573,7 +1573,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
 	<xsd:complexType name="SourceFluxStatisticsType" />
-	<xsd:complexType name="TriaxialDriverType" />
+	<xsd:complexType name="TriaxialDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />
