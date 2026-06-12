@@ -15,4 +15,6 @@ Faults & fractures
 
    faultVerification/Example
 
+   stableVerticalFault/Example
+
    slippedVerticalFault/Example

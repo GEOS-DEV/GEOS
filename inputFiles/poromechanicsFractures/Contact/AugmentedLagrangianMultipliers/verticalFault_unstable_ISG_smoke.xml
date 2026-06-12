@@ -15,7 +15,6 @@
   </Solvers>
 
   <Constitutive>
-    <!--porousRock-->
     <PorousElasticIsotropic
       name="porousRock"
       solidModelName="rock"
@@ -47,7 +46,6 @@
       name="rockPerm"
       permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}" />
 
-    <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
       solidModelName="nullSolid"

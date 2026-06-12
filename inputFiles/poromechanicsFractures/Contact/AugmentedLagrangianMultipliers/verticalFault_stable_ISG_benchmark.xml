@@ -6,16 +6,17 @@
   </Included>
 
   <Solvers>
+<!-- SPHINX_SURFACEGENERATOR -->
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="1"
       targetRegions="{ Region, Fault }"
       fractureRegion="Fault"
       initialRockToughness="1e60"/>
+<!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>
 
   <Constitutive>
-    <!--porousRock-->
     <PorousElasticIsotropic
       name="porousRock"
       solidModelName="rock"
@@ -47,7 +48,6 @@
       name="rockPerm"
       permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}" />
 
-    <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
       solidModelName="nullSolid"
@@ -76,6 +76,7 @@
       name="nullSolid" />
   </Constitutive>
 
+<!-- SPHINX_MESH -->
   <Mesh>
     <VTKMesh
       name="mesh1"
@@ -83,8 +84,10 @@
       nodesetNames="{ faultNodes }"
       file="../../MESH/verticalFault_ISG_benchmark.vtu"/>
   </Mesh>
+<!-- SPHINX_MESH_END -->
 
   <FieldSpecifications>
+<!-- SPHINX_FAULT -->
      <FieldSpecification
       name="separableFace"
       fieldName="isFaceSeparable"
@@ -100,6 +103,7 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1" />
+<!-- SPHINX_FAULT_END -->
   </FieldSpecifications>
 
   <Events maxTime="100.0">

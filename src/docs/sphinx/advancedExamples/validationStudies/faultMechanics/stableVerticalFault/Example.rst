@@ -1,14 +1,14 @@
-.. _unstableVerticalFault:
+.. _stableVerticalFault:
 
 
 ###########################################################
-Shear Slip Along a Frictionless Vertical Fault
+Shear Stress Along a Stable Vertical Fault
 ###########################################################
 
 
 **Context**
 
-In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a frictional fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions and is coupled with a Coulomb friction law. Implemented in GEOS, the model computes displacement discontinuities (fault slip unpon reactivation) along the frictionless fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
+In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a friction and stable fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions and is coupled with a Coulomb friction law. Implemented in GEOS, the model computes stress perturbations (normal and shear components) along the stable fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
 
 
 **Input file**
@@ -18,7 +18,7 @@ The xml input files for the test case with external workflow are located at:
 .. code-block:: console
 
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/ALM_verticalFault_base.xml
-  inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ESG_benchmark.xml
+  inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ESG_benchmark.xml
 
 
 The xml input files for the test case with internal workflow are located at:
@@ -26,7 +26,7 @@ The xml input files for the test case with internal workflow are located at:
 .. code-block:: console
 
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/ALM_verticalFault_base.xml
-  inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ISG_benchmark.xml
+  inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
 
 
 Corresponding mesh files and a python script for post-processing the simulation results are also provided:
@@ -37,7 +37,7 @@ Corresponding mesh files and a python script for post-processing the simulation 
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/faultMechanics/slippedVerticalFault/unstableFaultFigure.py
+  src/docs/sphinx/advancedExamples/validationStudies/faultMechanics/stableVerticalFault/stableFaultFigure.py
 
 
 ------------------------------------------------------------------
@@ -58,9 +58,9 @@ In conformity to the analytical set-up, the reservoir is divided into two parts 
 
 
 In this example, a poroelastic model is established to evaluate the spatial evolution of displacement and stress fields associated with reservoir depletion. 
-A frictionless configuration is achieved by setting both the friction coefficient and cohesion to zero, enabling shear slip. 
-Depletion induces localized slip along fault planes in contact with the reservoir. 
-The problem is solved using two different workflows available in GEOS, and the results are compared with the published study of `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__
+A stable fault regime is enforced by assigning friction and cohesion parameters that inhibit fault reactivation. 
+Depletion induces stress changes along fault planes in contact with the reservoir, with stress concentrations observed at the interface between the reservoir layers and the overburden and underburden.
+Simulations are performed using two distinct GEOS workflows, and the results are validated against the study of `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__
 
 
 
@@ -87,7 +87,7 @@ Here, we load the mesh with ``VTKMesh``.
 
 For the external workflow, the mesh file ``verticalFault_ESG_benchmark.vtm`` is included with its relative or absolute path to the location of the GEOS XML file and a user-specified label (here ``mesh1``) is given to the mesh object. 
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ESG_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ESG_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -97,21 +97,21 @@ The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh fi
 
 For internal workflow, only the domain mesh file ``verticalFault_ISG_benchmark.vtu`` is imported
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ISG_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
 The fault mesh is then generated within GEOS using ``SurfaceGenerator``
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ISG_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_SURFACEGENERATOR -->
     :end-before: <!-- SPHINX_SURFACEGENERATOR_END -->
 
 Note that the attribute ``nodesetNames="{ faultNodes }"`` must be included in the domain mesh file to define the location and extent of the fault plane. The ``ruptureState`` condition must be specified for this area in the following ``FieldSpecification`` block:
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ISG_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_FAULT -->
     :end-before: <!-- SPHINX_FAULT_END -->
@@ -198,7 +198,7 @@ For this problem, a homogeneous and isotropic domain with one solid material is 
 The solid and fluid materials are named as ``rock`` and ``water`` respectively, and their mechanical properties are specified in the ``Constitutive`` section. ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` when subjected to reservoir depletion. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water``.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ESG_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ESG_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -265,28 +265,28 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-----------------------------+------------------+--------------------+
 | :math:`F_{off}`  | Fault Vertical Offset       | [m]              | 75.0               |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`\mu`      | Friction Coefficient        | [-]              | 0.0                |
+| :math:`\mu`      | Friction Coefficient        | [-]              | 1.0                |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`c`        | Cohesion                    | [MPa]            | 0.0                |
+| :math:`c`        | Cohesion                    | [MPa]            | 5.0                |
 +------------------+-----------------------------+------------------+--------------------+
 
 ---------------------------------
 Inspecting results
 ---------------------------------
 
-The figure below presents a comparison between GEOS simulations (dashed lines) and analytical solutions (solid curves) for shear slip along a frictionless fault plane. The results demonstrate that GEOS reliably captures the mechanical deformation of the faulted reservoir and achieves excellent agreement with the analytical solutions for both workflows. 
+The figure below compares GEOS simulations (dashed lines) with analytical solutions (solid curves) for shear stress along a stable fault plane. The results show that GEOS accurately reproduces the mechanical response of the faulted reservoir and exhibits excellent agreement with the analytical solutions for both workflows. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/slippedVerticalFault/unstableFaultFigure.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/slippedVerticalFault/stableFaultFigure.py
 
-Furthermore, a mesh convergence study is also performed. For isotropic meshes (with near-unity aspect ratio in the x–z plane), the L2 error norm approaches the theoretical convergence rate, confirming the robustness and accuracy of the implemented ALM solver.
+A convergence study is also performed. For isotropic meshes (aspect ratio ≈ 1 in the x–z plane), the L2 error norm closely follows the theoretical rate, validating the accuracy of the ALM solver.
 
-.. _problemSketchUnstableVerticalFaultFig1:
-.. figure:: convergence_unstableFault.PNG
+.. _problemSketchStableVerticalFaultFig1:
+.. figure:: convergence_stableFault.PNG
    :align: center
    :width: 1000
    :figclass: align-center
 
-   Convergence of the relative 𝐿2-error for shear slip
+   Convergence of the relative 𝐿2-error for shear stress
 
 
 ------------------------------------------------------------------
