@@ -827,9 +827,9 @@ private:
    */
   inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int id )
   {
-    int min_id = MpiWrapper::min( id );
-    int max_id = MpiWrapper::max( id );
-    if( min_id != max_id ) { MPI_Abort( comm, 1 ); }
+    int minId = id; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
+    int maxId = id; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MAX, comm );
+    if( minId != maxId ) { MPI_Abort( comm, 1 ); }
   }
 #endif
 
@@ -1189,7 +1189,7 @@ int MpiWrapper::scan( T const * const sendbuf,
 {
 #ifdef GEOS_USE_MPI
   int ret = MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
-#ifdef GEOS_USE_MPI
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
   detectMpiDesync( comm, ++g_currentMpiOperationTag );
 #endif
   return ret;
@@ -1241,9 +1241,9 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 {
 #ifdef GEOS_USE_MPI
   MPI_Bcast( &value, 1, internal::getMpiType< T >(), srcRank, comm );
-// #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-//   detectMpiDesync( comm, ++g_currentMpiOperationTag );
-// #endif
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
 #endif
 }
 
@@ -1258,9 +1258,9 @@ void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
   broadcast( size, srcRank, comm );
   value.resize( size );
   MPI_Bcast( const_cast< char * >( value.data() ), size, internal::getMpiType< char >(), srcRank, comm );
-// #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-//   detectMpiDesync( comm, ++g_currentMpiOperationTag );
-// #endif
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
 #endif
 }
 
@@ -1653,6 +1653,9 @@ MpiWrapper::allReduce( PairType< FIRST, SECOND > const & localPair, MPI_Comm com
   auto const mpiOp = internal::getMpiPairReductionOp< FIRST, SECOND, OP >();
   PairType< FIRST, SECOND > pair{ localPair.first, localPair.second };
   MPI_Allreduce( MPI_IN_PLACE, &pair, 1, type, mpiOp, comm );
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  detectMpiDesync( comm, ++g_currentMpiOperationTag );
+#endif
   return pair;
 #else
   return localPair;
