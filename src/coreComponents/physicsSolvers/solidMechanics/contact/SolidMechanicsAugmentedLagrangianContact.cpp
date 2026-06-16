@@ -473,6 +473,23 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
         LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf1], 0.0 );
       } );
     }
+
+    // Snapshot friction state variables before Newton begins so that updateTraction
+    // can use saved + current-increment (semi-implicit) without accumulating over iterations.
+    {
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
+      constitutiveUpdatePassThru( frictionLaw, [&]( auto & castedFrictionLaw )
+      {
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          frictionWrapper.saveState( k );
+        } );
+      } );
+    }
+
   } );
 
   // Sync iterativePenalty
@@ -574,12 +591,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                         dt,
                                                                         faceElementList );
 
-        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, CoulombFriction >( mesh,
-                                                                                                                         fractureRegionName,
-                                                                                                                         faceElementList,
-                                                                                                                         subRegionFE,
-                                                                                                                         viewKeyStruct::frictionLawNameString(),
-                                                                                                                         kernelFactory );
+        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, FrictionBase >( mesh,
+                                                                                                                       fractureRegionName,
+                                                                                                                       faceElementList,
+                                                                                                                       subRegionFE,
+                                                                                                                       viewKeyStruct::frictionLawNameString(),
+                                                                                                                       kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -598,12 +615,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               CoulombFriction >( mesh,
-                                                  fractureRegionName,
-                                                  faceElementList,
-                                                  subRegionFE,
-                                                  viewKeyStruct::frictionLawNameString(),
-                                                  kernelFactory );
+                               FrictionBase >( mesh,
+                                               fractureRegionName,
+                                               faceElementList,
+                                               subRegionFE,
+                                               viewKeyStruct::frictionLawNameString(),
+                                               kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
       }
@@ -629,12 +646,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               CoulombFriction >( mesh,
-                                                  fractureRegionName,
-                                                  faceElementList,
-                                                  subRegionFE,
-                                                  viewKeyStruct::frictionLawNameString(),
-                                                  kernelFactory );
+                               FrictionBase >( mesh,
+                                               fractureRegionName,
+                                               faceElementList,
+                                               subRegionFE,
+                                               viewKeyStruct::frictionLawNameString(),
+                                               kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -650,12 +667,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                             faceElementList,
                                                             m_symmetric );
 
-        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, CoulombFriction >( mesh,
-                                                                                                                         fractureRegionName,
-                                                                                                                         faceElementList,
-                                                                                                                         subRegionFE,
-                                                                                                                         viewKeyStruct::frictionLawNameString(),
-                                                                                                                         kernelFactory );
+        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, FrictionBase >( mesh,
+                                                                                                                       fractureRegionName,
+                                                                                                                       faceElementList,
+                                                                                                                       subRegionFE,
+                                                                                                                       viewKeyStruct::frictionLawNameString(),
+                                                                                                                       kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
       }
@@ -1245,6 +1262,25 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
         {
           LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
+        } );
+
+        // Update state variables (e.g. cumulative slip) that depend on converged incremental jump
+        string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+        FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
+
+        arrayView2d< real64 const > const dispJump    = subRegion.getField< contact::dispJump >();
+        arrayView2d< real64 const > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+        arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+
+        constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
+        {
+          using FrictionType = TYPEOFREF( castedFrictionLaw );
+          typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
+
+          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+          {
+            frictionWrapper.updateElasticSlip( k, dispJump[k], oldDispJump[k], traction[k], fractureState[k] );
+          } );
         } );
       } );
     } );
@@ -2091,17 +2127,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
-        // Try to get Coulomb parameters if available
+        // Try to get Coulomb parameters if available (optional – used only for consistency check)
         bool const hasCoulombParams = frictionLaw.hasWrapper( fields::contact::cohesion::key() ) &&
                                       frictionLaw.hasWrapper( fields::contact::frictionCoefficient::key() );
 
-        GEOS_ERROR_IF( !hasCoulombParams,
-                       GEOS_FMT( "Friction law '{}' has no per-cell cohesion or frictionCoefficient fields. "
-                                 "These fields are required for initial traction computation.",
-                                 frictionLawName ) );
-
-        arrayView1d< real64 const > const cohesion = frictionLaw.getField< fields::contact::cohesion >().reference().toViewConst();
-        arrayView1d< real64 const > const frictionCoefficient = frictionLaw.getField< fields::contact::frictionCoefficient >().reference().toViewConst();
+        arrayView1d< real64 const > const cohesion = hasCoulombParams
+          ? frictionLaw.getField< fields::contact::cohesion >().reference().toViewConst()
+          : arrayView1d< real64 const >{};
+        arrayView1d< real64 const > const frictionCoefficient = hasCoulombParams
+          ? frictionLaw.getField< fields::contact::frictionCoefficient >().reference().toViewConst()
+          : arrayView1d< real64 const >{};
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,

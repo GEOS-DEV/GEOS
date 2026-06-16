@@ -207,6 +207,15 @@ public:
     return 0;
   }
 
+  /**
+   * @brief Snapshot path-dependent state variables at the start of a time step.
+   *        Default is a no-op; override in models that carry history variables.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  virtual void saveState( localIndex const k ) const
+  { GEOS_UNUSED_VAR( k ); }
+
 protected:
 
   /// A threshold valued to determine whether a fracture is open or not.

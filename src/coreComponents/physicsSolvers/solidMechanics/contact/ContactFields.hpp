@@ -268,6 +268,38 @@ DECLARE_FIELD( frictionCoefficient,
                WRITE_AND_READ,
                "Friction coefficient for each element" );
 
+DECLARE_FIELD( initialFrictionCoefficient,
+               "initialFrictionCoefficient",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Initial (peak) friction coefficient for each element" );
+
+DECLARE_FIELD( residualFrictionCoefficient,
+               "residualFrictionCoefficient",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Residual friction coefficient for each element" );
+
+DECLARE_FIELD( characteristicSlipDistance,
+               "characteristicSlipDistance",
+               array1d< real64 >,
+               1,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Characteristic slip distance for slip-weakening friction" );
+
+DECLARE_FIELD( cumulativeSlip,
+               "cumulativeSlip",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Cumulative slip distance for slip-weakening friction" );
+
 }
 
 }

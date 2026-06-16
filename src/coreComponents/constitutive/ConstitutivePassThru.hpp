@@ -55,6 +55,7 @@
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "contact/CoulombFriction.hpp"
 #include "contact/RateAndStateFriction.hpp"
+#include "contact/SlipWeakeningFriction.hpp"
 
 
 namespace geos
@@ -100,6 +101,7 @@ struct ConstitutivePassThru< FrictionBase >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CoulombFriction,
+                                 SlipWeakeningFriction,
                                  RateAndStateFriction< std::integral_constant< bool, true > >,
                                  RateAndStateFriction< std::integral_constant< bool, false > > >::execute( constitutiveRelation,
                                                                                                            std::forward< LAMBDA >( lambda ) );

@@ -258,7 +258,7 @@ public:
     real64 tractionR[numUdofs];
     real64 tractionRb[numBdofs];
 
-    real64 tractionNew[3];
+    real64 tractionNew[3] = {};
 
     integer fractureState( fields::contact::FractureState::Stick );
     m_constitutiveUpdate.updateTraction( k,
