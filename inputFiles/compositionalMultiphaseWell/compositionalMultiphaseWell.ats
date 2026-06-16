@@ -51,7 +51,7 @@ decks = [
         "Black oil well test (3D displacement, 3-phase black-oil, 2 wells)",
         partitions=[(1, 1, 1), (2, 2, 1)],
         restart_step=13,
-        check_step=25,
+        check_step=26,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="black_oil_wells_unsaturated_3d",
