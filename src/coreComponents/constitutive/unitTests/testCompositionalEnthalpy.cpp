@@ -74,8 +74,8 @@ struct FluidData< 4 >
       }
     }
     coefficients->m_phaseTypes.resize( numPhases );
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::LIQUID)] = static_cast< integer >(PhaseType::LIQUID);
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::VAPOUR)] = static_cast< integer >(PhaseType::VAPOUR);
+    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::LIQUID)] = PhaseType::LIQUID;
+    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::VAPOUR)] = PhaseType::VAPOUR;
   }
 };
 
@@ -113,8 +113,8 @@ struct FluidData< 6 >
       }
     }
     coefficients->m_phaseTypes.resize( numPhases );
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::LIQUID)] = static_cast< integer >(PhaseType::LIQUID);
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::VAPOUR)] = static_cast< integer >(PhaseType::VAPOUR);
+    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::LIQUID)] = PhaseType::LIQUID;
+    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::VAPOUR)] = PhaseType::VAPOUR;
   }
 };
 

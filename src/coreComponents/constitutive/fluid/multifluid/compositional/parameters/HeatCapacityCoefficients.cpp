@@ -63,11 +63,6 @@ void HeatCapacityCoefficients::registerParametersImpl( MultiFluidBase * fluid )
   fluid->registerWrapper( viewKeyStruct::componentHeatCapacityCoefficientsString(), &m_coefficients ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "The polynomial coefficients for the specific heat capacity of each component." );
-
-  // Register extra wrappers to enable auto-cloning
-  fluid->registerWrapper( "heatCapacityPhaseTypes", &m_phaseTypes )
-    .setSizedFromParent( 0 )
-    .setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
 void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const * fluid,
@@ -110,7 +105,7 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
   for( integer ip = 0; ip < numPhases; ip++ )
   {
     PhaseType const phaseType = getPhaseTypeFromName( phaseNames[ip] );
-    m_phaseTypes[ip] = static_cast< integer >(phaseType);
+    m_phaseTypes[ip] = phaseType;
     switch( phaseType )
     {
       case PhaseType::LIQUID:

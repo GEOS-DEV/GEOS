@@ -11,15 +11,25 @@
       initialStress="-1.0"
       steps="50"
       logLevel="0"
-      baseline="testTriaxial_delftEggUseLinear.txt"
-      output="none"/>
+      output="testTriaxial_delftEggLoadPathWetUseLinear.txt" />
   </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 
   <Events
     maxTime="1">
     <SoloEvent
       name="triaxialDriver"
       target="/Tasks/triaxialDriver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
   </Events>
 
   <Constitutive>
@@ -28,7 +38,7 @@
       defaultDensity="2700"
       defaultBulkModulus="500.0"
       defaultShearModulus="200.0"
-      defaultPreConsolidationPressure="-2.1"
+      defaultPreConsolidationPressure="-2.0"
       defaultShapeParameter="1.8"
       defaultCslSlope="1.2"
       defaultVirginCompressionIndex="0.003"
@@ -40,7 +50,7 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.005 }"/>
+      values="{ 0, -0.008 }"/>
 
     <TableFunction
       name="stressFunction"
@@ -48,25 +58,4 @@
       coordinates="{ 0.0, 1.0 }"
       values="{ -1.0, -1.0 }"/>
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>

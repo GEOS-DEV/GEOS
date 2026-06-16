@@ -4,30 +4,45 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="elastic"
+      material="drucker"
       mode="mixedControl"
       axialControl="strainFunction"
       radialControl="stressFunction"
       initialStress="-1.0"
-      steps="50"
-      output="none"
-      baseline="testTriaxial_elasticIsotropic.txt"
-      logLevel="0"/>
+      steps="40"
+      logLevel="1"
+      output="testTriaxial_druckerPragerExtended.txt" />
   </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 
   <Events
     maxTime="1">
     <SoloEvent
       name="triaxialDriver"
       target="/Tasks/triaxialDriver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
   </Events>
 
   <Constitutive>
-    <ElasticIsotropic
-      name="elastic"
+    <ExtendedDruckerPrager
+      name="drucker"
       defaultDensity="2700"
       defaultBulkModulus="500"
-      defaultShearModulus="300"/>
+      defaultShearModulus="300"
+      defaultCohesion="0.0"
+      defaultInitialFrictionAngle="15.27"
+      defaultResidualFrictionAngle="23.05"
+      defaultDilationRatio="1.0"
+      defaultHardening="0.001"/>
   </Constitutive>
 
   <Functions>
@@ -43,25 +58,4 @@
       coordinates="{ 0.0, 8.0 }"
       values="{ -1.0, -1.0 }"/>
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>
