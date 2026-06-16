@@ -8,15 +8,16 @@ These notes should be in reverse-chronological order, and use the following time
 PR #4040 (2026-06-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16801-f0937f9.tar.gz>
 Move relperm driver to use new constitutive driver framework
 
+PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
+Implement compositional enthalpy model
+
 PR #4074 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4074-16937-bf66240.tar.gz>
 Change triaxial driver to use restart for checks
 
 PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
-=====================
 Add Coulomb friction/cohesion input from vtk mesh
 
 PR #4068 (2026-06-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
-=====================
 Add MPI runs for smoke tests with surfaceGenerator
 
 PR #4062 (2026-05-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4062-16784-6d8782e.tar.gz>
