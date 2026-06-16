@@ -65,9 +65,9 @@ def ternaryfigure(num=None):
     triangle_y = [0, 1, 0, 0]
 
     ax.plot(triangle_x, triangle_y, '-k', linewidth=2)
-    ax.text(1 / np.sqrt(3) - 0.03, 1 + 0.03, '$S_w$', fontsize=10)
-    ax.text(2 / np.sqrt(3) + 0.01, -0.03, '$S_o$', fontsize=10)
-    ax.text(-0.05, -0.03, '$S_g$', fontsize=10)
+    ax.text(1 / np.sqrt(3) - 0.03, 1 + 0.03, '$S_w$')
+    ax.text(2 / np.sqrt(3) + 0.01, -0.03, '$S_o$')
+    ax.text(-0.05, -0.03, '$S_g$')
 
     add_minor_lines(ax)
 
@@ -107,14 +107,13 @@ def plot_ternary_surface(table, value='kro'):
     sampled (Sw, Sg) points on a ternary diagram, interpolated across the
     sampled legs via Delaunay triangulation."""
     
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
 
     x, y = ternary_coord(table['Sw'], table['Sg'])
 
     fig, ax = ternaryfigure()
     cs = ax.tricontourf(x, y, table[value], levels=20, cmap='turbo')
     fig.colorbar(cs, ax=ax, label=KR_LABELS[value])
-    ax.set_title(KR_LABELS[value])
 
     return fig, ax
 
