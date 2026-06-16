@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./ALM_SpringSlider_SlipWeakening_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsAugmentedLagrangianContact
+      name="ALM"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        logLevel="1"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+  </Solvers>
+
+  <!--
+    1 x 2 x 1 element mesh: two unit cubes stacked in Y.
+    Fault = internal face at y = 0.
+  -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ -1, 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1, 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <!-- Fault plane at y = 0 (horizontal) -->
+    <Rectangle
+      name="fracture"
+      normal="{ 0.0, 1.0, 0.0 }"
+      origin="{ 0.5, 0.0, 0.5 }"
+      lengthVector="{ 1.0, 0.0, 0.0 }"
+      widthVector="{ 0.0, 0.0, 1.0 }"
+      dimensions="{ 2, 2 }"/>
+
+    <Rectangle
+      name="core"
+      normal="{ 0.0, 1.0, 0.0 }"
+      origin="{ 0.5, 0.0, 0.5 }"
+      lengthVector="{ 1.0, 0.0, 0.0 }"
+      widthVector="{ 0.0, 0.0, 1.0 }"
+      dimensions="{ 2, 2 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <!-- Activate fracture surface -->
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <!-- Initial normal stress: sigma_yy = -100 MPa (compressive) -->
+    <FieldSpecification
+      name="Sigmay"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="1"
+      scale="-1.0e8"/>
+
+    <!-- Kinematic BCs -->
+    <!-- Bottom face: no horizontal motion (spring anchor) -->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ yneg }"/>
+
+    <!-- All horizontal faces: no vertical displacement (normal stress maintained) -->
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos, xneg, xpos }"/>
+
+    <!-- Plane-strain: no out-of-plane displacement -->
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <!--
+      Shear loading: U_x(y=1) ramps from 0 to 0.05 m over pseudo-time [0, 1].
+      Expected phases:
+        t in [0.00, 0.24]: stick     (U = 0 to 0.012 m at t=0.24)
+        t in [0.24, 0.48]: weakening (U = 0.012 to 0.024 m)
+        t in [0.48, 1.00]: residual  (U = 0.024 to 0.050 m)
+    -->
+    <FieldSpecification
+      name="shearLoad"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.05"
+      setNames="{ ypos }"
+      functionName="dispFunction"/>
+
+  </FieldSpecifications>
+
+  <Events
+    maxTime="1.0">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      forceDt="0.05"
+      target="/Solvers/ALM"/>
+
+    <PeriodicEvent
+      name="vtkOutputEvent"
+      timeFrequency="0.05"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="tractionCollection"
+      timeFrequency="0.05"
+      targetExactTimestep="1"
+      target="/Tasks/tractionCollection"/>
+
+    <PeriodicEvent
+      name="jumpCollection"
+      timeFrequency="0.05"
+      targetExactTimestep="1"
+      target="/Tasks/displacementJumpCollection"/>
+
+    <PeriodicEvent
+      name="slipCollection"
+      timeFrequency="0.05"
+      targetExactTimestep="1"
+      target="/Tasks/cumulativeSlipCollection"/>
+
+    <PeriodicEvent
+      name="tractionOutput"
+      timeFrequency="0.05"
+      target="/Outputs/tractionHistory"/>
+
+    <PeriodicEvent
+      name="jumpOutput"
+      timeFrequency="0.05"
+      target="/Outputs/jumpHistory"/>
+
+    <PeriodicEvent
+      name="slipOutput"
+      timeFrequency="0.05"
+      target="/Outputs/slipHistory"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      target="/Outputs/restartOutput"/>
+
+  </Events>
+
+</Problem>

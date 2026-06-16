@@ -1,0 +1,140 @@
+<?xml version="1.0" ?>
+
+<!--
+  Spring-Slider benchmark for linear slip-weakening friction
+
+  Geometry:
+    Two unit elastic blocks (1m x 1m x 1m each) stacked in Y, separated by a
+    horizontal fault at y=0.
+    - Bottom block (y: -1 to 0): fixed at y=-1 (no motion).
+    - Top block   (y:  0 to 1): shear displacement U_x applied at y=1.
+
+  Initial normal stress: sigma_n = 100 MPa (compressive, in Y direction).
+
+  Friction law (linear slip-weakening):
+    mu(delta) = muResidual + (muPeak - muResidual) * max(0, 1 - delta/Dc)
+    muPeak = 0.6,  muResidual = 0.2,  Dc = 0.02 m,  cohesion = 0
+
+  Analytical solution (G = 10 GPa, H = 1 m per block):
+    K_eff = G / (2*H) = 5e9 Pa/m   (effective spring stiffness per unit area)
+
+    Phase 1 - Stick     (0     <= U <= 0.012 m):
+      tau = K_eff * U,  delta = 0
+      Slip starts when tau = tau_peak = mu_peak * sigma_n = 60 MPa
+      -> U_yield = 0.012 m
+
+    Phase 2 - Weakening (0.012 <= U <= 0.024 m):
+      delta = (U - 0.012) / 0.6
+      tau   = 60e6 - 2e9 * delta            [Pa]
+      Full weakening at delta = Dc = 0.02 m  -> U = 0.024 m
+
+    Phase 3 - Residual  (U > 0.024 m):
+      tau   = mu_residual * sigma_n = 20 MPa  (constant)
+      delta = U - 0.004 m
+
+  Applied loading: U_x(y=1) ramps linearly from 0 to 0.05 m over pseudo-time [0, 1].
+  20 time steps (forceDt = 0.05) cover all three phases.
+-->
+
+<Problem>
+
+  <Solvers>
+    <SurfaceGenerator
+      name="SurfaceGen"
+      logLevel="0"
+      fractureRegion="Fracture"
+      targetRegions="{ Region }"
+      initialRockToughness="1.0e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="faceElementSubRegion"
+      defaultAperture="1.0e-6"
+      materialList="{ frictionLaw }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
+
+    <!-- SlipWeakening: catalog name "SlipWeakening" -->
+    <SlipWeakening
+      name="frictionLaw"
+      shearStiffness="1.0e10"
+      defaultCohesion="0.0"
+      defaultInitialFrictionCoefficient="0.6"
+      defaultResidualFrictionCoefficient="0.2"
+      defaultDc="0.02"/>
+  </Constitutive>
+
+  <!-- Linear ramp: scale factor from 0 to 1 over pseudo-time [0, 1] -->
+  <Functions>
+    <TableFunction
+      name="dispFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="tractionCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="traction"/>
+
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="displacementJump"/>
+
+    <PackCollection
+      name="cumulativeSlipCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="frictionLaw_cumulativeSlip"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotLevel="2"
+      format="ascii"/>
+
+    <TimeHistory
+      name="tractionHistory"
+      sources="{ /Tasks/tractionCollection }"
+      filename="traction_springSlider"/>
+
+    <TimeHistory
+      name="jumpHistory"
+      sources="{ /Tasks/displacementJumpCollection }"
+      filename="displacementJump_springSlider"/>
+
+    <TimeHistory
+      name="slipHistory"
+      sources="{ /Tasks/cumulativeSlipCollection }"
+      filename="cumulativeSlip_springSlider"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>
