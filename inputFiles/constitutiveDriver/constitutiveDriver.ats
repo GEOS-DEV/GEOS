@@ -45,6 +45,7 @@ decks = [
     create_relperm_test("testRelperm_BrooksCorey", "Three-phase Brooks-Corey with Baker and Stone II mixing rule"),
     create_relperm_test("testRelperm_VanGenuchten", "Three-phase van Genuchten-Mualem models"),
     create_relperm_test("testRelperm_docExample", "Relperm Driver documentation example"),
+    create_relperm_test("testRelperm_3_phase_example", "Relperm Driver 3-phase documentation example"),
     create_triaxial_test("testTriaxial_delftEggCase1", "Delft Egg Case 1"),
     create_triaxial_test("testTriaxial_delftEggCase2", "Delft Egg Case 2"),
     create_triaxial_test("testTriaxial_delftEggLoadPathDryUseLinear", "Delft Egg with load path"),
