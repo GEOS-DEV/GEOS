@@ -155,7 +155,6 @@ set( fluidFlowSolvers_sources
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
      SinglePhaseReactiveTransport.cpp
-     SinglePhaseStressPathDrivenFVM.cpp
      SourceFluxStatistics.cpp
      SolutionCheckHelpers.cpp
      StencilDataCollection.cpp

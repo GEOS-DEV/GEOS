@@ -46,11 +46,11 @@ BartonBandisPermeability::BartonBandisPermeability( string const & name, Group *
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Reference hydraulic aperture. It is the aperture at zero normal stress." );
     
-  registerWrapper( viewKeyStruct::biotString(), &m_biot ).
+  registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setApplyDefaultValue( 1.0 ). 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Biot coefficient." );
-  registerWrapper( viewKeyStruct::poissonString(), &m_poisson ).
+  registerWrapper( viewKeyStruct::poissonRatioString(), &m_poissonRatio ).
     setApplyDefaultValue( 0.3 ). 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Poisson ratio." );

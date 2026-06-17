@@ -454,7 +454,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="OedometricStressPath" type="OedometricStressPathType" minOccurs="1" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
@@ -502,7 +501,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="OedometricStressPathType" />
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
@@ -605,7 +603,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFractures" type="SinglePhaseReservoirPoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesALM" type="SinglePhaseReservoirPoromechanicsConformingFracturesALMType" />
-			<xsd:element name="SinglePhaseStressPathDrivenFVM" type="SinglePhaseStressPathDrivenFVMType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsAugmentedLagrangianContact" type="SolidMechanicsAugmentedLagrangianContactType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
@@ -1338,16 +1335,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		</xsd:choice>
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" />
-		<!--numTimestepsSinceLastDtCut => (no description available)-->
-		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseStressPathDrivenFVMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="OedometricStressPath" type="OedometricStressPathType" minOccurs="1" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-		</xsd:choice>
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
