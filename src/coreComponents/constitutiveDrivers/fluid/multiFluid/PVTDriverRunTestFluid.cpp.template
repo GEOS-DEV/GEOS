@@ -22,6 +22,6 @@
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::@FLUID@ >(
-  constitutive::@FLUID@ &, arrayView2d< real64 > const & );
+  using namespace constitutive;
+  template void PVTDriver::runTest< @FLUID@ >( @FLUID@ &, arrayView2d< real64 > const & );
 }

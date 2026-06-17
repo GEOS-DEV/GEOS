@@ -22,5 +22,6 @@
 
 namespace geos
 {
-template void RelpermDriver::runTest< geos::constitutive::@RELPERM@ >( geos::constitutive::@RELPERM@ &, arrayView2d< real64 > const & );
+  using namespace constitutive;
+  template void RelpermDriver::runTest< @RELPERM@ >( @RELPERM@ &, arrayView2d< real64 > const & );
 }

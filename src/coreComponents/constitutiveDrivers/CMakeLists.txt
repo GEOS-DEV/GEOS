@@ -36,18 +36,6 @@ set( constitutiveDrivers_headers
 set( constitutiveDrivers_sources
      ConstitutiveDriver.cpp
      fluid/multiFluid/PVTDriver.cpp
-     fluid/multiFluid/constant/PVTDriverRunTestInvariantImmiscibleFluid.cpp
-     fluid/multiFluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalKValueLohrenzBrayClarkViscosity.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalKValuePhillipsBrine.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalThreePhaseLohrenzBrayClarkViscosity.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhasePhillipsBrine.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
      relativePermeability/RelpermDriver.cpp
      solid/TriaxialDriver.cpp
    )

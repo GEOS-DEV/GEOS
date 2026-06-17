@@ -31,16 +31,19 @@
     "constants": [],
     "combinations": {
       "FLUID": [
-        "DeadOilFluid",
         "BlackOilFluid",
         "CO2BrineEzrokhiFluid",
         "CO2BrineEzrokhiThermalFluid",
         "CO2BrinePhillipsFluid",
         "CO2BrinePhillipsThermalFluid",
+        "CompositionalKValuePhillipsBrine",
+        "CompositionalKValueLohrenzBrayClarkViscosity",
         "CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "CompositionalTwoPhaseConstantViscosity",
         "CompositionalTwoPhaseLohrenzBrayClarkViscosity",
-        "CompositionalTwoPhasePhillipsBrine"
+        "CompositionalTwoPhasePhillipsBrine",
+        "DeadOilFluid",
+        "InvariantImmiscibleFluid"
       ]
     },
     "explicit": []
