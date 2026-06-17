@@ -215,6 +215,14 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 void NonlinearSolverParameters::postInputInitialization()
 {
+  if( m_allowNonConverged > 0 )
+  {
+    GEOS_WARNING( GEOS_FMT( "Solver '{}' has '{}' enabled.\nThe simulation will not stop on non-converged solutions, "
+                            "result may contain inaccurate solutions that VIOLATE CONVERGENCE TOLERANCES.",
+                            getParent().getName(), viewKeysStruct::allowNonConvergedString() ),
+                  getWrapperDataContext( viewKeysStruct::allowNonConvergedString() ) );
+  }
+
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         GEOS_FMT( "{} Value should be smaller than {}",
                                   viewKeysStruct::timeStepIncreaseIterLimString(),
