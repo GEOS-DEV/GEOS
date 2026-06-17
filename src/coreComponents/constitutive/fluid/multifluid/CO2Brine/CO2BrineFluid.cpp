@@ -198,20 +198,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
-{
-#if defined(GEOS_DEVICE_COMPILE)
-  if constexpr (std::is_same_v< CO2BrineFluid< PHASE1, PHASE2, FLASH >, CO2BrineEzrokhiThermalFluid >)
-  {
-    GEOS_THROW( GEOS_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
-                          CO2BrineEzrokhiThermalFluid::catalogName(),
-                          CO2BrinePhillipsThermalFluid::catalogName() ),
-                InputError, getDataContext() );
-  }
-#endif
-}
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
 {
   MultiFluidBase::postInputInitialization();
