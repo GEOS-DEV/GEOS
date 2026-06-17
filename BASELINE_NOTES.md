@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
+Move relperm driver to use new constitutive driver framework
+
 PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
 Implement compositional enthalpy model
 
