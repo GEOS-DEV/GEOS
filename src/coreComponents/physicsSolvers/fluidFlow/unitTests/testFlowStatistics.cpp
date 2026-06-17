@@ -383,6 +383,8 @@ TestSet getTestSet()
                     discretization="singlePhaseTPFA"
                     targetRegions="{ reservoir }" >
 
+      <!-- 'allowNonConverged' is a workaround to speedup the test on some configurations,
+           DO NOT USE IN PRODUCTION WITHOUT CONSIDERATION. -->
       <NonlinearSolverParameters newtonMaxIter="40"
                                  allowNonConverged="1" />
       <LinearSolverParameters directParallel="0" />
@@ -619,11 +621,11 @@ TestSet getTestSet()
                                 discretization="fluidTPFA"
                                 targetRegions="{ reservoir }"
                                 temperature="366.483"
-                                useMass="1"
-                                logLevel="1" >
+                                 useMass="1"
+                                 logLevel="1" >
       <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
-                                 allowNonConverged="1" />
+                                 allowNonConverged="1" /> <!-- workaround for fracture contact convergence in smoke test -->
       <LinearSolverParameters directParallel="0" />
     </CompositionalMultiphaseFVM>
   </Solvers>
@@ -891,11 +893,11 @@ TestSet getTestSet()
                                 discretization="fluidTPFA"
                                 targetRegions="{ reservoir }"
                                 temperature="366.483"
-                                useMass="0"
-                                logLevel="1" >
+                                 useMass="0"
+                                 logLevel="1" >
       <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
-                                 allowNonConverged="1" />
+                                 allowNonConverged="1" /> <!-- workaround for fracture contact convergence in smoke test -->
       <LinearSolverParameters directParallel="0" />
     </CompositionalMultiphaseFVM>
   </Solvers>
