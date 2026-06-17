@@ -298,6 +298,7 @@ if (NOT DEFINED ENABLE_ATS)
     set( ENABLE_ATS true CACHE BOOL "")
 endif()
 
+
 if ( ENABLE_ATS )
     if (NOT DEFINED ATS_WORKING_DIR)
         message( WARNING "ATS_WORKING_DIR is not defined (required for integrated testing system)" )

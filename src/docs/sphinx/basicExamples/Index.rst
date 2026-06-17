@@ -19,8 +19,6 @@ Basic Examples
 
    triaxialDriver/Example
 
-   stressPathDriven/Example
-
 
 
 

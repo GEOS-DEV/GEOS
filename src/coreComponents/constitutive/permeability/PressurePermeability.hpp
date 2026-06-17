@@ -87,7 +87,7 @@ public:
     referencePermeability[0] = m_referencePermeability[k][0][0];
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
-  
+
     switch( m_presModelType )
     {
       case PressureModelType::Exponential:
@@ -219,7 +219,6 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
 
     permeability[i] = perm;
     dPerm_dPressure[i] = perm * pressureDependenceConstants[i];
-    GEOS_LOG_RANK_0( std::setprecision(15) << "i "<<i<<" dPerm_dPressure " << dPerm_dPressure[i]);
   }
 }
 
@@ -239,7 +238,6 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
     real64 const perm = maxPermeability/( 1 + exp( -pressureDependenceConstants[i]*( deltaPressure - pressureOffSet ) ) );
     permeability[i] = perm;
     dPerm_dPressure[i] = perm*perm/maxPermeability*pressureDependenceConstants[i]*exp( -pressureDependenceConstants[i]*deltaPressure );
-    GEOS_LOG_RANK_0( std::setprecision(15) << "i "<<i<<" dPerm_dPressure2 " << dPerm_dPressure[i]);
   }
 }
 

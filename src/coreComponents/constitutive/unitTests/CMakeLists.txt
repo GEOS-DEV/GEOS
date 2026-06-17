@@ -4,6 +4,7 @@ set( gtest_geosx_tests
      testCO2SpycherPruessModels.cpp
      testCO2BrinePVTModels.cpp
      testCompositionalDensity.cpp
+     testCompositionalEnthalpy.cpp
      testCompositionalPhillipsBrineDensity.cpp
      testCompositionalPhillipsBrineViscosity.cpp
      testCompositionalProperties.cpp
@@ -12,6 +13,7 @@ set( gtest_geosx_tests
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testHeatCapacityCoefficients.cpp
      testInvariantImmiscibleFluid.cpp
      testKValueFlashModel.cpp
      testKValueInitialization.cpp
@@ -30,9 +32,9 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash9Comp.cpp
      testNegativeTwoPhaseFlashModel.cpp
      testParticleFluidEnums.cpp
-	 testPrescribedStressPath.cpp
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
+     testRelPermHysteresis.cpp
      testSoreideWhitsonEOSPhaseModel.cpp
      testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp

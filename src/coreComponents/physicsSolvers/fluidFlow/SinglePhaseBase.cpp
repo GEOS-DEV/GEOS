@@ -29,6 +29,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -49,8 +50,6 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
-// LILIANE
-#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 
 namespace geos
 {
@@ -135,7 +134,6 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
   {
     setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
-  
 }
 
 void SinglePhaseBase::initializeAquiferBC() const
@@ -677,7 +675,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
       applyDeltaVolume( subRegion );
 
-      // This should fix NaN density in newly created fracture elements 
+      // This should fix NaN density in newly created fracture elements
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy
@@ -897,18 +895,19 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
   fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                            mesh,
                                            fieldKey,
-                                           [&]( FieldSpecificationBase const & fs,
+                                           [&]( FieldSpecification const & fs,
                                                 string const &,
                                                 SortedArrayView< localIndex const > const & lset,
                                                 ElementSubRegionBase & subRegion,
                                                 string const & )
   {
     // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  boundaryFieldKey );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                             parallelDevicePolicy<> >( fs,
+                                                                       lset,
+                                                                       time_n + dt,
+                                                                       subRegion,
+                                                                       boundaryFieldKey );
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
@@ -1058,17 +1057,18 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1237,29 +1237,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  /*if(m_computePrescribedStressPath)
-  {
-    GEOS_LOG_RANK_0( "AQUI SinglePhaseBase::updateState" ); // AQUI
-    // m_updateStencil is temporary
-    //if(m_updateStencil) prepareStencilWeights( domain );
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                               auto & subRegion )
-      {
-        
-        setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion,
-                              viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
-                          
-        updateHydarulicAperture( subRegion );
-      } );
-    } );
-    // m_updateStencil is temporary
-    //if(m_updateStencil) updateStencilWeights( domain );
-  }*/
-  
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

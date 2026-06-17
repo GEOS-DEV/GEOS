@@ -102,6 +102,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/functions/Utilities.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp
@@ -121,6 +122,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/FlashParameters.hpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
@@ -149,10 +151,10 @@ set( constitutive_headers
      permeability/DamagePermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
+     permeability/BartonBandisPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
      permeability/PressurePermeability.hpp
-     permeability/BartonBandisPermeability.hpp
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp
@@ -268,6 +270,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp
@@ -281,6 +284,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/FlashParameters.cpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp
@@ -300,9 +304,9 @@ set( constitutive_sources
      permeability/DamagePermeability.cpp
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
+     permeability/BartonBandisPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/PressurePermeability.cpp
-     permeability/BartonBandisPermeability.cpp
      permeability/ProppantPermeability.cpp
      permeability/SlipDependentPermeability.cpp
      permeability/WillisRichardsPermeability.cpp
@@ -354,21 +358,6 @@ set( constitutive_sources
    )
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )
-
-if( ENABLE_PVTPackage )
-    set( constitutive_headers
-         ${constitutive_headers}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp )
-
-    set( constitutive_sources
-         ${constitutive_sources}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.cpp
-          )
-
-    add_subdirectory( PVTPackage )
-
-    list( APPEND dependencyList PVTPackage )
-endif()
 
 if (ENABLE_HPCREACT)
     set( constitutive_headers

@@ -65,24 +65,20 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPressureApertureAndNormal( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const & pressure,
-                                                    real64 const & oldHydraulicAperture,
-                                                    real64 const & newHydraulicAperture,
-                                                    arraySlice1d< real64 const > const & normal,
-                                                    real64 const & dHydraulicAperture_dNormalJump ) const override final
+  virtual void updateFromAperture( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture,
+                                   real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
-    GEOS_UNUSED_VAR( pressure, normal );
+    GEOS_UNUSED_VAR( q );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              dHydraulicAperture_dNormalJump,
-             m_permeability[k][q],
-             m_dPerm_dDispJump[k][q] );
-         
+             m_permeability[k][0],
+             m_dPerm_dDispJump[k][0] );
   }
-
 
   GEOS_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
@@ -95,8 +91,8 @@ public:
                                                        real64 const ( &traction )[3] ) const override final
   {
     GEOS_UNUSED_VAR( dispJump, traction, pressure );
-    array1d< real64 > const normal;
-    updateFromPressureApertureAndNormal( k, q, pressure, oldHydraulicAperture, newHydraulicAperture, normal, dHydraulicAperture_dNormalJump );
+
+    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }
 
 private:

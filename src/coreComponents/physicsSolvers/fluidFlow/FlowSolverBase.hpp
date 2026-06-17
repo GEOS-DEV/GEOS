@@ -82,14 +82,9 @@ public:
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
-    
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
-    // LILIANE
-    static constexpr char const * computesPrescribedStressPathString() { return "computesPrescribedStressPath"; }
-    static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
   };
 
   /**
@@ -217,6 +212,23 @@ public:
   void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
 
 protected:
+
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationImpl::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] fieldKey the key of the field specified in the xml file
+   * @param[in] boundaryFieldKey the key of the boundary field
+   */
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const fieldKey,
+                        string const boundaryFieldKey ) const;
 
   /**
    * @brief Increment the cumulative flux from each aquifer
