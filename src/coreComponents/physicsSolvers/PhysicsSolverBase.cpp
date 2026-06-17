@@ -864,13 +864,19 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
-    // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
+      // reset the solver state, since we are restarting the time step
       Timer timer( m_timers.get_inserted( "reset state" ) );
-
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
+
+      // previous attempt failed, we try cuttting the timestep
+      stepDt *= dtCutFactor;
+      m_numTimestepsSinceLastDtCut = 0;
+      GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
+      getIterationStats().updateTimeStepCut();
+      getIterationStats().writeIterationStatsToTable();
     }
 
     // it's the simplest configuration that can be attempted whenever Newton's fails as a last resource.
@@ -929,33 +935,20 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConfigurationLoopConverged )
     {
-      // get out of outer loop
-      break;
-    }
-    else
-    {
-      // cut timestep, go back to beginning of step and restart the Newton loop
-      stepDt *= dtCutFactor;
-      m_numTimestepsSinceLastDtCut = 0;
-      GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
-
-      // notify the solver statistics counter that this is a time step cut
-      getIterationStats().updateTimeStepCut();
-      getIterationStats().writeIterationStatsToTable();
+      break; // we converged, get out of outer loop
     }
   } // end of outer loop (dt chopping strategy)
+  // if not converged & no timestep cut are permitted, we exit the loop
 
   if( !isConfigurationLoopConverged )
   {
-    GEOS_LOG_RANK_0( "Convergence not achieved." );
-
     if( allowNonConverged )
     {
-      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+      GEOS_LOG_RANK_0( "Convergence not achieved. The accepted solution residuals are out of tolerance bounds." );
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext()  );
+      GEOS_ERROR( "Convergence not achieved. Terminating...", getDataContext() );
     }
   }
 
