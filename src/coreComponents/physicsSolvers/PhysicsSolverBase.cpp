@@ -217,17 +217,17 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ElementSubRegionBase & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-      setConstitutiveNames( subRegion );
-    } );
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        setConstitutiveNamesCallSuper( subRegion );
+        setConstitutiveNames( subRegion );
+      } );
 
-  } );
+    } );
 
 }
 
@@ -371,7 +371,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   if( m_nonlinearSolverParameters.m_allowNonConverged )
   {
     GEOS_WARNING_IF( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
-                     "Maximum allowed number of sub-steps reached but non-converged solutions are allowed so the simulation will continue with potentially inaccurate results.",
+                     "Maximum allowed number of sub-steps reached.\nNon-converged solutions are allowed, SIMULATION WILL CONTINUE WITH INACURATE RESULTS.",
                      getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
   }
   else
@@ -1650,12 +1650,12 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & )
-  {
-    if( meshModificationTimestamp < mesh.getModificationTimestamp() )
     {
-      meshModificationTimestamp = mesh.getModificationTimestamp();
-    }
-  } );
+      if( meshModificationTimestamp < mesh.getModificationTimestamp() )
+      {
+        meshModificationTimestamp = mesh.getModificationTimestamp();
+      }
+    } );
   return meshModificationTimestamp;
 }
 
@@ -1705,38 +1705,38 @@ bool PhysicsSolverBase::detectOscillations() const
 
   RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numDofs ),
                                           [=] GEOS_HOST_DEVICE ( localIndex const dof )
-  {
-    bool oscillationDetected = true;
-    for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
     {
-      real64 dxCur = solutionHistory[i][dof];
-      real64 dxPrev = solutionHistory[i-1][dof];
-
-      if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
+      bool oscillationDetected = true;
+      for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
       {
-        oscillationDetected = false;
+        real64 dxCur = solutionHistory[i][dof];
+        real64 dxPrev = solutionHistory[i-1][dof];
+
+        if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
+        {
+          oscillationDetected = false;
         break;   // solution changes are too small
-      }
+        }
 
-      real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
-      if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
-      {
-        oscillationDetected = false;
+        real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
+        if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
+        {
+          oscillationDetected = false;
         break;   // solution changes are not oscillating
-      }
+        }
 
-      if( dxCur * dxPrev > 0 )
-      {
-        oscillationDetected = false;
+        if( dxCur * dxPrev > 0 )
+        {
+          oscillationDetected = false;
         break;   // sign is not oscillating
+        }
       }
-    }
 
-    if( oscillationDetected )
-    {
-      oscillationCount += 1;
-    }
-  } );
+      if( oscillationDetected )
+      {
+        oscillationCount += 1;
+      }
+    } );
 
   real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / MpiWrapper::sum( numDofs );
 
