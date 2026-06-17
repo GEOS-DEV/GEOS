@@ -16,11 +16,11 @@
     "combinations" :
     {
       "vars" : [ "each value in this list will be used to generate kernel template files",
-                 "combinatorally with all other value lists" ]
+                 "combinatorially with all other value lists" ]
     },
     "explicit" : [ "specify a specific combination of the variables to generate",
                    "specify by choosing one value from each variable you want generated",
-                   "and concating them with '#' (this can by modified internally at the",
+                   "and concatenating them with '#' (this can be modified internally at the",
                    "generation call). Duplicate entries are unified internally" ]
   },
 
