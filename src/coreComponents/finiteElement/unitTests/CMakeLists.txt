@@ -4,13 +4,14 @@ set(testSources
     testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.cpp
     testH1_Hexahedron_Lagrange1_GaussLegendre2.cpp
     testH1_Tetrahedron_Lagrange1_Gauss1.cpp
+    testP1_Pyramid_BCD.cpp
     testH1_Wedge_Lagrange1_Gauss6.cpp
     testH1_Pyramid_Lagrange1_Gauss5.cpp
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
     testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
     testQ5_Hexahedron_Lagrange_GaussLobatto.cpp )
 
-set( dependencyList gtest finiteElement ${parallelDeps} )
+set( dependencyList gtest denseLinearAlgebra finiteElement ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )

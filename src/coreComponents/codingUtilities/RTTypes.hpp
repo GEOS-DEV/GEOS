@@ -59,9 +59,10 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOS_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::system::demangleType( val ) << " to " <<
-                 LvArray::system::demangleType< NEW_TYPE >() << " failed." );
-
+  GEOS_ERROR_IF( ptr == nullptr,
+                 GEOS_FMT( "Cast from {} to {} failed.",
+                           LvArray::system::demangleType( val ),
+                           LvArray::system::demangleType< NEW_TYPE >() ) );
   return *ptr;
 }
 
@@ -127,7 +128,7 @@ public:
   /**
    * @brief the regex map type to store and find the regexes by the associated rtTypeName.
    */
-  using RegexMapType = std::map< string, Regex >;
+  using RegexMapType = stdMap< string, Regex >;
 
   /**
    * @brief Custom types are useful to customize the regexes of an existing type. The type name

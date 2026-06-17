@@ -19,7 +19,6 @@
 
 #include "SpringSlider.hpp"
 
-#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
@@ -90,8 +89,9 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
 
       string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
       frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
-      GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
-                                                        this->getDataContext(), subRegion.getDataContext() ) );
+      GEOS_ERROR_IF( frictionLawName.empty(),
+                     GEOS_FMT( "Model not found on subregion {}", subRegion.getName() ),
+                     this->getDataContext(), subRegion.getDataContext() );
     } );
   } );
 }

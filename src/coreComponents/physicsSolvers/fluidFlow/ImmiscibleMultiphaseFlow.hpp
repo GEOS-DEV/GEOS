@@ -21,9 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOW_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"  // For GravityDensityScheme
+
 namespace geos
 {
 
@@ -90,8 +89,8 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( real64 const & time_n,
-                         real64 const & dt,
+  calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                         real64 const & GEOS_UNUSED_PARAM( dt ),
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
@@ -262,23 +261,6 @@ private:
    */
   void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
 
-  /**
-   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
-   * @param[in] time_n the time at the beginning of the step
-   * @param[in] dt the time step
-   * @param[in] mesh the mesh level object
-   * @param[in] logMessage the log message issued by the solver if the bc is called
-   * @param[in] fieldKey the key of the field specified in the xml file
-   * @param[in] boundaryFieldKey the key of the boundary field
-   */
-  template< typename OBJECT_TYPE >
-  void applyFieldValue( real64 const & time_n,
-                        real64 const & dt,
-                        MeshLevel & mesh,
-                        char const logMessage[],
-                        string const fieldKey,
-                        string const boundaryFieldKey ) const;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -314,42 +296,6 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
-
-template< typename OBJECT_TYPE >
-void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
-                                                real64 const & dt,
-                                                MeshLevel & mesh,
-                                                char const logMessage[],
-                                                string const fieldKey,
-                                                string const boundaryFieldKey ) const
-{
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  fsManager.apply< OBJECT_TYPE >( time_n + dt,
-                                  mesh,
-                                  fieldKey,
-                                  [&]( FieldSpecificationBase const & fs,
-                                       string const & setName,
-                                       SortedArrayView< localIndex const > const & lset,
-                                       OBJECT_TYPE & targetGroup,
-                                       string const & )
-  {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
-    }
-
-    // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  targetGroup,
-                                                  boundaryFieldKey );
-  } );
-}
 
 
 } // namespace geos

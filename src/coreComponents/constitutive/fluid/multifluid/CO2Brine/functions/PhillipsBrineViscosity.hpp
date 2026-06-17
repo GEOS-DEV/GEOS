@@ -86,8 +86,6 @@ public:
                           array1d< real64 > const & componentMolarWeight,
                           TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~PhillipsBrineViscosity() override = default;
-
   static string catalogName() { return "PhillipsBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }

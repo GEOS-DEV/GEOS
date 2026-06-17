@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ MediumA, MediumB, Source }"
+      initialDt="1e-12"
+      writeLinearSystem="0"
+      immobilePrimarySpeciesIndices="{ 4 }"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        timeStepIncreaseFactor="1.2"
+        logLevel="2"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        solverType="gmres"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb-0_2_0, cb-2_5_0 }"
+      materialList="{ water, rock_a }"/>
+
+    <CellElementRegion
+      name="MediumA"
+      cellBlocks="{ cb-1_0_0, cb-1_1_0, cb-1_2_0, cb-1_3_0, cb-1_4_0,
+                    cb-2_0_0, cb-2_1_0, cb-2_2_0, cb-2_3_0, cb-2_4_0,
+                    cb-3_0_0, cb-3_1_0, cb-3_2_0, cb-3_3_0, cb-3_4_0,
+                    cb-4_4_0,
+                    cb-5_0_0, cb-5_1_0, cb-5_2_0, cb-5_3_0, cb-5_4_0,
+                    cb-6_1_0, cb-6_2_0 }"
+      materialList="{ water, rock_a }"/>
+
+    <CellElementRegion
+      name="MediumB"
+      cellBlocks="{ cb-4_0_0, cb-4_1_0, cb-4_2_0, cb-4_3_0 }"
+      materialList="{ water, rock_b }"/>
+
+    <CellElementRegion
+      name="Barrier"
+      cellBlocks="{ cb-0_0_0, cb-0_1_0, cb-0_3_0, cb-0_4_0, cb-0_5_0, 
+                    cb-6_0_0, cb-6_3_0, cb-6_4_0, cb-6_5_0,
+                    cb-1_5_0, cb-3_5_0, cb-4_5_0, cb-5_5_0 }"
+      materialList="{}"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      chemicalSystemType="momasEasy"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_a"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityA"
+      permeabilityModelName="rockPermA"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosityA"
+      defaultReferencePorosity="0.25"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermA"
+      permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_b"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityB"
+      permeabilityModelName="rockPermB"/>
+
+    <PressurePorosity
+      name="rockPorosityB"
+      defaultReferencePorosity="0.5"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermB"
+      permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }"/>
+
+  </Constitutive>
+</Problem>

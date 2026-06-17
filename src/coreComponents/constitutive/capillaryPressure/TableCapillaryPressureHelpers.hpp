@@ -42,6 +42,34 @@ struct TableCapillaryPressureHelpers
                                        string const & fullConstitutiveName,
                                        bool const capPresMustBeIncreasing );
 
+  static
+  void validateCapillaryPressureTable( TableFunction const & capPresTable,
+                                       string const & fullConstitutiveName,
+                                       bool const capPresMustBeIncreasing,
+                                       real64 & phaseMax,
+                                       real64 & phaseMin );
+
+  /**
+   * @brief Populates the minimum phase volume fraction for each phase from the ends of the provided tables
+   * @param[in] phaseOrder The ordering of the phases
+   * @param[in] capPresTable The capillary pressure table
+   * @param[out] minPhaseVolumeFraction The list of minimum phase volume fractions for each phase
+   */
+  static void populateMinPhaseVolumeFraction( arraySlice1d< integer const > const phaseOrder,
+                                              TableFunction const & capPresTable,
+                                              arraySlice1d< real64 > minPhaseVolumeFraction );
+
+  /**
+   * @brief Populates the minimum phase volume fraction for each phase from the ends of the provided tables
+   * @param[in] phaseOrder The ordering of the phases
+   * @param[in] capPresTableWettingIntermediate The wetting-intermediate capillary pressure table
+   * @param[in] capPresTableNonWettingIntermediate The non-wetting-intermediate capillary pressure table
+   * @param[out] minPhaseVolumeFraction The list of minimum phase volume fractions for each phase
+   */
+  static void populateMinPhaseVolumeFraction( arraySlice1d< integer const > const phaseOrder,
+                                              TableFunction const & capPresTableWettingIntermediate,
+                                              TableFunction const & capPresTableNonWettingIntermediate,
+                                              arraySlice1d< real64 > minPhaseVolumeFraction );
 };
 
 } // namespace constitutive

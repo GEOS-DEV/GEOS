@@ -39,6 +39,8 @@ void setCylinderParameters( Cylinder & cylinder,
   radius = inputRadius;
   auto & innerRadius = cylinder.getReference< real64 >( Cylinder::viewKeyStruct::innerRadiusString() );
   innerRadius = inputInnerRadius;
+  auto & epsilon = cylinder.getReference< real64 >( SimpleGeometricObjectBase::viewKeyStruct::epsilonString() );
+  epsilon = 1e-12;
 }
 
 TEST( GeometricObjectTests, Cylinder )

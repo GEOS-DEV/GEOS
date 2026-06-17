@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDUPDATES_HPP_
 
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -33,29 +34,31 @@ namespace constitutive
 /**
  * @brief Kernel wrapper class for CompositionalMultiphaseFluid.
  * @tparam FLASH Class describing the phase equilibrium model
- * @tparam PHASE1 Class describing the phase property models for the first phase.
- * @tparam PHASE2 Class describing the phase property models for the second phase.
- * @tparam PHASE3 Class describing the phase property models for the possible third phase.
+ * @tparam PHASES Classes describing the phase property models for each phase.
  */
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+template< typename FLASH, typename ... PHASES >
 class CompositionalMultiphaseFluidUpdates final : public MultiFluidBase::KernelWrapper
 {
 public:
+  using FlashModel = FLASH;
+
+  // Get the number of phases
+  static constexpr integer NUM_PHASES = static_cast< integer >(sizeof...(PHASES));
+
+public:
   CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                        FLASH const & flash,
-                                       PHASE1 const & phase1,
-                                       PHASE2 const & phase2,
-                                       PHASE3 const & phase3,
+                                       PHASES const & ... phases,
                                        arrayView1d< integer const > const & phaseOrder,
                                        arrayView1d< real64 const > const & componentMolarWeight,
                                        bool const useMass,
-                                       MultiFluidBase::PhaseProp::ViewType phaseFrac,
-                                       MultiFluidBase::PhaseProp::ViewType phaseDens,
+                                       MultiFluidBase::PhaseProp::ViewType phaseFraction,
+                                       MultiFluidBase::PhaseProp::ViewType phaseDensity,
                                        MultiFluidBase::PhaseProp::ViewType phaseMassDensity,
-                                       MultiFluidBase::PhaseProp::ViewType phaseVisc,
+                                       MultiFluidBase::PhaseProp::ViewType phaseViscosity,
                                        MultiFluidBase::PhaseProp::ViewType phaseEnthalpy,
                                        MultiFluidBase::PhaseProp::ViewType phaseInternalEnergy,
-                                       MultiFluidBase::PhaseComp::ViewType phaseCompFrac,
+                                       MultiFluidBase::PhaseComp::ViewType phaseComponentFraction,
                                        MultiFluidBase::FluidProp::ViewType totalDensity,
                                        MultiFluidBase::PhaseComp::ViewValueType kValues );
 
@@ -63,13 +66,13 @@ public:
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                        MultiFluidBase::PhaseProp::SliceType const phaseFrac,
-                        MultiFluidBase::PhaseProp::SliceType const phaseDens,
+                        MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+                        MultiFluidBase::PhaseProp::SliceType const phaseDensity,
                         MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
-                        MultiFluidBase::PhaseProp::SliceType const phaseVisc,
+                        MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
                         MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
                         MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
-                        MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
+                        MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
                         MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
 
   GEOS_HOST_DEVICE
@@ -84,15 +87,29 @@ protected:
   void compute( real64 const pressure,
                 real64 const temperature,
                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                MultiFluidBase::PhaseProp::SliceType const phaseFrac,
-                MultiFluidBase::PhaseProp::SliceType const phaseDens,
+                MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+                MultiFluidBase::PhaseProp::SliceType const phaseDensity,
                 MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
-                MultiFluidBase::PhaseProp::SliceType const phaseVisc,
+                MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
                 MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
                 MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
-                MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
+                MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
                 MultiFluidBase::FluidProp::SliceType const totalDensity,
                 MultiFluidBase::PhaseComp::SliceType::ValueType const & kValues ) const;
+
+  /**
+   * @brief Helper to unpack phase property models and compute phase densities and viscosities.
+   */
+  template< std::size_t... Is >
+  GEOS_HOST_DEVICE
+  void computePhaseProperties( real64 const pressure,
+                               real64 const temperature,
+                               MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
+                               MultiFluidBase::PhaseProp::SliceType const phaseDensity,
+                               MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
+                               MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
+                               MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
+                               std::index_sequence< Is... > ) const;
 
   /**
    * @brief Convert derivatives from phase mole fraction to total mole fraction
@@ -116,6 +133,12 @@ protected:
   GEOS_FORCE_INLINE
   static void setZero( real64 & val ){ val = 0.0; }
 
+  GEOS_HOST_DEVICE
+  static constexpr bool isThermalType()
+  {
+    return (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
+  }
+
 private:
   // The component properties
   compositional::ComponentProperties::KernelWrapper m_componentProperties;
@@ -126,68 +149,62 @@ private:
   // The ordering of phases
   arrayView1d< integer const > const m_phaseOrder;
 
-  // Phase model kernel wrappers
-  typename PHASE1::KernelWrapper m_phase1;
-  typename PHASE2::KernelWrapper m_phase2;
-  typename PHASE3::KernelWrapper m_phase3;
+  // Phase model kernel wrappers stored in a tuple
+  camp::tuple< typename PHASES::KernelWrapper... > m_phases;
 
   // Backup variables
   MultiFluidBase::PhaseComp::ViewValueType m_kValues;
 };
 
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
+template< typename FLASH, typename ... PHASES >
+CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::
 CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                      FLASH const & flash,
-                                     PHASE1 const & phase1,
-                                     PHASE2 const & phase2,
-                                     PHASE3 const & phase3,
+                                     PHASES const &... phases,
                                      arrayView1d< integer const > const & phaseOrder,
                                      arrayView1d< real64 const > const & componentMolarWeight,
                                      bool const useMass,
-                                     MultiFluidBase::PhaseProp::ViewType phaseFrac,
-                                     MultiFluidBase::PhaseProp::ViewType phaseDens,
+                                     MultiFluidBase::PhaseProp::ViewType phaseFraction,
+                                     MultiFluidBase::PhaseProp::ViewType phaseDensity,
                                      MultiFluidBase::PhaseProp::ViewType phaseMassDensity,
-                                     MultiFluidBase::PhaseProp::ViewType phaseVisc,
+                                     MultiFluidBase::PhaseProp::ViewType phaseViscosity,
                                      MultiFluidBase::PhaseProp::ViewType phaseEnthalpy,
                                      MultiFluidBase::PhaseProp::ViewType phaseInternalEnergy,
-                                     MultiFluidBase::PhaseComp::ViewType phaseCompFrac,
+                                     MultiFluidBase::PhaseComp::ViewType phaseComponentFraction,
                                      MultiFluidBase::FluidProp::ViewType totalDensity,
                                      MultiFluidBase::PhaseComp::ViewValueType kValues ):
   MultiFluidBase::KernelWrapper( componentMolarWeight,
                                  useMass,
-                                 std::move( phaseFrac ),
-                                 std::move( phaseDens ),
+                                 std::move( phaseFraction ),
+                                 std::move( phaseDensity ),
                                  std::move( phaseMassDensity ),
-                                 std::move( phaseVisc ),
+                                 std::move( phaseViscosity ),
                                  std::move( phaseEnthalpy ),
                                  std::move( phaseInternalEnergy ),
-                                 std::move( phaseCompFrac ),
+                                 std::move( phaseComponentFraction ),
                                  std::move( totalDensity ) ),
   m_componentProperties( componentProperties.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() ),
   m_phaseOrder( phaseOrder ),
-  m_phase1( phase1.createKernelWrapper() ),
-  m_phase2( phase2.createKernelWrapper() ),
-  m_phase3( phase3.createKernelWrapper() ),
+  m_phases( phases.createKernelWrapper()... ),
   m_kValues( kValues )
 {}
 
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+template< typename FLASH, typename ... PHASES >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
+CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
   real64 const pressure,
   real64 const temperature,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-  MultiFluidBase::PhaseProp::SliceType const phaseFrac,
-  MultiFluidBase::PhaseProp::SliceType const phaseDens,
+  MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+  MultiFluidBase::PhaseProp::SliceType const phaseDensity,
   MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
-  MultiFluidBase::PhaseProp::SliceType const phaseVisc,
+  MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
   MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
   MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
-  MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
+  MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
   MultiFluidBase::FluidProp::SliceType const totalDensity ) const
 {
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -199,40 +216,89 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   compute( pressure,
            temperature,
            composition,
-           phaseFrac,
-           phaseDens,
+           phaseFraction,
+           phaseDensity,
            phaseMassDensity,
-           phaseVisc,
+           phaseViscosity,
            phaseEnthalpy,
            phaseInternalEnergy,
-           phaseCompFrac,
+           phaseComponentFraction,
            totalDensity,
            kValues[0][0] );
 }
 
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+template< typename FLASH, typename ... PHASES >
+template< std::size_t... Is >
+GEOS_HOST_DEVICE
+void CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::computePhaseProperties(
+  real64 const pressure,
+  real64 const temperature,
+  MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
+  MultiFluidBase::PhaseProp::SliceType const phaseDensity,
+  MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
+  MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
+  MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
+  std::index_sequence< Is... > ) const
+{
+  // Density computations
+  ( camp::get< Is >( m_phases ).density.compute(
+      m_componentProperties,
+      pressure,
+      temperature,
+      phaseComponentFraction.value[m_phaseOrder[Is]].toSliceConst(),
+      phaseDensity.value[m_phaseOrder[Is]],
+      phaseDensity.derivs[m_phaseOrder[Is]],
+      phaseMassDensity.value[m_phaseOrder[Is]],
+      phaseMassDensity.derivs[m_phaseOrder[Is]],
+      m_useMass ), ... );
+
+  // Viscosity computations
+  ( camp::get< Is >( m_phases ).viscosity.compute(
+      m_componentProperties,
+      pressure,
+      temperature,
+      phaseComponentFraction.value[m_phaseOrder[Is]].toSliceConst(),
+      phaseMassDensity.value[m_phaseOrder[Is]],
+      phaseMassDensity.derivs[m_phaseOrder[Is]].toSliceConst(),
+      phaseViscosity.value[m_phaseOrder[Is]],
+      phaseViscosity.derivs[m_phaseOrder[Is]],
+      m_useMass ), ... );
+
+  if constexpr (isThermalType())
+  {
+    // Enthalpy computations
+    ( camp::get< Is >( m_phases ).enthalpy.compute(
+        m_componentProperties,
+        pressure,
+        temperature,
+        phaseComponentFraction.value[m_phaseOrder[Is]].toSliceConst(),
+        phaseEnthalpy.value[m_phaseOrder[Is]],
+        phaseEnthalpy.derivs[m_phaseOrder[Is]],
+        m_useMass ), ... );
+  }
+}
+
+template< typename FLASH, typename ... PHASES >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
+CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
   real64 const pressure,
   real64 const temperature,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-  MultiFluidBase::PhaseProp::SliceType const phaseFrac,
-  MultiFluidBase::PhaseProp::SliceType const phaseDens,
+  MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+  MultiFluidBase::PhaseProp::SliceType const phaseDensity,
   MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
-  MultiFluidBase::PhaseProp::SliceType const phaseVisc,
+  MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
   MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
   MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
-  MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
+  MultiFluidBase::PhaseComp::SliceType const phaseComponentFraction,
   MultiFluidBase::FluidProp::SliceType const totalDensity,
   MultiFluidBase::PhaseComp::SliceType::ValueType const & kValues ) const
 {
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumDof = MultiFluidBase::MAX_NUM_COMPONENTS + 2;
-  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
-  integer const numPhase = numPhases();
   integer const numDof = numComp + 2;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
@@ -261,109 +327,66 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                    temperature,
                    compMoleFrac.toSliceConst(),
                    kValues,
-                   phaseFrac,
-                   phaseCompFrac );
+                   phaseFraction,
+                   phaseComponentFraction );
 
-  // 3. Calculate the phase densities
-  m_phase1.density.compute( m_componentProperties,
-                            pressure,
-                            temperature,
-                            phaseCompFrac.value[m_phaseOrder[0]].toSliceConst(),
-                            phaseDens.value[m_phaseOrder[0]],
-                            phaseDens.derivs[m_phaseOrder[0]],
-                            phaseMassDensity.value[m_phaseOrder[0]],
-                            phaseMassDensity.derivs[m_phaseOrder[0]],
-                            m_useMass );
-  m_phase2.density.compute( m_componentProperties,
-                            pressure,
-                            temperature,
-                            phaseCompFrac.value[m_phaseOrder[1]].toSliceConst(),
-                            phaseDens.value[m_phaseOrder[1]],
-                            phaseDens.derivs[m_phaseOrder[1]],
-                            phaseMassDensity.value[m_phaseOrder[1]],
-                            phaseMassDensity.derivs[m_phaseOrder[1]],
-                            m_useMass );
-  if constexpr (2 < FLASH::KernelWrapper::getNumberOfPhases())
-  {
-    m_phase3.density.compute( m_componentProperties,
-                              pressure,
-                              temperature,
-                              phaseCompFrac.value[m_phaseOrder[2]].toSliceConst(),
-                              phaseDens.value[m_phaseOrder[2]],
-                              phaseDens.derivs[m_phaseOrder[2]],
-                              phaseMassDensity.value[m_phaseOrder[2]],
-                              phaseMassDensity.derivs[m_phaseOrder[2]],
-                              m_useMass );
-  }
+  // 3. Calculate phase properties: density, viscosity and enthalpy
+  computePhaseProperties( pressure,
+                          temperature,
+                          phaseComponentFraction,
+                          phaseDensity,
+                          phaseMassDensity,
+                          phaseViscosity,
+                          phaseEnthalpy,
+                          std::make_index_sequence< NUM_PHASES >{} );
 
-  // 4. Calculate the phase viscosities
-  m_phase1.viscosity.compute( m_componentProperties,
-                              pressure,
-                              temperature,
-                              phaseCompFrac.value[m_phaseOrder[0]].toSliceConst(),
-                              phaseMassDensity.value[m_phaseOrder[0]],
-                              phaseMassDensity.derivs[m_phaseOrder[0]].toSliceConst(),
-                              phaseVisc.value[m_phaseOrder[0]],
-                              phaseVisc.derivs[m_phaseOrder[0]],
-                              m_useMass );
-  m_phase2.viscosity.compute( m_componentProperties,
-                              pressure,
-                              temperature,
-                              phaseCompFrac.value[m_phaseOrder[1]].toSliceConst(),
-                              phaseMassDensity.value[m_phaseOrder[1]],
-                              phaseMassDensity.derivs[m_phaseOrder[1]].toSliceConst(),
-                              phaseVisc.value[m_phaseOrder[1]],
-                              phaseVisc.derivs[m_phaseOrder[1]],
-                              m_useMass );
-  if constexpr (2 < FLASH::KernelWrapper::getNumberOfPhases())
-  {
-    m_phase3.viscosity.compute( m_componentProperties,
-                                pressure,
-                                temperature,
-                                phaseCompFrac.value[m_phaseOrder[2]].toSliceConst(),
-                                phaseMassDensity.value[m_phaseOrder[2]],
-                                phaseMassDensity.derivs[m_phaseOrder[2]].toSliceConst(),
-                                phaseVisc.value[m_phaseOrder[2]],
-                                phaseVisc.derivs[m_phaseOrder[2]],
-                                m_useMass );
-  }
-
-  // 5. Convert derivatives from phase composition to total composition
+  // 4. Convert derivatives from phase composition to total composition
   stackArray1d< real64, maxNumDof > workSpace( numDof );
-  for( integer ip = 0; ip < FLASH::KernelWrapper::getNumberOfPhases(); ++ip )
+  for( integer ip = 0; ip < NUM_PHASES; ++ip )
   {
     convertDerivativesToTotalMoleFraction( numComp,
-                                           phaseCompFrac.derivs[ip].toSliceConst(),
-                                           phaseDens.derivs[ip],
+                                           phaseComponentFraction.derivs[ip].toSliceConst(),
+                                           phaseDensity.derivs[ip],
                                            workSpace );
     convertDerivativesToTotalMoleFraction( numComp,
-                                           phaseCompFrac.derivs[ip].toSliceConst(),
+                                           phaseComponentFraction.derivs[ip].toSliceConst(),
                                            phaseMassDensity.derivs[ip],
                                            workSpace );
     convertDerivativesToTotalMoleFraction( numComp,
-                                           phaseCompFrac.derivs[ip].toSliceConst(),
-                                           phaseVisc.derivs[ip],
+                                           phaseComponentFraction.derivs[ip].toSliceConst(),
+                                           phaseViscosity.derivs[ip],
                                            workSpace );
+    if constexpr (isThermalType())
+    {
+      convertDerivativesToTotalMoleFraction( numComp,
+                                             phaseComponentFraction.derivs[ip].toSliceConst(),
+                                             phaseEnthalpy.derivs[ip],
+                                             workSpace );
+    }
+  }
+
+  // 5. Calculate the internal energy
+  if constexpr (isThermalType())
+  {
+    computeInternalEnergy( pressure,
+                           phaseFraction,
+                           phaseMassDensity,
+                           phaseEnthalpy,
+                           phaseInternalEnergy );
   }
 
   // 6. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
   {
-    real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
+    real64 phaseMolecularWeight[NUM_PHASES]{};
+    real64 dPhaseMolecularWeight[NUM_PHASES][maxNumDof]{};
 
     arrayView1d< real64 const > const & componentMolarWeight = m_componentProperties.m_componentMolarWeight;
 
-    for( integer ip = 0; ip < numPhase; ++ip )
+    for( integer ip = 0; ip < NUM_PHASES; ++ip )
     {
-      phaseMolecularWeight[ip] = 0.0;
-      for( integer kc = 0; kc < numDof; ++kc )
-      {
-        dPhaseMolecularWeight[ip][kc] = 0.0;
-      }
-
-      auto const & phaseComposition = phaseCompFrac.value[ip].toSliceConst();
-      auto const & dPhaseComposition = phaseCompFrac.derivs[ip].toSliceConst();
+      auto const & phaseComposition = phaseComponentFraction.value[ip].toSliceConst();
+      auto const & dPhaseComposition = phaseComponentFraction.derivs[ip].toSliceConst();
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -374,29 +397,40 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
         }
       }
     }
+
     convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                             phaseMolecularWeight,
                             dPhaseMolecularWeight,
-                            phaseFrac,
-                            phaseCompFrac,
-                            phaseDens.derivs,
-                            phaseVisc.derivs,
+                            phaseFraction,
+                            phaseComponentFraction,
+                            phaseMassDensity.derivs,
+                            phaseViscosity.derivs,
                             phaseEnthalpy.derivs,
                             phaseInternalEnergy.derivs );
+
+    // Molar density equals mass density
+    for( integer ip = 0; ip < NUM_PHASES; ++ip )
+    {
+      phaseDensity.value[ip] = phaseMassDensity.value[ip];
+      for( integer idof = 0; idof < numDof; ++idof )
+      {
+        phaseDensity.derivs( ip, idof ) = phaseMassDensity.derivs( ip, idof );
+      }
+    }
   }
 
   // 7. Compute total fluid mass/molar density and derivatives
 
-  computeTotalDensity( phaseFrac,
-                       phaseDens,
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
                        totalDensity );
 }
 
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+template< typename FLASH, typename ... PHASES >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
+CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::
 update( localIndex const k,
         localIndex const q,
         real64 const pressure,
@@ -417,11 +451,11 @@ update( localIndex const k,
            m_kValues[k][q] );
 }
 
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+template< typename FLASH, typename ... PHASES >
 template< int USD1, int USD2 >
 GEOS_HOST_DEVICE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
+CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::
 convertDerivativesToTotalMoleFraction( integer const numComps,
                                        arraySlice2d< real64 const, USD1 > const & dPhaseComposition,
                                        arraySlice1d< real64, USD2 > const & dProperty,

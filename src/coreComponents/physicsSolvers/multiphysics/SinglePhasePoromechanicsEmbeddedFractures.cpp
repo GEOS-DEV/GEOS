@@ -19,7 +19,6 @@
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
@@ -28,7 +27,6 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 
 
@@ -42,12 +40,9 @@ using namespace fields;
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
   SinglePhasePoromechanics( name, parent )
-{
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-}
+{ }
 
-SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
-{}
+SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures() = default;
 
 void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
 {
@@ -60,7 +55,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -70,9 +65,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::postInputInitialization()
   Base::postInputInitialization();
 
   GEOS_ERROR_IF( solidMechanicsSolver()->useStaticCondensation(),
-                 GEOS_FMT( "{}: {} = 1 in {} solver named {} is not supported for {}",
-                           this->getName(), SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
-                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ));
+                 GEOS_FMT( "{} = 1 in {} solver named {} is not supported for {}",
+                           SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
+                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ),
+                 getDataContext() );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -126,62 +122,37 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition c
                           meshTargets );
 }
 
-void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
-                                                             DofManager & dofManager,
-                                                             CRSMatrix< real64, globalIndex > & localMatrix,
-                                                             ParallelVector & rhs,
-                                                             ParallelVector & solution,
-                                                             bool const setSparsity )
+void SinglePhasePoromechanicsEmbeddedFractures::setSparsityPattern( DomainPartition & domain,
+                                                                    DofManager & dofManager,
+                                                                    CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                    SparsityPattern< globalIndex > & pattern )
 {
-  // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
-
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( setSparsity );
-
-  dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
   // Set the sparsity pattern without the Kwu and Kuw blocks.
   SparsityPattern< globalIndex > patternDiag;
   dofManager.setSparsityPattern( patternDiag );
 
   // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  array1d< localIndex > rowLengths( patternDiag.numRows());
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
   // Add the number of nonzeros induced by coupling jump-pm
-  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
   // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
   }
 
-  dofManager.printFieldInfo();
-
   // Add the nonzeros from coupling
-  addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.setName( this->getName() + "/localMatrix" );
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  addCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -507,13 +478,15 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       arrayView2d< real64 > const & fractureContactTraction = subRegion.template getField< contact::traction >();
 
+      arrayView1d< integer > const & fractureState = subRegion.template getField< contact::fractureState >();
+
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< flow::pressure >();
 
       string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
       HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
-      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      string const & porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
@@ -538,7 +511,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
                                               aperture,
                                               oldHydraulicAperture,
                                               hydraulicAperture,
-                                              fractureContactTraction );
+                                              fractureContactTraction,
+                                              fractureState );
 
         } );
       } );

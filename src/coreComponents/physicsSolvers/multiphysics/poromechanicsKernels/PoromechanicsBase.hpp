@@ -150,13 +150,8 @@ public:
       localPressureDofIndex{ 0 }
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[numNodesPerElem][3];
-#endif
 
     // Storage for displacements
 
@@ -191,6 +186,9 @@ public:
     real64 temperature{}; // for stress computation
     /// Delta temperature since last time step
     real64 deltaTemperatureFromLastStep{}; // for porosity update
+    /// Delta temperature from reference state
+    real64 deltaTemperature{}; // for stress computation
+
 
     // Storage for residual and degrees of freedom
 
@@ -224,7 +222,7 @@ public:
 
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
     localIndex const numSupportPoints =
-      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+      m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
     for( localIndex a=0; a<numSupportPoints; ++a )
     {
@@ -232,9 +230,7 @@ public:
 
       for( integer i = 0; i < numDims; ++i )
       {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[a][i] = m_X[localNodeIndex][i];
-#endif
         stack.u_local[a][i] = m_disp[localNodeIndex][i];
         stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
         stack.localRowDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;

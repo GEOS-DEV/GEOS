@@ -19,7 +19,6 @@
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"

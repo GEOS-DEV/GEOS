@@ -61,69 +61,74 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   arrayView2d< real64 const, compflow::USD_COMP > const composition = compositionValues;
 
-  // perform fluid update using table (P,T) and save resulting total density, etc.
-  // note: column indexing should be kept consistent with output file header below.
-
   bool const outputMassDensity = (m_outputMassDensity != 0);
   bool const outputCompressibility = (m_outputCompressibility != 0);
   bool const outputPhaseComposition = (m_outputPhaseComposition != 0);
+  bool const outputEnthalpy = fluid.isThermal();
 
-  integer const numSteps = m_numSteps;
-  using ExecPolicy = typename FLUID_TYPE::exec_policy;
-  forAll< ExecPolicy >( composition.size( 0 ),
-                        [outputMassDensity, outputCompressibility, outputPhaseComposition,
-                         numPhases, numComponents, numSteps, kernelWrapper,
-                         table, composition]
-                        GEOS_HOST_DEVICE ( localIndex const i )
+  integer const numRows = m_table.size( 0 );
+
+  forAll< parallelDevicePolicy<> >( numRows,
+                                    [outputMassDensity, outputCompressibility, outputPhaseComposition, outputEnthalpy,
+                                     numPhases, numComponents, kernelWrapper, table, composition]
+                                    GEOS_HOST_DEVICE ( localIndex const step )
   {
     // Index for start of phase properties
-    integer const PHASE_FRACTION = outputCompressibility ? TEMP + 3 : TEMP + 2;
+    integer const PHASE_FRACTION = TEMP + 2 + (outputCompressibility ? 1 : 0);
     integer const PHASE_DENSITY = PHASE_FRACTION + numPhases;
-    integer const PHASE_VISCOSITY = outputMassDensity ? PHASE_DENSITY + 2*numPhases : PHASE_DENSITY + numPhases;
-    integer const PHASE_COMP = PHASE_VISCOSITY + numPhases;
+    integer const PHASE_MASS_DENSITY = PHASE_DENSITY + numPhases;
+    integer const PHASE_VISCOSITY = PHASE_MASS_DENSITY + (outputMassDensity ? numPhases : 0);
+    integer const PHASE_ENTHALPY = PHASE_VISCOSITY + numPhases;
+    integer const PHASE_COMP = PHASE_ENTHALPY + (outputEnthalpy ? numPhases : 0);
 
     // Temporary space for phase mole fractions
     stackArray1d< real64, constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
 
-    for( integer n = 0; n <= numSteps; ++n )
+    real64 const pressure = table( step, PRES );
+    real64 const temperature = table( step, TEMP );
+    kernelWrapper.update( step, 0, pressure, temperature, composition[0] );
+
+    table( step, TEMP + 1 ) = kernelWrapper.totalDensity()( step, 0 );
+
+    if( outputCompressibility )
     {
-      kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
+      table( step, TEMP + 2 ) = kernelWrapper.totalCompressibility( step, 0 );
+    }
 
-      if( outputCompressibility )
-      {
-        table( n, TEMP + 2 ) = kernelWrapper.totalCompressibility( i, 0 );
-      }
-
+    for( integer p = 0; p < numPhases; ++p )
+    {
+      table( step, PHASE_FRACTION + p ) = kernelWrapper.phaseFraction()( step, 0, p );
+      table( step, PHASE_DENSITY + p ) = kernelWrapper.phaseDensity()( step, 0, p );
+      table( step, PHASE_VISCOSITY + p ) = kernelWrapper.phaseViscosity()( step, 0, p );
+    }
+    if( outputMassDensity )
+    {
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, PHASE_FRACTION + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-        table( n, PHASE_DENSITY + p ) = kernelWrapper.phaseDensity()( i, 0, p );
-        table( n, PHASE_VISCOSITY + p ) = kernelWrapper.phaseViscosity()( i, 0, p );
+        table( step, PHASE_MASS_DENSITY + p ) = kernelWrapper.phaseMassDensity()( step, 0, p );
       }
-      if( outputMassDensity )
+    }
+    if( outputEnthalpy )
+    {
+      for( integer p = 0; p < numPhases; ++p )
       {
-        for( integer p = 0; p < numPhases; ++p )
-        {
-          table( n, PHASE_DENSITY + numPhases + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
-        }
+        table( step, PHASE_ENTHALPY + p ) = kernelWrapper.phaseEnthalpy()( step, 0, p );
       }
-      if( outputPhaseComposition )
+    }
+    if( outputPhaseComposition )
+    {
+      for( integer p = 0; p < numPhases; ++p )
       {
-        for( integer p = 0; p < numPhases; ++p )
-        {
-          integer const compStartIndex = PHASE_COMP + p * numComponents;
+        integer const compStartIndex = PHASE_COMP + p * numComponents;
 
-          kernelWrapper.phaseCompMoleFraction( i, 0, p, phaseComposition );
-          for( integer ic = 0; ic < numComponents; ++ic )
-          {
-            table( n, compStartIndex + ic ) = phaseComposition[ic];
-          }
+        kernelWrapper.phaseCompMoleFraction( step, 0, p, phaseComposition );
+        for( integer ic = 0; ic < numComponents; ++ic )
+        {
+          table( step, compStartIndex + ic ) = phaseComposition[ic];
         }
       }
     }
   } );
-
 }
 
 }

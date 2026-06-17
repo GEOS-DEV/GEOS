@@ -26,7 +26,7 @@
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
-#include <krylov.h>
+#include <HYPRE_krylov.h>
 
 namespace geos
 {
@@ -78,7 +78,7 @@ void createHypreGMRES( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  HYPRE_Int logLevel = (params.logLevel >= 3) ? 2 : 0;
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 3 : 0;
 
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, logLevel ) ); // print iteration info
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */
@@ -187,7 +187,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+      GEOS_ERROR( GEOS_FMT( "Solver type not supported in hypre interface: {}", params.solverType ) );
     }
   }
 }
@@ -259,7 +259,7 @@ void HypreSolver::solve( HypreVector const & rhs,
     m_result.status = result ? LinearSolverResult::Status::NotConverged : LinearSolverResult::Status::Success;
   }
 
-  // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
+  // Clear error code to avoid GEOS from crashing if Krylov method did not converge
   GEOS_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
   // Get final residual norm
@@ -290,6 +290,8 @@ void HypreSolver::solve( HypreVector const & rhs,
 void HypreSolver::clear()
 {
   Base::clear();
+  m_precond.clear();
+
   if( m_solver )
   {
     GEOS_LAI_CHECK_ERROR( m_solver->destroy( m_solver->ptr ) );

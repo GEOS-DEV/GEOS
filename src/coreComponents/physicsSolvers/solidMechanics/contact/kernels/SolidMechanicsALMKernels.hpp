@@ -260,8 +260,9 @@ public:
 
     real64 tractionNew[3];
 
-    integer fractureState;
-    m_constitutiveUpdate.updateTraction( m_oldDispJump[k],
+    integer fractureState( fields::contact::FractureState::Stick );
+    m_constitutiveUpdate.updateTraction( k,
+                                         m_oldDispJump[k],
                                          m_dispJump[k],
                                          m_penalty[k],
                                          m_traction[k],
@@ -421,7 +422,7 @@ struct ComputeTractionKernel
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      contactWrapper.updateTractionOnly( dispJump[k], deltaDispJump[k],
+      contactWrapper.updateTractionOnly( k, dispJump[k], deltaDispJump[k],
                                          penalty[k], traction[k], tractionNew[k] );
 
     } );

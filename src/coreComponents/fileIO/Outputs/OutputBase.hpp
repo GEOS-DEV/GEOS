@@ -21,49 +21,10 @@
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"  // For logInfo namespace
 #include "common/Timer.hpp"
 
 namespace geos
 {
-
-namespace logInfo
-{
-/**
- * @brief Base timer category for output operations
- * @details Provides configuration for logging output operation timing information
- */
-struct OutputTimers
-{
-  /**
-   * @brief Get the description of this timer
-   * @return String view containing the timer description
-   */
-  static std::string_view getDescription() { return "Output timing information"; }
-
-  /**
-   * @brief Get the minimum log level for this timer
-   * @return Integer representing the minimum log level
-   */
-  static constexpr int getMinLogLevel() { return 1; }
-};
-
-/**
- * @brief Base interface for specific output type timers
- * @details Each output type (VTK, Silo, etc.) implements this interface to provide
- *          its own timing category. This is used in conjunction with OutputTimers:
- *          - OutputTimerBase: For polymorphic behavior in derived output classes
- *          - OutputTimers: For the general output timing logging infrastructure
- */
-struct OutputTimerBase
-{
-  /**
-   * @brief Get the description of this timer
-   * @return String view containing the timer description
-   */
-  virtual std::string_view getDescription() const = 0;
-};
-}
 
 /**
  * @class OutputBase
@@ -115,7 +76,6 @@ public:
   struct viewKeysStruct
   {
     static constexpr auto childDirectoryString = "childDirectory";
-    static constexpr auto parallelThreadsString = "parallelThreads";
   } outputBaseViewKeys;
   /// @endcond
 
@@ -124,14 +84,6 @@ public:
    * @return The directory path
    **/
   string childDirectory() const { return m_childDirectory; }
-
-  /**
-   * @brief Get the number of parallel threads to use to write plotfiles
-   * @return The number of threads
-   **/
-  integer parallelThreads() const { return m_parallelThreads; }
-
-
 
 protected:
   /**
@@ -144,12 +96,6 @@ protected:
   /// Timer used to track duration of file writing operations for this specific output type
   std::chrono::system_clock::duration m_outputTimer;
 
-  /**
-   * @brief Get the timer category for this output type
-   * @return Reference to the output timer base for timing statistics
-   */
-  virtual logInfo::OutputTimerBase const & getTimerCategory() const = 0;
-
   /// @copydoc geos::ExecutableGroup::cleanup
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
@@ -159,7 +105,6 @@ protected:
 
 private:
   string m_childDirectory;
-  integer m_parallelThreads;
 
 };
 

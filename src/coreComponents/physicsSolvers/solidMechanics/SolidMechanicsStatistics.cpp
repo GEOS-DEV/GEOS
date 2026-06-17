@@ -21,7 +21,6 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -33,7 +32,6 @@
 namespace geos
 {
 
-using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
@@ -168,7 +166,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
     TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
     TableTextFormatter mechanicsFormatter( mechanicsLayout );
-    mechanicsFormatter.toString( mechanicsData );
+    GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ) );
   }
 
 

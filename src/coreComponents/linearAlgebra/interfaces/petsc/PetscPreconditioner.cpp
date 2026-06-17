@@ -30,7 +30,7 @@ namespace
 {
 
 void convertRigidBodyModes( LinearSolverParameters const & params,
-                            array1d< PetscVector > const & nearNullKernel,
+                            arrayView1d< PetscVector const > nearNullKernel,
                             MatNullSpace & nullsp )
 {
   if( nearNullKernel.empty() )
@@ -59,10 +59,10 @@ void convertRigidBodyModes( LinearSolverParameters const & params,
 
 PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, PCILU },
-    { LinearSolverParameters::PreconditionerType::ic, PCICC },
+    { LinearSolverParameters::PreconditionerType::ick, PCICC },
     { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PCJACOBI },
     { LinearSolverParameters::PreconditionerType::fgs, PCSOR },
@@ -71,7 +71,8 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
     { LinearSolverParameters::PreconditionerType::l1sgs, PCSOR },
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Petsc smoother option: {}", type ) );
   return typeMap.at( type );
 }
 
@@ -144,14 +145,6 @@ void createPetscAMG( LinearSolverParameters const & params,
   // Default options only for the moment
   GEOS_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
 
-  if( !params.isSymmetric )
-  {
-    // Usually GEOSX matrix is not symmetric, but GAMG is designed for symmetric matrices
-    // In case of a general matrix, we need to compute a symmetric graph (slightly heavier
-    // than the default, but necessary in case of asymmetric matrices).
-    GEOS_LAI_CHECK_ERROR( PCGAMGSetSymGraph( precond, PETSC_TRUE ) );
-  }
-
   // Add user-defined null space / rigid body mode support
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes && nullsp )
   {
@@ -166,6 +159,9 @@ void createPetscAMG( LinearSolverParameters const & params,
 
   // Set max number of levels
   GEOS_LAI_CHECK_ERROR( PCGAMGSetNlevels( precond, params.amg.maxLevels ) );
+
+  // Set coarse grid max size (coarsening will stop once this limit is reached)
+  GEOS_LAI_CHECK_ERROR( PCGAMGSetCoarseEqLim( precond, params.amg.maxCoarseSize ) );
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
@@ -251,7 +247,7 @@ PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params )
 { }
 
 PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params,
-                                          array1d< Vector > const & nearNullKernel )
+                                          arrayView1d< Vector const > nearNullKernel )
   : Base{},
   m_params( std::move( params ) ),
   m_precond{},
@@ -327,7 +323,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       case LinearSolverParameters::PreconditionerType::bgs:
       case LinearSolverParameters::PreconditionerType::sgs:
       case LinearSolverParameters::PreconditionerType::iluk:
-      case LinearSolverParameters::PreconditionerType::ic:
+      case LinearSolverParameters::PreconditionerType::ick:
       {
         createPetscSmoother( m_params, m_precond );
         break;
@@ -339,7 +335,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       }
       default:
       {
-        GEOS_ERROR( "Preconditioner type not supported in PETSc interface: " << m_params.preconditionerType );
+        GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in PETSc interface: {}", m_params.preconditionerType ) );
       }
     }
   }

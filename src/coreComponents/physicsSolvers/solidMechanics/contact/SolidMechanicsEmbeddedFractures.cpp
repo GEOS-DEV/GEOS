@@ -21,9 +21,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -59,13 +58,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   getWrapperBase( viewKeyStruct::contactPenaltyStiffnessString() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
-
-  addLogLevel< logInfo::LinearSolverConfiguration >();
-}
-
-SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
-{
-  // TODO Auto-generated destructor stub
 }
 
 void SolidMechanicsEmbeddedFractures::postInputInitialization()
@@ -97,8 +89,8 @@ void SolidMechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                          EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -117,8 +109,8 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
-  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  ContactSolverBase::initializePostInitialConditionsPreSubGroups();
+  updateState( getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -176,7 +168,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
     FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
     constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
       using FrictionType = TYPEOFREF( castedFrictionLaw );
@@ -237,66 +229,43 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   }
 }
 
-void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
-                                                   DofManager & dofManager,
-                                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                                   ParallelVector & rhs,
-                                                   ParallelVector & solution,
-                                                   bool const setSparsity )
+void SolidMechanicsEmbeddedFractures::setSparsityPattern( DomainPartition & domain,
+                                                          DofManager & dofManager,
+                                                          CRSMatrix< real64, globalIndex > & localMatrix,
+                                                          SparsityPattern< globalIndex > & pattern )
 {
-  GEOS_MARK_FUNCTION;
-
-  if( !m_useStaticCondensation )
+  if( m_useStaticCondensation )
   {
-
-    GEOS_UNUSED_VAR( setSparsity );
-
-    dofManager.setDomain( domain );
-    setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
-    // Set the sparsity pattern without the Kwu and Kuw blocks.
-    SparsityPattern< globalIndex > patternDiag;
-    dofManager.setSparsityPattern( patternDiag );
-
-    // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternDiag.numRows() );
-    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-    {
-      rowLengths[localRow] = patternDiag.numNonZeros( localRow );
-    }
-
-    // Add the number of nonzeros induced by coupling
-    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
-
-    // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
-
-    // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-    {
-      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
-    }
-
-    // Add the nonzeros from coupling
-    addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-    // Finally, steal the pattern into a CRS matrix
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-    localMatrix.setName( this->getName() + "/localMatrix" );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    SolidMechanicsLagrangianFEM::setSparsityPattern( domain, dofManager, localMatrix, pattern );
+    return;
   }
-  else
+
+  // Set the sparsity pattern without the Kwu and Kuw blocks.
+  SparsityPattern< globalIndex > patternDiag;
+  dofManager.setSparsityPattern( patternDiag );
+
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
-    SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
+
+  // Add the number of nonzeros induced by coupling
+  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 }
 
 void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
@@ -560,16 +529,18 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n+ dt,
                                              mesh,
                                              contact::traction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                         time_n+dt,
-                                                                         subRegion,
-                                                                         contact::traction::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelHostPolicy >( fs,
+                                                                     targetSet,
+                                                                     time_n+dt,
+                                                                     subRegion,
+                                                                     contact::traction::key() );
     } );
   } );
 }
@@ -588,8 +559,9 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
   if( !m_useStaticCondensation )
   {
     real64 const fractureResidualNorm = calculateFractureResidualNorm( domain, dofManager, localRhs );
+    real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 
-    return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
+    return totalResidualNorm;
   }
   else
   {
@@ -599,7 +571,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
 real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPartition const & domain,
                                                                        DofManager const & dofManager,
-                                                                       arrayView1d< real64 const > const & localRhs ) const
+                                                                       arrayView1d< real64 const > const & localRhs )
 {
   string const jumpDofKey = dofManager.getKey( contact::dispJump::key() );
 
@@ -665,11 +637,10 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
   real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
                                                                                                 // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
 
+  getConvergenceStats().setResidualValue( "RFracture", fractureResidualNorm );
   return fractureResidualNorm;
 }
 
@@ -777,7 +748,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
       arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getField< contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 > const & slip = subRegion.getField< contact::slip >();
 
@@ -801,7 +772,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   } );
 }
 
-bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain,
+                                                           integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   int hasConfigurationConverged = true;
 
@@ -812,7 +784,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
@@ -829,7 +801,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            frictionWrapper.updateFractureState( dispJump[kfe], traction[kfe], fractureState[kfe] );
+            frictionWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );

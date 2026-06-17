@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./curvedFrac_smoke.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <MultiphasePoromechanicsConformingFracturesALM
+      name="poroFractureSolver"
+      targetRegions="{ Region, Reservoir, Fracture }" 
+      initialDt="1e-3"
+      flowSolverName="flowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        newtonTol="1e0"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </MultiphasePoromechanicsConformingFracturesALM>
+
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="2"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="10.0"
+      iterPenaltyT="10.0"
+      tolJumpN="1.e-05"
+      tolJumpT="1.e-04"
+      tolTauLimit="1.e-02"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Region, Reservoir, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+
+    <CompositionalMultiphaseFVM 
+      name="flowSolver"
+      logLevel="1"
+      isThermal="0"
+      discretization="fluidTPFA"
+      targetRegions="{ Region, Reservoir, Fracture}" 
+      temperature="368.15" >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="0.0001"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="0.001"
+        logLevel="1"/>
+     </CompositionalMultiphaseFVM> 
+  </Solvers>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{  1_hexahedra,  2_hexahedra, 
+                     3_hexahedra,  4_hexahedra, 
+                                   6_hexahedra,
+                     7_hexahedra,  8_hexahedra,
+                     9_hexahedra, 10_hexahedra, 
+                                  12_hexahedra, 
+                    13_hexahedra, 14_hexahedra, 
+                    15_hexahedra               }"
+      materialList="{ fluid, relperm, porousRock }"/>
+
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ 5_hexahedra, 11_hexahedra }"
+      materialList="{ fluid, relperm, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="fracture"
+      defaultAperture="1.0e-6"
+      materialList="{ fluid, relperm, faultFilling, frictionLaw, hApertureModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="2.5e10"
+      defaultPoissonRatio="0.25"/>
+
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      logLevel="1"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas_curvedFrac.txt, ../../MULTIPHASE_TABLES/pvtwat.txt }"
+      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt" />
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="1.0e20"
+      defaultReferencePorosity="0.15"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
+      
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="frictionLaw"
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269189626"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>   
+
+    <NullModel
+      name="nullSolid"/>
+
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>   
+  </Constitutive>
+
+  <Functions>    
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinates="{ 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0.0000, 0.0000, 0.0118, 0.0333, 0.0612, 0.0943, 0.1318, 0.1732, 0.2183, 0.2667, 0.3182, 0.3727, 0.4300, 0.4899, 0.5524, 0.6173, 0.6847, 0.7542, 0.8261, 0.9000, 0.9760 }"/>
+
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinates="{ 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0.0000, 0.0000, 0.0118, 0.0333, 0.0612, 0.0943, 0.1318, 0.1732, 0.2183, 0.2667, 0.3182, 0.3727, 0.4300, 0.4899, 0.5524, 0.6173, 0.6847, 0.7542, 0.8261, 0.9000, 0.9760 }"/>
+  </Functions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialCF_H2O"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.999"/>
+
+    <FieldSpecification
+      name="initialCF_CO2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.001"/> 
+  </FieldSpecifications> 
+</Problem>

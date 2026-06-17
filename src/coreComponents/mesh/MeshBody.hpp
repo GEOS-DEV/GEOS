@@ -156,7 +156,10 @@ public:
    * @brief Set mesh length scale used to define an absolute length tolerance
    * @param [in] scale length scale
    */
-  void setGlobalLengthScale( real64 scale );
+  void setGlobalLengthScale( real64 scale )
+  {
+    m_globalLengthScale = scale;
+  }
 
   /**
    * @brief Get mesh length scale

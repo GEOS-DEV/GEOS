@@ -20,8 +20,6 @@
 #include "ComponentProperties.hpp"
 #include "ComponentType.hpp"
 
-#include "common/format/StringUtilities.hpp"
-
 namespace geos
 {
 

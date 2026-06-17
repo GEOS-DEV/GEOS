@@ -21,21 +21,18 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
-#include "constitutive/dispersion/DispersionFields.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -49,11 +46,11 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureInversionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -65,6 +62,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )
@@ -119,7 +117,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
   this->registerWrapper( viewKeyStruct::targetRelativeCompDensChangeString(), &m_targetRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -135,7 +133,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (absolute) change in a component fraction in a Newton iteration" );
+    setDescription( "Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -194,10 +192,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
 
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::SourceFluxFailure >();
-  addLogLevel< logInfo::TimeStep >();
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 void CompositionalMultiphaseBase::postInputInitialization()
@@ -205,53 +200,53 @@ void CompositionalMultiphaseBase::postInputInitialization()
   FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0" );
+                        "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
+                        "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
-                        ": The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in pressure in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
-                        ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in temperature in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
-                        ": The maximum relative change in component density in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in component density in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
-                        ": The target relative change in pressure in a time step must be larger than 0.0" );
+                        "The target relative change in pressure in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) <<
-                        ": The target relative change in temperature in a time step must be larger than 0.0" );
+                        "The target relative change in temperature in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
-                        ": The target change in phase volume fraction in a time step must be larger than 0.0" );
+                        "The target change in phase volume fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) <<
-                        ": The target change in component density in a time step must be larger than 0.0" );
+                        "The target change in component density in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) <<
-                        ": The target change in component fraction in a time step must be larger than 0.0" );
+                        "The target change in component fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be larger or equal to 0.0" );
+                        "The solution change scaling factor must be larger or equal to 0.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be smaller or equal to 1.0" );
+                        "The solution change scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be larger than 0.0" );
+                        "The minumum scaling factor must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be smaller or equal to 1.0" );
+                        "The minumum scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
 
   if( m_isThermal && m_useSimpleAccumulation ) // useSimpleAccumulation is not yet compatible with thermal
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: '{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
-                               getDataContext(), viewKeyStruct::useSimpleAccumulationString() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "'{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
+                               viewKeyStruct::useSimpleAccumulationString(), getDataContext()  ) );
     m_useSimpleAccumulation = 0;
   }
 
@@ -261,26 +256,24 @@ void CompositionalMultiphaseBase::postInputInitialization()
 
     if( m_isThermal ) // z_c formulation is not yet compatible with thermal
     {
-      GEOS_ERROR( GEOS_FMT( "{}: '{}' is currently not available for thermal simulations",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " '{}' is currently not available for thermal simulations",
+                            formulationName ), getDataContext());
     }
     if( m_hasDiffusion || m_hasDispersion ) // z_c formulation is not yet compatible with diffusion or dispersion
     {
-      GEOS_ERROR( GEOS_FMT( "{}: {} is currently not available for diffusion or dispersion",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " {} is currently not available for diffusion or dispersion",
+                            formulationName ), getDataContext() );
     }
     if( m_isJumpStabilized ) // z_c formulation is not yet compatible with pressure stabilization
     {
-      GEOS_ERROR( GEOS_FMT( "{}: pressure stabilization is not yet supported by {}",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " pressure stabilization is not yet supported by {}",
+                            formulationName ), getDataContext() );
     }
   }
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 {
-  using namespace fields::flow;
-
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -301,27 +294,47 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       }
 
       // If at least one region has a capillary pressure model, consider it enabled for all
-      string const capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-      if( !capPresName.empty() )
-      {
-        m_hasCapPressure = true;
-      }
+      m_hasCapPressure |= !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty();
 
       // If at least one region has a diffusion model, consider it enabled for all
-      string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
-      if( !diffusionName.empty() )
-      {
-        m_hasDiffusion = true;
-      }
+      m_hasDiffusion |= !getConstitutiveName< DiffusionBase >( subRegion ).empty();
 
       // If at least one region has a dispersion model, consider it enabled for all
-      string const dispersionName = getConstitutiveName< DispersionBase >( subRegion );
-      if( !dispersionName.empty() )
+      m_hasDispersion |= !getConstitutiveName< DispersionBase >( subRegion ).empty();
+      GEOS_ERROR_IF( m_hasDispersion, "Dispersion is not supported yet, please remove it from this XML file" );
+
+    } );
+  } );
+
+  // check consistency between subregions
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel & mesh,
+                                                   string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      if( m_hasCapPressure )
       {
-        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
-        m_hasDispersion = true;
+        GEOS_THROW_IF( getConstitutiveName< CapillaryPressureBase >( subRegion ).empty(),
+                       GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
+      if( m_hasDiffusion )
+      {
+        GEOS_THROW_IF( getConstitutiveName< DiffusionBase >( subRegion ).empty(),
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
+      }
+
+      if( m_hasDispersion )
+      {
+        GEOS_THROW_IF( getConstitutiveName< DispersionBase >( subRegion ).empty(),
+                       GEOS_FMT( " Dispersion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
+      }
     } );
   } );
 
@@ -351,7 +364,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "{}: unknown formulation type", getDataContext() ) );
+    GEOS_ERROR( "unknown formulation type", getDataContext() );
   }
 
   // 2. Register and resize all fields as necessary
@@ -363,84 +376,69 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      if( m_hasCapPressure )
-      {
-        setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString(), "capillary pressure" );
-      }
-
-      if( m_hasDiffusion )
-      {
-        setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString(), "diffusion" );
-      }
-
-      if( m_hasDispersion )
-      {
-        setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString(), "dispersion" );
-      }
-
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
-      subRegion.registerField< pressureScalingFactor >( getName() );
-      subRegion.registerField< temperatureScalingFactor >( getName() );
+      subRegion.registerField< flow::pressureScalingFactor >( getName() );
+      subRegion.registerField< flow::temperatureScalingFactor >( getName() );
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
-      subRegion.registerField< globalCompFraction >( getName() ).
+      subRegion.registerField< flow::globalCompFraction >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
-        subRegion.registerField< globalCompFraction_n >( getName() ).
+        subRegion.registerField< flow::globalCompFraction_n >( getName() ).
           setDimLabels( 1, fluid.componentNames() ).
           reference().resizeDimension< 1 >( m_numComponents );
         // may be needed later for sequential poromechanics implementation
         //if( m_isFixedStressPoromechanicsUpdate )
         //{
-        //  subRegion.registerField< globalCompFraction_k >( getName() ).
+        //  subRegion.registerField< flow::globalCompFraction_k >( getName() ).
         //    setDimLabels( 1, fluid.componentNames() ).
         //    reference().resizeDimension< 1 >( m_numComponents );
         //}
-        subRegion.registerField< globalCompFractionScalingFactor >( getName() );
+        subRegion.registerField< flow::globalCompFractionScalingFactor >( getName() );
       }
       else
       {
-        subRegion.registerField< globalCompDensity >( getName() ).
+        subRegion.registerField< flow::globalCompDensity >( getName() ).
           setDimLabels( 1, fluid.componentNames() ).
           reference().resizeDimension< 1 >( m_numComponents );
-        subRegion.registerField< globalCompDensity_n >( getName() ).
+        subRegion.registerField< flow::globalCompDensity_n >( getName() ).
           reference().resizeDimension< 1 >( m_numComponents );
         if( m_isFixedStressPoromechanicsUpdate )
         {
-          subRegion.registerField< globalCompDensity_k >( getName() ).
+          subRegion.registerField< flow::globalCompDensity_k >( getName() ).
             setDimLabels( 1, fluid.componentNames() ).
             reference().resizeDimension< 1 >( m_numComponents );
         }
-        subRegion.registerField< globalCompDensityScalingFactor >( getName() );
-        subRegion.registerField< dGlobalCompFraction_dGlobalCompDensity >( getName() ).
+        subRegion.registerField< flow::globalCompDensityScalingFactor >( getName() );
+        subRegion.registerField< flow::dGlobalCompFraction_dGlobalCompDensity >( getName() ).
           reference().resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
       }
 
-      subRegion.registerField< phaseVolumeFraction >( getName() ).
+      subRegion.registerField< flow::phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerField< dPhaseVolumeFraction >( getName() ).
+      subRegion.registerField< flow::dPhaseVolumeFraction >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
-      subRegion.registerField< phaseMobility >( getName() ).
+      subRegion.registerField< flow::phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerField< dPhaseMobility >( getName() ).
+      subRegion.registerField< flow::dPhaseMobility >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       // needed for time step selector
-      subRegion.registerField< phaseVolumeFraction_n >( getName() ).
+      subRegion.registerField< flow::phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
-      subRegion.registerField< compAmount >( getName() ).
+      subRegion.registerField< flow::compAmount >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerField< compAmount_n >( getName() ).
+      subRegion.registerField< flow::compAmount_n >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
@@ -452,9 +450,8 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
       // TODO: add conditional registration later, this is only needed when there is a face-based Dirichlet BC
-      faceManager.registerField< facePressure >( getName() );
-      faceManager.registerField< faceTemperature >( getName() );
-      faceManager.registerField< faceGlobalCompFraction >( getName() ).
+      faceManager.registerField< flow::faceTemperature >( getName() );
+      faceManager.registerField< flow::faceGlobalCompFraction >( getName() ).
         setDimLabels( 1, fluid0.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
     }
@@ -466,6 +463,21 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "multiphase fluid" );
 
   setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
+
+  if( !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty() )
+  {
+    setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString(), "capillary pressure" );
+  }
+
+  if( !getConstitutiveName< DiffusionBase >( subRegion ).empty() )
+  {
+    setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString(), "diffusion" );
+  }
+
+  if( !getConstitutiveName< DispersionBase >( subRegion ).empty() )
+  {
+    setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString(), "dispersion" );
+  }
 
   if( m_isThermal )
   {
@@ -482,15 +494,15 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -499,15 +511,15 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -533,14 +545,20 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
     string_array const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
     GEOS_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
-                          getDataContext() << ": Mismatch in number of components between constitutive model "
-                                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+                          GEOS_FMT( "Mismatch in number of components between constitutive model {} and the water "
+                                    "phase composition in aquifer {}",
+                                    fluid0.getName(),
+                                    bc.getName() ),
+                          getDataContext()  );
 
     for( integer ic = 0; ic < fluid0.numFluidComponents(); ++ic )
     {
       GEOS_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
-                            getDataContext() << ": Mismatch in component names between constitutive model "
-                                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+                            GEOS_FMT( "Mismatch in component names between constitutive model {} and the water "
+                                      "phase components in aquifer {}",
+                                      fluid0.getName(),
+                                      bc.getName() ),
+                            getDataContext()  );
     }
   } );
 }
@@ -566,7 +584,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
       temp.setValues< parallelHostPolicy >( m_inputTemperature );
     } );
   } );
@@ -592,7 +610,6 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       compareMultiphaseModels( fluid, referenceFluid );
@@ -600,13 +617,13 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
       bool const isFluidModelThermal = fluid.isThermal();
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "The thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               fluid.getName() ),
+                     InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "The thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               fluid.getName() ),
+                     InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -691,27 +708,24 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = dataGroup.getField< flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-    dataGroup.getField< fields::flow::globalCompFraction >();
-
+    dataGroup.getField< flow::globalCompFraction >();
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( dataGroup.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
+    KernelType::launch( dataGroup.size(),
+                        fluidWrapper,
+                        pres,
+                        temp,
+                        compFrac );
   } );
 }
 
@@ -720,7 +734,7 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
   GEOS_MARK_FUNCTION;
 
   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-    dataGroup.getField< fields::flow::phaseVolumeFraction >();
+    dataGroup.getField< flow::phaseVolumeFraction >();
 
   string const & relPermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relPermName );
@@ -744,7 +758,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
   if( m_hasCapPressure )
   {
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      dataGroup.getField< fields::flow::phaseVolumeFraction >();
+      dataGroup.getField< flow::phaseVolumeFraction >();
 
     string const & cappresName = dataGroup.getReference< string >( viewKeyStruct::capPressureNamesString() );
     CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( dataGroup, cappresName );
@@ -766,7 +780,7 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView2d< real64, compflow::USD_COMP > const compAmount = subRegion.getField< fields::flow::compAmount >();
+  arrayView2d< real64, compflow::USD_COMP > const compAmount = subRegion.getField< flow::compAmount >();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -776,11 +790,11 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
 
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
-    arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< fields::flow::globalCompFraction >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< flow::globalCompFraction >();
     // access total density stored in the fluid
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+    arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -793,7 +807,7 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
   }
   else
   {
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< flow::globalCompDensity >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -814,13 +828,13 @@ void CompositionalMultiphaseBase::updateEnergy( ElementSubRegionBase & subRegion
   arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
   arrayView2d< real64 const > rockInternalEnergy = porousMaterial.getInternalEnergy();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac = subRegion.getField< fields::flow::phaseVolumeFraction >();
-  string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac = subRegion.getField< flow::phaseVolumeFraction >();
+  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy = fluid.phaseInternalEnergy();
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseDens = fluid.phaseDensity();
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseInternalEnergy = fluid.phaseInternalEnergy();
 
-  arrayView1d< real64 > const energy = subRegion.getField< fields::flow::energy >();
+  arrayView1d< real64 > const energy = subRegion.getField< flow::energy >();
 
   integer const numPhases = m_numPhases;
 
@@ -836,7 +850,7 @@ void CompositionalMultiphaseBase::updateEnergy( ElementSubRegionBase & subRegion
 
 void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< flow::temperature >();
 
   string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
   SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
@@ -856,8 +870,6 @@ real64 CompositionalMultiphaseBase::updateFluidState( ElementSubRegionBase & sub
 {
   GEOS_MARK_FUNCTION;
 
-  real64 maxDeltaPhaseVolFrac;
-
   if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
   {
     // For p, rho_c as the primary unknowns
@@ -865,7 +877,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ElementSubRegionBase & sub
   }
   updateFluidModel( subRegion );
   updateCompAmount( subRegion );
-  maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
+  real64 const maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
@@ -886,6 +898,54 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                                               [&]( localIndex const,
                                                    ElementSubRegionBase & subRegion )
   {
+    // check the global component fractions values
+    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+      subRegion.getField< flow::globalCompFraction >();
+
+    {
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localNegativeValues( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooHighFracCount( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooLowFracCount( 0 );
+      RAJA::ReduceMin< parallelDeviceReduce, localIndex > localMinFrac( LvArray::NumericLimits< localIndex >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, localIndex > localMaxFrac( LvArray::NumericLimits< localIndex >::min );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        real64 sumCompFrac = 0.0;
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          sumCompFrac += compFrac[ei][ic];
+          if( compFrac[ei][ic] < 0.0 )
+            localNegativeValues += 1;
+        }
+        localMinFrac.min( sumCompFrac );
+        localMaxFrac.max( sumCompFrac );
+        if( sumCompFrac > 1 + 1e-6 )
+          localTooHighFracCount += 1;
+        if( sumCompFrac < 1 - 1e-6 )
+          localTooLowFracCount += 1;
+      } );
+
+      localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
+      GEOS_ERROR_IF( negativeValues > 0,
+                     GEOS_FMT( "negative global component fraction values found in subregion '{}' for {} elements",
+                               subRegion.getName(), negativeValues ),
+                     getDataContext(), subRegion.getDataContext()  );
+
+      localIndex const totalSupFrac = MpiWrapper::sum( localTooHighFracCount.get() );
+      localIndex const totalInfFrac = MpiWrapper::sum( localTooLowFracCount.get() );
+      localIndex const totalWrongCompFrac = totalSupFrac + totalInfFrac;
+      localIndex const minFrac  = MpiWrapper::min( localMinFrac.get() );
+      localIndex const maxFrac  = MpiWrapper::sum( localMaxFrac.get() );
+      GEOS_ERROR_IF( totalWrongCompFrac > 0,
+                     GEOS_FMT( "{} component fractions do not sum to 1.0 in subregion '{}'!\n"
+                               "{} are too low ; {} are too high ; component fractions sum range is from {} to {}.\n"
+                               "Consider adding field specification to initialize the '{}' field.",
+                               totalWrongCompFrac, subRegion.getName(),
+                               localTooLowFracCount.get(), localTooHighFracCount.get(), minFrac, maxFrac,
+                               fields::flow::globalCompFraction::key() ),
+                     getDataContext());
+    }
+
     // Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
     updateFluidModel( subRegion );
@@ -894,14 +954,12 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // in order to initialize the primary solution variables
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+    arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
 
     if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
     {
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getField< fields::flow::globalCompFraction >();
       arrayView2d< real64, compflow::USD_COMP > const compDens =
-        subRegion.getField< fields::flow::globalCompDensity >();
+        subRegion.getField< flow::globalCompDensity >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
@@ -946,7 +1004,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     // initialized phase volume fraction
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.template getField< fields::flow::phaseVolumeFraction >();
+      subRegion.template getField< flow::phaseVolumeFraction >();
 
     // Initialize/update the relative permeability model using the initial phase volume fraction
     // Note:
@@ -995,7 +1053,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     {
       string const & diffusionName = subRegion.template getReference< string >( viewKeyStruct::diffusionNamesString() );
       DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
-      arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+      arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
       diffusionMaterial.initializeTemperatureState( temperature );
     }
     if( m_hasDispersion )
@@ -1023,7 +1081,7 @@ void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, stri
 
     // initialized phase volume fraction
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.template getField< fields::flow::phaseVolumeFraction >();
+      subRegion.template getField< flow::phaseVolumeFraction >();
 
     string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString());
     MultiPhaseThermalConductivityBase const & conductivityMaterial =
@@ -1044,6 +1102,7 @@ void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, stri
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   integer const numComps = m_numComponents;
   integer const numPhases = m_numPhases;
@@ -1052,27 +1111,36 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-
-    // collect all the equilibrium names to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    // Collect all the equilibrium names to idx
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() << " " << getDataContext() <<
-                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                   ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                   "used in this simulation. To proceed, you can either: \n" <<
-                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+                   GEOS_FMT( "The gravity vector specified in this simulation ({} {} {}) is not aligned with the z-axis. \n"
+                             "This is incompatible with the {} used in this simulation. To proceed, you can either: \n"
+                             "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n"
+                             "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                             gravVector[0],
+                             gravVector[1],
+                             gravVector[2],
+                             bc.getCatalogName() ),
+                   InputError, getDataContext(), bc.getDataContext() );
 
+    // ensure that the temperature and composition tables are defined
+    GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
+                   GEOS_FMT( "{} must be provided for a multiphase simulation",
+                             EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString() ),
+                   InputError, bc.getDataContext() );
+    GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
+                   GEOS_FMT( "{} must be provided for a multiphase simulation",
+                             EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString() ),
+                   InputError, bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -1112,39 +1180,101 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                           ElementSubRegionBase & subRegion,
                                                           string const & )
     {
+      // Check if the region is targetted by the solver. Otherwise we cannot guarantee a fluid exists
+      Group const & region = subRegion.getParent().getParent();
+      if( regionFilter.find( region.getName() ) == regionFilter.end() )
+      {
+        return;   // the region is not in target, there is nothing to do
+      }
+
       // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
       integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
       real64 const equilTolerance = fs.getEquilibrationTolerance();
       real64 const datumElevation = fs.getDatumElevation();
       real64 const datumPressure = fs.getDatumPressure();
-      string const initPhaseName = fs.getInitPhaseName();   // will go away when GOC/WOC are implemented
+      string const initPhaseName = fs.getInitPhaseName();
+      arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
 
       localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-      localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
-
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           getCatalogName() << " " << getDataContext() <<
-                          ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
+                          "By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                           " was specified in the input file to equilibrate the model.\n " <<
                           "The simulation is going to proceed with this out-of-bound datum elevation," <<
                           " but the initial condition may be inaccurate." );
 
+      // Check if we are targetting single or multiple phase initialisation
+      bool singlePhaseInitialisation = !initPhaseName.empty();
+      if( !singlePhaseInitialisation )
+      {
+        // Check that we have number of contacts equal to one less that number of phases
+        GEOS_THROW_IF( phaseContacts.size() != numPhases - 1,
+                       GEOS_FMT( "{}: For a region ({}) with {} phases, the number of phase contacts must be {} not {}.",
+                                 fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                 subRegion.getName(), numPhases, numPhases-1, phaseContacts.size() ),
+                       InputError );
+
+        real64 const minAllowedElevation = 2.0*minElevation - maxElevation;
+        real64 const maxAllowedElevation = 2.0*maxElevation - minElevation;
+        // Check that the contacts are not too far away from the region extents
+        for( real64 const & contact : phaseContacts )
+        {
+          GEOS_THROW_IF( contact < minAllowedElevation,
+                         GEOS_FMT( "{}: The phase contact {} is below the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, minAllowedElevation, subRegion.getName() ),
+                         InputError );
+          GEOS_THROW_IF( maxAllowedElevation < contact,
+                         GEOS_FMT( "{}: The phase contact {} is above the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, maxAllowedElevation, subRegion.getName() ),
+                         InputError );
+        }
+      }
+
+      // Populate elevation values. Done here in serial
+      auto const getUniqueFloat = []( const real64 & a, const real64 & b ) {
+        return a < b - LvArray::NumericLimits< real64 >::epsilon;
+      };
+      std::set< real64, decltype(getUniqueFloat) > uniqueElevations( getUniqueFloat );
+      // If we are doing multiphase initialisation, add the contacts and the datum
+      if( !singlePhaseInitialisation )
+      {
+        uniqueElevations.insert( datumElevation );
+        for( real64 const & contact : phaseContacts )
+        {
+          uniqueElevations.insert( contact );
+        }
+      }
+      uniqueElevations.insert( maxElevation );
+      uniqueElevations.insert( minElevation );
+      if( LvArray::NumericLimits< real64 >::epsilon < elevationIncrement )
+      {
+        for( real64 elevation = minElevation; elevation < maxElevation; elevation += elevationIncrement )
+        {
+          uniqueElevations.insert( elevation );
+        }
+      }
       array1d< array1d< real64 > > elevationValues;
-      array1d< real64 > pressureValues;
       elevationValues.resize( 1 );
-      elevationValues[0].resize( numPointsInTable );
-      pressureValues.resize( numPointsInTable );
+      for( real64 const & elevation : uniqueElevations )
+      {
+        elevationValues[0].emplace_back( elevation );
+      }
+      localIndex const numPointsInTable = static_cast< localIndex >(elevationValues[0].size());
+
+      array3d< real64, constitutive::multifluid::LAYOUT_PHASE > pressureValues( numPointsInTable, 1, numPhases );
+      array3d< real64, constitutive::multifluid::LAYOUT_PHASE > phaseDens( numPointsInTable, 1, numPhases );
+      array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( numPointsInTable, 1, numPhases, numComps );
 
       // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
-
-      FunctionManager & functionManager = FunctionManager::getInstance();
 
       array1d< TableFunction::KernelWrapper > compFracTableWrappers;
       string_array const & compFracTableNames = fs.getComponentFractionVsElevationTableNames();
@@ -1158,134 +1288,326 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
       TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
 
-      // Step 3.3: retrieve the fluid model to compute densities
-      // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
-
-      Group const & region = subRegion.getParent().getParent();
-      auto itRegionFilter = regionFilter.find( region.getName() );
-      if( itRegionFilter == regionFilter.end() )
-      {
-        return;   // the region is not in target, there is nothing to do
-      }
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
-                     "Mismatch in number of components between constitutive model "
-                     << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                     InputError );
+                     GEOS_FMT( "Mismatch in number of components between constitutive model {} and the Equilibrium "
+                               "initial condition {}",
+                               fluid.getName(),
+                               fs.getName() ),
+                     InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
-                       "Mismatch in component names between constitutive model "
-                       << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                       InputError );
+                       GEOS_FMT( "Mismatch in component names between constitutive model {} and the Equilibrium "
+                                 "initial condition {}",
+                                 fluid.getName(),
+                                 fs.getName() ),
+                       InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
-      // Note: for now, we assume that the reservoir is in a single-phase state at initialization
+      integer ipInit = -1;
       string_array const & phaseNames = fluid.phaseNames();
-      auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-      GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     getCatalogName() << " " << getDataContext() << ": phase name " <<
-                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-                     InputError );
-      integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+      if( singlePhaseInitialisation )
+      {
+        auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+        GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
+                       GEOS_FMT( "{} {}: phase name {} not found in the phases of {}",
+                                 getCatalogName(),
+                                 getDataContext(),
+                                 initPhaseName,
+                                 fluid.getDataContext() ),
+                       InputError, getDataContext() );
+        ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+      }
 
       // Step 3.4: compute the hydrostatic pressure values
+      arrayView1d< integer const > phaseOrder;
+      arrayView1d< real64 const > phaseMinVolumeFraction;
+      array1d< integer > temporaryPhaseOrder( constitutive::CapillaryPressureBase::MAX_NUM_PHASES );
+      array1d< real64 > temporaryMinVolumeFraction( numPhases );
+      if( m_hasCapPressure )
+      {
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+        phaseOrder = capPressure.phaseOrder();
+        phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
+      }
+      else
+      {
+        auto const toPhaseType = [&]( string const & lookup ) -> integer
+        {
+          static unordered_map< string, integer > const phaseDict =
+          {
+            { "gas", CapillaryPressureBase::PhaseType::GAS },
+            { "oil", CapillaryPressureBase::PhaseType::OIL },
+            { "water", CapillaryPressureBase::PhaseType::WATER }
+          };
+          auto const it = phaseDict.find( lookup );
+          if( it == phaseDict.end())
+          {
+            return -1;
+          }
+          return it->second;
+        };
+        for( integer phaseType = 0; phaseType < constitutive::CapillaryPressureBase::MAX_NUM_PHASES; phaseType++ )
+        {
+          temporaryPhaseOrder[phaseType] = -1;
+        }
+        for( integer ip = 0; ip < numPhases; ip++ )
+        {
+          auto const phaseType = toPhaseType( phaseNames[ip] );
+          temporaryMinVolumeFraction[ip] = 0.0;
+          temporaryPhaseOrder[phaseType] = ip;
+        }
+        phaseMinVolumeFraction = temporaryMinVolumeFraction.toViewConst();
+        phaseOrder = temporaryPhaseOrder.toViewConst();
+      }
+
+      integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+      integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+      integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         using FluidType = TYPEOFREF( castedFluid );
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel< typename FluidType::KernelWrapper >;
+        using KernelReturnType = typename Kernel::ReturnType;
 
-        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-        isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+        // note: This is a serial Kernel (due to the nature of the problem being solved). So values do not need to go onto the GPU
+        KernelReturnType const returnValue = Kernel::launch( numPointsInTable,
+                                                             numComps,
+                                                             numPhases,
+                                                             ipGas,
+                                                             ipOil,
+                                                             ipWater,
+                                                             ipInit,
+                                                             maxNumEquilIterations,
+                                                             phaseContacts,
+                                                             phaseMinVolumeFraction,
+                                                             equilTolerance,
+                                                             gravVector,
+                                                             datumElevation,
+                                                             datumPressure,
+                                                             fluidWrapper,
+                                                             compFracTableWrappers.toViewConst(),
+                                                             tempTableWrapper,
+                                                             elevationValues.toNestedView(),
+                                                             pressureValues.toView(),
+                                                             phaseDens.toView(),
+                                                             phaseCompFrac.toView() );
 
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
-                       "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
-                       "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error );
+        GEOS_THROW_IF( returnValue == KernelReturnType::FAILED_TO_CONVERGE,
+                       GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
+                                 "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
+                                 "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                                 region.getName() ),
+                       geos::RuntimeError, getDataContext() );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            getCatalogName() << " " << getDataContext() <<
-                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
-                            "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
-                            "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
-                            "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
-
+        if( singlePhaseInitialisation )
+        {
+          GEOS_LOG_RANK_0_IF( returnValue == KernelReturnType::DETECTED_MULTIPHASE_FLOW,
+                              getCatalogName() << " " << getDataContext() <<
+                              ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                              "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
+                              "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
+                              "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+        }
       } );
 
-      // Step 3.5: create hydrostatic pressure table
+      // Step: create table wrappers for the phase pressures and mass density
+      // Create a wrapper for the elevations
+      string const elevationIndexTableName = GEOS_FMT( "{}_{}_Elevation_index_table", fs.getName(), subRegion.getName() );
+      if( !functionManager.hasGroup< TableFunction >( elevationIndexTableName ))
+      {
+        array1d< real64 > indexValues( numPointsInTable );
+        for( localIndex i = 0; i < numPointsInTable; ++i )
+        {
+          indexValues[i] = i;
+        }
+        TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), elevationIndexTableName ) );
+        table->setTableCoordinates( elevationValues, { units::Distance } );
+        table->setTableValues( indexValues, units::Dimensionless );
+        table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      }
+      TableFunction const & elevationIndexTable = functionManager.getGroup< TableFunction >( elevationIndexTableName );
+      TableFunction::KernelWrapper elevationIndexTableWrapper = elevationIndexTable.createKernelWrapper();
 
-      string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
-      TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-      presTable->setTableCoordinates( elevationValues, { units::Distance } );
-      presTable->setTableValues( pressureValues, units::Pressure );
-      presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-      TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
-
-      // Step 4: assign pressure, temperature, and component fraction as a function of elevation
-      // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-      // TODO: this last step should be modified to account for GOC and WOC
       arrayView2d< real64 const > const elemCenter =
         subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
-      arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
-      arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( fields::flow::temperature::key() );
+      arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
+      arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( flow::temperature::key() );
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( flow::globalCompFraction::key() );
       arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
         compFracTableWrappers.toViewConst();
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
+      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
+      array1d< real64 > elevationBoundaries( numPhases );
+      array1d< integer > phaseIndexOrdering( numPhases );
+      if( singlePhaseInitialisation )
+      {
+        for( integer ip = 0; ip < numPhases; ip++ )
+        {
+          elevationBoundaries[ip] = LvArray::NumericLimits< real64 >::max;
+          phaseIndexOrdering[ip] = ipInit;
+        }
+      }
+      else if( numPhases == 2 )
+      {
+        elevationBoundaries[0] = phaseContacts[0];
+        elevationBoundaries[1] = LvArray::NumericLimits< real64 >::max;
+        if( ipGas < 0 )
+        {
+          phaseIndexOrdering[0] = ipWater;
+          phaseIndexOrdering[1] = ipOil;
+        }
+        else if( ipOil < 0 )
+        {
+          phaseIndexOrdering[0] = ipWater;
+          phaseIndexOrdering[1] = ipGas;
+        }
+        else if( ipWater < 0 )
+        {
+          phaseIndexOrdering[0] = ipOil;
+          phaseIndexOrdering[1] = ipGas;
+        }
+      }
+      else
+      {
+        elevationBoundaries[0] = phaseContacts[0];
+        elevationBoundaries[1] = phaseContacts[1];
+        elevationBoundaries[2] = LvArray::NumericLimits< real64 >::max;
+        phaseIndexOrdering[0] = ipWater;
+        phaseIndexOrdering[1] = ipOil;
+        phaseIndexOrdering[2] = ipGas;
+      }
+
+      arrayView1d< real64 const > elevationsView = elevationBoundaries.toViewConst();
+      arrayView1d< integer const > phaseIndexView = phaseIndexOrdering.toViewConst();
+
+      // Assign pressure and temperature to cells
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
-                                                           presTableWrapper,
-                                                           tempTableWrapper,
-                                                           compFracTableWrappersViewConst,
+                                                           numPhases,
                                                            numComps,
-                                                           minPressure,
                                                            pres,
                                                            temp,
-                                                           compFrac] GEOS_HOST_DEVICE ( localIndex const i )
+                                                           compFrac,
+                                                           minPressure,
+                                                           numPointsInTable,
+                                                           elevationIndexTableWrapper,
+                                                           pressureValuesView,
+                                                           tempTableWrapper,
+                                                           compFracTableWrappersViewConst,
+                                                           elevationsView,
+                                                           phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const k = targetSet[i];
         real64 const elevation = elemCenter[k][2];
 
-        pres[k] = presTableWrapper.compute( &elevation );
-        minPressure.min( pres[k] );
+        real64 ea = elevationIndexTableWrapper.compute( &elevation );
+        integer const en = LvArray::math::min( static_cast< integer >(ea), numPointsInTable - 2 );
+        ea -= en;
+
+        integer const phaseIndex = [&]() -> integer {
+          for( integer ip = 0; ip < numPhases; ip++ )
+          {
+            if( elevation < elevationsView[ip] )
+            {
+              return phaseIndexView[ip];
+            }
+          }
+          return phaseIndexView[numPhases-1];
+        }();
+
+        real64 const p0 = pressureValuesView[en][0][phaseIndex];
+        real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
+        pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
         }
+        minPressure.min( pres[k] );
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
-                     GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ) );
+                     GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                               minPressure.get(), region.getName(), subRegion.getName() ), getDataContext() );
+
+      // For multiphase initialisation, after the computation of the pressure and composition, we invert
+      // the capillary pressure curves to calculate new saturations.
+      if( !singlePhaseInitialisation )
+      {
+        if( m_hasCapPressure )
+        {
+          // Initialise porosity and permeability for capillary pressure computaion
+          // This needs to happen before calling updateCapPressureModel
+          CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
+          if( cellElemSubRegion != nullptr )
+          {
+            updatePorosityAndPermeability( *cellElemSubRegion );
+          }
+
+          // initialized porosity
+          string const solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+          CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+          // initialized permeability
+          string const permeabilityName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
+          PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permeabilityName );
+
+          string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+          CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+          arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+          arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+          capPressure.initializeRockState( porosity, permeability );
+          updateCapPressureModel( subRegion );
+
+          constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
+          {
+            using CapPressureType = TYPEOFREF( castCapPressure );
+            using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< CapPressureType >;
+
+            isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                               numPhases,
+                                                                                               targetSet,
+                                                                                               castCapPressure,
+                                                                                               phaseOrder,
+                                                                                               elemCenter,
+                                                                                               elevationIndexTable.createKernelWrapper(),
+                                                                                               pressureValues,
+                                                                                               phaseDens,
+                                                                                               phaseCompFrac,
+                                                                                               compFrac );
+          } );
+        }
+        else
+        {
+          using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< constitutive::NoOpCapillaryPressure >;
+          constitutive::NoOpCapillaryPressure noOpCapillaryPressure( numPhases, phaseOrder );
+          isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                             numPhases,
+                                                                                             targetSet,
+                                                                                             noOpCapillaryPressure,
+                                                                                             phaseOrder,
+                                                                                             elemCenter,
+                                                                                             elevationIndexTable.createKernelWrapper(),
+                                                                                             pressureValues,
+                                                                                             phaseDens,
+                                                                                             phaseCompFrac,
+                                                                                             compFrac );
+        }
+      }
     } );
   } );
 }
@@ -1304,7 +1626,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
-                                       fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() },
+                                       flow::globalCompFraction::key() : flow::globalCompDensity::key() },
                                      regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
@@ -1324,10 +1646,12 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition & domain )
 {
+  PhysicsSolverBase::implicitStepSetup( time_n, dt, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -1338,7 +1662,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
                                                                                 auto & subRegion )
     {
       saveConvergedState( subRegion );
-
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
@@ -1351,9 +1674,9 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
 
       // after the update, save the new saturation
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.template getField< fields::flow::phaseVolumeFraction >();
+        subRegion.template getField< flow::phaseVolumeFraction >();
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
-        subRegion.template getField< fields::flow::phaseVolumeFraction_n >();
+        subRegion.template getField< flow::phaseVolumeFraction_n >();
       phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
 
     } );
@@ -1416,62 +1739,7 @@ void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-      if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
-      {
-        // isothermal for now
-        isothermalCompositionalMultiphaseBaseKernels::
-          AccumulationZFormulationKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     kernelFlags,
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        if( m_isThermal )
-        {
-          thermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
@@ -1531,13 +1799,13 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 
@@ -1575,7 +1843,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -1588,9 +1856,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }
@@ -1599,7 +1867,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
-      // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+      // We don't use FieldSpecificationImpl::applyConditionToSystem here because we want to account for the row permutation used in the
       // compositional solvers
 
       array1d< globalIndex > dofArray( targetSet.size() );
@@ -1610,17 +1878,18 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1704,8 +1973,8 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
-                                             fields::flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
+                                             flow::pressure::key(),
+                                             [&]( FieldSpecification const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
                                                   ElementSubRegionBase & subRegion,
@@ -1720,7 +1989,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::pressureConflict( regionName, subRegionName, setName,
-                                                   fields::flow::pressure::key() ) );
+                                                   flow::pressure::key() ) );
       }
       subRegionSetMap[setName].setNumComp( m_numComponents );
     } );
@@ -1730,8 +1999,8 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     {
       fsManager.apply< ElementSubRegionBase >( time,
                                                mesh,
-                                               fields::flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const &,
+                                               flow::temperature::key(),
+                                               [&]( FieldSpecification const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
                                                     ElementSubRegionBase & subRegion,
@@ -1746,7 +2015,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         {
           bcConsistent = false;
           GEOS_WARNING( BCMessage::temperatureConflict( regionName, subRegionName, setName,
-                                                        fields::flow::temperature::key() ) );
+                                                        flow::temperature::key() ) );
         }
         tempSubRegionSetMap.insert( setName );
       } );
@@ -1755,8 +2024,8 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     // 3. Check composition BC (global component fraction)
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
-                                             fields::flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             flow::globalCompFraction::key(),
+                                             [&] ( FieldSpecification const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
                                                    ElementSubRegionBase & subRegion,
@@ -1772,7 +2041,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  fields::flow::pressure::key() ) );
+                                                  flow::pressure::key() ) );
       }
       if( m_isThermal )
       {
@@ -1781,14 +2050,14 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         {
           bcConsistent = false;
           GEOS_WARNING( BCMessage::missingTemperature( regionName, subRegionName, setName,
-                                                       fields::flow::temperature::key() ) );
+                                                       flow::temperature::key() ) );
         }
       }
       if( comp < 0 || comp >= m_numComponents )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        fields::flow::globalCompFraction::key() ) );
+                                                        flow::globalCompFraction::key() ), fs.getDataContext()  );
         return;   // can't check next part with invalid component id
       }
 
@@ -1799,9 +2068,10 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
+          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           fields::flow::globalCompFraction::key() ) );
+                                                           flow::globalCompFraction::key() ) );
         } );
       }
       compMask.set( comp );
@@ -1827,7 +2097,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                 bcConsistent = false;
                 GEOS_WARNING( BCMessage::notAppliedOnRegion( ic, componentNames[ic],
                                                              regionEntry.first, subRegionEntry.first, setEntry.first,
-                                                             fields::flow::globalCompFraction::key() ) );
+                                                             flow::globalCompFraction::key() ) );
               }
             }
           } );
@@ -1852,7 +2122,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent, "CompositionalMultiphaseBase: inconsistent boundary conditions",
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1864,15 +2135,15 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
     applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                             fields::flow::pressure::key(), fields::flow::bcPressure::key() );
+                                             flow::pressure::key(), flow::bcPressure::key() );
     // 2. Apply composition BC (global component fraction) and store them for constitutive call
     applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                             fields::flow::globalCompFraction::key(), fields::flow::globalCompFraction::key() );
+                                             flow::globalCompFraction::key(), flow::globalCompFraction::key() );
     // 3. Apply temperature Dirichlet BCs, store in a separate field
     if( m_isThermal )
     {
       applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                               fields::flow::temperature::key(), fields::flow::bcTemperature::key() );
+                                               flow::temperature::key(), flow::bcTemperature::key() );
     }
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1881,8 +2152,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
     // 4. Call constitutive update, back-calculate target global component densities and apply to the system
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
-                                             fields::flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             flow::pressure::key(),
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -1893,28 +2164,26 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
 
       // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
       // in the thermal case, the validation function guarantees that temperature has been provided
-      string const temperatureKey = m_isThermal ? fields::flow::bcTemperature::key() : fields::flow::temperature::key();
+      string const temperatureKey = m_isThermal ? flow::bcTemperature::key() : flow::temperature::key();
 
       arrayView1d< real64 const > const bcPres =
-        subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
+        subRegion.getReference< array1d< real64 > >( flow::bcPressure::key() );
       arrayView1d< real64 const > const bcTemp =
         subRegion.getReference< array1d< real64 > >( temperatureKey );
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( flow::globalCompFraction::key() );
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         using FluidType = TYPEOFREF( castedFluid );
-        using ExecPolicy = typename FluidType::exec_policy;
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
+        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
+        KernelType::launch( targetSet,
+                            fluidWrapper,
+                            bcPres,
+                            bcTemp,
+                            compFrac );
       } );
 
       arrayView1d< integer const > const ghostRank =
@@ -1922,7 +2191,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       arrayView1d< globalIndex const > const dofNumber =
         subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< real64 const > const pres =
-        subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
+        subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
 
       // for now to avoid lambda function complain
 
@@ -1966,8 +2235,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       else
       {
         arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-          subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompDensity::key() );
-        arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+          subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( flow::globalCompDensity::key() );
+        arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
 
         integer const numComp = m_numComponents;
         forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -2012,8 +2281,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
     {
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
-                                               fields::flow::temperature::key(),
-                                               [&] ( FieldSpecificationBase const &,
+                                               flow::temperature::key(),
+                                               [&] ( FieldSpecification const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
@@ -2024,9 +2293,9 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         arrayView1d< globalIndex const > const dofNumber =
           subRegion.getReference< array1d< globalIndex > >( dofKey );
         arrayView1d< real64 const > const bcTemp =
-          subRegion.getReference< array1d< real64 > >( fields::flow::bcTemperature::key() );
+          subRegion.getReference< array1d< real64 > >( flow::bcTemperature::key() );
         arrayView1d< real64 const > const temp =
-          subRegion.getReference< array1d< real64 > >( fields::flow::temperature::key() );
+          subRegion.getReference< array1d< real64 > >( flow::temperature::key() );
 
         integer const numComp = m_numComponents;
         forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -2080,9 +2349,9 @@ void CompositionalMultiphaseBase::keepVariablesConstantDuringInitStep( real64 co
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-      arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+      arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< flow::globalCompDensity >();
 
       integer const numComp = m_numComponents;
       integer const isThermal = m_isThermal;
@@ -2159,7 +2428,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( ElementSubRegionBase & 
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
   arrayView2d< real64, compflow::USD_COMP > const compDens =
-    subRegion.getField< fields::flow::globalCompDensity >();
+    subRegion.getField< flow::globalCompDensity >();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
@@ -2196,7 +2465,7 @@ void CompositionalMultiphaseBase::chopNegativeCompFractions( DomainPartition & d
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       arrayView2d< real64, compflow::USD_COMP > const compFrac =
-        subRegion.getField< fields::flow::globalCompFraction >();
+        subRegion.getField< flow::globalCompFraction >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
@@ -2247,18 +2516,18 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-        arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-        arrayView1d< real64 const > const pres_n = subRegion.getField< fields::flow::pressure_n >();
-        arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-        arrayView1d< real64 const > const temp_n = subRegion.getField< fields::flow::temperature_n >();
+        arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+        arrayView1d< real64 const > const pres_n = subRegion.getField< flow::pressure_n >();
+        arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
+        arrayView1d< real64 const > const temp_n = subRegion.getField< flow::temperature_n >();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-          subRegion.getField< fields::flow::phaseVolumeFraction >();
+          subRegion.getField< flow::phaseVolumeFraction >();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
-          subRegion.getField< fields::flow::phaseVolumeFraction_n >();
+          subRegion.getField< flow::phaseVolumeFraction_n >();
         arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-          subRegion.getField< fields::flow::globalCompFraction >();
+          subRegion.getField< flow::globalCompFraction >();
         arrayView2d< real64, compflow::USD_COMP > const compFrac_n =
-          subRegion.getField< fields::flow::globalCompFraction_n >();
+          subRegion.getField< flow::globalCompFraction_n >();
 
         RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
         RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
@@ -2370,18 +2639,18 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-        arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-        arrayView1d< real64 const > const pres_n = subRegion.getField< fields::flow::pressure_n >();
-        arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-        arrayView1d< real64 const > const temp_n = subRegion.getField< fields::flow::temperature_n >();
+        arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+        arrayView1d< real64 const > const pres_n = subRegion.getField< flow::pressure_n >();
+        arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
+        arrayView1d< real64 const > const temp_n = subRegion.getField< flow::temperature_n >();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-          subRegion.getField< fields::flow::phaseVolumeFraction >();
+          subRegion.getField< flow::phaseVolumeFraction >();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
-          subRegion.getField< fields::flow::phaseVolumeFraction_n >();
+          subRegion.getField< flow::phaseVolumeFraction_n >();
         arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-          subRegion.getField< fields::flow::globalCompDensity >();
+          subRegion.getField< flow::globalCompDensity >();
         arrayView2d< real64, compflow::USD_COMP > const compDens_n =
-          subRegion.getField< fields::flow::globalCompDensity_n >();
+          subRegion.getField< flow::globalCompDensity_n >();
 
         RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
         RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
@@ -2475,6 +2744,8 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 {
   GEOS_MARK_FUNCTION;
 
+  PhysicsSolverBase::resetStateToBeginningOfStep( domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -2485,25 +2756,25 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
                                                                                 auto & subRegion )
     {
       arrayView1d< real64 > const & pres =
-        subRegion.template getField< fields::flow::pressure >();
+        subRegion.template getField< flow::pressure >();
       arrayView1d< real64 const > const & pres_n =
-        subRegion.template getField< fields::flow::pressure_n >();
+        subRegion.template getField< flow::pressure_n >();
       pres.setValues< parallelDevicePolicy<> >( pres_n );
 
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
         arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-          subRegion.template getField< fields::flow::globalCompFraction >();
+          subRegion.template getField< flow::globalCompFraction >();
         arrayView2d< real64 const, compflow::USD_COMP > const & compFrac_n =
-          subRegion.template getField< fields::flow::globalCompFraction_n >();
+          subRegion.template getField< flow::globalCompFraction_n >();
         compFrac.setValues< parallelDevicePolicy<> >( compFrac_n );
       }
       else
       {
         arrayView2d< real64, compflow::USD_COMP > const & compDens =
-          subRegion.template getField< fields::flow::globalCompDensity >();
+          subRegion.template getField< flow::globalCompDensity >();
         arrayView2d< real64 const, compflow::USD_COMP > const & compDens_n =
-          subRegion.template getField< fields::flow::globalCompDensity_n >();
+          subRegion.template getField< flow::globalCompDensity_n >();
         compDens.setValues< parallelDevicePolicy<> >( compDens_n );
       }
 
@@ -2511,9 +2782,9 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
       if( m_isThermal )
       {
         arrayView1d< real64 > const & temp =
-          subRegion.template getField< fields::flow::temperature >();
+          subRegion.template getField< flow::temperature >();
         arrayView1d< real64 const > const & temp_n =
-          subRegion.template getField< fields::flow::temperature_n >();
+          subRegion.template getField< flow::temperature_n >();
         temp.setValues< parallelDevicePolicy<> >( temp_n );
       }
 
@@ -2549,9 +2820,9 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
                                                      ElementSubRegionBase & subRegion )
     {
       // update deltaPressure
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const initPres = subRegion.getField< fields::flow::initialPressure >();
-      arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+      arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const initPres = subRegion.getField< flow::initialPressure >();
+      arrayView1d< real64 > const deltaPres = subRegion.getField< flow::deltaPressure >();
       isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
@@ -2574,7 +2845,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
       // Step 4: save converged state for the relperm model to handle hysteresis
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getField< fields::flow::phaseVolumeFraction >();
+        subRegion.getField< flow::phaseVolumeFraction >();
       string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPermMaterial =
         getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
@@ -2609,12 +2880,12 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
       }
 
-      // Step 7: if the diffusion and/or dispersion is/are supported, update the two models explicity
+      // Step 7: if the diffusion and/or dispersion is/are supported, update the two models explicitly
       if( m_hasDiffusion )
       {
         string const & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
         DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
-        arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+        arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
         diffusionMaterial.saveConvergedTemperatureState( temperature );
       }
       if( m_hasDispersion )
@@ -2636,37 +2907,37 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
-      subRegion.template getField< fields::flow::globalCompFraction >();
+      subRegion.template getField< flow::globalCompFraction >();
     arrayView2d< real64, compflow::USD_COMP > const & compFrac_n =
-      subRegion.template getField< fields::flow::globalCompFraction_n >();
+      subRegion.template getField< flow::globalCompFraction_n >();
     compFrac_n.setValues< parallelDevicePolicy<> >( compFrac );
     // may be useful later for sequential poromechanics implementation
     //if( m_isFixedStressPoromechanicsUpdate )
     //{
     //  arrayView2d< real64, compflow::USD_COMP > const & compFrac_k =
-    //    subRegion.template getField< fields::flow::globalCompFraction_k >();
+    //    subRegion.template getField< flow::globalCompFraction_k >();
     //  compFrac_k.setValues< parallelDevicePolicy<> >( compFrac );
     //}
   }
   else
   {
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.template getField< fields::flow::globalCompDensity >();
+      subRegion.template getField< flow::globalCompDensity >();
     arrayView2d< real64, compflow::USD_COMP > const & compDens_n =
-      subRegion.template getField< fields::flow::globalCompDensity_n >();
+      subRegion.template getField< flow::globalCompDensity_n >();
     compDens_n.setValues< parallelDevicePolicy<> >( compDens );
     if( m_isFixedStressPoromechanicsUpdate )
     {
       arrayView2d< real64, compflow::USD_COMP > const & compDens_k =
-        subRegion.template getField< fields::flow::globalCompDensity_k >();
+        subRegion.template getField< flow::globalCompDensity_k >();
       compDens_k.setValues< parallelDevicePolicy<> >( compDens );
     }
   }
 
   arrayView2d< real64 const, compflow::USD_COMP > const & compAmount =
-    subRegion.template getField< fields::flow::compAmount >();
+    subRegion.template getField< flow::compAmount >();
   arrayView2d< real64, compflow::USD_COMP > const & compAmount_n =
-    subRegion.template getField< fields::flow::compAmount_n >();
+    subRegion.template getField< flow::compAmount_n >();
   compAmount_n.setValues< parallelDevicePolicy<> >( compAmount );
 }
 
@@ -2688,9 +2959,9 @@ void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       arrayView2d< real64 const, compflow::USD_COMP >
-      const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+      const compDens = subRegion.getField< flow::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP >
-      const compDens_k = subRegion.getField< fields::flow::globalCompDensity_k >();
+      const compDens_k = subRegion.getField< flow::globalCompDensity_k >();
 
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
 

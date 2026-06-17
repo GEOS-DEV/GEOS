@@ -416,22 +416,14 @@ public:
   ElasticOrthotropic( string const & name, Group * const parent );
 
   /**
-   * Destructor
-   */
-  virtual ~ElasticOrthotropic() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticOrthotropic";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ElasticOrthotropic"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
   ///@}
@@ -494,33 +486,6 @@ public:
 
     /// string/key for default c66 component of Voigt stiffness tensor
     static constexpr char const * defaultC66String() { return "defaultC66"; };
-
-    /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr char const * c11String() { return "c11"; };
-
-    /// string/key for c12 component of Voigt stiffness tensor
-    static constexpr char const * c12String() { return "c12"; };
-
-    /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr char const * c13String() { return "c13"; };
-
-    /// string/key for c22 component of Voigt stiffness tensor
-    static constexpr char const * c22String() { return "c22"; };
-
-    /// string/key for c23 component of Voigt stiffness tensor
-    static constexpr char const * c23String() { return "c23"; };
-
-    /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr char const * c33String() { return "c33"; };
-
-    /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr char const * c44String() { return "c44"; };
-
-    /// string/key for c55 component of Voigt stiffness tensor
-    static constexpr char const * c55String() { return "c55"; };
-
-    /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr char const * c66String() { return "c66"; };
   };
 
   /**

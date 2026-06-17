@@ -89,7 +89,7 @@ The main repository of interest is obviously GEOS itself: `GEOS <https://github.
 
 We also rely on two types of dependencies: first-party and third-party.
 First-party dependencies are projects directly associated with the GEOS effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOS-DEV/PVTPackage>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
+For example, there is a chemical reactions package called `HPCReact <https://github.com/GEOS-DEV/HPCReact>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
 These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
 Most users will never have to worry that these modules are in fact separate projects from GEOS.
 
@@ -179,8 +179,9 @@ The most common errors people encounter here have to do with Github not recogniz
 See the previous section for tips on ensuring your SSH is working properly.
 
 *Note*: Previous versions of GEOS also imported the integratedTests submodule, which is not publicly available (access is limited to the core development team).
+Previous versions also included the PVTPackage which is no longer required.
 This may cause the ``git submodule update`` command to fail.
-In that case, run ``git submodule deinit integratedTests`` before ``git submodule update``.
+In that case, run ``git submodule deinit integratedTests`` and/or ``git submodule deinit src/coreComponents/constitutive/PVTPackage`` before ``git submodule update``.
 This submodule is not required for building GEOS.
 
 .. code-block:: sh
@@ -189,7 +190,6 @@ This submodule is not required for building GEOS.
    git submodule update --init src/cmake/blt
    git submodule update --init src/coreComponents/LvArray
    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update --init src/coreComponents/constitutive/PVTPackage
    cd ..
 
 Once we have grabbed GEOS, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type
@@ -355,6 +355,7 @@ This should print out a brief summary of the available command line arguments:
 .. code-block:: sh
 
     USAGE: geosx -i input.xml [options]
+           geosx -s schema-output.xml
 
     Options:
     -?, --help
@@ -364,13 +365,17 @@ This should print out a brief summary of the available command line arguments:
     -y, --y-partitions,      Number of partitions in the y-direction
     -z, --z-partitions,      Number of partitions in the z-direction
     -s, --schema,            Name of the output schema
+    -v, --validate-input,    only do the loading phase, and not actual simulation. Useful to validate 'input'.
     -b, --use-nonblocking,   Use non-blocking MPI communication
     -n, --name,              Name of the problem, used for output
     -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
     -o, --output,            Directory to put the output files
     -t, --timers,            String specifying the type of timer output
     --trace-data-migration,  Trace host-device data migration
+    -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
     --pause-for,             Pause geosx for a given number of seconds before starting execution
+
+    Rank 0: No XML input file nor schema specified. Exiting...
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.
@@ -378,6 +383,10 @@ In typical usage, an input XML must be provided describing the problem to be run
 .. code-block:: sh
 
     ./bin/geosx -i your-problem.xml
+
+.. note::
+    To validate inputs without executing a full simulation, use the ``-v`` or ``--validate-only`` option
+    (useful before running a heavy simulation).
 
 In a parallel setting, the command might look something like
 

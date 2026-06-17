@@ -96,7 +96,7 @@
     <PackCollection
       name="stressCollection"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"/>
+      fieldName="averageStress"/>
       
     <PackCollection
       name="displacementCollection"
@@ -109,13 +109,7 @@
   <Outputs>
     <VTK 
       name="vtkOutput"
-      parallelThreads="32"
       plotFileRoot="plot"
-    />
-
-    <Silo
-      name="siloOutput"
-      plotLevel="3"
     />
 
     <TimeHistory
@@ -137,7 +131,6 @@
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsLagrangianFEM 
       name="mechanicsSolver" 
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{Omega}">

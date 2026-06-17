@@ -66,7 +66,7 @@ protected:
 PressureTemperatureCoordinatesTestFixture::PressureTemperatureCoordinatesTestFixture():
   m_parent( "parent", m_node ),
   m_fluid( std::make_unique< MockFluid >( "fluid", &m_parent )),
-  m_testFluid( TestFluid< numComps >::create( {Fluid::CO2, Fluid::H2O, Fluid::C1, Fluid::C5} ))
+  m_testFluid( TestFluid< numComps >::create( {Fluid::CO2, Fluid::H2O, Fluid::CH4, Fluid::C5H12} ))
 {
   m_parameters = PressureTemperatureCoordinates::create( std::move( m_parameters ));
   m_coordinates = dynamic_cast< PressureTemperatureCoordinates * >(m_parameters.get());
