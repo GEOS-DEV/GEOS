@@ -20,6 +20,7 @@
 #include "PeriodicEvent.hpp"
 
 #include "common/format/Format.hpp"
+#include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geos
@@ -173,27 +174,21 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
     // Because the function applied to an object may differ by rank, synchronize
     // (Note: this shouldn't occur very often, since it is only called if the base forecast <= 0)
 #ifdef GEOS_USE_MPI
-    real64 result_global;
     switch( m_functionStatOption )
     {
       case 0:
       {
-        MPI_Allreduce( &result, &result_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
-        result = result_global;
+        result = MpiWrapper::min( result, MPI_COMM_WORLD );
         break;
       }
       case 1:
       {
-        int nprocs;
-        MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
-        MPI_Allreduce( &result, &result_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-        result = result_global / nprocs;
+        result = MpiWrapper::sum( result, MPI_COMM_WORLD ) / MPI_Comm_size( MPI_COMM_WORLD );
         break;
       }
       case 2:
       {
-        MPI_Allreduce( &result, &result_global, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
-        result = result_global;
+        result = MpiWrapper::max( result, MPI_COMM_WORLD );
       }
     }
 #endif
