@@ -99,6 +99,8 @@ public:
 
   virtual void initializeState() const override;
 
+  virtual void resetState() const override;
+
   virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct

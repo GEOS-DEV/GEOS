@@ -110,6 +110,13 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::initializeState() const
 }
 
 template< typename FLASH, typename ... PHASES >
+void CompositionalMultiphaseFluid< FLASH, PHASES... >::resetState() const
+{
+  // Zero k-Values to discard the warm-start from the failed Newton attempt.
+  m_kValues.zero();
+}
+
+template< typename FLASH, typename ... PHASES >
 void CompositionalMultiphaseFluid< FLASH, PHASES... >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   m_kValues.resize( 0, numPts, numFluidPhases()-1, numFluidComponents() );
