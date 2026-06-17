@@ -280,6 +280,38 @@ public:
                                   StackDerivativeType< 2, DERIVATIVES, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
+   * @brief Compute the dimensionless enthalpy departure
+   * @details Computes the dimensionless enthalpy departure (H_dep / RT) alongside its analytical
+   * derivatives with respect to pressure, temperature, and compositions. Pressure, temperature,
+   * and componentProperties are required parameters as calculating mixture parameter first and
+   * second temperature derivatives dictates access to properties like critical Temperature.
+   * @tparam USD Length descriptor for un-strided array access
+   * @tparam DERIVATIVES a flag to indicate if derivatives w.r.t p, t, and composition should be evaluated
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure of the phase
+   * @param[in] temperature temperature of the phase
+   * @param[in] composition composition of the phase
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] data The component mixture properties evaluated into an EOSStackVariables object. This should
+   *            always have the derivatives because enthalpy requires the temperature derivative of Z.
+   * @param[out] enthalpy Calculated dimensionless enthalpy departure H_dep
+   * @param[out] enthalpyDerivs Slice to hold analytical derivatives H_dep' evaluated if DERIVATIVES is true
+   * @param[in] selectedRoot Explicit indicator to track designated root selection (AUTO by default)
+   */
+  template< integer USD, bool DERIVATIVES = false >
+  GEOS_HOST_DEVICE
+  static void
+  computeEnthalpy( integer const numComps,
+                   real64 const & pressure,
+                   real64 const & temperature,
+                   arraySlice1d< real64 const, USD > const & composition,
+                   ComponentProperties::KernelWrapper const & componentProperties,
+                   StackVariables< true > const & data,
+                   real64 & enthalpy,
+                   StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs,
+                   SelectedRoot const selectedRoot = SelectedRoot::AUTO );
+
+  /**
    * @brief Helper functions solving a cubic equation using trigonometry
    *        m3 * x^3 + m2 * x^2 + m1 *x + m0  = 0
    * @param[in] m3 first coefficient (in front of x^3)

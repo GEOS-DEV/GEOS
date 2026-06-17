@@ -1554,7 +1554,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="outputData" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType" />
-	<xsd:complexType name="RelpermDriverType" />
+	<xsd:complexType name="RelpermDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
@@ -1570,7 +1573,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
 	<xsd:complexType name="SourceFluxStatisticsType" />
-	<xsd:complexType name="TriaxialDriverType" />
+	<xsd:complexType name="TriaxialDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />
@@ -2437,8 +2443,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
+		<!--cohesion => Cohesion for each cell => Coulomb-->
+		<xsd:attribute name="cohesion" type="real64_array" />
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+		<!--frictionCoefficient => Friction coefficient for each cell => Coulomb-->
+		<xsd:attribute name="frictionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--biotCoefficient => Biot coefficient-->
