@@ -818,7 +818,7 @@ private:
 
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
   /// Tag/counter of the latest MPI collective operation to detect MPI desynchronizations
-  inline static int g_currentMpiOperationTag = 0;
+  inline static int g_collectiveOperationCounter = 0;
 
   /**
    * @struct MpiDesyncGuard
