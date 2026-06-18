@@ -29,6 +29,9 @@ The xml input files for the test case with internal workflow are located at:
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
 
 
+Note that in the external workflow, two mesh files are required, a damain mesh with 3D cells and a fault mesh with 2D suface elements, both of which are generated prior to running the GEOS simulation. In the internal workflow, only the domain mesh file is imported, and the fault mesh is subsequently generated within GEOS using ``SurfaceGenerator``.
+
+
 Corresponding mesh files and a python script for post-processing the simulation results are also provided:
 
 .. code-block:: console
@@ -92,7 +95,7 @@ For the external workflow, the mesh file ``verticalFault_ESG_benchmark.vtm`` is 
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
-The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh files: the damain mesh ``Domain_verticalFault_benchmark.vtu`` and the fault mesh ``Fault_verticalFault_benchmark.vtu``, which are generated prior to running the GEOS simulation. The ``mesh doctor`` module provides a convenient way to prepare these meshes. For this case, functions ``generateFractures`` and ``generateGlobalIds`` are used (more information here: `mesh doctor  <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/mesh-doctor.html#>`__).
+The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh files: the domain mesh ``Domain_verticalFault_benchmark.vtu`` and the fault mesh ``Fault_verticalFault_benchmark.vtu``, which are generated prior to running the GEOS simulation. The ``mesh doctor`` module provides a convenient way to prepare these meshes. For this case, functions ``generateFractures`` and ``generateGlobalIds`` are used (more information here: `mesh doctor  <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/mesh-doctor.html#>`__).
 
 
 For internal workflow, only the domain mesh file ``verticalFault_ISG_benchmark.vtu`` is imported
@@ -166,7 +169,7 @@ in their corresponding documents.
 In this example, let us focus on the coupling solver.
 This solver (``poroFractureSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``singlePhaseFlowSolver``) and solid solver (here: ``fractureMechSolver``).
-These solvers are forced to interact with all the constitutive models in the target regions (here, we only two, ``Region`` and ``Fault``).
+These solvers are forced to interact with all the constitutive models in the target regions (here, we have only two, ``Region`` and ``Fault``).
 More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). This way, the two single-physics solvers will be simultaneously called and executed for solving the problem.
 
 ------------------------------------------------
