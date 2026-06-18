@@ -832,7 +832,9 @@ private:
     explicit MpiDesyncGuard( MPI_Comm const & comm )
       : m_comm( comm )
       , m_operationId( ++g_collectiveOperationCounter )
-    {}
+    {
+      saveStackTrace();
+    }
 
     ~MpiDesyncGuard()
     {
@@ -848,12 +850,12 @@ private:
    * @param[in] comm The MPI_Comm over which the gather operates.
    * @param[in] operationId The current collective operation counter of this rank.
    */
-  inline static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId )
-  {
-    int minId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
-    int maxId = operationId; MPI_Allreduce( MPI_IN_PLACE, &maxId, 1, MPI_INT, MPI_MAX, comm );
-    if( minId != maxId ) { MPI_Abort( comm, 1 ); }
-  }
+  static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId );
+
+  /**
+   * @brief Save the stack trace for desync diagnostics for MPI collective calls.
+   */
+  static void saveStackTrace();
 #endif
 
 };

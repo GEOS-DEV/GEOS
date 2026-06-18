@@ -18,6 +18,7 @@
  */
 
 #include "MpiWrapper.hpp"
+#include "LvArray/src/system.hpp"
 #include <unistd.h>
 
 #if defined(__clang__)
@@ -36,6 +37,28 @@ namespace geos
 MPI_Comm MPI_COMM_GEOS;
 #else
 int MPI_COMM_GEOS = 0;
+#endif
+
+#ifdef GEOS_USE_MPI
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+std::string g_currentStacktrace;
+std::string g_lastSuccessfulStacktrace;
+
+void MpiWrapper::saveStackTrace()
+{
+  g_currentStacktrace = LvArray::system::stackTrace( true );
+}
+
+void MpiWrapper::detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId )
+{
+  int minId = operationId; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, comm );
+  int maxId = operationId; MPI_Allreduce( MPI_IN_PLACE, &maxId, 1, MPI_INT, MPI_MAX, comm );
+  if( minId != maxId ) 
+  {
+    MPI_Abort( comm, 1 );
+  }
+  g_lastSuccessfulStacktrace = g_currentStacktrace;
+}
 #endif
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
