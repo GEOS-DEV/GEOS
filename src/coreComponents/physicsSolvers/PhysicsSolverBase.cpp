@@ -358,28 +358,15 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                         GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ),
                                         m_nonlinearSolverParameters );
       }
-    }
 
-    if( dtRemaining > 0.0 )
-    {
       GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
                              GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}",
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-
-  if( m_nonlinearSolverParameters.m_allowNonConverged )
-  {
-    GEOS_WARNING_IF( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
-                     "Maximum allowed number of sub-steps reached.\nNon-converged solutions are allowed, SIMULATION WILL CONTINUE WITH INACURATE RESULTS.",
-                     getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
-  }
-  else
-  {
-    GEOS_ERROR_IF( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
-                   "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
-                   getDataContext() );
-  }
+  GEOS_ERROR_IF( dtRemaining > 0.0,
+                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
+                 getDataContext() );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
@@ -837,10 +824,10 @@ real64 PhysicsSolverBase::eisenstatWalker( real64 const newNewtonNorm,
   return krylovTol;
 }
 
-real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 integer const cycleNumber,
-                                                 DomainPartition & domain )
+StepResult PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer const cycleNumber,
+                                                     DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
@@ -944,7 +931,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
   {
     if( allowNonConverged )
     {
-      GEOS_LOG_RANK_0( "Convergence not achieved. The accepted solution residuals are out of tolerance bounds." );
+      if ( MpiWrapper::commRank() == 0 )
+        recordNonConvergedTimestep( time_n, cycleNumber );
     }
     else
     {
@@ -954,6 +942,15 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   // return the achieved timestep
   return stepDt;
+}
+
+void PhysicsSolverBase::recordNonConvergedTimestep( globalIndex const cycleNumber,
+                                                    real64 const time_n )
+{
+  GEOS_WARNING( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
+                "Maximum allowed number of sub-steps reached.\nNon-converged solutions are allowed, SIMULATION WILL CONTINUE WITH INACURATE RESULTS.",
+                getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
+  // TODO record non-converged timestep, cycle, residual...
 }
 
 bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
@@ -1622,6 +1619,33 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
+  if( m_nonlinearSolverParameters.m_allowNonConverged && m_nonConvergedCycleNumbers.size() > 0 )
+  { // TODO : relocate where non-convergence data is stored
+    globalIndex const numNonConverged = m_nonConvergedCycleNumbers.size();
+
+    TableLayout nonConvLayout( GEOS_FMT( "{} NON-CONVERGED TIMESTEPS", getName()),
+                               { "Cycle", "Time (s)", "Residual" } );
+
+    TableTextFormatter const nonConvFormatter( nonConvLayout );
+
+    TableData nonConvData;
+    for( globalIndex i = 0; i < numNonConverged; ++i )
+    {
+      real64 const timeVal = i < m_nonConvergedTimes.size() ? m_nonConvergedTimes[i] : 0.0;
+      real64 const residVal = i < m_nonConvergedResiduals.size() ? m_nonConvergedResiduals[i] : 0.0;
+      nonConvData.addRow( m_nonConvergedCycleNumbers[i], timeVal, residVal );
+    }
+
+    std::string const tableStr = nonConvFormatter.toString( nonConvData );
+
+    GEOS_WARNING( GEOS_FMT( "WARNING: Simulation ended with non-converged timesteps:\n"
+                            "- Results contain NON-PHYSICAL values and are likely invalid for use.\n"
+                            "- The simulation has not been aborted because 'allowNonConverged' was active on this solver.\n"
+                            "{}\n",
+                            tableStr ),
+                           );
+  }
+
   for( auto & timer : m_timers )
   {
     real64 const time = std::chrono::duration< double >( timer.second ).count();
@@ -1643,12 +1667,12 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & )
+  {
+    if( meshModificationTimestamp < mesh.getModificationTimestamp() )
     {
-      if( meshModificationTimestamp < mesh.getModificationTimestamp() )
-      {
-        meshModificationTimestamp = mesh.getModificationTimestamp();
-      }
-    } );
+      meshModificationTimestamp = mesh.getModificationTimestamp();
+    }
+  } );
   return meshModificationTimestamp;
 }
 
@@ -1698,38 +1722,38 @@ bool PhysicsSolverBase::detectOscillations() const
 
   RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numDofs ),
                                           [=] GEOS_HOST_DEVICE ( localIndex const dof )
+  {
+    bool oscillationDetected = true;
+    for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
     {
-      bool oscillationDetected = true;
-      for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
-      {
-        real64 dxCur = solutionHistory[i][dof];
-        real64 dxPrev = solutionHistory[i-1][dof];
+      real64 dxCur = solutionHistory[i][dof];
+      real64 dxPrev = solutionHistory[i-1][dof];
 
-        if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
-        {
-          oscillationDetected = false;
+      if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
+      {
+        oscillationDetected = false;
         break;   // solution changes are too small
-        }
-
-        real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
-        if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
-        {
-          oscillationDetected = false;
-        break;   // solution changes are not oscillating
-        }
-
-        if( dxCur * dxPrev > 0 )
-        {
-          oscillationDetected = false;
-        break;   // sign is not oscillating
-        }
       }
 
-      if( oscillationDetected )
+      real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
+      if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
       {
-        oscillationCount += 1;
+        oscillationDetected = false;
+        break;   // solution changes are not oscillating
       }
-    } );
+
+      if( dxCur * dxPrev > 0 )
+      {
+        oscillationDetected = false;
+        break;   // sign is not oscillating
+      }
+    }
+
+    if( oscillationDetected )
+    {
+      oscillationCount += 1;
+    }
+  } );
 
   real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / MpiWrapper::sum( numDofs );
 
