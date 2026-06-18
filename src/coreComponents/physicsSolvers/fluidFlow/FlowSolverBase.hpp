@@ -169,6 +169,18 @@ public:
     GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
   }
 
+  virtual void assembleHydrofracFluxTermsALM( real64 const time_n,
+                                              real64 const dt,
+                                              DomainPartition const & domain,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs,
+                                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
+  {
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+    GEOS_ERROR( "Poroelastic fluxes with conforming fractures ALM not yet implemented." );
+  }
+
   void initializeState( DomainPartition & domain );
 
   virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }

@@ -19,7 +19,9 @@
 
 #include "SinglePhasePoromechanicsConformingFracturesALM.hpp"
 
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 
 namespace geos
 {
@@ -35,14 +37,27 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
 {}
 
 template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::postInputInitialization()
+{
+  Base::postInputInitialization();
+
+  GEOS_WARNING_IF( this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit,
+                   "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
+
+  this->getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
+}
+
+template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling( DomainPartition const & domain,
                                                                                    DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( domain, dofManager );
+  Base::setupCoupling( domain, dofManager );
 
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  dofManager.addCoupling( this->getFlowDofKey(),
+                          fields::contact::traction::key(),
+                          DofManager::Connector::Elem );
 
 }
 
@@ -60,7 +75,10 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
 
   GEOS_UNUSED_VAR( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 
 }
 
@@ -77,7 +95,10 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSyst
 
   GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 }
 
 template< typename FLOW_SOLVER >
@@ -92,7 +113,10 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElem
 
   GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 
 }
 
@@ -107,15 +131,23 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCoup
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs, time_n, dt );
 
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( domain );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  Base::updateState( domain );
+  this->solidMechanicsSolver()->updateState( domain );
+
+  this->flowSolver()->prepareStencilWeights( domain );
+  updateHydraulicApertureAndFracturePermeability( domain );
+  this->flowSolver()->updateStencilWeights( domain );
 }
 
 template< typename FLOW_SOLVER >
@@ -125,7 +157,11 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
                             CRSMatrix< real64, globalIndex > & localMatrix )
 {
   GEOS_UNUSED_VAR( domain, localMatrix );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 }
 
 template< typename FLOW_SOLVER >
@@ -137,7 +173,11 @@ addTransmissibilityCouplingNNZ( DomainPartition const & domain,
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( domain, dofManager, rowLengths );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 
 }
 
@@ -150,7 +190,11 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( domain, dofManager, pattern );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 }
 
 template< typename FLOW_SOLVER >
@@ -165,7 +209,11 @@ assembleForceResidualDerivativeWrtPressure( string const & meshName,
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
 }
 
 template< typename FLOW_SOLVER >
@@ -179,7 +227,89 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( mesh, regionNames, dofManager, localMatrix );
-  GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+
+  if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  }
+
+}
+
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPartition & domain,
+                                                                                                integer const solverType )
+{
+  GEOS_MARK_FUNCTION;
+
+  if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+      && !this->m_performStressInitialization )
+  {
+    this->flowSolver()->prepareStencilWeights( domain );
+    updateHydraulicApertureAndFracturePermeability( domain );
+    this->flowSolver()->updateStencilWeights( domain );
+  }
+
+  Base::mapSolutionBetweenSolvers( domain, solverType );
+}
+
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
+{
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< fields::contact::dispJump >();
+      arrayView1d< real64 const > const area = subRegion.getElementArea();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView2d< real64 const > const fractureTraction = subRegion.getField< fields::contact::traction >();
+      arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
+
+      arrayView1d< real64 > const aperture = subRegion.getElementAperture();
+      arrayView1d< real64 > const hydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
+      arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
+
+      string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+
+      string const & hydraulicApertureRelationName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
+      HydraulicApertureBase const & hydraulicApertureModel =
+        this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
+
+      constitutiveUpdatePassThru( hydraulicApertureModel, [&] ( auto & castedHydraulicAperture )
+      {
+        using HydraulicApertureType = TYPEOFREF( castedHydraulicAperture );
+        typename HydraulicApertureType::KernelWrapper hydraulicApertureWrapper = castedHydraulicAperture.createKernelWrapper();
+
+        ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+        {
+          typename TYPEOFREF( castedPorousSolid )::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+
+          poromechanicsFracturesKernels::StateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                                               porousMaterialWrapper,
+                                                                                               hydraulicApertureWrapper,
+                                                                                               dispJump,
+                                                                                               pressure,
+                                                                                               area,
+                                                                                               volume,
+                                                                                               deltaVolume,
+                                                                                               aperture,
+                                                                                               oldHydraulicAperture,
+                                                                                               hydraulicAperture,
+                                                                                               fractureTraction,
+                                                                                               fractureState );
+        } );
+      } );
+    } );
+  } );
 
 }
 

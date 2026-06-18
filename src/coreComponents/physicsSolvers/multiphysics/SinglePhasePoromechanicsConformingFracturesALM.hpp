@@ -183,6 +183,11 @@ private:
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+                                          integer const solverType ) override;
+
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
+
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture;
@@ -201,6 +206,10 @@ private:
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
+
+protected:
+
+  virtual void postInputInitialization() override final;
 
 };
 

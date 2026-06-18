@@ -45,6 +45,8 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFracturesALM.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesALM.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -649,6 +651,92 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
   } );
 
 
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UNUSED_PARAM ( time_n ),
+                                                            real64 const dt,
+                                                            DomainPartition const & domain,
+                                                            DofManager const & dofManager,
+                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            arrayView1d< real64 > const & localRhs,
+                                                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      string_array const & )
+  {
+    fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      {
+        thermalSinglePhaseFVMKernels::
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
+      }
+      else
+      {
+        singlePhaseFVMKernels::
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
+      }
+    } );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      {
+        thermalSinglePhasePoromechanicsConformingFracturesALMKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          dofKey,
+                                                                                          this->getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView(),
+                                                                                          dR_dAper );
+      }
+      else
+      {
+        singlePhasePoromechanicsConformingFracturesALMKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          dofKey,
+                                                                                          this->getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView(),
+                                                                                          dR_dAper );
+      }
+    } );
+  } );
 }
 
 template< typename BASE >
