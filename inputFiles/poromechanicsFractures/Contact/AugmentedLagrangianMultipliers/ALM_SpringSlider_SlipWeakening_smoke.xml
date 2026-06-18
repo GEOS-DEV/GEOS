@@ -143,6 +143,17 @@
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
+    <!-- Capture initial state (U=0) before any solver step -->
+    <SoloEvent
+      name="initialTractionCollection"
+      target="/Tasks/tractionCollection"/>
+    <SoloEvent
+      name="initialJumpCollection"
+      target="/Tasks/displacementJumpCollection"/>
+    <SoloEvent
+      name="initialSlipCollection"
+      target="/Tasks/cumulativeSlipCollection"/>
+
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
@@ -151,23 +162,27 @@
 
     <PeriodicEvent
       name="vtkOutputEvent"
+      beginTime="0.0"
       timeFrequency="0.05"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="tractionCollection"
+      beginTime="0.05"
       timeFrequency="0.05"
       targetExactTimestep="1"
       target="/Tasks/tractionCollection"/>
 
     <PeriodicEvent
       name="jumpCollection"
+      beginTime="0.05"
       timeFrequency="0.05"
       targetExactTimestep="1"
       target="/Tasks/displacementJumpCollection"/>
 
     <PeriodicEvent
       name="slipCollection"
+      beginTime="0.05"
       timeFrequency="0.05"
       targetExactTimestep="1"
       target="/Tasks/cumulativeSlipCollection"/>
@@ -187,10 +202,12 @@
       timeFrequency="0.05"
       target="/Outputs/slipHistory"/>
 
+    <!--
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.5"
       target="/Outputs/restartOutput"/>
+      -->
 
   </Events>
 

@@ -537,6 +537,15 @@ inline void SlipWeakeningFrictionUpdates::updateTractionOnly(
 {
   real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 
+  // deltaDispJump = dispJump - oldDispJump (total increment since start of time step,
+  // freshly computed by computeDispJump before this call). Update cumulativeSlip here
+  // so that limitTau reflects the current converged slip, not the stale value from
+  // the last Newton assembly where m_dispJump had not yet been updated.
+  {
+    real64 const slipInc[2] = { deltaDispJump[1], deltaDispJump[2] };
+    m_cumulativeSlip[k] = m_cumulativeSlipSaved[k] + LvArray::tensorOps::l2Norm< 2 >( slipInc );
+  }
+
   tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
   tractionNew[2] = traction[2] + penalty[1] * deltaDispJump[2];
@@ -585,6 +594,18 @@ inline void SlipWeakeningFrictionUpdates::constraintCheck(
   integer & condConv ) const
 {
   using namespace fields::contact;
+
+  // Update cumulativeSlip from the current converged deltaDispJump so that
+  // computeLimitTangentialTractionNorm uses the correct mu. This is critical
+  // for the simultaneous ALM path where the assembly kernel never calls
+  // updateTraction, leaving m_cumulativeSlip frozen at m_cumulativeSlipSaved.
+  // Only update for Slip state: in Stick, deltaDispJump is the penalty residual
+  // (not real slip) and would cause spurious cumulativeSlip accumulation.
+  if( fractureState == FractureState::Slip )
+  {
+    real64 const slipInc[2] = { deltaDispJump[1], deltaDispJump[2] };
+    m_cumulativeSlip[k] = m_cumulativeSlipSaved[k] + LvArray::tensorOps::l2Norm< 2 >( slipInc );
+  }
 
   real64 const deltaDisp[2] = { deltaDispJump[1], deltaDispJump[2] };
   real64 const deltaDispNorm = LvArray::tensorOps::l2Norm< 2 >( deltaDisp );

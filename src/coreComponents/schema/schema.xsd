@@ -1039,6 +1039,10 @@
 					<xsd:selector xpath="SlipDependentPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveSlipWeakeningUniqueName">
+					<xsd:selector xpath="SlipWeakening" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveSolidInternalEnergyUniqueName">
 					<xsd:selector xpath="SolidInternalEnergy" />
 					<xsd:field xpath="@name" />
@@ -6854,6 +6858,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ReactiveThermalCompressibleSinglePhaseFluid" type="ReactiveThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SlipWeakening" type="SlipWeakeningType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
@@ -8617,6 +8622,22 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="maxPermMultiplier" type="real64" use="required" />
 		<!--shearDispThreshold => Threshold of shear displacement.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SlipWeakeningType">
+		<!--defaultCohesion => Default cohesion value-->
+		<xsd:attribute name="defaultCohesion" type="real64" use="required" />
+		<!--defaultDc => Default characteristic slip distance over which friction weakens from muPeak to muResidual-->
+		<xsd:attribute name="defaultDc" type="real64" use="required" />
+		<!--defaultInitialFrictionCoefficient => Default peak friction coefficient-->
+		<xsd:attribute name="defaultInitialFrictionCoefficient" type="real64" use="required" />
+		<!--defaultResidualFrictionCoefficient => Default residual friction coefficient (must satisfy muResidual <= muPeak)-->
+		<xsd:attribute name="defaultResidualFrictionCoefficient" type="real64" use="required" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
+		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
+		<xsd:attribute name="shearStiffness" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

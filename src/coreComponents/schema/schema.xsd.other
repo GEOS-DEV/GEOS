@@ -1706,6 +1706,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="ReactiveThermalCompressibleSinglePhaseFluid" type="ReactiveThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SlipWeakening" type="SlipWeakeningType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
@@ -2440,11 +2441,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
-		<!--cohesion => Cohesion for each cell => Coulomb-->
+		<!--cohesion => Cohesion for each element-->
 		<xsd:attribute name="cohesion" type="real64_array" />
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
-		<!--frictionCoefficient => Friction coefficient for each cell => Coulomb-->
+		<!--frictionCoefficient => Friction coefficient for each element-->
 		<xsd:attribute name="frictionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
@@ -3234,6 +3235,22 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="SlipWeakeningType">
+		<!--characteristicSlipDistance => Characteristic slip distance for slip-weakening friction-->
+		<xsd:attribute name="characteristicSlipDistance" type="real64_array" />
+		<!--cohesion => Cohesion for each element-->
+		<xsd:attribute name="cohesion" type="real64_array" />
+		<!--cumulativeSlip => Cumulative slip distance for slip-weakening friction-->
+		<xsd:attribute name="cumulativeSlip" type="real64_array" />
+		<!--cumulativeSlipSaved => Snapshot of cumulative slip at the start of the current time step-->
+		<xsd:attribute name="cumulativeSlipSaved" type="real64_array" />
+		<!--elasticSlip => Elastic slip-->
+		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+		<!--initialFrictionCoefficient => Initial (peak) friction coefficient for each element-->
+		<xsd:attribute name="initialFrictionCoefficient" type="real64_array" />
+		<!--residualFrictionCoefficient => Residual friction coefficient for each element-->
+		<xsd:attribute name="residualFrictionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidInternalEnergyType">
 		<!--dInternalEnergy_dTemperature => Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]-->
