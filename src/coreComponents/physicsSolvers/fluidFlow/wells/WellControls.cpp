@@ -41,8 +41,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetPhaseRate( 0.0 ),
   m_targetMassRate( 0.0 ),
   m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 ),
+  m_surfacePres( -1.0 ),
+  m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
   m_rateSign( -1.0 ),
@@ -305,6 +305,17 @@ void WellControls::postInputInitialization()
                  "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
+  if( m_useSurfaceConditions )
+  {
+    // 3a) check the flag for surface  condition P&T
+    GEOS_THROW_IF( m_surfacePres <= 0.0,
+                   "Surface conditions set to 1 but surface pressure is not set",
+                   InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
+    GEOS_THROW_IF( m_surfaceTemp <= 0.0,
+                   "Surface conditions set to 1 but surface temperature is not set",
+                   InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
+
+  }
   // 4) check that at least one rate constraint has been defined
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                   (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&

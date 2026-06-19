@@ -72,6 +72,7 @@
         targetBHP="5e7"
         targetTotalRateTableName="injectorTotalRateTable"       
         useSurfaceConditions="1"
+        surfaceTemperature="300"
         surfacePressure="101325"/>
     </SinglePhaseWell>
    
