@@ -469,12 +469,7 @@ TestSet getTestSet()
          xMax="{ 10.01, 10.01, 0.01 }" />
   </Geometry>
 
-  <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
-  <Events maxTime="5500.0">
-    <PeriodicEvent name="solverApplications"
-                   forceDt="500.0"
-                   target="/Solvers/testSolver" />
-
+  <Events maxTime="5000.0">
     <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepFluxStats" />
@@ -482,13 +477,17 @@ TestSet getTestSet()
                    timeFrequency="500.0"
                    target="/Tasks/timeStepReservoirStats" />
 
+    <PeriodicEvent name="wholeSimStatsEvent"
+                   timeFrequency="5000.0"
+                   target="/Tasks/wholeSimFluxStats" />
+
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepChecker" />
 
-    <PeriodicEvent name="wholeSimStatsEvent"
-                   timeFrequency="5000.0"
-                   target="/Tasks/wholeSimFluxStats" />
+    <PeriodicEvent name="solverApplications"
+                   forceDt="500.0"
+                   target="/Solvers/testSolver" />
   </Events>
 
   <Tasks>
@@ -514,8 +513,8 @@ TestSet getTestSet()
       name="FluxRate"
       inputVarNames="{ time }"
       interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.767,  0.894,  0.561,  0.234,  0.194,  0.178,  0.162,  0.059,  0.000,  0.000 }"
+      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 }"
+      values="{       0.000,  0.767,  0.894,  0.561,  0.234,  0.194,  0.178,  0.162,  0.059,  0.000,  0.000 }"
     />
   </Functions>
 
@@ -714,12 +713,7 @@ TestSet getTestSet()
          xMax="{ 10.01, 10.01,  0.01 }" />
   </Geometry>
 
-  <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
-  <Events maxTime="5500.0">
-    <PeriodicEvent name="solverApplications"
-                   forceDt="500.0"
-                   target="/Solvers/testSolver" />
-
+  <Events maxTime="5000.0">
     <PeriodicEvent name="timestepFluxStatsEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepFluxStats" />
@@ -727,13 +721,17 @@ TestSet getTestSet()
                    timeFrequency="500.0"
                    target="/Tasks/timeStepReservoirStats" />
 
+    <PeriodicEvent name="wholeSimStatsEvent"
+                   timeFrequency="5000.0"
+                   target="/Tasks/wholeSimFluxStats" />
+
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepChecker" />
 
-    <PeriodicEvent name="wholeSimStatsEvent"
-                   timeFrequency="5000.0"
-                   target="/Tasks/wholeSimFluxStats" />
+    <PeriodicEvent name="solverApplications"
+                   forceDt="500.0"
+                   target="/Solvers/testSolver" />
   </Events>
 
   <Tasks>
@@ -759,16 +757,16 @@ TestSet getTestSet()
       name="FluxInjectionRate"
       inputVarNames="{ time }"
       interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
+      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 }"
+      values="{       0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
     />
     <!-- water depletion rates in mol/s -->
     <TableFunction
       name="FluxProductionRate"
       inputVarNames="{ time }"
       interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
+      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 }"
+      values="{       0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
     />
 
     <TableFunction name="initGasCompFracTable"
@@ -986,12 +984,7 @@ TestSet getTestSet()
          xMax="{ 10.01, 10.01,  0.01 }" />
   </Geometry>
 
-  <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
-  <Events maxTime="5500.0">
-    <PeriodicEvent name="solverApplications"
-                   forceDt="500.0"
-                   target="/Solvers/testSolver" />
-
+  <Events maxTime="5000.0">
     <PeriodicEvent name="timestepFluxStatsEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepFluxStats" />
@@ -999,13 +992,17 @@ TestSet getTestSet()
                    timeFrequency="500.0"
                    target="/Tasks/timeStepReservoirStats" />
 
+    <PeriodicEvent name="wholeSimStatsEvent"
+                   timeFrequency="5000.0"
+                   target="/Tasks/wholeSimFluxStats" />
+
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepChecker" />
 
-    <PeriodicEvent name="wholeSimStatsEvent"
-                   timeFrequency="5000.0"
-                   target="/Tasks/wholeSimFluxStats" />
+    <PeriodicEvent name="solverApplications"
+                   forceDt="500.0"
+                   target="/Solvers/testSolver" />
   </Events>
 
   <Tasks>
@@ -1031,16 +1028,16 @@ TestSet getTestSet()
       name="FluxInjectionRate"
       inputVarNames="{ time }"
       interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
+      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 }"
+      values="{       0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
     />
     <!-- water depletion rates in mol/s -->
     <TableFunction
       name="FluxProductionRate"
       inputVarNames="{ time }"
       interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
+      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 }"
+      values="{       0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
     />
 
     <TableFunction name="initGasCompFracTable"

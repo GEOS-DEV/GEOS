@@ -81,17 +81,26 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
                                         real64 const dt,
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                         integer const GEOS_UNUSED_PARAM( eventCounter ),
-                                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                        real64 const eventProgress,
                                         DomainPartition & domain )
 {
+  real64 const time = time_n + dt * eventProgress;
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
                                                                           string_array const & )
   {
-    // current time is time_n + dt
-    computeNodeStatistics( mesh, time_n + dt );
+    computeNodeStatistics( mesh, time );
   } );
   return false;
+}
+
+void SolidMechanicsStatistics::cleanup( real64 const time_n,
+                                        integer const cycleNumber,
+                                        integer const eventCounter,
+                                        real64 const eventProgress,
+                                        DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
 }
 
 void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 const time ) const

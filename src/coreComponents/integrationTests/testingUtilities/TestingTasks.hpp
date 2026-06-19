@@ -20,6 +20,7 @@
 #ifndef GEOS_EVENTS_TASKS_TESTINGTASKS_HPP_
 #define GEOS_EVENTS_TASKS_TESTINGTASKS_HPP_
 
+#include "common/DataTypes.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
 
@@ -65,6 +66,10 @@ public:
   static string catalogName() { return "TimeStepChecker"; }
 
   virtual bool execute( real64 time_n, real64 dt, integer cycleNumber,
+                        integer eventCounter, real64 eventProgress,
+                        DomainPartition & domain );
+
+  virtual void cleanup( real64 time_n, integer cycleNumber,
                         integer eventCounter, real64 eventProgress,
                         DomainPartition & domain );
 

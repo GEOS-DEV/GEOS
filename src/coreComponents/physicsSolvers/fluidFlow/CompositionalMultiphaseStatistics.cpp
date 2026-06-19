@@ -192,28 +192,37 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
                                                  real64 const dt,
                                                  integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                  integer const GEOS_UNUSED_PARAM( eventCounter ),
-                                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                                 real64 const eventProgress,
                                                  DomainPartition & domain )
 {
+  real64 const time = time_n + dt * eventProgress;
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
                                                                           string_array const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
-      // current time is time_n + dt
-      computeRegionStatistics( time_n + dt, mesh, regionNames );
+      computeRegionStatistics( time, mesh, regionNames );
     }
   } );
 
   if( m_computeCFLNumbers )
   {
-    // current time is time_n + dt
-    computeCFLNumbers( time_n + dt, dt, domain );
+    computeCFLNumbers( time, dt, domain );
   }
 
   return false;
 }
+
+void CompositionalMultiphaseStatistics::cleanup( real64 const time_n,
+                                                 integer const cycleNumber,
+                                                 integer const eventCounter,
+                                                 real64 const eventProgress,
+                                                 DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+}
+
 
 void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
                                                                  MeshLevel & mesh,
