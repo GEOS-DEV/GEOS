@@ -18,6 +18,7 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/CollocatedNodes.hpp"
 
+#include "common/MpiWrapper.hpp"
 #include "dataRepository/Group.hpp"
 
 #include <vtkCell.h>
@@ -624,10 +625,116 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
 }
 
 
+/**
+ * @brief Register a passthrough field on a FaceBlock, ensuring MPI consistency.
+ *
+ * On ranks where the VTK array is absent (e.g. empty fracture partition), an empty
+ * wrapper of the correct type is still registered so all ranks have the same wrappers
+ * during ghost communication.
+ */
+static void writeFacePassthroughField( vtkDataSet & faceMesh,
+                                       localIndex const numElems,
+                                       string const & fieldName,
+                                       FaceBlock & faceBlock )
+{
+  vtkDataArray * srcArray = faceMesh.GetCellData()->GetArray( fieldName.c_str() );
+
+  // Collectively determine type: isReal (1/0) and numComp, or -1 if absent on this rank.
+  int localIsReal = ( srcArray != nullptr )
+                    ? ( ( srcArray->GetDataType() == VTK_FLOAT || srcArray->GetDataType() == VTK_DOUBLE ) ? 1 : 0 )
+                    : -1;
+  int localNumComp = ( srcArray != nullptr ) ? srcArray->GetNumberOfComponents() : -1;
+
+  int const globalIsReal  = MpiWrapper::allReduce( localIsReal, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const globalNumComp = MpiWrapper::allReduce( localNumComp, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+
+  if( globalNumComp == -1 )
+  {
+    // Field absent on every rank — not a passthrough field of this mesh.
+    GEOS_WARNING( GEOS_FMT( "Passthrough field '{}' not found in any fracture VTK CellData; skipping.", fieldName ) );
+    return;
+  }
+
+  if( srcArray == nullptr )
+  {
+    // This rank has no data for this field (empty partition). Register an empty
+    // wrapper so ghost communication finds the same wrapper on all ranks.
+    if( globalIsReal == 1 )
+    {
+      if( globalNumComp == 1 )
+      {
+        faceBlock.addProperty< array1d< real64 > >( fieldName ).resize( numElems );
+      }
+      else
+      {
+        faceBlock.addProperty< array2d< real64 > >( fieldName ).resize( numElems, globalNumComp );
+      }
+    }
+    else
+    {
+      if( globalNumComp == 1 )
+      {
+        faceBlock.addProperty< array1d< integer > >( fieldName ).resize( numElems );
+      }
+      else
+      {
+        faceBlock.addProperty< array2d< integer > >( fieldName ).resize( numElems, globalNumComp );
+      }
+    }
+    faceBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+    return;
+  }
+
+  // This rank has the data — fill it.
+  bool const isReal = ( globalIsReal == 1 );
+  if( isReal )
+  {
+    if( globalNumComp == 1 )
+    {
+      array1d< real64 > & dst = faceBlock.addProperty< array1d< real64 > >( fieldName );
+      dst.resize( numElems );
+      faceBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      for( localIndex i = 0; i < numElems; ++i )
+        dst[i] = static_cast< real64 >( srcArray->GetTuple1( i ) );
+    }
+    else
+    {
+      array2d< real64 > & dst = faceBlock.addProperty< array2d< real64 > >( fieldName );
+      dst.resize( numElems, globalNumComp );
+      faceBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      for( localIndex i = 0; i < numElems; ++i )
+        for( int c = 0; c < globalNumComp; ++c )
+          dst( i, c ) = static_cast< real64 >( srcArray->GetComponent( i, c ) );
+    }
+  }
+  else
+  {
+    if( globalNumComp == 1 )
+    {
+      array1d< integer > & dst = faceBlock.addProperty< array1d< integer > >( fieldName );
+      dst.resize( numElems );
+      faceBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      for( localIndex i = 0; i < numElems; ++i )
+        dst[i] = static_cast< integer >( srcArray->GetTuple1( i ) );
+    }
+    else
+    {
+      array2d< integer > & dst = faceBlock.addProperty< array2d< integer > >( fieldName );
+      dst.resize( numElems, globalNumComp );
+      faceBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      for( localIndex i = 0; i < numElems; ++i )
+        for( int c = 0; c < globalNumComp; ++c )
+          dst( i, c ) = static_cast< integer >( srcArray->GetComponent( i, c ) );
+    }
+  }
+}
+
+
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
-                            CellBlockManager & cellBlockManager )
+                            CellBlockManager & cellBlockManager,
+                            Span< string const > passthroughFieldNames )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   vtk::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
@@ -686,6 +793,16 @@ void importFractureNetwork( string const & faceBlockName,
     buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ),
                                              buildCollocatedNodesMap( collocatedNodes ) )
     );
+
+  // Import passthrough fields from the face mesh CellData.
+  // writeFacePassthroughField performs an MPI_Allreduce to determine the field type
+  // collectively, ensuring all ranks register the same wrappers even when some ranks
+  // have an empty fracture partition (needed for ghost communication consistency).
+  localIndex const numElems = LvArray::integerConversion< localIndex >( num2dElements );
+  for( string const & fieldName : passthroughFieldNames )
+  {
+    writeFacePassthroughField( *faceMesh, numElems, fieldName, faceBlock );
+  }
 }
 
 } // end of namespace

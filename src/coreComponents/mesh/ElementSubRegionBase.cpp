@@ -47,6 +47,7 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+
 }
 
 ElementSubRegionBase::~ElementSubRegionBase()

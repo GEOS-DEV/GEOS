@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4077 (2026-06-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4077-17009-64cf777.tar.gz>
+Add input mesh parameter to output Pvd results
+
 PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
 Move relperm driver to use new constitutive driver framework
 

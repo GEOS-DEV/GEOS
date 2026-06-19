@@ -3561,12 +3561,89 @@ void writeStructuredIndex( vtkDataSet & mesh,
   } );
 }
 
+static void writePassthroughField( vtkDataSet & mesh,
+                                   Span< vtkIdType const > const cellIds,
+                                   string const & fieldName,
+                                   CellBlock & cellBlock )
+{
+  vtkDataArray * srcArray = mesh.GetCellData()->GetArray( fieldName.c_str() );
+  if( srcArray == nullptr )
+  {
+    GEOS_WARNING( GEOS_FMT( "Passthrough field '{}' not found in VTK CellData; skipping.", fieldName ) );
+    return;
+  }
+
+  localIndex const numElems = LvArray::integerConversion< localIndex >( cellIds.size() );
+  integer const numComp = srcArray->GetNumberOfComponents();
+
+  // Map VTK float types to real64; everything else (integers, id types) to integer.
+  bool const isRealArray = ( srcArray->GetDataType() == VTK_FLOAT || srcArray->GetDataType() == VTK_DOUBLE );
+
+  if( isRealArray )
+  {
+    if( numComp == 1 )
+    {
+      array1d< real64 > & dst = cellBlock.addProperty< array1d< real64 > >( fieldName );
+      dst.resize( numElems );
+      cellBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      forAll< parallelHostPolicy >( numElems, [&dst, srcArray, cellIds]( localIndex const i )
+      {
+        dst[i] = static_cast< real64 >( srcArray->GetTuple1( cellIds[i] ) );
+      } );
+    }
+    else
+    {
+      array2d< real64 > & dst = cellBlock.addProperty< array2d< real64 > >( fieldName );
+      dst.resize( numElems, numComp );
+      cellBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      forAll< parallelHostPolicy >( numElems, [&dst, srcArray, cellIds, numComp]( localIndex const i )
+      {
+        for( integer c = 0; c < numComp; ++c )
+          dst( i, c ) = static_cast< real64 >( srcArray->GetComponent( cellIds[i], c ) );
+      } );
+    }
+  }
+  else
+  {
+    if( numComp == 1 )
+    {
+      array1d< integer > & dst = cellBlock.addProperty< array1d< integer > >( fieldName );
+      dst.resize( numElems );
+      cellBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      forAll< parallelHostPolicy >( numElems, [&dst, srcArray, cellIds]( localIndex const i )
+      {
+        dst[i] = static_cast< integer >( srcArray->GetTuple1( cellIds[i] ) );
+      } );
+    }
+    else
+    {
+      array2d< integer > & dst = cellBlock.addProperty< array2d< integer > >( fieldName );
+      dst.resize( numElems, numComp );
+      cellBlock.getWrapperBase( fieldName ).setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      forAll< parallelHostPolicy >( numElems, [&dst, srcArray, cellIds, numComp]( localIndex const i )
+      {
+        for( integer c = 0; c < numComp; ++c )
+          dst( i, c ) = static_cast< integer >( srcArray->GetComponent( cellIds[i], c ) );
+      } );
+    }
+  }
+}
+
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
                  vtk::CellMapType const & cellMap,
                  string const & structuredIndexAttributeName,
-                 CellBlockManager & cellBlockManager )
+                 CellBlockManager & cellBlockManager,
+                 Span< string const > passthroughFieldNames )
 {
+  if( !passthroughFieldNames.empty() )
+  {
+    string fieldList;
+    for( string const & n : passthroughFieldNames )
+      fieldList += "'" + n + "' ";
+    GEOS_LOG_RANK_0( GEOS_FMT( "VTKMesh: propagating passthrough fields: {}", fieldList ) );
+  }
+
   // Creates a new cell block for each region and for each type of cell.
   for( auto const & typeRegions : cellMap )
   {
@@ -3594,6 +3671,11 @@ void writeCells( integer const logLevel,
       if( !structuredIndexAttributeName.empty() )
       {
         writeStructuredIndex( mesh, structuredIndexAttributeName, cellIds, cellBlock );
+      }
+
+      for( string const & fieldName : passthroughFieldNames )
+      {
+        writePassthroughField( mesh, cellIds, fieldName, cellBlock );
       }
     }
   }

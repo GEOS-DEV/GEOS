@@ -20,6 +20,8 @@
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
+#include <list>
+
 namespace geos
 {
 
@@ -170,6 +172,31 @@ public:
    * @return The mapping relationship as an array.
    */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
+
+  /**
+   * @brief Apply a lambda to each external (passthrough) property registered on this face block.
+   * @tparam LAMBDA type of the lambda
+   * @param lambda the lambda to apply; receives a @p dataRepository::WrapperBase const &
+   */
+  template< typename LAMBDA >
+  void forExternalProperties( LAMBDA && lambda ) const
+  {
+    for( auto * wrapperBase : this->getExternalProperties() )
+    {
+      lambda( *wrapperBase );
+    }
+  }
+
+private:
+
+  /**
+   * @brief Returns the list of external (passthrough) property wrappers.
+   * @return List of pointers to external property wrappers.
+   */
+  virtual std::list< dataRepository::WrapperBase const * > getExternalProperties() const
+  {
+    return {};
+  }
 };
 
 }

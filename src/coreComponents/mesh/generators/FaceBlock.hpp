@@ -120,10 +120,36 @@ public:
    */
   void set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets );
 
+  /**
+   * @brief Add a property to the FaceBlock.
+   * @tparam T type of the property
+   * @param[in] propertyName the name of the property
+   * @return a non-const reference to the property
+   */
+  template< typename T >
+  T & addProperty( string const & propertyName )
+  {
+    m_externalPropertyNames.emplace_back( propertyName );
+    return this->registerWrapper< T >( propertyName ).reference();
+  }
+
 private:
+
+  std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
+  {
+    std::list< dataRepository::WrapperBase const * > result;
+    for( string const & externalPropertyName : m_externalPropertyNames )
+    {
+      result.push_back( &this->getWrapperBase( externalPropertyName ) );
+    }
+    return result;
+  }
 
   localIndex m_num2dElements;
   localIndex m_num2dFaces;
+
+  /// Names of the properties registered from an external mesh
+  string_array m_externalPropertyNames;
 
   ArrayOfArrays< localIndex > m_2dElemToNodes;
   ArrayOfArrays< localIndex > m_2dElemToEdges;
