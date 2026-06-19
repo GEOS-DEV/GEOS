@@ -26,6 +26,10 @@
 
 #include <numeric>
 
+// TODO move in cpp
+#include <chrono>
+#include <thread>
+
 #if defined(GEOS_USE_MPI)
   #include <mpi.h>
 #define MPI_PARAM( x ) x
@@ -817,9 +821,6 @@ private:
   static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOS );
 
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  /// Tag/counter of the latest MPI collective operation to detect MPI desynchronizations
-  inline static int g_collectiveOperationCounter = 0;
-
   /**
    * @struct MpiDesyncGuard
    * @brief RAII helper to detect MPI desynchronizations from MPI collective operations.
@@ -827,30 +828,37 @@ private:
   struct MpiDesyncGuard
   {
     MPI_Comm const & m_comm;
-    int const m_operationId;
+    bool m_collectiveOperationSuccess = false;
 
     explicit MpiDesyncGuard( MPI_Comm const & comm )
       : m_comm( comm )
-      , m_operationId( ++g_collectiveOperationCounter )
     {
-      saveStackTrace();
+      saveStackTrace(); // Here every rank saves a stacktrace TODO modify
     }
 
     ~MpiDesyncGuard()
     {
-      detectMpiDesync( m_comm, m_operationId );
+      detectMpiDesync();
     }
+
+    /**
+     * @brief Detects MPI desynchronizations from MPI collective operations.
+     */
+    void detectMpiDesync();
+
+    /**
+     * TODO
+     */
+    void timeout();
+
+    // TODO rename TODO is it useful?
+    void failed();
+    // TODO rename TODO is it useful?
+    void succeeded();
 
     MpiDesyncGuard( MpiDesyncGuard const & ) = delete;
     MpiDesyncGuard & operator=( MpiDesyncGuard const & ) = delete;
   };
-
-  /**
-   * @brief Detects MPI desynchronizations from MPI collective operations.
-   * @param[in] comm The MPI_Comm over which the gather operates.
-   * @param[in] operationId The current collective operation counter of this rank.
-   */
-  static void detectMpiDesync( MPI_Comm const & MPI_PARAM( comm ), int operationId );
 
   /**
    * @brief Save the stack trace for desync diagnostics for MPI collective calls.
