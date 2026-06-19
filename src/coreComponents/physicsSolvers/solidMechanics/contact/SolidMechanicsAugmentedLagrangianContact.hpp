@@ -301,6 +301,8 @@ private:
     constexpr static char const * tolNormalTracFacString() { return "tolNormalTrac"; }
 
     constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
+    
+    constexpr static char const * anisotropicString() { return "anisotropic"; }
 
   };
 
@@ -329,6 +331,9 @@ private:
 
   /// Factor to adjust the tolerance for normal traction
   real64 m_tolNormalTracFac = 0.5;
+
+  /// Flag for anisotropic scaling in Tolerances and Penalties
+  int m_isAnisotropic = 1;
 
 };
 
