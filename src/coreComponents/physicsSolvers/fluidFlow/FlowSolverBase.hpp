@@ -77,6 +77,7 @@ public:
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    static constexpr char const * maxAbsoluteTempChangeString() { return "maxAbsoluteTemperatureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
     static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
 
@@ -300,6 +301,9 @@ protected:
 
   /// maximum (absolute) pressure change in a Newton iteration
   real64 m_maxAbsolutePresChange;
+
+  /// maximum (absolute) temperature change in a Newton iteration
+  real64 m_maxAbsoluteTempChange;
 
   /// maximum (absolute) pressure change in a sequential iteration
   real64 m_sequentialPresChange;
