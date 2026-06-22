@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="test_3_phase_baker"
+      relperm="3_phase_baker"
+      steps="65"
+      phaseNames="{ water, oil }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
+      output="testRelperm_VanGenuchten_3_phase_baker.txt"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_3_phase_stone2"
+      relperm="3_phase_stone2"
+      steps="65"
+      phaseNames="{ gas, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
+      output="testRelperm_VanGenuchten_3_phase_stone2.txt"
+      logLevel="1" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="event_3_phase_baker"
+      target="/Tasks/test_3_phase_baker" />
+    <SoloEvent
+      name="event_3_phase_stone2"
+      target="/Tasks/test_3_phase_stone2" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <Constitutive>
+    <VanGenuchtenBakerRelativePermeability
+      name="3_phase_baker"
+      phaseNames="{ gas, oil, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.25, 0.20 }"
+      gasOilRelPermExponentInv="{ 0.5, 0.5 }"
+      gasOilRelPermMaxValue="{ 0.65, 0.75 }"
+      waterOilRelPermExponentInv="{ 0.25, 0.5 }"
+      waterOilRelPermMaxValue="{ 0.65, 0.75 }" />
+
+    <VanGenuchtenStone2RelativePermeability
+      name="3_phase_stone2"
+      phaseNames="{ gas, oil, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.25, 0.20 }"
+      gasOilRelPermExponentInv="{ 0.5, 0.5 }"
+      gasOilRelPermMaxValue="{ 0.65, 0.75 }"
+      waterOilRelPermExponentInv="{ 0.25, 0.5 }"
+      waterOilRelPermMaxValue="{ 0.65, 0.75 }" />
+  </Constitutive>
+
+  <Included>
+    <File name="testRelperm_data/relperm_tables.xml" />
+  </Included>
+</Problem>

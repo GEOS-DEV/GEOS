@@ -89,7 +89,7 @@ The main repository of interest is obviously GEOS itself: `GEOS <https://github.
 
 We also rely on two types of dependencies: first-party and third-party.
 First-party dependencies are projects directly associated with the GEOS effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOS-DEV/PVTPackage>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
+For example, there is a chemical reactions package called `HPCReact <https://github.com/GEOS-DEV/HPCReact>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
 These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
 Most users will never have to worry that these modules are in fact separate projects from GEOS.
 
@@ -179,8 +179,9 @@ The most common errors people encounter here have to do with Github not recogniz
 See the previous section for tips on ensuring your SSH is working properly.
 
 *Note*: Previous versions of GEOS also imported the integratedTests submodule, which is not publicly available (access is limited to the core development team).
+Previous versions also included the PVTPackage which is no longer required.
 This may cause the ``git submodule update`` command to fail.
-In that case, run ``git submodule deinit integratedTests`` before ``git submodule update``.
+In that case, run ``git submodule deinit integratedTests`` and/or ``git submodule deinit src/coreComponents/constitutive/PVTPackage`` before ``git submodule update``.
 This submodule is not required for building GEOS.
 
 .. code-block:: sh
@@ -189,7 +190,6 @@ This submodule is not required for building GEOS.
    git submodule update --init src/cmake/blt
    git submodule update --init src/coreComponents/LvArray
    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update --init src/coreComponents/constitutive/PVTPackage
    cd ..
 
 Once we have grabbed GEOS, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type

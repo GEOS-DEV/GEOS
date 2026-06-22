@@ -26,6 +26,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
@@ -715,7 +716,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       flow::pressure::key(),
-                                      [&] ( FieldSpecificationBase const & fs,
+                                      [&] ( FieldSpecification const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
                                             FaceManager & targetGroup,
@@ -740,18 +741,19 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
         pressureSets.insert( setName );
         // first, evaluate BC to get primary field values (pressure)
-        fs.applyFieldValue< FieldSpecificationEqual,
-                            parallelDevicePolicy<> >( targetSet,
-                                                      time_n + dt,
-                                                      targetGroup,
-                                                      flow::facePressure::key() );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                 parallelDevicePolicy<> >( fs,
+                                                                           targetSet,
+                                                                           time_n + dt,
+                                                                           targetGroup,
+                                                                           flow::facePressure::key() );
       } );
 
       // Take BCs defined for "temperature" field and apply values to "faceTemperature"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       flow::temperature::key(),
-                                      [&] ( FieldSpecificationBase const & fs,
+                                      [&] ( FieldSpecification const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
                                             FaceManager & targetGroup,
@@ -775,11 +777,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
         temperatureSets.insert( setName );
         // Specify the bc value of the field
-        fs.applyFieldValue< FieldSpecificationEqual,
-                            parallelDevicePolicy<> >( targetSet,
-                                                      time_n + dt,
-                                                      targetGroup,
-                                                      flow::faceTemperature::key() );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                 parallelDevicePolicy<> >( fs,
+                                                                           targetSet,
+                                                                           time_n + dt,
+                                                                           targetGroup,
+                                                                           flow::faceTemperature::key() );
 
       } );
 
@@ -821,7 +824,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       flow::pressure::key(),
-                                      [&] ( FieldSpecificationBase const & fs,
+                                      [&] ( FieldSpecification const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
                                             FaceManager & targetGroup,
@@ -845,11 +848,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         }
 
         // first, evaluate BC to get primary field values (pressure)
-        fs.applyFieldValue< FieldSpecificationEqual,
-                            parallelDevicePolicy<> >( targetSet,
-                                                      time_n + dt,
-                                                      targetGroup,
-                                                      flow::facePressure::key() );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                 parallelDevicePolicy<> >( fs,
+                                                                           targetSet,
+                                                                           time_n + dt,
+                                                                           targetGroup,
+                                                                           flow::facePressure::key() );
 
 
         // TODO: currently we just use model from the first cell in this stencil
