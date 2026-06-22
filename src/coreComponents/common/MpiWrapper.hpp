@@ -26,9 +26,7 @@
 
 #include <numeric>
 
-// TODO move in cpp
-#include <chrono>
-#include <thread>
+#include <atomic>
 
 #if defined(GEOS_USE_MPI)
   #include <mpi.h>
@@ -828,7 +826,7 @@ private:
   struct MpiDesyncGuard
   {
     MPI_Comm const & m_comm;
-    bool m_collectiveOperationSuccess = false;
+    std::atomic<bool> m_collectiveOperationSuccess{ false };
 
     explicit MpiDesyncGuard( MPI_Comm const & comm )
       : m_comm( comm )
@@ -847,13 +845,14 @@ private:
     void detectMpiDesync();
 
     /**
-     * TODO
+     * @brief Method ran when a desynchronization is detected.
+     * TODO rename TODO is it useful?
      */
-    void timeout();
-
-    // TODO rename TODO is it useful?
     void failed();
-    // TODO rename TODO is it useful?
+    /**
+     * @brief Method ran when no desynchronizations are detected.
+     * TODO rename TODO is it useful?
+     */
     void succeeded();
 
     MpiDesyncGuard( MpiDesyncGuard const & ) = delete;

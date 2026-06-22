@@ -19,7 +19,10 @@
 
 #include "MpiWrapper.hpp"
 #include "LvArray/src/system.hpp"
+#include "common/logger/Logger.hpp"
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -50,65 +53,45 @@ void MpiWrapper::saveStackTrace()
 
 void MpiWrapper::MpiDesyncGuard::failed()
 {
-  std::cerr << g_lastSuccessfulStacktrace << '\n' << g_currentStacktrace;
+  GEOS_LOG_RANK_0( GEOS_FMT( "MPI desync detected: rank {) timed out\n"
+                             "{}\n"
+                             "Last successful stacktrace:\n"
+                             "{}",
+                             g_currentStacktrace, g_lastSuccessfulStacktrace ) );
   MPI_Abort( m_comm, 1 );
 }
 
 void MpiWrapper::MpiDesyncGuard::succeeded()
 {
-  // the MPI_Barrier did not hang
-  this->m_collectiveOperationSuccess = true;
+  m_collectiveOperationSuccess.store( true, std::memory_order_release );
   g_lastSuccessfulStacktrace = g_currentStacktrace;
 }
 
-void MpiWrapper::MpiDesyncGuard::timeout()
-{
-  std::this_thread::sleep_for( std::chrono::seconds( 10 ) );
-  if( !this->m_collectiveOperationSuccess ) 
-  {
-    failed();
-  }
-}
-
-// void MpiWrapper::MpiDesyncGuard::detectMpiDesync()
-// {
-//   // start a timeout for the following MPI_Barrier 
-//   std::thread timeout( &MpiWrapper::MpiDesyncGuard::timeout, this );
-//   MPI_Barrier( this->m_comm );
-//   succeeded();
-// }
-
 void MpiWrapper::MpiDesyncGuard::detectMpiDesync()
 {
-  // start a timeout for the following MPI_Barrier 
-  std::thread timeout( [this]{
-    std::this_thread::sleep_for( std::chrono::seconds( 10 ) );
-    if( !this->m_collectiveOperationSuccess ) 
+  MPI_Request request;
+  MPI_Ibarrier( m_comm, &request );
+
+  int flag = 0;
+  double start = MpiWrapper::wtime();
+  while( true )
+  {
+    MpiWrapper::test( &request, &flag, MPI_STATUS_IGNORE );
+    if( flag )
+    {
+      succeeded();
+      return;
+    }
+
+    if( MpiWrapper::wtime() - start > 10 )
     {
       failed();
+      return;
     }
-  } );
-  MPI_Barrier( this->m_comm );
-  succeeded();
-}
 
-// void MpiWrapper::MpiDesyncGuard::detectMpiDesync()
-// {
-//   // start a timeout for the following MPI_Barrier 
-//   std::thread timeout( [this]{
-//     std::this_thread::sleep_for( std::chrono::seconds( 10 ) );
-//     if( !this->m_collectiveOperationSuccess ) 
-//     {
-//       // (Timeout reached, desync detected)
-//       std::cerr << g_lastSuccessfulStacktrace << '\n' << g_currentStacktrace;
-//       MPI_Abort( m_comm, 1 );
-//     }
-//   } );
-//   MPI_Barrier( this->m_comm );
-//   // Successful operation for this rank
-//   this->m_collectiveOperationSuccess = true;
-//   g_lastSuccessfulStacktrace = g_currentStacktrace;
-// }
+    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+  }
+}
 #endif
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
