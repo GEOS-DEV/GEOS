@@ -6925,20 +6925,20 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
-The expected format is "{ gasExp, oilExp }", in that order-->
+The expected format is "{ gasExp, oilExp }", in that order Allowed range: [0, +inf)-->
 		<xsd:attribute name="gasOilRelPermExponent" type="real64_array" default="{1}" />
 		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
-The expected format is "{ gasMax, oilMax }", in that order-->
+The expected format is "{ gasMax, oilMax }", in that order Allowed range: [0, 1]-->
 		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability -->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability  Allowed range: [0, 1]-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation
-The expected format is "{ waterExp, oilExp }", in that order-->
+The expected format is "{ waterExp, oilExp }", in that order Allowed range: [0, +inf)-->
 		<xsd:attribute name="waterOilRelPermExponent" type="real64_array" default="{1}" />
 		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
-The expected format is "{ waterMax, oilMax }", in that order-->
+The expected format is "{ waterMax, oilMax }", in that order Allowed range: [0, 1]-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
