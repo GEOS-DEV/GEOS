@@ -29,7 +29,7 @@ namespace constitutive
 namespace compositional
 {
 
-static std::unordered_map< PhaseType, std::string > const phase_aliases{
+static stdUnorderedMap< PhaseType, std::string > const phase_aliases{
   {PhaseType::LIQUID, "liquid,liq,oil"},
   {PhaseType::VAPOUR, "gas,vap,vapor,vapour"},
   {PhaseType::AQUEOUS, "wat,water,aqueous"}
