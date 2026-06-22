@@ -1039,18 +1039,18 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & wellElemPhaseDens = fluid.phaseDensity();
     arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
 
-        // 4) Back calculate component densities
-        constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-        {
-          using FluidType = TYPEOFREF( castedFluid );
-          typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-          using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< serialPolicy, FluidType >;
-          KernelType::launch( subRegion.size(),
-                              fluidWrapper,
-                              wellElemPressure,
-                              wellElemTemp,
-                              wellElemCompFrac );
-        } );
+    // 4) Back calculate component densities
+    constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+    {
+      using FluidType = TYPEOFREF( castedFluid );
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< serialPolicy, FluidType >;
+      KernelType::launch( subRegion.size(),
+                          fluidWrapper,
+                          wellElemPressure,
+                          wellElemTemp,
+                          wellElemCompFrac );
+    } );
 
     compositionalMultiphaseWellKernels::
       CompDensInitializationKernel::launch( subRegion.size(),
