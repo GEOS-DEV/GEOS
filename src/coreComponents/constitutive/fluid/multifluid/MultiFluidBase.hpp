@@ -198,11 +198,6 @@ public:
   virtual void initializeState() const;
 
   /**
-   * @brief Reset any internal warm-started state held by the fluid model.
-   */
-  virtual void resetState() const {}
-
-  /**
    * @brief Save the phase densities, component fractions, enthalpies and internal energies (for accumulation)
    */
   virtual void saveConvergedState() const override;

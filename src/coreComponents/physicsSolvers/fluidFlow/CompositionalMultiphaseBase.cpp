@@ -2796,7 +2796,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
       {
         string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-        fluid.resetState();
+        fluid.initializeState();
       }
       // update all fluid properties
       updateFluidState( subRegion );
