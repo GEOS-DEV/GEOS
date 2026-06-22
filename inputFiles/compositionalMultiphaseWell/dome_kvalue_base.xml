@@ -73,7 +73,6 @@
         useSurfaceConditions="1"
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
-        control="totalVolRate"
         enableCrossflow="0"
         logLevel="2"
         maxRelativePressureChange="0.5"
