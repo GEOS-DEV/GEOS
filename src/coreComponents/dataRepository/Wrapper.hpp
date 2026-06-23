@@ -744,6 +744,11 @@ public:
              std::optional< WrapperBound< limit_value_type_t< T > > > max,
              WrapperLimitsMode mode = WrapperLimitsMode::Error )
   {
+    if( min.has_value() && max.has_value() )
+    {
+      GEOS_ASSERT_LE_MSG( min.value(), max.value(),
+                          "Min value should be less or equal to max value." );
+    }
     m_limits.min = min;
     m_limits.max = max;
     m_limitsMode = mode;

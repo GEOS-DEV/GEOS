@@ -125,6 +125,26 @@ struct WrapperBound
   WrapperBound( T v, bool inclusive = true )
     : value( v ), isInclusive( inclusive )
   {}
+
+  /// @cond DO_NOT_DOCUMENT
+  friend bool operator<( WrapperBound const & left, WrapperBound const & right )
+  { return left.value < right.value; }
+
+  friend bool operator>( WrapperBound const & left, WrapperBound const & right )
+  { return !( operator<( right, left ) ); }
+
+  friend bool operator<=( WrapperBound const & left, WrapperBound const & right )
+  { return !( operator>( left, right ) ); }
+
+  friend bool operator>=( WrapperBound const & left, WrapperBound const & right )
+  { return !( operator<( left, right ) ); }
+
+  friend inline std::ostream & operator<<( std::ostream & os, WrapperBound const & bound )
+  {
+    os << bound.value;
+    return os;
+  }
+  ///@endcond
 };
 
 /**
