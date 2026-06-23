@@ -21,7 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Span.hpp"
-#include "dataRepository/AttributeLimits.hpp"
+#include "dataRepository/WrapperLimits.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"

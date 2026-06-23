@@ -21,7 +21,7 @@
 #define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
-#include "dataRepository/AttributeLimits.hpp"
+#include "dataRepository/WrapperLimits.hpp"
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
 #include "LvArray/src/limits.hpp"

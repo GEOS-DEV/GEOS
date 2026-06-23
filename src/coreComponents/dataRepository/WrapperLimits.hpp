@@ -14,8 +14,8 @@
  */
 
 
-#ifndef GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
-#define GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPERLIMITS_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPERLIMITS_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -217,4 +217,4 @@ static bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit
 
 } /* namespace geos */
 
-#endif /* GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_WRAPPERLIMITS_HPP_ */

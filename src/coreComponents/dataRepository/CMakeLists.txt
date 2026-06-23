@@ -22,7 +22,6 @@ Also contains a wrapper to process entries from an xml file into data types.
 # Specify all headers
 #
 set( dataRepository_headers
-     AttributeLimits.hpp
      BufferOps.hpp
      BufferOpsDevice.hpp
      BufferOps_inline.hpp
@@ -44,6 +43,7 @@ set( dataRepository_headers
      Wrapper.hpp
      WrapperBase.hpp
      wrapperHelpers.hpp
+     WrapperLimits.hpp
      xmlWrapper.hpp
      DataContext.hpp
      GroupContext.hpp
