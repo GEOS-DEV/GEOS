@@ -742,7 +742,7 @@ public:
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
   setLimits( std::optional< WrapperBound< limit_value_type_t< T > > > min,
              std::optional< WrapperBound< limit_value_type_t< T > > > max,
-             LimitsMode mode = LimitsMode::Error )
+             WrapperLimitsMode mode = WrapperLimitsMode::Error )
   {
     m_limits.min = min;
     m_limits.max = max;
@@ -754,7 +754,7 @@ public:
   std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
   setLimits( std::optional< WrapperBound< limit_value_type_t< T > > >,
              std::optional< WrapperBound< limit_value_type_t< T > > >,
-             LimitsMode GEOS_UNUSED_PARAM( mode ) )
+             WrapperLimitsMode GEOS_UNUSED_PARAM( mode ) )
   {
     static_assert( is_limitable_v< U >,
                    "setLimits is only supported on scalar arithmetic types." );
@@ -812,7 +812,7 @@ public:
   validateLimits()
   {
     if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == LimitsMode::Indicative )
+        m_limitsMode == WrapperLimitsMode::Indicative )
     {
       return;
     }
@@ -824,7 +824,7 @@ public:
   validateLimits()
   {
     if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == LimitsMode::Indicative )
+        m_limitsMode == WrapperLimitsMode::Indicative )
     {
       return;
     }
@@ -1231,16 +1231,16 @@ private:
 
     switch( m_limitsMode )
     {
-      case LimitsMode::Warning:
+      case WrapperLimitsMode::Warning:
         GEOS_WARNING( msg );
         break;
 
-      case LimitsMode::Error:
+      case WrapperLimitsMode::Error:
         GEOS_THROW( msg, InputError );
         break;
 
       default:
-        GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
+        GEOS_LOG_RANK_0( "Unimplemented WrapperLimitsMode" );
         break;
     }
   }
@@ -1261,7 +1261,7 @@ private:
   wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
 
   /// stores the (optional) min/max bounds for the wrapped value.
-  Limits< T > m_limits;
+  WrapperLimits< T > m_limits;
 };
 
 }

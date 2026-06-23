@@ -30,21 +30,21 @@ namespace dataRepository
 {
 
 /**
- * @enum LimitsMode
+ * @enum WrapperLimitsMode
  * @brief Enforcement mode associated with the limits of an attribute
  *
  * - Indicative: the limits are documentation only, no runtime check is performed.
  * - Warning:    a value outside the limits emits a runtime warning.
  * - Error:      a value outside the limits throws.
  */
-enum class LimitsMode : integer
+enum class WrapperLimitsMode : integer
 {
   Indicative,
   Warning,
   Error
 };
 
-ENUM_STRINGS( LimitsMode,
+ENUM_STRINGS( WrapperLimitsMode,
               "Indicative",
               "Warning",
               "Error" );
@@ -86,7 +86,7 @@ using limit_value_type_t = typename LimitValueType< T >::type;
  * @tparam T type to check
  * @brief Trait determining whether attribute limits can be applied to type @p T
  *
- * Limits apply to numeric types (integer, real32, real64, etc.) including arrays
+ * WrapperLimits apply to numeric types (integer, real32, real64, etc.) including arrays
  * of numeric types (array1d< integer >, array2d< real64 >, etc.)
  */
 template< typename T >
@@ -148,7 +148,7 @@ WrapperBound< T > exclusive( T value )
 }
 
 /**
- * @struct Limits
+ * @struct WrapperLimits
  * @brief Storage for the optional min/max bounds of a wrapped value.
  *
  * Specialized so that the members (std::optional< T >) are only instanciated
@@ -156,11 +156,11 @@ WrapperBound< T > exclusive( T value )
  * abstract types that can't be instantiated with std::optional< absT >.
  */
 template< typename T, bool = is_limitable_v< T > >
-struct Limits
+struct WrapperLimits
 {};
 
 template< typename T >
-struct Limits< T, true >
+struct WrapperLimits< T, true >
 {
   std::optional< WrapperBound< limit_value_type_t< T > > > min;
   std::optional< WrapperBound< limit_value_type_t< T > > > max;
