@@ -558,7 +558,11 @@ public:
    * @brief Set the current consrtaint
    * @param[in] currentConstraint pointer to constraint
    */
-  void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
+  void setCurrentConstraint( WellConstraintBase * currentConstraint )
+  {
+    setControl( currentConstraint->getControl()  );
+    m_currentConstraint = currentConstraint;
+  }
   /**
    * @brief Get the current consrtaint
    * @return pointer to constraint

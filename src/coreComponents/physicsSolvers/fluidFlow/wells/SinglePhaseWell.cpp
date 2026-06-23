@@ -487,7 +487,6 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           if( ConstraintTypeId( getControl()) == constraint.getControl() )
           {
             setCurrentConstraint( &constraint );
-            setControl( constraint.getControl());
           }
         } );
       }
@@ -499,7 +498,6 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           if( ConstraintTypeId( getControl()) == constraint.getControl() )
           {
             setCurrentConstraint( &constraint );
-            setControl( constraint.getControl()  );
           }
         } );
       }

@@ -971,7 +971,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           if( constraint.getControl() == inputControl )
           {
             setCurrentConstraint( &constraint );
-            setControl( inputControl );
           }
         } );
       }
@@ -984,7 +983,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           if( constraint.getControl() == inputControl )
           {
             setCurrentConstraint( &constraint );
-            setControl( inputControl );
           }
         } );
       }

@@ -910,7 +910,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       if( constraint->checkViolation( *limitingConstraint, time_n ) )
       {
         limitingConstraint = constraint;
-        setControl( constraint->getControl()  );       // tjb old
         setCurrentConstraint( constraint );
         GEOS_LOG_RANK_IF ( subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " Control switch " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
@@ -934,14 +933,13 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
 {
   // create list of all constraints to solve
   // note that initializeWells sets the initial constraint
-  // tjb reactive control schema to allow use to set if needed
   stdVector< WellConstraintBase * > constraintList = getRateConstraints();
   WellConstraintBase * limitingConstraint = getCurrentConstraint();
   if( isProducer() )
   {
     if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
     {
-      {   // remove from list and add BHP constraint
+      { // remove from list and add BHP constraint
         auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
         if( it != constraintList.end() )
         {
@@ -949,15 +947,13 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         }
         forSubGroups< MinimumBHPConstraint >( [&] ( auto & constraint )
         {
-          constraintList.emplace_back( &constraint );
+          if( constraint.isConstraintActive() )
+          {
+            constraintList.emplace_back( &constraint );
+          }
         } );
         constraintList.insert( constraintList.begin(), limitingConstraint );
       }
-    }
-    // Solve minimum bhp constraint first
-    if( limitingConstraint == nullptr )
-    {
-      limitingConstraint = constraintList[0];
     }
   }
   else
@@ -999,7 +995,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     if( constraint->isConstraintActive() && constraint->checkViolation( *limitingConstraint, time_n ))
     {
       limitingConstraint=constraint;
-      setControl( constraint->getControl()  );                        // tjb old
       setCurrentConstraint( limitingConstraint );
       GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                          " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " active " << constraint->isConstraintActive() <<
@@ -1037,7 +1032,6 @@ void WellControls::setupWellDofs( DomainPartition & domain, WellElementRegion & 
   {
     m_dofManagerInitialized=true;
     m_wellNewtonSolver.setupSystem( *this, domain, meshBodyName, meshLevel, wellElementRegion );
-
   }
 }
 
@@ -1070,7 +1064,6 @@ void WellControls::solveConstraint( WellConstraintBase *constraint,
     }
     if( constraint->isConstraintActive() )
     {
-      setControl( constraint->getControl() );    // tjb old
       setCurrentConstraint( constraint );
       // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
 // the well initialization code requires control type to by synced
@@ -1121,7 +1114,9 @@ WellControls::assembleSystem( real64 const & time_n,
   assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
 
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
   computeWellPerforationRates( time_n, dt, elemManager, subRegion );
+
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
 }
 
