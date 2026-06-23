@@ -42,6 +42,8 @@ namespace archiveInputDeck
  * Copy XML input files and every included files they contain (specified in
  * the Included tag) into a single flat file. When @p level is at least 2, the
  * XSD schema is also copied next to the flattened input.
+ *
+ * @note Should be called on a single MPI rank.
  */
 void archiveInputDeck( string_array const & inputFileNames,
                        string const & outputDirectory,
