@@ -65,7 +65,7 @@ void Gas::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ContinuumBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_jacobian.resize( 0 );
+  m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_temperature.resize( 0 );
 }
 

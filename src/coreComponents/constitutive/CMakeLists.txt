@@ -284,6 +284,7 @@ set( constitutive_headers
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
      fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp
      fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp
+     liquid/Liquid.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/DamagePermeability.hpp
@@ -451,6 +452,7 @@ set( constitutive_sources
      fluid/singlefluid/SlurryFluidBase.cpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
      fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.cpp
+     liquid/Liquid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/DamagePermeability.cpp
@@ -528,6 +530,7 @@ if( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY )
        NullModel.cpp
        ContinuumBase.cpp
        gas/Gas.cpp
+       liquid/Liquid.cpp
        cohesiveZone/CohesiveZoneBase.cpp
        cohesiveZone/UncoupledCohesiveZone.cpp
        cohesiveZone/CoupledCohesiveZone.cpp

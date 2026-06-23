@@ -22,7 +22,7 @@ variant_label = os.environ.get("PERIODIC_VARIANT_LABEL", "2D disk")
 velocity = [float(x) for x in os.environ.get("PERIODIC_VELOCITY", "0.42,0.31,0.0").split(",")]
 
 pfw["caseName"] = case_name
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 pfw["mBatch"] = True
 pfw["mWallTime"] = "00:05:00"
 pfw["mSubmitJobs"] = False

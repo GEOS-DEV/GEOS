@@ -592,10 +592,13 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(num_subplots, 1, figsize=(16, 16))
     if not isinstance(axes, (np.ndarray, list)):
       axes = [axes]
+    
+    job.read_reaction_file()
+    job.read_from_box_average_file()
 
     if "displacementTime" in args.plot:
       plotIndex = m["displacementTime"]
-      job.read_reaction_file()
+      # job.read_reaction_file()
       if args.x:
         axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["F00"].getData(), linestyle='-',color='r',linewidth=1,label="F00")
       if args.y:
@@ -608,7 +611,7 @@ if __name__ == "__main__":
 
     if "reactions" in args.plot:
       plotIndex = m["reactions"]
-      job.read_reaction_file()
+      # job.read_reaction_file()
       if args.x:
         axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rxp"].getData(), linestyle='-', alpha=0.5, color='r',linewidth=1,label="+x")
         axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rxm"].getData(), linestyle='--',color='r',linewidth=1,label="-x")
@@ -624,7 +627,7 @@ if __name__ == "__main__":
     
     if "stressStrain" in args.plot:
       plotIndex = m["stressStrain"]
-      job.read_from_box_average_file()
+      # job.read_from_box_average_file()
       job.compute_domain_strain()
       job.compute_domain_stress()
       if args.x:
@@ -679,6 +682,11 @@ if __name__ == "__main__":
       if args.z:
         axes[plotIndex].plot(dz, job.fields["Rzp"].getData(), linestyle='-', alpha=0.5,color='b',linewidth=1,label="+z")
         axes[plotIndex].plot(dz, job.fields["Rzm"].getData(), linestyle='--',color='b',linewidth=1,label="-z")
+
+    if "pressureTime" in args.plot:
+      time = job.fields["Time"].getData()
+      plotIndex = m["pressureTime"]
+      axes[plotIndex].plot(time, -(job.fields["BSxx"].getData()+job.fields["BSyy"].getData()+job.fields["BSzz"].getData())/3, linestyle='-', alpha=0.5,color='b',linewidth=1,label="pressure")
 
     plt.show()
 

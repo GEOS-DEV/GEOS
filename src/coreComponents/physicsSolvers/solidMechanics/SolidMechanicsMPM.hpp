@@ -401,6 +401,8 @@ public:
                                            NodeManager & nodeManager,
                                            MeshLevel & mesh );
 
+  void shapeFunctionDiagnostics( ParticleManager & particleManager );
+
   void performParticleToGridForExplicitStep( real64 const time_n,
                                              integer const cycleNumber,
                                              ParticleManager & particleManager,
@@ -409,6 +411,10 @@ public:
   void syncGridFieldsForExplicitStep( DomainPartition & domain,
                                       NodeManager & nodeManager,
                                       MeshLevel & mesh );
+
+  void syncSurfaceTensionForcesForExplicitStep( DomainPartition & domain,
+                                                NodeManager & nodeManager,
+                                                MeshLevel & mesh );
 
   void enforceGridFieldSymmetryAndNormalize( NodeManager & nodeManager );
 
@@ -786,7 +792,16 @@ public:
   // XXX Legacy P2G performance variants were usually worse than atomics.
   // XXX Retained only as inactive reference; delete when the archive is no longer useful.
 
-  void computeSPHSurfaceCurvature( ParticleManager & particleManager );
+/**
+   * @brief Assembles diffuse-interface surface-tension forces with a weak-form P2G pass.
+   *
+   * The method uses synchronized gridMaterialVolume as a partitioned phase color field,
+   * gathers the color gradient to particles with shape-function gradients, builds a
+   * continuum surface stress at each particle, and scatters -V_p tau_s grad N into
+   * gridSurfaceTensionForce.
+   */
+  void computePartitionedSurfaceTensionForces( ParticleManager & particleManager,
+                                               NodeManager & nodeManager );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
@@ -1308,6 +1323,7 @@ protected:
   real64 m_separabilityMinDamage;
   int m_setDomainTemperature;
   int m_setDomainTemperatureRate;
+  int m_shapeFunctionDiagnostics;
   stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
                                                                 // value][direction]. dims = {# of subregions, # of
                                                                 // particles, # of nodes
@@ -1330,7 +1346,9 @@ protected:
   int m_surfaceHealing;
   real64 m_surfaceNormalAndPositionDamageThreshold;
   real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
-  real64 m_surfaceTensionCoefficient;
+  real64 m_surfaceTensionForceSign;
+  real64 m_surfaceTensionGradientTolerance;
+  array2d< real64 > m_surfaceTensionPairs;
   real64 m_thinFeatureDFGThreshold;
   mpm::TimeIntegrationOption m_timeIntegrationOption;
   int m_tracerCycleInterval;

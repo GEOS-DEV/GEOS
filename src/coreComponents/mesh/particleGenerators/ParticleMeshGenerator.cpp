@@ -143,12 +143,14 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     regionIndex++;
   } );
 
-  std::string line; // initialize line variable
   std::ifstream particleFile( m_particleFilePath );
-  std::vector< std::vector< std::vector< double > > > particleData( numBlocks );
+  
+  GEOS_ERROR_IF( !particleFile.is_open(), "Could not open MPM particle file: " << m_particleFilePath );
 
   // Read column headers for particle data
   int numColumnHeaders = 0;
+  std::string line; // initialize line variable
+  std::vector< std::vector< std::vector< double > > > particleData( numBlocks );
   std::map< int, int > columnHeaderMap;
   {
     std::getline( particleFile, line );
@@ -161,6 +163,20 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       numColumnHeaders++;
     }
   }
+
+  auto requireColumn = [&]( ParticleColumnHeaders h )
+  {
+    GEOS_ERROR_IF( columnHeaderMap.find( static_cast< int >( h ) ) == columnHeaderMap.end(),
+                  "Missing required MPM particle-file column: "
+                  << EnumStrings< ParticleColumnHeaders >::toString( h ) );
+  };
+
+  requireColumn( ParticleColumnHeaders::ID );
+  requireColumn( ParticleColumnHeaders::PositionX );
+  requireColumn( ParticleColumnHeaders::PositionY );
+  requireColumn( ParticleColumnHeaders::PositionZ );
+  requireColumn( ParticleColumnHeaders::RVectorXX ); // For single point we currently use this to input particle volume 
+  // I don't like that we should optionally check if particleVolume field is defined and use that regardless of rvectors if instead, and warn if the user tries specifying both
 
   // Read in particle data
   int lineNumber = 1; // Since column header takes one line
@@ -186,9 +202,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     lineNumber++;
 
     // If particle is inside partition add to particleData otherwise ignore and continue parsing file
-    bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionX ) ] ], 0 ) &&
-                       partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionY ) ] ], 1 ) &&
-                       partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionZ ) ] ], 2 );
+    bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionX ) ) ], 0 ) &&
+                       partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionY ) ) ], 1 ) &&
+                       partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionZ ) ) ], 2 );
     if( !inPartition )
     {
       continue;
@@ -201,7 +217,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     {
       if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
       {
-        lineDataInside.push_back( lineData[ columnHeaderMap[ c ] ] );
+        lineDataInside.push_back( lineData[ columnHeaderMap.at( c ) ] );
         continue;
       }
 
@@ -304,7 +320,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< int > particleCZTag( npInBlock );
 
     // Populate particle fields with data
-    for( int i = 0; i < npInBlock; i++ )
+    for( localIndex i = 0; i < npInBlock; i++ )
     {
       // Global ID
       particleID[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ID )];
@@ -352,7 +368,10 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         {
           particleVolume[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
 
-          double a = std::pow( particleVolume[i], 1.0/3.0 );
+          GEOS_ERROR_IF( !std::isfinite( particleVolume[i] ) || particleVolume[i] <= 0.0,
+               "MPM particle volume must be finite and positive." );
+
+          real64 a = LvArray::math::pow( particleVolume[i], 1.0/3.0 );
           particleRVectors[i][0][0] = a;
           particleRVectors[i][0][1] = 0.0;
           particleRVectors[i][0][2] = 0.0;

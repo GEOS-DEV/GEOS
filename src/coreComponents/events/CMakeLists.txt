@@ -79,7 +79,6 @@ set( events_sources
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ConfiningPressureMPMEvent.cpp
      mpmEvents/ReferenceCohesiveZonesMPMEvent.cpp
-     mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ResetDeformationGradientMPMEvent.cpp
      mpmEvents/TemperatureProfileMPMEvent.cpp
      mpmEvents/TransformParticlesMPMEvent.cpp
