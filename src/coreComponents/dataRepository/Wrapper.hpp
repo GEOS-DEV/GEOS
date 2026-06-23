@@ -1229,17 +1229,17 @@ private:
       return;
     }
 
-    string const msg = GEOS_FMT( "Value {} for attribute '{}' is outside the allowed range {}.",
-                                 value, getDataContext(), m_limits.getRangeStr() );
+    string const msg = GEOS_FMT( "Value {} is outside the allowed range {}.",
+                                 value, m_limits.getRangeStr() );
 
     switch( m_limitsMode )
     {
       case WrapperLimitsMode::Warning:
-        GEOS_WARNING( msg );
+        GEOS_WARNING( msg, getDataContext() );
         break;
 
       case WrapperLimitsMode::Error:
-        GEOS_THROW( msg, InputError );
+        GEOS_THROW( msg, InputError, getDataContext() );
         break;
 
       default:
