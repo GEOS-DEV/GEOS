@@ -218,7 +218,7 @@ void archiveInputDeck( string_array const & inputFileNames,
                        string_array const & xmlTagOrder,
                        integer const level )
 {
-  if( level == 0 || inputFileNames.empty() || outputDirectory.empty() )
+  if( level <= 0 || inputFileNames.empty() || outputDirectory.empty() )
   {
     return;
   }
