@@ -197,7 +197,7 @@ void copySchemaToArchive( string const & archiveDir )
     {
       GEOS_WARNING( GEOS_FMT( "Failed to copy XSD schema to archive '{}': {}",
                               destination.string(), ec.message() ) );
-      return;
+      continue;
     }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Archived XSD schema: {}",
