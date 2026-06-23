@@ -21,7 +21,6 @@
 #define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
-#include "dataRepository/WrapperLimits.hpp"
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
 #include "LvArray/src/limits.hpp"
@@ -39,7 +38,6 @@
 
 // System includes
 #include <cstdlib>
-#include <optional>
 #include <type_traits>
 
 namespace geos

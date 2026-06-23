@@ -20,8 +20,6 @@
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/EnumStrings.hpp"
-#include <optional>
-#include <type_traits>
 
 namespace geos
 {
@@ -131,7 +129,7 @@ struct WrapperBound
   { return left.value < right.value; }
 
   friend bool operator>( WrapperBound const & left, WrapperBound const & right )
-  { return !( operator<( right, left ) ); }
+  { return operator<( right, left ); }
 
   friend bool operator<=( WrapperBound const & left, WrapperBound const & right )
   { return !( operator>( left, right ) ); }
