@@ -114,7 +114,7 @@ struct WrapperBound
   /**
    * @brief WrapperBound constructor to write a limit without the "WrapperBound{ ... }" syntax
    * @param value The limit value to set
-   * @param isInclusive Wether the limit should be inclusive or not
+   * @param isInclusive Whether the limit should be inclusive or not
    *
    * @code
    *   .setLimits( 0.0, 1.0 )  // where setLimits takes `WrapperBound` parameters, those parameters
@@ -183,7 +183,10 @@ struct WrapperLimits< T, true >
 };
 
 
-// Helper methods
+/**
+ * @name Helper methods
+ */
+///@{
 
 /**
  * @brief Compare the given value with the min limit, taking account for the inclusive xor exclusive
@@ -212,6 +215,8 @@ static bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit
   return maxLimit.isInclusive ? ( value >  maxLimit.value )
                               : ( value >= maxLimit.value );
 }
+
+///@}
 
 } /* namespace dataRepository */
 
