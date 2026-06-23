@@ -915,6 +915,8 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
                                lineBlock.getName(), iperfGlobal,
                                location[0], location[1], location[2] ) );
 
+    bool perfFound = false;
+
     localIndex erStart = -1, erEnd = -1;
 
     localIndex const targetRegionIndex = elemManager.getRegions().getIndex( perfTargetRegionGlobal[iperfGlobal] );
@@ -936,14 +938,31 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
       localIndex esrMatched = -1;
       localIndex eiMatched  = -1;
       globalIndex giMatched  = -1;
-      integer const resElemFound = searchLocalElements( mesh,
-                                                        location,
-                                                        m_searchDepth,
-                                                        er,
-                                                        esrMatched,
-                                                        eiMatched,
-                                                        giMatched,
-                                                        geomTol );
+      integer resElemFound = searchLocalElements( mesh,
+                                                  location,
+                                                  m_searchDepth,
+                                                  er,
+                                                  esrMatched,
+                                                  eiMatched,
+                                                  giMatched,
+                                                  geomTol );
+
+      // Multiple ranks can match the element of the well perforation occurs at the interface of 2 or multiple
+      // cells (face, edge or even vertex). We will arbitrarily assign the perforation to the process with the
+      // lowest global id
+      integer const matchedRanks = MpiWrapper::sum( resElemFound ? 1 : 0 );
+      if( 1 < matchedRanks )
+      {
+        // Reduction for pairs (globalIndex, int) seems unsupported. We will cast the rank to globalIndex
+        globalIndex const rank = resElemFound ? static_cast< globalIndex >(MpiWrapper::commRank()) : LvArray::NumericLimits< globalIndex >::max;
+        MpiWrapper::PairType< globalIndex, globalIndex > match = { resElemFound ? giMatched : rank, rank };
+        match = MpiWrapper::min( match );
+        // If this process does not have the lowest Id we will say it hasn't found the element
+        if( match.first != giMatched || match.second != rank )
+        {
+          resElemFound = 0;
+        }
+      }
 
       // if the element was found
       if( resElemFound )
@@ -968,9 +987,17 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
       }
 
       // if one rank has found the element, all ranks exit the search
-      if( MpiWrapper::allReduce( resElemFound, MpiWrapper::Reduction::LogicalOr ))
+      perfFound = perfFound || ( 0 < matchedRanks );
+      if( perfFound )
         break;
     }
+
+    // We will issue this only as a warning to capture all failed perforations.
+    // If the failure is irrecoverable, an error will be issued in WellElementRegion
+    GEOS_WARNING_IF( !perfFound && MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "Failed to locate perforation {} for well {} with location ({}, {}, {}). "
+                               "This is because the perforation is on a section of the well polyline located outside the domain.",
+                               perfName[iperfGlobal], lineBlock.getName(), location[0], location[1], location[2] ));
   }
 
   // set the size based on the number of perforations matched with local reservoir elements

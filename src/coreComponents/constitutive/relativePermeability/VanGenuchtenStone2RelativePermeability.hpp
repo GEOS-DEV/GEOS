@@ -190,9 +190,9 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   real64 const volFracScaleInv = 1.0 / m_volFracScale;
 
   real64 oilRelPerm_wo = 0.0; // oil rel perm using two-phase gas-oil data
-  real64 dOilRelPerm_wo_dOilVolFrac = 0.0; // derivative w.r.t to So
+  real64 dOilRelPerm_wo = 0.0; // derivative w.r.t to So (2-phase) or Sw (3-phase,STONEII)
   real64 oilRelPerm_go = 0.0; // oil rel perm using two-phase gas-oil data
-  real64 dOilRelPerm_go_dOilVolFrac = 0.0; // derivative w.r.t to So
+  real64 dOilRelPerm_go = 0.0; // derivative w.r.t to So (2-phase) or Sg (3-phase,STONEII)
 
   // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
 
@@ -200,7 +200,6 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   if( ipWater >= 0 )
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
-    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil]   - m_phaseMinVolumeFraction[ipOil])   * volFracScaleInv;
 
     using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
     real64 const waterExponentInv = m_waterOilRelPermExponentInv[WOPT::WATER];
@@ -218,12 +217,22 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
     real64 const oilMaxValue_wo = m_waterOilRelPermMaxValue[WOPT::OIL];
 
     // oil rel perm
-    evaluateVanGenuchtenFunction( scaledOilVolFrac,
-                                  volFracScaleInv,
-                                  oilExponentInv_wo,
-                                  oilMaxValue_wo,
-                                  oilRelPerm_wo,
-                                  dOilRelPerm_wo_dOilVolFrac );
+    if( ipGas >= 0 )
+    {
+      real64 const scaledOilVolFrac_wo = ( (1. - phaseVolFraction[ipWater] ) - m_phaseMinVolumeFraction[ipOil] ) * volFracScaleInv;
+      evaluateVanGenuchtenFunction( scaledOilVolFrac_wo,
+                                    volFracScaleInv, oilExponentInv_wo, oilMaxValue_wo, oilRelPerm_wo, dOilRelPerm_wo );
+
+      dOilRelPerm_wo *= -1;
+    }
+    else//2-phase
+    {
+
+      real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+      evaluateVanGenuchtenFunction( scaledOilVolFrac,
+                                    volFracScaleInv, oilExponentInv_wo, oilMaxValue_wo, oilRelPerm_wo, dOilRelPerm_wo );
+
+    }
 
   }
 
@@ -232,7 +241,6 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   if( ipGas >= 0 )
   {
     real64 const scaledGasVolFrac = (phaseVolFraction[ipGas] - m_phaseMinVolumeFraction[ipGas]) * volFracScaleInv;
-    real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
 
     using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
     real64 const gasExponentInv = m_gasOilRelPermExponentInv[GOPT::GAS];
@@ -250,14 +258,24 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
     real64 const oilMaxValue_go    = m_gasOilRelPermMaxValue[GOPT::OIL];
 
     // oil rel perm
-    evaluateVanGenuchtenFunction( scaledOilVolFrac,
-                                  volFracScaleInv,
-                                  oilExponentInv_go,
-                                  oilMaxValue_go,
-                                  oilRelPerm_go,
-                                  dOilRelPerm_go_dOilVolFrac );
+    if( ipWater >= 0 )
+    {
+      // here connate is actually the min volume fraction (as opposed to tables which can be pre-padded with zero)
+      real64 const saturationConnateWater = m_phaseMinVolumeFraction[ipWater];
+      real64 const scaledOilVolFrac_wo = ( (1. - phaseVolFraction[ipWater] ) - m_phaseMinVolumeFraction[ipOil] - saturationConnateWater ) * volFracScaleInv;
+      evaluateVanGenuchtenFunction( scaledOilVolFrac_wo,
+                                    volFracScaleInv, oilExponentInv_go, oilMaxValue_go, oilRelPerm_go, dOilRelPerm_go );
 
+      dOilRelPerm_go *= -1;
+    }
+    else//2-phase
+    {
 
+      real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+      evaluateVanGenuchtenFunction( scaledOilVolFrac,
+                                    volFracScaleInv, oilExponentInv_go, oilMaxValue_go, oilRelPerm_go, dOilRelPerm_go );
+
+    }
   }
 
 
@@ -267,13 +285,13 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   if( ipGas < 0 )
   {
     phaseRelPerm[ipOil] = oilRelPerm_wo;
-    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo_dOilVolFrac;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo;
   }
   // if no water, use gas-oil data
   else if( ipWater < 0 )
   {
     phaseRelPerm[ipOil] = oilRelPerm_go;
-    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go_dOilVolFrac;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go;
   }
   // if water and oil and gas can be present, use saturation-weighted interpolation
   else
@@ -287,9 +305,9 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
                                            m_phaseOrder,
                                            m_waterOilRelPermMaxValue[ipOil],
                                            oilRelPerm_wo,
-                                           dOilRelPerm_wo_dOilVolFrac,
+                                           dOilRelPerm_wo,
                                            oilRelPerm_go,
-                                           dOilRelPerm_go_dOilVolFrac,
+                                           dOilRelPerm_go,
                                            phaseRelPerm[ipWater],
                                            dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
                                            phaseRelPerm[ipGas],

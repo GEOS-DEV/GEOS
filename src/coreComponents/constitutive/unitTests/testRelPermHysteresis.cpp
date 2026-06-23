@@ -17,9 +17,8 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/relativePermeability/unitTests/constitutiveTestHelpers.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/initialization.hpp"
-#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "common/initializeEnvironment.hpp"
+#include "functions/FunctionManager.hpp"
 
 using namespace geos;
 using namespace geos::testing;
@@ -130,7 +129,12 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
 class KilloughHysteresisTest : public ConstitutiveTestBase< TableRelativePermeabilityHysteresis >
 {
 public:
+  KilloughHysteresisTest()
+    : m_functionManager( std::make_unique< FunctionManager >( "FunctionManager", &m_parent ))
+  {}
 
+private:
+  std::unique_ptr< FunctionManager > m_functionManager{};
 };
 
 template< typename TBL_WRAPPER >
@@ -251,11 +255,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  geos::setupEnvironment( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup();
+  geos::cleanupEnvironment();
 
   return result;
 }

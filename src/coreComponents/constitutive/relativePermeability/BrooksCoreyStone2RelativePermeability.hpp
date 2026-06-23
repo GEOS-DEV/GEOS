@@ -189,9 +189,9 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
   real64 oilRelPerm_wo = 0; // oil rel perm using two-phase gas-oil data
-  real64 dOilRelPerm_wo_dOilVolFrac = 0; // derivative w.r.t to So
+  real64 dOilRelPerm_wo = 0;// derivative w.r.t to So (2-phase) or Sw (3-phase,STONEII)
   real64 oilRelPerm_go = 0; // oil rel perm using two-phase gas-oil data
-  real64 dOilRelPerm_go_dOilVolFrac = 0; // derivative w.r.t to So
+  real64 dOilRelPerm_go = 0; // derivative w.r.t to So (2-phase) or Sg (3-phase,STONEII)
 
   // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
 
@@ -199,7 +199,6 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
   if( ipWater >= 0 )
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
-    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil]   - m_phaseMinVolumeFraction[ipOil])   * volFracScaleInv;
 
     using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
     real64 const waterExponent = m_waterOilRelPermExponent[WOPT::WATER];
@@ -216,13 +215,34 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
     real64 const oilExponent_wo = m_waterOilRelPermExponent[WOPT::OIL];
     real64 const oilMaxValue_wo = m_waterOilRelPermMaxValue[WOPT::OIL];
 
-    // oil rel perm
-    evaluateBrooksCoreyFunction( scaledOilVolFrac,
-                                 volFracScaleInv,
-                                 oilExponent_wo,
-                                 oilMaxValue_wo,
-                                 oilRelPerm_wo,
-                                 dOilRelPerm_wo_dOilVolFrac );
+
+    if( ipGas >= 0 )
+    {
+      //StoneII: look at So = 1-Sw for krow, derivatives rotated from dSo to dSw
+      real64 const scaledOilVolFrac_wo = ( (1.0 - phaseVolFraction[ipWater]) - m_phaseMinVolumeFraction[ipOil] ) * volFracScaleInv;
+
+      evaluateBrooksCoreyFunction( scaledOilVolFrac_wo,
+                                   volFracScaleInv,
+                                   oilExponent_wo,
+                                   oilMaxValue_wo,
+                                   oilRelPerm_wo,
+                                   dOilRelPerm_wo );
+
+      dOilRelPerm_wo *= -1.0; //invert relperm derivative
+    }
+    else
+    {
+      //No gas: kro is direct function of So
+      real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+
+      evaluateBrooksCoreyFunction( scaledOilVolFrac,
+                                   volFracScaleInv,
+                                   oilExponent_wo,
+                                   oilMaxValue_wo,
+                                   oilRelPerm_wo,
+                                   dOilRelPerm_wo );
+    }
+
   }
 
 
@@ -230,7 +250,6 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
   if( ipGas >= 0 )
   {
     real64 const scaledGasVolFrac = (phaseVolFraction[ipGas] - m_phaseMinVolumeFraction[ipGas]) * volFracScaleInv;
-    real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
 
     using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
     real64 const gasExponent = m_gasOilRelPermExponent[GOPT::GAS];
@@ -247,13 +266,35 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
     real64 const oilExponent_go = m_gasOilRelPermExponent[GOPT::OIL];
     real64 const oilMaxValue_go = m_gasOilRelPermMaxValue[GOPT::OIL];
 
-    // oil rel perm
-    evaluateBrooksCoreyFunction( scaledOilVolFrac,
-                                 volFracScaleInv,
-                                 oilExponent_go,
-                                 oilMaxValue_go,
-                                 oilRelPerm_go,
-                                 dOilRelPerm_go_dOilVolFrac );
+    if( ipWater >= 0 )
+    {
+      //StoneII: look at So = 1-Sg - Swco for krow, derivatives rotated from dSo to dSg
+      // here connate is actually the min volume fraction (as opposed to tables which can be pre-padded with zero)
+      real64 const connateWaterSaturation = m_phaseMinVolumeFraction[ipWater];
+      real64 const scaledOilVolFrac_go = ( (1.0 - phaseVolFraction[ipGas]) - m_phaseMinVolumeFraction[ipOil] - connateWaterSaturation ) * volFracScaleInv;
+
+      evaluateBrooksCoreyFunction( scaledOilVolFrac_go,
+                                   volFracScaleInv,
+                                   oilExponent_go,
+                                   oilMaxValue_go,
+                                   oilRelPerm_go,
+                                   dOilRelPerm_go );
+
+      dOilRelPerm_go *= -1.0; //invert relperm derivative
+    }
+    else
+    {
+      //No gas: kro is direct function of So
+      real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+
+      evaluateBrooksCoreyFunction( scaledOilVolFrac,
+                                   volFracScaleInv,
+                                   oilExponent_go,
+                                   oilMaxValue_go,
+                                   oilRelPerm_go,
+                                   dOilRelPerm_go );
+    }
+
   }
 
 
@@ -263,13 +304,13 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
   if( ipGas < 0 )
   {
     phaseRelPerm[ipOil] = oilRelPerm_wo;
-    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo_dOilVolFrac;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo;
   }
   // if no water, use gas-oil data
   else if( ipWater < 0 )
   {
     phaseRelPerm[ipOil] = oilRelPerm_go;
-    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go_dOilVolFrac;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go;
   }
   // if water and oil and gas can be present, use saturation-weighted interpolation
   else
@@ -282,9 +323,9 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
                                            m_phaseOrder,
                                            m_waterOilRelPermMaxValue[ipOil],
                                            oilRelPerm_wo,
-                                           dOilRelPerm_wo_dOilVolFrac,
+                                           dOilRelPerm_wo,
                                            oilRelPerm_go,
-                                           dOilRelPerm_go_dOilVolFrac,
+                                           dOilRelPerm_go,
                                            phaseRelPerm[ipWater],
                                            dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
                                            phaseRelPerm[ipGas],
