@@ -196,7 +196,7 @@ struct WrapperLimits< T, true >
  * @return True if the value is below the min limit, false otherwise
  */
 template< typename T >
-static bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit )
+bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit )
 {
   return minLimit.isInclusive ? ( value <  minLimit.value )
                               : ( value <= minLimit.value );
@@ -210,7 +210,7 @@ static bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit
  * @return True if the value is above the max limit, false otherwise
  */
 template< typename T >
-static bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit )
+bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit )
 {
   return maxLimit.isInclusive ? ( value >  maxLimit.value )
                               : ( value >= maxLimit.value );
