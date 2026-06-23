@@ -135,6 +135,10 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     faceManager.registerField< contact::totalBubbleDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
+    // Register the beginning-of-step snapshot used for state rollback
+    faceManager.registerField< contact::totalBubbleDisplacement_n >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+
     // Register the incremental bubble displacement
     faceManager.registerField< contact::incrementalBubbleDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
@@ -145,6 +149,10 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< contact::deltaTraction >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      // Beginning-of-step traction snapshot for state rollback
+      subRegion.registerField< contact::traction_n >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
       // Register the rotation matrix
@@ -397,6 +405,26 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    // Snapshot beginning-of-step values for resetStateToBeginningOfStep rollback.
+    // This must happen before any modification of traction or totalBubbleDisplacement.
+    {
+      arrayView2d< real64 const > const totalBubbleDisp =
+        faceManager.getField< contact::totalBubbleDisplacement >();
+      arrayView2d< real64 > const totalBubbleDisp_n =
+        faceManager.getField< contact::totalBubbleDisplacement_n >();
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const f )
+      {
+        LvArray::tensorOps::copy< 3 >( totalBubbleDisp_n[f], totalBubbleDisp[f] );
+      } );
+
+      arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 > const traction_n = subRegion.getField< contact::traction_n >();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
+      } );
+    }
 
     arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
@@ -793,6 +821,73 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
     GEOS_UNUSED_VAR( maxTraction );
   } );
 
+}
+
+void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  // Roll back nodal displacements (u -= incDisp; incDisp = 0).
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
+
+  // Roll back ALM contact fields to the snapshots taken at the start of implicitStepSetup.
+  // Without this, failed Newton attempts leave dispJump, traction, fractureState, and
+  // totalBubbleDisplacement in an inconsistent intermediate state, causing the subsequent
+  // configuration attempt to assemble incorrect residuals.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    // Restore bubble displacements (face fields).
+    arrayView2d< real64 > const totalBubbleDisp =
+      faceManager.getField< contact::totalBubbleDisplacement >();
+    arrayView2d< real64 const > const totalBubbleDisp_n =
+      faceManager.getField< contact::totalBubbleDisplacement_n >();
+    arrayView2d< real64 > const incrBubbleDisp =
+      faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const f )
+    {
+      LvArray::tensorOps::copy< 3 >( totalBubbleDisp[f], totalBubbleDisp_n[f] );
+      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[f], 0.0 );
+    } );
+
+    // Restore fracture element fields.
+    SurfaceElementRegion & region =
+      mesh.getElemManager().getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 const > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
+    arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
+    arrayView2d< real64 const > const traction_n = subRegion.getField< contact::traction_n >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      LvArray::tensorOps::copy< 3 >( dispJump[kfe], oldDispJump[kfe] );
+      LvArray::tensorOps::copy< 3 >( traction[kfe], traction_n[kfe] );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      fractureState[kfe] = oldFractureState[kfe];
+    } );
+
+    // Synchronize ghost values.
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::totalBubbleDisplacement::key(),
+                                contact::incrementalBubbleDisplacement::key() } );
+    fieldsToBeSync.addElementFields( { contact::dispJump::key(),
+                                       contact::traction::key(),
+                                       contact::deltaDispJump::key(),
+                                       contact::fractureState::key() },
+                                     { getUniqueFractureRegionName() } );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 const & time_n,

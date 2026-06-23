@@ -42,6 +42,14 @@ DECLARE_FIELD( totalBubbleDisplacement,
                WRITE_AND_READ,
                "Total bubble displacements at the faces" );
 
+DECLARE_FIELD( totalBubbleDisplacement_n,
+               "totalBubbleDisplacement_n",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Total bubble displacements at the faces at the beginning of the time step" );
+
 DECLARE_FIELD( incrementalBubbleDisplacement,
                "incrementalBubbleDisplacement",
                array2d< real64 >,

@@ -76,6 +76,8 @@ public:
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
