@@ -21,8 +21,6 @@
 #define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
-#include "common/format/Format.hpp"
-#include "common/logger/Logger.hpp"
 #include "dataRepository/AttributeLimits.hpp"
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
