@@ -102,27 +102,27 @@ template< typename T >
 inline constexpr bool is_limitable_v = is_limitable< T >::value;
 
 /**
- * @struct Bound
+ * @struct WrapperBound
  * @brief Structure containing informations about an attribute limit.
  */
 template< typename T >
-struct Bound
+struct WrapperBound
 {
   T value;
   bool isInclusive = true;
 
   /**
-   * @brief Bound constructor to write a limit without the "Bound{ ... }" syntax
+   * @brief WrapperBound constructor to write a limit without the "WrapperBound{ ... }" syntax
    * @param value The limit value to set
    * @param isInclusive Wether the limit should be inclusive or not
    *
    * @code
-   *   .setLimits( 0.0, 1.0 )  // where setLimits takes `Bound` parameters, those parameters can
-   *                           // be written only with the value. The isInclusive property will
+   *   .setLimits( 0.0, 1.0 )  // where setLimits takes `WrapperBound` parameters, those parameters
+   *                           // can be written only with the value. The isInclusive property will
    *                           // default to true.
    * @endcode
    */
-  Bound( T v, bool inclusive = true )
+  WrapperBound( T v, bool inclusive = true )
     : value( v ), isInclusive( inclusive )
   {}
 };
@@ -132,9 +132,9 @@ struct Bound
  * @param value The inclusive limit value to set
  */
 template< typename T >
-Bound< T > inclusive( T value )
+WrapperBound< T > inclusive( T value )
 {
-  return Bound< T >{ value, /*isInclusive*/ true };
+  return WrapperBound< T >{ value, /*isInclusive*/ true };
 }
 
 /**
@@ -142,9 +142,9 @@ Bound< T > inclusive( T value )
  * @param value The inclusive limit value to set
  */
 template< typename T >
-Bound< T > exclusive( T value )
+WrapperBound< T > exclusive( T value )
 {
-  return Bound< T >{ value, /*isInclusive*/ false };
+  return WrapperBound< T >{ value, /*isInclusive*/ false };
 }
 
 /**
@@ -162,8 +162,8 @@ struct Limits
 template< typename T >
 struct Limits< T, true >
 {
-  std::optional< Bound< limit_value_type_t< T > > > min;
-  std::optional< Bound< limit_value_type_t< T > > > max;
+  std::optional< WrapperBound< limit_value_type_t< T > > > min;
+  std::optional< WrapperBound< limit_value_type_t< T > > > max;
 
   string getRangeStr() const
   {
@@ -193,7 +193,7 @@ struct Limits< T, true >
  * @return True if the value is below the min limit, false otherwise
  */
 template< typename T >
-static bool isValueBelowMin( T const & value, Bound< T > const & minLimit )
+static bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit )
 {
   return minLimit.isInclusive ? ( value <  minLimit.value )
                               : ( value <= minLimit.value );
@@ -207,7 +207,7 @@ static bool isValueBelowMin( T const & value, Bound< T > const & minLimit )
  * @return True if the value is above the max limit, false otherwise
  */
 template< typename T >
-static bool isValueAboveMax( T const & value, Bound< T > const & maxLimit )
+static bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit )
 {
   return maxLimit.isInclusive ? ( value >  maxLimit.value )
                               : ( value >= maxLimit.value );

@@ -740,8 +740,8 @@ public:
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< Bound< limit_value_type_t< T > > > min,
-             std::optional< Bound< limit_value_type_t< T > > > max,
+  setLimits( std::optional< WrapperBound< limit_value_type_t< T > > > min,
+             std::optional< WrapperBound< limit_value_type_t< T > > > max,
              LimitsMode mode = LimitsMode::Error )
   {
     m_limits.min = min;
@@ -752,8 +752,8 @@ public:
 
   template< typename U=T >
   std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
-  setLimits( std::optional< Bound< limit_value_type_t< T > > >,
-             std::optional< Bound< limit_value_type_t< T > > >,
+  setLimits( std::optional< WrapperBound< limit_value_type_t< T > > >,
+             std::optional< WrapperBound< limit_value_type_t< T > > >,
              LimitsMode GEOS_UNUSED_PARAM( mode ) )
   {
     static_assert( is_limitable_v< U >,
@@ -767,7 +767,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< WrapperBound< limit_value_type_t< T > > > const & >
   getMinValue() const
   {
     return m_limits.min;
@@ -779,7 +779,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< WrapperBound< limit_value_type_t< T > > > const & >
   getMaxValue() const
   {
     return m_limits.max;
