@@ -71,6 +71,7 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 
+#include "functions/FunctionManager.hpp"
 #include "events/EventManager.hpp"
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -2456,7 +2457,7 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
   GEOS_UNUSED_VAR( coupledIterationNumber );
   bool whpLimiting = false;
 
-  MinimumWHPConstraint * whpConstraint = getMinWHPConstraint();
+  WHPConstraint * whpConstraint = getWHPConstraint();
   if( whpConstraint == nullptr || !whpConstraint->isConstraintActive() )
     return whpLimiting;
 
@@ -2470,7 +2471,7 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
   array1d< real64 > currentPhaseVolRate_local = currentPhaseVolRate;
   real64 currentTotalVolRate_local = currentTotalVolRate;
   // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
-  MinimumBHPConstraint * bhpConstraint=  getMinimumBHPConstraintForWHP();
+  BHPConstraint< BHPConstraintTypeId::MIN > * bhpConstraint=  dynamic_cast< BHPConstraint< BHPConstraintTypeId::MIN > * >(getBHPConstraint( ConstraintSourceId::WHP ));
   bhpConstraint->setConstraintActive( false );
   real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
   real64 currentWHP = constraintWHP;
@@ -2506,12 +2507,13 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
 
     if( dP_dQ_table < 0.0 )
     {
-      ProductionConstraint< LiquidRateConstraint > *  liqConstraint=  getMaxLiquidConstraintForWHP();
+      //ProductionConstraint< LiquidRateConstraint > *  liqConstraint=  getProductionRateConstraintgetMaxLiquidConstraintForWHP();
+      LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
       setCurrentConstraint( liqConstraint );
       liqConstraint->setConstraintActive( true );
 
-      setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );        // tjb old
-      WellControls::Control wellControl = getControl();
+      setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );        // tjb old
+      ConstraintTypeId wellControl = getControl();
       MpiWrapper::broadcast( wellControl, owner );
       setControl( wellControl );
 
@@ -2571,11 +2573,11 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
     currentWHP = constraintWHP;
 
     // sets. tjb cleanup
-    ProductionConstraint< LiquidRateConstraint > *  liqConstraint=  getMaxLiquidConstraintForWHP();
+    LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
     setCurrentConstraint( liqConstraint );
     liqConstraint->setConstraintActive( true );
-    setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );         // tjb old
-    WellControls::Control wellControl = getControl();
+    setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );         // tjb old
+    ConstraintTypeId wellControl = getControl();
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );
 
@@ -2608,7 +2610,7 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
                               flowTableSolveState );
 
     setCurrentConstraint( bhpConstraint );
-    setControl( static_cast< WellControls::Control >(bhpConstraint->getControl()) );
+    setControl( static_cast< ConstraintTypeId >(bhpConstraint->getControl()) );
 
     integer const maxIters=100;
     real64 const tol = 1;
@@ -2638,7 +2640,7 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
     liqConstraint->setConstraintValue( -currentPhaseVolRate[0]- currentPhaseVolRate[2] );
     liqConstraint->setConstraintActive( true );
     setCurrentConstraint( liqConstraint );
-    setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );         // tjb old
+    setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );         // tjb old
     liqConstraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
     liqConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
                                            CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
@@ -2663,7 +2665,7 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
   GEOS_UNUSED_VAR( coupledIterationNumber );
   bool whpLimiting = false;
 
-  MaximumWHPConstraint * whpConstraint = getMaxWHPConstraint();
+  MaximumWHPConstraint * whpConstraint = dynamic_cast< MaximumWHPConstraint * >( getWHPConstraint() );
   if( whpConstraint == nullptr || !whpConstraint->isConstraintActive() )
     return whpLimiting;
 
@@ -2678,7 +2680,7 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
   real64 currentTotalVolRate_local = currentTotalVolRate;
 
   // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
-  MaximumBHPConstraint * bhpConstraint=  getMaximumBHPConstraintForWHP();
+  MaximumBHPConstraint * bhpConstraint=  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
   bhpConstraint->setConstraintActive( false );
   real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
   real64 currentWHP = constraintWHP;
@@ -2714,12 +2716,12 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
 
     if( dP_dQ_table < 0.0 )
     {
-      InjectionConstraint< PhaseVolumeRateConstraint > *  volConstraint=  getMaxPhaseVolumeConstraintForWHP();
+      PhaseVolumeRateConstraint *  volConstraint=  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
       setCurrentConstraint( volConstraint );
       volConstraint->setConstraintActive( true );
 
-      setControl( static_cast< WellControls::Control >(volConstraint->getControl()) );        // tjb old
-      WellControls::Control wellControl = getControl();
+      setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );        // tjb old
+      ConstraintTypeId wellControl = getControl();
       MpiWrapper::broadcast( wellControl, owner );
       setControl( wellControl );
 
@@ -2779,11 +2781,11 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
     currentWHP = constraintWHP;
 
     // sets. tjb cleanup
-    InjectionConstraint< PhaseVolumeRateConstraint > *  volConstraint=  getMaxPhaseVolumeConstraintForWHP();
+    PhaseVolumeRateConstraint *  volConstraint=  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
     setCurrentConstraint( volConstraint );
     volConstraint->setConstraintActive( true );
-    setControl( static_cast< WellControls::Control >(volConstraint->getControl()) );         // tjb old
-    WellControls::Control wellControl = getControl();
+    setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );         // tjb old
+    ConstraintTypeId wellControl = getControl();
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );
     std::ofstream of;
@@ -2819,7 +2821,7 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
                               flowTableSolveState );
 
     setCurrentConstraint( bhpConstraint );
-    setControl( static_cast< WellControls::Control >(bhpConstraint->getControl()) );
+    setControl( static_cast< ConstraintTypeId >(bhpConstraint->getControl()) );
 
     integer const maxIters=100;
     real64 const tol = 1;
@@ -2853,7 +2855,7 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
     volConstraint->setConstraintValue( currentTotalVolRate );
     volConstraint->setConstraintActive( true );
     setCurrentConstraint( volConstraint );
-    setControl( static_cast< WellControls::Control >(volConstraint->getControl()) );         // tjb old
+    setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );         // tjb old
     volConstraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
     volConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
                                            CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );

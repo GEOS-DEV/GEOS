@@ -22,6 +22,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellWHPConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
@@ -94,16 +95,15 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.5 ),
   m_currentConstraint( nullptr ),
-  m_minBHPConstraint( nullptr ),
-  m_maxBHPConstraint( nullptr ),
-  m_minWHPConstraint( nullptr ),
-  m_maxWHPConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
   m_wellOpen( false ),
   m_statusTable( nullptr ),
   m_regionAveragePressure( -1 ),
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
+  m_thermalEffectsEnabled( false ),
+  m_hasMinWHPConstraint( false ),
+  m_hasMaxWHPConstraint( false ),
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
@@ -114,7 +114,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_wellDebugInit( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  m_minWHPConstraint=nullptr;
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
@@ -216,6 +215,14 @@ Group * WellControls::createChild( string const & childKey, string const & child
     return &m_wellNewtonSolver;
   }
 
+  if( childKey == MaximumWHPConstraint::catalogName() )
+  {
+    m_hasMaxWHPConstraint = true;
+  }
+  else if( childKey == MinimumWHPConstraint::catalogName() )
+  {
+    m_hasMinWHPConstraint = true;
+  }
   std::unique_ptr< WellConstraintBase > constraint =
     WellConstraintBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &registerGroup< WellConstraintBase >( childName, std::move( constraint ) );
@@ -224,39 +231,57 @@ Group * WellControls::createChild( string const & childKey, string const & child
 void WellControls::createMinBHPConstraintForWHP()
 {
   // Create constraint and set local pointer
-  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+std::string( "MinimumBHPConstraint" ));
-  m_minBHPConstraintForWHP =    &bhpConstraint;
+  MinimumBHPConstraint & minBHPConstraintForWHP = registerGroup< MinimumBHPConstraint >( getBHPConstraint()->getName()+std::string( "MinimumBHPConstraint" ) );
+  auto const * bhpConstraint = dynamic_cast< MinimumBHPConstraint const * >( getBHPConstraint() );
+  GEOS_THROW_IF( bhpConstraint == nullptr,
+                 "Unable to create WHP helper minimum BHP constraint because the user minimum BHP constraint is missing",
+                 InputError,
+                 getDataContext() );
+
   // Set properties from the original minBHP constraint
-  m_minBHPConstraintForWHP->setReferenceElevation( m_minBHPConstraint->getReferenceElevation() );
-  m_minBHPConstraintForWHP->setReferenceGravityCoef ( m_minBHPConstraint->getReferenceGravityCoef() );
+  minBHPConstraintForWHP.setReferenceElevation( bhpConstraint->getReferenceElevation() );
+  minBHPConstraintForWHP.setReferenceGravityCoef ( bhpConstraint->getReferenceGravityCoef() );
   // Set to inactive. WHP estimator solve will set status
-  m_minBHPConstraintForWHP->setConstraintActive( false );
+  minBHPConstraintForWHP.setConstraintActive( false );
+
 }
 void WellControls::createMaxBHPConstraintForWHP()
 {
   // Create constraint and set local pointer
-  MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( m_maxWHPConstraint->getName()+std::string( "MaximumBHPConstraint" ) );
-  m_maxBHPConstraintForWHP =    &bhpConstraint;
+  // Create constraint and set local pointer
+  MaximumBHPConstraint & maxBHPConstraintForWHP = registerGroup< MaximumBHPConstraint >( getBHPConstraint()->getName()+std::string( "MaximumBHPConstraint" ) );
+  auto const * bhpConstraint = dynamic_cast< MaximumBHPConstraint const * >( getBHPConstraint() );
+  GEOS_THROW_IF( bhpConstraint == nullptr,
+                 "Unable to create WHP helper maximum BHP constraint because the user maximum BHP constraint is missing",
+                 InputError,
+                 getDataContext() );
+
   // Set properties from the original maxBHP constraint
-  m_maxBHPConstraintForWHP->setReferenceElevation( m_maxBHPConstraint->getReferenceElevation() );
-  m_maxBHPConstraintForWHP->setReferenceGravityCoef ( m_maxBHPConstraint->getReferenceGravityCoef() );
+  maxBHPConstraintForWHP.setReferenceElevation( bhpConstraint->getReferenceElevation() );
+  maxBHPConstraintForWHP.setReferenceGravityCoef ( bhpConstraint->getReferenceGravityCoef() );
   // Set to inactive. WHP estimator solve will set status
-  m_maxBHPConstraintForWHP->setConstraintActive( false );
+  maxBHPConstraintForWHP.setConstraintActive( false );
 }
 void WellControls::createMaxLiquidConstraintForWHP()
 {
+  WHPConstraint const * whpConstraint = getWHPConstraint();
+  GEOS_THROW_IF( whpConstraint == nullptr,
+                 "Unable to create WHP helper liquid constraint because the WHP constraint is missing",
+                 InputError,
+                 getDataContext() );
+
   // Create constraint and set local pointer
-  ProductionConstraint< LiquidRateConstraint > & liquidConstraint =
-    registerGroup< ProductionConstraint< LiquidRateConstraint > >( m_minWHPConstraint->getName()+std::string( "LiquidProductionConstraint" ));
-  m_maxLiquidConstraintForWHP =  &liquidConstraint;
+  ProductionConstraint< LiquidRateConstraint > & maxLiquidConstraintForWHP =
+    registerGroup< ProductionConstraint< LiquidRateConstraint > >( whpConstraint->getName()+std::string( "LiquidProductionConstraint" ));
+
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const ProdPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< ProdPipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  const ProdPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< ProdPipeFlowTableFunction const >( whpConstraint->getFlowTableName());
   string_array ratePhases = m_flowTable.getRatePhases();
-  m_maxLiquidConstraintForWHP->setPhaseNames( ratePhases );
-  m_maxLiquidConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
+  maxLiquidConstraintForWHP.setPhaseNames( ratePhases );
+  maxLiquidConstraintForWHP.validateLiquidType( getMultiFluidSeparator());
   // WHP estimator solve will set status
-  m_maxLiquidConstraintForWHP->setConstraintActive( false );
+  maxLiquidConstraintForWHP.setConstraintActive( false );
 }
 
 void WellControls::createMaxVolumeInjConstraintForWHP()
@@ -264,12 +289,11 @@ void WellControls::createMaxVolumeInjConstraintForWHP()
 
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( m_maxWHPConstraint->getFlowTableName());
+  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( getWHPConstraint()->getFlowTableName());
   std::string const & rateType = m_flowTable.getRateType();
   // Create constraint and set local pointer
-  InjectionConstraint< PhaseVolumeRateConstraint > & volumeConstraint =
-    registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( m_maxWHPConstraint->getName()+std::string( "VolumeInjectionConstraint" ) );
-  m_maxPhaseVolumeConstraintForWHP =  &volumeConstraint;
+  InjectionConstraint< PhaseVolumeRateConstraint > & maxPhaseVolumeConstraintForWHP =
+    registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( getWHPConstraint()->getName()+std::string( "VolumeInjectionConstraint" ) );
 
   bool foundMatchingConstraint = false;
   forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >
@@ -279,16 +303,16 @@ void WellControls::createMaxVolumeInjConstraintForWHP()
     if( constraint.isConstraintActive() && constraint.getPhaseName() ==  rateType )
     {
       foundMatchingConstraint = true;
-      m_maxPhaseVolumeConstraintForWHP->setPhaseName( rateType );
-      m_maxPhaseVolumeConstraintForWHP->setPhaseIndex( constraint.getPhaseIndex() );
-      m_maxPhaseVolumeConstraintForWHP->setInjectionStream( constraint.getInjectionStream() );
-      m_maxPhaseVolumeConstraintForWHP->setInjectionTemperature( constraint.getInjectionTemperature() );
+      maxPhaseVolumeConstraintForWHP.setPhaseName( rateType );
+      maxPhaseVolumeConstraintForWHP.setPhaseIndex( constraint.getPhaseIndex() );
+      maxPhaseVolumeConstraintForWHP.setInjectionStream( constraint.getInjectionStream() );
+      maxPhaseVolumeConstraintForWHP.setInjectionTemperature( constraint.getInjectionTemperature() );
     }
   } );
-  GEOS_THROW_IF( !foundMatchingConstraint, "No active injection phase volume constraint with matching phase found for max WHP constraint " << getMaxWHPConstraint()->getName(),
+  GEOS_THROW_IF( !foundMatchingConstraint, "No active injection phase volume constraint with matching phase found for max WHP constraint " << getWHPConstraint()->getName(),
                  InputError, getDataContext() );
 
-  m_maxPhaseVolumeConstraintForWHP->setConstraintActive( false );
+  maxPhaseVolumeConstraintForWHP.setConstraintActive( false );
 }
 
 void WellControls::expandObjectCatalogs()
@@ -679,7 +703,47 @@ void populateConstraints( GROUP & group, bool isProducer, stdVector< CONSTRAINT 
     } );
   }
 }
-} stdVector< WellConstraintBase const * > WellControls::getRateConstraints() const
+}
+
+template< typename T >
+T * WellControls::getProductionRateConstraint( const ConstraintSourceId source )
+{
+  T * constraint = nullptr;
+  forSubGroups< ProductionConstraint< T > >( [&]( ProductionConstraint< T > & candidate )
+  {
+    if( candidate.isConstraintActive() && candidate.getConstraintSource() == source )
+    {
+      constraint = &candidate;
+    }
+  } );
+  return constraint;
+}
+
+template< typename T >
+T * WellControls::getInjectionRateConstraint( const ConstraintSourceId source )
+{
+  T * constraint = nullptr;
+  forSubGroups< InjectionConstraint< T > >( [&]( InjectionConstraint< T > & candidate )
+  {
+    if( candidate.isConstraintActive() && candidate.getConstraintSource() == source )
+    {
+      constraint = &candidate;
+    }
+  } );
+  return constraint;
+}
+
+template MassRateConstraint * WellControls::getProductionRateConstraint< MassRateConstraint >( ConstraintSourceId );
+template VolumeRateConstraint * WellControls::getProductionRateConstraint< VolumeRateConstraint >( ConstraintSourceId );
+template PhaseVolumeRateConstraint * WellControls::getProductionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId );
+template LiquidRateConstraint * WellControls::getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId );
+
+template MassRateConstraint * WellControls::getInjectionRateConstraint< MassRateConstraint >( ConstraintSourceId );
+template VolumeRateConstraint * WellControls::getInjectionRateConstraint< VolumeRateConstraint >( ConstraintSourceId );
+template PhaseVolumeRateConstraint * WellControls::getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId );
+template LiquidRateConstraint * WellControls::getInjectionRateConstraint< LiquidRateConstraint >( ConstraintSourceId );
+
+stdVector< WellConstraintBase const * > WellControls::getRateConstraints() const
 {
   stdVector< WellConstraintBase const * > constraints;
   populateConstraints( *this, isProducer(), constraints );
@@ -754,6 +818,52 @@ WellConstraintBase * WellControls::getBHPConstraint( const ConstraintSourceId so
 real64 WellControls::getTargetBHP( real64 const & targetTime, const ConstraintSourceId source ) const
 {
   return getBHPConstraint( source )->getConstraintValue( targetTime );
+}
+
+WHPConstraint const * WellControls::getWHPConstraint( const ConstraintSourceId source ) const
+{
+  WHPConstraint const * whpConstraint = nullptr;
+  // Rely on validation here. We assume that there aren't both constraints listed
+  if( isProducer() )
+  {
+    forSubGroups< MinimumWHPConstraint >( [&]( MinimumWHPConstraint const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+        whpConstraint = &constraint;
+    } );
+  }
+  else
+  {
+    forSubGroups< MaximumWHPConstraint >( [&]( MaximumWHPConstraint const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+        whpConstraint = &constraint;
+    } );
+  }
+  return whpConstraint;
+}
+
+WHPConstraint * WellControls::getWHPConstraint( const ConstraintSourceId source )
+{
+  WHPConstraint * whpConstraint = nullptr;
+  // Rely on validation here. We assume that there aren't both constraints listed
+  if( isProducer() )
+  {
+    forSubGroups< MinimumWHPConstraint >( [&]( MinimumWHPConstraint & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+        whpConstraint = &constraint;
+    } );
+  }
+  else
+  {
+    forSubGroups< MaximumWHPConstraint >( [&]( MaximumWHPConstraint & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+        whpConstraint = &constraint;
+    } );
+  }
+  return whpConstraint;
 }
 
 real64 WellControls::getInjectionTemperature() const
@@ -1005,11 +1115,11 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   std::vector< WellConstraintBase * > constraintList;
   if( isProducer() )
   {
-    constraintList = getProdRateConstraints();
+    constraintList = getRateConstraints();
     //if constraints arent updated with estimator and WHP is binding dont check allow constraint to be switch during remainder of timestep
     if( hasMinimumWHPConstraint()  )
     {
-      MinimumBHPConstraint * minBHPForWHP =  getMinimumBHPConstraintForWHP();
+      MinimumBHPConstraint * minBHPForWHP =  dynamic_cast< MinimumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
       if( minBHPForWHP != nullptr && minBHPForWHP->isConstraintActive())
       {
         std::cout << "we not active " << subRegion.getName() << " Constraint " << minBHPForWHP->getName() << " active " << minBHPForWHP->isConstraintActive() <<
@@ -1019,7 +1129,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       }
       else
       {
-        ProductionConstraint< LiquidRateConstraint > * maxLiqForWHP =  getMaxLiquidConstraintForWHP();
+        LiquidRateConstraint * maxLiqForWHP =  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
         if( maxLiqForWHP != nullptr && maxLiqForWHP->isConstraintActive())
         {
           std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxLiqForWHP->getName() << " active " << maxLiqForWHP->isConstraintActive() <<
@@ -1030,27 +1140,32 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         else
         {
           // Solve minimum bhp constraint first
-          if( getMinBHPConstraint()->isConstraintActive() )
+          WellConstraintBase * minBHPConstraint = getBHPConstraint();
+          if( minBHPConstraint != nullptr && minBHPConstraint->isConstraintActive() )
           {
             std::cout << "we  not active " << subRegion.getName() << " Constraint add minbp " << std::endl;
-            constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+            constraintList.insert( constraintList.begin(), minBHPConstraint );
           }
         }
       }
     }
     else
     {
-      std::cout << "we  not active " << subRegion.getName() << " Constraint " << getMinBHPConstraint()->getName() << " active " << getMinBHPConstraint()->isConstraintActive() <<
-        " value " << getMinBHPConstraint()->getConstraintValue( time_n ) << std::endl;
-      constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+      WellConstraintBase * minBHPConstraint = getBHPConstraint();
+      if( minBHPConstraint != nullptr )
+      {
+        std::cout << "we  not active " << subRegion.getName() << " Constraint " << minBHPConstraint->getName() << " active " << minBHPConstraint->isConstraintActive() <<
+          " value " << minBHPConstraint->getConstraintValue( time_n ) << std::endl;
+        constraintList.insert( constraintList.begin(), minBHPConstraint );
+      }
     }
   }
   else
   {
-    constraintList = getInjRateConstraints();
+    constraintList = getRateConstraints();
     if( hasMaximumWHPConstraint()  )
     {
-      MaximumBHPConstraint * maxBHPForWHP =  getMaximumBHPConstraintForWHP();
+      MaximumBHPConstraint * maxBHPForWHP =  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
       if( maxBHPForWHP != nullptr && maxBHPForWHP->isConstraintActive())
       {
         std::cout << "we not active " << subRegion.getName() << " Constraint " << maxBHPForWHP->getName() << " active " << maxBHPForWHP->isConstraintActive() <<
@@ -1060,7 +1175,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       }
       else
       {
-        InjectionConstraint< PhaseVolumeRateConstraint > * maxVolForWHP =  getMaxPhaseVolumeConstraintForWHP();
+        PhaseVolumeRateConstraint * maxVolForWHP =  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
         if( maxVolForWHP != nullptr && maxVolForWHP->isConstraintActive())
         {
           std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxVolForWHP->getName() << " active " << maxVolForWHP->isConstraintActive() <<
@@ -1071,10 +1186,11 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         else
         {
           // Solve maximum bhp constraint first
-          if( getMaxBHPConstraint()->isConstraintActive() )
+          WellConstraintBase * maxBHPConstraint = getBHPConstraint();
+          if( maxBHPConstraint != nullptr && maxBHPConstraint->isConstraintActive() )
           {
             std::cout << "we  not active " << subRegion.getName() << " Constraint add maxbp " << std::endl;
-            constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+            constraintList.insert( constraintList.begin(), maxBHPConstraint );
           }
         }
       }
@@ -1082,7 +1198,11 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     else
     {
       // Solve maximum bhp constraint first;
-      constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+      WellConstraintBase * maxBHPConstraint = getBHPConstraint();
+      if( maxBHPConstraint != nullptr )
+      {
+        constraintList.insert( constraintList.begin(), maxBHPConstraint );
+      }
     }
   }
 
@@ -1135,65 +1255,28 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   // note that initializeWells sets the initial constraint
   stdVector< WellConstraintBase * > constraintList = getRateConstraints();
   WellConstraintBase * limitingConstraint = getCurrentConstraint();
-  if( isProducer() )
-  {
-    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
-    {
-      {   // set BHP constraint to be first constraint evaluated
-        if( getMinBHPConstraint()->isConstraintActive() )
-        {
-          constraintList.push_back( getMinBHPConstraint() );
-        }
-        constraintList.insert( constraintList.begin(), limitingConstraint ); // tjb should this be included
-      }
-    }
-  }
-  else
-  {
-    constraintList = getInjRateConstraints();
-    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
-    {
-      {   // set BHP constraint to be first constraint evaluated
-        if( getMaxBHPConstraint()->isConstraintActive() )
-        {
-          constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
-        }
-      }
-    }
-    // Solve minimum bhp constraint first
-    if( false && getMinBHPConstraint()->isConstraintActive() )
-    {
-      // this is related to WHP option which introduces a new BHP constraint
-      limitingConstraint = getMinBHPConstraint();
-    }
-    else if( limitingConstraint == nullptr )
-    {
-      limitingConstraint = constraintList[0];
-    }
-  }
-  else
-  {
-    constraintList = getInjRateConstraints();
-    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
-    {
-      {   // set BHP constraint to be first constraint evaluated
-        if( getMaxBHPConstraint()->isConstraintActive() )
-        {
-          constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
-        }
-      }
-    }
-    // Solve minimum bhp constraint first
-    if( false && getMinBHPConstraint()->isConstraintActive() )
-    {
-      // this is related to WHP option which introduces a new BHP constraint
-      limitingConstraint = getMinBHPConstraint();
-    }
-    else if( limitingConstraint == nullptr )
-    {
-      limitingConstraint = constraintList[0];
-    }
 
+  if( limitingConstraint == nullptr && !constraintList.empty() )
+  {
+    limitingConstraint = constraintList[0];
+  }
+
+  if( limitingConstraint != nullptr && limitingConstraint->getControl() != ConstraintTypeId::BHP )
+  {
+    WellConstraintBase * bhpConstraint = getBHPConstraint();
+    if( bhpConstraint != nullptr && bhpConstraint->isConstraintActive() )
+    {
+      constraintList.insert( constraintList.begin(), bhpConstraint );
+    }
+  }
+
+  if( limitingConstraint == nullptr )
+  {
+    if( constraintList.empty() )
+    {
+      return false;
+    }
+    limitingConstraint = constraintList[0];
   }
   if( isoThermalEstimatorEnabled() )
   {
@@ -1236,7 +1319,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       if( !constraintChecked[i] &&constraint->isConstraintActive()  &&  constraint->checkViolation( *limitingConstraint, time_n ))
       {
         limitingConstraint=constraint;
-        setControl( static_cast< WellControls::Control >(constraint->getControl()) );                     // tjb old
+        setControl( static_cast< ConstraintTypeId >(constraint->getControl()) );                     // tjb old
         setCurrentConstraint( limitingConstraint );
         GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " active " << constraint->isConstraintActive() <<
@@ -1302,7 +1385,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       // WHP option can use different constraint as limiting constraint, so need to update the rates for the current limiting constraint
       limitingConstraint= getCurrentConstraint();
 
-  logConstraint( limitingConstraint, subRegion, time_n, true );
+      logConstraint( limitingConstraint, subRegion, time_n, true );
 
     }
   }

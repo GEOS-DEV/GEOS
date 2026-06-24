@@ -297,8 +297,8 @@ array1d< integer > CompositionalMultiphaseFluid< FLASH, PHASES... >::getPhaseTyp
   }
   return phaseTypes;
 }
-template< typename FLASH, typename PHASES ... >
-integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::findPhaseIndex( string names ) const
+template< typename FLASH, typename ... PHASES >
+integer CompositionalMultiphaseFluid< FLASH, PHASES... >::findPhaseIndex( string names ) const
 {
   auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
 

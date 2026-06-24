@@ -42,7 +42,7 @@ static constexpr auto wellControls = "WellControls";
 }
 
 class ElementsReporterBuffer;
-
+class WHPConstraint;
 
 /**
  * @class WellControls
@@ -659,7 +659,7 @@ public:
    */
   bool hasMinimumWHPConstraint() const
   {
-    return static_cast< bool >(m_minWHPConstraint);
+    return m_hasMinWHPConstraint;
   }
 
   /**
@@ -668,7 +668,7 @@ public:
    */
   bool hasMaximumWHPConstraint() const
   {
-    return static_cast< bool >(m_maxWHPConstraint);
+    return m_hasMaxWHPConstraint;
   }
 
   ///@}
@@ -789,30 +789,38 @@ public:
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
 
+  /**
+   * @brief Creates for internal constraints used by WHP constraints
+   */
+  void createMinBHPConstraintForWHP();
+  void createMaxLiquidConstraintForWHP();
+  void createMaxBHPConstraintForWHP();
+  void createMaxVolumeInjConstraintForWHP();
 
   /**
-  * @brief Gets the defined BHP constraint
-   * @details Returns the BHP constraint if one is defined for the WellControl. For a producer
-   * well this will be a minimum BHP constraint and for an injector well this will be a maximum
-   * BHP constraint. This will possibly return null if no BHP constraint is set. Validation is
-   * in place to enforce the setting of at least one BHp constraint.
-   * @return A BHP constraint object of one is defined
+   * @brief Gets the defined pressure constraint
+   * @details Returns the pressure constraint if one is defined for the WellControl. For a producer
+   * well this will be a minimum pressure constraint and for an injector well this will be a maximum
+   * pressure constraint. This will possibly return null if no pressure constraint is set. Validation is
+   * in place to enforce the setting of at least one pressure constraint.
+   * @return A pressure constraint object if one is defined
    */
   WellConstraintBase const * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
   WellConstraintBase * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+  WHPConstraint const * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
+  WHPConstraint * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
 
+  template< typename T >
+  T *  getProductionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
 
-  //  WHP constraint getters
-  MinimumWHPConstraint * getMinWHPConstraint() { return m_minWHPConstraint; };
-  MinimumWHPConstraint * getMinWHPConstraint() const { return m_minWHPConstraint; };
-  MaximumWHPConstraint * getMaxWHPConstraint() { return m_maxWHPConstraint; };
-  MaximumWHPConstraint * getMaxWHPConstraint() const { return m_maxWHPConstraint; };
+  template< typename T >
+  T *  getInjectionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
 
-  ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
-  BHPConstraint< BHPConstraintTypeId::MIN > * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+  //ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
+  //BHPConstraint< BHPConstraintTypeId::MIN > * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
 
-  InjectionConstraint< PhaseVolumeRateConstraint > * getMaxPhaseVolumeConstraintForWHP() { return m_maxPhaseVolumeConstraintForWHP; };
-  BHPConstraint< BHPConstraintTypeId::MAX > * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
+  //InjectionConstraint< PhaseVolumeRateConstraint > * getMaxPhaseVolumeConstraintForWHP() { return m_maxPhaseVolumeConstraintForWHP; };
+  //BHPConstraint< BHPConstraintTypeId::MAX > * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
 
 
   /**
@@ -1045,6 +1053,8 @@ protected:
   integer m_enableIsoThermalEstimator;
   bool m_thermalEffectsEnabled;
 
+  bool m_hasMinWHPConstraint;
+  bool m_hasMaxWHPConstraint;
   WellNewtonSolver m_wellNewtonSolver;
 
 

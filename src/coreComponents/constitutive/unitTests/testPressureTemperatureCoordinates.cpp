@@ -40,7 +40,7 @@ public:
 
   string getCatalogName() const override { return "FluidModel"; }
   integer getWaterPhaseIndex() const override { return 1; }
-  virtual integer getPhaseIndex( const std::string & phaseName ) const
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override
   {
     GEOS_UNUSED_VAR( phaseName );
     return 0;

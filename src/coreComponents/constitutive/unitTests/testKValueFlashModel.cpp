@@ -109,7 +109,7 @@ public:
   string getCatalogName() const override { return ""; }
   void checkTablesParameters( real64, real64 ) const override {}
   integer getWaterPhaseIndex() const override { return 0; };
-  virtual integer getPhaseIndex( const std::string & phaseName ) const
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override
   {
     GEOS_UNUSED_VAR( phaseName );
     return 0;
