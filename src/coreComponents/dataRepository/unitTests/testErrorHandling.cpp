@@ -460,44 +460,38 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   } );
 }
 
-
 TEST( ErrorHandling, VerifySignalHandlerLogs )
 {
   ErrorLogger testErrorLogger;
-
-  beginLocalLoggerTest( testErrorLogger, "errors.yaml" );
-
-  setupLogger();
-
   bool signalHappened = false;
-  LvArray::system::setErrorHandler( [&]()
+
+  beginLocalLoggerTest( testErrorLogger, "VerifySignalHandlerLogs.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, [&]()
   {
-    endLocalLoggerTest( testErrorLogger, {
-      R"(- type: ExternalError
+    signalHappened = true;
+    // we do not really abort, we want to test signal handling behaviour
+  } );
+
+  raise( SIGFPE );
+  EXPECT_TRUE( signalHappened );
+
+  endLocalErrorHandlerTest();
+  endLocalLoggerTest( testErrorLogger, {
+    R"(- type: ExternalError
     rank: 0
     message: >-
-      Signal encountered (no. 2): Interrupt
+      Floating point error encountered:
+      Unknown reason.
     contexts:
       - priority: 0
         description: Signal (detected from Signal Handler)
         detectionLocation: Signal handler
-        signal: 2
+        signal: 8
     sourceCallStack:)",
-      "- frame0: ",
-      "- frame1: ",
-      "- frame2: "
-    } );
-
-    signalHappened = true;
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
   } );
-
-  ErrorLogger::global().enableFileOutput( true );
-
-  raise( SIGINT );
-
-  EXPECT_TRUE( signalHappened );
-
-  setupLogger();
 }
 
 int main( int ac, char * av[] )
