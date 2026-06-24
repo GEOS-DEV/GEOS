@@ -265,11 +265,11 @@ public:
                                                NodeManager & nodeManager,
                                                MeshLevel & mesh );
 
-  void singleFaceVectorFieldSymmetryBC( const int face,
-                                        arrayView3d< real64 > const & vectorMultiField,
-                                        arrayView3d< real64 > const & dVectorMultiField,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                        Group & nodeSets );
+  // void singleFaceVectorFieldSymmetryBC( const int face,
+  //                                       arrayView3d< real64 > const & vectorMultiField,
+  //                                       arrayView3d< real64 > const & dVectorMultiField,
+  //                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+  //                                       Group & nodeSets );
 
   void enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > const & vectorMultiField,
                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,

@@ -92,6 +92,125 @@ real64 clampValue( real64 const value,
   return LvArray::math::min( upper, LvArray::math::max( value, lower ) );
 }
 
+
+/**
+ * Component priorities used by the staged MPM essential-boundary update.
+ *
+ * Boundary conditions are assembled into temporary targets before any grid field
+ * is overwritten.  The priority ordering makes the corner rule explicit: a
+ * component that is normal to one face is never replaced by a tangential update
+ * requested by another face.  Equal-priority contributions are averaged so the
+ * result is independent of face-loop order; physically consistent constraints
+ * should contribute the same value, while contradictory opposite-face
+ * constraints on a very small grid receive the least-biased simultaneous value.
+ */
+enum : int
+{
+  mpmBCTargetNone = 0,
+  mpmBCTargetBufferTangential = 1,
+  mpmBCTargetBoundaryTangential = 2,
+  mpmBCTargetBufferNormal = 3,
+  mpmBCTargetBoundaryNormal = 4
+};
+
+enum : int
+{
+  mpmBCDVelocityIncrement = 1,
+  mpmBCDVelocitySet = 2
+};
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void stageBCScalarTarget( localIndex const nodeIndex,
+                          localIndex const fieldIndex,
+                          int const component,
+                          int const newKind,
+                          real64 const newValue,
+                          arrayView3d< int > const targetKind,
+                          arrayView3d< int > const targetCount,
+                          arrayView3d< real64 > const targetValue )
+{
+  int const oldKind = targetKind[nodeIndex][fieldIndex][component];
+  if( newKind > oldKind )
+  {
+    targetKind[nodeIndex][fieldIndex][component] = newKind;
+    targetCount[nodeIndex][fieldIndex][component] = 1;
+    targetValue[nodeIndex][fieldIndex][component] = newValue;
+  }
+  else if( newKind == oldKind && newKind != mpmBCTargetNone )
+  {
+    targetCount[nodeIndex][fieldIndex][component] += 1;
+    targetValue[nodeIndex][fieldIndex][component] += newValue;
+  }
+}
+
+// Source accessor used while constructing buffer/control-node targets.
+// It deliberately sees only boundary-node targets, not buffer targets staged by
+// earlier face kernels, so buffer construction remains simultaneous and does
+// not reintroduce a face-order dependence.
+template< typename BASE_FIELD_VIEW >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 stagedBCScalarValue( localIndex const nodeIndex,
+                            localIndex const fieldIndex,
+                            int const component,
+                            BASE_FIELD_VIEW const baseValue,
+                            arrayView3d< int const > const targetKind,
+                            arrayView3d< int const > const targetCount,
+                            arrayView3d< real64 const > const targetValue )
+{
+  int const count = targetCount[nodeIndex][fieldIndex][component];
+  int const kind = targetKind[nodeIndex][fieldIndex][component];
+  bool const isBoundaryTarget =
+    kind == mpmBCTargetBoundaryNormal ||
+    kind == mpmBCTargetBoundaryTangential;
+  if( isBoundaryTarget && count > 0 )
+  {
+    return targetValue[nodeIndex][fieldIndex][component] / count;
+  }
+  return baseValue[nodeIndex][fieldIndex][component];
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void stageBCComponentTarget( localIndex const nodeIndex,
+                             localIndex const fieldIndex,
+                             int const component,
+                             int const newKind,
+                             real64 const newVelocity,
+                             real64 const newAcceleration,
+                             real64 const newDVelocity,
+                             int const newDVelocityMode,
+                             arrayView3d< int > const targetKind,
+                             arrayView3d< int > const targetCount,
+                             arrayView3d< int > const targetDVelocityMode,
+                             arrayView3d< real64 > const targetVelocity,
+                             arrayView3d< real64 > const targetAcceleration,
+                             arrayView3d< real64 > const targetDVelocity )
+{
+  int const oldKind = targetKind[nodeIndex][fieldIndex][component];
+  if( newKind > oldKind )
+  {
+    targetKind[nodeIndex][fieldIndex][component] = newKind;
+    targetCount[nodeIndex][fieldIndex][component] = 1;
+    targetDVelocityMode[nodeIndex][fieldIndex][component] = newDVelocityMode;
+    targetVelocity[nodeIndex][fieldIndex][component] = newVelocity;
+    targetAcceleration[nodeIndex][fieldIndex][component] = newAcceleration;
+    targetDVelocity[nodeIndex][fieldIndex][component] = newDVelocity;
+  }
+  else if( newKind == oldKind && newKind != mpmBCTargetNone )
+  {
+    targetCount[nodeIndex][fieldIndex][component] += 1;
+    targetVelocity[nodeIndex][fieldIndex][component] += newVelocity;
+    targetAcceleration[nodeIndex][fieldIndex][component] += newAcceleration;
+    targetDVelocity[nodeIndex][fieldIndex][component] += newDVelocity;
+    if( newDVelocityMode > targetDVelocityMode[nodeIndex][fieldIndex][component] )
+    {
+      targetDVelocityMode[nodeIndex][fieldIndex][component] = newDVelocityMode;
+    }
+  }
+}
+
 real64 vectorInfinityNorm3( real64 const (& value)[3] )
 {
   return LvArray::math::max( LvArray::math::abs( value[0] ),
@@ -4177,15 +4296,15 @@ void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 cons
  * This is used by FMPM Net contact to build the first-order uncontacted seed velocity. The destination
  * velocity remains free of material-contact corrections in unconstrained components, while prescribed
  * normal moving-boundary values and optional prescribed transverse values are copied from the already
- * constrained source velocity. Buffer nodes are rebuilt from the destination interior field so their
- * normal component remains consistent with the moving-grid mirror condition:
+ * constrained source velocity. Buffer nodes rebuild constrained components with
+ * the same moving-grid mirror relation used by the explicit boundary update:
  *
  *   v_buffer,n = -v_interior,n + 2 v_boundary,n.
  *
- * The function intentionally copies only constrained components. For FMPM Net
- * contact, unconstrained components of the destination are allowed to remain
- * material-contact-free so they can represent the uncorrected velocity used by
- * the incremental contact target.
+ * The update is staged and applied once so adjacent faces are simultaneous at
+ * edges/corners.  Unconstrained tangential components are never copied from a
+ * reflected interior node; those components are not prescribed data and buffer
+ * nodes may carry mass.
  */
 void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
   NodeManager & nodeManager,
@@ -4197,6 +4316,9 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
 
   localIndex const numVelocityFields =
     m_numVelocityFields;
+
+  localIndex const numNodes =
+    nodeManager.size();
 
   integer nEl[3] = {};
   // Tensor equation: nEl = m_nEl.
@@ -4224,6 +4346,105 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
 
   array1d< SortedArray< localIndex > > & bufferNodes =
     nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+  array3d< int > targetKindStorage( numNodes, numVelocityFields, 3 );
+  array3d< int > targetCountStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetVelocityStorage( numNodes, numVelocityFields, 3 );
+
+  arrayView3d< int > const targetKind = targetKindStorage.toView();
+  arrayView3d< int > const targetCount = targetCountStorage.toView();
+  arrayView3d< real64 > const targetVelocity = targetVelocityStorage.toView();
+  arrayView3d< int const > const targetKindConst = targetKindStorage.toViewConst();
+  arrayView3d< int const > const targetCountConst = targetCountStorage.toViewConst();
+  arrayView3d< real64 const > const targetVelocityConst = targetVelocityStorage.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < 3; ++component )
+      {
+        targetKind[g][fieldIndex][component] = mpmBCTargetNone;
+        targetCount[g][fieldIndex][component] = 0;
+        targetVelocity[g][fieldIndex][component] = 0.0;
+      }
+    }
+  } );
+
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
+                   "FMPM boundary contact requires a dedicated incremental boundary-contact law." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const boundaryNodesView =
+      boundaryNodes[face].toView();
+
+    forAll< parallelDevicePolicy<> >( boundaryNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
+    {
+      localIndex const g =
+        boundaryNodesView[gg];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir0,
+                               mpmBCTargetBoundaryNormal,
+                               sourceVelocity[g][fieldIndex][dir0],
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
+        }
+
+        if( constrainTransverseComponents && dir1 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir1,
+                               mpmBCTargetBoundaryTangential,
+                               sourceVelocity[g][fieldIndex][dir1],
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
+        }
+
+        if( constrainTransverseComponents && dir2 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir2,
+                               mpmBCTargetBoundaryTangential,
+                               sourceVelocity[g][fieldIndex][dir2],
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
+        }
+      }
+    } );
+  }
 
   for( int face = 0; face < 6; ++face )
   {
@@ -4254,40 +4475,10 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
       boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
       m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
 
-    SortedArrayView< localIndex const > const boundaryNodesView =
-      boundaryNodes[face].toView();
-
-    for( localIndex gg = 0; gg < boundaryNodesView.size(); ++gg )
-    {
-      localIndex const g =
-        boundaryNodesView[gg];
-
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-      {
-        if( dir0 < numDims )
-        {
-          destinationVelocity[g][fieldIndex][dir0] =
-            sourceVelocity[g][fieldIndex][dir0];
-        }
-
-        if( constrainTransverseComponents && dir1 < numDims )
-        {
-          destinationVelocity[g][fieldIndex][dir1] =
-            sourceVelocity[g][fieldIndex][dir1];
-        }
-
-        if( constrainTransverseComponents && dir2 < numDims )
-        {
-          destinationVelocity[g][fieldIndex][dir2] =
-            sourceVelocity[g][fieldIndex][dir2];
-        }
-      }
-    }
-
     SortedArrayView< localIndex const > const bufferNodesView =
       bufferNodes[face].toView();
 
-    for( localIndex gg = 0; gg < bufferNodesView.size(); ++gg )
+    forAll< parallelDevicePolicy<> >( bufferNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
     {
       localIndex const g =
         bufferNodesView[gg];
@@ -4313,27 +4504,105 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
       {
         if( dir0 < numDims )
         {
-          destinationVelocity[g][fieldIndex][dir0] =
-            -destinationVelocity[gFrom][fieldIndex][dir0] +
-            2.0 * destinationVelocity[gBoundary][fieldIndex][dir0];
+          real64 const fromValue =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir0,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryValue =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir0,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir0,
+                               mpmBCTargetBufferNormal,
+                               -fromValue + 2.0 * boundaryValue,
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
         }
 
         if( constrainTransverseComponents && dir1 < numDims )
         {
-          destinationVelocity[g][fieldIndex][dir1] =
-            -destinationVelocity[gFrom][fieldIndex][dir1]
-            + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir1];
+          real64 const fromValue =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir1,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryValue =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir1,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir1,
+                               mpmBCTargetBufferTangential,
+                               -fromValue + 2.0 * boundaryValue,
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
         }
 
         if( constrainTransverseComponents && dir2 < numDims )
         {
-          destinationVelocity[g][fieldIndex][dir2] =
-            -destinationVelocity[gFrom][fieldIndex][dir2]
-            + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir2];
+          real64 const fromValue =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir2,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryValue =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir2,
+                                 destinationVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir2,
+                               mpmBCTargetBufferTangential,
+                               -fromValue + 2.0 * boundaryValue,
+                               targetKind,
+                               targetCount,
+                               targetVelocity );
+        }
+      }
+    } );
+  }
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < numDims; ++component )
+      {
+        int const count = targetCount[g][fieldIndex][component];
+        if( targetKind[g][fieldIndex][component] != mpmBCTargetNone && count > 0 )
+        {
+          destinationVelocity[g][fieldIndex][component] = targetVelocity[g][fieldIndex][component] / count;
         }
       }
     }
-  }
+  } );
 }
 
 /**
@@ -4341,12 +4610,14 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
  *
  * The first-order FMPM seed already contains the full prescribed moving-boundary velocity. Higher-order
  * FMPM increments must therefore have zero constrained boundary components. Buffer increments use the
- * homogeneous version of the moving-grid mirror condition:
+ * homogeneous version of the moving-grid mirror condition on constrained
+ * components:
  *
- *   Delta v_buffer,n = -Delta v_interior,n,
- *   Delta v_buffer,t =  Delta v_interior,t,
+ *   Delta v_buffer,n = -Delta v_interior,n.
  *
- * because Delta v_boundary,n = 0 for a prescribed boundary component.
+ * Explicitly prescribed transverse increments use the same odd reflection.
+ * Free tangential increments are left unchanged, because copying them from a
+ * reflected interior node would add a boundary-induced tangential increment.
  *
  * This is the homogeneous counterpart of applyEssentialBCs(). It should be
  * applied to every higher-order FMPM increment, not to the accumulated FMPM
@@ -4362,6 +4633,9 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
 
   localIndex const numVelocityFields =
     m_numVelocityFields;
+
+  localIndex const numNodes =
+    nodeManager.size();
 
   integer nEl[3] = {};
   // Tensor equation: nEl = m_nEl.
@@ -4389,6 +4663,105 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
 
   array1d< SortedArray< localIndex > > & bufferNodes =
     nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+  array3d< int > targetKindStorage( numNodes, numVelocityFields, 3 );
+  array3d< int > targetCountStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetIncrementStorage( numNodes, numVelocityFields, 3 );
+
+  arrayView3d< int > const targetKind = targetKindStorage.toView();
+  arrayView3d< int > const targetCount = targetCountStorage.toView();
+  arrayView3d< real64 > const targetIncrement = targetIncrementStorage.toView();
+  arrayView3d< int const > const targetKindConst = targetKindStorage.toViewConst();
+  arrayView3d< int const > const targetCountConst = targetCountStorage.toViewConst();
+  arrayView3d< real64 const > const targetIncrementConst = targetIncrementStorage.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < 3; ++component )
+      {
+        targetKind[g][fieldIndex][component] = mpmBCTargetNone;
+        targetCount[g][fieldIndex][component] = 0;
+        targetIncrement[g][fieldIndex][component] = 0.0;
+      }
+    }
+  } );
+
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
+                   "FMPM with boundary contact requires a dedicated per-increment boundary-contact correction." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const boundaryNodesView =
+      boundaryNodes[face].toView();
+
+    forAll< parallelDevicePolicy<> >( boundaryNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
+    {
+      localIndex const g =
+        boundaryNodesView[gg];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir0,
+                               mpmBCTargetBoundaryNormal,
+                               0.0,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
+        }
+
+        if( constrainTransverseComponents && dir1 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir1,
+                               mpmBCTargetBoundaryTangential,
+                               0.0,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
+        }
+
+        if( constrainTransverseComponents && dir2 < numDims )
+        {
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir2,
+                               mpmBCTargetBoundaryTangential,
+                               0.0,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
+        }
+      }
+    } );
+  }
 
   for( int face = 0; face < 6; ++face )
   {
@@ -4419,40 +4792,10 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
       boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
       m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
 
-    SortedArrayView< localIndex const > const boundaryNodesView =
-      boundaryNodes[face].toView();
-
-    for( localIndex gg = 0; gg < boundaryNodesView.size(); ++gg )
-    {
-      localIndex const g =
-        boundaryNodesView[gg];
-
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-      {
-        if( dir0 < numDims )
-        {
-          velocityIncrement[g][fieldIndex][dir0] =
-            0.0;
-        }
-
-        if( constrainTransverseComponents && dir1 < numDims )
-        {
-          velocityIncrement[g][fieldIndex][dir1] =
-            0.0;
-        }
-
-        if( constrainTransverseComponents && dir2 < numDims )
-        {
-          velocityIncrement[g][fieldIndex][dir2] =
-            0.0;
-        }
-      }
-    }
-
     SortedArrayView< localIndex const > const bufferNodesView =
       bufferNodes[face].toView();
 
-    for( localIndex gg = 0; gg < bufferNodesView.size(); ++gg )
+    forAll< parallelDevicePolicy<> >( bufferNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
     {
       localIndex const g =
         bufferNodesView[gg];
@@ -4472,24 +4815,81 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
       {
         if( dir0 < numDims )
         {
-          velocityIncrement[g][fieldIndex][dir0] =
-            -velocityIncrement[gFrom][fieldIndex][dir0];
+          real64 const fromIncrement =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir0,
+                                 velocityIncrement,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetIncrementConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir0,
+                               mpmBCTargetBufferNormal,
+                               -fromIncrement,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
         }
 
         if( constrainTransverseComponents && dir1 < numDims )
         {
-          velocityIncrement[g][fieldIndex][dir1] =
-            -velocityIncrement[gFrom][fieldIndex][dir1];
+          real64 const fromIncrement =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir1,
+                                 velocityIncrement,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetIncrementConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir1,
+                               mpmBCTargetBufferTangential,
+                               -fromIncrement,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
         }
 
         if( constrainTransverseComponents && dir2 < numDims )
         {
-          velocityIncrement[g][fieldIndex][dir2] =
-            -velocityIncrement[gFrom][fieldIndex][dir2];
+          real64 const fromIncrement =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir2,
+                                 velocityIncrement,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetIncrementConst );
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               dir2,
+                               mpmBCTargetBufferTangential,
+                               -fromIncrement,
+                               targetKind,
+                               targetCount,
+                               targetIncrement );
+        }
+      }
+    } );
+  }
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < numDims; ++component )
+      {
+        int const count = targetCount[g][fieldIndex][component];
+        if( targetKind[g][fieldIndex][component] != mpmBCTargetNone && count > 0 )
+        {
+          velocityIncrement[g][fieldIndex][component] = targetIncrement[g][fieldIndex][component] / count;
         }
       }
     }
-  }
+  } );
 }
 
 /**
@@ -17620,107 +18020,283 @@ localIndex const mappedNode =
 /**
  * @brief Enforces grid vector field symmetry bc.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * This path is used for auxiliary geometric grid fields such as
+ * gridSurfaceNormal, gridCenterOfMass, and gridCenterOfVolume before they are
+ * normalized.  These are not momentum-carrying velocity fields.  For geometric
+ * vectors the symmetry extension is vector parity: odd in the face-normal
+ * component and even in tangential components.
+ *
+ * The targets are staged for all faces before vectorMultiField is overwritten.
+ * This removes the old face-loop order dependence at edges/corners: if a
+ * component is normal to one active face and tangential to another, the normal
+ * target has higher priority; equal-priority same-component targets are averaged.
  */
 void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > const & vectorMultiField,
                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                           Group & nodeSets )
 {
-  for( int face=0; face < 6; ++face )
-  {
-    if( m_boundaryConditionTypes[face] == 1 || m_boundaryConditionTypes[face] == 2 ) // || m_boundaryConditionTypes[face] == 3 )// What
-                                                                                     // about for BC = 3 (contact)?
-    {
-      array3d< real64 > dVectorMultiField( vectorMultiField.size( 0 ), vectorMultiField.size( 1 ), vectorMultiField.size( 2 ) ); // dumby
-                                                                                                                                 // variable,
-                                                                                                                                 // CC TODO
-                                                                                                                                 // there
-                                                                                                                                 // must be
-                                                                                                                                 // a better
-                                                                                                                                 // solution
-      singleFaceVectorFieldSymmetryBC( face, vectorMultiField, dVectorMultiField, gridPosition, nodeSets );
-    }
-  }
-}
+  localIndex const numNodes =
+    vectorMultiField.size( 0 );
+  localIndex const numVelocityFields =
+    m_numVelocityFields;
+  localIndex const numDims =
+    m_numDims;
 
-/**
- * @brief Applies single-entity handling for face vector field symmetry bc.
- *
- * Executable statements are unchanged; comments document intent where practical.
- */
-void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
-                                                         arrayView3d< real64 > const & vectorMultiField,
-                                                         arrayView3d< real64 > const & dVectorMultiField, //Change in vectorMultiField
-                                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                                         Group & nodeSets )
-{
-  // This is a helper function for enforcing symmetry BCs on a single face and is meant to be called by other functions,
-  // not directly by the
-  // solver:
-  //   * enforceGridVectorFieldSymmetryBC calls this on all grid faces
-  //   * applyEssentialBCs calls this on faces that aren't moving (moving faces due to F-table need special treatment)
   int nEl[3] = {};
   // Tensor equation: nEl = m_nEl.
   LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
 
-  array1d< SortedArray< localIndex > > & boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
-  array1d< SortedArray< localIndex > > & bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+  arrayView3d< localIndex const > const ijkMap =
+    m_ijkMap;
 
-  for( localIndex fieldIndex=0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+  array1d< SortedArray< localIndex > > & boundaryNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+  array1d< SortedArray< localIndex > > & bufferNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+  array3d< int > targetKindStorage( numNodes, numVelocityFields, 3 );
+  array3d< int > targetCountStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetVectorStorage( numNodes, numVelocityFields, 3 );
+
+  arrayView3d< int > const targetKind =
+    targetKindStorage.toView();
+  arrayView3d< int > const targetCount =
+    targetCountStorage.toView();
+  arrayView3d< real64 > const targetVector =
+    targetVectorStorage.toView();
+  arrayView3d< int const > const targetKindConst =
+    targetKindStorage.toViewConst();
+  arrayView3d< int const > const targetCountConst =
+    targetCountStorage.toViewConst();
+  arrayView3d< real64 const > const targetVectorConst =
+    targetVectorStorage.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
-    // Face-associated quantities
-    int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
-    int dir1 = ( dir0 + 1 ) % 3;   // 1, 1, 2, 2, 0, 0
-    int dir2 = ( dir0 + 2 ) % 3;   // 2, 2, 0, 0, 1, 1
-    int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
-
-    // Enforce BCs on boundary nodes
-    SortedArrayView< localIndex const > const boundaryNodesView = boundaryNodes[face].toView();
-    int const numBoundaryNodes = boundaryNodesView.size();
-    // Probably not a big enough loop to warrant parallelization
-    forAll< serialPolicy >( numBoundaryNodes, [=] GEOS_HOST ( localIndex const gg )
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < 3; ++component )
       {
-        int const g = boundaryNodesView[gg];
-        dVectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[g][fieldIndex][dir0];
-        vectorMultiField[g][fieldIndex][dir0] = 0.0;
-      } );
+        targetKind[g][fieldIndex][component] = mpmBCTargetNone;
+        targetCount[g][fieldIndex][component] = 0;
+        targetVector[g][fieldIndex][component] = 0.0;
+      }
+    }
+  } );
 
-    // Perform field reflection on buffer nodes
-    SortedArrayView< localIndex const > const bufferNodesView = bufferNodes[face].toView();
-    int const numBufferNodes = bufferNodesView.size();
-    // Probably not a big enough loop to warrant parallelization
-    forAll< serialPolicy >( numBufferNodes, [=] GEOS_HOST ( localIndex const gg )
+  // Boundary nodes: symmetry fixes the face-normal component to zero.
+  for( int face = 0; face < 6; ++face )
+  {
+    if( m_boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Symmetry ) &&
+        m_boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Moving ) )
+    {
+      continue;
+    }
+
+    int const dir0 =
+      face / 2;
+    if( dir0 >= numDims )
+    {
+      continue;
+    }
+
+    SortedArrayView< localIndex const > const boundaryNodesView =
+      boundaryNodes[face].toView();
+
+    forAll< parallelDevicePolicy<> >( boundaryNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
+    {
+      localIndex const g =
+        boundaryNodesView[gg];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        int const g = bufferNodesView[gg];
-        int ijk[3] = {};
-        ijk[dir0] = positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * ( 2 );
-        ijk[dir1] = LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
-        ijk[dir2] = LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
-
-        localIndex gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-        real64 previousVectorMultiField[3] = {};
-        previousVectorMultiField[dir0] = vectorMultiField[g][fieldIndex][dir0];
-        previousVectorMultiField[dir1] = vectorMultiField[g][fieldIndex][dir1];
-        previousVectorMultiField[dir2] = vectorMultiField[g][fieldIndex][dir2];
-
-        vectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[gFrom][fieldIndex][dir0]; // Negate component aligned with surface normal
-        vectorMultiField[g][fieldIndex][dir1] =  vectorMultiField[gFrom][fieldIndex][dir1];
-        vectorMultiField[g][fieldIndex][dir2] =  vectorMultiField[gFrom][fieldIndex][dir2];
-
-        dVectorMultiField[g][fieldIndex][dir0] += vectorMultiField[g][fieldIndex][dir0] - previousVectorMultiField[dir0];
-        dVectorMultiField[g][fieldIndex][dir1] += vectorMultiField[g][fieldIndex][dir1] - previousVectorMultiField[dir1];
-        dVectorMultiField[g][fieldIndex][dir2] += vectorMultiField[g][fieldIndex][dir2] - previousVectorMultiField[dir2];
-      } );
+        stageBCScalarTarget( g,
+                             fieldIndex,
+                             dir0,
+                             mpmBCTargetBoundaryNormal,
+                             0.0,
+                             targetKind,
+                             targetCount,
+                             targetVector );
+      }
+    } );
   }
+
+  // Buffer/control nodes: apply vector parity using the staged boundary values
+  // as sources, but do not let buffer targets from earlier faces influence later
+  // faces.  This keeps the construction simultaneous and face-order independent.
+  for( int face = 0; face < 6; ++face )
+  {
+    if( m_boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Symmetry ) &&
+        m_boundaryConditionTypes[face] != static_cast< int >( mpm::BoundaryConditionOption::Moving ) )
+    {
+      continue;
+    }
+
+    int const dir0 =
+      face / 2;
+    if( dir0 >= numDims )
+    {
+      continue;
+    }
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+    int const positiveNormal =
+      face % 2;
+
+    SortedArrayView< localIndex const > const bufferNodesView =
+      bufferNodes[face].toView();
+
+    forAll< parallelDevicePolicy<> >( bufferNodesView.size(), [=] GEOS_HOST_DEVICE ( localIndex const gg )
+    {
+      localIndex const g =
+        bufferNodesView[gg];
+
+      int ijk[3] = {};
+      ijk[dir0] =
+        positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * 2;
+      ijk[dir1] =
+        LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+      ijk[dir2] =
+        LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+      localIndex const gFrom =
+        ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        for( int component = 0; component < numDims; ++component )
+        {
+          bool const isNormalComponent =
+            component == dir0;
+          real64 const fromValue =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 component,
+                                 vectorMultiField,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVectorConst );
+
+          stageBCScalarTarget( g,
+                               fieldIndex,
+                               component,
+                               isNormalComponent ? mpmBCTargetBufferNormal : mpmBCTargetBufferTangential,
+                               isNormalComponent ? -fromValue : fromValue,
+                               targetKind,
+                               targetCount,
+                               targetVector );
+        }
+      }
+    } );
+  }
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < numDims; ++component )
+      {
+        int const count =
+          targetCount[g][fieldIndex][component];
+        if( targetKind[g][fieldIndex][component] != mpmBCTargetNone && count > 0 )
+        {
+          vectorMultiField[g][fieldIndex][component] =
+            targetVector[g][fieldIndex][component] / count;
+        }
+      }
+    }
+  } );
 }
+
+/**
+ * @brief Applies single-face vector-parity symmetry handling.
+ *
+ * This legacy helper operates on one face at a time, so it is not suitable for
+ * corner/order-independent production enforcement.  The all-face wrapper
+ * enforceGridVectorFieldSymmetryBC() stages every face and should be preferred.
+ * This helper preserves the original vector-parity behavior for a single face:
+ * normal components are odd-reflected and tangential components are even-reflected.
+ */
+// void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
+//                                                          arrayView3d< real64 > const & vectorMultiField,
+//                                                          arrayView3d< real64 > const & dVectorMultiField, //Change in vectorMultiField
+//                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+//                                                          Group & nodeSets )
+// {
+//   int nEl[3] = {};
+//   // Tensor equation: nEl = m_nEl.
+//   LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+//   real64 hEl[3] = {};
+//   // Tensor equation: hEl = m_hEl.
+//   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+//   real64 xLocalMin[3] = {};
+//   // Tensor equation: xLocalMin = m_xLocalMin.
+//   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+//   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
+
+//   array1d< SortedArray< localIndex > > & boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+//   array1d< SortedArray< localIndex > > & bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+//   for( localIndex fieldIndex=0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+//   {
+//     // Face-associated quantities
+//     int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+//     int dir1 = ( dir0 + 1 ) % 3;   // 1, 1, 2, 2, 0, 0
+//     int dir2 = ( dir0 + 2 ) % 3;   // 2, 2, 0, 0, 1, 1
+//     int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+
+//     // Enforce BCs on boundary nodes
+//     SortedArrayView< localIndex const > const boundaryNodesView = boundaryNodes[face].toView();
+//     int const numBoundaryNodes = boundaryNodesView.size();
+//     // Probably not a big enough loop to warrant parallelization
+//     forAll< serialPolicy >( numBoundaryNodes, [=] GEOS_HOST ( localIndex const gg )
+//       {
+//         int const g = boundaryNodesView[gg];
+//         dVectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[g][fieldIndex][dir0];
+//         vectorMultiField[g][fieldIndex][dir0] = 0.0;
+//       } );
+
+//     // Perform field reflection on buffer nodes
+//     SortedArrayView< localIndex const > const bufferNodesView = bufferNodes[face].toView();
+//     int const numBufferNodes = bufferNodesView.size();
+//     // Probably not a big enough loop to warrant parallelization
+//     forAll< serialPolicy >( numBufferNodes, [=] GEOS_HOST ( localIndex const gg )
+//       {
+//         int const g = bufferNodesView[gg];
+//         int ijk[3] = {};
+//         ijk[dir0] = positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * ( 2 );
+//         ijk[dir1] = LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+//         ijk[dir2] = LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+//         localIndex gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+//         real64 previousVectorMultiField[3] = {};
+//         previousVectorMultiField[dir0] = vectorMultiField[g][fieldIndex][dir0];
+//         previousVectorMultiField[dir1] = vectorMultiField[g][fieldIndex][dir1];
+//         previousVectorMultiField[dir2] = vectorMultiField[g][fieldIndex][dir2];
+
+//         vectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[gFrom][fieldIndex][dir0]; // Negate component aligned with surface normal
+//         vectorMultiField[g][fieldIndex][dir1] =  vectorMultiField[gFrom][fieldIndex][dir1];
+//         vectorMultiField[g][fieldIndex][dir2] =  vectorMultiField[gFrom][fieldIndex][dir2];
+
+//         dVectorMultiField[g][fieldIndex][dir0] += vectorMultiField[g][fieldIndex][dir0] - previousVectorMultiField[dir0];
+//         dVectorMultiField[g][fieldIndex][dir1] += vectorMultiField[g][fieldIndex][dir1] - previousVectorMultiField[dir1];
+//         dVectorMultiField[g][fieldIndex][dir2] += vectorMultiField[g][fieldIndex][dir2] - previousVectorMultiField[dir2];
+//       } );
+//   }
+// }
 
 /**
  * @brief Normalizes grid surface normals and positions.
@@ -20962,7 +21538,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-  real64 smallMass = m_smallMass;
+  real64 const smallMass = m_smallMass;
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
@@ -20990,6 +21566,10 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
   int const useInternalForceAsFaceReaction = m_useInternalForceAsFaceReaction;
 
+  localIndex const numNodes = nodeManager.size();
+  localIndex const numVelocityFields = m_numVelocityFields;
+  localIndex const numDims = m_numDims;
+
   // Get grid fields
   arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
   arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
@@ -21007,282 +21587,518 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
   array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
 
+  /*
+   * Assemble essential-boundary constraints into targets, then apply them once.
+   * This delayed-apply form removes the face-loop ordering dependence that showed
+   * up on very small grids and at corners.  In particular, a component that is
+   * normal to one face has higher priority than a tangential prescription from an
+   * adjacent face, so tangential enforcement cannot overwrite a normal BC.
+   *
+   * Free tangential components are deliberately not targeted.  Buffer/control
+   * nodes can carry mapped mass and participate in higher-order interpolation, so
+   * copying a free tangential component from a reflected interior node is a real
+   * impulse, not a harmless ghost fill.
+   */
+  array3d< int > targetKindStorage( numNodes, numVelocityFields, 3 );
+  array3d< int > targetCountStorage( numNodes, numVelocityFields, 3 );
+  array3d< int > targetDVelocityModeStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetVelocityStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetAccelerationStorage( numNodes, numVelocityFields, 3 );
+  array3d< real64 > targetDVelocityStorage( numNodes, numVelocityFields, 3 );
+
+  arrayView3d< int > const targetKind = targetKindStorage.toView();
+  arrayView3d< int > const targetCount = targetCountStorage.toView();
+  arrayView3d< int > const targetDVelocityMode = targetDVelocityModeStorage.toView();
+  arrayView3d< real64 > const targetVelocity = targetVelocityStorage.toView();
+  arrayView3d< real64 > const targetAcceleration = targetAccelerationStorage.toView();
+  arrayView3d< real64 > const targetDVelocity = targetDVelocityStorage.toView();
+  arrayView3d< int const > const targetKindConst = targetKindStorage.toViewConst();
+  arrayView3d< int const > const targetCountConst = targetCountStorage.toViewConst();
+  arrayView3d< real64 const > const targetVelocityConst = targetVelocityStorage.toViewConst();
+  arrayView3d< real64 const > const targetAccelerationConst = targetAccelerationStorage.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < 3; ++component )
+      {
+        targetKind[g][fieldIndex][component] = mpmBCTargetNone;
+        targetCount[g][fieldIndex][component] = 0;
+        targetDVelocityMode[g][fieldIndex][component] = mpmBCDVelocityIncrement;
+        targetVelocity[g][fieldIndex][component] = 0.0;
+        targetAcceleration[g][fieldIndex][component] = 0.0;
+        targetDVelocity[g][fieldIndex][component] = 0.0;
+      }
+    }
+  } );
+
   // Impose BCs on each face while gathering reaction forces
   real64 localFaceReactions[6] = {};
   for( int face = 0; face < 6; ++face )
   {
-    // TODO Eventually perform cast to BC enum type!
-    switch( m_boundaryConditionTypes[face] )
+    int const boundaryType = boundaryConditionTypes[face];
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
     {
-      case 0: // Outflow
-        break; // Do nothing
-      case 1: // Symmetry
+      continue;
+    }
+
+    int const dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+    int const dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
+    int const dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
+    int const positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+
+    bool const hasMovingControl =
+      m_prescribedBoundaryFTable == 1 ||
+      m_stressControl[0] == 1 ||
+      m_stressControl[1] == 1 ||
+      m_stressControl[2] == 1 ||
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact );
+
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Symmetry ) )
+    {
+      SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
+      int const numBoundaryNodes = boundaryNodes.size();
+      forAll< parallelDevicePolicy<> >( numBoundaryNodes, [=] GEOS_HOST_DEVICE ( localIndex const gg )
       {
-        // CC: TODO add gridDVelocity update to theses for XPIC
-        singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridDVelocity, gridPosition, nodeSets );
-
-        //Dumby paramter, we do not need the change in grid acceleration
-        array3d< real64 > gridDAcceleration( gridAcceleration.size( 0 ), gridAcceleration.size( 1 ), gridAcceleration.size( 2 )); //CC: TODO
-                                                                                                                                  // Probably
-                                                                                                                                  // want to
-                                                                                                                                  // avoid
-                                                                                                                                  // allocating
-                                                                                                                                  // a lot
-                                                                                                                                  // of
-                                                                                                                                  // memory
-                                                                                                                                  // just
-                                                                                                                                  // for the
-                                                                                                                                  // dummy
-                                                                                                                                  // variable
-        singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridDAcceleration, gridPosition, nodeSets );
-      }
-      break;
-      case 2: // Moving
-      case 3: // Contact
-        if( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 || m_boundaryConditionTypes[face] == 3 ) // Double
-                                                                                                                                                                      // check
-                                                                                                                                                                      // stress
-                                                                                                                                                                      // control
-                                                                                                                                                                      // (think
-                                                                                                                                                                      // we
-                                                                                                                                                                      // only
-                                                                                                                                                                      // need
-                                                                                                                                                                      // to
-                                                                                                                                                                      // check
-                                                                                                                                                                      // if
-                                                                                                                                                                      // stress
-                                                                                                                                                                      // control
-                                                                                                                                                                      // for
-                                                                                                                                                                      // the
-                                                                                                                                                                      // direction
-                                                                                                                                                                      // of
-                                                                                                                                                                      // faces
-                                                                                                                                                                      // are
-                                                                                                                                                                      // on
-                                                                                                                                                                      // not
-                                                                                                                                                                      // all
-                                                                                                                                                                      // them)
+        localIndex const g = boundaryNodes[gg];
+        for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
         {
-          for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+          if( dir0 < numDims )
           {
-            // Face-associated quantities
-            int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
-            int dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
-            int dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
-            int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
-
-            // Enforce BCs on boundary nodes using F-table
-            SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
-            int const numBoundaryNodes = boundaryNodes.size();
-            forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg )
-            {
-              int const g = boundaryNodes[gg];
-
-              // If boundary condition type is 3 (e.g. contact, default is sticky), performs a check if normal grid
-              // component of grid
-              // velocity is moving into plane, if so flips component and adds domain velocity
-              real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
-              if( boundaryConditionTypes[face] == 3 )
-              {
-                // Currently fails if contact is only enforced when surface position is at 0 for inContact condition on
-                // grid boundary too,
-                // likely needs some soft scaling
-                real64 surfacePosition = gridCenterOfVolume[g][fieldIndex][dir0];
-                if( gridSurfaceFieldMass[g][fieldIndex] > smallMass )
-                {
-                  surfacePosition = gridSurfacePosition[g][fieldIndex][dir0];
-                }
-                bool inContact = ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) && ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 );
-
-                if( inContact )
-                {
-                  prescribedVelocity = inContact * ( domainL[dir0] * gridPosition[g][dir0] );
-                  // prescribedVelocity = inContact * (
-                  // -m_boundaryFaceCoefficientsOfRestitution[face]*gridVelocity[g][fieldIndex][dir0] +
-                  // m_domainL[dir0] * gridPosition[g][dir0] );
-                }
-
-                // Enforce friction in transverse directions
-                real64 mu = boundaryFaceFrictionCoefficients[face];
-                real64 frictionalForce = mu * LvArray::math::max( -gridAcceleration[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0 );
-
-                real64 inPlaneSpeed = std::sqrt( gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] + gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
-
-                real64 r1, r2;
-                if( inPlaneSpeed > 1e-16 )
-                {
-                  r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
-                  r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
-                }
-                else
-                {
-                  r1 = 0.;
-                  r2 = 0.;
-                }
-
-                real64 da1 = r1 * frictionalForce;
-                real64 da2 = r2 * frictionalForce;
-
-                gridDVelocity[g][fieldIndex][dir1] = da1 * dt;
-                gridDVelocity[g][fieldIndex][dir2] = da2 * dt;
-
-                gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1];
-                gridVelocity[g][fieldIndex][dir2] += gridDVelocity[g][fieldIndex][dir2];
-
-                gridAcceleration[g][fieldIndex][dir1] -= da1;
-                gridAcceleration[g][fieldIndex][dir2] -= da2;
-              }
-              else
-              {
-                // maybe the issue is that we are using beginning of step grid position to compute this.
-                // prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
-
-                real64 endOfStepGridPosition = ( 1. + domainL[dir0]*dt )*gridPosition[g][dir0];
-                prescribedVelocity = domainL[dir0] * endOfStepGridPosition;
-
-                if( enablePrescribedBoundaryTransverseVelocities[face] == 1 )
-                {
-                  real64 prescribedTransverseVelocity1 = prescribedBoundaryTransverseVelocities[face][0];
-                  gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
-                  real64 accelerationForTransverseBC1 = gridDVelocity[g][fieldIndex][dir1] / dt; // acceleration needed to satisfy BC along
-                                                                                                 // transverse
-                                                                                                 // directions
-                  gridVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1;
-                  gridAcceleration[g][fieldIndex][dir1] += accelerationForTransverseBC1;
-
-                  real64 prescribedTransverseVelocity2 = prescribedBoundaryTransverseVelocities[face][1];
-                  gridDVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
-                  real64 accelerationForTransverseBC2 = gridDVelocity[g][fieldIndex][dir2] / dt; // acceleration needed to satisfy BC along
-                                                                                                 // transverse
-                                                                                                 // directions
-                  gridVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2;
-                  gridAcceleration[g][fieldIndex][dir2] += accelerationForTransverseBC2;
-                }
-              }
-
-              gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this,
-                                                                                                           // because it overrides
-                                                                                                           // the
-                                                                                                           // change in velocity
-                                                                                                           // that might
-                                                                                                           // have been written
-                                                                                                           // during
-                                                                                                           // enforceContact
-              //real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
-              real64 accelerationForBC = prescribedVelocity / dt - gridVelocity[g][fieldIndex][dir0] / dt;  // seeing if this is better for
-                                                                                                            // small dt.
-
-              if( gridGhostRank[g] <= -1 && gridMass[g][fieldIndex] > smallMass ) // so we don't double count reactions at partition
-                                                                                  // boundaries
-              {
-                if( useInternalForceAsFaceReaction == 0 )
-                { // This computes the acceleration needed to bring the nodal velocity to the prescribed value, and the associated force.
-                  // But in cases where there is a significant velocity change across the boundary grid cell, the mapped
-                  // velocity
-                  // can differ significantly from the prescribed value (unless APIC or similar accounting for p_velGrad
-                  // is used)
-                  // in the p2g mapping.  As a result, the error in velocity is constant (an effect of g2p and p2g
-                  // mapping, not
-                  // due to change in velocity over the time increment) but the acceleration and force needed to correct
-                  // this
-                  // error increases with (1/dt).  This causes spikes in reactions when dt is tiny...at t=0, after
-                  // restart (maybe)
-                  // or when the event manage picks a small dt to align better with the plotTime or restartTime
-                  // interval.
-                  localFaceReactions[face] += prescribedVelocity * gridMass[g][fieldIndex] / dt - gridVelocity[g][fieldIndex][dir0] * gridMass[g][fieldIndex] / dt;
-                }
-                else
-                { // This isn't actually a reaction, it's the average traction in the material at the boundary and may neglect
-                  // important dynamic effects.  However, for quasistatic loading, this will be (probably) accurate, and
-                  // won't give errors in cases with very small dt.
-                  localFaceReactions[face] -= gridInternalForce[g][fieldIndex][dir0];
-                }
-
-                // std::cout<<"localFaceReactions[face] = "<<localFaceReactions[face]<<std::endl;
-                //localFaceReactions[face] += accelerationForBC * gridMass[g][fieldIndex];
-              }
-
-              gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
-              gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
-
-            } );
-
-            // Perform field reflection on buffer nodes for constrained components.
-            // Normal components use the moving/odd extension required for the
-            // prescribed wall motion. Prescribed tangential components use the
-            // same odd/moving extension. Unconstrained tangential components are
-            // not modified here: leaving them as produced by the grid update
-            // avoids applying an artificial tangential boundary impulse through
-            // mass-bearing buffer/control nodes.
-            bool const constrainTransverseComponents =
-              boundaryConditionTypes[face] == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
-              enablePrescribedBoundaryTransverseVelocities[face] == 1;
-            SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
-            int const numBufferNodes = bufferNodes.size();
-            // Possibly not a big enough loop to warrant parallelization
-            forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
-            {
-              int const g = bufferNodes[gg];
-
-              // Initialize grid ijk indices
-              int ijk[3];
-              ijk[dir1] = LvArray::math::round((gridPosition[g][dir1] - xLocalMin[dir1]) / hEl[dir1] );
-              ijk[dir2] = LvArray::math::round((gridPosition[g][dir2] - xLocalMin[dir2]) / hEl[dir2] );
-
-              // Grab the node index that we're copying from
-              ijk[dir0] = positiveNormal * (nEl[dir0] - 2) + (1 - positiveNormal) * (2);
-              localIndex gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-              // Grab the associated boundary node index for moving boundary correction
-              ijk[dir0] = positiveNormal * (nEl[dir0] - 1) + (1 - positiveNormal) * (1);
-              localIndex gBoundary = ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-              //Store previous velocity to compute change in velocity
-              real64 gridPreviousVelocity[3] = {};
-              gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
-              gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
-              gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
-
-              // Calculate velocity. Constrained components use an odd/moving extension
-              // about the boundary control value. Unconstrained tangential components are
-              // left untouched: changing them on mass-bearing buffer/control nodes is a
-              // real tangential impulse, not a harmless ghost fill.
-              gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
-              if( constrainTransverseComponents )
-              {
-                gridVelocity[g][fieldIndex][dir1] = -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1];
-                gridVelocity[g][fieldIndex][dir2] = -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2];
-              }
-
-              // Compute change in velocity for XPIC calculations. Free tangential components
-              // are not modified above, so they must not receive a boundary-induced dVelocity.
-              gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
-              if( constrainTransverseComponents )
-              {
-                gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
-                gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
-              }
-
-              // Calculate acceleration with the same component-wise extension. Free
-              // tangential accelerations remain those produced by the dynamics.
-              gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
-              if( constrainTransverseComponents )
-              {
-                gridAcceleration[g][fieldIndex][dir1] = -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1];
-                gridAcceleration[g][fieldIndex][dir2] = -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2];
-              }
-            } );
+            stageBCComponentTarget( g,
+                                    fieldIndex,
+                                    dir0,
+                                    mpmBCTargetBoundaryNormal,
+                                    0.0,
+                                    0.0,
+                                    -gridVelocity[g][fieldIndex][dir0],
+                                    mpmBCDVelocitySet,
+                                    targetKind,
+                                    targetCount,
+                                    targetDVelocityMode,
+                                    targetVelocity,
+                                    targetAcceleration,
+                                    targetDVelocity );
           }
         }
-        break;
-      default:
-        GEOS_ERROR( "Unrecognized boundary condition type in MPM Solver!" );
-        break;
+      } );
+    }
+    else if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) ||
+             boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ) )
+    {
+      if( !hasMovingControl )
+      {
+        continue;
+      }
+
+      SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
+      int const numBoundaryNodes = boundaryNodes.size();
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        RAJA::ReduceSum< parallelDeviceReduce, real64 > faceReaction( 0.0 );
+        forAll< parallelDevicePolicy<> >( numBoundaryNodes, [=] GEOS_HOST_DEVICE ( localIndex const gg )
+        {
+          localIndex const g = boundaryNodes[gg];
+
+          // Contact faces prescribe the normal component only while the node is moving into the wall.
+          // Moving faces prescribe the normal component from the domain-rate/F-table state.
+          real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
+          if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ) )
+          {
+            real64 surfacePosition = gridCenterOfVolume[g][fieldIndex][dir0];
+            if( gridSurfaceFieldMass[g][fieldIndex] > smallMass )
+            {
+              surfacePosition = gridSurfacePosition[g][fieldIndex][dir0];
+            }
+            bool const inContact =
+              ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) &&
+              ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 );
+
+            if( inContact )
+            {
+              prescribedVelocity = domainL[dir0] * gridPosition[g][dir0];
+            }
+
+            // Boundary friction acts only in tangential components.  It is staged
+            // with tangential priority so it cannot replace an adjacent face's
+            // normal target at an edge or corner.
+            real64 const mu = boundaryFaceFrictionCoefficients[face];
+            real64 const frictionalForce =
+              mu * LvArray::math::max( -gridAcceleration[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0 );
+
+            real64 const inPlaneSpeed =
+              LvArray::math::sqrt( gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] +
+                                   gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
+
+            real64 r1 = 0.0;
+            real64 r2 = 0.0;
+            if( inPlaneSpeed > 1.0e-16 )
+            {
+              r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
+              r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
+            }
+
+            real64 const da1 = r1 * frictionalForce;
+            real64 const da2 = r2 * frictionalForce;
+
+            if( dir1 < numDims )
+            {
+              real64 const dVelocity1 = da1 * dt;
+              stageBCComponentTarget( g,
+                                      fieldIndex,
+                                      dir1,
+                                      mpmBCTargetBoundaryTangential,
+                                      gridVelocity[g][fieldIndex][dir1] + dVelocity1,
+                                      gridAcceleration[g][fieldIndex][dir1] - da1,
+                                      dVelocity1,
+                                      mpmBCDVelocitySet,
+                                      targetKind,
+                                      targetCount,
+                                      targetDVelocityMode,
+                                      targetVelocity,
+                                      targetAcceleration,
+                                      targetDVelocity );
+            }
+            if( dir2 < numDims )
+            {
+              real64 const dVelocity2 = da2 * dt;
+              stageBCComponentTarget( g,
+                                      fieldIndex,
+                                      dir2,
+                                      mpmBCTargetBoundaryTangential,
+                                      gridVelocity[g][fieldIndex][dir2] + dVelocity2,
+                                      gridAcceleration[g][fieldIndex][dir2] - da2,
+                                      dVelocity2,
+                                      mpmBCDVelocitySet,
+                                      targetKind,
+                                      targetCount,
+                                      targetDVelocityMode,
+                                      targetVelocity,
+                                      targetAcceleration,
+                                      targetDVelocity );
+            }
+          }
+          else
+          {
+            real64 const endOfStepGridPosition = ( 1.0 + domainL[dir0] * dt ) * gridPosition[g][dir0];
+            prescribedVelocity = domainL[dir0] * endOfStepGridPosition;
+
+            if( enablePrescribedBoundaryTransverseVelocities[face] == 1 )
+            {
+              if( dir1 < numDims )
+              {
+                real64 const prescribedTransverseVelocity1 = prescribedBoundaryTransverseVelocities[face][0];
+                real64 const dVelocity1 = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
+                stageBCComponentTarget( g,
+                                        fieldIndex,
+                                        dir1,
+                                        mpmBCTargetBoundaryTangential,
+                                        prescribedTransverseVelocity1,
+                                        gridAcceleration[g][fieldIndex][dir1] + dVelocity1 / dt,
+                                        dVelocity1,
+                                        mpmBCDVelocitySet,
+                                        targetKind,
+                                        targetCount,
+                                        targetDVelocityMode,
+                                        targetVelocity,
+                                        targetAcceleration,
+                                        targetDVelocity );
+              }
+              if( dir2 < numDims )
+              {
+                real64 const prescribedTransverseVelocity2 = prescribedBoundaryTransverseVelocities[face][1];
+                real64 const dVelocity2 = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
+                stageBCComponentTarget( g,
+                                        fieldIndex,
+                                        dir2,
+                                        mpmBCTargetBoundaryTangential,
+                                        prescribedTransverseVelocity2,
+                                        gridAcceleration[g][fieldIndex][dir2] + dVelocity2 / dt,
+                                        dVelocity2,
+                                        mpmBCDVelocitySet,
+                                        targetKind,
+                                        targetCount,
+                                        targetDVelocityMode,
+                                        targetVelocity,
+                                        targetAcceleration,
+                                        targetDVelocity );
+              }
+            }
+          }
+
+          real64 const normalDVelocity = prescribedVelocity - gridVelocity[g][fieldIndex][dir0];
+          real64 const accelerationForBC = normalDVelocity / dt;
+
+          if( gridGhostRank[g] <= -1 && gridMass[g][fieldIndex] > smallMass )
+          {
+            if( useInternalForceAsFaceReaction == 0 )
+            {
+              faceReaction += normalDVelocity * gridMass[g][fieldIndex] / dt;
+            }
+            else
+            {
+              // RAJA::ReduceSum provides operator+= on device reductions, but
+              // not operator-= on all backends.  Add the signed value instead.
+              faceReaction += -gridInternalForce[g][fieldIndex][dir0];
+            }
+          }
+
+          if( dir0 < numDims )
+          {
+            stageBCComponentTarget( g,
+                                    fieldIndex,
+                                    dir0,
+                                    mpmBCTargetBoundaryNormal,
+                                    prescribedVelocity,
+                                    gridAcceleration[g][fieldIndex][dir0] + accelerationForBC,
+                                    normalDVelocity,
+                                    mpmBCDVelocitySet,
+                                    targetKind,
+                                    targetCount,
+                                    targetDVelocityMode,
+                                    targetVelocity,
+                                    targetAcceleration,
+                                    targetDVelocity );
+          }
+        } );
+        localFaceReactions[face] += faceReaction.get();
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Unrecognized boundary condition type in MPM Solver!" );
     }
   }
 
-  // Compute change in grid velocities for XPIC calculations
-  // TODO for multifield contact corrections
+  /*
+   * Boundary-node targets are complete.  Now stage buffer/control-node targets
+   * using delayed source access: if the reflected source or boundary-control
+   * node already has a boundary-node target, use that target value; otherwise
+   * use the original pre-BC grid field.  Buffer targets from earlier faces are
+   * intentionally ignored as sources.  This keeps corner normals simultaneous without copying
+   * free tangential values.
+   */
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType = boundaryConditionTypes[face];
+    if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    int const dir0 = face / 2;
+    int const dir1 = ( dir0 + 1 ) % 3;
+    int const dir2 = ( dir0 + 2 ) % 3;
+    int const positiveNormal = face % 2;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
+      enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
+    int const numBufferNodes = bufferNodes.size();
+    forAll< parallelDevicePolicy<> >( numBufferNodes, [=] GEOS_HOST_DEVICE ( localIndex const gg )
+    {
+      localIndex const g = bufferNodes[gg];
+
+      int ijk[3] = {};
+      ijk[dir1] = LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+      ijk[dir2] = LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+      ijk[dir0] = positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * 2;
+      localIndex const gFrom = ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      ijk[dir0] = positiveNormal * ( nEl[dir0] - 1 ) + ( 1 - positiveNormal ) * 1;
+      localIndex const gBoundary = ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          real64 const fromVelocity =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir0,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryVelocity =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir0,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const fromAcceleration =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir0,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const boundaryAcceleration =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir0,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const newVelocity = -fromVelocity + 2.0 * boundaryVelocity;
+          stageBCComponentTarget( g,
+                                  fieldIndex,
+                                  dir0,
+                                  mpmBCTargetBufferNormal,
+                                  newVelocity,
+                                  -fromAcceleration + 2.0 * boundaryAcceleration,
+                                  newVelocity - gridVelocity[g][fieldIndex][dir0],
+                                  mpmBCDVelocityIncrement,
+                                  targetKind,
+                                  targetCount,
+                                  targetDVelocityMode,
+                                  targetVelocity,
+                                  targetAcceleration,
+                                  targetDVelocity );
+        }
+
+        if( constrainTransverseComponents && dir1 < numDims )
+        {
+          real64 const fromVelocity =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir1,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryVelocity =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir1,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const fromAcceleration =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir1,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const boundaryAcceleration =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir1,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const newVelocity = -fromVelocity + 2.0 * boundaryVelocity;
+          stageBCComponentTarget( g,
+                                  fieldIndex,
+                                  dir1,
+                                  mpmBCTargetBufferTangential,
+                                  newVelocity,
+                                  -fromAcceleration + 2.0 * boundaryAcceleration,
+                                  newVelocity - gridVelocity[g][fieldIndex][dir1],
+                                  mpmBCDVelocityIncrement,
+                                  targetKind,
+                                  targetCount,
+                                  targetDVelocityMode,
+                                  targetVelocity,
+                                  targetAcceleration,
+                                  targetDVelocity );
+        }
+
+        if( constrainTransverseComponents && dir2 < numDims )
+        {
+          real64 const fromVelocity =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir2,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const boundaryVelocity =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir2,
+                                 gridVelocity,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetVelocityConst );
+          real64 const fromAcceleration =
+            stagedBCScalarValue( gFrom,
+                                 fieldIndex,
+                                 dir2,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const boundaryAcceleration =
+            stagedBCScalarValue( gBoundary,
+                                 fieldIndex,
+                                 dir2,
+                                 gridAcceleration,
+                                 targetKindConst,
+                                 targetCountConst,
+                                 targetAccelerationConst );
+          real64 const newVelocity = -fromVelocity + 2.0 * boundaryVelocity;
+          stageBCComponentTarget( g,
+                                  fieldIndex,
+                                  dir2,
+                                  mpmBCTargetBufferTangential,
+                                  newVelocity,
+                                  -fromAcceleration + 2.0 * boundaryAcceleration,
+                                  newVelocity - gridVelocity[g][fieldIndex][dir2],
+                                  mpmBCDVelocityIncrement,
+                                  targetKind,
+                                  targetCount,
+                                  targetDVelocityMode,
+                                  targetVelocity,
+                                  targetAcceleration,
+                                  targetDVelocity );
+        }
+      }
+    } );
+  }
+
+  // Apply the assembled targets in one pass.  Components with no target are the
+  // unconstrained/free components and are not changed.
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int component = 0; component < numDims; ++component )
+      {
+        int const count = targetCount[g][fieldIndex][component];
+        if( targetKind[g][fieldIndex][component] != mpmBCTargetNone && count > 0 )
+        {
+          real64 const newVelocity = targetVelocity[g][fieldIndex][component] / count;
+          real64 const newAcceleration = targetAcceleration[g][fieldIndex][component] / count;
+          real64 const dVelocity = targetDVelocity[g][fieldIndex][component] / count;
+
+          if( targetDVelocityMode[g][fieldIndex][component] == mpmBCDVelocitySet )
+          {
+            gridDVelocity[g][fieldIndex][component] = dVelocity;
+          }
+          else
+          {
+            gridDVelocity[g][fieldIndex][component] += dVelocity;
+          }
+          gridVelocity[g][fieldIndex][component] = newVelocity;
+          gridAcceleration[g][fieldIndex][component] = newAcceleration;
+        }
+      }
+    }
+  } );
 
   // Reduce reaction forces from all partitions
   real64 globalFaceReactions[6] = {};
