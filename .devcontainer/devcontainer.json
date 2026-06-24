@@ -37,11 +37,6 @@
                     "permissions": {
                         "contents": "write"
                     }
-                },
-                "GEOS-DEV/PVTPackage": {
-                    "permissions": {
-                        "contents": "write"
-                    }
                 }
             },
             "openFiles": []

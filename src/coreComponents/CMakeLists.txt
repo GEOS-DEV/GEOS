@@ -73,7 +73,7 @@ else()
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake constitutive/PVTPackage constitutive/HPCReact )
+                       EXCLUDES constitutive/HPCReact )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck
