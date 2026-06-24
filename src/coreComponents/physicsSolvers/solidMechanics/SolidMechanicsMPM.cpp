@@ -4318,22 +4318,18 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
             2.0 * destinationVelocity[gBoundary][fieldIndex][dir0];
         }
 
-        if( dir1 < numDims )
+        if( constrainTransverseComponents && dir1 < numDims )
         {
           destinationVelocity[g][fieldIndex][dir1] =
-            constrainTransverseComponents
-            ? -destinationVelocity[gFrom][fieldIndex][dir1]
-              + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir1]
-            :  destinationVelocity[gFrom][fieldIndex][dir1];
+            -destinationVelocity[gFrom][fieldIndex][dir1]
+            + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir1];
         }
 
-        if( dir2 < numDims )
+        if( constrainTransverseComponents && dir2 < numDims )
         {
           destinationVelocity[g][fieldIndex][dir2] =
-            constrainTransverseComponents
-            ? -destinationVelocity[gFrom][fieldIndex][dir2]
-              + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir2]
-            :  destinationVelocity[gFrom][fieldIndex][dir2];
+            -destinationVelocity[gFrom][fieldIndex][dir2]
+            + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir2];
         }
       }
     }
@@ -4480,20 +4476,16 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
             -velocityIncrement[gFrom][fieldIndex][dir0];
         }
 
-        if( dir1 < numDims )
+        if( constrainTransverseComponents && dir1 < numDims )
         {
           velocityIncrement[g][fieldIndex][dir1] =
-            constrainTransverseComponents
-            ? -velocityIncrement[gFrom][fieldIndex][dir1]
-            :  velocityIncrement[gFrom][fieldIndex][dir1];
+            -velocityIncrement[gFrom][fieldIndex][dir1];
         }
 
-        if( dir2 < numDims )
+        if( constrainTransverseComponents && dir2 < numDims )
         {
           velocityIncrement[g][fieldIndex][dir2] =
-            constrainTransverseComponents
-            ? -velocityIncrement[gFrom][fieldIndex][dir2]
-            :  velocityIncrement[gFrom][fieldIndex][dir2];
+            -velocityIncrement[gFrom][fieldIndex][dir2];
         }
       }
     }
@@ -21215,10 +21207,13 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
             } );
 
-            // Perform field reflection on buffer nodes - accounts for moving boundary effects.
-            // For B-spline/control-node interpolation, prescribed tangential
-            // components also need a moving/odd extension; unconstrained
-            // tangential components remain even/free-slip.
+            // Perform field reflection on buffer nodes for constrained components.
+            // Normal components use the moving/odd extension required for the
+            // prescribed wall motion. Prescribed tangential components use the
+            // same odd/moving extension. Unconstrained tangential components are
+            // not modified here: leaving them as produced by the grid update
+            // avoids applying an artificial tangential boundary impulse through
+            // mass-bearing buffer/control nodes.
             bool const constrainTransverseComponents =
               boundaryConditionTypes[face] == static_cast< int >( mpm::BoundaryConditionOption::Moving ) &&
               enablePrescribedBoundaryTransverseVelocities[face] == 1;
@@ -21249,29 +21244,33 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
               gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
 
               // Calculate velocity. Constrained components use an odd/moving extension
-              // about the boundary control value; free tangential components use
-              // an even extension.
+              // about the boundary control value. Unconstrained tangential components are
+              // left untouched: changing them on mass-bearing buffer/control nodes is a
+              // real tangential impulse, not a harmless ghost fill.
               gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
-              gridVelocity[g][fieldIndex][dir1] = constrainTransverseComponents
-                ? -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1]
-                :  gridVelocity[gFrom][fieldIndex][dir1];
-              gridVelocity[g][fieldIndex][dir2] = constrainTransverseComponents
-                ? -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2]
-                :  gridVelocity[gFrom][fieldIndex][dir2];
+              if( constrainTransverseComponents )
+              {
+                gridVelocity[g][fieldIndex][dir1] = -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1];
+                gridVelocity[g][fieldIndex][dir2] = -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2];
+              }
 
-              // Compute change in velocity for XPIC calculations
+              // Compute change in velocity for XPIC calculations. Free tangential components
+              // are not modified above, so they must not receive a boundary-induced dVelocity.
               gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
-              gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
-              gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
+              if( constrainTransverseComponents )
+              {
+                gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
+                gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
+              }
 
-              // Calculate acceleration with the same component-wise extension.
+              // Calculate acceleration with the same component-wise extension. Free
+              // tangential accelerations remain those produced by the dynamics.
               gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
-              gridAcceleration[g][fieldIndex][dir1] = constrainTransverseComponents
-                ? -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1]
-                :  gridAcceleration[gFrom][fieldIndex][dir1];
-              gridAcceleration[g][fieldIndex][dir2] = constrainTransverseComponents
-                ? -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2]
-                :  gridAcceleration[gFrom][fieldIndex][dir2];
+              if( constrainTransverseComponents )
+              {
+                gridAcceleration[g][fieldIndex][dir1] = -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1];
+                gridAcceleration[g][fieldIndex][dir2] = -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2];
+              }
             } );
           }
         }
