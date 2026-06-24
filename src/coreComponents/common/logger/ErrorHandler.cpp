@@ -69,6 +69,7 @@ void ErrorHandler::setupExternalErrorManagment()
                                                            ::geos::logger::internal::g_rank )
                                  .addCallStackInfo( stackHistory )
                                  .addDetectionLocation( detectionLocation )
+                                 .setCause( "Error pipe output from a dependency" )
                                  .getDiagnosticMsg() );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
