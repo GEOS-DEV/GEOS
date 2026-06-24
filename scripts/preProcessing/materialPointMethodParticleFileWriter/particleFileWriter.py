@@ -602,6 +602,13 @@ parameters = {
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
+               'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
+               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
+               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
+               'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.
+               'weakInterfaceTraceMinWeight': ( None, True ),  # MPM: minimum active trace interpolation weight.
+               'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
+               'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
                'exactJIntegration': ( None, True ),  # MPM: enforce exact J integration for F updates.
                'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: weight explicit vs implicit surface normals.

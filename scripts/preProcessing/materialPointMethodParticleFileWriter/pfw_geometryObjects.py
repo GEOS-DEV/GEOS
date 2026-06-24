@@ -18,6 +18,7 @@ from abc import ABCMeta, abstractmethod
 import scipy
 import itertools
 from datetime import datetime
+from enum import IntEnum
 np.random.seed(1)
 
 from mpi4py import MPI
@@ -118,7 +119,15 @@ _defaultDamage = 0.0
 _defaultPorosity = 0.0
 _defaultStrengthScale = 1.0
 _defaultTemperature = 300.0
-_defaultSurfaceFlag = 2 # Basic surface flag (0 = internal, 1=fully damaged, 2=normal surface flag, 3=cohesive)
+class SurfaceFlag(IntEnum):
+  Interior = 0
+  FullyDamaged = 1
+  Surface = 2
+  Cohesive = 3
+  DamagedCohesive = 4
+  WeakDiscontinuity = 5
+
+_defaultSurfaceFlag = int(SurfaceFlag.Surface) # Basic surface flag
 _defaultSurfaceNormal = np.array([0.0, 0.0, 0.0]) # 0 vector turns off surface normal use in solver (defaults to implicit surface normals)
 _defaultSurfacePosition = np.array([0.0, 0.0, 0.0])
 _defaultMatDir = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) 
@@ -4615,7 +4624,7 @@ class polygon(Geometry):
       return True
 
   def isInterior(self, point, skinDepth):
-    x = np.asarray(point)
+    x = np.asarray(point[:2])
     if(self.isInside(self.plist,x)):
       vertices = self.plist
       nv = vertices.shape[0]
@@ -4647,46 +4656,84 @@ class polygon(Geometry):
     
     return -1
 
+  def _signedArea2D(self):
+    vertices = self.plist
+    area = 0.0
+    nv = vertices.shape[0]
+    for i in range(nv):
+      j = np.mod(i+1,nv)
+      area += vertices[i,0]*vertices[j,1] - vertices[j,0]*vertices[i,1]
+    return 0.5*area
+
+  def _edgeNormal2D(self, edgeIndex):
+    vertices = self.plist
+    nv = vertices.shape[0]
+    j = np.mod(edgeIndex+1,nv)
+    e = vertices[j,:] - vertices[edgeIndex,:]
+    eNorm = np.linalg.norm(e)
+    if eNorm <= 0.0:
+      return np.zeros(2)
+    t = e/eNorm
+    # For a counter-clockwise polygon the material interior lies to the left
+    # of each directed edge, so the outward normal is the right normal.  For a
+    # clockwise polygon the sign is reversed.  This deterministic edge normal
+    # is preferable to a particle-to-edge vector for flagged interfaces because
+    # particles can lie exactly on the edge, making the latter undefined.
+    n = np.array([t[1], -t[0]])
+    if self._signedArea2D() < 0.0:
+      n = -n
+    return n
+
   def getSurfaceNormal(self,pt):
-    x = np.asarray(pt)
-    # Assumes point is already internal
-    # Find the nearest edge and use it's normal
+    x = np.asarray(pt[:2])
+    # Assumes point is already internal.  Only flagged polygon edges should
+    # contribute a surface normal.  This matters for objects whose contact/CZ
+    # face is flagged but whose free or boundary-adjacent faces are not.
     vertices = self.plist
     nv = vertices.shape[0]
 
     nearestEdgeD = np.inf
-    surfaceNormal = np.empty((1,3))
+    surfaceNormal = np.zeros(3)
     for i in range(nv):
+      if not self.flaggedSurfaces[i]:
+        continue
       j = np.mod(i+1,nv)
       v = x - vertices[i,:]
       w = vertices[j,:] - vertices[i,:]
 
       wNorm = np.linalg.norm(w)
-      w = w / wNorm
-      dw = np.dot(v,w)
-      if dw >= 0.0 and dw <= wNorm:
-        v = v - dw * w
+      if wNorm <= 0.0:
+        continue
+      wHat = w / wNorm
+      dw = np.dot(v,wHat)
+      if dw >= -1.0e-14 and dw <= wNorm + 1.0e-14:
+        v = v - max(0.0, min(dw, wNorm)) * wHat
         d = np.linalg.norm(v)
         if d < nearestEdgeD:
           nearestEdgeD = d
-          surfaceNormal = -v / d
+          surfaceNormal[:2] = self._edgeNormal2D(i)
 
     return surfaceNormal
   
   def getSurfacePosition(self,pt):
-    x = np.asarray(pt)
-    # Assumes point is already internal
-    # Find the nearest edge and vector to surface
+    x = np.asarray(pt[:2])
+    # Assumes point is already internal.  Only flagged polygon edges should
+    # contribute a surface-position vector.
     vertices = self.plist
     nv = vertices.shape[0]
     
     nearestEdgeD = np.inf
+    surfacePosition = np.zeros(3)
     for i in range(nv):
+      if not self.flaggedSurfaces[i]:
+        continue
       j = np.mod(i+1,nv)
       v = x - vertices[i,:]
       w = vertices[j,:] - vertices[i,:]
 
       wNorm = np.linalg.norm(w)
+      if wNorm <= 0.0:
+        continue
       w = w / wNorm
       dw = np.dot(v,w)
       if dw >= 0.0 and dw <= wNorm:
@@ -4694,7 +4741,7 @@ class polygon(Geometry):
         d = np.linalg.norm(v)
         if d < nearestEdgeD:
           nearestEdgeD = d
-          surfacePosition = -v
+          surfacePosition[:2] = -v
 
     return surfacePosition
 

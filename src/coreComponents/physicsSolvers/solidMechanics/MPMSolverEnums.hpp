@@ -78,7 +78,8 @@ namespace mpm
     FullyDamaged = 1,
     Surface = 2,
     Cohesive = 3,
-    DamagedCohesive = 4
+    DamagedCohesive = 4,
+    WeakDiscontinuity = 5
   };
 
   /**
@@ -206,7 +207,8 @@ ENUM_STRINGS( mpm::SurfaceFlag,
               "FullyDamaged",
               "Surface",
               "Cohesive",
-              "DamagedCohesive" );
+              "DamagedCohesive",
+              "WeakDiscontinuity" );
 
 ENUM_STRINGS( mpm::InterpolationOption,
               "Linear",

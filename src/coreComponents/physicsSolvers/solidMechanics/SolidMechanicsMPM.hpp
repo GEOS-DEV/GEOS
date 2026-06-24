@@ -142,9 +142,15 @@ public:
     // Contact
     static constexpr char const * gridContactForceString() { return "gridContactForce"; }
     static constexpr char const * gridWeakInterfaceTraceActiveString() { return "gridWeakInterfaceTraceActive"; }
+    static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
+    static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
     static constexpr char const * gridWeakInterfaceTraceForceString() { return "gridWeakInterfaceTraceForce"; }
     static constexpr char const * gridWeakInterfaceTracePointString() { return "gridWeakInterfaceTracePoint"; }
+    static constexpr char const * gridWeakInterfaceTraceSupportWeightString() { return "gridWeakInterfaceTraceSupportWeight"; }
+    static constexpr char const * gridWeakInterfaceTraceSkipReasonString() { return "gridWeakInterfaceTraceSkipReason"; }
+    static constexpr char const * gridWeakInterfaceTraceSurfaceJumpString() { return "gridWeakInterfaceTraceSurfaceJump"; }
     static constexpr char const * gridWeakInterfaceTraceVelocityJumpString() { return "gridWeakInterfaceTraceVelocityJump"; }
+    static constexpr char const * gridWeakInterfaceTraceVelocityJumpPostString() { return "gridWeakInterfaceTraceVelocityJumpPost"; }
 
     // Cohesive zone
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
@@ -490,6 +496,8 @@ public:
 
   void applyWeakInterfaceTraceProjectionForces( real64 const dt,
                                                 NodeManager & nodeManager );
+
+  void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
 
   /**
    * @brief Computes the cumulative material-contact impulse target for FMPM Net contact.
@@ -1412,6 +1420,7 @@ protected:
   real64 m_weakInterfaceTraceGapStabilization;
   real64 m_weakInterfaceTraceMinWeight;
   array2d< int > m_weakInterfaceTracePairs;
+  int m_weakInterfaceTraceProjectionIterations;
   real64 m_weakInterfaceTraceProjectionScale;
   int m_weakInterfaceTraceSuppressNodalContact;
   int m_writeParticleData;

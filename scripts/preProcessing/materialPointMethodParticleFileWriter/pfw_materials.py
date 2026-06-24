@@ -3114,6 +3114,53 @@ verificationMaterialSwapStiff["materialString"] = generateMaterialString(verific
 
 
 ###################################################################################################
+# WEAK TRACE ROTATED BAR VERIFICATION MATERIALS:
+# Dimensionless two-phase VonMisesJ materials used by
+# verification/weakTraceRotatedBar.  The compliant material is soft and strong;
+# the stiff material is intentionally weak.  For the prescribed bar-axis strain
+# in the verification case, the exact series response remains elastic, but a
+# local mixed-cell constant-strain error can drive the stiff/weak material above
+# yield near the interface.
+weakTraceCompliantVonMises = {}
+weakTraceCompliantVonMises["name"] = "weakTraceCompliantVonMises"
+weakTraceCompliantVonMises["version"] = 2606121717
+weakTraceCompliantVonMises["model"] = "VonMisesJ"
+weakTraceCompliantVonMises["defaultDensity"] = 1.0
+weakTraceCompliantVonMises["defaultYoungModulus"] = 1.0
+weakTraceCompliantVonMises["defaultPoissonRatio"] = 0.25
+weakTraceCompliantVonMises["defaultBulkModulus"] = weakTraceCompliantVonMises["defaultYoungModulus"]/(3.0*(1.0 - 2.0*weakTraceCompliantVonMises["defaultPoissonRatio"]))
+weakTraceCompliantVonMises["defaultShearModulus"] = weakTraceCompliantVonMises["defaultYoungModulus"]/(2.0*(1.0 + weakTraceCompliantVonMises["defaultPoissonRatio"]))
+weakTraceCompliantVonMises["defaultYieldStrength"] = 1.0
+weakTraceCompliantVonMises["waveSpeed"] = float(np.sqrt((weakTraceCompliantVonMises["defaultBulkModulus"] + 4.0/3.0*weakTraceCompliantVonMises["defaultShearModulus"])/weakTraceCompliantVonMises["defaultDensity"]))
+weakTraceCompliantVonMises["materialString"] = generateMaterialString(weakTraceCompliantVonMises)
+
+weakTraceStiffWeakVonMises = {}
+weakTraceStiffWeakVonMises["name"] = "weakTraceStiffWeakVonMises"
+weakTraceStiffWeakVonMises["version"] = 2606121717
+weakTraceStiffWeakVonMises["model"] = "VonMisesJ"
+weakTraceStiffWeakVonMises["defaultDensity"] = 1.0
+weakTraceStiffWeakVonMises["defaultYoungModulus"] = 10.0
+weakTraceStiffWeakVonMises["defaultPoissonRatio"] = 0.25
+weakTraceStiffWeakVonMises["defaultBulkModulus"] = weakTraceStiffWeakVonMises["defaultYoungModulus"]/(3.0*(1.0 - 2.0*weakTraceStiffWeakVonMises["defaultPoissonRatio"]))
+weakTraceStiffWeakVonMises["defaultShearModulus"] = weakTraceStiffWeakVonMises["defaultYoungModulus"]/(2.0*(1.0 + weakTraceStiffWeakVonMises["defaultPoissonRatio"]))
+weakTraceStiffWeakVonMises["defaultYieldStrength"] = 0.025
+weakTraceStiffWeakVonMises["waveSpeed"] = float(np.sqrt((weakTraceStiffWeakVonMises["defaultBulkModulus"] + 4.0/3.0*weakTraceStiffWeakVonMises["defaultShearModulus"])/weakTraceStiffWeakVonMises["defaultDensity"]))
+weakTraceStiffWeakVonMises["materialString"] = generateMaterialString(weakTraceStiffWeakVonMises)
+
+weakTraceFalseElasticCohesiveZone = {}
+weakTraceFalseElasticCohesiveZone["name"] = "weakTraceFalseElasticCohesiveZone"
+weakTraceFalseElasticCohesiveZone["version"] = 2606121717
+weakTraceFalseElasticCohesiveZone["model"] = "UncoupledCohesiveZone"
+weakTraceFalseElasticCohesiveZone["normalForceConstant"] = 1000.0
+weakTraceFalseElasticCohesiveZone["shearForceConstant"] = 1000.0
+weakTraceFalseElasticCohesiveZone["maxNormalDisplacement"] = 1.0e6
+weakTraceFalseElasticCohesiveZone["maxTangentialDisplacement"] = 1.0e6
+weakTraceFalseElasticCohesiveZone["materialString"] = generateMaterialString(weakTraceFalseElasticCohesiveZone)
+# #################################################################################################
+
+
+
+###################################################################################################
 # SURFACE POLYMER VERIFICATION ELASTIC BLOCK:
 # Stiff elastic block used only by the surface-informed polymer layer cohesive-zone verification.
 # The blocks are not intended to represent a polymer; they provide inert, much stiffer adherends so
@@ -3264,6 +3311,9 @@ verificationMaterials = [
     verificationMaterialSwapStiff,
     verificationQuartz,
     verificationVonMises,
+    weakTraceCompliantVonMises,
+    weakTraceStiffWeakVonMises,
+    weakTraceFalseElasticCohesiveZone,
     pbcCompactionElastic,
     pbcCompactionPlastic,
 ]
