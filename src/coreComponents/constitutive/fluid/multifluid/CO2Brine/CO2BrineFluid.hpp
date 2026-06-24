@@ -49,9 +49,6 @@ template< typename PHASE1, typename PHASE2, typename FLASH >
 class CO2BrineFluid : public MultiFluidBase
 {
 public:
-
-  using exec_policy = parallelDevicePolicy<>;
-
   CO2BrineFluid( string const & name,
                  Group * const parent );
 
@@ -182,10 +179,7 @@ private:
   };
 
 protected:
-
   virtual void postInputInitialization() override;
-
-  virtual void initializePreSubGroups() override;
 
 private:
 

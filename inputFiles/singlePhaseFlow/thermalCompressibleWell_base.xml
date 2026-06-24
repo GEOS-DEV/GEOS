@@ -40,11 +40,11 @@
       <SinglePhaseWell
         name="wellControls2"
         type="injector"
+        control="BHP"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15"
-        control="BHP">
+        surfaceTemperature="300.15">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1.45e7"

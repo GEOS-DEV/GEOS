@@ -34,6 +34,7 @@ enum class BHPConstraintTypeId : integer
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
+
 /**
  * @class BHPConstraint
  * @brief This class describes a minimum pressure constraint used to control a injection well.
@@ -153,6 +154,7 @@ public:
     }
 
   }
+
 
   virtual string getCatalogName() const override { return catalogName(); }
 protected:

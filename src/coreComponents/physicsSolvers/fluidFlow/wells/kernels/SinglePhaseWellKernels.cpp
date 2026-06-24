@@ -37,12 +37,12 @@ inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
-                 WellControls::Control const & currentControl,
+                 ConstraintTypeId const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
                  real64 const & currentBHP,
                  real64 const & currentVolRate,
-                 WellControls::Control & newControl )
+                 ConstraintTypeId & newControl )
 {
   // if isViable is true at the end of the following checks, no need to switch
   bool controlIsViable = false;
@@ -52,7 +52,7 @@ ControlEquationHelper::
   // The well changes its mode of control whenever the existing control mode would
   // violate one of these limits.
   // BHP control
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     // the control is viable if the reference rate is below the max rate
     controlIsViable = ( LvArray::math::abs( currentVolRate ) <= LvArray::math::abs( targetRate ) + EPS );
@@ -80,9 +80,9 @@ ControlEquationHelper::
   {
     // Note: if BHP control is not viable, we switch to TOTALVOLRATE
     //       if TOTALVOLRATE are not viable, we switch to BHP
-    newControl = ( currentControl == WellControls::Control::BHP )
-               ? WellControls::Control::TOTALVOLRATE
-               : WellControls::Control::BHP;
+    newControl = ( currentControl == ConstraintTypeId::BHP )
+               ? ConstraintTypeId::TOTALVOLRATE
+               : ConstraintTypeId::BHP;
   }
 }
 
@@ -92,7 +92,7 @@ inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
-           WellControls::Control const currentControl,
+           ConstraintTypeId const currentControl,
            real64 const & targetBHP,
            real64 const & targetRate,
            real64 const & currentBHP,
@@ -124,7 +124,7 @@ ControlEquationHelper::
   //       the well element that contains the reference elevation.
 
   // BHP control
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     // control equation is a difference between current BHP and target BHP
     controlEqn = currentBHP - targetBHP;
@@ -134,7 +134,7 @@ ControlEquationHelper::
 
   }
   // Total volumetric rate control
-  else if( currentControl == WellControls::Control::TOTALVOLRATE )
+  else if( currentControl == ConstraintTypeId::TOTALVOLRATE )
   {
     // control equation is the difference between volumetric current rate and target rate
     controlEqn = currentVolRate - targetRate;
@@ -418,7 +418,7 @@ PresTempInitializationKernel::
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   real64 const initialPressureCoef = wellControls.getInitialPressureCoefficient();
-  WellControls::Control const currentControl = wellControls.getControl();
+  ConstraintTypeId const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
 
 
@@ -477,7 +477,7 @@ PresTempInitializationKernel::
     avgTemp = wellControls.getInjectionTemperature();
   }
   // if the well is controlled by pressure, initialize the reference pressure at the target pressure
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     refPres = targetBHP;
   }
@@ -548,25 +548,15 @@ RateInitializationKernel::
           arrayView1d< real64 > const & connRate )
 {
 
-  WellControls::Control const control = wellControls.getControl();
+  ConstraintTypeId const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  real64 constraintVal;
-  if( isProducer )
-  {
-    std::vector< WellConstraintBase * >  const constraints = wellControls.getProdRateConstraints();
-    // Use first rate constraint to set initial connection rates
-    constraintVal = constraints[0]->getConstraintValue( currentTime );
-  }
-  else
-  {
-    std::vector< WellConstraintBase * >  const constraints = wellControls.getInjRateConstraints();
-    // Use first rate constraint to set initial connection rates
-    constraintVal = constraints[0]->getConstraintValue( currentTime );;
-  }
+  auto const * rateConstraint = wellControls.getRateConstraints().front(); // tjb
+  real64 const constraintVal = rateConstraint->getConstraintValue( currentTime );
+
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
-    if( control == WellControls::Control::BHP )
+    if( control == ConstraintTypeId::BHP )
     {
       // if BHP constraint set rate below the absolute max rate
       // with the appropriate sign (negative for prod, positive for inj)
@@ -578,6 +568,10 @@ RateInitializationKernel::
       {
         connRate[iwelem] = LvArray::math::min( 0.1 * constraintVal * wellElemDens[iwelem][0], 1e3 );
       }
+    }
+    else if( control == ConstraintTypeId::MASSRATE )
+    {
+      connRate[iwelem] = constraintVal;
     }
     else
     {

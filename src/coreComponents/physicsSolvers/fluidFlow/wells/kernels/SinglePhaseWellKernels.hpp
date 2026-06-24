@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 
@@ -129,12 +130,12 @@ struct ControlEquationHelper
   static
   void
   switchControl( bool const isProducer,
-                 WellControls::Control const & currentControl,
+                 ConstraintTypeId const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
                  real64 const & currentBHP,
                  real64 const & currentVolRate,
-                 WellControls::Control & newControl );
+                 ConstraintTypeId & newControl );
 
   template< integer IS_THERMAL >
   GEOS_HOST_DEVICE
@@ -142,7 +143,7 @@ struct ControlEquationHelper
   static
   void
   compute( globalIndex const rankOffset,
-           WellControls::Control const currentControl,
+           ConstraintTypeId const currentControl,
            real64 const & targetBHP,
            real64 const & targetRate,
            real64 const & currentBHP,
@@ -812,18 +813,10 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_currentControl( wellControls.getControl() ),
     m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
+    m_targetBHP( wellControls.getTargetBHP( time ) ), // tjb fix for whp imposed bhp constraint
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
-  {
-    if( wellControls.isProducer() )
-    {
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-    }
-    else
-    {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-    }
-  }
+  {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
@@ -837,17 +830,17 @@ public:
         // for the top well element, normalize using the current control
         if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-          if( m_currentControl == WellControls::Control::BHP )
+          if( m_currentControl == ConstraintTypeId::BHP )
           {
             // this residual entry is in pressure units
             normalizer = m_targetBHP;
           }
-          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::TOTALVOLRATE )
           {
             // this residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::MASSRATE )
+          else if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
@@ -900,7 +893,7 @@ protected:
   localIndex const m_iwelemControl;
 
   /// Controls
-  WellControls::Control const m_currentControl;
+  ConstraintTypeId const m_currentControl;
   real64 const m_constraintValue;
   real64 m_targetBHP;
 

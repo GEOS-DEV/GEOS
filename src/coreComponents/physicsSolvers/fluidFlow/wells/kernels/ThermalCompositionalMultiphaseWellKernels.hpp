@@ -181,35 +181,28 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
+    m_targetBHP( std::numeric_limits< real64 >::max() ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
     m_phaseVolFraction_n( subRegion.getField< fields::well::phaseVolumeFraction_n >()),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() )
   {
-    if( m_isProducer )
+    const WellConstraintBase * currentConstraint = wellControls.getCurrentConstraint();
+    ConstraintTypeId currentControl = wellControls.getControl();
+    if( currentControl == ConstraintTypeId::BHP )
     {
-      // tjb This needs to be fixed  should use current constraint rate for normalization
-      if( wellControls.getMinBHPConstraint()->isConstraintActive() )
-      {
-        m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-      }
-      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-        m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
-      }
+      m_targetBHP = currentConstraint->getConstraintValue( time );
     }
     else
     {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-      m_targetPhaseIndex = -1;
-      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
-
+      m_constraintValue = currentConstraint->getConstraintValue( time );
+      if( currentControl == ConstraintTypeId::PHASEVOLRATE )
+      {
+        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
+      }
     }
-
   }
-
 
   GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const iwelem,
@@ -243,22 +236,22 @@ public:
         // for the top well element, normalize using the current control
         if( m_isLocallyOwned && iwelem == m_iwelemControl )
         {
-          if( m_currentControl == WellControls::Control::BHP )
+          if( m_currentControl == ConstraintTypeId::BHP )
           {
             // the residual entry is in pressure units
             normalizer = m_targetBHP;
           }
-          else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::TOTALVOLRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::PHASEVOLRATE )
+          else if( m_currentControl == ConstraintTypeId::PHASEVOLRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
           }
-          else if( m_currentControl == WellControls::Control::MASSRATE )
+          else if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_constraintValue ), m_minNormalizer );
@@ -273,14 +266,14 @@ public:
       // Step 2: compute a normalizer for the mass balance equations
       else if( idof >= WJ_ROFFSET::MASSBAL && idof < WJ_ROFFSET::MASSBAL + numComp )
       {
-        if( m_isProducer ) // only PHASEVOLRATE is supported for now
+        if( m_isProducer )   // only PHASEVOLRATE is supported for now
         {
           // the residual is in mass units
           normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else   // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          if( m_currentControl == WellControls::Control::MASSRATE )
+          if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             normalizer = m_dt * LvArray::math::abs( m_constraintValue );
           }
@@ -298,14 +291,14 @@ public:
       // Step 3: compute a normalizer for the volume balance equations
       else if( idof == WJ_ROFFSET::VOLBAL )
       {
-        if( m_isProducer ) // only PHASEVOLRATE is supported for now
+        if( m_isProducer )   // only PHASEVOLRATE is supported for now
         {
           // the residual is in volume units
           normalizer = m_dt * LvArray::math::abs( m_constraintValue );
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else   // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          if( m_currentControl == WellControls::Control::MASSRATE )
+          if( m_currentControl == ConstraintTypeId::MASSRATE )
           {
             normalizer = m_dt * LvArray::math::abs( m_constraintValue/  m_totalDens_n[iwelem][0] );
           }
@@ -373,7 +366,7 @@ protected:
   bool const m_isProducer;
 
   /// Controls
-  WellControls::Control const m_currentControl;
+  ConstraintTypeId const m_currentControl;
   real64 m_constraintValue;
   real64 m_targetBHP;
 

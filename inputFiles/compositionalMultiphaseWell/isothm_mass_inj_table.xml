@@ -40,11 +40,12 @@
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
+        control="massRate"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15"
-        control="massRate">
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           constraintScheduleTableName="totalBHPTable"

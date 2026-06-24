@@ -708,7 +708,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     stdVector< localIndex > ghostsToFix;
 
     /// Map from owning MPI rank to an array of local objects we need to fix.
-    std::unordered_map< int, stdVector< localIndex > > ghostsBySecondNeighbor;
+    stdUnorderedMap< int, stdVector< localIndex > > ghostsBySecondNeighbor;
 
     arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 
@@ -716,7 +716,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsBySecondNeighbor.get_inserted( pair.second ).emplace_back( lid );
       ghostsToFix.emplace_back( lid );
       ghostRank[ lid ] = pair.second;
     }

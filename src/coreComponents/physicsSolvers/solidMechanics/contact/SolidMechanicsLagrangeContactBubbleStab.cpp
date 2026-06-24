@@ -29,6 +29,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 

@@ -28,6 +28,12 @@
 namespace geos
 {
 
+enum class ConstraintSourceId : integer
+{
+  USER,    /**< The well operates at a specified minimum bottom hole pressure (BHP) */
+  WHP,    /**< The well operates at a specified maximum bottom hole pressure (BHP) */
+  UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
+};
 
 
 enum class ConstraintTypeId : integer
@@ -40,19 +46,6 @@ enum class ConstraintTypeId : integer
   LIQUIDRATE,  /**< The well operates at a specified liquid rate */
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
-
-/*
-   class WellContraint : public dataRepository::Group
-   {
-   public:
-
-   virtual bool estimateWellSolution()=0;
-   virtual void assembleConstraintEquation()=0;
-   virtual void getBHP()=0;
-   virtual void getPhaseRate(integer phase)=0;
-   }
- */
-
 
 /**
  * @class WellContraint
@@ -132,6 +125,12 @@ public:
   virtual ConstraintTypeId getControl() const = 0;
 
   /**
+   * @brief Provide source of constraint (user defined, or computed from WHP constraint)
+   * @return true if the constraint is active, false otherwise
+   */
+  ConstraintSourceId getConstraintSource( ) const { return m_constraintSource; }
+
+  /**
    * @brief Defines whether the constraint should be evaluated or not
    * @brief Some workflows require the well model to define a constraint
    * @brief of similar type to user defined constraints. For example,
@@ -191,7 +190,10 @@ public:
   viewKeysWellConstraint;
 
   // Quantities computed from well constraint solve with this boundary condition
-  // This needs to be somewhere else tjb
+  // Until we have a more general interface for constraints to return these quantities,
+  // we will store them in the constraint object itself.
+  // This is not ideal but it is a temporary solution to avoid having to solve the constraint multiple times in the well solver and in the
+  // test.
   void setBHP( real64 bhp ){ m_BHP=bhp;};
   void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates ) { m_phaseVolumeRates = phaseVolumeRates; };
   void setTotalVolumeRate( real64 totalVolumeRate ){ m_totalVolumeRate = totalVolumeRate; };
@@ -243,10 +245,13 @@ protected:
    * @param[in] currentTime the current time
    * @param[inout] nextDt the time step
    */
-  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+  void setNextDtFromTables( real64 const currentTime, real64 & nextDt ) const;
 
 
 protected:
+
+  /// Source of the constraint (user defined, or computed from WHP constraint)
+  ConstraintSourceId m_constraintSource;
 
   /// Constraint status
   integer m_isConstraintActive;
@@ -257,7 +262,7 @@ protected:
   /// Constraint value
   real64 m_constraintValue;
 
-  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
   /// Constraint schedule table name
   string m_constraintScheduleTableName;

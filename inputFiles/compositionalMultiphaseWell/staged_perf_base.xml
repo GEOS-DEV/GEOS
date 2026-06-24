@@ -31,7 +31,8 @@
       <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
-        control="BHP">
+        control="BHP"
+        writeCSV="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"

@@ -22,8 +22,6 @@ public:
 
   static constexpr bool isThermalType() { return false; }
 
-  using exec_policy = parallelDevicePolicy<>;
-
   virtual integer getWaterPhaseIndex() const override;
 
   virtual integer getPhaseIndex( const std::string & phaseName ) const override final;

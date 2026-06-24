@@ -38,6 +38,15 @@
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 
+
+#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/PerforationFluxKernels.hpp"
@@ -193,7 +202,6 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
   }
 
   subRegion.registerField< well::gravityCoefficient >( getName() );
-
 
   subRegion.registerField< well::globalCompDensity >( getName() ).
     reference().resizeDimension< 1 >( m_numComponents );
@@ -366,27 +374,10 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   if( !useSurfaceConditions() )
   {
     bool const useSeg = getReferenceReservoirRegion().empty();
-    GEOS_WARNING_IF( useSeg,
-                     GEOS_FMT( "WellControls {} not set and well constraint fluid property calculations will use "
-                               "top segement pressure and temp ",
-                               WellControls::viewKeyStruct::referenceReservoirRegionString() ) );
     if( useSeg )
     {
       setRegionAveragePressure( -1 );
       setRegionAverageTemperature( -1 );
-    }
-    else
-    {
-      // Check if region name exists in list of Reservoir's target regions
-      string const regionName =  getReferenceReservoirRegion();
-      CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-      string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
-      auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
-      GEOS_ERROR_IF( pos == targetRegionsNames.end(),
-                     GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               getDataContext(), regionName, getName() ) );
-
-
     }
   }
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
@@ -396,21 +387,16 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   {
     constraint.validatePhaseType( fluid );
   } );
-
-
-
 }
 
 void CompositionalMultiphaseWell::initializePostSubGroups()
 {
   WellControls::initializePostSubGroups();
-
 }
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
   WellControls::initializePostInitialConditionsPreSubGroups();
-
 }
 
 void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )
@@ -738,16 +724,14 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
+    KernelType::launch( subRegion.size(),
+                        fluidWrapper,
+                        pres,
+                        temp,
+                        compFrac );
   } );
 
 }
@@ -792,19 +776,11 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
   {
     if( !getReferenceReservoirRegion().empty() )
     {
-      ElementRegionBase const & region = elemManager.getRegion( getReferenceReservoirRegion() );
-      GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName()),
-                      GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-                                getDataContext(), getName(), getReferenceReservoirRegion() ) );
-
-      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
-        CompositionalMultiphaseStatistics::regionStatisticsName() );
-      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                     GEOS_FMT(
-                       "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-                       getDataContext(), getName(), getReferenceReservoirRegion() ));
-      setRegionAveragePressure( stats.averagePressure );
-      setRegionAverageTemperature( stats.averageTemperature );
+      real64 averagePressure = 0.0;
+      real64 averageTemperature = 0.0;
+      validateReferenceRegionStatistics< CompositionalMultiphaseStatistics >( elemManager, averagePressure, averageTemperature );
+      setRegionAveragePressure( averagePressure );
+      setRegionAverageTemperature( averageTemperature );
     }
     // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
     flashPressure = getRegionAveragePressure();
@@ -1013,7 +989,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
-            setControl( static_cast< WellControls::Control >(inputControl) );  // tjb old
           }
         } );
       }
@@ -1025,7 +1000,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
-            setControl( static_cast< WellControls::Control >(inputControl) );   // tjb old
           }
         } );
       }
@@ -1085,15 +1059,14 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     // 4) Back calculate component densities
     constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-      thermalCompositionalMultiphaseBaseKernels::
-        FluidUpdateKernel::
-        launch< serialPolicy >( subRegion.size(),
-                                fluidWrapper,
-                                wellElemPressure,
-                                wellElemTemp,
-                                wellElemCompFrac );
+      using FluidType = TYPEOFREF( castedFluid );
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< serialPolicy, FluidType >;
+      KernelType::launch( subRegion.size(),
+                          fluidWrapper,
+                          wellElemPressure,
+                          wellElemTemp,
+                          wellElemCompFrac );
     } );
 
     compositionalMultiphaseWellKernels::
@@ -1142,10 +1115,10 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     {
       if( isProducer() )
       {
-        forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
-                      ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
-                                                                             auto
-                                                                             & constraint )
+        forSubGroups< MinimumBHPConstraint,
+                      ProductionConstraint< VolumeRateConstraint >,
+                      ProductionConstraint< MassRateConstraint >,
+                      ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
           if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {
@@ -1155,10 +1128,10 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       }
       else
       {
-        forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&](
-                                                                                                                                                                                          auto
-                                                                                                                                                                                          &
-                                                                                                                                                                                          constraint )
+        forSubGroups< MaximumBHPConstraint,
+                      InjectionConstraint< VolumeRateConstraint >,
+                      InjectionConstraint< MassRateConstraint >,
+                      InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
           if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {

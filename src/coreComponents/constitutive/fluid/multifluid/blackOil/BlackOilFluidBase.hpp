@@ -33,9 +33,6 @@ namespace constitutive
 class BlackOilFluidBase : public MultiFluidBase
 {
 public:
-
-  using exec_policy = parallelDevicePolicy<>;
-
   static constexpr integer MAX_NUM_PHASES = 3;
 
   struct PhaseType

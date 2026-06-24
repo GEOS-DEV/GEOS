@@ -28,7 +28,8 @@
       <SinglePhaseWell
         name="wellControls1"
         type="producer"
-        control="BHP">
+        control="BHP"
+        writeCSV="1">
         <MinimumBHPConstraint
           name="minbhp"
           targetBHP="5e5"
@@ -40,7 +41,8 @@
       <SinglePhaseWell
         name="wellControls2"
         type="producer"
-        control="BHP">
+        control="BHP"
+        writeCSV="1">
         <MinimumBHPConstraint
           name="minbhp"
           targetBHP="5e5"
@@ -53,7 +55,8 @@
         name="wellControls3"
         type="injector"
         initialPressureCoefficient="0.01"
-        control="totalVolRate">
+        control="totalVolRate"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e7"

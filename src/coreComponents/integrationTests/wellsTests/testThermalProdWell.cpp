@@ -37,8 +37,6 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-
-
 void writeTableToFile( string const & filename, char const * str )
 {
   std::ofstream os( filename );
@@ -111,7 +109,7 @@ char const * xmlInput =
         control="BHP"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15">
-                <ProductionPhaseVolumeRateConstraint
+        <ProductionPhaseVolumeRateConstraint
           name="maxwatprod"
           phaseName="water"
           phaseRate="0.001"/>
@@ -287,6 +285,8 @@ char const * xmlInput =
 </Problem>
 )xml";
 
+// CSV output file are generated for the jacobian, which can be used to compare the analytical and numerical results.
+// Both matrices are reported to same file
 template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
@@ -334,7 +334,9 @@ void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const 
   omat1.close();
 }
 
-
+// CSV output file are generated for the residuals, which can be used to compare the analytical and numerical results.
+// Both residuals are reported to same file.  This is used to determine how the perturbation affects the residuals.
+// This is useful to determine if the perturbation is too small or too large.
 void printResiduals( array1d< real64 > const & rsd1,
                      array1d< real64 > const & rsd2, std::string const & testName )
 {
@@ -386,6 +388,8 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
   ////////////////////////////////////////////////
   // Step 1) Compute the terms in J_RR and J_WR //
   ////////////////////////////////////////////////
+// Toggels to turn on/off the numerical jacobian computation of terms with respect to reservoir element dofs.
+// This is useful to isolate the terms that are causing the test to fail.
 #if 1
   domain.forMeshBodies( [&] ( MeshBody & meshBody )
   {
@@ -417,8 +421,8 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
         // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
         for( localIndex ei = 0; ei < subRegion.size(); ++ei )
         {
-
-
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir pressure.
+#if 1
           {
             solver.resetStateToBeginningOfStep( domain );
 
@@ -451,6 +455,8 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                     dP,
                                     jacobianFD.toViewConstSizes() );
           }
+#endif
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir temperature.
 #if 1
           {
             solver.resetStateToBeginningOfStep( domain );
@@ -486,6 +492,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                    jacobianFD.toViewConstSizes() );
           }
 #endif
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir component density.
 #if 1
           real64 totalDensity = 0.0;
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -533,14 +540,13 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
   } );
 
 #endif
-  // at this point we start assembling the finite-difference block by block
-
-
   /////////////////////////////////////////////////
   // Step 2) Compute the terms in J_RW and J_WW //
   /////////////////////////////////////////////////
 
   // loop over the wells
+// Toggels to turn on/off the numerical jacobian computation of terms with respect to well element dofs.
+// This is useful to isolate the terms that are causing the test to fail.
   if( 1 )
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
@@ -574,7 +580,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
         // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
-
+// Turn on/off the numerical jacobian computation of terms with respect to well pressure.
 #if 1
           {
             solver.resetStateToBeginningOfStep( domain );
@@ -598,6 +604,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                    jacobianFD.toViewConstSizes() );
           }
 #endif
+// Turn on/off the numerical jacobian computation of terms with respect to well component density.
 #if 1
           real64 wellElemTotalDensity = 0.0;
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -608,7 +615,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           {
             solver.resetStateToBeginningOfStep( domain );
 
-            real64 const dRho = perturbParameter * wellElemTotalDensity;
+            real64 const dRho = perturbParameter *  (wellElemTotalDensity+perturbParameter);;
             wellElemCompDens.move( hostMemorySpace, true );
             wellElemCompDens[iwelem][jc] += dRho;
 
@@ -647,10 +654,9 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           }
 #endif
         }
-
+// Turn on/off the numerical jacobian computation of terms with respect to well connection rate.
 #if 1
-        // b) compute all the derivatives wrt to the connection in WELL elem
-        // iwelem
+
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
           {
@@ -742,7 +748,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_FullS
   } );
 }
 #endif
-
+// Enable test for full well system jacobian, which includes the coupling terms.
 #if 1
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_System )
 {
@@ -793,6 +799,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Accum
     } );
   } );
 }
+// Enable test for well pressure relation derivatives
 #if 1
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_PressureRelation )
 {
@@ -825,6 +832,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
   } );
 }
 #endif
+// Enable test for well flux derivatives
 #if 1
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux )
 {

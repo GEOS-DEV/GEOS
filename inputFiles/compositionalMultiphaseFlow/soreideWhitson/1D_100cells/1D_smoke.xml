@@ -33,21 +33,22 @@
 
     <WellManager
       name="WELL.SOLVER"
-      useMass="0"
       targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
       timeStepFromTables="1"
-      logLevel="1">
+      logLevel="1"
+      useMass="0">
       <CompositionalMultiphaseWell
         name="WATER.INJECTOR.CONTROL"
         type="injector"
         useSurfaceConditions="0"
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
+        control="totalVolRate"
         enableCrossflow="0"
         logLevel="0"
-        control="totalVolRate"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5">
+        maxCompFractionChange="0.5"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -64,11 +65,12 @@
         useSurfaceConditions="0"
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
+        control="totalVolRate"
         enableCrossflow="0"
         logLevel="0"
-        control="totalVolRate"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5">
+        maxCompFractionChange="0.5"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -85,10 +87,11 @@
         useSurfaceConditions="0"
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
-        logLevel="0"
         control="BHP"
+        logLevel="0"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5">
+        maxCompFractionChange="0.5"
+        writeCSV="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxgasprod"
           phaseName="gas"

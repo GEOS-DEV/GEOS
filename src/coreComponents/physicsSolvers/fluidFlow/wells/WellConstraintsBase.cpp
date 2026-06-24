@@ -68,6 +68,7 @@ TableFunction * createConstraintScheduleTable( string const & tableName,
 
 WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
+  m_constraintSource( ConstraintSourceId::USER ),
   m_isConstraintActive( 1 ),
   m_useScheduleTable( false ),
   m_constraintValue( 0 ),
@@ -123,7 +124,7 @@ void WellConstraintBase::postInputInitialization()
 
 }
 
-void WellConstraintBase::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+void WellConstraintBase::setNextDtFromTables( real64 const currentTime, real64 & nextDt ) const
 {
   setNextDtFromTable( m_constraintScheduleTable, currentTime, nextDt );
 }
