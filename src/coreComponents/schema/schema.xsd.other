@@ -352,13 +352,19 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
+			<xsd:element name="InjPipeFlowTableFunction" type="InjPipeFlowTableFunctionType" />
+			<xsd:element name="MultivariableNonuniformTableFunction" type="MultivariableNonuniformTableFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
+			<xsd:element name="ProdPipeFlowTableFunction" type="ProdPipeFlowTableFunctionType" />
 			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CompositeFunctionType" />
+	<xsd:complexType name="InjPipeFlowTableFunctionType" />
+	<xsd:complexType name="MultivariableNonuniformTableFunctionType" />
 	<xsd:complexType name="MultivariableTableFunctionType" />
+	<xsd:complexType name="ProdPipeFlowTableFunctionType" />
 	<xsd:complexType name="SymbolicFunctionType" />
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
@@ -1492,7 +1498,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
 		</xsd:choice>
 		<!--currentControl => Current well control-->
-		<xsd:attribute name="currentControl" type="geos_WellControls_Control" />
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
 	</xsd:complexType>
 	<xsd:complexType name="InjectionMassRateConstraintType" />
 	<xsd:complexType name="InjectionPhaseVolumeRateConstraintType" />
@@ -1512,7 +1518,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:simpleType name="geos_WellControls_Control">
+	<xsd:simpleType name="geos_ConstraintTypeId">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
 		</xsd:restriction>
@@ -1533,7 +1539,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
 		</xsd:choice>
 		<!--currentControl => Current well control-->
-		<xsd:attribute name="currentControl" type="geos_WellControls_Control" />
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2481,11 +2487,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
-		<!--cohesion => Cohesion for each cell => Coulomb-->
+		<!--cohesion => Cohesion for each element-->
 		<xsd:attribute name="cohesion" type="real64_array" />
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
-		<!--frictionCoefficient => Friction coefficient for each cell => Coulomb-->
+		<!--frictionCoefficient => Friction coefficient for each element-->
 		<xsd:attribute name="frictionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
