@@ -14,10 +14,10 @@
  */
 
 /**
- * @file ErrorHandling.cpp
+ * @file ErrorLogger.cpp
  */
 
-#include "ErrorHandling.hpp"
+#include "ErrorLogger.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -451,16 +451,6 @@ void ErrorLogger::flushCurrentExceptionMessage()
   {
     writeToYamlStream( m_getCurrentExceptionMsg );
   }
-}
-
-ErrorHandler::ErrorHandler()
-  : m_abortingFunctor( []() { std::abort(); } )
-{}
-
-ErrorHandler & ErrorHandler::instance()
-{
-  static ErrorHandler s_instance;
-  return s_instance;
 }
 
 } /* namespace geos */

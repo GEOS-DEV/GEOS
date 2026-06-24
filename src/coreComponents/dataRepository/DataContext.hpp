@@ -24,7 +24,7 @@
 #include "common/logger/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/format/Format.hpp"
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorLogger.hpp"
 
 namespace geos
 {

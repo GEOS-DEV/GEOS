@@ -14,7 +14,7 @@
  */
 
 /**
- * @file ErrorHandling.hpp
+ * @file ErrorLogger.hpp
  */
 
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
@@ -422,29 +422,6 @@ private:
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
-};
-
-class ErrorHandler
-{
-public:
-
-  static ErrorHandler & instance();
-
-  ErrorHandler();
-
-  void setProgramAborter( std::function< void() > const & abortingFunctor )
-  { m_abortingFunctor = abortingFunctor; }
-
-  /**
-   * @brief Post error-handling function that terminates the program.
-   */
-  void abortProgram()
-  { m_abortingFunctor(); }
-
-private:
-
-  std::function< void() > m_abortingFunctor;
-
 };
 
 } /* namespace geos */

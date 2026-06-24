@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorLogger.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"

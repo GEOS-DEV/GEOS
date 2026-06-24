@@ -15,11 +15,10 @@
 
 // forcefully enable asserts macros for this unit test
 #include "LvArray/src/system.hpp"
-#include "common/logger/ExternalErrorHandler.hpp"
 #include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
-#include "common/logger/ErrorHandling.hpp"
 
+#include "common/logger/ErrorHandler.hpp"
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -104,7 +103,7 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
                                 << "-----------------------\n";
     testFailed |= !foundFileBit;
   }
-  EXPECT_FALSE( testFailed ) << "Generated error file content:\n"
+  EXPECT_FALSE( testFailed ) << "Generated error file content ("<<filename<<"):\n"
                              << "-----------------------\n"
                              << fileContent << '\n'
                              << "-----------------------\n";
@@ -114,16 +113,22 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
 }
 
 template< typename LAMBDA >
-void beginLocalHandlerTest( LAMBDA && lambda )
+void beginLocalErrorHandlerTest( ErrorLogger & logger, LAMBDA && abortCustomFunc )
 {
-  defaultErrorhandler = ErrorHandler::instance();
-  ErrorHandler::instance() = ErrorHandler();
-  ErrorHandler::instance().setProgramAborter( lambda );
+  ErrorHandler testErrorHandler;
+  testErrorHandler.setProgramAborter( abortCustomFunc );
+  testErrorHandler.setLogger( &logger );
+
+  // backup and change
+  defaultErrorhandler = ErrorHandler::getInstance();
+  ErrorHandler::setupErrorHandlingStrategy( std::move( testErrorHandler ) );
 }
 
-void endLocalHandlerTest()
+void endLocalErrorHandlerTest()
 {
-  ErrorHandler::instance() = defaultErrorhandler;
+  // restore backup
+  ErrorHandler defaultErrorHandlerBackup = defaultErrorhandler;
+  ErrorHandler::setupErrorHandlingStrategy( std::move( defaultErrorHandlerBackup ) );
 }
 
 ///@}
@@ -358,7 +363,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
 
 // testing the capture & processing of lvarray exceptions, also testing what happens in case of an
 // std::exception (as this is what lvarray throws).
-TEST( ErrorHandling, testLvArrayAndStdException )
+TEST( ErrorHandling, testLvArrayStdException )
 {
   ErrorLogger testErrorLogger;
   size_t line1;
@@ -381,7 +386,7 @@ TEST( ErrorHandling, testLvArrayAndStdException )
     // mimic "main()" exception logging behaviour
     testErrorLogger.flushErrorMsg( testErrorLogger.initCurrentExceptionMessage(
                                      MsgType::Exception, e.what(),
-                                                 ::geos::logger::internal::g_rank )
+                                     ::geos::logger::internal::g_rank )
                                      .setCause( "A dependency has thrown an exception" )
                                      .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                      .getDiagnosticMsg() );
