@@ -11,3 +11,5 @@ These drivers are designed to facilitate the exploration of various constitutive
    PVTDriver
 
    TriaxialDriver
+
+   RelpermDriver
