@@ -156,7 +156,7 @@ class WrapperLimitsTest : public ::testing::Test
 protected:
   WrapperLimitsTest():
     m_node(),
-    m_group( "root", m_node )
+    m_group( "Problem", m_node )
   {}
 
   template< typename T >
