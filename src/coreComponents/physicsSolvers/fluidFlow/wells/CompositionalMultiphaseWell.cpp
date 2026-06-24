@@ -493,6 +493,11 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 {
   WellSolverBase::initializePostSubGroups();
 
+  if( m_writeCSV > 0 )
+  {
+    CompositionalMultiphaseWell::initializeRatesCSVColumns();
+  }
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   validateConstitutiveModels( domain );
@@ -2149,6 +2154,44 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
   }
 }
 
+namespace
+{
+
+stdVector< string > buildRatesCSVColumnNames( integer numPhase,
+                                              integer numComp,
+                                              string const & massUnit,
+                                              bool useSurfaceConditions )
+{
+  string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+  string const unitKey = useSurfaceConditions ? "s" : "r";
+
+  stdVector< string > columnNames;
+  columnNames.reserve( 5 + numPhase + numComp );
+  columnNames.emplace_back( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) );
+  columnNames.emplace_back( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) );
+  columnNames.emplace_back( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) );
+  columnNames.emplace_back( GEOS_FMT( "Total rate [{}/s]", massUnit ) );
+  columnNames.emplace_back( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) );
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+    columnNames.emplace_back( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) );
+  }
+  for( integer ic = 0; ic < numComp; ++ic )
+  {
+    columnNames.emplace_back( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) );
+  }
+  return columnNames;
+}
+
+} // namespace
+
+void CompositionalMultiphaseWell::initializeRatesCSVColumns()
+{
+  string const & massUnit = m_useMass ? "kg" : "mol";
+  m_ratesCSVColumnNames[ 0 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, false );
+  m_ratesCSVColumnNames[ 1 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, true );
+}
+
 void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition & domain )
@@ -2208,23 +2251,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
       string const unitKey = useSurfaceConditions ? "s" : "r";
 
-      stdVector< string > columnNames;
-      columnNames.reserve( 5 + numPhase + numComp );
-      columnNames.emplace_back( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) );
-      columnNames.emplace_back( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) );
-      columnNames.emplace_back( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) );
-      columnNames.emplace_back( GEOS_FMT( "Total rate [{}/s]", massUnit ) );
-      columnNames.emplace_back( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) );
-      for( integer ip = 0; ip < numPhase; ++ip )
-      {
-        columnNames.emplace_back( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) );
-      }
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        columnNames.emplace_back( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) );
-      }
+      stdVector< string > const & columnNames = m_ratesCSVColumnNames[ useSurfaceConditions ? 1 : 0 ];
       size_t const numColumns = columnNames.size();
-
       auto const buildRow = [&]( real64 const bhp,
                                  real64 const totalRate,
                                  real64 const totalVolRate,

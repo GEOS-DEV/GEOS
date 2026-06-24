@@ -366,6 +366,11 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Initializes rates CSV columns
+   */
+  void initializeRatesCSVColumns();
+
 
 
   /// flag indicating whether mass or molar formulation should be used
@@ -398,6 +403,8 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  /// Precomputed CSV columns names indexed on surface condition (0 = reservoir, 1 = surface)
+  stdVector< string > m_ratesCSVColumnNames[2];
 
 
 };

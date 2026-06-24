@@ -121,6 +121,11 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
+void SinglePhaseWell::initializePostSubGroups()
+{
+  initializeRatesCSVColumns();
+}
+
 void SinglePhaseWell::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
   setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "singlephase fluid" );
@@ -1210,6 +1215,30 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
   }
 }
 
+namespace
+{
+
+stdVector< string > buildRatesCSVColumnNames( bool useSurfaceConditions )
+{
+  string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+  string const unitKey = useSurfaceConditions ? "s" : "r";
+
+  return {
+    GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ),
+    GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ),
+    GEOS_FMT( "Total rate [{}/{}]", units::getSymbol( units::Unit::Mass ), units::getSymbol( units::Unit::Time ) ),
+    GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey )
+  };
+}
+
+} // namespace
+
+void SinglePhaseWell::initializeRatesCSVColumns()
+{
+  m_ratesCSVColumnNames[ 0 ] = buildRatesCSVColumnNames( false );
+  m_ratesCSVColumnNames[ 1 ] = buildRatesCSVColumnNames( true );
+}
+
 void SinglePhaseWell::printRates( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
                                   DomainPartition & domain )
@@ -1247,12 +1276,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
       string const unitKey = useSurfaceConditions ? "s" : "r";
 
-      stdVector< string > columnNames = {
-        GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ),
-        GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ),
-        GEOS_FMT( "Total rate [{}/{}]", units::getSymbol( units::Unit::Mass ), units::getSymbol( units::Unit::Time ) ),
-        GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey )
-      };
+      stdVector< string > const & columnNames = m_ratesCSVColumnNames[ useSurfaceConditions ? 1 : 0 ];
 
       std::filesystem::path const fileName =
         std::filesystem::path( m_ratesOutputDir ) / ( wellControlsName + ".csv" );
