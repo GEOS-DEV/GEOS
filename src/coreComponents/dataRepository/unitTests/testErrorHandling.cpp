@@ -417,6 +417,48 @@ TEST( ErrorHandling, testLvArrayStdException )
   } );
 }
 
+// testing the capture & processing of lvarray error, also testing what happens when a dependency terminates
+TEST( ErrorHandling, testLvArrayError )
+{
+  ErrorLogger testErrorLogger;
+
+  beginLocalLoggerTest( testErrorLogger, "testLvArrayAndStdError.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, abortGeos );
+
+  // Standard error caused by LvArray: not existing MemorySpace will cause an error with defined behaviour.
+  LvArray::MemorySpace const badValue = LvArray::MemorySpace( -2 );
+  EXPECT_EXIT( LvArray::operator<<( std::cout, badValue ), ::testing::ExitedWithCode( 1 ), ".*" );
+
+  endLocalErrorHandlerTest();
+
+  // we have to inherint the LvArray formatting here
+  endLocalLoggerTest( testErrorLogger, {
+    R"(errors:)",
+
+    R"(  - type: ExternalError
+    rank: 0
+    message: >-
+      LvArray Runtime Error
+    contexts:
+      - priority: 0
+        description: LvArray Error Handler
+        detectionLocation: LvArray Error Handler)",
+
+    // LvArray Error
+    // Exact reason is deactivated: For now, we cannot capture the lvarray error reason, because the lvarray error
+    //                              handler does not communicate the error message (excepted directly in std::cout).
+    // "Unrecognized memory space -2",
+
+    // LvArray also does not communicate the error line.
+    // GEOS_FMT( "{}:{}", __FILE__, line1 ),
+
+    "sourceCallStack:",
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
+  } );
+}
+
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
   ErrorLogger testErrorLogger;
@@ -460,7 +502,7 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   } );
 }
 
-TEST( ErrorHandling, VerifySignalHandlerLogs )
+TEST( ErrorHandling, testSignalHandling )
 {
   ErrorLogger testErrorLogger;
   bool signalHappened = false;
