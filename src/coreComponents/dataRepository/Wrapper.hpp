@@ -738,25 +738,28 @@ public:
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< WrapperBound< limit_value_type_t< T > > > min,
-             std::optional< WrapperBound< limit_value_type_t< T > > > max,
+  setLimits( std::optional< LimitArg< limit_value_type_t< T > > > min,
+             std::optional< LimitArg< limit_value_type_t< T > > > max,
              WrapperLimitsMode mode = WrapperLimitsMode::Error )
   {
-    if( min.has_value() && max.has_value() )
+    using LimitT = limit_value_type_t< T >;
+    std::optional< WrapperBound< LimitT > > const minBound = toWrapperBound< LimitT >( min );
+    std::optional< WrapperBound< LimitT > > const maxBound = toWrapperBound< LimitT >( max );
+    if( minBound.has_value() && maxBound.has_value() )
     {
-      GEOS_ASSERT_LE_MSG( min.value(), max.value(),
+      GEOS_ASSERT_LE_MSG( minBound.value(), maxBound.value(),
                           "Min value should be less or equal to max value." );
     }
-    m_limits.min = min;
-    m_limits.max = max;
+    m_limits.min = minBound;
+    m_limits.max = maxBound;
     m_limitsMode = mode;
     return *this;
   }
 
   template< typename U=T >
   std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
-  setLimits( std::optional< WrapperBound< limit_value_type_t< T > > >,
-             std::optional< WrapperBound< limit_value_type_t< T > > >,
+  setLimits( std::optional< LimitArg< limit_value_type_t< T > > >,
+             std::optional< LimitArg< limit_value_type_t< T > > >,
              WrapperLimitsMode GEOS_UNUSED_PARAM( mode ) )
   {
     static_assert( is_limitable_v< U >,

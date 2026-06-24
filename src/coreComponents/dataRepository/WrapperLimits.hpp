@@ -20,6 +20,7 @@
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/EnumStrings.hpp"
+#include <variant>
 
 namespace geos
 {
@@ -110,17 +111,11 @@ struct WrapperBound
   bool isInclusive = true;
 
   /**
-   * @brief WrapperBound constructor to write a limit without the "WrapperBound{ ... }" syntax
+   * @brief Construct a limit bound
    * @param value The limit value to set
    * @param isInclusive Whether the limit should be inclusive or not
-   *
-   * @code
-   *   .setLimits( 0.0, 1.0 )  // where setLimits takes `WrapperBound` parameters, those parameters
-   *                           // can be written only with the value. The isInclusive property will
-   *                           // default to true.
-   * @endcode
    */
-  WrapperBound( T v, bool inclusive = true )
+  explicit WrapperBound( T v, bool inclusive = true )
     : value( v ), isInclusive( inclusive )
   {}
 
@@ -163,6 +158,46 @@ template< typename T >
 WrapperBound< T > exclusive( T value )
 {
   return WrapperBound< T >{ value, /*isInclusive*/ false };
+}
+
+/**
+ * @brief Type containing either a raw type or a WrapperBound
+ *
+ * Used as a type argument for methods that expect a wrapper boundary,
+ * allowing them to accept either a "raw" value or a WrapperBound.
+ * This simplifies the API of those method
+ *
+ * @code
+ * // foo signature: foo( LimitArg< T > const & )
+ * foo( 1 );
+ * foo( exclusive( 1 ) ); // <- exclusive() builds a WrapperBound
+ * @endcode
+ */
+template< typename T >
+using LimitArg = std::variant< T, WrapperBound< T > >;
+
+/**
+ * @brief Transfrom a "raw" bound value (like an `int`) into a WrapperBound.
+ * @param bound the value to transform
+ * @return A WrapperBound containing the @p bound value, or @p bound it is already a WrapperBound
+ */
+template< typename T >
+std::optional< WrapperBound< T > > toWrapperBound( std::optional< LimitArg< T > > const & bound )
+{
+  if( !bound.has_value() )
+  {
+    return std::nullopt;
+  }
+  return std::visit( []( auto const & value ) -> WrapperBound< T > {
+    if constexpr ( std::is_same_v< std::decay_t< decltype( value ) >, T > )
+    {
+      return inclusive( value );
+    }
+    else
+    {
+      return value;
+    }
+  }, bound.value() );
 }
 
 /**
