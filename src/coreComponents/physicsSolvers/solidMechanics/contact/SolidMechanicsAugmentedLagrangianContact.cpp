@@ -2245,11 +2245,11 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // sorted in ascending order
               real64 principalStresses[3];
               LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStressView[er][esr][ei] );
-              GEOS_ERROR_IF( principalStresses[2] > 0.0,
-                             GEOS_FMT(
-                               "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {} "
-                               "connected to face {}. Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e})",
-                               kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
+              GEOS_LOG_RANK_IF( principalStresses[2] > 0.0,
+                               GEOS_FMT(
+                                 "WARNING: Maximum principal stress is tensile in element adjacent to fracture element {} "
+                                 "connected to face {}. Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e})",
+                                 kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
 
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStressView[er][esr][ei] );
