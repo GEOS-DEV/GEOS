@@ -1,0 +1,29 @@
+\subsection{Weak-interface trace projection: rotated bi-material bar}
+\label{sec:weakTraceRotatedBar}
+
+This folder verifies the local-stress behavior of the prescribed weak-interface
+trace projection.  A diagonal two-material coupon is loaded in plane-strain
+tension by moving the global x and y F-table faces.  The stiff phase is assigned
+a low Von Mises yield stress, while the prescribed strain is chosen so the ideal
+series response remains elastic.  A single-field mixed-cell stress error can
+therefore be detected as local stiff-side stress elevation and spurious
+plasticity near the inclined interface.
+
+The active variants are: single-field baseline, false-elastic cohesive-zone
+coupling, and prescribed-surface trace projection between contact groups.  DFG
+surface-flag and stress-residual partitioning variants are included as
+placeholders for future development.
+
+\paragraph{Geometry convention.}  The two material segments are standard PFW
+polygon objects.  They extend into the lower-left and upper-right loading
+corners so the moving boundaries load finite boundary segments.  Only the
+internal material contact face is assigned a nonzero surface flag in the CZ and
+weak-discontinuity trace variants.
+
+\paragraph{Diagnostics.}  The quantitative metrics use tracer particles placed
+on near-interface and far-field layers in both materials.  The post-processor
+computes the material-normal stress and von Mises stress from tracer stress
+components.  Optional VisIt frames render both particle material regions using a
+case-specific multi-region plot script.
+
+\input{\CaseOutputDir/weak_trace_rotated_bar_results.tex}

@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd)
+PYTHON_CMD=${PFW_PYTHON:-${PYTHON:-/usr/tce/bin/python3}}
+SUITE="verification"
+CASE_ID="weakTraceRotatedBar"
+POST_WALLTIME="00:05:00"
+POST_PARTITION="pdebug"
+JOBS=1
+FORCE=0
+PREPARE_ONLY=0
+NO_VISIT=0
+ATS_FAST=0
+WALLTIME=""
+VARIANT_FILTER=""
+GEOMETRY_ONLY=0
+DIAGNOSE_GEOMETRY=0
+
+ARGS=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --suite) SUITE="$2"; shift 2 ;;
+    --case-id) CASE_ID="$2"; shift 2 ;;
+    --python) PYTHON_CMD="$2"; shift 2 ;;
+    --post-walltime) POST_WALLTIME="$2"; shift 2 ;;
+    --post-partition) POST_PARTITION="$2"; shift 2 ;;
+    --jobs) JOBS="$2"; shift 2 ;;
+    --walltime) WALLTIME="$2"; shift 2 ;;
+    --variant) VARIANT_FILTER="$2"; shift 2 ;;
+    --geometry-only) GEOMETRY_ONLY=1; shift ;;
+    --diagnose-geometry) DIAGNOSE_GEOMETRY=1; shift ;;
+    --force|-y) FORCE=1; ARGS+=("$1"); shift ;;
+    --prepare-only) PREPARE_ONLY=1; ARGS+=("$1"); shift ;;
+    --no-visit) NO_VISIT=1; ARGS+=("$1"); shift ;;
+    --ats-fast) ATS_FAST=1; ARGS+=("$1"); shift ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+
+ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups)
+PLACEHOLDER_VARIANTS=(dfgSurfaceFlags stressResidualPartition)
+
+selected_variants=()
+if [ -n "$VARIANT_FILTER" ]; then
+  selected_variants=("$VARIANT_FILTER")
+else
+  selected_variants=("${ACTIVE_VARIANTS[@]}")
+fi
+
+run_geometry_diagnostics() {
+  local status=0
+  for variant in "${selected_variants[@]}"; do
+    echo "[weakTraceRotatedBar] geometry diagnostics for $variant"
+    if ! "$PYTHON_CMD" "$SCRIPT_DIR/diagnoseGeometry_weakTraceRotatedBar.py" \
+      --variant "$variant" \
+      --output-dir "$SCRIPT_DIR/output/$CASE_ID/geometryDiagnostics"; then
+      status=1
+    fi
+  done
+  return "$status"
+}
+
+if [ "$GEOMETRY_ONLY" -eq 1 ]; then
+  run_geometry_diagnostics
+  exit $?
+fi
+
+if [ "$DIAGNOSE_GEOMETRY" -eq 1 ]; then
+  run_geometry_diagnostics
+fi
+
+RUNNER="$PFW_ROOT/mpm_vv_case_runner.py"
+OUT_DIR="$SCRIPT_DIR/output/$CASE_ID"
+mkdir -p "$OUT_DIR"
+
+SUBCASE_JSONS=()
+for variant in "${selected_variants[@]}"; do
+  case_name="weakTraceRotatedBar_${variant}"
+  subcase_id="${CASE_ID}__${variant}"
+  output_prefix="weakTraceRotatedBar_${variant}"
+  echo "[weakTraceRotatedBar] dispatching $variant"
+  cmd=("$PYTHON_CMD" "$RUNNER" \
+    --suite "$SUITE" \
+    --case-id "$subcase_id" \
+    --input "pfw_input_weakTraceRotatedBar.py" \
+    --source-dir "$SCRIPT_DIR" \
+    --output-prefix "$output_prefix" \
+    --python "$PYTHON_CMD" \
+    --post-walltime "$POST_WALLTIME" \
+    --post-partition "$POST_PARTITION" \
+    --no-post)
+  if [ "$FORCE" -eq 1 ]; then cmd+=(--force); fi
+  if [ "$PREPARE_ONLY" -eq 1 ]; then cmd+=(--prepare-only); fi
+  if [ "$NO_VISIT" -eq 1 ]; then cmd+=(--no-visit); fi
+  if [ "$ATS_FAST" -eq 1 ]; then cmd+=(--ats-fast); fi
+  if [ -n "$WALLTIME" ]; then cmd+=(--walltime "$WALLTIME"); fi
+  WEAK_TRACE_VARIANT="$variant" \
+  WEAK_TRACE_CASE_NAME="$case_name" \
+  WEAK_TRACE_VARIANT_LABEL="$variant" \
+    "${cmd[@]}"
+  SUBCASE_JSONS+=("$SCRIPT_DIR/output/$subcase_id/${output_prefix}_jobs.json")
+done
+
+"$PYTHON_CMD" - "$OUT_DIR/weakTraceRotatedBar_jobs.json" "$CASE_ID" "${SUBCASE_JSONS[@]}" <<'PY'
+import json
+import sys
+from pathlib import Path
+out = Path(sys.argv[1])
+case_id = sys.argv[2]
+jsons = [Path(p) for p in sys.argv[3:]]
+labels = {
+    "singleField": "single-field baseline",
+    "falseElasticCZ": "false-elastic CZ reference",
+    "traceContactGroups": "trace projection, contact groups",
+    "dfgSurfaceFlags": "DFG surface flags placeholder",
+    "stressResidualPartition": "stress-residual partition placeholder",
+}
+subcases = []
+for p in jsons:
+    variant = p.parent.name.rsplit("__", 1)[-1]
+    jobs = {}
+    if p.is_file():
+        try:
+            jobs = json.loads(p.read_text())
+        except Exception:
+            jobs = {}
+    subcases.append({
+        "name": variant,
+        "label": labels.get(variant, variant),
+        "case_id": f"{case_id}__{variant}",
+        "case_name": f"weakTraceRotatedBar_{variant}",
+        "jobs": jobs,
+        "placeholder": False,
+    })
+for variant in ["dfgSurfaceFlags", "stressResidualPartition"]:
+    if not any(s["name"] == variant for s in subcases):
+        subcases.append({
+            "name": variant,
+            "label": labels[variant],
+            "case_id": f"{case_id}__{variant}",
+            "case_name": f"weakTraceRotatedBar_{variant}",
+            "jobs": {},
+            "placeholder": True,
+        })
+out.write_text(json.dumps({"case_id": case_id, "subcases": subcases}, indent=2, sort_keys=True))
+PY
+
+if [ "$PREPARE_ONLY" -eq 1 ]; then
+  echo "[weakTraceRotatedBar] prepared subcases; skipping aggregate post-process"
+  exit 0
+fi
+
+# Submit a single aggregate post-processing job if GEOS jobs were submitted.
+mapfile -t GEOS_JOBS < <("$PYTHON_CMD" - "$OUT_DIR/weakTraceRotatedBar_jobs.json" <<'PY'
+import json, sys
+from pathlib import Path
+m = json.loads(Path(sys.argv[1]).read_text())
+for s in m.get('subcases', []):
+    jid = str(s.get('jobs', {}).get('geos_job_id', '')).strip()
+    if jid:
+        print(jid)
+PY
+)
+BANK=$("$PYTHON_CMD" - "$OUT_DIR/weakTraceRotatedBar_jobs.json" <<'PY'
+import json, sys
+from pathlib import Path
+m=json.loads(Path(sys.argv[1]).read_text())
+for s in m.get('subcases', []):
+    b=str(s.get('jobs', {}).get('bank','')).strip()
+    if b:
+        print(b); break
+PY
+)
+
+POST_CMD=("$PYTHON_CMD" "$SCRIPT_DIR/postProcess_weakTraceRotatedBar.py" \
+  --source-dir "$SCRIPT_DIR" \
+  --output-dir "$OUT_DIR" \
+  --case-id "$CASE_ID" \
+  --python "$PYTHON_CMD" \
+  --visit-cmd "${VISIT_COMMAND:-}")
+if [ "$NO_VISIT" -eq 1 ]; then POST_CMD+=(--no-visit); fi
+
+if [ "${#GEOS_JOBS[@]}" -gt 0 ] && command -v sbatch >/dev/null 2>&1; then
+  dep=$(IFS=:; echo "${GEOS_JOBS[*]}")
+  script="$OUT_DIR/post_weakTraceRotatedBar.sbatch"
+  cat > "$script" <<EOS
+#!/bin/bash
+#SBATCH -A ${BANK:-debug}
+#SBATCH -p $POST_PARTITION
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -t $POST_WALLTIME
+#SBATCH -J post_weakTraceRotatedBar
+#SBATCH --dependency=afterany:$dep
+set -euo pipefail
+cd "$SCRIPT_DIR"
+$(printf '%q ' "${POST_CMD[@]}")
+EOS
+  sbatch "$script"
+else
+  "${POST_CMD[@]}"
+fi
