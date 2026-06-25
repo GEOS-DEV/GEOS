@@ -62,12 +62,10 @@ DiagnosticMsgBuilder ErrorLogger::initCurrentExceptionMessage( MsgType msgType,
                                                                std::string_view msgContent,
                                                                integer rank )
 {
-  DiagnosticMsg diagnosticMsg;
-  m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                         msgType, msgContent,
-                                                         rank )
-                               .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                               .getDiagnosticMsg();
+  m_getCurrentExceptionMsg = DiagnosticMsg();
+  DiagnosticMsgBuilder::init( m_getCurrentExceptionMsg,
+                              msgType, msgContent,
+                              rank );
   return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
 }
 
