@@ -2471,7 +2471,8 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
   array1d< real64 > currentPhaseVolRate_local = currentPhaseVolRate;
   real64 currentTotalVolRate_local = currentTotalVolRate;
   // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
-  BHPConstraint< BHPConstraintTypeId::MIN > * bhpConstraint=  dynamic_cast< BHPConstraint< BHPConstraintTypeId::MIN > * >(getBHPConstraint( ConstraintSourceId::WHP ));
+  bool checkActiveStatus = false;
+  BHPConstraint< BHPConstraintTypeId::MIN > * bhpConstraint=  dynamic_cast< BHPConstraint< BHPConstraintTypeId::MIN > * >(getBHPConstraint( ConstraintSourceId::WHP, checkActiveStatus ));
   bhpConstraint->setConstraintActive( false );
   real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
   real64 currentWHP = constraintWHP;
@@ -2508,11 +2509,10 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
     if( dP_dQ_table < 0.0 )
     {
       //ProductionConstraint< LiquidRateConstraint > *  liqConstraint=  getProductionRateConstraintgetMaxLiquidConstraintForWHP();
-      LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
+      checkActiveStatus = false;
+      LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP, checkActiveStatus );
       setCurrentConstraint( liqConstraint );
       liqConstraint->setConstraintActive( true );
-
-      setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );        // tjb old
       ConstraintTypeId wellControl = getControl();
       MpiWrapper::broadcast( wellControl, owner );
       setControl( wellControl );
@@ -2572,11 +2572,10 @@ bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
     // WHP is limiting  set WHP to constraint value
     currentWHP = constraintWHP;
 
-    // sets. tjb cleanup
-    LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
+    checkActiveStatus = false;
+    LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP, checkActiveStatus );
     setCurrentConstraint( liqConstraint );
     liqConstraint->setConstraintActive( true );
-    setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );         // tjb old
     ConstraintTypeId wellControl = getControl();
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );

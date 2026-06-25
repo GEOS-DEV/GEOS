@@ -124,6 +124,13 @@ public:
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const = 0;
 
+
+  /**
+   * @brief Sets source of constraint (user defined, or computed from WHP constraint)
+   * @param[in] constraintSource the source of the constraint
+   */
+  void setConstraintSource( ConstraintSourceId const & constraintSource ) { m_constraintSource = constraintSource; }
+
   /**
    * @brief Provide source of constraint (user defined, or computed from WHP constraint)
    * @return true if the constraint is active, false otherwise

@@ -805,16 +805,16 @@ public:
    * in place to enforce the setting of at least one pressure constraint.
    * @return A pressure constraint object if one is defined
    */
-  WellConstraintBase const * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
-  WellConstraintBase * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+  WellConstraintBase const * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true ) const;
+  WellConstraintBase * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
   WHPConstraint const * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
   WHPConstraint * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
 
   template< typename T >
-  T *  getProductionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+  T *  getProductionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
 
   template< typename T >
-  T *  getInjectionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+  T *  getInjectionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
 
   //ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
   //BHPConstraint< BHPConstraintTypeId::MIN > * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
