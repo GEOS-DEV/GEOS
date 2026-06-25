@@ -338,7 +338,7 @@ TableFunction * createWellTable( string const & tableName,
 {
   array1d< array1d< real64 > > timeCoord;
   timeCoord.resize( 1 );
-  timeCoord[0].emplace_back( 0 );
+  timeCoord[0].emplace_back( 0.0 );
   array1d< real64 > constantValueArray;
   constantValueArray.emplace_back( constantValue );
 
@@ -408,11 +408,12 @@ void WellControls::postInputInitialization()
   // 6.2) Check incoherent information
 
   // An injector must be controlled by TotalVolRate
+#if 0
   GEOS_THROW_IF( (isInjector() && (m_inputControl == ConstraintTypeId::PHASEVOLRATE)),
                  GEOS_FMT( "You have to control an injector with {}",
                            EnumStrings< ConstraintTypeId >::toString( ConstraintTypeId::TOTALVOLRATE ) ),
                  InputError, getDataContext() );
-
+#endif
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isProducer() && (m_inputControl == ConstraintTypeId::MASSRATE)),
                  GEOS_FMT( "You have to control an injector with {}",
