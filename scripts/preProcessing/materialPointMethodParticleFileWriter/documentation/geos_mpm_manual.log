@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  25 JUN 2026 12:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  25 JUN 2026 13:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -819,7 +819,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 
  [7]
 (./sections/00_introduction.tex
-<figures/mpm_overview_diagram.png, id=541, 1535.7375pt x 941.5175pt>
+<figures/mpm_overview_diagram.png, id=561, 1535.7375pt x 941.5175pt>
 File: figures/mpm_overview_diagram.png Graphic file (type png)
 <use figures/mpm_overview_diagram.png>
 Package pdftex.def Info: figures/mpm_overview_diagram.png  used on input line 1
@@ -842,7 +842,7 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2]
-<figures/mpm_applications_composite.png, id=587, 1496.59125pt x 733.74126pt>
+<figures/mpm_applications_composite.png, id=607, 1496.59125pt x 733.74126pt>
 File: figures/mpm_applications_composite.png Graphic file (type png)
 <use figures/mpm_applications_composite.png>
 Package pdftex.def Info: figures/mpm_applications_composite.png  used on input 
@@ -989,7 +989,7 @@ oncentration fac-tor and $\OT1/lmr/m/n/10.95 (-20) ^^@[] = 1$ \T1/lmr/m/n/10.95
  []
 
 [48]
-<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1632, 1385.175pt x 933.48
+<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1652, 1385.175pt x 933.48
 75pt>
 File: figures/ceramic_damage_yield_surface_fig8_hi.pdf Graphic file (type pdf)
 <use figures/ceramic_damage_yield_surface_fig8_hi.pdf>
@@ -1000,7 +1000,7 @@ Package pdftex.def Info: figures/ceramic_damage_yield_surface_fig8_hi.pdf  used
 [52
 
 ]
-<figures/graphite_deformation_modes.png, id=1701, 493.407pt x 255.573pt>
+<figures/graphite_deformation_modes.png, id=1721, 493.407pt x 255.573pt>
 File: figures/graphite_deformation_modes.png Graphic file (type png)
 <use figures/graphite_deformation_modes.png>
 Package pdftex.def Info: figures/graphite_deformation_modes.png  used on input 
@@ -1022,7 +1022,7 @@ T1/lmr/m/n/10.95 (-20) .
  []
 
 [54 <./figures/graphite_deformation_modes.png (PNG copy)>] [55]
-<figures/graphite_point_slope_strength.png, id=1757, 751.24664pt x 397.12366pt>
+<figures/graphite_point_slope_strength.png, id=1777, 751.24664pt x 397.12366pt>
 
 File: figures/graphite_point_slope_strength.png Graphic file (type png)
 <use figures/graphite_point_slope_strength.png>
@@ -1046,7 +1046,7 @@ n/10.95 (+20) ,
  []
 
 [58] [59] [60]
-<figures/geomechanics_formulation_composite.png, id=1839, 693.792pt x 697.76685
+<figures/geomechanics_formulation_composite.png, id=1859, 693.792pt x 697.76685
 pt>
 File: figures/geomechanics_formulation_composite.png Graphic file (type png)
 <use figures/geomechanics_formulation_composite.png>
@@ -1217,7 +1217,7 @@ File: lstlang1.sty 2020/03/24 1.8d listings language file
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 ))
 [70] [71]
-<figures/particle_shape_functions.pdf, id=2029, 520.34402pt x 296.307pt>
+<figures/particle_shape_functions.pdf, id=2049, 520.34402pt x 296.307pt>
 File: figures/particle_shape_functions.pdf Graphic file (type pdf)
 <use figures/particle_shape_functions.pdf>
 Package pdftex.def Info: figures/particle_shape_functions.pdf  used on input li
@@ -1336,72 +1336,133 @@ Underfull \hbox (badness 1072) in paragraph at lines 210--211
 n-trols are \T1/lmtt/m/n/10.95 czVolumeNormalization\T1/lmr/m/n/10.95 (+20) ,
  []
 
-[95]) (./sections/02_contact_options_expanded.tex
+[95]) (./sections/02_weak_trace_implementation.tex [96] [97]
+Overfull \hbox (42.72571pt too wide) in paragraph at lines 121--122
+\T1/lmr/m/n/10.95 (-20) scribed de-for-ma-tion and boundary-condition en-force-
+ment. When \T1/lmtt/m/n/10.95 weakInterfaceTraceSuppressNodalContact=1\T1/lmr/m
+/n/10.95 (-20) ,
+ []
+
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 144.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 144.
+
+Overfull \hbox (12.75168pt too wide) in paragraph at lines 145--145
+[]|\T1/lmtt/m/n/10 weakInterfaceTraceProjectionIterations|  
+ []
+
+
+Overfull \hbox (12.75168pt too wide) in paragraph at lines 148--148
+[]|\T1/lmtt/m/n/10 weakInterfaceTraceSuppressNodalContact|  
+ []
+
+[98]
+Overfull \hbox (4.91241pt too wide) in paragraph at lines 153--154
+[]\T1/lmr/m/n/10.95 (-20) The prin-ci-pal grid di-ag-nos-tics are \T1/lmtt/m/n/
+10.95 gridWeakInterfaceTraceActive\T1/lmr/m/n/10.95 (-20) , \T1/lmtt/m/n/10.95 
+gridWeakInterfaceTraceForce\T1/lmr/m/n/10.95 (-20) ,
+ []
+
+) (./sections/02_contact_options_expanded.tex [99]
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
 )
-[96]
-<figures/contact_fields_schematic.pdf, id=2547, 1000.88431pt x 573.46545pt>
+[100]
+<figures/contact_fields_schematic.pdf, id=2620, 1000.88431pt x 573.46545pt>
 File: figures/contact_fields_schematic.pdf Graphic file (type pdf)
 <use figures/contact_fields_schematic.pdf>
 Package pdftex.def Info: figures/contact_fields_schematic.pdf  used on input li
 ne 66.
 (pdftex.def)             Requested size: 491.43513pt x 281.56929pt.
- [97] [98 <./figures/contact_fields_schematic.pdf>] [99]
-Overfull \hbox (61.4305pt too wide) in paragraph at lines 140--142
+ [101 <./figures/contact_fields_schematic.pdf>]
+Underfull \hbox (badness 5091) in paragraph at lines 119--120
+[]\T1/lmr/m/n/10.95 (+20) When \T1/lmtt/m/n/10.95 enableWeakInterfaceTraceProje
+ction=1\T1/lmr/m/n/10.95 (+20) , se-lected group pairs are iden-ti-fied by
+ []
+
+[102]
+Underfull \hbox (badness 2698) in paragraph at lines 121--122
+[]\T1/lmr/m/n/10.95 (+20) For pre-scribed trace ge-om-e-try, par-ti-cles on the
+ in-tended bonded in-ter-face should use
+ []
+
+
+Underfull \hbox (badness 1424) in paragraph at lines 121--122
+\T1/lmtt/m/n/10.95 SurfaceFlag::WeakDiscontinuity\T1/lmr/m/n/10.95 (+20) . This
+ flag con-tributes ex-plicit sur-face nor-mals and po-si-
+ []
+
+
+Overfull \hbox (61.4305pt too wide) in paragraph at lines 155--157
 \T1/lmr/m/n/10.95 (-20) with a sep-a-rate mass-like nor-mal-iza-tion stored in 
 \T1/lmtt/m/n/10.95 gridSurfaceFieldMass\T1/lmr/m/n/10.95 (-20) . When \T1/lmtt/
 m/n/10.95 useSurfacePositionForContact=1\T1/lmr/m/n/10.95 (-20) ,
  []
 
-<figures/contact_surface_methods_schematic.pdf, id=2690, 455.4475pt x 220.0659p
+<figures/contact_surface_methods_schematic.pdf, id=2745, 455.4475pt x 220.0659p
 t>
 File: figures/contact_surface_methods_schematic.pdf Graphic file (type pdf)
 <use figures/contact_surface_methods_schematic.pdf>
 Package pdftex.def Info: figures/contact_surface_methods_schematic.pdf  used on
- input line 145.
+ input line 160.
 (pdftex.def)             Requested size: 471.78102pt x 227.95984pt.
-[100 <./figures/contact_surface_methods_schematic.pdf>] [101] [102] [103]
-[104]
-<figures/contact_examples_summary.pdf, id=2774, 1011.78pt x 433.62pt>
+[103] [104 <./figures/contact_surface_methods_schematic.pdf>] [105] [106]
+[107] [108]
+<figures/contact_examples_summary.pdf, id=2836, 1011.78pt x 433.62pt>
 File: figures/contact_examples_summary.pdf Graphic file (type pdf)
 <use figures/contact_examples_summary.pdf>
 Package pdftex.def Info: figures/contact_examples_summary.pdf  used on input li
-ne 409.
+ne 424.
 (pdftex.def)             Requested size: 491.43513pt x 210.61642pt.
- [105]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 438.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 438.
- [106 <./figures/contact_examples_summary.pdf>])
-(./sections/02_robustness_controls.tex
+ [109]
+Overfull \hbox (1.58253pt too wide) in paragraph at lines 466--466
+[]|\T1/lmtt/m/n/10 enableWeakInterfaceTraceProjection|  
+ []
+
+
+Overfull \hbox (22.31998pt too wide) in paragraph at lines 468--468
+\T1/lmtt/m/n/10 weakInterfaceTraceProjectionIterations|  
+ []
+
+
+Overfull \hbox (2.91473pt too wide) in paragraph at lines 469--469
+[]|\T1/lmtt/m/n/10 weakInterfaceTraceGapStabilization\T1/lmr/m/n/10 (-20) , 
+ []
+
+
+Overfull \hbox (22.58247pt too wide) in paragraph at lines 470--470
+[]|\T1/lmtt/m/n/10 weakInterfaceTraceSuppressNodalContact|  
+ []
+
+[110 <./figures/contact_examples_summary.pdf>])
+(./sections/02_robustness_controls.tex [111]
 Underfull \hbox (badness 1448) in paragraph at lines 26--27
 []\T1/lmr/bx/n/10.95 (+20) Constitutive fail-ure flag. \T1/lmr/m/n/10.95 (+20) 
 If a ma-te-rial wrap-per ex-poses \T1/lmtt/m/n/10.95 constitutiveUpdateFlag\T1/
 lmr/m/n/10.95 (+20) ,
  []
 
-[107] [108]
+[112]
 Underfull \hbox (badness 10000) in paragraph at lines 92--93
 []\T1/lmr/m/n/10.95 (+20) If \T1/lmtt/m/n/10.95 resetDefGradForScaledSurfacePar
 ticles=1\T1/lmr/m/n/10.95 (+20) , CPDI-
  []
 
-[109])) (./sections/03_pfw.tex [110] [111]
+[113] [114])) (./sections/03_pfw.tex [115]
 Chapter 3.
-[112
+[116
 
-] [113] [114]
-<figures/pfw_grid_partition_schematic.pdf, id=3006, 892.6873pt x 516.32903pt>
+] [117] [118]
+<figures/pfw_grid_partition_schematic.pdf, id=3067, 892.6873pt x 516.32903pt>
 File: figures/pfw_grid_partition_schematic.pdf Graphic file (type pdf)
 <use figures/pfw_grid_partition_schematic.pdf>
 Package pdftex.def Info: figures/pfw_grid_partition_schematic.pdf  used on inpu
 t line 137.
 (pdftex.def)             Requested size: 452.11942pt x 261.51225pt.
- [115 <./figures/pfw_grid_partition_schematic.pdf>] [116]
-[117]
+ [119 <./figures/pfw_grid_partition_schematic.pdf>] [120]
+[121]
 Underfull \hbox (badness 10000) in paragraph at lines 275--275
 []|\T1/lmtt/m/n/10 getParticleType(pt) \T1/lmr/m/n/10 (+20) or
  []
@@ -1412,7 +1473,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 275--275
 T1/lmr/m/n/10 (+20) ,
  []
 
-[118] [119] [120] [121] [122]
+[122] [123] [124] [125] [126]
 Underfull \hbox (badness 7451) in paragraph at lines 399--400
 [] []\T1/lmr/bx/n/10.95 (+20) Ba-sic field wrap-pers.[] \T1/lmr/m/n/10.95 (+20)
  The wrap-pers \T1/lmtt/m/n/10.95 materialDirectionWrapper\T1/lmr/m/n/10.95 (+2
@@ -1456,7 +1517,7 @@ and \T1/lmtt/m/n/10.95 layeredStrengthScaleBoxWrapper \T1/lmr/m/n/10.95 (+20) a
 s-sign spa-tially
  []
 
-[123]
+[127]
 Underfull \hbox (badness 10000) in paragraph at lines 435--435
 []|\T1/lmtt/m/n/10 ElasticIsotropic\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 Elast
 icTransverseIsotropic\T1/lmr/m/n/10 (+20) ,
@@ -1469,7 +1530,7 @@ i\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 StrainHardeningPolymer\T1/lmr/m/n/10 (+
 20) , \T1/lmtt/m/n/10 Graphite\T1/lmr/m/n/10 (+20) ,
  []
 
-[124] [125]
+[128] [129]
 Underfull \hbox (badness 10000) in paragraph at lines 532--532
 []|\T1/lmtt/m/n/10 strengthScaleWrapper\T1/lmr/m/n/10 (+20) , lay-
  []
@@ -1509,9 +1570,9 @@ Underfull \hbox (badness 10000) in paragraph at lines 532--532
 \T1/lmtt/m/n/10 surfacePositionWrapper\T1/lmr/m/n/10 (+20) ,
  []
 
-[126] [127] [128
+[130] [131] [132
 
-] [129
+] [133
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 700--700
@@ -1593,7 +1654,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 700--700
 \T1/lmtt/m/n/10 verification / cohesiveZones /
  []
 
-[130] [131] [132] [133]
+[134] [135] [136] [137]
 Overfull \hbox (55.18887pt too wide) in paragraph at lines 905--906
 []\T1/lmr/m/n/10.95 (-20) Older cohesive-failure style con-trols such as \T1/lm
 tt/m/n/10.95 enableCohesiveFailure\T1/lmr/m/n/10.95 (-20) , \T1/lmtt/m/n/10.95 
@@ -1601,7 +1662,7 @@ cohesiveLaw\T1/lmr/m/n/10.95 (-20) , \T1/lmtt/m/n/10.95 maxCohesiveNormalStress
 \T1/lmr/m/n/10.95 (-20) ,
  []
 
-[134]
+[138]
 Underfull \hbox (badness 10000) in paragraph at lines 966--966
 []|\T1/lmtt/m/n/9 timeIntegrationOption\T1/lmr/m/n/9 (+20) ,
  []
@@ -1770,14 +1831,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 978--978
 \T1/lmtt/m/n/9 maxParticleJacobian\T1/lmr/m/n/9 (+20) ,
  []
 
-[135] [136]
+[139] [140]
 Underfull \hbox (badness 1776) in paragraph at lines 1039--1040
 \T1/lmr/m/n/10.95 (+20) Use \T1/lmtt/m/n/10.95 prescribedFTable = 1 \T1/lmr/m/n
 /10.95 (+20) for a su-per-posed ho-mo-ge-neous velocity-gradient up-date in pe-
 ri-
  []
 
-[137]
+[141]
 Underfull \hbox (badness 2961) in paragraph at lines 1071--1072
 \T1/lmr/m/n/10.95 (+20) fi-cients are sup-plied with \T1/lmtt/m/n/10.95 boundar
 yFaceFrictionCoefficients\T1/lmr/m/n/10.95 (+20) . The solver also reg-is-ters
@@ -1789,7 +1850,7 @@ Underfull \hbox (badness 1558) in paragraph at lines 1071--1072
  , but the re-viewed ac-tive code path does not use
  []
 
-[138]
+[142]
 Underfull \hbox (badness 10000) in paragraph at lines 1121--1121
 []|\T1/lmtt/m/n/10 boxAverageHistory\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 boxA
 verageWriteInterval\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 boxAverageMin\T1/lmr/
@@ -1810,7 +1871,7 @@ ordinates\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 tracerVariables\T1/lmr/m/n/10 (
 +20) , \T1/lmtt/m/n/10 tracerWriteInterval\T1/lmr/m/n/10 (+20) ,
  []
 
-[139] [140] [141] [142]
+[143] [144] [145] [146]
 Underfull \hbox (badness 1715) in paragraph at lines 1324--1325
 \T1/lmtt/m/n/10.95 outputs \T1/lmr/m/n/10.95 (+20) with \T1/lmtt/m/n/10.95 time
 Frequency=pfw["plotInterval"]\T1/lmr/m/n/10.95 (+20) , tar-get-ing ei-ther \T1/
@@ -1834,7 +1895,7 @@ Overfull \hbox (2.13336pt too wide) in paragraph at lines 1359--1359
 []|\T1/lmtt/m/n/10 plotUnscaledParticles| 
  []
 
-[143]
+[147]
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
@@ -1843,11 +1904,11 @@ File: lstlang1.sty 2020/03/24 1.8d listings language file
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 )
-[144] [145] [146]) (./sections/03_event_controls.tex [147] [148] [149] [150]
-[151] [152] [153] [154]) (./sections/03_restart_controls.tex [155] [156]
-[157]) (./sections/04_postprocessing.tex [158]
+[148] [149] [150]) (./sections/03_event_controls.tex [151] [152] [153] [154]
+[155] [156] [157] [158]) (./sections/03_restart_controls.tex [159] [160]
+[161]) (./sections/04_postprocessing.tex [162]
 Chapter 4.
-[159
+[163
 
 ]
 Underfull \hbox (badness 1789) in paragraph at lines 32--33
@@ -1856,9 +1917,9 @@ ry . csv$ \T1/lmr/m/n/10.95 (+20) has the header \T1/lmtt/m/n/10.95 time, F00,
 F11, F22, length_x,
  []
 
-) (./sections/05_reports.tex [160]
+) (./sections/05_reports.tex [164]
 Chapter 5.
-) (./sections/06_maintaining.tex [161
+) (./sections/06_maintaining.tex [165
 
 ]
 Chapter 6.
@@ -1875,15 +1936,15 @@ Underfull \hbox (badness 2478) in paragraph at lines 41--42
 0.95 (+20) , plus a Read
  []
 
-[162
+[166
 
-]) (./sections/07_references.tex [163]
+]) (./sections/07_references.tex [167]
 Chapter 7.
-[164
+[168
 
-] [165
+] [169
 
-] [166] [167]) (./generated/source_inventory.tex
+] [170] [171]) (./generated/source_inventory.tex
 Underfull \hbox (badness 10000) in paragraph at lines 18--19
 []|\T1/lmtt/m/n/9 src/coreComponents/physicsSolvers/solidMechanics/
  []
@@ -1934,7 +1995,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 27--28
 fw_
  []
 
-[168]) (./generated/solver_attributes.tex [169]
+[172]) (./generated/solver_attributes.tex [173]
 Appendix A.
 
 Overfull \hbox (1.60341pt too wide) in alignment at lines 44--49
@@ -2036,9 +2097,9 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 58--173
  [] [] [] [] 
  []
 
-[170
+[174
 
-] [171] [172]
+] [175] [176]
 Overfull \hbox (17.1885pt too wide) in paragraph at lines 177--178
 [] []\T1/lmr/bx/n/10.95 (-20) In-ter-nal/non-in-put wrap-pers.[] \T1/lmr/m/n/10
 .95 (-20) The fol-low-ing reg-is-tered wrap-pers were marked with \T1/lmtt/m/n/
@@ -2115,7 +2176,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 199--234
  [] [] [] [] 
  []
 
-[173]
+[177]
 Overfull \hbox (1.60341pt too wide) in alignment at lines 238--243
  [] [] [] [] 
  []
@@ -2205,7 +2266,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 274--277
  [] [] [] [] 
  []
 
-[174]
+[178]
 Overfull \hbox (1.60341pt too wide) in alignment at lines 281--286
  [] [] [] [] 
  []
@@ -2230,7 +2291,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 295--296
  [] [] [] [] 
  []
 
-) (./generated/events.tex [175]
+) (./generated/events.tex [179]
 Appendix B.
 
 Overfull \hbox (1.59592pt too wide) in alignment at lines 7--12
@@ -2577,7 +2638,7 @@ Overfull \hbox (1.59592pt too wide) in alignment at lines 21--40
  [] [] [] [] 
  []
 
-[176
+[180
 
 ]
 Overfull \hbox (13.59589pt too wide) in alignment at lines 46--51
@@ -2714,7 +2775,7 @@ Overfull \hbox (13.59589pt too wide) in alignment at lines 60--136
  [] [] [] [] [] 
  []
 
-[177] [178]) (./generated/pfw.tex [179]
+[181] [182]) (./generated/pfw.tex [183]
 Appendix C.
 
 Underfull \hbox (badness 10000) in paragraph at lines 11--12
@@ -2736,15 +2797,15 @@ Underfull \hbox (badness 10000) in paragraph at lines 134--134
 []|\T1/lmtt/m/n/8 ['Velocity', 'MaterialType', 'Contact
  []
 
-[180
+[184
 
-] [181]) (./generated/particle_format.tex
+] [185]) (./generated/particle_format.tex
 Underfull \hbox (badness 10000) in paragraph at lines 142--1
 \T1/lmr/m/n/10.95 (+20) mal, grid-Prin-ci-pal-Ex-plic-it-Sur-faceNor-mal, grid-
 Co-he-sive-Field-Flag, grid-MaxMapped-Par-ti-cleID,
  []
 
-[182]
+[186]
 Appendix D.
 
 Underfull \hbox (badness 2318) in paragraph at lines 37--38
@@ -2756,11 +2817,11 @@ Underfull \hbox (badness 2318) in paragraph at lines 41--42
 []|\T1/lmr/bx/n/8 (+20) Required if ab-
  []
 
-[183
+[187
 
-]) (./generated/geometry_materials.tex [184]
+]) (./generated/geometry_materials.tex [188]
 Appendix E.
-[185
+[189
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 97--97
@@ -2777,7 +2838,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 162--162
 []|\T1/lmtt/m/n/8 ElasticTransverseIsotropicPressure
  []
 
-[186]) (./generated/suites.tex [187]
+[190]) (./generated/suites.tex [191]
 Appendix F.
 
 Overfull \hbox (1.59592pt too wide) in alignment at lines 10--15
@@ -4279,9 +4340,9 @@ Overfull \hbox (1.59592pt too wide) in alignment at lines 24--125
  [] [] [] [] 
  []
 
-[188
+[192
 
-] [189] [190] [191] [192]) (./generated/post_scripts.tex [193]
+] [193] [194] [195] [196]) (./generated/post_scripts.tex [197]
 Appendix G.
 
 Underfull \hbox (badness 10000) in paragraph at lines 22--23
@@ -4583,125 +4644,125 @@ Underfull \hbox (badness 10000) in paragraph at lines 61--62
 []|\T1/lmtt/m/n/9 scripts/preProcessing/materialPointMethodParticleFileWriter/
  []
 
-[194
+[198
 
-]) [195] (./geos_mpm_manual.ind [196
+]) [199] (./geos_mpm_manual.ind [200
 
 
-] [197] [198] [199] [200]
-Overfull \hbox (45.18294pt too wide) in paragraph at lines 537--539
+] [201] [202] [203] [204]
+Overfull \hbox (45.18294pt too wide) in paragraph at lines 545--547
 []| \T1/lmtt/m/n/10.95 disableSurfaceNormalsAndPositionsOnCPDIScaling\T1/lmr/m/
 n/10.95 (-20) ,
  []
 
 
-Underfull \hbox (badness 1748) in paragraph at lines 545--547
+Underfull \hbox (badness 1748) in paragraph at lines 553--555
 []| \T1/lmtt/m/n/10.95 frictionCoefficientRuleOfMixtures\T1/lmr/m/n/10.95 (+20)
- , [][]129[][],
+ , [][]133[][],
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 597--599
+Underfull \hbox (badness 10000) in paragraph at lines 605--607
 []| \T1/lmtt/m/n/10.95 resetDefGradForFullyDamagedParticles\T1/lmr/m/n/10.95 (+
 20) ,
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 633--635
+[205]
+Underfull \hbox (badness 10000) in paragraph at lines 641--643
 []| \T1/lmtt/m/n/10.95 useReferenceVectorsForParticleUpdate\T1/lmr/m/n/10.95 (+
 20) ,
  []
 
 
-Underfull \hbox (badness 1460) in paragraph at lines 635--637
+Underfull \hbox (badness 1460) in paragraph at lines 643--645
 []| \T1/lmtt/m/n/10.95 useSurfacePositionForContact\T1/lmr/m/n/10.95 (+20) , []
-[]129[][], [][]131[][],
+[]133[][], [][]135[][],
  []
 
-[201] [202] [203]) (./geos_mpm_manual.aux) ) 
+[206] [207]) (./geos_mpm_manual.aux) ) 
 Here is how much of TeX's memory you used:
- 23679 strings out of 478268
- 396285 string characters out of 5754030
- 1216410 words of memory out of 5000000
- 38218 multiletter control sequences out of 15000+600000
- 603989 words of font info for 360 fonts, out of 8000000 for 9000
+ 23745 strings out of 478268
+ 397519 string characters out of 5754030
+ 1215257 words of memory out of 5000000
+ 38247 multiletter control sequences out of 15000+600000
+ 608678 words of font info for 365 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,14n,80p,1750b,2051s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/tce/backend/installations/lin
-ux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/te
-xmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/tce/backend/installations/linux-rhe
+ 60i,14n,80p,1983b,2032s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/tce/backend/installations/linux-rhe
 l8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-di
-st/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/tce/backend/installations/linux-rhel8
--x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist
-/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/tce/backend/installations/linux-rhel8-x
-86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/f
-onts/enc/dvips/lm/lm-rm.enc}{/usr/tce/backend/installations/linux-rhel8-x86_64/
-gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/e
-nc/dvips/lm/lm-mathex.enc}{/usr/tce/backend/installations/linux-rhel8-x86_64/gc
-c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/enc
-/dvips/lm/lm-ts1.enc}</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.
-3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pu
-blic/lm/lmbsy10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
-.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pub
-lic/lm/lmbx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1
-/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/publi
-c/lm/lmbx12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/t
-exlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/
-lm/lmbx6.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texl
-ive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/
-lmbx8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive
--20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmb
-x9.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20
-220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmex10
-.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022
-0321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi10.p
-fb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-202203
-21-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi6.pfb>
-</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></u
-sr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dv
-bmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/
-tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
-j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></usr/tce
-/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
-r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></usr/tce/
-backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr
-7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/tce/bac
-kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
-fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/tce/backen
-d/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyz
-zzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/tce/backend/in
-stallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzst
-anspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/tce/backend/instal
-lations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstansp
-bcoex6ij/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/tce/backend/installati
-ons/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoe
-x6ij/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/tce/backend/installation
-s/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6
-ij/texmf-dist/fonts/type1/public/lm/lmri9.pfb></usr/tce/backend/installations/l
-inux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/
-texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/tce/backend/installations/lin
-ux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/te
-xmf-dist/fonts/type1/public/lm/lmsy6.pfb></usr/tce/backend/installations/linux-
-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf
--dist/fonts/type1/public/lm/lmsy8.pfb></usr/tce/backend/installations/linux-rhe
-l8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-di
-st/fonts/type1/public/lm/lmtk10.pfb></usr/tce/backend/installations/linux-rhel8
--x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist
-/fonts/type1/public/lm/lmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x
-86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/f
-onts/type1/public/lm/lmtt12.pfb></usr/tce/backend/installations/linux-rhel8-x86
+st/fonts/enc/dvips/lm/lm-ec.enc}{/usr/tce/backend/installations/linux-rhel8-x86
 _64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fon
-ts/type1/public/lm/lmtt8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64
-/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/
-type1/public/lm/lmtt9.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
+ts/enc/dvips/lm/lm-mathit.enc}{/usr/tce/backend/installations/linux-rhel8-x86_6
+4/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts
+/enc/dvips/lm/lm-mathsy.enc}{/usr/tce/backend/installations/linux-rhel8-x86_64/
+gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/e
+nc/dvips/lm/lm-rm.enc}{/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10
+.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/enc/dvi
+ps/lm/lm-mathex.enc}{/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
+.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/enc/dvips
+/lm/lm-ts1.enc}</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/te
+xlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/l
+m/lmbsy10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/tex
+live-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm
+/lmbx10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texli
+ve-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/l
+mbx12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive
+-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmb
+x6.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20
+220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmbx8.
+pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220
+321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmbx9.pfb
+></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321
+-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmex10.pfb><
+/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5
+dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></u
+sr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dv
+bmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></usr/
+tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
+j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/tce
+/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
+r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/tce/ba
+ckend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7b
+mfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></usr/tce/backe
+nd/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfy
+zzzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></usr/tce/backen
+d/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyz
+zzstanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/tce/backend/i
+nstallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzs
+tanspbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/tce/backend/inst
+allations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstan
+spbcoex6ij/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/tce/backend/installa
+tions/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbc
+oex6ij/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/tce/backend/installation
+s/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6
+ij/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/tce/backend/installations/li
+nux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/t
+exmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/tce/backend/installations/linu
+x-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/tex
+mf-dist/fonts/type1/public/lm/lmri9.pfb></usr/tce/backend/installations/linux-r
+hel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-
+dist/fonts/type1/public/lm/lmsy10.pfb></usr/tce/backend/installations/linux-rhe
+l8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-di
+st/fonts/type1/public/lm/lmsy6.pfb></usr/tce/backend/installations/linux-rhel8-
+x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/
+fonts/type1/public/lm/lmsy8.pfb></usr/tce/backend/installations/linux-rhel8-x86
+_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fon
+ts/type1/public/lm/lmtk10.pfb></usr/tce/backend/installations/linux-rhel8-x86_6
+4/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts
+/type1/public/lm/lmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/
+gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/t
+ype1/public/lm/lmtt12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
 c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
-e1/public/lm/lmtti10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc
--10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type
-1/public/amsfonts/symbols/msbm10.pfb>
-Output written on geos_mpm_manual.pdf (211 pages, 10924173 bytes).
+e1/public/lm/lmtt8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-1
+0.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/
+public/lm/lmtt9.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
+.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pub
+lic/lm/lmtti10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.
+1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/publ
+ic/amsfonts/symbols/msbm10.pfb>
+Output written on geos_mpm_manual.pdf (215 pages, 10960863 bytes).
 PDF statistics:
- 6695 PDF objects out of 7423 (max. 8388607)
- 2785 named destinations out of 2984 (max. 500000)
- 75237 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 6810 PDF objects out of 7423 (max. 8388607)
+ 2811 named destinations out of 2984 (max. 500000)
+ 77365 words of extra memory for PDF output out of 89155 (max. 10000000)
 

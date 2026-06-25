@@ -22,6 +22,12 @@
 # This keeps the otherwise minimal MPM build profile, but preserves VTK_DIR and
 # enables GEOS VTK output classes.  It does not build the VTK TPL from source.
 #
+# Optional stand-alone constitutive material-point driver:
+#   ./setupMPM --dane --enable-material-point-driver
+#   ./setupMPM --tuolumne --enable-material-point-driver
+# This default-off option forwards GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON
+# and builds geos_mpm_material_point_driver in addition to the normal target.
+#
 # Fast rebuild after source/header edits:
 #   ./setupMPM --dane --rebuild
 #   ./setupMPM --tuolumne --rebuild
@@ -87,6 +93,17 @@ Options:
                             is supplied. It does not build the VTK TPL itself.
   --vtk-dir DIR             VTK install/CMake package prefix to pass as VTK_DIR.
                             Implies --enable-vtk.
+  --enable-material-point-driver, --with-material-point-driver,
+  --build-material-point-driver
+                            Configure and build the optional stand-alone
+                            MPM constitutive material-point driver. Default: disabled.
+                            Forwards GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON
+                            and builds target geos_mpm_material_point_driver after
+                            the normal --build-target unless that is already the target.
+                            Also accepted: --enable-mpm-material-point-driver.
+  --disable-material-point-driver, --without-material-point-driver,
+  --no-material-point-driver
+                            Keep the optional material-point driver disabled.
   --external-material-models DIR
                             Optional out-of-tree material-model folder. Works for
                             both Dane and Tuolumne. The folder should contain
@@ -1232,16 +1249,47 @@ configure_and_build() {
       log "rebuild-only mode does not change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR; rerun setupMPM without --rebuild to reconfigure a different external folder"
     fi
 
-    local cmake_cmd
+    if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+      local cached_material_point_driver
+      cached_material_point_driver=$(cmake_cache_value GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER || true)
+      if [ -n "$cached_material_point_driver" ]; then
+        log "cached MPM material-point driver option: $cached_material_point_driver"
+      fi
+      if [ "$DRY_RUN" -eq 0 ] && ! truthy "$cached_material_point_driver"; then
+        fail "Cannot rebuild geos_mpm_material_point_driver because this build directory was not configured with GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON. Run setupMPM --enable-material-point-driver without --rebuild first."
+      fi
+    fi
+
+    local cmake_cmd build_target
+    local build_targets
     cmake_cmd=$(detect_cmake)
-    log "rebuilding target $BUILD_TARGET in existing build dir $BUILD_DIR"
-    run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$BUILD_TARGET" -j "$JOBS"
+    build_targets=("$BUILD_TARGET")
+    if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+      case "$BUILD_TARGET" in
+        all|install|geos_mpm_material_point_driver)
+          ;;
+        *)
+          build_targets+=("geos_mpm_material_point_driver")
+          ;;
+      esac
+    fi
+    for build_target in "${build_targets[@]}"; do
+      log "rebuilding target $build_target in existing build dir $BUILD_DIR"
+      run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$build_target" -j "$JOBS"
+    done
 
     if [ "$DRY_RUN" -eq 0 ]; then
       if [ -x "$GEOS_EXECUTABLE" ]; then
         log "GEOS executable: $GEOS_EXECUTABLE"
       else
         log "expected GEOS executable was not found yet: $GEOS_EXECUTABLE"
+      fi
+      if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+        if [ -x "$MATERIAL_POINT_DRIVER_EXECUTABLE" ]; then
+          log "MPM material-point driver executable: $MATERIAL_POINT_DRIVER_EXECUTABLE"
+        else
+          log "expected MPM material-point driver executable was not found yet: $MATERIAL_POINT_DRIVER_EXECUTABLE"
+        fi
       fi
     fi
     return 0
@@ -1272,6 +1320,14 @@ configure_and_build() {
       config_cmd+=("-DVTK_DIR=$VTK_DIR_OVERRIDE")
     fi
   fi
+  if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+    # Keep the material-point driver opt-in and outside the production MPM
+    # solver path.  setupMPM explicitly writes OFF when not requested so a
+    # reused build directory does not accidentally keep a stale enabled cache.
+    config_cmd+=("-DGEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON")
+  else
+    config_cmd+=("-DGEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=OFF")
+  fi
   if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
     # External material models are kept out of the public checkout.  Their
     # manifest is included from src/coreComponents/constitutive/CMakeLists.txt
@@ -1285,16 +1341,36 @@ configure_and_build() {
     return 0
   fi
 
-  local cmake_cmd
+  local cmake_cmd build_target
+  local build_targets
   cmake_cmd=$(detect_cmake)
-  log "building target $BUILD_TARGET in $BUILD_DIR"
-  run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$BUILD_TARGET" -j "$JOBS"
+  build_targets=("$BUILD_TARGET")
+  if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+    case "$BUILD_TARGET" in
+      all|install|geos_mpm_material_point_driver)
+        ;;
+      *)
+        build_targets+=("geos_mpm_material_point_driver")
+        ;;
+    esac
+  fi
+  for build_target in "${build_targets[@]}"; do
+    log "building target $build_target in $BUILD_DIR"
+    run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$build_target" -j "$JOBS"
+  done
 
   if [ "$DRY_RUN" -eq 0 ]; then
     if [ -x "$GEOS_EXECUTABLE" ]; then
       log "GEOS executable: $GEOS_EXECUTABLE"
     else
       log "expected GEOS executable was not found yet: $GEOS_EXECUTABLE"
+    fi
+    if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+      if [ -x "$MATERIAL_POINT_DRIVER_EXECUTABLE" ]; then
+        log "MPM material-point driver executable: $MATERIAL_POINT_DRIVER_EXECUTABLE"
+      else
+        log "expected MPM material-point driver executable was not found yet: $MATERIAL_POINT_DRIVER_EXECUTABLE"
+      fi
     fi
   fi
 }
@@ -1333,6 +1409,11 @@ ENABLE_MPM_VTK=0
 if truthy "${GEOS_ENABLE_MPM_VTK:-${GEOS_MPM_ENABLE_VTK:-}}"; then
   ENABLE_MPM_VTK=1
 fi
+ENABLE_MPM_MATERIAL_POINT_DRIVER=0
+if truthy "${GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER:-${GEOS_MPM_ENABLE_MATERIAL_POINT_DRIVER:-}}"; then
+  ENABLE_MPM_MATERIAL_POINT_DRIVER=1
+fi
+MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY=0
 VTK_DIR_OVERRIDE="${GEOS_MPM_VTK_DIR:-}"
 if [ -n "$VTK_DIR_OVERRIDE" ]; then
   ENABLE_MPM_VTK=1
@@ -1507,6 +1588,16 @@ while [ "$#" -gt 0 ]; do
       VTK_DIR_OVERRIDE="$2"
       shift 2
       ;;
+    --enable-material-point-driver|--with-material-point-driver|--build-material-point-driver|--enable-mpm-material-point-driver|--with-mpm-material-point-driver|--build-mpm-material-point-driver|--material-point-driver)
+      ENABLE_MPM_MATERIAL_POINT_DRIVER=1
+      MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY=0
+      shift
+      ;;
+    --disable-material-point-driver|--without-material-point-driver|--no-material-point-driver|--disable-mpm-material-point-driver|--without-mpm-material-point-driver|--no-mpm-material-point-driver)
+      ENABLE_MPM_MATERIAL_POINT_DRIVER=0
+      MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY=1
+      shift
+      ;;
     --external-material-models|--external-constitutive-models|--material-models-dir|--external-models-dir)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       EXTERNAL_MATERIAL_MODELS_DIR="$2"
@@ -1603,6 +1694,12 @@ if [ "$REBUILD_ONLY" -eq 1 ] && [ "$CONFIGURE_ONLY" -eq 1 ]; then
 fi
 if [ "$REBUILD_ONLY" -eq 1 ] && [ "$SKIP_BUILD" -eq 1 ]; then
   fail "--rebuild cannot be combined with --skip-build/--no-build"
+fi
+if [ "$BUILD_TARGET" = "geos_mpm_material_point_driver" ]; then
+  if [ "$MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY" -eq 1 ]; then
+    fail "--build-target geos_mpm_material_point_driver cannot be combined with --disable-material-point-driver"
+  fi
+  ENABLE_MPM_MATERIAL_POINT_DRIVER=1
 fi
 
 SCRIPT_DIR=$(dirname -- "${BASH_SOURCE[0]}")
@@ -1725,6 +1822,7 @@ else
   BUILD_DIR="$BUILD_ROOT/build-$HOST_BASE-$BUILD_TYPE_LOWER"
 fi
 GEOS_EXECUTABLE="$BUILD_DIR/bin/geosx"
+MATERIAL_POINT_DRIVER_EXECUTABLE="$BUILD_DIR/bin/geos_mpm_material_point_driver"
 BUILD_DIR_USER="$BUILD_DIR"
 if [ -n "$GEOS_PATH_OVERRIDE" ]; then
   ACTIVE_GEOS_USER_PATH="$(abs_path "$GEOS_PATH_OVERRIDE")"
@@ -1856,6 +1954,17 @@ if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
   fi
 else
   log "MPM VTK output support: disabled"
+fi
+if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    log "MPM material-point driver: requested for rebuild-only; existing CMake cache must already have GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON"
+  elif [ "$CONFIGURE_ONLY" -eq 1 ]; then
+    log "MPM material-point driver: enabled for configure-only"
+  else
+    log "MPM material-point driver: enabled; will build geos_mpm_material_point_driver"
+  fi
+else
+  log "MPM material-point driver: disabled"
 fi
 log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"

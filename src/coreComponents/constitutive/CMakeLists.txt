@@ -614,6 +614,14 @@ endif()
 
 install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
+option( GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER
+        "Build the optional stand-alone GEOS/MPM constitutive material-point driver executable"
+        OFF )
+
+if( GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER )
+  add_subdirectory( materialPointDriver )
+endif()
+
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( relativePermeability/unitTests )

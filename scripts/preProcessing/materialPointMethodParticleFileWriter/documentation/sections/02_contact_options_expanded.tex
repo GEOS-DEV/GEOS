@@ -9,7 +9,7 @@
 \index{contact!gap closure}
 \index{overdensification}
 
-This section documents the solver-side contact machinery.  It intentionally focuses on the internal fields, algorithms, and option-dependent branches.  User-facing input controls are collected in Section~\ref{sec:pfw-boundary-controls}, and the generated attribute inventory in Appendix~\ref{app:solver-attributes} should be used as the authoritative list of currently registered solver keys.  At the algorithmic level, GEOS-MPM contact follows the multi-velocity-field MPM contact family of Bardenhagen, Brackbill, Sulsky, Guilkey, and coworkers \cite{bardenhagen2000granular,bardenhagen2001contact}.  GEOS-MPM then provides several complementary ways to create the contact fields and contact geometry.  Prescribed multi-field contact uses user-assigned particle groups.  Dynamic same-material fracture/contact uses the damage-field-gradient, or DFG, partition of Homel and Herbold \cite{homel2016dfg}.  Logistic-regression contact reconstructs a separating plane from the local point cloud following Nairn, Hammerquist, and Smith \cite{nairn2020contact}.  In addition, the cohesive-zone implementation described in Section~\ref{sec:cohesive-zone-implementation} can provide exact surface-contact data: stored surface positions and normals define the gap plane for curved boundaries, so the contact normal and gap are not forced to follow stair-step particle domains.  This removes the particle-domain stair-step discretization error in the contact geometry for those cohesive-zone-derived surfaces, while the usual grid-transfer, time-integration, and constitutive-discretization errors remain \cite{crook2025cohesive}.
+This section documents the solver-side contact machinery.  It intentionally focuses on the internal fields, algorithms, and option-dependent branches.  User-facing input controls are collected in Section~\ref{sec:pfw-boundary-controls}, and the generated attribute inventory in Appendix~\ref{app:solver-attributes} should be used as the authoritative list of currently registered solver keys.  At the algorithmic level, GEOS-MPM contact follows the multi-velocity-field MPM contact family of Bardenhagen, Brackbill, Sulsky, Guilkey, and coworkers \cite{bardenhagen2000granular,bardenhagen2001contact}.  GEOS-MPM then provides several complementary ways to create the contact fields and contact geometry.  Prescribed multi-field contact uses user-assigned particle groups.  Dynamic same-material fracture/contact uses the damage-field-gradient, or DFG, partition of Homel and Herbold \cite{homel2016dfg}.  Logistic-regression contact reconstructs a separating plane from the local point cloud following Nairn, Hammerquist, and Smith \cite{nairn2020contact}.  In addition, the cohesive-zone implementation described in Section~\ref{sec:cohesive-zone-implementation} can provide exact surface-contact data: stored surface positions and normals define the gap plane for curved boundaries, so the contact normal and gap are not forced to follow stair-step particle domains.  This removes the particle-domain stair-step discretization error in the contact geometry for those cohesive-zone-derived surfaces, while the usual grid-transfer, time-integration, and constitutive-discretization errors remain \cite{crook2025cohesive}.  The experimental weak-trace projection described in Section~\ref{sec:weak-trace-implementation} uses the same multi-field and surface-geometry data paths, but it is a bonded-interface projection rather than a separable contact law.
 
 \subsection{Nodal contact state and activation}
 \label{subsec:contact-state-activation}
@@ -55,7 +55,7 @@ where $g_p$ is the stored particle group.  A protective check rejects cases with
 \begin{equation}
   \alpha = g_p, \qquad N_{\mathrm{fields}}=N_g.
 \end{equation}
-Thus, particles in different groups scatter mass, momentum, internal force, damage summaries, and surface fields to different velocity fields at the same grid node.  Pairwise contact between fields with different group indices is considered a prescribed material-material interface.  The pairwise friction coefficient is taken from \texttt{frictionCoefficientTable} by reducing the field indices modulo the prescribed group count,
+Thus, particles in different groups scatter mass, momentum, internal force, damage summaries, and surface fields to different velocity fields at the same grid node.  Pairwise contact between fields with different group indices is considered a prescribed material-material interface.  The same prescribed-group separation is currently the simplest way to provide the two velocity fields used by the experimental weak-trace projection in Section~\ref{sec:weak-trace-implementation}.  In that mode, the selected group pair is coupled by trace velocity compatibility at a prescribed interface point rather than by the ordinary nodal contact impulse.  The pairwise friction coefficient is taken from \texttt{frictionCoefficientTable} by reducing the field indices modulo the prescribed group count,
 \begin{equation}
   \mu_{AB}=\mu_{A\bmod N_g,\,B\bmod N_g}.
 \end{equation}
@@ -105,13 +105,28 @@ This has three important consequences.  First, DFG enables automatic self-contac
 
 DFG and prescribed multi-field contact are compositional.  Prescribed groups determine the material or body identity $g_p$, while DFG determines the damage-side flag $c_p(I)$.  In a two-group calculation, for example, group 0 can occupy fields 0 and 2, while group 1 can occupy fields 1 and 3.  Contact between different prescribed groups is separable by construction.  Contact between the two DFG sides of the same prescribed group is allowed only when the damage and surface-quality criteria described in Section~\ref{subsec:contact-separability} are satisfied.
 
+\subsection{Experimental weak-trace interaction with contact}
+\label{subsec:contact-weak-trace-interaction}
+\index{contact!weak trace projection}
+\index{weak trace projection!contact interaction}
+
+The weak-trace projection is implemented adjacent to the contact machinery because it uses the same multi-field nodal arrays and the same mapped surface-position data.  It should nevertheless be interpreted differently from contact.  Ordinary contact decides whether two fields should stick, slip, separate, or receive a compressive gap correction at a background node.  The weak-trace projection assumes a bonded weak discontinuity and enforces equality of the two field velocities at a reconstructed interface trace point,
+\begin{equation}
+  \mathbf{v}^{\Gamma}_{A}-\mathbf{v}^{\Gamma}_{B}=\mathbf{0},
+\end{equation}
+while allowing the two sides to retain independent velocity gradients.  This is intended to reduce mixed-cell stress errors at bonded material interfaces; it is not a frictional or unilateral contact model.
+
+When \texttt{enableWeakInterfaceTraceProjection=1}, selected group pairs are identified by \texttt{weakInterfaceTracePairs}, or all prescribed group pairs are eligible if that list is empty.  If \texttt{weakInterfaceTraceSuppressNodalContact=1}, ordinary nodal contact is skipped for those pairs so that a nodal common-velocity projection does not remove the extra degrees of freedom introduced by the two fields.  This means trace coverage and trace residual diagnostics are important: if a pair is removed from ordinary nodal contact, the prescribed surface geometry and trace projection must provide the intended bonded coupling.
+
+For prescribed trace geometry, particles on the intended bonded interface should use \texttt{SurfaceFlag::WeakDiscontinuity}.  This flag contributes explicit surface normals and positions to the grid, but it is not treated as a damage/contact surface in DFG partitioning.  By contrast, \texttt{Surface}, \texttt{FullyDamaged}, and \texttt{DamagedCohesive} remain ordinary opened or damaged surface states for contact and DFG purposes.  The weak-trace algorithm and its controls are described in Section~\ref{sec:weak-trace-implementation}; this contact section only records how that experimental branch intersects the existing contact options.
+
 \subsection{Surface normals and surface positions}
 \label{subsec:contact-surface-geometry}
 \index{contact!surface normal}
 \index{contact!surface position}
 \index{explicitSurfaceNormalInfluence}
 
-Each contact pair requires a normal direction and, for the more restrictive gap-closure options, a surface position.  GEOS-MPM can use explicit particle surface geometry supplied in the particle file, implicit geometry inferred from particle volume gradients, logistic-regression reconstruction from the local point cloud, or exact surface data created by cohesive-zone initialization.  The exact cohesive-zone path is a special case of the explicit-geometry path: the particles carry surface positions and normals tied to a smooth reference interface, so the later contact calculation can use that stored surface rather than the visible stair-step particle domain.
+Each contact pair requires a normal direction and, for the more restrictive gap-closure options, a surface position.  GEOS-MPM can use explicit particle surface geometry supplied in the particle file, implicit geometry inferred from particle volume gradients, logistic-regression reconstruction from the local point cloud, or exact surface data created by cohesive-zone initialization.  The experimental weak-trace projection also consumes explicit surface positions and normals, but only to locate a bonded trace; it does not use them as a contact gap unless ordinary contact is also active for another pair.  The exact cohesive-zone path is a special case of the explicit-geometry path: the particles carry surface positions and normals tied to a smooth reference interface, so the later contact calculation can use that stored surface rather than the visible stair-step particle domain.
 
 The grid surface normal accumulated during particle-to-grid mapping has the form
 \begin{equation}
@@ -411,7 +426,7 @@ Figure~\ref{fig:contact-examples-summary} records two representative high-value 
   \label{fig:contact-examples-summary}
 \end{figure}
 
-A useful verification matrix is: (i) prescribed two-body contact with a scalar global friction coefficient, (ii) prescribed multi-body contact with a symmetric group-dependent friction table, (iii) DFG same-material self-contact with a nonzero diagonal friction entry, (iv) DFG plus prescribed groups where field indices use the modulo friction-table lookup, (v) logistic-regression contact on a curved or oblique two-material interface, (vi) cohesive-zone-derived exact surface contact after cohesive failure, and (vii) each of the above under \texttt{Simple}, \texttt{Implicit}, and \texttt{Softened} gap closure.  Overlap correction should then be tested as an optional stabilization layer rather than as the primary mechanism for enforcing contact.
+A useful verification matrix is: (i) prescribed two-body contact with a scalar global friction coefficient, (ii) prescribed multi-body contact with a symmetric group-dependent friction table, (iii) DFG same-material self-contact with a nonzero diagonal friction entry, (iv) DFG plus prescribed groups where field indices use the modulo friction-table lookup, (v) logistic-regression contact on a curved or oblique two-material interface, (vi) cohesive-zone-derived exact surface contact after cohesive failure, (vii) prescribed weak-trace projection on a bonded two-material interface, and (viii) each contact case under \texttt{Simple}, \texttt{Implicit}, and \texttt{Softened} gap closure.  Overlap correction should then be tested as an optional stabilization layer rather than as the primary mechanism for enforcing contact.  The weak-trace case should be judged primarily by local mixed-cell stress error and trace velocity residuals, not only by global stress--strain response.
 
 \subsection{Input controls and cross references}
 \label{subsec:contact-input-summary-theory}
@@ -448,6 +463,11 @@ Attribute & Internal effect \\
 \texttt{overlapThreshold1}, \texttt{overlapThreshold2} & Define ramp thresholds for overlap-correction branches. \\
 \texttt{computeSPHJacobian} & Computes nonlocal SPH Jacobian data; automatically enabled by \texttt{overlapCorrection=SPH}. \\
 \texttt{directionalOverlapCorrection} & Development hook for neighbor-based directional overlap data. \\
+\texttt{enableWeakInterfaceTraceProjection} & Experimental bonded trace projection between selected velocity-field pairs; see Section~\ref{sec:weak-trace-implementation}. \\
+\texttt{weakInterfaceTracePairs} & Optional group-pair list for the weak-trace branch.  Empty means all group pairs are eligible. \\
+\texttt{weakInterfaceTraceProjectionScale}, \texttt{weakInterfaceTraceProjectionIterations} & Under-relaxation and local iteration count for the weak-trace projection. \\
+\texttt{weakInterfaceTraceGapStabilization}, \texttt{weakInterfaceTraceMinWeight} & Optional trace drift stabilization and minimum active trace support. \\
+\texttt{weakInterfaceTraceSuppressNodalContact} & Suppresses ordinary nodal contact for pairs handled by the experimental weak-trace branch. \\
 \bottomrule
 \end{longtable}
 \endgroup
