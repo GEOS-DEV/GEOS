@@ -31,11 +31,11 @@ InitializeStressMPMEvent::InitializeStressMPMEvent( const string & name,
 {
   registerWrapper( viewKeyStruct::pressureString(), &m_pressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Starting temperature to ramp from" );
+    setDescription( "Pressure" );
 
   registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Particle region to perform anneal on" );
+    setDescription( "Target region to initialize stress" );
 
 }
 

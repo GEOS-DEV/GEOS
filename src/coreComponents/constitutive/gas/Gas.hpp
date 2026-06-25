@@ -50,7 +50,7 @@ public:
    */
   GasUpdates( real64 const referencePressure,
               real64 const referenceTemperature,
-              arrayView1d< real64 const > const & jacobian,
+              arrayView2d< real64 const > const & jacobian,
               arrayView1d< real64 const > const & temperature,
               arrayView3d< real64, solid::STRESS_USD > const & newStress,
               arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -163,7 +163,7 @@ protected:
   real64 const m_referenceTemperature;
 
   /// A reference to the ArrayView holding the jacobian for each element.
-  arrayView1d< real64 const > const m_jacobian;
+  arrayView2d< real64 const > const m_jacobian;
 
   /// A reference to the ArrayView holding the temperature for each element.
   arrayView1d< real64 const > const m_temperature;
@@ -181,7 +181,7 @@ void GasUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
   GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( totalStrain );
 
-  real64 pressure =  m_referencePressure / m_jacobian[k] * ( m_temperature[k] / m_referenceTemperature );
+  real64 pressure =  m_referencePressure / m_jacobian[k][0] * ( m_temperature[k] / m_referenceTemperature );
 
   stress[0] = -pressure;
   stress[1] = -pressure;
@@ -408,13 +408,13 @@ public:
    * @brief Accessor for jacobian
    * @return A const reference to arrayView1d<real64> containing the jacobian (at every element).
    */
-  arrayView1d< real64 > const jacobian() { return m_jacobian; }
+  arrayView2d< real64 > const jacobian() { return m_jacobian; }
 
   /**
    * @brief Const accessor for jacobian
    * @return A const reference to arrayView1d<real64 const> containing jacobian (at every element).
    */
-  arrayView1d< real64 const > const jacobian() const { return m_jacobian; }
+  arrayView2d< real64 const > const jacobian() const { return m_jacobian; }
 
   /**
    * @brief Accessor for temperature
@@ -429,7 +429,7 @@ public:
   arrayView1d< real64 const > const temperature() const { return m_temperature; }
 
   GEOS_HOST_DEVICE
-  virtual arrayView1d< real64 const > getJacobian() const final
+  virtual arrayView2d< real64 const > getJacobian() const final
   {
     return m_jacobian;
   }
@@ -513,7 +513,7 @@ protected:
   real64 m_referenceTemperature;
 
   /// The jacobian for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_jacobian;
+  array2d< real64 > m_jacobian;
 
   /// The temperature for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_temperature;

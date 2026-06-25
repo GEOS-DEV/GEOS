@@ -32,6 +32,7 @@
 #include "cohesiveZone/SurfaceInformedPolymerCohesiveZone.hpp"
 #include "cohesiveZone/BicrystalCohesiveZone.hpp"
 #include "gas/Gas.hpp"
+#include "liquid/Liquid.hpp"
 #include "solid/Damage.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
@@ -256,6 +257,7 @@ struct ConstitutivePassThruMPM< ContinuumBase >
                                  ElasticIsotropic,
                                  Hyperelastic,
                                  HyperelasticMMS,
+                                 Liquid,
                                  Gas >::execute( constitutiveRelation,
                                                  std::forward< LAMBDA >( lambda ) );
   }

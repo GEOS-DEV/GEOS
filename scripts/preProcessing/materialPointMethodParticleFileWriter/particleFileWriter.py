@@ -30,6 +30,7 @@ import getpass
 import platform
 import argparse
 import re
+import builtins
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
 parser.add_argument('input_file', help="PFW input file", type=str)
@@ -229,6 +230,129 @@ def _format_solver_child_xml_block(tagName, value, indent="\t\t\t"):
 
   childIndent = indent + "\t"
   return "\n" + indent + f"<{tagName}>\n" + childIndent + ("\n" + childIndent).join(body.splitlines()) + "\n" + indent + f"</{tagName}>\n"
+
+
+def _particle_object_name(particleObject):
+  """Return a useful name for diagnostics from a geometry object."""
+  name = getattr(particleObject, "name", None)
+  if name:
+    return str(name)
+  return particleObject.__class__.__name__
+
+
+def _particle_point_string(pt):
+  """Format the particle point used when evaluating object fields."""
+  try:
+    coords = np.asarray(pt, dtype=float).reshape(-1)
+    return "(" + ", ".join("{:.17g}".format(value) for value in coords) + ")"
+  except Exception:
+    return str(pt)
+
+
+def _abort_particle_generation(message):
+  """Stop particle generation with a nonzero exit status on serial or MPI runs."""
+  print(message)
+  sys.stdout.flush()
+  if "comm" in globals() and not globals().get("flux", True):
+    comm.Abort(1)
+  sys.exit(1)
+
+
+def _invalid_particle_value_message(fieldName, particleObject, pt, reason):
+  return (
+    "Invalid particle value detected while generating the particle file: "
+    + "object='" + _particle_object_name(particleObject) + "', "
+    + "field='" + str(fieldName) + "', "
+    + "point=" + _particle_point_string(pt) + ". "
+    + str(reason)
+  )
+
+
+def _validate_particle_value(fieldName, particleObject, value, pt):
+  """Require a scalar/vector/matrix particle value to be numeric and finite.
+
+  This rejects NaN and +/-Inf before the value is written to the particle file,
+  and reports the geometry object, field name, and point that produced it.
+  """
+  if value is None:
+    _abort_particle_generation(
+      _invalid_particle_value_message(fieldName, particleObject, pt, "Value is None.")
+    )
+
+  try:
+    objectArray = np.asarray(value, dtype=builtins.object)
+  except Exception as exc:
+    print("Value", value)
+    _abort_particle_generation(
+      _invalid_particle_value_message(
+        fieldName,
+        particleObject,
+        pt,
+        "Value could not be inspected for None entries: " + str(exc)
+      )
+    )
+
+  for entry in objectArray.reshape(-1):
+    if entry is None:
+      _abort_particle_generation(
+        _invalid_particle_value_message(fieldName, particleObject, pt, "Value contains None.")
+      )
+
+  try:
+    valueArray = np.asarray(value, dtype=float)
+  except Exception as exc:
+    _abort_particle_generation(
+      _invalid_particle_value_message(
+        fieldName,
+        particleObject,
+        pt,
+        "Value could not be converted to numeric values for finite checking: " + str(exc)
+      )
+    )
+
+  finiteMask = np.isfinite(valueArray)
+  if np.all(finiteMask):
+    return value
+
+  invalidEntries = []
+  if valueArray.shape == ():
+    invalidEntries.append(str(fieldName) + "=" + str(valueArray.item()))
+  else:
+    invalidIndices = np.argwhere(~finiteMask)
+    for invalidIndex in invalidIndices[:8]:
+      indexTuple = tuple(int(i) for i in invalidIndex)
+      indexText = "".join("[" + str(i) + "]" for i in indexTuple)
+      invalidEntries.append(str(fieldName) + indexText + "=" + str(valueArray[indexTuple]))
+    if len(invalidIndices) > 8:
+      invalidEntries.append("... and " + str(len(invalidIndices) - 8) + " more")
+
+  _abort_particle_generation(
+    _invalid_particle_value_message(
+      fieldName,
+      particleObject,
+      pt,
+      "Value contains NaN or infinity: " + ", ".join(invalidEntries)
+    )
+  )
+
+
+def _validate_particle_int_value(fieldName, particleObject, value, pt):
+  """Validate an integer-valued particle field before converting to int."""
+  _validate_particle_value(fieldName, particleObject, value, pt)
+  try:
+    numericValue = np.asarray(value, dtype=float)
+    if numericValue.shape != () and numericValue.size != 1:
+      raise ValueError("expected a scalar integer value")
+    return int(numericValue.reshape(-1)[0])
+  except Exception as exc:
+    _abort_particle_generation(
+      _invalid_particle_value_message(
+        fieldName,
+        particleObject,
+        pt,
+        "Value could not be converted to an integer: " + str(exc)
+      )
+    )
 
 
 # ============================================================================================
@@ -732,6 +856,7 @@ parameters = {
                'stressControlKp': ( None, True ),  # MPM: stress-control proportional gain.
                'stressTable': ( None, True ),  # MPM: time-dependent stress table.
                'stressTableInterpType': ( None, True ),  # MPM: interpolation type for stressTable.
+               'surfaceTensionPairs': (None, True ), # MPM: pair-wise surface tension coefficient.
                'subdivideParticles': ( None, True ),  # MPM: split particles spanning too much of a cell.
                'surfaceDetection': ( None, True ),  # MPM: automatic initial surface detection.
                'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
@@ -1191,9 +1316,9 @@ if generateParticleFile:
 
               if "MaterialType" in particleFileFields:
                 if hasattr(object, 'getMat'):
-                  mat = int( object.getMat( pt ) )
+                  mat = _validate_particle_int_value("MaterialType", object, object.getMat( pt ), pt)
                 else:
-                  mat = int( object.mat(object, pt) if callable(object.mat) else object.mat )
+                  mat = _validate_particle_int_value("MaterialType", object, object.mat(object, pt) if callable(object.mat) else object.mat, pt)
 
               if "ContactGroup" in particleFileFields:
                 if hasattr(object,'getGroup'):
@@ -1239,66 +1364,55 @@ if generateParticleFile:
                     else:
                       czTag = 0
 
-              # Check for fields with None values
-              # Get the particle type, default is CPDI
-              if particleType == None:
-                print("ParticleType value from", object.name,"was None!")
-                sys.exit(0)
+              # Validate fields before using them to refine or write particles.
+              # This catches None, NaN, and +/-Inf values with object and field context.
+              _validate_particle_value("ParticleType", object, particleType, pt)
 
-              if "Velocity" in particleFileFields and all(v is None for v in velocity):
-                print("Velocity value from", object.name,"was None!")
-                sys.exit(0)
+              if "Velocity" in particleFileFields:
+                _validate_particle_value("Velocity", object, velocity, pt)
 
-              if "Damage" in particleFileFields and damage == None:
-                print("Damage value from", object.name,"was None!")
-                sys.exit(0)
+              if "Damage" in particleFileFields:
+                _validate_particle_value("Damage", object, damage, pt)
 
-              if "Porosity" in particleFileFields and porosity == None:
-                print("Porosity value from", object.name,"was None!")
-                sys.exit(0)
+              if "Porosity" in particleFileFields:
+                _validate_particle_value("Porosity", object, porosity, pt)
 
-              if "Temperature" in particleFileFields and temperature == None:
-                print("Temperature value from", object.name,"was None!")
-                sys.exit(0)
+              if "Temperature" in particleFileFields:
+                _validate_particle_value("Temperature", object, temperature, pt)
 
-              if "SurfaceFlag" in particleFileFields and surfaceFlag == None:
-                print("SurfaceFlag value from", object.name,"was None!")
-                sys.exit(0)
+              if "SurfaceFlag" in particleFileFields:
+                _validate_particle_value("SurfaceFlag", object, surfaceFlag, pt)
 
-              if "SurfacePosition" in particleFileFields and surfaceFlag != 0 and all(v is None for v in surfacePosition):
-                print("SurfacePosition value from", object.name,"was None!")
-                sys.exit(0)
+              if "SurfacePosition" in particleFileFields:
+                _validate_particle_value("SurfacePosition", object, surfacePosition, pt)
 
-              if "SurfaceNormal" in particleFileFields and surfaceFlag != 0 and all(v is None for v in surfaceNormal):
-                print("SurfaceNormal value from", object.name,"was None!")
-                sys.exit(0)
+              if "SurfaceNormal" in particleFileFields:
+                _validate_particle_value("SurfaceNormal", object, surfaceNormal, pt)
 
-              if "SurfaceTraction" in particleFileFields and surfaceFlag != 0 and all(v is None for v in surfaceTraction):
-                print("SurfaceTraction value from", object.name,"was None!")
-                sys.exit(0)
+              if "SurfaceTraction" in particleFileFields:
+                _validate_particle_value("SurfaceTraction", object, surfaceTraction, pt)
 
-              if "MaterialType" in particleFileFields and mat == None:
-                print("MaterialType value from", object.name,"was None!")
-                sys.exit(0)
+              if "MaterialType" in particleFileFields:
+                _validate_particle_value("MaterialType", object, mat, pt)
+              else:
+                mat = 0
 
-              if "ContactGroup" in particleFileFields and group == None:
-                print("ContactGroup value from", object.name,"was None!")
-                sys.exit(0)
+              if "ContactGroup" in particleFileFields:
+                _validate_particle_value("ContactGroup", object, group, pt)
 
-              if "MaterialDirection" in particleFileFields and all(v is None for v in matDir):
-                print("MaterialDirection value from", object.name,"was None!")
-                sys.exit(0)
-  
-              if "StrengthScale" in particleFileFields and strengthScale == None:
-                print("Strengthscale value from", object.name,"was None!")
-                sys.exit(0)
+              if "MaterialDirection" in particleFileFields:
+                _validate_particle_value("MaterialDirection", object, matDir, pt)
 
-              if "CZTag" in particleFileFields and czTag == None:
-                print("CZTag value from", object.name, "was None!")
-                sys.exit(0)
+              if "StrengthScale" in particleFileFields:
+                _validate_particle_value("StrengthScale", object, strengthScale, pt)
+
+              if "CZTag" in particleFileFields:
+                _validate_particle_value("CZTag", object, czTag, pt)
+
+              if "ShrinkageFlag" in particleFileFields and hasattr( object, 'flag'):
+                _validate_particle_value("ShrinkageFlag", object, object.flag, pt)
 
               # particleTypesPerMat[mat].add( particleType )
-
               dxr = dx/particleRefinement[mat]
               dyr = dy/particleRefinement[mat]
               dzr = dz if planeStrain == 1 else dz/particleRefinement[mat]
@@ -1313,6 +1427,10 @@ if generateParticleFile:
                     # only create particle if mat>=0, that way we can specify mat=-1 to generate a 
                     # defect or void.
                     if(mat>=0):
+                      particlePosition = [xr, yr, zr]
+                      _validate_particle_value("Position", object, particlePosition, particlePosition)
+                      _validate_particle_value("ParticleType", object, particleType, particlePosition)
+
                       n_p = n_p + 1
 
                       particleVolume += dxr*dyr*dzr
@@ -1324,9 +1442,11 @@ if generateParticleFile:
                                 + str(particleType)
 
                       if "Velocity" in particleFileFields:
-                        pString = pString + delim + str(velocity[0]) + delim \
-                                                  + str(velocity[1]) + delim \
-                                                  + str(0.0 if planeStrain == 1 else velocity[2])
+                        velocityValues = [velocity[0], velocity[1], 0.0 if planeStrain == 1 else velocity[2]]
+                        _validate_particle_value("Velocity", object, velocityValues, particlePosition)
+                        pString = pString + delim + str(velocityValues[0]) + delim \
+                                                  + str(velocityValues[1]) + delim \
+                                                  + str(velocityValues[2])
 
                       if "MaterialType" in particleFileFields:
                         pString = pString + delim + str(mat)
@@ -1353,15 +1473,19 @@ if generateParticleFile:
                         pString = pString + delim + str(czTag)
 
                       if "RVector" in particleFileFields:
-                        pString = pString + delim + str(dxr*0.5) + delim \
-                                                  + str(0) + delim \
-                                                  + str(0) + delim \
-                                                  + str(0) + delim \
-                                                  + str(dyr*0.5) + delim \
-                                                  + str(0) + delim \
-                                                  + str(0) + delim \
-                                                  + str(0) + delim \
-                                                  + str(dzr*0.5)
+                        rVectorValues = [dxr*0.5, 0, 0,
+                                         0, dyr*0.5, 0,
+                                         0, 0, dzr*0.5]
+                        _validate_particle_value("RVector", object, rVectorValues, particlePosition)
+                        pString = pString + delim + str(rVectorValues[0]) + delim \
+                                                  + str(rVectorValues[1]) + delim \
+                                                  + str(rVectorValues[2]) + delim \
+                                                  + str(rVectorValues[3]) + delim \
+                                                  + str(rVectorValues[4]) + delim \
+                                                  + str(rVectorValues[5]) + delim \
+                                                  + str(rVectorValues[6]) + delim \
+                                                  + str(rVectorValues[7]) + delim \
+                                                  + str(rVectorValues[8])
 
                       if "MaterialDirection" in particleFileFields:
                         if (np.array(matDir).size == 9):
@@ -1385,27 +1509,33 @@ if generateParticleFile:
                         if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):
                           # enforce plane strain and renormalize:
                           norm = float( np.sqrt( surfaceNormal[0]*surfaceNormal[0] + surfaceNormal[1]*surfaceNormal[1] ) )
-                          pString = pString + delim + str(surfaceNormal[0]/norm) + delim \
-                                            + str(surfaceNormal[1]/norm) + delim \
-                                            + str(0.0)                     
+                          surfaceNormalValues = [surfaceNormal[0]/norm, surfaceNormal[1]/norm, 0.0]
                         else:
-                          # assume normal is alread unit vector:
-                          pString = pString + delim + str(surfaceNormal[0]) + delim \
-                                                  + str(surfaceNormal[1]) + delim \
-                                            + str(surfaceNormal[2]) 
+                          # assume normal is already a unit vector:
+                          surfaceNormalValues = [surfaceNormal[0], surfaceNormal[1], surfaceNormal[2]]
+                        _validate_particle_value("SurfaceNormal", object, surfaceNormalValues, particlePosition)
+                        pString = pString + delim + str(surfaceNormalValues[0]) + delim \
+                                          + str(surfaceNormalValues[1]) + delim \
+                                          + str(surfaceNormalValues[2]) 
                       
                       if "SurfacePosition" in particleFileFields:
-                        pString = pString + delim + str(surfacePosition[0]) + delim \
-                                                  + str(surfacePosition[1]) + delim \
-                                                  + str(0.0 if planeStrain == 1 else surfacePosition[2])
+                        surfacePositionValues = [surfacePosition[0], surfacePosition[1], 0.0 if planeStrain == 1 else surfacePosition[2]]
+                        _validate_particle_value("SurfacePosition", object, surfacePositionValues, particlePosition)
+                        pString = pString + delim + str(surfacePositionValues[0]) + delim \
+                                                  + str(surfacePositionValues[1]) + delim \
+                                                  + str(surfacePositionValues[2])
 
                       if "SurfaceTraction" in particleFileFields:
-                        pString = pString + delim + str(surfaceTraction[0]) + delim \
-                                                  + str(surfaceTraction[1]) + delim \
-                                                  + str(0.0 if planeStrain == 1 else surfaceTraction[2])
+                        surfaceTractionValues = [surfaceTraction[0], surfaceTraction[1], 0.0 if planeStrain == 1 else surfaceTraction[2]]
+                        _validate_particle_value("SurfaceTraction", object, surfaceTractionValues, particlePosition)
+                        pString = pString + delim + str(surfaceTractionValues[0]) + delim \
+                                                  + str(surfaceTractionValues[1]) + delim \
+                                                  + str(surfaceTractionValues[2])
 
                       if "ShrinkageFlag" in particleFileFields:
-                        pString = pString + delim + str( object.flag if hasattr( object, 'flag') else 0)
+                        shrinkageFlag = object.flag if hasattr( object, 'flag') else 0
+                        _validate_particle_value("ShrinkageFlag", object, shrinkageFlag, particlePosition)
+                        pString = pString + delim + str(shrinkageFlag)
 
                       pString = pString +'\n'
                       particleFile.write(pString)

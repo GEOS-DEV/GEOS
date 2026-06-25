@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  10 JUN 2026 20:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  25 JUN 2026 12:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -819,7 +819,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 
  [7]
 (./sections/00_introduction.tex
-<figures/mpm_overview_diagram.png, id=537, 1535.7375pt x 941.5175pt>
+<figures/mpm_overview_diagram.png, id=541, 1535.7375pt x 941.5175pt>
 File: figures/mpm_overview_diagram.png Graphic file (type png)
 <use figures/mpm_overview_diagram.png>
 Package pdftex.def Info: figures/mpm_overview_diagram.png  used on input line 1
@@ -842,7 +842,7 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2]
-<figures/mpm_applications_composite.png, id=583, 1496.59125pt x 733.74126pt>
+<figures/mpm_applications_composite.png, id=587, 1496.59125pt x 733.74126pt>
 File: figures/mpm_applications_composite.png Graphic file (type png)
 <use figures/mpm_applications_composite.png>
 Package pdftex.def Info: figures/mpm_applications_composite.png  used on input 
@@ -897,20 +897,26 @@ Underfull \hbox (badness 1127) in paragraph at lines 59--59
  []
 
 
-Underfull \hbox (badness 2261) in paragraph at lines 59--60
-[]|\T1/lmr/m/n/10.95 (+20) Evaluate body forces, manufactured-solution loads,
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+[]|\T1/lmr/m/n/10.95 (+20) Compute and syn-chro-nize
  []
 
 
-Underfull \hbox (badness 1715) in paragraph at lines 68--68
+Underfull \hbox (badness 1715) in paragraph at lines 69--69
 []|\T1/lmr/m/n/10.95 (+20) Write op-tional out-puts and
  []
 
-[8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19] [20] [21] [22]
-(./sections/02_events_expanded.tex [23]
+[8] [9] [10] [11] [12] [13] [14] [15]
+Overfull \hbox (9.67303pt too wide) in paragraph at lines 379--381
+\T1/lmr/m/n/10.95 (-20) while diffuse-interface surface-tension forces are as-s
+em-bled later as the grid force \T1/lmtt/m/n/10.95 gridSurfaceTensionForce
+ []
+
+[16] [17] [18] [19] [20] [21] [22] [23] [24] (./sections/02_events_expanded.tex
+[25]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 51.
- [24] [25]
+ [26] [27] [28]
 Underfull \hbox (badness 2237) in paragraph at lines 186--187
 \T1/lmtt/m/n/10.95 endTime\T1/lmr/m/n/10.95 (+20) ; \T1/lmtt/m/n/10.95 czVolume
 Normalization\T1/lmr/m/n/10.95 (+20) , de-fault \T1/lmtt/m/n/10.95 1\T1/lmr/m/n
@@ -925,7 +931,7 @@ Overfull \hbox (20.56873pt too wide) in paragraph at lines 186--187
 /m/n/10.95 (-20) and \T1/lmtt/m/n/10.95 computeNormalsAndPositions
  []
 
-[26] [27] [28] [29]
+[29] [30] [31]
 Overfull \hbox (260.0977pt too wide) detected at line 352
 [][][] \OMS/lmsy/m/n/10.95   []\OML/lmm/m/it/10.95 ;  [] \OMS/lmsy/m/n/10.95   
 []\OML/lmm/m/it/10.95 ;  [] \OMS/lmsy/m/n/10.95   []\OML/lmm/m/it/10.95 :
@@ -938,17 +944,17 @@ Underfull \hbox (badness 7613) in paragraph at lines 363--364
 /lmr/m/n/10.95 (+20) and
  []
 
-[30] [31] [32] [33] [34] [35] [36]
+[32] [33] [34] [35] [36] [37] [38] [39]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <9> on input line 779.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 779.
- [37])
-(./sections/02_constitutive_models_expanded.tex [38]
+)
+(./sections/02_constitutive_models_expanded.tex [40]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 39.
- [39] [40] [41] [42]
-[43] [44]
+ [41] [42] [43] [44]
+[45] [46]
 Underfull \hbox (badness 3449) in paragraph at lines 400--401
 []|\T1/lmr/m/n/8 (+20) Time-to-failure reg-u-lar-iza-tion speed used when
  []
@@ -973,7 +979,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 407--407
 []|\T1/lmr/m/n/8 (+20) particle
  []
 
-[45]
+[47]
 Overfull \hbox (8.96936pt too wide) in paragraph at lines 458--460
 \T1/lmr/m/n/10.95 (-20) where $\OML/lmm/m/it/10.95 ^^X[] \OMS/lmsy/m/n/10.95 ^^
 U \OT1/lmr/m/n/10.95 (-20) 1$ \T1/lmr/m/n/10.95 (-20) is the crack-tip stress-c
@@ -982,24 +988,25 @@ oncentration fac-tor and $\OT1/lmr/m/n/10.95 (-20) ^^@[] = 1$ \T1/lmr/m/n/10.95
 ) .
  []
 
-<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1573, 1385.175pt x 933.48
+[48]
+<figures/ceramic_damage_yield_surface_fig8_hi.pdf, id=1632, 1385.175pt x 933.48
 75pt>
 File: figures/ceramic_damage_yield_surface_fig8_hi.pdf Graphic file (type pdf)
 <use figures/ceramic_damage_yield_surface_fig8_hi.pdf>
 Package pdftex.def Info: figures/ceramic_damage_yield_surface_fig8_hi.pdf  used
  on input line 477.
 (pdftex.def)             Requested size: 452.11942pt x 304.69028pt.
-[46] [47 <./figures/ceramic_damage_yield_surface_fig8_hi.pdf>] [48] [49]
-[50
+ [49 <./figures/ceramic_damage_yield_surface_fig8_hi.pdf>] [50] [51]
+[52
 
 ]
-<figures/graphite_deformation_modes.png, id=1652, 493.407pt x 255.573pt>
+<figures/graphite_deformation_modes.png, id=1701, 493.407pt x 255.573pt>
 File: figures/graphite_deformation_modes.png Graphic file (type png)
 <use figures/graphite_deformation_modes.png>
 Package pdftex.def Info: figures/graphite_deformation_modes.png  used on input 
 line 616.
 (pdftex.def)             Requested size: 471.78102pt x 244.38403pt.
- [51]
+ [53]
 Underfull \hbox (badness 2401) in paragraph at lines 667--669
 \T1/lmr/m/n/10.95 (+20) pres-sure scales $\OML/lmm/m/it/10.95 P[]$\T1/lmr/m/n/1
 0.95 (+20) , $\OML/lmm/m/it/10.95 P[]$\T1/lmr/m/n/10.95 (+20) , and $\OML/lmm/m
@@ -1014,8 +1021,8 @@ Overfull \hbox (46.43814pt too wide) in paragraph at lines 667--669
 T1/lmr/m/n/10.95 (-20) .
  []
 
-[52 <./figures/graphite_deformation_modes.png (PNG copy)>] [53]
-<figures/graphite_point_slope_strength.png, id=1708, 751.24664pt x 397.12366pt>
+[54 <./figures/graphite_deformation_modes.png (PNG copy)>] [55]
+<figures/graphite_point_slope_strength.png, id=1757, 751.24664pt x 397.12366pt>
 
 File: figures/graphite_point_slope_strength.png Graphic file (type png)
 <use figures/graphite_point_slope_strength.png>
@@ -1030,7 +1037,7 @@ is one of \T1/lmtt/m/n/10.95 distortionStrainHardeningC0\T1/lmr/m/n/10.95 (-20)
 lmtt/m/n/10.95 coupledStrainHardeningC0\T1/lmr/m/n/10.95 (-20) ;
  []
 
-[54] [55 <./figures/graphite_point_slope_strength.png>]
+[56] [57 <./figures/graphite_point_slope_strength.png>]
 Underfull \hbox (badness 1371) in paragraph at lines 865--867
 \T1/lmr/m/n/10.95 (+20) and $\OML/lmm/m/it/10.95 n[] \OT1/lmr/m/n/10.95 (+20) =
  []$\T1/lmr/m/n/10.95 (+20) . The ef-fec-tive frac-ture en-ergy uses $\OML/lmm/
@@ -1038,8 +1045,8 @@ m/it/10.95 G[] \OT1/lmr/m/n/10.95 (+20) = \OML/lmm/m/it/10.95 G[]s[]$\T1/lmr/m/
 n/10.95 (+20) ,
  []
 
-[56] [57] [58]
-<figures/geomechanics_formulation_composite.png, id=1789, 693.792pt x 697.76685
+[58] [59] [60]
+<figures/geomechanics_formulation_composite.png, id=1839, 693.792pt x 697.76685
 pt>
 File: figures/geomechanics_formulation_composite.png Graphic file (type png)
 <use figures/geomechanics_formulation_composite.png>
@@ -1057,8 +1064,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 1001--1001
 []|\T1/lmr/m/n/10.95 (+20) Nonlinear Drucker--
  []
 
-[59] [60 <./figures/geomechanics_formulation_composite.png (PNG copy)>]
-[61] [62]
+[61] [62 <./figures/geomechanics_formulation_composite.png (PNG copy)>]
+[63] [64]
 Underfull \hbox (badness 10000) in paragraph at lines 1166--1166
 []|\T1/lmtt/m/n/10.95 b0,b1,b2,b3,b4\T1/lmr/m/n/10.95 (+20) ,
  []
@@ -1189,7 +1196,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 1174--1174
 []|\T1/lmtt/m/n/10.95 fluidBulkModulus\T1/lmr/m/n/10.95 (+20) ,
  []
 
-[63] [64] [65] [66]
+[65] [66]
+Overfull \hbox (28.04353pt too wide) in paragraph at lines 1221--1222
+\T1/lmtt/m/n/10.95 Liquid \T1/lmr/m/n/10.95 (-20) is the im-ple-mented weakly c
+om-press-ible New-to-nian liq-uid model in \T1/lmtt/m/n/10.95 constitutive/liqu
+id/Liquid.cpp\T1/lmr/m/n/10.95 (-20) .
+ []
+
+[67] [68] [69]
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
@@ -1201,33 +1215,33 @@ File: lstlang1.sty 2020/03/24 1.8d listings language file
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
-)
-[67]) [68] [69]
-<figures/particle_shape_functions.pdf, id=1972, 520.34402pt x 296.307pt>
+))
+[70] [71]
+<figures/particle_shape_functions.pdf, id=2029, 520.34402pt x 296.307pt>
 File: figures/particle_shape_functions.pdf Graphic file (type pdf)
 <use figures/particle_shape_functions.pdf>
 Package pdftex.def Info: figures/particle_shape_functions.pdf  used on input li
-ne 842.
+ne 947.
 (pdftex.def)             Requested size: 452.11942pt x 257.46852pt.
- [70] [71 <./figures/particle_shape_functions.pdf>] [72]
-[73] [74] [75]
-Underfull \hbox (badness 2073) in paragraph at lines 1181--1181
+ [72] [73 <./figures/particle_shape_functions.pdf>] [74] [75] [76]
+[77] [78]
+Underfull \hbox (badness 2073) in paragraph at lines 1286--1286
 []|\T1/lmr/m/n/10.95 (+20) implemented, de-
  []
 
 
-Underfull \hbox (badness 2582) in paragraph at lines 1183--1184
+Underfull \hbox (badness 2582) in paragraph at lines 1288--1289
 []|\T1/lmr/m/n/10.95 (+20) Approximate full-mass in-verse con-trolled by
  []
 
-[76] [77] [78] [79] [80] [81]
-Overfull \hbox (24.225pt too wide) in paragraph at lines 1455--1457
+[79] [80] [81] [82] [83] [84]
+Overfull \hbox (24.225pt too wide) in paragraph at lines 1560--1562
 \T1/lmr/m/n/10.95 (-20) buffer-reflection op-er-a-tions used by a mov-ing face.
  The reg-is-tered \T1/lmtt/m/n/10.95 boundaryFaceCoefficientsOfRestitution
  []
 
-[82] [83]
-Overfull \hbox (10.3516pt too wide) in paragraph at lines 1650--1677
+[85] [86]
+Overfull \hbox (10.3516pt too wide) in paragraph at lines 1755--1782
  [][] 
  []
 
@@ -1235,31 +1249,31 @@ Overfull \hbox (10.3516pt too wide) in paragraph at lines 1650--1677
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Underfull \hbox (badness 3058) in paragraph at lines 1679--1685
+Underfull \hbox (badness 3058) in paragraph at lines 1784--1790
 []\T1/lmr/m/n/10.95 (+20) For prescribed-F quasi-static tests, the de-fault str
 ain scales are suit-able start-ing val-
  []
 
-[84] [85] [86]
-Underfull \hbox (badness 2181) in paragraph at lines 1770--1777
+[87] [88]
+Underfull \hbox (badness 2181) in paragraph at lines 1875--1882
 []\T1/lmr/m/n/10.95 (+20) Persistent wave warn-ings in-di-cate that the con-tro
 lled stress is dom-i-nated by tran-sient
  []
 
 
-Underfull \hbox (badness 1292) in paragraph at lines 1770--1777
+Underfull \hbox (badness 1292) in paragraph at lines 1875--1882
 \T1/lmr/m/n/10.95 (+20) stress waves rather than a quasi-static mean. In-crease
  \T1/lmtt/m/n/10.95 stressControlResponseStrain \T1/lmr/m/n/10.95 (+20) and
  []
 
-[87] (./sections/02_cohesive_zone_implementation.tex [88]
+[89] [90] (./sections/02_cohesive_zone_implementation.tex [91]
 Overfull \hbox (52.29422pt too wide) in paragraph at lines 53--54
 []\T1/lmr/m/n/10.95 (-20) Two op-tions con-trol how par-ti-cle sur-face data en
 -ter the ref-er-ence con-fig-u-ra-tion. If \T1/lmtt/m/n/10.95 computeNormalsAnd
 Positions
  []
 
-[89]
+[92]
 Underfull \hbox (badness 1189) in paragraph at lines 128--129
 \T1/lmr/m/n/10.95 (+20) viewed source reg-is-ters five ex-e-cutable cohesive-zo
 ne model classes: \T1/lmtt/m/n/10.95 UncoupledCohesiveZone\T1/lmr/m/n/10.95 (+2
@@ -1274,7 +1288,7 @@ hesiveZone\T1/lmr/m/n/10.95 (-20) , and \T1/lmtt/m/n/10.95 SurfaceInformedPolym
 erCohesiveZone\T1/lmr/m/n/10.95 (-20) .
  []
 
-[90]
+[93]
 Underfull \hbox (badness 5504) in paragraph at lines 141--142
 [] []\T1/lmtt/b/n/10.95 CoupledCohesiveZone\T1/lmr/bx/n/10.95 (+20) .[] \T1/lmr
 /m/n/10.95 (+20) This law im-ple-ments a cou-pled ex-po-nen-tial co-he-sive re-
@@ -1303,12 +1317,12 @@ earModulusB\T1/lmr/m/n/10.95 (+20) , \T1/lmtt/m/n/10.95 shearModulusT0\T1/lmr/m
 \T1/lmr/m/n/10.95 (+20) ,
  []
 
-[91]
+[94]
 Overfull \hbox (1.10962pt too wide) in paragraph at lines 202--202
 \T1/lmtt/m/n/10.95 PolymerCohesiveZone|  
  []
 
-[92]
+
 Underfull \hbox (badness 1502) in paragraph at lines 210--211
 \T1/lmr/m/n/10.95 (+20) The min-i-mum event-level con-trols are \T1/lmtt/m/n/10
 .95 regionNames\T1/lmr/m/n/10.95 (+20) , \T1/lmtt/m/n/10.95 constitutiveModels\
@@ -1322,71 +1336,72 @@ Underfull \hbox (badness 1072) in paragraph at lines 210--211
 n-trols are \T1/lmtt/m/n/10.95 czVolumeNormalization\T1/lmr/m/n/10.95 (+20) ,
  []
 
-) (./sections/02_contact_options_expanded.tex [93]
+[95]) (./sections/02_contact_options_expanded.tex
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
 )
-<figures/contact_fields_schematic.pdf, id=2479, 1000.88431pt x 573.46545pt>
+[96]
+<figures/contact_fields_schematic.pdf, id=2547, 1000.88431pt x 573.46545pt>
 File: figures/contact_fields_schematic.pdf Graphic file (type pdf)
 <use figures/contact_fields_schematic.pdf>
 Package pdftex.def Info: figures/contact_fields_schematic.pdf  used on input li
 ne 66.
 (pdftex.def)             Requested size: 491.43513pt x 281.56929pt.
-
-[94] [95 <./figures/contact_fields_schematic.pdf>] [96]
+ [97] [98 <./figures/contact_fields_schematic.pdf>] [99]
 Overfull \hbox (61.4305pt too wide) in paragraph at lines 140--142
 \T1/lmr/m/n/10.95 (-20) with a sep-a-rate mass-like nor-mal-iza-tion stored in 
 \T1/lmtt/m/n/10.95 gridSurfaceFieldMass\T1/lmr/m/n/10.95 (-20) . When \T1/lmtt/
 m/n/10.95 useSurfacePositionForContact=1\T1/lmr/m/n/10.95 (-20) ,
  []
 
-<figures/contact_surface_methods_schematic.pdf, id=2624, 455.4475pt x 220.0659p
+<figures/contact_surface_methods_schematic.pdf, id=2690, 455.4475pt x 220.0659p
 t>
 File: figures/contact_surface_methods_schematic.pdf Graphic file (type pdf)
 <use figures/contact_surface_methods_schematic.pdf>
 Package pdftex.def Info: figures/contact_surface_methods_schematic.pdf  used on
  input line 145.
 (pdftex.def)             Requested size: 471.78102pt x 227.95984pt.
-[97 <./figures/contact_surface_methods_schematic.pdf>] [98] [99] [100] [101]
-[102]
-<figures/contact_examples_summary.pdf, id=2716, 1011.78pt x 433.62pt>
+[100 <./figures/contact_surface_methods_schematic.pdf>] [101] [102] [103]
+[104]
+<figures/contact_examples_summary.pdf, id=2774, 1011.78pt x 433.62pt>
 File: figures/contact_examples_summary.pdf Graphic file (type pdf)
 <use figures/contact_examples_summary.pdf>
 Package pdftex.def Info: figures/contact_examples_summary.pdf  used on input li
 ne 409.
 (pdftex.def)             Requested size: 491.43513pt x 210.61642pt.
+ [105]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10> on input line 438.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <7> on input line 438.
- [103 <./figures/contact_examples_summary.pdf>])
-(./sections/02_robustness_controls.tex [104]
+ [106 <./figures/contact_examples_summary.pdf>])
+(./sections/02_robustness_controls.tex
 Underfull \hbox (badness 1448) in paragraph at lines 26--27
 []\T1/lmr/bx/n/10.95 (+20) Constitutive fail-ure flag. \T1/lmr/m/n/10.95 (+20) 
 If a ma-te-rial wrap-per ex-poses \T1/lmtt/m/n/10.95 constitutiveUpdateFlag\T1/
 lmr/m/n/10.95 (+20) ,
  []
 
-[105]
+[107] [108]
 Underfull \hbox (badness 10000) in paragraph at lines 92--93
 []\T1/lmr/m/n/10.95 (+20) If \T1/lmtt/m/n/10.95 resetDefGradForScaledSurfacePar
 ticles=1\T1/lmr/m/n/10.95 (+20) , CPDI-
  []
 
-[106] [107])) (./sections/03_pfw.tex [108]
+[109])) (./sections/03_pfw.tex [110] [111]
 Chapter 3.
-[109
+[112
 
-] [110] [111]
-<figures/pfw_grid_partition_schematic.pdf, id=2941, 892.6873pt x 516.32903pt>
+] [113] [114]
+<figures/pfw_grid_partition_schematic.pdf, id=3006, 892.6873pt x 516.32903pt>
 File: figures/pfw_grid_partition_schematic.pdf Graphic file (type pdf)
 <use figures/pfw_grid_partition_schematic.pdf>
 Package pdftex.def Info: figures/pfw_grid_partition_schematic.pdf  used on inpu
 t line 137.
 (pdftex.def)             Requested size: 452.11942pt x 261.51225pt.
- [112 <./figures/pfw_grid_partition_schematic.pdf>] [113]
-[114]
+ [115 <./figures/pfw_grid_partition_schematic.pdf>] [116]
+[117]
 Underfull \hbox (badness 10000) in paragraph at lines 275--275
 []|\T1/lmtt/m/n/10 getParticleType(pt) \T1/lmr/m/n/10 (+20) or
  []
@@ -1397,7 +1412,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 275--275
 T1/lmr/m/n/10 (+20) ,
  []
 
-[115] [116] [117] [118] [119]
+[118] [119] [120] [121] [122]
 Underfull \hbox (badness 7451) in paragraph at lines 399--400
 [] []\T1/lmr/bx/n/10.95 (+20) Ba-sic field wrap-pers.[] \T1/lmr/m/n/10.95 (+20)
  The wrap-pers \T1/lmtt/m/n/10.95 materialDirectionWrapper\T1/lmr/m/n/10.95 (+2
@@ -1441,7 +1456,7 @@ and \T1/lmtt/m/n/10.95 layeredStrengthScaleBoxWrapper \T1/lmr/m/n/10.95 (+20) a
 s-sign spa-tially
  []
 
-[120]
+[123]
 Underfull \hbox (badness 10000) in paragraph at lines 435--435
 []|\T1/lmtt/m/n/10 ElasticIsotropic\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 Elast
 icTransverseIsotropic\T1/lmr/m/n/10 (+20) ,
@@ -1454,7 +1469,7 @@ i\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 StrainHardeningPolymer\T1/lmr/m/n/10 (+
 20) , \T1/lmtt/m/n/10 Graphite\T1/lmr/m/n/10 (+20) ,
  []
 
-[121] [122]
+[124] [125]
 Underfull \hbox (badness 10000) in paragraph at lines 532--532
 []|\T1/lmtt/m/n/10 strengthScaleWrapper\T1/lmr/m/n/10 (+20) , lay-
  []
@@ -1494,9 +1509,9 @@ Underfull \hbox (badness 10000) in paragraph at lines 532--532
 \T1/lmtt/m/n/10 surfacePositionWrapper\T1/lmr/m/n/10 (+20) ,
  []
 
-[123] [124] [125
+[126] [127] [128
 
-] [126
+] [129
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 700--700
@@ -1578,7 +1593,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 700--700
 \T1/lmtt/m/n/10 verification / cohesiveZones /
  []
 
-[127] [128] [129] [130]
+[130] [131] [132] [133]
 Overfull \hbox (55.18887pt too wide) in paragraph at lines 905--906
 []\T1/lmr/m/n/10.95 (-20) Older cohesive-failure style con-trols such as \T1/lm
 tt/m/n/10.95 enableCohesiveFailure\T1/lmr/m/n/10.95 (-20) , \T1/lmtt/m/n/10.95 
@@ -1586,7 +1601,7 @@ cohesiveLaw\T1/lmr/m/n/10.95 (-20) , \T1/lmtt/m/n/10.95 maxCohesiveNormalStress
 \T1/lmr/m/n/10.95 (-20) ,
  []
 
-[131]
+[134]
 Underfull \hbox (badness 10000) in paragraph at lines 966--966
 []|\T1/lmtt/m/n/9 timeIntegrationOption\T1/lmr/m/n/9 (+20) ,
  []
@@ -1755,14 +1770,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 978--978
 \T1/lmtt/m/n/9 maxParticleJacobian\T1/lmr/m/n/9 (+20) ,
  []
 
-[132] [133]
+[135] [136]
 Underfull \hbox (badness 1776) in paragraph at lines 1039--1040
 \T1/lmr/m/n/10.95 (+20) Use \T1/lmtt/m/n/10.95 prescribedFTable = 1 \T1/lmr/m/n
 /10.95 (+20) for a su-per-posed ho-mo-ge-neous velocity-gradient up-date in pe-
 ri-
  []
 
-[134]
+[137]
 Underfull \hbox (badness 2961) in paragraph at lines 1071--1072
 \T1/lmr/m/n/10.95 (+20) fi-cients are sup-plied with \T1/lmtt/m/n/10.95 boundar
 yFaceFrictionCoefficients\T1/lmr/m/n/10.95 (+20) . The solver also reg-is-ters
@@ -1774,7 +1789,7 @@ Underfull \hbox (badness 1558) in paragraph at lines 1071--1072
  , but the re-viewed ac-tive code path does not use
  []
 
-[135]
+[138]
 Underfull \hbox (badness 10000) in paragraph at lines 1121--1121
 []|\T1/lmtt/m/n/10 boxAverageHistory\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 boxA
 verageWriteInterval\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 boxAverageMin\T1/lmr/
@@ -1795,7 +1810,7 @@ ordinates\T1/lmr/m/n/10 (+20) , \T1/lmtt/m/n/10 tracerVariables\T1/lmr/m/n/10 (
 +20) , \T1/lmtt/m/n/10 tracerWriteInterval\T1/lmr/m/n/10 (+20) ,
  []
 
-[136] [137] [138] [139]
+[139] [140] [141] [142]
 Underfull \hbox (badness 1715) in paragraph at lines 1324--1325
 \T1/lmtt/m/n/10.95 outputs \T1/lmr/m/n/10.95 (+20) with \T1/lmtt/m/n/10.95 time
 Frequency=pfw["plotInterval"]\T1/lmr/m/n/10.95 (+20) , tar-get-ing ei-ther \T1/
@@ -1819,7 +1834,7 @@ Overfull \hbox (2.13336pt too wide) in paragraph at lines 1359--1359
 []|\T1/lmtt/m/n/10 plotUnscaledParticles| 
  []
 
-[140]
+[143]
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2020/03/24 1.8d listings language file
@@ -1828,11 +1843,11 @@ File: lstlang1.sty 2020/03/24 1.8d listings language file
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 )
-[141] [142] [143]) (./sections/03_event_controls.tex [144] [145] [146] [147]
-[148] [149] [150] [151]) (./sections/03_restart_controls.tex [152] [153]
-[154]) (./sections/04_postprocessing.tex [155]
+[144] [145] [146]) (./sections/03_event_controls.tex [147] [148] [149] [150]
+[151] [152] [153] [154]) (./sections/03_restart_controls.tex [155] [156]
+[157]) (./sections/04_postprocessing.tex [158]
 Chapter 4.
-[156
+[159
 
 ]
 Underfull \hbox (badness 1789) in paragraph at lines 32--33
@@ -1841,9 +1856,9 @@ ry . csv$ \T1/lmr/m/n/10.95 (+20) has the header \T1/lmtt/m/n/10.95 time, F00,
 F11, F22, length_x,
  []
 
-) (./sections/05_reports.tex [157]
+) (./sections/05_reports.tex [160]
 Chapter 5.
-) (./sections/06_maintaining.tex [158
+) (./sections/06_maintaining.tex [161
 
 ]
 Chapter 6.
@@ -1860,15 +1875,15 @@ Underfull \hbox (badness 2478) in paragraph at lines 41--42
 0.95 (+20) , plus a Read
  []
 
-[159
+[162
 
-]) (./sections/07_references.tex [160]
+]) (./sections/07_references.tex [163]
 Chapter 7.
-[161
+[164
 
-] [162
+] [165
 
-] [163] [164]) (./generated/source_inventory.tex
+] [166] [167]) (./generated/source_inventory.tex
 Underfull \hbox (badness 10000) in paragraph at lines 18--19
 []|\T1/lmtt/m/n/9 src/coreComponents/physicsSolvers/solidMechanics/
  []
@@ -1919,7 +1934,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 27--28
 fw_
  []
 
-[165]) (./generated/solver_attributes.tex [166]
+[168]) (./generated/solver_attributes.tex [169]
 Appendix A.
 
 Overfull \hbox (1.60341pt too wide) in alignment at lines 44--49
@@ -2021,9 +2036,9 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 58--173
  [] [] [] [] 
  []
 
-[167
+[170
 
-] [168] [169]
+] [171] [172]
 Overfull \hbox (17.1885pt too wide) in paragraph at lines 177--178
 [] []\T1/lmr/bx/n/10.95 (-20) In-ter-nal/non-in-put wrap-pers.[] \T1/lmr/m/n/10
 .95 (-20) The fol-low-ing reg-is-tered wrap-pers were marked with \T1/lmtt/m/n/
@@ -2100,7 +2115,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 199--234
  [] [] [] [] 
  []
 
-[170]
+[173]
 Overfull \hbox (1.60341pt too wide) in alignment at lines 238--243
  [] [] [] [] 
  []
@@ -2190,7 +2205,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 274--277
  [] [] [] [] 
  []
 
-[171]
+[174]
 Overfull \hbox (1.60341pt too wide) in alignment at lines 281--286
  [] [] [] [] 
  []
@@ -2215,7 +2230,7 @@ Overfull \hbox (1.60341pt too wide) in alignment at lines 295--296
  [] [] [] [] 
  []
 
-) (./generated/events.tex [172]
+) (./generated/events.tex [175]
 Appendix B.
 
 Overfull \hbox (1.59592pt too wide) in alignment at lines 7--12
@@ -2562,7 +2577,7 @@ Overfull \hbox (1.59592pt too wide) in alignment at lines 21--40
  [] [] [] [] 
  []
 
-[173
+[176
 
 ]
 Overfull \hbox (13.59589pt too wide) in alignment at lines 46--51
@@ -2699,7 +2714,7 @@ Overfull \hbox (13.59589pt too wide) in alignment at lines 60--136
  [] [] [] [] [] 
  []
 
-[174] [175]) (./generated/pfw.tex [176]
+[177] [178]) (./generated/pfw.tex [179]
 Appendix C.
 
 Underfull \hbox (badness 10000) in paragraph at lines 11--12
@@ -2721,15 +2736,15 @@ Underfull \hbox (badness 10000) in paragraph at lines 134--134
 []|\T1/lmtt/m/n/8 ['Velocity', 'MaterialType', 'Contact
  []
 
-[177
+[180
 
-] [178]) (./generated/particle_format.tex
+] [181]) (./generated/particle_format.tex
 Underfull \hbox (badness 10000) in paragraph at lines 142--1
 \T1/lmr/m/n/10.95 (+20) mal, grid-Prin-ci-pal-Ex-plic-it-Sur-faceNor-mal, grid-
 Co-he-sive-Field-Flag, grid-MaxMapped-Par-ti-cleID,
  []
 
-[179]
+[182]
 Appendix D.
 
 Underfull \hbox (badness 2318) in paragraph at lines 37--38
@@ -2741,11 +2756,11 @@ Underfull \hbox (badness 2318) in paragraph at lines 41--42
 []|\T1/lmr/bx/n/8 (+20) Required if ab-
  []
 
-[180
+[183
 
-]) (./generated/geometry_materials.tex [181]
+]) (./generated/geometry_materials.tex [184]
 Appendix E.
-[182
+[185
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 97--97
@@ -2762,7 +2777,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 162--162
 []|\T1/lmtt/m/n/8 ElasticTransverseIsotropicPressure
  []
 
-[183]) (./generated/suites.tex [184]
+[186]) (./generated/suites.tex [187]
 Appendix F.
 
 Overfull \hbox (1.59592pt too wide) in alignment at lines 10--15
@@ -4264,9 +4279,9 @@ Overfull \hbox (1.59592pt too wide) in alignment at lines 24--125
  [] [] [] [] 
  []
 
-[185
+[188
 
-] [186] [187] [188] [189]) (./generated/post_scripts.tex [190]
+] [189] [190] [191] [192]) (./generated/post_scripts.tex [193]
 Appendix G.
 
 Underfull \hbox (badness 10000) in paragraph at lines 22--23
@@ -4568,50 +4583,50 @@ Underfull \hbox (badness 10000) in paragraph at lines 61--62
 []|\T1/lmtt/m/n/9 scripts/preProcessing/materialPointMethodParticleFileWriter/
  []
 
-[191
+[194
 
-]) [192] (./geos_mpm_manual.ind [193
+]) [195] (./geos_mpm_manual.ind [196
 
 
-] [194] [195] [196] [197]
-Overfull \hbox (45.18294pt too wide) in paragraph at lines 534--536
+] [197] [198] [199] [200]
+Overfull \hbox (45.18294pt too wide) in paragraph at lines 537--539
 []| \T1/lmtt/m/n/10.95 disableSurfaceNormalsAndPositionsOnCPDIScaling\T1/lmr/m/
 n/10.95 (-20) ,
  []
 
 
-Underfull \hbox (badness 1748) in paragraph at lines 542--544
+Underfull \hbox (badness 1748) in paragraph at lines 545--547
 []| \T1/lmtt/m/n/10.95 frictionCoefficientRuleOfMixtures\T1/lmr/m/n/10.95 (+20)
- , [][]126[][],
+ , [][]129[][],
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 594--596
+Underfull \hbox (badness 10000) in paragraph at lines 597--599
 []| \T1/lmtt/m/n/10.95 resetDefGradForFullyDamagedParticles\T1/lmr/m/n/10.95 (+
 20) ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 630--632
+Underfull \hbox (badness 10000) in paragraph at lines 633--635
 []| \T1/lmtt/m/n/10.95 useReferenceVectorsForParticleUpdate\T1/lmr/m/n/10.95 (+
 20) ,
  []
 
 
-Underfull \hbox (badness 1460) in paragraph at lines 632--634
+Underfull \hbox (badness 1460) in paragraph at lines 635--637
 []| \T1/lmtt/m/n/10.95 useSurfacePositionForContact\T1/lmr/m/n/10.95 (+20) , []
-[]126[][], [][]128[][],
+[]129[][], [][]131[][],
  []
 
-[198] [199] [200]) (./geos_mpm_manual.aux) ) 
+[201] [202] [203]) (./geos_mpm_manual.aux) ) 
 Here is how much of TeX's memory you used:
- 23594 strings out of 478268
- 394862 string characters out of 5754030
- 1214932 words of memory out of 5000000
- 38184 multiletter control sequences out of 15000+600000
- 603776 words of font info for 358 fonts, out of 8000000 for 9000
+ 23679 strings out of 478268
+ 396285 string characters out of 5754030
+ 1216410 words of memory out of 5000000
+ 38218 multiletter control sequences out of 15000+600000
+ 603989 words of font info for 360 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,14n,80p,1750b,2032s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 60i,14n,80p,1750b,2051s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {/usr/tce/backend/installations/lin
 ux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/te
 xmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/tce/backend/installations/linux-rhe
@@ -4684,9 +4699,9 @@ c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
 e1/public/lm/lmtti10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc
 -10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type
 1/public/amsfonts/symbols/msbm10.pfb>
-Output written on geos_mpm_manual.pdf (208 pages, 10899441 bytes).
+Output written on geos_mpm_manual.pdf (211 pages, 10924173 bytes).
 PDF statistics:
- 6607 PDF objects out of 7423 (max. 8388607)
- 2738 named destinations out of 2984 (max. 500000)
- 75221 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 6695 PDF objects out of 7423 (max. 8388607)
+ 2785 named destinations out of 2984 (max. 500000)
+ 75237 words of extra memory for PDF output out of 89155 (max. 10000000)
 

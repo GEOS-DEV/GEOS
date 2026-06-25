@@ -429,14 +429,6 @@ DECLARE_FIELD( particleColor,
                WRITE_AND_READ,
                "particleColor" );
 
-DECLARE_FIELD( particleSurfaceCurvature,
-               "particleSurfaceCurvature",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "particleSurfaceCurvature" );
-
 DECLARE_FIELD( particleResidueBinderFlag,
                "particleResidueBinderFlag",
                array1d< real64 >,

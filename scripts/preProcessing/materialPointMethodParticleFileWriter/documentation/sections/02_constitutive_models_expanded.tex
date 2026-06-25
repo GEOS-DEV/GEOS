@@ -4,7 +4,7 @@
 \index{Constitutive block}
 \index{MPM constitutive dispatch}
 
-This section documents the continuum constitutive models used by the MPM solver.  Cohesive-zone material laws are documented separately in Section~\ref{sec:cohesive-zone-implementation}, because they operate on interface opening/sliding states rather than on ordinary particle volume states.  The continuum models described here are defined in the XML \texttt{Constitutive} block and assigned to particles through \texttt{ParticleRegion} material lists.  PFW assigns the particle material index as described in Section~\ref{sec:pfw-materials}; during the explicit step, that index selects the GEOS constitutive object used at Step~16, Section~\ref{subsec:solver-step-16}.
+This section documents the continuum constitutive models used by the MPM solver.  Cohesive-zone material laws are documented separately in Section~\ref{sec:cohesive-zone-implementation}, because they operate on interface opening/sliding states rather than on ordinary particle volume states.  The continuum models described here are defined in the XML \texttt{Constitutive} block and assigned to particles through \texttt{ParticleRegion} material lists.  PFW assigns the particle material index as described in Section~\ref{sec:pfw-materials}; during the explicit step, that index selects the GEOS constitutive object used at Step~17, Section~\ref{subsec:solver-step-17}.
 
 For a continuum particle, the solver supplies the material update with the current or incremental kinematic state, density, volume, temperature, porosity, damage, material direction, and any model-specific history fields.  The constitutive model returns the updated Cauchy stress, updated history variables, material wave-speed data used by the CFL estimate, and a constitutive update flag that may be consumed by the robustness controls in Section~\ref{sec:robustness-controls}.  The common notation used below is
 \begin{align}
@@ -1183,7 +1183,7 @@ The model writes \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{porosity},
 \label{subsec:fluid-constitutive-models}
 \index{constitutiveModels!fluid models}
 
-The reviewed MPM continuum dispatch includes a gas-like continuum model.  The PFW and XML infrastructure can assign this model to particles in the same way as solid models, but its stress is purely spherical.  A future liquid model can use the same dispatch path once implemented.
+The reviewed MPM continuum dispatch includes both gas-like and liquid-like continuum models.  The PFW and XML infrastructure assigns these models to particles through the same \texttt{Constitutive} and \texttt{ParticleRegion} material-name machinery used by the solid models.  Their stresses are fluid stresses rather than solid elastic/plastic stresses: \texttt{Gas} is purely spherical, while \texttt{Liquid} combines a weakly compressible pressure law with a Newtonian viscous stress.  Surface-tension forces, when enabled, are not part of either constitutive model; they are assembled separately by the solver-side Step~11 capillary-force path described in Section~\ref{subsec:solver-step-11}.
 
 \subsubsection{\texttt{Gas}}
 \label{subsubsec:gas-model}
@@ -1213,18 +1213,45 @@ waveSpeed = sqrt(1.4 * pressure / density)
 
 The gas model has special handling in the robustness/deformation-gradient-reset path (Section~\ref{sec:robustness-controls}) because a gas particle does not require the same persistent deviatoric deformation history as a solid particle.
 
-\subsubsection{Liquid-model placeholder}
-\label{subsubsec:liquid-model-placeholder}
-\index{constitutiveModels!liquid placeholder}
+\subsubsection{\texttt{Liquid}}
+\label{subsubsec:liquid-model}
+\index{constitutiveModels!Liquid}
+\index{liquid model}
 
-A liquid-particle model is not currently documented as an active MPM continuum model in the reviewed snapshot.  A future liquid model could be introduced through the same material dispatch interface, for example with a weakly compressible equation of state,
+\texttt{Liquid} is the implemented weakly compressible Newtonian liquid model in \texttt{constitutive/liquid/Liquid.cpp}.  It provides the ordinary volumetric and viscous Cauchy stress used by liquid particles in the MPM stress update.  It does not store plastic history, damage history, or a persistent deviatoric elastic deformation; the pressure is recomputed from the current Jacobian and the viscous stress is recomputed from the current rate of deformation each constitutive update.
+
+The volumetric response follows the quadratic compression energy used by the MPM liquid formulation,
 \begin{equation}
-  p = p_0 + K_f\left(\frac{\rho}{\rho_0}-1\right),
+  \Psi_l(J)=\frac{K_l}{2}\left(J-1\right)^2,
   \qquad
-  \boldsymbol{\sigma}=-p\mathbf{I}+2\eta\operatorname{dev}\mathbf{D},
-  \label{eq:liquid-placeholder}
+  p=-\frac{\partial \Psi_l}{\partial J}=-K_l\left(J-1\right),
+  \label{eq:liquid-pressure-from-energy}
 \end{equation}
-where \(K_f\) is a fluid bulk modulus and \(\eta\) is a dynamic viscosity.  This equation is a design placeholder only; it should not be interpreted as an implemented input option until a concrete GEOS-MPM liquid model is registered and verified.
+where \(J=\det\mathbf{F}\) is the particle deformation-gradient Jacobian and \(K_l\) is the liquid bulk modulus.  With the GEOS/MPM stress sign convention, compression gives \(J<1\), positive pressure, and a compressive spherical contribution \(-p\mathbf{I}\).
+
+The viscous response is Newtonian.  Let
+\begin{equation}
+  \mathbf{D}=\frac{1}{2}\left(\nabla\mathbf{v}+\nabla\mathbf{v}^{T}\right)
+  \label{eq:liquid-rate-of-deformation}
+\end{equation}
+be the symmetric velocity-gradient tensor supplied by the particle kinematics.  The liquid Cauchy stress is
+\begin{equation}
+  \boldsymbol{\sigma}=-p\mathbf{I}+2\mu_l\mathbf{D},
+  \label{eq:liquid-stress}
+\end{equation}
+where \(\mu_l\) is the dynamic viscosity.  This is a fluid stress, not an elastic shear stress: the viscous part depends on the instantaneous velocity gradient and vanishes in a rigid-body state with no rate of deformation.
+
+\begin{lstlisting}[caption={Liquid stress update.},label={alg:liquid-update},basicstyle=\ttfamily\small]
+J = det(particleDeformationGradient[p])
+D = sym(particleVelocityGradient[p])
+pressure = -bulkModulus * (J - 1)
+stress = -pressure * I + 2 * viscosity * D
+waveSpeed = sqrt(bulkModulus / density)
+\end{lstlisting}
+
+The particle-to-constitutive dependency update supplies the current \texttt{jacobian} and \texttt{density} fields to the model before the stress update.  The explicit time-step estimate then uses the acoustic wave speed shown in Listing~\ref{alg:liquid-update}.  Increasing \(K_l\) makes the material less compressible but also increases the wave speed and can reduce the stable explicit time step; increasing \(\mu_l\) increases rate-dependent damping without introducing a solid-like shear modulus.
+
+The solver treats \texttt{Liquid} as a fluid material in the deformation-gradient cleanup path, together with \texttt{Gas}.  After output and robustness checks, the particle deformation gradient may be reset to a rotation times a spherical stretch with the same determinant.  This keeps the volumetric state used by Eq.~\eqref{eq:liquid-pressure-from-energy} while removing distortional deformation history that the liquid model does not use.  Capillary forces remain separate: enabling a \texttt{Liquid} material alone does not add surface tension; users must also enable the solver surface-tension controls and provide \texttt{surfaceTensionPairs} when capillary forces are desired.
 
 \subsection{Shared constitutive modifiers and particle state}
 \label{subsec:constitutive-modifiers}
