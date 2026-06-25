@@ -252,7 +252,7 @@ void SchemaConstruction( Group & group,
             string const limitsString = wrapper.getLimitsString();
             if( !limitsString.empty() )
             {
-              commentString += GEOS_FMT( " Allowed range: {}", limitsString );
+              commentString += GEOS_FMT( "\nAllowed range: {}", limitsString );
             }
 
             // List of objects that registered this field
