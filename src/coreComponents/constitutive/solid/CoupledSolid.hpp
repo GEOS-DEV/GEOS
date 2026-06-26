@@ -30,6 +30,24 @@ namespace constitutive
 {
 
 /**
+ * @brief Sentinel type representing "no damage-coupled diffusion".
+ * Used as the default DIFF_TYPE in reactive solid models so that existing
+ * registrations (without diffusion) compile and run identically to before.
+ */
+struct NoDiffusion
+{
+  static string catalogName() { return ""; }
+
+  struct KernelWrapper
+  {
+    GEOS_HOST_DEVICE
+    void updateDamageDiffusivity( localIndex const, real64 const & ) const {}
+  };
+
+  KernelWrapper createKernelWrapper() const { return KernelWrapper{}; }
+};
+
+/**
  * @brief Provides kernel-callable constitutive update routines
  *
  *

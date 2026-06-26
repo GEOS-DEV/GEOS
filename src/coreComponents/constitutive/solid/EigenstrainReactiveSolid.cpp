@@ -26,6 +26,7 @@
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/diffusion/DamageDiffusion.hpp"
 
 namespace geos
 {
@@ -36,14 +37,23 @@ namespace constitutive
 {
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::EigenstrainReactiveSolid( string const & name, Group * const parent ):
+          typename PERM_TYPE,
+          typename DIFF_TYPE >
+EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::EigenstrainReactiveSolid( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( name, parent )
-{}
+{
+  if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
+  {
+    this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Name of the diffusion constitutive model" );
+  }
+}
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
+          typename PERM_TYPE,
+          typename DIFF_TYPE >
+void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::initializeState();
 }
@@ -56,12 +66,16 @@ typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability
 // typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageSpectralDamagePermeability;
 typedef EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageVolDevDamagePermeability;
 
+// Damage solid + damage permeability + damage diffusion
+typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > EigenStrainReactiveDamageDamagePermeabilityDamageDiffusion;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeability, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageVolDevDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 
 
 }

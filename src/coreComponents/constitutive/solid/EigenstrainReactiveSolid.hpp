@@ -27,6 +27,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/diffusion/DamageDiffusion.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 
@@ -36,13 +37,15 @@ namespace constitutive
 {
 
 /**
- * @brief Provides kernel-callable constitutive update routines
+ * @brief Provides kernel-callable constitutive update routines.
  *
- *
- * @tparam SOLID_TYPE type of the porosity model
+ * @tparam SOLID_TYPE type of the solid model
+ * @tparam PERM_TYPE  type of the permeability model
+ * @tparam DIFF_TYPE  type of the diffusion model (default: NoDiffusion = no damage coupling)
  */
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
+          typename PERM_TYPE,
+          typename DIFF_TYPE = NoDiffusion >
 class EigenstrainReactiveSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >
 {
 public:
@@ -50,12 +53,15 @@ public:
   using DiscretizationOps = typename SOLID_TYPE::KernelWrapper::DiscretizationOps;
 
   /**
-   * @brief Constructor
+   * @brief Constructor.
+   * @param diffModel pointer to diffusion model; may be nullptr when DIFF_TYPE == NoDiffusion.
    */
   EigenstrainReactiveSolidUpdates( SOLID_TYPE const & solidModel,
                                    ReactivePorosityBase const & porosityModel,
-                                   PERM_TYPE const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel )
+                                   PERM_TYPE const & permModel,
+                                   DIFF_TYPE const * diffModel = nullptr ):
+    CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
+    m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
   GEOS_HOST_DEVICE
@@ -77,6 +83,7 @@ public:
                                         mineralReactionMolarIncrements );
 
     updateMatrixPermeability( k );
+    updateMatrixDiffusivity( k );
   }
 
   GEOS_HOST_DEVICE
@@ -120,6 +127,26 @@ public:
       damageAvg = damageAvg/quadSize;
 
       m_permUpdate.updateDamagePermeability( k, damageAvg );
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  void updateMatrixDiffusivity( localIndex const k ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< DIFF_TYPE, DamageDiffusion > )
+    {
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+
+      real64 damageAvg = 0.0;
+
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+      }
+
+      damageAvg = damageAvg / quadSize;
+
+      m_diffUpdate.updateDamageDiffusivity( k, damageAvg );
     }
   }
 
@@ -217,6 +244,29 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_permUpdate;
 
+  /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
+  typename DIFF_TYPE::KernelWrapper m_diffUpdate;
+
+  /**
+   * @brief Factory that creates the diffusion kernel wrapper.
+   * For DamageDiffusion: creates a real wrapper from the model.
+   * For NoDiffusion (default): returns a zero-cost no-op wrapper.
+   */
+  GEOS_HOST_DEVICE
+  static typename DIFF_TYPE::KernelWrapper initDiffUpdate( DIFF_TYPE const * diffModel )
+  {
+    if constexpr( std::is_same_v< DIFF_TYPE, DamageDiffusion > )
+    {
+      GEOS_ASSERT( diffModel != nullptr );
+      return diffModel->createKernelWrapper();
+    }
+    else
+    {
+      (void)diffModel;
+      return typename DIFF_TYPE::KernelWrapper{};
+    }
+  }
+
   GEOS_HOST_DEVICE
   inline
   void updateSolidBulkModulus( localIndex const k ) const
@@ -281,15 +331,18 @@ class EigenstrainReactiveSolidBase
  * It is used as an interface to access all constitutive models relative to the properties of a porous material.
  *
  * @tparam SOLID_TYPE type of solid model
+ * @tparam PERM_TYPE  type of permeability model
+ * @tparam DIFF_TYPE  type of diffusion model (default: NoDiffusion = no damage coupling)
  */
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
+          typename PERM_TYPE,
+          typename DIFF_TYPE = NoDiffusion >
 class EigenstrainReactiveSolid : public CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >
 {
 public:
 
-  /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = EigenstrainReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE >;
+  /// Alias for kernel update wrapper
+  using KernelWrapper = EigenstrainReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >;
 
   /**
    * @brief Constructor
@@ -299,18 +352,28 @@ public:
   EigenstrainReactiveSolid( string const & name, dataRepository::Group * const parent );
 
   /**
-   * @brief Catalog name
+   * @brief Catalog name.
+   * Existing 2-param registrations (DIFF_TYPE == NoDiffusion) produce the same name as before.
+   * New 3-param registrations append the DIFF_TYPE suffix.
    * @return Static catalog string
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )   // default case
+    if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > && std::is_same_v< DIFF_TYPE, NoDiffusion > )
     {
       return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName();
     }
-    else   // special cases
+    else if constexpr ( std::is_same_v< DIFF_TYPE, NoDiffusion > )
     {
       return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
+    }
+    else if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )
+    {
+      return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName() + DIFF_TYPE::catalogName();
+    }
+    else
+    {
+      return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName() + DIFF_TYPE::catalogName();
     }
   }
 
@@ -327,9 +390,19 @@ public:
    */
   KernelWrapper createKernelUpdates() const
   {
-    return KernelWrapper( getSolidModel(),
-                          getPorosityModel(),
-                          getPermModel() );
+    if constexpr( std::is_same_v< DIFF_TYPE, NoDiffusion > )
+    {
+      return KernelWrapper( getSolidModel(),
+                            getPorosityModel(),
+                            getPermModel() );
+    }
+    else
+    {
+      return KernelWrapper( getSolidModel(),
+                            getPorosityModel(),
+                            getPermModel(),
+                            &getDiffModel() );
+    }
   }
 
   /**
@@ -350,6 +423,13 @@ private:
   using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getPermModel;
+
+  DIFF_TYPE const & getDiffModel() const
+  {
+    return this->getParent().template getGroup< DIFF_TYPE >( m_diffusionModelName );
+  }
+
+  string m_diffusionModelName;
 };
 
 

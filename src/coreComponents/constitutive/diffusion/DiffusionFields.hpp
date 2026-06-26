@@ -55,6 +55,14 @@ DECLARE_FIELD( phaseDiffusivityMultiplier,
                WRITE_AND_READ,
                "Phase multipliers for the diffusivity coefficients" );
 
+DECLARE_FIELD( bulkDiffusivity,
+               "bulkDiffusivity",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Bulk (undamaged) diffusivity" );
+
 
 }
 

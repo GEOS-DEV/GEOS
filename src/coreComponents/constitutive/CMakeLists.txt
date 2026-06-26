@@ -47,6 +47,7 @@ set( constitutive_headers
      contact/HydraulicApertureTable.hpp
      contact/RateAndStateFriction.hpp
      diffusion/ConstantDiffusion.hpp
+     diffusion/DamageDiffusion.hpp
      diffusion/DiffusionBase.hpp
      diffusion/DiffusionFields.hpp
      diffusion/DiffusionSelector.hpp
@@ -244,6 +245,7 @@ set( constitutive_sources
      contact/HydraulicApertureTable.cpp
      contact/RateAndStateFriction.cpp
      diffusion/ConstantDiffusion.cpp
+     diffusion/DamageDiffusion.cpp
      diffusion/DiffusionBase.cpp
      dispersion/DispersionBase.cpp
      dispersion/LinearIsotropicDispersion.cpp

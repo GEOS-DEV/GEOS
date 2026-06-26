@@ -26,6 +26,7 @@
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/diffusion/DamageDiffusion.hpp"
 
 namespace geos
 {
@@ -36,14 +37,23 @@ namespace constitutive
 {
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
+          typename PERM_TYPE,
+          typename DIFF_TYPE >
+PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( name, parent )
-{}
+{
+  if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
+  {
+    this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Name of the diffusion constitutive model" );
+  }
+}
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
+          typename PERM_TYPE,
+          typename DIFF_TYPE >
+void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
 }
@@ -60,6 +70,9 @@ typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > Po
 // typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageSpectralDamagePermeability;
 typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageVolDevDamagePermeability;
 
+// Damage solid + damage permeability + damage diffusion
+typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > PorousReactiveDamageDamagePermeabilityDamageDiffusion;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageConstant, string const &, Group * const )
@@ -69,6 +82,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, stri
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeability, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 
 
 }
