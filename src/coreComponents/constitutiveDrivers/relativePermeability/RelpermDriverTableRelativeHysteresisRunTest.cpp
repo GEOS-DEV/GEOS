@@ -16,8 +16,12 @@
 #include "RelpermDriverRunTest.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 
-
 namespace geos
 {
+
+template<>
+struct HasHysteresis< constitutive::TableRelativePermeabilityHysteresis > : std::true_type
+{};
+
 template void RelpermDriver::runTest< geos::constitutive::TableRelativePermeabilityHysteresis >( geos::constitutive::TableRelativePermeabilityHysteresis &, arrayView2d< real64 > const & );
 }

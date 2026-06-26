@@ -1307,7 +1307,7 @@ int MpiWrapper::scatterv( TS const * const sendbuf,
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
-  std::size_t const sendBufferSize = sendcounts * sizeof(TS);
+  std::size_t const sendBufferSize = sendcounts[0] * sizeof(TS);
   std::size_t const recvBufferSize = recvcount * sizeof(TR);
   GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
