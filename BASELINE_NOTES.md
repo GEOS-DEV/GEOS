@@ -5,19 +5,28 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4082 (2026-06-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4082-17011-71cf518.tar.gz>
+=====================
+Tutorial examples of a vertical fault using the ALM solver
+
 PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
+=====================
 Move relperm driver to use new constitutive driver framework
 
 PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
+=====================
 Implement compositional enthalpy model
 
 PR #4074 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4074-16937-bf66240.tar.gz>
+=====================
 Change triaxial driver to use restart for checks
 
 PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
+=====================
 Add Coulomb friction/cohesion input from vtk mesh
 
 PR #4068 (2026-06-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
+=====================
 Add MPI runs for smoke tests with surfaceGenerator
 
 PR #4062 (2026-05-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4062-16784-6d8782e.tar.gz>
