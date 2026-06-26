@@ -11,7 +11,8 @@
       logLevel="1"
       targetRegions="{ Region, Fault }"
       fractureRegion="Fault"
-      initialRockToughness="1e60"/>
+      initialRockToughness="1e60"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Constitutive>
