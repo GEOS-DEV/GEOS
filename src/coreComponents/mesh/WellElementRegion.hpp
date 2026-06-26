@@ -107,6 +107,12 @@ public:
   void setWellControlsName( string const & name ) { m_wellControlsName = name; }
 
   /**
+   * @return name the name of the WellControls object
+   */
+  string const & getWellControlsName() const { return m_wellControlsName; }
+
+
+  /**
    * @brief Get the name of the subRegion.
    * @return the name of the subRegion object
    */

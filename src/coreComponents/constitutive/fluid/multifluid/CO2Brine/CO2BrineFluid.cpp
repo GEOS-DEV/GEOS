@@ -154,6 +154,13 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
+integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getPhaseIndex( const std::string & phaseName ) const
+{
+  string const expectedPhaseName[] =  { phaseName };
+  return PVTFunctionHelpers::findName( m_phaseNames, expectedPhaseName, viewKeyStruct::phaseNamesString() );
+}
+
+template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const pressure,
                                                                     real64 const temperature ) const
 {
