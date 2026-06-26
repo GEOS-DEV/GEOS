@@ -28,22 +28,25 @@ namespace geos
 namespace dataRepository
 {
 
+namespace wrapperLimits
+{
+
 /**
- * @enum WrapperLimitsMode
+ * @enum LimitsMode
  * @brief Enforcement mode associated with the limits of an attribute
  *
  * - Indicative: the limits are documentation only, no runtime check is performed.
  * - Warning:    a value outside the limits emits a runtime warning.
  * - Error:      a value outside the limits throws.
  */
-enum class WrapperLimitsMode : integer
+enum class LimitsMode : integer
 {
   Indicative,
   Warning,
   Error
 };
 
-ENUM_STRINGS( WrapperLimitsMode,
+ENUM_STRINGS( LimitsMode,
               "Indicative",
               "Warning",
               "Error" );
@@ -85,7 +88,7 @@ using limit_value_type_t = typename LimitValueType< T >::type;
  * @tparam T type to check
  * @brief Trait determining whether attribute limits can be applied to type @p T
  *
- * WrapperLimits apply to numeric types (integer, real32, real64, etc.) including arrays
+ * wrapperLimits::Limits apply to numeric types (integer, real32, real64, etc.) including arrays
  * of numeric types (array1d< integer >, array2d< real64 >, etc.)
  */
 template< typename T >
@@ -101,11 +104,11 @@ template< typename T >
 inline constexpr bool is_limitable_v = is_limitable< T >::value;
 
 /**
- * @struct WrapperBound
+ * @struct Bound
  * @brief Structure containing informations about an attribute limit.
  */
 template< typename T >
-struct WrapperBound
+struct Bound
 {
   T value;
   bool isInclusive = true;
@@ -115,24 +118,24 @@ struct WrapperBound
    * @param value The limit value to set
    * @param isInclusive Whether the limit should be inclusive or not
    */
-  explicit WrapperBound( T v, bool inclusive = true )
+  explicit Bound( T v, bool inclusive = true )
     : value( v ), isInclusive( inclusive )
   {}
 
   /// @cond DO_NOT_DOCUMENT
-  friend bool operator<( WrapperBound const & left, WrapperBound const & right )
+  friend bool operator<( Bound const & left, Bound const & right )
   { return left.value < right.value; }
 
-  friend bool operator>( WrapperBound const & left, WrapperBound const & right )
+  friend bool operator>( Bound const & left, Bound const & right )
   { return operator<( right, left ); }
 
-  friend bool operator<=( WrapperBound const & left, WrapperBound const & right )
+  friend bool operator<=( Bound const & left, Bound const & right )
   { return !( operator>( left, right ) ); }
 
-  friend bool operator>=( WrapperBound const & left, WrapperBound const & right )
+  friend bool operator>=( Bound const & left, Bound const & right )
   { return !( operator<( left, right ) ); }
 
-  friend inline std::ostream & operator<<( std::ostream & os, WrapperBound const & bound )
+  friend inline std::ostream & operator<<( std::ostream & os, Bound const & bound )
   {
     os << bound.value;
     return os;
@@ -145,9 +148,9 @@ struct WrapperBound
  * @param value The inclusive limit value to set
  */
 template< typename T >
-WrapperBound< T > inclusive( T value )
+Bound< T > inclusive( T value )
 {
-  return WrapperBound< T >{ value, /*isInclusive*/ true };
+  return Bound< T >{ value, /*isInclusive*/ true };
 }
 
 /**
@@ -155,40 +158,40 @@ WrapperBound< T > inclusive( T value )
  * @param value The inclusive limit value to set
  */
 template< typename T >
-WrapperBound< T > exclusive( T value )
+Bound< T > exclusive( T value )
 {
-  return WrapperBound< T >{ value, /*isInclusive*/ false };
+  return Bound< T >{ value, /*isInclusive*/ false };
 }
 
 /**
- * @brief Type containing either a raw type or a WrapperBound
+ * @brief Type containing either a raw type or a Bound
  *
  * Used as a type argument for methods that expect a wrapper boundary,
- * allowing them to accept either a "raw" value or a WrapperBound.
+ * allowing them to accept either a "raw" value or a Bound.
  * This simplifies the API of those method
  *
  * @code
  * // foo signature: foo( LimitArg< T > const & )
  * foo( 1 );
- * foo( exclusive( 1 ) ); // <- exclusive() builds a WrapperBound
+ * foo( exclusive( 1 ) ); // <- exclusive() builds a Bound
  * @endcode
  */
 template< typename T >
-using LimitArg = std::variant< T, WrapperBound< T > >;
+using LimitArg = std::variant< T, Bound< T > >;
 
 /**
- * @brief Transfrom a "raw" bound value (like an `int`) into a WrapperBound.
+ * @brief Transfrom a "raw" bound value (like an `int`) into a Bound.
  * @param bound the value to transform
- * @return A WrapperBound containing the @p bound value, or @p bound it is already a WrapperBound
+ * @return A Bound containing the @p bound value, or @p bound it is already a Bound
  */
 template< typename T >
-std::optional< WrapperBound< T > > toWrapperBound( std::optional< LimitArg< T > > const & bound )
+std::optional< Bound< T > > toBound( std::optional< LimitArg< T > > const & bound )
 {
   if( !bound.has_value() )
   {
     return std::nullopt;
   }
-  return std::visit( []( auto const & value ) -> WrapperBound< T > {
+  return std::visit( []( auto const & value ) -> Bound< T > {
     if constexpr ( std::is_same_v< std::decay_t< decltype( value ) >, T > )
     {
       return inclusive( value );
@@ -201,7 +204,7 @@ std::optional< WrapperBound< T > > toWrapperBound( std::optional< LimitArg< T > 
 }
 
 /**
- * @struct WrapperLimits
+ * @struct Limits
  * @brief Storage for the optional min/max bounds of a wrapped value.
  *
  * Specialized so that the members (std::optional< T >) are only instanciated
@@ -209,14 +212,14 @@ std::optional< WrapperBound< T > > toWrapperBound( std::optional< LimitArg< T > 
  * abstract types that can't be instantiated with std::optional< absT >.
  */
 template< typename T, bool = is_limitable_v< T > >
-struct WrapperLimits
+struct Limits
 {};
 
 template< typename T >
-struct WrapperLimits< T, true >
+struct Limits< T, true >
 {
-  std::optional< WrapperBound< limit_value_type_t< T > > > min;
-  std::optional< WrapperBound< limit_value_type_t< T > > > max;
+  std::optional< Bound< limit_value_type_t< T > > > min;
+  std::optional< Bound< limit_value_type_t< T > > > max;
 
   string getRangeStr() const
   {
@@ -249,7 +252,7 @@ struct WrapperLimits< T, true >
  * @return True if the value is below the min limit, false otherwise
  */
 template< typename T >
-bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit )
+bool isValueBelowMin( T const & value, Bound< T > const & minLimit )
 {
   return minLimit.isInclusive ? ( value <  minLimit.value )
                               : ( value <= minLimit.value );
@@ -263,13 +266,15 @@ bool isValueBelowMin( T const & value, WrapperBound< T > const & minLimit )
  * @return True if the value is above the max limit, false otherwise
  */
 template< typename T >
-bool isValueAboveMax( T const & value, WrapperBound< T > const & maxLimit )
+bool isValueAboveMax( T const & value, Bound< T > const & maxLimit )
 {
   return maxLimit.isInclusive ? ( value >  maxLimit.value )
                               : ( value >= maxLimit.value );
 }
 
 ///@}
+
+} /* namespace wrapperLimits */
 
 } /* namespace dataRepository */
 

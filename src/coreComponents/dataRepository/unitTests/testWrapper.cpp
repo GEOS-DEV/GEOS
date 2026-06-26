@@ -171,21 +171,21 @@ protected:
 
 TEST_F( WrapperLimitsTest, IsLimitableTrait )
 {
-  static_assert( is_limitable_v< integer >, "integer must be limitable" );
-  static_assert( is_limitable_v< real64 >, "real64 must be limitable" );
-  static_assert( is_limitable_v< array1d< integer > >, "array1d< integer > must be limitable" );
-  static_assert( is_limitable_v< array2d< real64 > >, "array2d< real64 > must be limitable" );
-  static_assert( is_limitable_v< array3d< integer > >, "array3d< integer > must be limitable" );
+  static_assert( wrapperLimits::is_limitable_v< integer >, "integer must be limitable" );
+  static_assert( wrapperLimits::is_limitable_v< real64 >, "real64 must be limitable" );
+  static_assert( wrapperLimits::is_limitable_v< array1d< integer > >, "array1d< integer > must be limitable" );
+  static_assert( wrapperLimits::is_limitable_v< array2d< real64 > >, "array2d< real64 > must be limitable" );
+  static_assert( wrapperLimits::is_limitable_v< array3d< integer > >, "array3d< integer > must be limitable" );
 
-  static_assert( std::is_same< limit_value_type_t< real64 >, real64 >::value, "" );
-  static_assert( std::is_same< limit_value_type_t< array1d< real64 > >, real64 >::value, "" );
-  static_assert( std::is_same< limit_value_type_t< array2d< integer > >, integer >::value, "" );
+  static_assert( std::is_same< wrapperLimits::limit_value_type_t< real64 >, real64 >::value, "" );
+  static_assert( std::is_same< wrapperLimits::limit_value_type_t< array1d< real64 > >, real64 >::value, "" );
+  static_assert( std::is_same< wrapperLimits::limit_value_type_t< array2d< integer > >, integer >::value, "" );
 }
 
 TEST_F( WrapperLimitsTest, ScalarSetGet )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( inclusive( 0.0 ), exclusive( 1.0 ), WrapperLimitsMode::Error );
+  w.setLimits( wrapperLimits::inclusive( 0.0 ), wrapperLimits::exclusive( 1.0 ), wrapperLimits::LimitsMode::Error );
 
   ASSERT_TRUE( w.getMinValue().has_value() );
   ASSERT_TRUE( w.getMaxValue().has_value() );
@@ -193,25 +193,25 @@ TEST_F( WrapperLimitsTest, ScalarSetGet )
   EXPECT_TRUE( w.getMinValue()->isInclusive );
   EXPECT_DOUBLE_EQ( w.getMaxValue()->value, 1.0 );
   EXPECT_FALSE( w.getMaxValue()->isInclusive );
-  EXPECT_EQ( w.getLimitsMode(), WrapperLimitsMode::Error );
+  EXPECT_EQ( w.getLimitsMode(), wrapperLimits::LimitsMode::Error );
 }
 
 TEST_F( WrapperLimitsTest, Array1dSetGet )
 {
   auto & w = makeWrapper< array1d< real64 > >( "array1d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   ASSERT_TRUE( w.getMinValue().has_value() );
   ASSERT_TRUE( w.getMaxValue().has_value() );
   EXPECT_DOUBLE_EQ( w.getMinValue()->value, 0.0 );
   EXPECT_DOUBLE_EQ( w.getMaxValue()->value, 1.0 );
-  EXPECT_EQ( w.getLimitsMode(), WrapperLimitsMode::Error );
+  EXPECT_EQ( w.getLimitsMode(), wrapperLimits::LimitsMode::Error );
 }
 
 TEST_F( WrapperLimitsTest, ScalarValidateInRange )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
   w.reference() = 0.5;
   EXPECT_NO_THROW( w.validateLimits() );
 }
@@ -219,7 +219,7 @@ TEST_F( WrapperLimitsTest, ScalarValidateInRange )
 TEST_F( WrapperLimitsTest, ScalarValidateBelowMinThrows )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
   w.reference() = -0.1;
   EXPECT_THROW( w.validateLimits(), InputError );
 }
@@ -227,7 +227,7 @@ TEST_F( WrapperLimitsTest, ScalarValidateBelowMinThrows )
 TEST_F( WrapperLimitsTest, ScalarValidateAboveMaxThrows )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
   w.reference() = 1.1;
   EXPECT_THROW( w.validateLimits(), InputError );
 }
@@ -235,7 +235,7 @@ TEST_F( WrapperLimitsTest, ScalarValidateAboveMaxThrows )
 TEST_F( WrapperLimitsTest, ScalarValidateInclusiveBoundary )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( inclusive( 0.0 ), inclusive( 1.0 ), WrapperLimitsMode::Error );
+  w.setLimits( wrapperLimits::inclusive( 0.0 ), wrapperLimits::inclusive( 1.0 ), wrapperLimits::LimitsMode::Error );
 
   w.reference() = 0.0;
   EXPECT_NO_THROW( w.validateLimits() );
@@ -247,7 +247,7 @@ TEST_F( WrapperLimitsTest, ScalarValidateInclusiveBoundary )
 TEST_F( WrapperLimitsTest, ScalarValidateExclusiveBoundary )
 {
   auto & w = makeWrapper< real64 >( "scalar" );
-  w.setLimits( exclusive( 0.0 ), exclusive( 1.0 ), WrapperLimitsMode::Error );
+  w.setLimits( wrapperLimits::exclusive( 0.0 ), wrapperLimits::exclusive( 1.0 ), wrapperLimits::LimitsMode::Error );
 
   w.reference() = 0.0;
   EXPECT_THROW( w.validateLimits(), InputError );
@@ -262,7 +262,7 @@ TEST_F( WrapperLimitsTest, ScalarValidateExclusiveBoundary )
 TEST_F( WrapperLimitsTest, Array1dValidateAllInRange )
 {
   auto & w = makeWrapper< array1d< real64 > >( "array1d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   array1d< real64 > & data = w.reference();
   data.resize( 4 );
@@ -277,7 +277,7 @@ TEST_F( WrapperLimitsTest, Array1dValidateAllInRange )
 TEST_F( WrapperLimitsTest, Array1dValidateOutOfRange )
 {
   auto & w = makeWrapper< array1d< real64 > >( "array1d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   array1d< real64 > & data = w.reference();
   data.resize( 4 );
@@ -292,7 +292,7 @@ TEST_F( WrapperLimitsTest, Array1dValidateOutOfRange )
 TEST_F( WrapperLimitsTest, Array1dValidateEmpty )
 {
   auto & w = makeWrapper< array1d< real64 > >( "array1d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   EXPECT_NO_THROW( w.validateLimits() );
 }
@@ -300,7 +300,7 @@ TEST_F( WrapperLimitsTest, Array1dValidateEmpty )
 TEST_F( WrapperLimitsTest, Array2dValidateAllInRange )
 {
   auto & w = makeWrapper< array2d< real64 > >( "array2d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   array2d< real64 > & data = w.reference();
   data.resize( 2, 3 );
@@ -317,7 +317,7 @@ TEST_F( WrapperLimitsTest, Array2dValidateAllInRange )
 TEST_F( WrapperLimitsTest, Array2dValidateOutOfRange )
 {
   auto & w = makeWrapper< array2d< real64 > >( "array2d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   array2d< real64 > & data = w.reference();
   data.resize( 2, 3 );
@@ -334,7 +334,7 @@ TEST_F( WrapperLimitsTest, Array2dValidateOutOfRange )
 TEST_F( WrapperLimitsTest, Array2dValidateEmpty )
 {
   auto & w = makeWrapper< array2d< real64 > >( "array2d" );
-  w.setLimits( 0.0, 1.0, WrapperLimitsMode::Error );
+  w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   EXPECT_NO_THROW( w.validateLimits() );
 }

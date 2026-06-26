@@ -539,9 +539,9 @@ public:
 
   /**
    * @brief Get the enforcement mode of the (optional) attribute limits
-   * @return the WrapperLimitsMode of the wrapper
+   * @return the wrapperLimits::LimitsMode of the wrapper
    */
-  WrapperLimitsMode getLimitsMode() const
+  wrapperLimits::LimitsMode getLimitsMode() const
   {
     return m_limitsMode;
   }
@@ -717,7 +717,7 @@ protected:
   string m_description;
 
   /// Enforcement mode of the (optional) attribute limits
-  WrapperLimitsMode m_limitsMode;
+  wrapperLimits::LimitsMode m_limitsMode;
 
   /// A string regex to validate the input values string to parse for the wrapped object
   string m_rtTypeName;

@@ -48,6 +48,8 @@ namespace dataRepository
 //template< typename U >
 //static void totalViewType( char * const dataType );
 
+using namespace wrapperLimits;
+
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
  * @tparam T is any type that is to be wrapped by Wrapper
@@ -740,11 +742,11 @@ public:
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
   setLimits( std::optional< LimitArg< limit_value_type_t< T > > > min,
              std::optional< LimitArg< limit_value_type_t< T > > > max,
-             WrapperLimitsMode mode = WrapperLimitsMode::Error )
+             LimitsMode mode = LimitsMode::Error )
   {
     using LimitT = limit_value_type_t< T >;
-    std::optional< WrapperBound< LimitT > > const minBound = toWrapperBound< LimitT >( min );
-    std::optional< WrapperBound< LimitT > > const maxBound = toWrapperBound< LimitT >( max );
+    std::optional< Bound< LimitT > > const minBound = toBound< LimitT >( min );
+    std::optional< Bound< LimitT > > const maxBound = toBound< LimitT >( max );
     if( minBound.has_value() && maxBound.has_value() )
     {
       GEOS_ASSERT_LE_MSG( minBound.value(), maxBound.value(),
@@ -760,7 +762,7 @@ public:
   std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
   setLimits( std::optional< LimitArg< limit_value_type_t< T > > >,
              std::optional< LimitArg< limit_value_type_t< T > > >,
-             WrapperLimitsMode GEOS_UNUSED_PARAM( mode ) )
+             LimitsMode GEOS_UNUSED_PARAM( mode ) )
   {
     static_assert( is_limitable_v< U >,
                    "setLimits is only supported on scalar arithmetic types." );
@@ -773,7 +775,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< WrapperBound< limit_value_type_t< T > > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
   getMinValue() const
   {
     return m_limits.min;
@@ -785,7 +787,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< WrapperBound< limit_value_type_t< T > > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
   getMaxValue() const
   {
     return m_limits.max;
@@ -818,7 +820,7 @@ public:
   validateLimits()
   {
     if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == WrapperLimitsMode::Indicative )
+        m_limitsMode == LimitsMode::Indicative )
     {
       return;
     }
@@ -830,7 +832,7 @@ public:
   validateLimits()
   {
     if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == WrapperLimitsMode::Indicative )
+        m_limitsMode == LimitsMode::Indicative )
     {
       return;
     }
@@ -1237,16 +1239,16 @@ private:
 
     switch( m_limitsMode )
     {
-      case WrapperLimitsMode::Warning:
+      case LimitsMode::Warning:
         GEOS_WARNING( msg, getDataContext() );
         break;
 
-      case WrapperLimitsMode::Error:
+      case LimitsMode::Error:
         GEOS_THROW( msg, InputError, getDataContext() );
         break;
 
       default:
-        GEOS_LOG_RANK_0( "Unimplemented WrapperLimitsMode" );
+        GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
         break;
     }
   }
@@ -1267,7 +1269,7 @@ private:
   wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
 
   /// stores the (optional) min/max bounds for the wrapped value.
-  WrapperLimits< T > m_limits;
+  Limits< T > m_limits;
 };
 
 }
