@@ -127,5 +127,16 @@ void ErrorHandler::setupLvArrayErrorHandling()
   } );
 }
 
+void ErrorHandler::manageException( std::exception const & e,
+                                    string_view causeMessage,
+                                    string_view stackTrace ) const
+{
+  m_logger->flushErrorMsg( m_logger->initCurrentExceptionMessage( MsgType::Exception,
+                                                                  e.what(),
+                                                                  ::geos::logger::internal::g_rank )
+                             .setCause( causeMessage )
+                             .addCallStackInfo( stackTrace )
+                             .getDiagnosticMsg());
+}
 
 } /* namespace geos */

@@ -76,6 +76,16 @@ public:
   { return *m_logger; }
 
   /**
+   * @brief Output the error message for a std exception. Std exception are likely thrown from a
+   *        dependency, as geos::exception is the standard exception type to throw from GEOS.
+   * @param e
+   * @param stack_trace
+   */
+  void manageException( std::exception const & e,
+                        string_view causeMessage,
+                        string_view stackTrace ) const;
+
+  /**
    * @brief Post error-handling function that terminates the program.
    */
   void abortProgram() const

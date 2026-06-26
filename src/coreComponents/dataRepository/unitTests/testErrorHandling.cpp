@@ -366,16 +366,17 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
 TEST( ErrorHandling, testLvArrayStdException )
 {
   ErrorLogger testErrorLogger;
-  size_t line1;
+  bool exceptionHappened = false;
 
   beginLocalLoggerTest( testErrorLogger, "testLvArrayAndStdException.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, abortGeos );
 
   // Standard exception thrown by LvArray
   try
   {
     // no ',' in between numbers will throw an exception
     array1d< localIndex > dummy;
-    line1 = __LINE__; LvArray::input::stringToArray( dummy, "{123 456}" );
+    LvArray::input::stringToArray( dummy, "{123 456}" );
   }
   catch( geos::Exception & e )
   {
@@ -383,22 +384,24 @@ TEST( ErrorHandling, testLvArrayStdException )
   }
   catch( std::exception const & e )
   {
-    // mimic "main()" exception logging behaviour
-    testErrorLogger.flushErrorMsg( testErrorLogger.initCurrentExceptionMessage(
-                                     MsgType::Exception, e.what(),
-                                     ::geos::logger::internal::g_rank )
-                                     .setCause( "A dependency has thrown an exception" )
-                                     .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                     .getDiagnosticMsg() );
+    exceptionHappened = true;
 
+    // mimic "main()" exception logging behaviour
+    {
+      string_view constexpr causeMessage = "A dependency has thrown an exception";
+      auto const stackTrace = LvArray::system::stackTrace( true ); // auto const for compatibility with stacktrace library
+      ErrorHandler::getInstance().manageException( e, causeMessage, stackTrace );
+    }
     // we continue without aborting to check the yaml results
   }
   catch( ... )
   {
-    EXPECT_FALSE( true ) << "Exception not correctly handled.";
+    EXPECT_FALSE( true ) << "Unexpected exception.";
   }
+  EXPECT_TRUE( exceptionHappened ) << "Exception has not been thrown";
 
   // we have to inherint the LvArray formatting here
+  endLocalErrorHandlerTest();
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
@@ -406,8 +409,9 @@ TEST( ErrorHandling, testLvArrayStdException )
     R"(- type: Exception
     rank: 0
     message: >-)",
-    GEOS_FMT( "{}:{}", __FILE__, line1 ),
+
     "Array value sequence specified without ',' delimiter: {123 456}",
+
     R"(cause: >-
       A dependency has thrown an exception)",
     "sourceCallStack:",

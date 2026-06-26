@@ -85,12 +85,9 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
-                                           MsgType::Exception, e.what(),
-                                           ::geos::logger::internal::g_rank )
-                                           .setCause( "A dependency has thrown an exception" )
-                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                           .getDiagnosticMsg());
+    string_view constexpr causeMessage = "A dependency has thrown an exception";
+    auto const stackTrace = LvArray::system::stackTrace( true ); // auto const for compatibility with stacktrace library
+    ErrorHandler::getInstance().manageException( e, causeMessage, stackTrace );
     basicCleanup( true );
     ErrorHandler::getInstance().abortProgram();
   }
