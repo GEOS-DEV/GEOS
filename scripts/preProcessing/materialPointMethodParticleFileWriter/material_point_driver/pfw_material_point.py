@@ -19,7 +19,9 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import getpass
 import importlib
+import importlib.util
 import json
 import math
 import os
@@ -34,6 +36,7 @@ import numpy as np
 
 
 VOIGT_COMPONENTS = ("xx", "yy", "zz", "yz", "xz", "xy")
+DEFAULT_COMPILED_DRIVER_NAME = "geos_mpm_material_point_driver"
 VOIGT_INDEX = {name: i for i, name in enumerate(VOIGT_COMPONENTS)}
 VOIGT_TENSOR_INDEX = {
     "xx": (0, 0),
@@ -51,6 +54,7 @@ class MaterialPointInputError(ValueError):
 
 class BackendError(RuntimeError):
     """Raised when a constitutive backend fails."""
+
 
 
 def _as_array(value: Any, shape: Optional[Tuple[int, ...]] = None, name: str = "array") -> np.ndarray:
@@ -320,6 +324,7 @@ class CompiledDriverRunResult:
     run_script: Path
     output_csv: Path
     command: List[str]
+    log_file: Optional[Path] = None
     returncode: Optional[int] = None
 
 
@@ -1013,10 +1018,121 @@ def _quote_command(command: Sequence[str]) -> str:
     return " \\\n  ".join(shlex.quote(str(part)) for part in command)
 
 
+def _is_unset_userdefs_value(value: Any) -> bool:
+    if value is None:
+        return True
+    text = str(value).strip()
+    return text == "" or text == "CHANGEME" or text == "_CHANGEME"
+
+
+def _expand_executable_path(value: Any) -> str:
+    return str(Path(os.path.expandvars(os.path.expanduser(str(value)))))
+
+
+def _load_userdefs_from(path: Path) -> Optional[Any]:
+    if not path.is_file():
+        return None
+    module_name = f"_geos_mpm_material_point_userdefs_{abs(hash(str(path)))}"
+    try:
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        return None
+
+
+def _iter_userdefs_candidates() -> Iterable[Path]:
+    """Yield likely userDefs files without requiring the caller's CWD.
+
+    setupMPM writes userDefs_<user>.py next to the PFW scripts, which are often
+    reached through the top-level mpm symlink.  Some wrappers copy userDefs into
+    the current run directory, so check both locations before falling back to any
+    userDefs_*.py found in the PFW root.
+    """
+    yielded = set()
+
+    explicit = os.environ.get("GEOS_MPM_USERDEFS") or os.environ.get("PFW_USERDEFS")
+    if explicit:
+        path = Path(os.path.expandvars(os.path.expanduser(explicit))).resolve()
+        yielded.add(path)
+        yield path
+
+    user_names = []
+    for name in (os.environ.get("USER"), os.environ.get("LOGNAME")):
+        if name and name not in user_names:
+            user_names.append(name)
+    try:
+        name = getpass.getuser()
+    except Exception:
+        name = ""
+    if name and name not in user_names:
+        user_names.append(name)
+
+    pfw_root = Path(__file__).resolve().parents[1]
+    bases = [Path.cwd(), pfw_root]
+    for base in bases:
+        for user in user_names:
+            path = (base / f"userDefs_{user}.py").resolve()
+            if path not in yielded:
+                yielded.add(path)
+                yield path
+    for path in sorted(p for p in pfw_root.glob("userDefs_*.py") if p.name != "userDefs_username.py"):
+        resolved = path.resolve()
+        if resolved not in yielded:
+            yielded.add(resolved)
+            yield resolved
+
+
+def default_compiled_driver_executable(driver_name: str = DEFAULT_COMPILED_DRIVER_NAME) -> str:
+    """Return the default compiled material-point driver executable.
+
+    Precedence:
+      1. GEOS_MPM_MATERIAL_POINT_DRIVER, for explicit overrides;
+      2. userDefs_<user>.py materialPointDriverPath, if present;
+      3. a driver executable next to userDefs.geosPath;
+      4. the bare executable name, allowing PATH lookup.
+    """
+    env_driver = os.environ.get("GEOS_MPM_MATERIAL_POINT_DRIVER", "").strip()
+    if env_driver:
+        return _expand_executable_path(env_driver)
+
+    for candidate in _iter_userdefs_candidates():
+        userdefs = _load_userdefs_from(candidate)
+        if userdefs is None:
+            continue
+
+        configured_driver = getattr(userdefs, "materialPointDriverPath", None)
+        if not _is_unset_userdefs_value(configured_driver):
+            return _expand_executable_path(configured_driver)
+
+        geos_path = getattr(userdefs, "geosPath", None)
+        if not _is_unset_userdefs_value(geos_path):
+            return str(Path(_expand_executable_path(geos_path)).parent / driver_name)
+
+    return driver_name
+
+
+
+
+def default_compiled_driver_path(driver_name: str = DEFAULT_COMPILED_DRIVER_NAME) -> str:
+    """Backward-compatible alias for the compiled material-point driver path.
+
+    Older material-point verification scripts and some package initializers use
+    this path-oriented name, while the driver helper that resolves the same
+    executable is named ``default_compiled_driver_executable`` in this branch.
+    Keep both names so mixed incremental patch application does not break
+    imports.
+    """
+    return default_compiled_driver_executable(driver_name)
+
+
 def write_compiled_driver_files(
     case: Mapping[str, Any],
     prefix: Path,
-    driver_name: str = "geos_mpm_material_point_driver",
+    driver_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Write sidecar files for the optional compiled GEOS material-point executable.
 
@@ -1026,6 +1142,8 @@ def write_compiled_driver_files(
     """
     prefix = Path(prefix)
     prefix.parent.mkdir(parents=True, exist_ok=True)
+    if driver_name is None:
+        driver_name = default_compiled_driver_executable()
 
     material = load_material(case.get("material", {}))
     controls = ControlProgram(case.get("control", []))
@@ -1085,6 +1203,13 @@ def write_compiled_driver_files(
         "--stress-tolerance", str(float(solver.get("stressTolerance", solver.get("absoluteTolerance", 1.0e-8)))),
         "--fd-epsilon", str(float(solver.get("finiteDifferenceStrain", solver.get("finiteDifferenceScale", 1.0e-7)))),
         "--max-newton-iterations", str(int(solver.get("maxIterations", 20))),
+        "--max-line-search-iterations", str(int(solver.get("maxLineSearchIterations", 12))),
+        "--max-stress-bracket-iterations", str(int(solver.get("maxStressBracketIterations", solver.get("maxBracketIterations", 32)))),
+        "--max-stress-bisection-iterations", str(int(solver.get("maxStressBisectionIterations", solver.get("maxBisectionIterations", 64)))),
+        "--stress-bracket-initial-scale", str(float(solver.get("stressBracketInitialScale", solver.get("bracketInitialScale", 0.0)))),
+        "--stress-bracket-max-strain", str(float(solver.get("stressBracketMaxStrain", solver.get("bracketMaxStrain", 5.0e-2)))),
+        "--stress-bracket-growth", str(float(solver.get("stressBracketGrowth", solver.get("bracketGrowth", 2.0)))),
+        "--stress-control-failure-policy", str(solver.get("stressControlFailurePolicy", solver.get("failurePolicy", "error"))),
     ]
     if "heatCapacity" in temperature or "heatCapacity" in energy:
         command.extend(["--heat-capacity", str(float(temperature.get("heatCapacity", energy.get("heatCapacity", 1.0))))])
@@ -1102,11 +1227,19 @@ def write_compiled_driver_files(
         elif isinstance(value, (list, tuple)) and all(isinstance(v, (int, float, np.integer, np.floating)) for v in value):
             command.extend(["--initial-field", f"{key}={_join_reals(value)}"])
 
-    run_command = f"\"${{GEOS_MPM_MATERIAL_POINT_DRIVER:-{driver_name}}}\" \\\n  " + _quote_command(command)
+    driver_log_path = prefix.parent / f"{prefix.name}.driver.log"
+    run_command = "\"$DRIVER\" \\" + "\n  " + _quote_command(command) + " > \"$LOG_FILE\" 2>&1"
     run_script_path.write_text(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         "# Set GEOS_MPM_MATERIAL_POINT_DRIVER to override the executable path.\n"
+        "if [ -n \"${GEOS_MPM_MATERIAL_POINT_DRIVER:-}\" ]; then\n"
+        "  DRIVER=\"$GEOS_MPM_MATERIAL_POINT_DRIVER\"\n"
+        "else\n"
+        f"  DRIVER={shlex.quote(str(driver_name))}\n"
+        "fi\n"
+        f"LOG_FILE={shlex.quote(str(driver_log_path))}\n"
+        "echo \"driver log: $LOG_FILE\"\n"
         + run_command
         + "\n"
     )
@@ -1156,11 +1289,13 @@ def kroonblawd_graphite_case(
 
 def run_material_point(
     case: Mapping[str, Any],
-    executable: str = "geos_mpm_material_point_driver",
+    executable: Optional[str] = None,
     work_dir: Optional[Union[Path, str]] = None,
     parameter_overrides: Optional[Mapping[str, Any]] = None,
     dry_run: bool = False,
     check: bool = True,
+    capture_output: bool = True,
+    echo_output: bool = False,
 ) -> CompiledDriverRunResult:
     """Prepare and optionally run the optional compiled GEOS material-point driver.
 
@@ -1168,6 +1303,10 @@ def run_material_point(
     apply parameter overrides, emit isolated driver sidecar files, and run the
     compiled constitutive-point executable without touching SolidMechanicsMPM.
     """
+    if executable is None:
+        executable = default_compiled_driver_executable()
+    executable = str(executable)
+
     case_copy = copy.deepcopy(dict(case))
     if parameter_overrides:
         material_block = copy.deepcopy(case_copy.get("material", {}))
@@ -1182,6 +1321,7 @@ def run_material_point(
     files = write_compiled_driver_files(case_copy, root / name, executable)
 
     command = [str(executable)] + [str(part) for part in files["command"]]
+    log_file = root / f"{name}.driver.log"
     result = CompiledDriverRunResult(
         case=Path(files["case"]),
         material_xml=Path(files["materialXml"]),
@@ -1189,13 +1329,35 @@ def run_material_point(
         run_script=Path(files["runScript"]),
         output_csv=Path(files["outputCsv"]),
         command=command,
+        log_file=log_file,
     )
 
     if not dry_run:
-        proc = subprocess.run(command, check=False)
+        if capture_output:
+            proc = subprocess.run(
+                command,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            log_text = (
+                "# Command\n" + _quote_command(command) +
+                "\n\n# stdout\n" + proc.stdout +
+                "\n# stderr\n" + proc.stderr
+            )
+            log_file.write_text(log_text)
+            if echo_output or (check and proc.returncode != 0):
+                if proc.stdout:
+                    print(proc.stdout, end="")
+                if proc.stderr:
+                    print(proc.stderr, end="", file=sys.stderr)
+        else:
+            proc = subprocess.run(command, check=False)
         result.returncode = proc.returncode
         if check and proc.returncode != 0:
-            raise BackendError(f"Compiled GEOS material-point driver returned {proc.returncode}")
+            detail = f"; driver log: {log_file}" if capture_output else ""
+            raise BackendError(f"Compiled GEOS material-point driver returned {proc.returncode}{detail}")
     return result
 
 def example_case() -> Dict[str, Any]:
@@ -1250,8 +1412,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--backend", help="Override backend type, e.g. elastic or external-json")
     parser.add_argument("--export-compiled-driver-prefix", type=Path,
                         help="Write .material.xml, .path.csv, .run.sh, and normalized .json files for the optional compiled GEOS driver, then exit")
-    parser.add_argument("--compiled-driver-name", default="geos_mpm_material_point_driver",
-                        help="Executable name/path embedded in the generated .run.sh file")
+    parser.add_argument("--compiled-driver-name", default=None,
+                        help="Executable name/path embedded in the generated .run.sh file. Default: GEOS_MPM_MATERIAL_POINT_DRIVER, then userDefs.geosPath-adjacent driver, then PATH lookup.")
     args = parser.parse_args(argv)
 
     if args.write_example:

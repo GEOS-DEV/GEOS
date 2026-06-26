@@ -1,0 +1,3 @@
+These tests use the optional geos_mpm_material_point_driver executable, which is
+built only when GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON.  They are intentionally
+not discovered by the default MPM verification-suite pass.

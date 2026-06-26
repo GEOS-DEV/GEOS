@@ -11,6 +11,8 @@ from .pfw_material_point import (  # noqa: F401
     MaterialPointState,
     StepResult,
     cofactor,
+    default_compiled_driver_executable,
+    default_compiled_driver_path,
     example_case,
     flatten_result,
     frame_from_normal,

@@ -58,6 +58,8 @@
 #include <random>
 #include <thread>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 #include <unordered_map>
 
 namespace geos
@@ -68,6 +70,16 @@ using namespace constitutive;
 
 namespace
 {
+
+template< typename T, typename = void >
+struct HasMPMHostStressUpdate : std::false_type
+{};
+
+template< typename T >
+struct HasMPMHostStressUpdate< T,
+                               std::void_t< decltype( std::declval< T const & >().useMPMHostStressUpdate() ) > >
+  : std::true_type
+{};
 
 string normalizeProfileInput( string const & input )
 {
@@ -27018,6 +27030,23 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     {
       using SolidType = TYPEOFREF( castedConstitutiveModel );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
+
+      if constexpr( HasMPMHostStressUpdate< SolidType >::value )
+      {
+        if( castedConstitutiveModel.useMPMHostStressUpdate() )
+        {
+          solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
+                                                                                       constitutiveModelWrapper,
+                                                                                       dt,
+                                                                                       hyperelasticUpdate,
+                                                                                       particleDeformationGradient,
+                                                                                       particleFDot,
+                                                                                       particleVelocityGradient,
+                                                                                       particleStress );
+          return;
+        }
+      }
+
       solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
                                                                                              constitutiveModelWrapper,
                                                                                              dt,

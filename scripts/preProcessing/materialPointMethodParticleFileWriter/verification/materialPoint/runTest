@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PYTHON_CMD=${PFW_PYTHON:-${PYTHON:-python3}}
+DRIVER=${GEOS_MPM_MATERIAL_POINT_DRIVER:-geos_mpm_material_point_driver}
+exec "$PYTHON_CMD" "$SCRIPT_DIR/pfw_input_vonMisesJ_uniaxial_stress_material_point.py" \
+  --driver "$DRIVER" \
+  "$@"

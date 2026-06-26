@@ -12,7 +12,7 @@ The Python layer handles:
 - internal-energy and accumulated stress-power integration using `sigma : D / rho`; and
 - CSV output suitable for fitting and optimization workflows.
 
-The built-in `elastic` backend is for smoke tests and verification of the driver mechanics. Production GEOS-MPM constitutive testing should use the optional compiled executable `geos_mpm_material_point_driver`, generated from `src/coreComponents/constitutive/materialPointDriver` with `GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON`. With `setupMPM`, this remains default-off and can be requested with `./setupMPM --dane --enable-material-point-driver` or `./setupMPM --tuolumne --enable-material-point-driver`.
+The built-in `elastic` backend is for smoke tests and verification of the driver mechanics. Production GEOS-MPM constitutive testing should use the optional compiled executable `geos_mpm_material_point_driver`, generated from `src/coreComponents/constitutive/materialPointDriver` with `GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON`. With `setupMPM`, this remains default-off and can be requested with `./setupMPM --dane --enable-material-point-driver` or `./setupMPM --tuolumne --enable-material-point-driver`. The Python tools default to the executable next to `userDefs_<user>.py`'s `geosPath`, and `GEOS_MPM_MATERIAL_POINT_DRIVER` remains the explicit override.
 
 Typical Python smoke test:
 
@@ -30,9 +30,18 @@ python3 pfw_material_point.py \
   --case /tmp/material_point_case.json \
   --export-compiled-driver-prefix /tmp/material_point_case
 
-# After building the optional C++ target:
+# After building the optional C++ target, this uses GEOS_MPM_MATERIAL_POINT_DRIVER
+# if set, otherwise the driver next to userDefs.geosPath:
 /tmp/material_point_case.run.sh
 ```
+
+The generated run script defaults to `GEOS_MPM_MATERIAL_POINT_DRIVER` when that
+environment variable is set.  Otherwise the Python helper reads the current
+PFW `userDefs_<user>.py` and uses `geos_mpm_material_point_driver` next to the
+configured `userDefs.geosPath` executable.  Direct `run_material_point` calls and
+generated run scripts capture compiled-driver stdout/stderr in a sidecar
+`.driver.log` file, which suppresses verbose LvArray/CHAI allocation/free messages
+in normal verification output while keeping the full log available.
 
 Kroonblawd/Figure-1-style Graphite input generation:
 

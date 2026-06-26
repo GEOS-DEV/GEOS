@@ -244,10 +244,6 @@ std::vector< real64 > solveLinearSystem( std::vector< std::vector< real64 > > A,
         continue;
       }
       real64 const factor = A[rowIndex][col];
-      if( factor == 0.0 )
-      {
-        continue;
-      }
       for( localIndex j = col; j < n; ++j )
       {
         A[rowIndex][j] -= factor * A[col][j];

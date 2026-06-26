@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Configure a fresh GEOS-MPM checkout for LLNL Dane or Tuolumne.
+# Configure a fresh GEOS-MPM checkout for LLNL Dane, Tuolumne, or RZHound.
 #
 # This unified setup script creates local MPM convenience files, updates only the
 # active machine dictionary entries in userDefs_$USER.py, loads the build modules for the
 # selected machine when possible, then configures and builds GEOS with the
 # machine-specific MPM minimal-TPL host-config.  The machine is inferred from the
-# hostname unless --setup-machine, --dane, --tuolumne, or GEOS_MPM_SETUP_MACHINE
+# hostname unless --setup-machine, --dane, --tuolumne, --rzhound, or GEOS_MPM_SETUP_MACHINE
 # is supplied.
 #
 # External/internal material models:
 #   ./setupMPM --dane --external-material-models /path/to/internal/materials
 #   ./setupMPM --tuolumne --external-material-models /path/to/internal/materials
+#   ./setupMPM --rzhound --external-material-models /path/to/internal/materials
 # The external folder should contain GEOSExternalConstitutiveModels.cmake or
 # CMakeLists.txt and call geos_register_external_constitutive_models().  The
 # option is forwarded to CMake as GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR.
@@ -18,6 +19,7 @@
 # Optional VTK output support for the MPM solver:
 #   ./setupMPM --dane --enable-vtk
 #   ./setupMPM --tuolumne --enable-vtk
+#   ./setupMPM --rzhound --enable-vtk
 #   ./setupMPM --enable-vtk --vtk-dir /path/to/vtk/install
 # This keeps the otherwise minimal MPM build profile, but preserves VTK_DIR and
 # enables GEOS VTK output classes.  It does not build the VTK TPL from source.
@@ -25,16 +27,20 @@
 # Optional stand-alone constitutive material-point driver:
 #   ./setupMPM --dane --enable-material-point-driver
 #   ./setupMPM --tuolumne --enable-material-point-driver
+#   ./setupMPM --rzhound --enable-material-point-driver
 # This default-off option forwards GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON
 # and builds geos_mpm_material_point_driver in addition to the normal target.
 #
 # Fast rebuild after source/header edits:
 #   ./setupMPM --dane --rebuild
 #   ./setupMPM --tuolumne --rebuild
+#   ./setupMPM --rzhound --rebuild
 # This skips user-file generation and CMake configure, then runs cmake --build
 # on the existing build directory.  Any external material-model folder recorded
-# in that build directory's CMakeCache.txt remains active.  Re-run configure if
-# you need to change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR itself.
+# in that build directory's CMakeCache.txt remains active.  If the optional
+# material-point driver was enabled in that cache, plain --rebuild also rebuilds
+# geos_mpm_material_point_driver.  Re-run configure if you need to change
+# GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR itself.
 
 set -euo pipefail
 
@@ -43,10 +49,11 @@ usage() {
 Usage: ./setupMPM [options]
 
 Options:
-  --setup-machine MACHINE   Machine to configure/build for: dane or tuolumne.
+  --setup-machine MACHINE   Machine to configure/build for: dane, tuolumne, or rzhound.
                             Default: infer from hostname, or GEOS_MPM_SETUP_MACHINE.
   --dane                    Shortcut for --setup-machine dane.
   --tuolumne                Shortcut for --setup-machine tuolumne.
+  --rzhound                 Shortcut for --setup-machine rzhound.
   --python PATH             Python executable used for PFW/config scripts.
                             Default: PFW_PYTHON, PFW_PYTHON_COMMAND,
                             /usr/tce/bin/python3, python3, then python.
@@ -58,14 +65,17 @@ Options:
                             otherwise the logical checkout path.
   --run-root DIR            Active-machine defaultRunDirectory root.
                             Default: /p/lustre1/$USER/geosxRuns on Dane,
-                            /p/lustre5/$USER/geosxRuns on Tuolumne.
+                            /p/lustre5/$USER/geosxRuns on Tuolumne,
+                            /p/lustre2/$USER/geosxRuns on RZHound.
   --test-dir DIR            Active-machine testRunDirectory.
   --default-run-dir DIR     Active-machine defaultRunDirectory. Default: RUN_ROOT.
   --build-root DIR          Active-machine CMake build root. Default: repo root.
   --build-dir DIR           Explicit active-machine CMake build directory.
                             Default: BUILD_ROOT/build-<host-config>-<type>.
   --geos-path PATH          Explicit active-machine geosx path written to userDefs.py.
-                            Default: BUILD_DIR/bin/geosx.
+                            Default: BUILD_DIR/bin/geosx. The material-point
+                            driver path defaults to the same directory with
+                            executable name geos_mpm_material_point_driver.
   --tuolumne-build-dir DIR  Alias for --build-dir when --setup-machine tuolumne is active.
   --tuolumne-geos-path PATH Explicit Tuolumne geosx path; alias for --geos-path
                             when --setup-machine tuolumne is active.
@@ -80,11 +90,20 @@ Options:
   --dane-test-dir DIR       Alias for --test-dir when --setup-machine dane is active.
   --dane-default-run-dir DIR
                             Alias for --default-run-dir when --setup-machine dane is active.
+  --rzhound-build-dir DIR   Alias for --build-dir when --setup-machine rzhound is active.
+  --rzhound-geos-path PATH  Explicit RZHound geosx path; alias for --geos-path
+                            when --setup-machine rzhound is active.
+  --rzhound-run-root DIR    Alias for --run-root when --setup-machine rzhound is active.
+  --rzhound-test-dir DIR    Alias for --test-dir when --setup-machine rzhound is active.
+  --rzhound-default-run-dir DIR
+                            Alias for --default-run-dir when --setup-machine rzhound is active.
   --dane-partition NAME     Dane Slurm partition for runClean_$USER.sh. Default: pdebug
-  --slurm-time TIME         Dane Slurm walltime for runClean_$USER.sh. Default: 00:30:00
+  --rzhound-partition NAME  RZHound Slurm partition for runClean_$USER.sh. Default: pdebug
+  --slurm-time TIME         Slurm walltime for runClean_$USER.sh on Dane/RZHound. Default: 00:30:00
   --install-root DIR        Active-machine CMake install root.
                             Default: /p/lustre1/$USER/geosxInstalls on Dane,
-                            /p/lustre5/$USER/geosxInstalls on Tuolumne.
+                            /p/lustre5/$USER/geosxInstalls on Tuolumne,
+                            /p/lustre2/$USER/geosxInstalls on RZHound.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
   --enable-vtk, --with-vtk, --build-vtk
@@ -100,17 +119,33 @@ Options:
                             Forwards GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON
                             and builds target geos_mpm_material_point_driver after
                             the normal --build-target unless that is already the target.
+                            userDefs.py records the driver path next to geosPath.
                             Also accepted: --enable-mpm-material-point-driver.
   --disable-material-point-driver, --without-material-point-driver,
   --no-material-point-driver
                             Keep the optional material-point driver disabled.
   --external-material-models DIR
                             Optional out-of-tree material-model folder. Works for
-                            both Dane and Tuolumne. The folder should contain
+                            all supported setup machines. The folder should contain
                             GEOSExternalConstitutiveModels.cmake or CMakeLists.txt.
                             Also accepted: --external-constitutive-models,
                             --material-models-dir, --external-models-dir.
                             Default: GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR, if set.
+  --enable-leos, --with-leos
+                            Enable the optional LEOS connection in the external
+                            materialModels folder. This only forwards CMake cache
+                            variables; the external manifest still owns the LEOS
+                            find/link logic. Default: disabled.
+  --disable-leos, --without-leos, --no-leos
+                            Force the external materialModels LEOS connection off.
+  --leos-dir DIR            LEOS install/CMake prefix to pass as LEOS_DIR.
+                            Implies --enable-leos.
+  --leos-include-dir DIR    LEOS include directory to pass as LEOS_INCLUDE_DIR.
+                            Implies --enable-leos.
+  --leos-library FILE       LEOS library to pass as LEOS_LIBRARY.
+                            Implies --enable-leos.
+  --leos-header HEADER      Optional C++ include token for the LEOS wrapper, e.g.
+                            <LEOS/LEOS.hh> or "/path/to/LEOS.hh". Implies --enable-leos.
   --tpl-dir DIR             Existing minimal TPL install/view root. If provided, exported as
                             GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure.
   --queue QUEUE             Tuolumne Flux queue written to runClean_$USER.sh. Default: pdebug
@@ -121,14 +156,16 @@ Options:
                             regenerating user files or running config-build.py.
                             This preserves any external material-model hooks
                             already stored in that build directory's CMake cache.
-                            Re-run normal setup if the external model folder path
-                            itself changes.
+                            If the cached build has the optional material-point
+                            driver enabled, --rebuild also rebuilds it. Re-run
+                            normal setup if the external model folder path itself
+                            changes.
   --log-file FILE           Write full setup/configure/build output to FILE.
   --log-dir DIR             Directory for the default log file.
                             Default: BUILD_ROOT/setupMPM-logs
   --no-log                  Do not create a setup/build log file.
   --skip-modules            Do not attempt to load machine build modules.
-  --module-purge            Run module purge before loading Tuolumne modules.
+  --module-purge            Run module purge before loading machine modules.
   --force                   Replace the symlink and overwrite generated user files.
   --force-link              Replace an existing root mpm symlink.
   --overwrite-userdefs      Replace a non-generated mpm/userDefs_$USER.py.
@@ -336,7 +373,7 @@ detect_cmake() {
     command -v cmake
     return 0
   fi
-  fail "Could not find cmake. Load the Tuolumne build environment or update the host-config."
+  fail "Could not find cmake. Load the active machine build environment or update the host-config."
 }
 
 cmake_cache_value() {
@@ -398,7 +435,7 @@ skip = {
     "class", "cluster", "default", "fairshare", "group", "name", "norm",
     "normshares", "partition", "project", "projects", "qos", "rawshares",
     "share", "shares", "total", "user", "users", user, "dane", "tuolumne",
-    "elcapitan", "root",
+    "rzhound", "elcapitan", "root",
 }
 
 # mshare commonly prints this line. It is the best default to use.
@@ -561,9 +598,13 @@ detect_setup_machine() {
       printf 'tuolumne\n'
       return 0
       ;;
+    rzhound|rzhound.*|*rzhound*|rzho|rzho*)
+      printf 'rzhound\n'
+      return 0
+      ;;
   esac
 
-  fail "Could not infer setup machine from '$value'. Re-run with --setup-machine dane or --setup-machine tuolumne."
+  fail "Could not infer setup machine from '$value'. Re-run with --setup-machine dane, tuolumne, or rzhound."
 }
 
 choose_repo_command_root() {
@@ -689,6 +730,13 @@ write_user_defs() {
       active_device_ranks="4"
       active_mpi_ranks="4"
       ;;
+    rzhound)
+      active_scheduler="slurm"
+      active_slurm_partition="$RZHOUND_PARTITION"
+      active_flux_queue="$RZHOUND_PARTITION"
+      active_device_ranks="112"
+      active_mpi_ranks="112"
+      ;;
   esac
 
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -696,6 +744,7 @@ write_user_defs() {
     log "would update only the '$SETUP_MACHINE' entries in the userDefs dictionaries"
     log "would set _pfwPath[\"$SETUP_MACHINE\"] = '$PFW_USER_PATH'"
     log "would set _geosPath[\"$SETUP_MACHINE\"] = '$ACTIVE_GEOS_USER_PATH'"
+    log "would set _materialPointDriverPath[\"$SETUP_MACHINE\"] = '$ACTIVE_MATERIAL_POINT_DRIVER_USER_PATH'"
     log "would set _testRunDirectory[\"$SETUP_MACHINE\"] = r\"$TEST_RUN_DIR\""
     log "would set _defaultRunDirectory[\"$SETUP_MACHINE\"] = r\"$DEFAULT_RUN_DIR_USER\""
     log "would set _defaultBank[\"$SETUP_MACHINE\"] = '$active_bank'"
@@ -705,6 +754,7 @@ write_user_defs() {
   GEOS_MPM_USERDEFS_MACHINE="$SETUP_MACHINE" \
   GEOS_MPM_USERDEFS_PFW_PATH="$PFW_USER_PATH" \
   GEOS_MPM_USERDEFS_GEOS_PATH="$ACTIVE_GEOS_USER_PATH" \
+  GEOS_MPM_USERDEFS_MATERIAL_POINT_DRIVER_PATH="$ACTIVE_MATERIAL_POINT_DRIVER_USER_PATH" \
   GEOS_MPM_USERDEFS_TEST_RUN_DIRECTORY="$TEST_RUN_DIR" \
   GEOS_MPM_USERDEFS_DEFAULT_RUN_DIRECTORY="$DEFAULT_RUN_DIR_USER" \
   GEOS_MPM_USERDEFS_DEFAULT_BANK="$active_bank" \
@@ -721,12 +771,13 @@ import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-machines = ("dane", "tuolumne")
+machines = ("dane", "tuolumne", "rzhound")
 CHANGEME = "CHANGEME"
 
 fields = [
     ("_pfwPath", "pfwPath"),
     ("_geosPath", "geosPath"),
+    ("_materialPointDriverPath", "materialPointDriverPath"),
     ("_testRunDirectory", "testRunDirectory"),
     ("_defaultRunDirectory", "defaultRunDirectory"),
     ("_defaultBank", "defaultBank"),
@@ -807,6 +858,7 @@ if active_machine not in machines:
 
 values["_pfwPath"][active_machine] = env("GEOS_MPM_USERDEFS_PFW_PATH")
 values["_geosPath"][active_machine] = env("GEOS_MPM_USERDEFS_GEOS_PATH")
+values["_materialPointDriverPath"][active_machine] = env("GEOS_MPM_USERDEFS_MATERIAL_POINT_DRIVER_PATH")
 values["_testRunDirectory"][active_machine] = env("GEOS_MPM_USERDEFS_TEST_RUN_DIRECTORY")
 values["_defaultRunDirectory"][active_machine] = env("GEOS_MPM_USERDEFS_DEFAULT_RUN_DIRECTORY")
 values["_defaultBank"][active_machine] = env("GEOS_MPM_USERDEFS_DEFAULT_BANK")
@@ -835,7 +887,7 @@ lines = [
     "import platform",
     "",
     "_CHANGEME = 'CHANGEME'",
-    "_machines = ('dane', 'tuolumne')",
+    "_machines = ('dane', 'tuolumne', 'rzhound')",
     "",
     "_node = platform.node().lower()",
     "node = platform.node()",
@@ -848,17 +900,20 @@ lines = [
     "# Optional escape hatch for login nodes or unusual node names:",
     "#   export GEOS_MPM_MACHINE=dane",
     "#   export GEOS_MPM_MACHINE=tuolumne",
+    "#   export GEOS_MPM_MACHINE=rzhound",
     "_machine = os.environ.get('GEOS_MPM_MACHINE', '').strip().lower()",
     "if not _machine:",
     "  if dane:",
     "    _machine = 'dane'",
     "  elif tuolumne:",
     "    _machine = 'tuolumne'",
+    "  elif rzhound:",
+    "    _machine = 'rzhound'",
     "",
     "if _machine not in _machines:",
     "  raise RuntimeError(",
-    "    \"Could not identify Dane or Tuolumne from host '%s'. \"",
-    "    \"Set GEOS_MPM_MACHINE=dane or GEOS_MPM_MACHINE=tuolumne.\"",
+    "    \"Could not identify Dane, Tuolumne, or RZHound from host '%s'. \"",
+    "    \"Set GEOS_MPM_MACHINE=dane, GEOS_MPM_MACHINE=tuolumne, or GEOS_MPM_MACHINE=rzhound.\"",
     "    % node",
     "  )",
     "",
@@ -877,6 +932,9 @@ lines.extend([
     "# Public names consumed by the particle-file-writer scripts.",
     "pfwPath=_pfwPath[_machine]",
     "geosPath=_geosPath[_machine]",
+    "materialPointDriverPath=_materialPointDriverPath[_machine]",
+    "if materialPointDriverPath == _CHANGEME and geosPath != _CHANGEME:",
+    "  materialPointDriverPath=os.path.join(os.path.dirname(geosPath), 'geos_mpm_material_point_driver')",
     "testRunDirectory=_testRunDirectory[_machine]",
     "defaultRunDirectory=_defaultRunDirectory[_machine]",
     "defaultBank=_defaultBank[_machine]",
@@ -917,7 +975,12 @@ write_runclean() {
     return 0
   fi
 
-  local slurm_account_line flux_account_line
+  local slurm_account_line flux_account_line runclean_slurm_partition
+  case "$SETUP_MACHINE" in
+    rzhound) runclean_slurm_partition="$RZHOUND_PARTITION" ;;
+    *) runclean_slurm_partition="$DANE_PARTITION" ;;
+  esac
+
   if [ -n "$DEFAULT_BANK" ]; then
     slurm_account_line="#SBATCH -A $DEFAULT_BANK"
     flux_account_line="#flux: -B $DEFAULT_BANK"
@@ -937,7 +1000,7 @@ write_runclean() {
 #SBATCH -t $SLURM_TIME
 #SBATCH -N 1
 @@SLURM_ACCOUNT_LINE@@
-#SBATCH -p $DANE_PARTITION
+#SBATCH -p $runclean_slurm_partition
 #flux: --job-name=mpm-pfw-clean
 #flux: -N 1
 #flux: -t $FLUX_TIME
@@ -956,6 +1019,9 @@ case "@@DOLLAR@@{GEOS_MPM_MACHINE:-}" in
   tuolumne|TUOLUMNE)
     mpmMachine="tuolumne"
     ;;
+  rzhound|RZHOUND)
+    mpmMachine="rzhound"
+    ;;
   "")
     case "@@DOLLAR@@hostLower" in
       *dane*)
@@ -964,9 +1030,12 @@ case "@@DOLLAR@@{GEOS_MPM_MACHINE:-}" in
       tuolumne*|*tuolumne*|tuo*)
         mpmMachine="tuolumne"
         ;;
+      *rzhound*|rzho*)
+        mpmMachine="rzhound"
+        ;;
       *)
-        echo "ERROR: Could not identify Dane or Tuolumne from host '@@DOLLAR@@hostName'." >&2
-        echo "       Set GEOS_MPM_MACHINE=dane or GEOS_MPM_MACHINE=tuolumne." >&2
+        echo "ERROR: Could not identify Dane, Tuolumne, or RZHound from host '@@DOLLAR@@hostName'." >&2
+        echo "       Set GEOS_MPM_MACHINE=dane, GEOS_MPM_MACHINE=tuolumne, or GEOS_MPM_MACHINE=rzhound." >&2
         exit 1
         ;;
     esac
@@ -992,6 +1061,14 @@ case "@@DOLLAR@@mpmMachine" in
     defaultPython="$PYTHON_CMD"
     export MPICH_GPU_SUPPORT_ENABLED="@@DOLLAR@@{MPICH_GPU_SUPPORT_ENABLED:-1}"
     export HSA_XNACK="@@DOLLAR@@{HSA_XNACK:-1}"
+    export OMP_NUM_THREADS="@@DOLLAR@@{OMP_NUM_THREADS:-1}"
+    ;;
+  rzhound)
+    scheduler="slurm"
+    defaultRunLocation="$RZHOUND_TEST_RUN_DIR"
+    defaultPython="$PYTHON_CMD"
+    unset MPICH_GPU_SUPPORT_ENABLED || true
+    unset HSA_XNACK || true
     export OMP_NUM_THREADS="@@DOLLAR@@{OMP_NUM_THREADS:-1}"
     ;;
 esac
@@ -1180,6 +1257,16 @@ load_tuolumne_modules() {
   load_module_any "CMake" cmake/3.29.2 cmake/3.26.3
   load_module_any "Ninja" ninja/1.10.2 ninja
 }
+
+load_rzhound_modules() {
+  prepare_module_command || return 0
+
+  log "loading RZHound build modules if available"
+  load_module_any "RZHound GCC" gcc/12.1.1-magic gcc/12.1.1
+  load_module_any "RZHound MVAPICH2" mvapich2/2.3.7 mvapich2/2.3.7-gcc-12.1.1-magic
+  load_module_any "CMake" cmake/3.26.3 cmake/3.29.2
+  load_module_any "Ninja" ninja/1.10.2 ninja
+}
 prepare_tuolumne_environment() {
   load_tuolumne_modules
 
@@ -1202,7 +1289,15 @@ prepare_tuolumne_environment() {
 prepare_dane_environment() {
   load_dane_modules
 
-  # Do not let a previous Tuolumne/ROCm environment leak into a Dane CPU configure.
+  # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
+  unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
+  unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
+}
+
+prepare_rzhound_environment() {
+  load_rzhound_modules
+
+  # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
 }
@@ -1217,6 +1312,12 @@ prepare_build_environment() {
         log "ignoring --tpl-dir for Dane CPU setup"
       fi
       prepare_dane_environment
+      ;;
+    rzhound)
+      if [ -n "$TPL_DIR" ]; then
+        log "ignoring --tpl-dir for RZHound CPU setup"
+      fi
+      prepare_rzhound_environment
       ;;
   esac
 }
@@ -1249,22 +1350,37 @@ configure_and_build() {
       log "rebuild-only mode does not change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR; rerun setupMPM without --rebuild to reconfigure a different external folder"
     fi
 
-    if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
-      local cached_material_point_driver
-      cached_material_point_driver=$(cmake_cache_value GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER || true)
-      if [ -n "$cached_material_point_driver" ]; then
-        log "cached MPM material-point driver option: $cached_material_point_driver"
+    local cached_material_point_driver
+    local rebuild_material_point_driver
+    cached_material_point_driver=$(cmake_cache_value GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER || true)
+    rebuild_material_point_driver=0
+    if [ -n "$cached_material_point_driver" ]; then
+      log "cached MPM material-point driver option: $cached_material_point_driver"
+    elif [ "$DRY_RUN" -eq 0 ]; then
+      log "no cached MPM material-point driver option was found in $BUILD_DIR/CMakeCache.txt"
+    fi
+
+    if truthy "$cached_material_point_driver"; then
+      if [ "$MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY" -eq 1 ]; then
+        log "cached MPM material-point driver is enabled, but command line requested --disable-material-point-driver; not rebuilding it"
+      else
+        rebuild_material_point_driver=1
+        if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 0 ]; then
+          log "cached MPM material-point driver is enabled; rebuild-only mode will also rebuild geos_mpm_material_point_driver"
+        fi
       fi
-      if [ "$DRY_RUN" -eq 0 ] && ! truthy "$cached_material_point_driver"; then
+    elif [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+      if [ "$DRY_RUN" -eq 0 ]; then
         fail "Cannot rebuild geos_mpm_material_point_driver because this build directory was not configured with GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON. Run setupMPM --enable-material-point-driver without --rebuild first."
       fi
+      rebuild_material_point_driver=1
     fi
 
     local cmake_cmd build_target
     local build_targets
     cmake_cmd=$(detect_cmake)
     build_targets=("$BUILD_TARGET")
-    if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+    if [ "$rebuild_material_point_driver" -eq 1 ]; then
       case "$BUILD_TARGET" in
         all|install|geos_mpm_material_point_driver)
           ;;
@@ -1284,7 +1400,7 @@ configure_and_build() {
       else
         log "expected GEOS executable was not found yet: $GEOS_EXECUTABLE"
       fi
-      if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
+      if [ "$rebuild_material_point_driver" -eq 1 ]; then
         if [ -x "$MATERIAL_POINT_DRIVER_EXECUTABLE" ]; then
           log "MPM material-point driver executable: $MATERIAL_POINT_DRIVER_EXECUTABLE"
         else
@@ -1333,6 +1449,26 @@ configure_and_build() {
     # manifest is included from src/coreComponents/constitutive/CMakeLists.txt
     # and can register sources, headers, dependencies, and MPM dispatch types.
     config_cmd+=("-DGEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR=$EXTERNAL_MATERIAL_MODELS_DIR")
+  fi
+  if [ "$ENABLE_LEOS" -eq 1 ]; then
+    # Optional LEOS support is implemented by the external materialModels CMake
+    # manifest.  Keep this opt-in so users without LEOS can still build the
+    # external materials folder and analytic EOS models.
+    config_cmd+=("-DGEOS_EXTERNAL_ENABLE_LEOS=ON")
+    if [ -n "$LEOS_DIR_OVERRIDE" ]; then
+      config_cmd+=("-DLEOS_DIR=$LEOS_DIR_OVERRIDE")
+    fi
+    if [ -n "$LEOS_INCLUDE_DIR_OVERRIDE" ]; then
+      config_cmd+=("-DLEOS_INCLUDE_DIR=$LEOS_INCLUDE_DIR_OVERRIDE")
+    fi
+    if [ -n "$LEOS_LIBRARY_OVERRIDE" ]; then
+      config_cmd+=("-DLEOS_LIBRARY=$LEOS_LIBRARY_OVERRIDE")
+    fi
+    if [ -n "$GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE" ]; then
+      config_cmd+=("-DGEOS_EXTERNAL_LEOS_HEADER=$GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE")
+    fi
+  else
+    config_cmd+=("-DGEOS_EXTERNAL_ENABLE_LEOS=OFF")
   fi
   run_cmd "${config_cmd[@]}"
 
@@ -1396,7 +1532,13 @@ DANE_GEOS_PATH_OVERRIDE=""
 DANE_RUN_ROOT_OVERRIDE=""
 DANE_TEST_RUN_DIR_OVERRIDE=""
 DANE_DEFAULT_RUN_DIR_OVERRIDE=""
+RZHOUND_BUILD_DIR_OVERRIDE=""
+RZHOUND_GEOS_PATH_OVERRIDE=""
+RZHOUND_RUN_ROOT_OVERRIDE=""
+RZHOUND_TEST_RUN_DIR_OVERRIDE=""
+RZHOUND_DEFAULT_RUN_DIR_OVERRIDE=""
 DANE_PARTITION="pdebug"
+RZHOUND_PARTITION="pdebug"
 SLURM_TIME="00:30:00"
 FLUX_TIME="30m"
 INSTALL_ROOT_OVERRIDE=""
@@ -1405,6 +1547,17 @@ JOBS="${GEOS_BUILD_JOBS:-32}"
 BUILD_TARGET="geosx"
 HOST_CONFIG=""
 EXTERNAL_MATERIAL_MODELS_DIR="${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR:-}"
+ENABLE_LEOS=0
+if truthy "${GEOS_EXTERNAL_ENABLE_LEOS:-${GEOS_MPM_ENABLE_LEOS:-}}"; then
+  ENABLE_LEOS=1
+fi
+LEOS_DIR_OVERRIDE="${LEOS_DIR:-${GEOS_MPM_LEOS_DIR:-}}"
+LEOS_INCLUDE_DIR_OVERRIDE="${LEOS_INCLUDE_DIR:-}"
+LEOS_LIBRARY_OVERRIDE="${LEOS_LIBRARY:-}"
+GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE="${GEOS_EXTERNAL_LEOS_HEADER:-}"
+if [ -n "$LEOS_DIR_OVERRIDE$LEOS_INCLUDE_DIR_OVERRIDE$LEOS_LIBRARY_OVERRIDE$GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE" ]; then
+  ENABLE_LEOS=1
+fi
 ENABLE_MPM_VTK=0
 if truthy "${GEOS_ENABLE_MPM_VTK:-${GEOS_MPM_ENABLE_VTK:-}}"; then
   ENABLE_MPM_VTK=1
@@ -1446,6 +1599,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --tuolumne)
       REQUESTED_SETUP_MACHINE="tuolumne"
+      shift
+      ;;
+    --rzhound)
+      REQUESTED_SETUP_MACHINE="rzhound"
       shift
       ;;
     --python|--python-command)
@@ -1548,9 +1705,39 @@ while [ "$#" -gt 0 ]; do
       DANE_DEFAULT_RUN_DIR_OVERRIDE="$2"
       shift 2
       ;;
+    --rzhound-build-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_BUILD_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --rzhound-geos-path)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_GEOS_PATH_OVERRIDE="$2"
+      shift 2
+      ;;
+    --rzhound-run-root)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_RUN_ROOT_OVERRIDE="$2"
+      shift 2
+      ;;
+    --rzhound-test-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_TEST_RUN_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --rzhound-default-run-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_DEFAULT_RUN_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
     --dane-partition)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       DANE_PARTITION="$2"
+      shift 2
+      ;;
+    --rzhound-partition)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RZHOUND_PARTITION="$2"
       shift 2
       ;;
     --slurm-time)
@@ -1601,6 +1788,38 @@ while [ "$#" -gt 0 ]; do
     --external-material-models|--external-constitutive-models|--material-models-dir|--external-models-dir)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       EXTERNAL_MATERIAL_MODELS_DIR="$2"
+      shift 2
+      ;;
+    --enable-leos|--with-leos)
+      ENABLE_LEOS=1
+      shift
+      ;;
+    --disable-leos|--without-leos|--no-leos)
+      ENABLE_LEOS=0
+      shift
+      ;;
+    --leos-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      ENABLE_LEOS=1
+      LEOS_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --leos-include-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      ENABLE_LEOS=1
+      LEOS_INCLUDE_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --leos-library)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      ENABLE_LEOS=1
+      LEOS_LIBRARY_OVERRIDE="$2"
+      shift 2
+      ;;
+    --leos-header)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      ENABLE_LEOS=1
+      GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE="$2"
       shift 2
       ;;
     --tpl-dir)
@@ -1730,13 +1949,28 @@ case "$SETUP_MACHINE" in
     [ -z "$BUILD_DIR_OVERRIDE" ] && BUILD_DIR_OVERRIDE="$TUOLUMNE_BUILD_DIR_OVERRIDE"
     [ -z "$GEOS_PATH_OVERRIDE" ] && GEOS_PATH_OVERRIDE="$TUOLUMNE_GEOS_PATH_OVERRIDE"
     ;;
+  rzhound)
+    [ -z "$RUN_ROOT_OVERRIDE" ] && RUN_ROOT_OVERRIDE="$RZHOUND_RUN_ROOT_OVERRIDE"
+    [ -z "$TEST_RUN_DIR_OVERRIDE" ] && TEST_RUN_DIR_OVERRIDE="$RZHOUND_TEST_RUN_DIR_OVERRIDE"
+    [ -z "$DEFAULT_RUN_DIR_OVERRIDE" ] && DEFAULT_RUN_DIR_OVERRIDE="$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE"
+    [ -z "$BUILD_DIR_OVERRIDE" ] && BUILD_DIR_OVERRIDE="$RZHOUND_BUILD_DIR_OVERRIDE"
+    [ -z "$GEOS_PATH_OVERRIDE" ] && GEOS_PATH_OVERRIDE="$RZHOUND_GEOS_PATH_OVERRIDE"
+    ;;
 esac
 DANE_HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl.cmake"
 TUOLUMNE_HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/tuolumne-toss_4_x86_64_ib_cray-llvm-amdgpu@6.4.2-rocm@6.4.2-mpm-minimal-tpl.cmake"
+RZHOUND_HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/rzhound-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl.cmake"
+if [ ! -f "$RZHOUND_HOST_CONFIG" ]; then
+  # RZHound is a TOSS4 CPU-only Sapphire Rapids Slurm cluster, like Dane.
+  # Fall back to the Dane minimal-TPL host-config when a native RZHound wrapper
+  # is not present in this checkout; users can still override with --host-config.
+  RZHOUND_HOST_CONFIG="$DANE_HOST_CONFIG"
+fi
 if [ -z "$HOST_CONFIG" ]; then
   case "$SETUP_MACHINE" in
     dane) HOST_CONFIG="$DANE_HOST_CONFIG" ;;
     tuolumne) HOST_CONFIG="$TUOLUMNE_HOST_CONFIG" ;;
+    rzhound) HOST_CONFIG="$RZHOUND_HOST_CONFIG" ;;
   esac
 else
   HOST_CONFIG=$(abs_path "$HOST_CONFIG")
@@ -1759,6 +1993,18 @@ if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ] && [ "$REBUILD_ONLY" -eq 0 ]; then
   if [ ! -f "$externalManifestPrimary" ] && [ ! -f "$externalManifestFallback" ]; then
     log "external material-model dir has no GEOSExternalConstitutiveModels.cmake or CMakeLists.txt: $EXTERNAL_MATERIAL_MODELS_DIR"
     log "CMake will continue, but no external material models will be added unless a manifest is present"
+  fi
+fi
+
+if [ "$REBUILD_ONLY" -eq 0 ]; then
+  if [ -n "$LEOS_DIR_OVERRIDE" ]; then
+    LEOS_DIR_OVERRIDE=$(trim_trailing_slashes "$(abs_path "$LEOS_DIR_OVERRIDE")")
+  fi
+  if [ -n "$LEOS_INCLUDE_DIR_OVERRIDE" ]; then
+    LEOS_INCLUDE_DIR_OVERRIDE=$(trim_trailing_slashes "$(abs_path "$LEOS_INCLUDE_DIR_OVERRIDE")")
+  fi
+  if [ -n "$LEOS_LIBRARY_OVERRIDE" ]; then
+    LEOS_LIBRARY_OVERRIDE=$(abs_path "$LEOS_LIBRARY_OVERRIDE")
   fi
 fi
 
@@ -1786,6 +2032,11 @@ case "$SETUP_MACHINE" in
     DEFAULT_ACTIVE_RUN_ROOT="/p/lustre5/$LC_USER/geosxRuns"
     DEFAULT_ACTIVE_TEST_DIR="/p/lustre5/$LC_USER/geosxTests"
     DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre5/$LC_USER/geosxInstalls"
+    ;;
+  rzhound)
+    DEFAULT_ACTIVE_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
+    DEFAULT_ACTIVE_TEST_DIR="/p/lustre2/$LC_USER/geosxTests"
+    DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre2/$LC_USER/geosxInstalls"
     ;;
  esac
 
@@ -1829,6 +2080,7 @@ if [ -n "$GEOS_PATH_OVERRIDE" ]; then
 else
   ACTIVE_GEOS_USER_PATH="$BUILD_DIR_USER/bin/geosx"
 fi
+ACTIVE_MATERIAL_POINT_DRIVER_USER_PATH="$(dirname "$ACTIVE_GEOS_USER_PATH")/geos_mpm_material_point_driver"
 
 if [ -n "$TUOLUMNE_RUN_ROOT_OVERRIDE" ]; then
   TUOLUMNE_RUN_ROOT=$(trim_trailing_slashes "$(abs_path "$TUOLUMNE_RUN_ROOT_OVERRIDE")")
@@ -1908,6 +2160,45 @@ else
   DANE_GEOS_USER_PATH="$DANE_BUILD_DIR_USER/bin/geosx"
 fi
 
+if [ -n "$RZHOUND_RUN_ROOT_OVERRIDE" ]; then
+  RZHOUND_RUN_ROOT=$(trim_trailing_slashes "$(abs_path "$RZHOUND_RUN_ROOT_OVERRIDE")")
+elif [ "$SETUP_MACHINE" = "rzhound" ]; then
+  RZHOUND_RUN_ROOT="$RUN_ROOT"
+else
+  RZHOUND_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
+fi
+if [ -n "$RZHOUND_TEST_RUN_DIR_OVERRIDE" ]; then
+  RZHOUND_TEST_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_TEST_RUN_DIR_OVERRIDE")")
+elif [ "$SETUP_MACHINE" = "rzhound" ]; then
+  RZHOUND_TEST_RUN_DIR="$TEST_RUN_DIR"
+else
+  RZHOUND_TEST_RUN_DIR="/p/lustre2/$LC_USER/geosxTests"
+fi
+if [ -n "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE" ]; then
+  RZHOUND_DEFAULT_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE")")
+elif [ "$SETUP_MACHINE" = "rzhound" ]; then
+  RZHOUND_DEFAULT_RUN_DIR="$DEFAULT_RUN_DIR"
+else
+  RZHOUND_DEFAULT_RUN_DIR="$RZHOUND_RUN_ROOT"
+fi
+RZHOUND_DEFAULT_RUN_DIR_USER=$(ensure_trailing_slash "$RZHOUND_DEFAULT_RUN_DIR")
+RZHOUND_HOST_BASE="rzhound-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl"
+if [ -n "$RZHOUND_BUILD_DIR_OVERRIDE" ]; then
+  RZHOUND_BUILD_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_BUILD_DIR_OVERRIDE")")
+elif [ "$SETUP_MACHINE" = "rzhound" ] && [ -z "$BUILD_DIR_OVERRIDE" ] && [ "$HOST_CONFIG" = "$RZHOUND_HOST_CONFIG" ]; then
+  RZHOUND_BUILD_DIR="$BUILD_DIR"
+else
+  RZHOUND_BUILD_DIR="$REPO_ROOT_CMD/build-$RZHOUND_HOST_BASE-$BUILD_TYPE_LOWER"
+fi
+RZHOUND_BUILD_DIR_USER="$RZHOUND_BUILD_DIR"
+if [ -n "$RZHOUND_GEOS_PATH_OVERRIDE" ]; then
+  RZHOUND_GEOS_USER_PATH="$(abs_path "$RZHOUND_GEOS_PATH_OVERRIDE")"
+elif [ "$SETUP_MACHINE" = "rzhound" ] && [ -n "$GEOS_PATH_OVERRIDE" ]; then
+  RZHOUND_GEOS_USER_PATH="$ACTIVE_GEOS_USER_PATH"
+else
+  RZHOUND_GEOS_USER_PATH="$RZHOUND_BUILD_DIR_USER/bin/geosx"
+fi
+
 USER_DEFS_PATH="$PFW_DIR/userDefs_$LC_USER.py"
 RUNCLEAN_PATH="$PFW_DIR/runClean_$LC_USER.sh"
 
@@ -1931,6 +2222,7 @@ log "active default run dir: $DEFAULT_RUN_DIR_USER"
 log "active build root: $(shell_to_display_path "$BUILD_ROOT")"
 log "active build dir: $BUILD_DIR_USER"
 log "active geosx path: $ACTIVE_GEOS_USER_PATH"
+log "active material-point driver path: $ACTIVE_MATERIAL_POINT_DRIVER_USER_PATH"
 if [ "$REBUILD_ONLY" -eq 1 ]; then
   log "rebuild-only mode: skipping generated PFW files and CMake configure"
 fi
@@ -1940,6 +2232,27 @@ if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
   else
     log "external material-model dir: $EXTERNAL_MATERIAL_MODELS_DIR"
   fi
+fi
+if [ "$ENABLE_LEOS" -eq 1 ]; then
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    log "external LEOS support requested; rebuild-only mode will not reconfigure CMake"
+  else
+    log "external LEOS support: enabled"
+  fi
+  if [ -n "$LEOS_DIR_OVERRIDE" ]; then
+    log "LEOS dir: $LEOS_DIR_OVERRIDE"
+  fi
+  if [ -n "$LEOS_INCLUDE_DIR_OVERRIDE" ]; then
+    log "LEOS include dir: $LEOS_INCLUDE_DIR_OVERRIDE"
+  fi
+  if [ -n "$LEOS_LIBRARY_OVERRIDE" ]; then
+    log "LEOS library: $LEOS_LIBRARY_OVERRIDE"
+  fi
+  if [ -n "$GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE" ]; then
+    log "LEOS header token: $GEOS_EXTERNAL_LEOS_HEADER_OVERRIDE"
+  fi
+else
+  log "external LEOS support: disabled"
 fi
 if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
   if [ "$REBUILD_ONLY" -eq 1 ]; then
@@ -1964,7 +2277,13 @@ if [ "$ENABLE_MPM_MATERIAL_POINT_DRIVER" -eq 1 ]; then
     log "MPM material-point driver: enabled; will build geos_mpm_material_point_driver"
   fi
 else
-  log "MPM material-point driver: disabled"
+  if [ "$REBUILD_ONLY" -eq 1 ] && [ "$MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY" -eq 0 ]; then
+    log "MPM material-point driver: rebuild-only mode will rebuild it automatically if the existing CMake cache has GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON"
+  elif [ "$REBUILD_ONLY" -eq 1 ]; then
+    log "MPM material-point driver: disabled for rebuild-only by command line"
+  else
+    log "MPM material-point driver: disabled"
+  fi
 fi
 log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"
@@ -1973,6 +2292,7 @@ if [ -n "$TPL_DIR" ]; then
 fi
 log "Flux queue for generated runClean: $DEFAULT_QUEUE"
 log "Dane Slurm partition for generated runClean: $DANE_PARTITION"
+log "RZHound Slurm partition for generated runClean: $RZHOUND_PARTITION"
 if [ "$NO_LOG" -eq 1 ]; then
   log "setup/build logging disabled by --no-log"
 fi

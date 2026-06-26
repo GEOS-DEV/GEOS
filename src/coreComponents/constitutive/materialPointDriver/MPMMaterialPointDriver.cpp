@@ -108,6 +108,13 @@ enum class TemperatureMode
   FromMaterial
 };
 
+enum class StressControlFailurePolicy
+{
+  Error,
+  Stop,
+  Continue
+};
+
 struct InitialField
 {
   std::string name;
@@ -154,6 +161,12 @@ struct Options
   real64 finiteDifferenceEpsilon = 1.0e-8;
   int maxNewtonIterations = 25;
   int maxLineSearchIterations = 12;
+  int maxStressBracketIterations = 32;
+  int maxStressBisectionIterations = 64;
+  real64 stressBracketInitialScale = 0.0;
+  real64 stressBracketMaxStrain = 5.0e-2;
+  real64 stressBracketGrowth = 2.0;
+  StressControlFailurePolicy stressControlFailurePolicy = StressControlFailurePolicy::Error;
 
   localIndex constantSteps = 0;
   real64 constantDt = 0.0;
@@ -302,6 +315,12 @@ void writeUsage( std::ostream & os )
      << "  --material-direction-update auto|fixed|rotation|fiber|normal|graphite|mpmCofactor\n"
      << "  --temperature-mode prescribed|isothermal|adiabatic|fromMaterial\n"
      << "  --energy-mode off|stressPower|material\n"
+     << "  --stress-control-failure-policy error|stop|continue\n"
+     << "  --stress-bracket-initial-scale value (0 means automatic)\n"
+     << "  --stress-bracket-max-strain value\n"
+     << "  --stress-bracket-growth value\n"
+     << "  --max-stress-bracket-iterations n\n"
+     << "  --max-stress-bisection-iterations n\n"
      << "  --initial-field name=v0[,v1,...] (may be repeated)\n";
 }
 
@@ -357,6 +376,32 @@ TemperatureMode parseTemperatureMode( std::string const & token )
   if( mode == "adiabatic" ) return TemperatureMode::Adiabatic;
   if( mode == "frommaterial" || mode == "material" ) return TemperatureMode::FromMaterial;
   throw std::runtime_error( "Unknown temperature mode: " + token );
+}
+
+StressControlFailurePolicy parseStressControlFailurePolicy( std::string const & token )
+{
+  std::string const mode = toLower( token );
+  if( mode == "error" || mode == "abort" || mode == "fail" ) return StressControlFailurePolicy::Error;
+  if( mode == "stop" || mode == "partial" || mode == "partialoutput" ) return StressControlFailurePolicy::Stop;
+  if( mode == "continue" || mode == "keepgoing" || mode == "keep_going" ) return StressControlFailurePolicy::Continue;
+  throw std::runtime_error( "Unknown stress-control failure policy: " + token );
+}
+
+bool permissiveStressControlFailurePolicy( StressControlFailurePolicy const policy )
+{
+  return policy == StressControlFailurePolicy::Stop || policy == StressControlFailurePolicy::Continue;
+}
+
+bool hasStressControl( Options const & options )
+{
+  for( ControlMode const mode : options.controlModes )
+  {
+    if( mode == ControlMode::Stress )
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 Options parseCommandLine( int argc, char ** argv )
@@ -415,6 +460,23 @@ Options parseCommandLine( int argc, char ** argv )
     else if( key == "--fd-epsilon" ) options.finiteDifferenceEpsilon = std::stod( requireValue( key ) );
     else if( key == "--max-newton-iterations" ) options.maxNewtonIterations = std::stoi( requireValue( key ) );
     else if( key == "--max-line-search-iterations" ) options.maxLineSearchIterations = std::stoi( requireValue( key ) );
+    else if( key == "--max-stress-bracket-iterations" || key == "--max-stress-control-bracket-iterations" ) options.maxStressBracketIterations = std::stoi( requireValue( key ) );
+    else if( key == "--max-stress-bisection-iterations" || key == "--max-stress-control-bisection-iterations" ) options.maxStressBisectionIterations = std::stoi( requireValue( key ) );
+    else if( key == "--stress-bracket-initial-scale" || key == "--stress-control-bracket-initial-scale" ) options.stressBracketInitialScale = std::stod( requireValue( key ) );
+    else if( key == "--stress-bracket-max-strain" || key == "--stress-control-bracket-max-strain" ) options.stressBracketMaxStrain = std::stod( requireValue( key ) );
+    else if( key == "--stress-bracket-growth" || key == "--stress-control-bracket-growth" ) options.stressBracketGrowth = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-failure-policy" || key == "--stress-failure-policy" )
+    {
+      options.stressControlFailurePolicy = parseStressControlFailurePolicy( requireValue( key ) );
+    }
+    else if( key == "--allow-partial-output" )
+    {
+      options.stressControlFailurePolicy = StressControlFailurePolicy::Stop;
+    }
+    else if( key == "--continue-on-stress-control-failure" || key == "--continue-on-nonconvergence" )
+    {
+      options.stressControlFailurePolicy = StressControlFailurePolicy::Continue;
+    }
     else if( key == "--steps" ) options.constantSteps = static_cast< localIndex >( std::stoll( requireValue( key ) ) );
     else if( key == "--dt" ) options.constantDt = std::stod( requireValue( key ) );
     else if( key == "--values" ) options.constantValues = parseVec6( requireValue( key ) );
@@ -1427,6 +1489,215 @@ std::vector< real64 > solveLinearSystem( std::vector< std::vector< real64 > > A,
   return b;
 }
 
+bool isFinite( real64 const value )
+{
+  return std::isfinite( value );
+}
+
+bool isFinite( std::vector< real64 > const & values )
+{
+  for( real64 const value : values )
+  {
+    if( !isFinite( value ) )
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+real64 characteristicPrescribedStrainIncrement( Options const & options, PathStep const & step )
+{
+  Vec6 strainIncrement = {};
+  Mat3 L = {};
+  int numUnknowns = 0;
+  for( ControlMode const mode : options.controlModes )
+  {
+    if( mode == ControlMode::Stress )
+    {
+      ++numUnknowns;
+    }
+  }
+  buildTrialKinematics( options, step, std::vector< real64 >( static_cast< std::size_t >( numUnknowns ), 0.0 ), strainIncrement, L );
+
+  real64 scale = 0.0;
+  for( int c = 0; c < 6; ++c )
+  {
+    if( options.controlModes[c] != ControlMode::Stress )
+    {
+      scale = std::max( scale, std::abs( strainIncrement[c] ) );
+    }
+  }
+  return std::max( scale, 10.0 * options.finiteDifferenceEpsilon );
+}
+
+bool residualsBracketRoot( real64 const a, real64 const b )
+{
+  return ( a <= 0.0 && b >= 0.0 ) || ( a >= 0.0 && b <= 0.0 );
+}
+
+bool scalarStressControlFallback( ContinuumBase & model,
+                                  DriverState const & stateOld,
+                                  RepositorySnapshot const & snapshot,
+                                  Options const & options,
+                                  PathStep const & step,
+                                  MaterialFrameUpdate const materialFrameUpdate,
+                                  std::vector< real64 > & bestUnknowns,
+                                  real64 & bestResidualNorm,
+                                  bool & haveBest,
+                                  std::string & stopReason )
+{
+  if( bestUnknowns.size() != 1 )
+  {
+    return false;
+  }
+
+  struct Sample
+  {
+    real64 x;
+    real64 r;
+  };
+
+  std::vector< Sample > samples;
+  bool exact = false;
+
+  auto evaluate = [&]( real64 const x, real64 & residualValue ) -> bool
+  {
+    try
+    {
+      TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, std::vector< real64 >{ x }, materialFrameUpdate, false );
+      std::vector< real64 > const residual = stressResidual( options, step, trial.state.stress );
+      if( residual.size() != 1 || !isFinite( residual ) )
+      {
+        return false;
+      }
+      residualValue = residual[0];
+      real64 const residualNorm = std::abs( residualValue );
+      if( isFinite( residualNorm ) && residualNorm < bestResidualNorm )
+      {
+        bestResidualNorm = residualNorm;
+        bestUnknowns[0] = x;
+        haveBest = true;
+      }
+      if( residualNorm <= options.stressTolerance )
+      {
+        exact = true;
+      }
+      samples.push_back( Sample{ x, residualValue } );
+      return true;
+    }
+    catch( std::exception const & error )
+    {
+      stopReason = std::string( "scalar stress-control fallback trial failed: " ) + error.what();
+      return false;
+    }
+  };
+
+  auto bisectBracket = [&]( Sample lo, Sample hi ) -> bool
+  {
+    if( std::abs( lo.r ) <= options.stressTolerance )
+    {
+      bestUnknowns[0] = lo.x;
+      bestResidualNorm = std::abs( lo.r );
+      haveBest = true;
+      return true;
+    }
+    if( std::abs( hi.r ) <= options.stressTolerance )
+    {
+      bestUnknowns[0] = hi.x;
+      bestResidualNorm = std::abs( hi.r );
+      haveBest = true;
+      return true;
+    }
+
+    for( int iteration = 0; iteration < options.maxStressBisectionIterations; ++iteration )
+    {
+      real64 const xMid = 0.5 * ( lo.x + hi.x );
+      real64 rMid = 0.0;
+      if( !evaluate( xMid, rMid ) )
+      {
+        break;
+      }
+      if( std::abs( rMid ) <= options.stressTolerance )
+      {
+        bestUnknowns[0] = xMid;
+        bestResidualNorm = std::abs( rMid );
+        haveBest = true;
+        return true;
+      }
+      if( residualsBracketRoot( lo.r, rMid ) )
+      {
+        hi = Sample{ xMid, rMid };
+      }
+      else
+      {
+        lo = Sample{ xMid, rMid };
+      }
+    }
+    return false;
+  };
+
+  real64 const x0 = haveBest ? bestUnknowns[0] : 0.0;
+  real64 r0 = 0.0;
+  evaluate( x0, r0 );
+  if( exact )
+  {
+    return true;
+  }
+
+  real64 scale = options.stressBracketInitialScale > 0.0 ?
+                 options.stressBracketInitialScale :
+                 characteristicPrescribedStrainIncrement( options, step );
+  scale = std::max( scale, 10.0 * options.finiteDifferenceEpsilon );
+  real64 const maxScale = std::max( scale, options.stressBracketMaxStrain );
+  real64 const growth = options.stressBracketGrowth > 1.0 ? options.stressBracketGrowth : 2.0;
+
+  for( int iteration = 0; iteration < options.maxStressBracketIterations && scale <= maxScale; ++iteration )
+  {
+    for( real64 const sign : { -1.0, 1.0 } )
+    {
+      real64 const x = x0 + sign * scale;
+      real64 r = 0.0;
+      if( !evaluate( x, r ) )
+      {
+        continue;
+      }
+      if( exact )
+      {
+        return true;
+      }
+      Sample const current{ x, r };
+      for( Sample const & previous : samples )
+      {
+        real64 const duplicateTolerance = std::numeric_limits< real64 >::epsilon() *
+                                          std::max( real64( 1.0 ),
+                                                    std::max( std::abs( previous.x ),
+                                                              std::abs( current.x ) ) );
+        if( std::abs( previous.x - current.x ) <= duplicateTolerance )
+        {
+          continue;
+        }
+        if( residualsBracketRoot( previous.r, current.r ) )
+        {
+          stopReason = "used scalar bracketed stress-control fallback";
+          if( bisectBracket( previous, current ) )
+          {
+            return true;
+          }
+          return false;
+        }
+      }
+    }
+    scale *= growth;
+  }
+
+  if( haveBest )
+  {
+    stopReason = "scalar stress-control fallback could not bracket a root; using best available trial";
+  }
+  return false;
+}
+
 TrialResult solveStep( ContinuumBase & model,
                        DriverState const & stateOld,
                        Options const & options,
@@ -1455,17 +1726,34 @@ TrialResult solveStep( ContinuumBase & model,
   }
 
   std::vector< real64 > unknowns( static_cast< std::size_t >( numUnknowns ), 0.0 );
-  TrialResult current;
-  real64 residualNorm = std::numeric_limits< real64 >::infinity();
+  std::vector< real64 > bestUnknowns = unknowns;
+  real64 bestResidualNorm = std::numeric_limits< real64 >::infinity();
+  bool haveBest = false;
+  std::string stopReason;
   int iteration = 0;
 
   for( iteration = 0; iteration < options.maxNewtonIterations; ++iteration )
   {
-    current = evaluateTrial( model, stateOld, snapshot, options, step, unknowns, materialFrameUpdate, false );
+    TrialResult current = evaluateTrial( model, stateOld, snapshot, options, step, unknowns, materialFrameUpdate, false );
     std::vector< real64 > residual = stressResidual( options, step, current.state.stress );
-    residualNorm = l2Norm( residual );
-    if( residualNorm <= options.stressTolerance )
+    real64 const residualNorm = l2Norm( residual );
+    if( isFinite( residualNorm ) && residualNorm < bestResidualNorm )
     {
+      bestResidualNorm = residualNorm;
+      bestUnknowns = unknowns;
+      haveBest = true;
+    }
+    if( isFinite( residualNorm ) && residualNorm <= options.stressTolerance )
+    {
+      break;
+    }
+    if( !isFinite( residualNorm ) || !isFinite( residual ) )
+    {
+      stopReason = "non-finite stress-control residual";
+      if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+      {
+        break;
+      }
       break;
     }
 
@@ -1491,7 +1779,21 @@ TrialResult solveStep( ContinuumBase & model,
     {
       value *= -1.0;
     }
-    std::vector< real64 > stepDirection = solveLinearSystem( jacobian, rhs );
+
+    std::vector< real64 > stepDirection;
+    try
+    {
+      stepDirection = solveLinearSystem( jacobian, rhs );
+    }
+    catch( std::exception const & error )
+    {
+      stopReason = error.what();
+      if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+      {
+        break;
+      }
+      break;
+    }
 
     real64 acceptedNorm = residualNorm;
     std::vector< real64 > acceptedUnknowns = unknowns;
@@ -1507,7 +1809,13 @@ TrialResult solveStep( ContinuumBase & model,
       TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, trialUnknowns, materialFrameUpdate, false );
       std::vector< real64 > trialResidual = stressResidual( options, step, trial.state.stress );
       real64 const trialNorm = l2Norm( trialResidual );
-      if( trialNorm < acceptedNorm || lineSearch == options.maxLineSearchIterations - 1 )
+      if( isFinite( trialNorm ) && trialNorm < bestResidualNorm )
+      {
+        bestResidualNorm = trialNorm;
+        bestUnknowns = trialUnknowns;
+        haveBest = true;
+      }
+      if( isFinite( trialNorm ) && trialNorm < acceptedNorm )
       {
         acceptedNorm = trialNorm;
         acceptedUnknowns = trialUnknowns;
@@ -1518,19 +1826,61 @@ TrialResult solveStep( ContinuumBase & model,
     }
     if( !accepted )
     {
-      throw std::runtime_error( "Line search failed in material-point stress control" );
+      stopReason = "line search failed to reduce the stress-control residual";
+      if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+      {
+        break;
+      }
+      break;
     }
     unknowns = acceptedUnknowns;
   }
 
-  TrialResult accepted = evaluateTrial( model, stateOld, snapshot, options, step, unknowns, materialFrameUpdate, true );
-  accepted.newtonIterations = iteration + 1;
-  accepted.residualNorm = l2Norm( stressResidual( options, step, accepted.state.stress ) );
-  accepted.converged = accepted.residualNorm <= options.stressTolerance;
+  if( numUnknowns == 1 && ( !haveBest || bestResidualNorm > options.stressTolerance ) )
+  {
+    scalarStressControlFallback( model,
+                                 stateOld,
+                                 snapshot,
+                                 options,
+                                 step,
+                                 materialFrameUpdate,
+                                 bestUnknowns,
+                                 bestResidualNorm,
+                                 haveBest,
+                                 stopReason );
+  }
+
+  std::vector< real64 > const & finalUnknowns = haveBest ? bestUnknowns : unknowns;
+  TrialResult finalTrial = evaluateTrial( model, stateOld, snapshot, options, step, finalUnknowns, materialFrameUpdate, false );
+  finalTrial.newtonIterations = std::min( iteration + 1, options.maxNewtonIterations );
+  finalTrial.residualNorm = l2Norm( stressResidual( options, step, finalTrial.state.stress ) );
+  finalTrial.converged = finalTrial.residualNorm <= options.stressTolerance;
+
+  if( !finalTrial.converged && options.stressControlFailurePolicy == StressControlFailurePolicy::Error )
+  {
+    std::ostringstream message;
+    message << "stress control did not converge after " << finalTrial.newtonIterations
+            << " iterations; residual norm = " << finalTrial.residualNorm;
+    if( !stopReason.empty() )
+    {
+      message << "; reason: " << stopReason;
+    }
+    throw std::runtime_error( message.str() );
+  }
+
+  TrialResult accepted = evaluateTrial( model, stateOld, snapshot, options, step, finalUnknowns, materialFrameUpdate, true );
+  accepted.newtonIterations = finalTrial.newtonIterations;
+  accepted.residualNorm = finalTrial.residualNorm;
+  accepted.converged = finalTrial.converged;
   if( !accepted.converged )
   {
-    std::cerr << "Warning: stress control did not converge after " << options.maxNewtonIterations
-              << " iterations; residual norm = " << accepted.residualNorm << "\n";
+    std::cerr << "Warning: stress control did not converge after " << accepted.newtonIterations
+              << " iterations; residual norm = " << accepted.residualNorm;
+    if( !stopReason.empty() )
+    {
+      std::cerr << "; reason: " << stopReason;
+    }
+    std::cerr << "\n";
   }
   return accepted;
 }
@@ -1740,10 +2090,38 @@ int run( int argc, char ** argv )
     {
       throw std::runtime_error( "Non-positive dt at load step " + std::to_string( stepIndex ) );
     }
-    TrialResult result = solveStep( model, state, options, step, frameUpdate );
+
+    TrialResult result;
+    try
+    {
+      result = solveStep( model, state, options, step, frameUpdate );
+    }
+    catch( std::exception const & error )
+    {
+      if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) && hasStressControl( options ) )
+      {
+        std::cerr << "Warning: stopping material-point driver with partial output at load step "
+                  << stepIndex + 1 << " after stress-control failure: " << error.what() << "\n";
+        output.flush();
+        return 0;
+      }
+      throw;
+    }
+
     result.state.time = state.time + step.dt;
     writeOutputRow( output, model, stepIndex + 1, step, result );
+    output.flush();
     state = result.state;
+
+    if( !result.converged &&
+        options.stressControlFailurePolicy == StressControlFailurePolicy::Stop &&
+        hasStressControl( options ) )
+    {
+      std::cerr << "Warning: stopping material-point driver with partial output at load step "
+                << stepIndex + 1 << " because stress control did not converge; residual norm = "
+                << result.residualNorm << "\n";
+      return 0;
+    }
   }
 
   return 0;
