@@ -187,12 +187,12 @@ TEST_F( WrapperLimitsTest, ScalarSetGet )
   auto & w = makeWrapper< real64 >( "scalar" );
   w.setLimits( wrapperLimits::inclusive( 0.0 ), wrapperLimits::exclusive( 1.0 ), wrapperLimits::LimitsMode::Error );
 
-  ASSERT_TRUE( w.getMinValue().has_value() );
-  ASSERT_TRUE( w.getMaxValue().has_value() );
-  EXPECT_DOUBLE_EQ( w.getMinValue()->value, 0.0 );
-  EXPECT_TRUE( w.getMinValue()->isInclusive );
-  EXPECT_DOUBLE_EQ( w.getMaxValue()->value, 1.0 );
-  EXPECT_FALSE( w.getMaxValue()->isInclusive );
+  ASSERT_TRUE( w.getMinBound().has_value() );
+  ASSERT_TRUE( w.getMaxBound().has_value() );
+  EXPECT_DOUBLE_EQ( w.getMinBound()->value, 0.0 );
+  EXPECT_TRUE( w.getMinBound()->isInclusive );
+  EXPECT_DOUBLE_EQ( w.getMaxBound()->value, 1.0 );
+  EXPECT_FALSE( w.getMaxBound()->isInclusive );
   EXPECT_EQ( w.getLimitsMode(), wrapperLimits::LimitsMode::Error );
 }
 
@@ -201,10 +201,10 @@ TEST_F( WrapperLimitsTest, Array1dSetGet )
   auto & w = makeWrapper< array1d< real64 > >( "array1d" );
   w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
-  ASSERT_TRUE( w.getMinValue().has_value() );
-  ASSERT_TRUE( w.getMaxValue().has_value() );
-  EXPECT_DOUBLE_EQ( w.getMinValue()->value, 0.0 );
-  EXPECT_DOUBLE_EQ( w.getMaxValue()->value, 1.0 );
+  ASSERT_TRUE( w.getMinBound().has_value() );
+  ASSERT_TRUE( w.getMaxBound().has_value() );
+  EXPECT_DOUBLE_EQ( w.getMinBound()->value, 0.0 );
+  EXPECT_DOUBLE_EQ( w.getMaxBound()->value, 1.0 );
   EXPECT_EQ( w.getLimitsMode(), wrapperLimits::LimitsMode::Error );
 }
 

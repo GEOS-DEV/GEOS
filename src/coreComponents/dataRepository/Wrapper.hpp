@@ -776,7 +776,7 @@ public:
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
-  getMinValue() const
+  getMinBound() const
   {
     return m_limits.min;
   }
@@ -788,7 +788,7 @@ public:
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
-  getMaxValue() const
+  getMaxBound() const
   {
     return m_limits.max;
   }
