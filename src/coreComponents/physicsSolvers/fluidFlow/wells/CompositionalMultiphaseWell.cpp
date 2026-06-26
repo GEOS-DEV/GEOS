@@ -2679,7 +2679,8 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
   real64 currentTotalVolRate_local = currentTotalVolRate;
 
   // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
-  MaximumBHPConstraint * bhpConstraint=  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
+  bool checkActiveStatus = false;
+  MaximumBHPConstraint * bhpConstraint=  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP, checkActiveStatus ) );
   bhpConstraint->setConstraintActive( false );
   real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
   real64 currentWHP = constraintWHP;
