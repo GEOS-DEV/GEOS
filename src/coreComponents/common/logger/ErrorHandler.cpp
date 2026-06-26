@@ -29,7 +29,7 @@ ErrorHandler ErrorHandler::s_errorHandlerInstance;
 
 ErrorHandler::ErrorHandler()
   : m_logger( &ErrorLogger::global() )
-  , m_abortingFunctor( [this]() { std::abort(); } )
+  , m_abortingFunctor( []() { std::abort(); } )
 {}
 
 ErrorHandler const & ErrorHandler::getInstance()
