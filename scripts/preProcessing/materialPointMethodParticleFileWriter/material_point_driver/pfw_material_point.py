@@ -324,6 +324,7 @@ class CompiledDriverRunResult:
     run_script: Path
     output_csv: Path
     command: List[str]
+    stress_control_diagnostics_csv: Optional[Path] = None
     log_file: Optional[Path] = None
     returncode: Optional[int] = None
 
@@ -1014,6 +1015,30 @@ def _join_reals(values: Iterable[float]) -> str:
     return ",".join(f"{float(v):.17g}" for v in values)
 
 
+def _format_stress_control_strain_bound(value: Any) -> str:
+    """Format a stress-control strain-bound option for the compiled driver.
+
+    Bounds may be supplied either as a component mapping, for example
+    {"xx": 0.0, "yy": 0.0}, or as a six-value GEOS Voigt sequence.  A string is
+    passed through so advanced users can use the compiled driver's assignment
+    syntax directly.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, Mapping):
+        parts: List[str] = []
+        for key, item in value.items():
+            if item is None:
+                parts.append(f"{key}=none")
+            else:
+                parts.append(f"{key}={float(item):.17g}")
+        return ",".join(parts)
+    values = list(value)
+    if len(values) != 6:
+        raise MaterialPointInputError("stress-control strain bounds must be a component mapping, string, or six-value sequence")
+    return ",".join("none" if item is None else f"{float(item):.17g}" for item in values)
+
+
 def _quote_command(command: Sequence[str]) -> str:
     return " \\\n  ".join(shlex.quote(str(part)) for part in command)
 
@@ -1209,10 +1234,53 @@ def write_compiled_driver_files(
         "--stress-bracket-initial-scale", str(float(solver.get("stressBracketInitialScale", solver.get("bracketInitialScale", 0.0)))),
         "--stress-bracket-max-strain", str(float(solver.get("stressBracketMaxStrain", solver.get("bracketMaxStrain", 5.0e-2)))),
         "--stress-bracket-growth", str(float(solver.get("stressBracketGrowth", solver.get("bracketGrowth", 2.0)))),
-        "--stress-control-failure-policy", str(solver.get("stressControlFailurePolicy", solver.get("failurePolicy", "error"))),
+        "--stress-control-algorithm", str(solver.get("stressControlAlgorithm", solver.get("stressControlMethod", solver.get("algorithm", "hybrid")))),
+        "--stress-control-regularization", str(float(solver.get("stressControlRegularization", solver.get("regularization", 1.0e-12)))),
+        "--stress-control-max-strain-correction", str(float(solver.get("stressControlMaxStrainCorrection", solver.get("maxStrainCorrection", 5.0e-2)))),
+        "--stress-control-servo-compliance", str(float(solver.get("stressControlServoCompliance", solver.get("servoCompliance", solver.get("barostatCompliance", 1.0e-2))))),
+        "--stress-control-servo-relaxation", str(float(solver.get("stressControlServoRelaxation", solver.get("servoRelaxation", solver.get("barostatGain", 0.5))))),
+        "--stress-control-servo-derivative-floor", str(float(solver.get("stressControlServoDerivativeFloor", solver.get("servoDerivativeFloor", 1.0e-8)))),
+        "--stress-control-servo-iterations", str(int(solver.get("stressControlServoIterations", solver.get("servoIterations", solver.get("barostatIterations", 12))))),
+        "--stress-control-pattern-iterations", str(int(solver.get("stressControlPatternIterations", solver.get("patternIterations", 0)))),
+        "--stress-control-pattern-initial-step", str(float(solver.get("stressControlPatternInitialStep", solver.get("patternInitialStep", 0.0)))),
+        "--stress-control-pattern-min-step", str(float(solver.get("stressControlPatternMinStep", solver.get("patternMinStep", 1.0e-12)))),
+        "--stress-control-pattern-shrink", str(float(solver.get("stressControlPatternShrink", solver.get("patternShrink", 0.5)))),
+        "--stress-control-pattern-growth", str(float(solver.get("stressControlPatternGrowth", solver.get("patternGrowth", 1.25)))),
+        "--stress-control-failure-policy", str(solver.get("stressControlFailurePolicy", solver.get("failurePolicy", "continue"))),
     ]
+    stress_min_strain = solver.get("stressControlMinStrain", solver.get("stressControlStrainMin", solver.get("minStressControlStrain", None)))
+    stress_max_strain = solver.get("stressControlMaxStrain", solver.get("stressControlStrainMax", solver.get("maxStressControlStrain", None)))
+    if stress_min_strain is not None and str(stress_min_strain).strip().lower() not in ("", "none", "off"):
+        command.extend(["--stress-control-min-strain", _format_stress_control_strain_bound(stress_min_strain)])
+    if stress_max_strain is not None and str(stress_max_strain).strip().lower() not in ("", "none", "off"):
+        command.extend(["--stress-control-max-strain", _format_stress_control_strain_bound(stress_max_strain)])
     if "heatCapacity" in temperature or "heatCapacity" in energy:
         command.extend(["--heat-capacity", str(float(temperature.get("heatCapacity", energy.get("heatCapacity", 1.0))))])
+
+    diagnostics_csv_path: Optional[Path] = None
+    diagnostics_block = solver.get("stressControlDiagnostics", solver.get("stressControlTrace", None))
+    diagnostics_enabled = False
+    diagnostics_level = "iteration"
+    diagnostics_path_value: Optional[Any] = None
+    if isinstance(diagnostics_block, Mapping):
+        diagnostics_enabled = bool(diagnostics_block.get("enabled", False))
+        diagnostics_path_value = diagnostics_block.get("file", diagnostics_block.get("path", None))
+        diagnostics_level = str(diagnostics_block.get("level", diagnostics_block.get("diagnosticsLevel", diagnostics_level)))
+    elif isinstance(diagnostics_block, bool):
+        diagnostics_enabled = diagnostics_block
+    elif isinstance(diagnostics_block, (str, Path)):
+        diagnostics_enabled = True
+        diagnostics_path_value = diagnostics_block
+
+    if diagnostics_enabled or diagnostics_path_value is not None:
+        if diagnostics_path_value is None or str(diagnostics_path_value).strip() == "":
+            diagnostics_csv_path = prefix.parent / f"{prefix.name}.stress_control_diagnostics.csv"
+        else:
+            diagnostics_csv_path = Path(str(diagnostics_path_value))
+            if not diagnostics_csv_path.is_absolute():
+                diagnostics_csv_path = prefix.parent / diagnostics_csv_path
+        command.extend(["--stress-control-diagnostics", str(diagnostics_csv_path)])
+        command.extend(["--stress-control-diagnostics-level", diagnostics_level])
 
     core_initial_keys = {
         "stress", "strain", "totalStrain", "F", "materialDirection", "temperature", "temperatureRate",
@@ -1251,19 +1319,20 @@ def write_compiled_driver_files(
         "pathCsv": path_csv_path,
         "runScript": run_script_path,
         "outputCsv": output_csv_path,
+        "stressControlDiagnosticsCsv": diagnostics_csv_path,
         "command": command,
     }
 
 
-def kroonblawd_graphite_case(
+def triaxial_graphite_case(
     theta_deg: float = 75.0,
     pressure_gpa: float = 30.0,
     dt: float = 5.0e-7,
     n_steps: int = 1000,
     strain_rate_us: float = -1.0e3,
-    material: str = "graphiteSingleCrystal",
+    material: str = "graphitePressureSensitiveCrystal",
 ) -> Dict[str, Any]:
-    """Return a Kroonblawd-style graphite material-point case.
+    """Return a Triaxial-style graphite material-point case.
 
     The case uses GEOS tension-positive stress convention, so a positive
     background pressure is written as a negative normal stress target.
@@ -1329,6 +1398,7 @@ def run_material_point(
         run_script=Path(files["runScript"]),
         output_csv=Path(files["outputCsv"]),
         command=command,
+        stress_control_diagnostics_csv=Path(files["stressControlDiagnosticsCsv"]) if files.get("stressControlDiagnosticsCsv") else None,
         log_file=log_file,
     )
 
@@ -1347,7 +1417,7 @@ def run_material_point(
                 "\n# stderr\n" + proc.stderr
             )
             log_file.write_text(log_text)
-            if echo_output or (check and proc.returncode != 0):
+            if echo_output:
                 if proc.stdout:
                     print(proc.stdout, end="")
                 if proc.stderr:
@@ -1361,12 +1431,12 @@ def run_material_point(
     return result
 
 def example_case() -> Dict[str, Any]:
-    """Return a Kroonblawd-style graphite local-driver case template."""
+    """Return a Triaxial-style graphite local-driver case template."""
     return {
         "name": "graphite_theta75_p30_material_point",
         "units": "mm_us_mg_GPa_K",
         "backend": "elastic",
-        "material": {"source": "pfw_materials.py", "name": "graphiteSingleCrystal"},
+        "material": {"source": "pfw_materials.py", "name": "graphiteTriaxialTest"},
         "initial": {
             "stress": [-30.0, -30.0, -30.0, 0.0, 0.0, 0.0],
             "temperature": 300.0,

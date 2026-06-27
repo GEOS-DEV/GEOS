@@ -43,14 +43,30 @@ generated run scripts capture compiled-driver stdout/stderr in a sidecar
 `.driver.log` file, which suppresses verbose LvArray/CHAI allocation/free messages
 in normal verification output while keeping the full log available.
 
-Kroonblawd/Figure-1-style Graphite input generation:
+Stress-controlled components may also be given accumulated-strain bounds through
+the `solver` block.  The bounds apply only to components whose `control` mode is
+`stress`, and can be supplied either as a component map or as six GEOS Voigt
+values:
+
+```python
+"solver": {
+    "stressControlMinStrain": {"xx": 0.0, "yy": 0.0},
+    "stressControlMaxStrain": {"xx": 0.5, "yy": 0.5},
+}
+```
+
+The compiled executable accepts the same bounds directly with
+`--stress-control-min-strain xx=0,yy=0` and
+`--stress-control-max-strain xx=0.5,yy=0.5`.
+
+Triaxial-style Graphite input generation:
 
 ```bash
 cd scripts/preProcessing/materialPointMethodParticleFileWriter
-python3 verification/materialPoint/pfw_input_graphite_kroonblawd_material_point.py \
+python3 verification/materialPoint/pfw_input_graphite_triaxial_material_point.py \
   --work-dir /tmp/graphite_theta75_p30 \
   --theta-deg 75 \
   --pressure-gpa 30
 ```
 
-The Kroonblawd-style example sets lab `z` as the compression direction, uses the first material-frame row as the graphite basal-plane normal, keeps the run isothermal at 300 K, and accumulates stress work while retaining zero thermal energy by default.
+The Triaxial-style example sets lab `z` as the compression direction, uses the first material-frame row as the graphite basal-plane normal, keeps the run isothermal at 300 K, and accumulates stress work while retaining zero thermal energy by default.
