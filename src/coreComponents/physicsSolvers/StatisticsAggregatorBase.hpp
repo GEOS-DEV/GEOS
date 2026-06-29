@@ -210,7 +210,7 @@ protected:
 
   dataRepository::Group & m_meshBodies;
 
-  std::vector< DiscretizationGroupPath > m_discretizationsPaths;
+  stdVector< DiscretizationGroupPath > m_discretizationsPaths;
 
   /// @see getWarnings()
   stdVector< string > m_warnings;
