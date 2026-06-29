@@ -14,6 +14,8 @@
  */
 
 #include "PermeabilitySpecification.hpp"
+#include "FieldSpecification.hpp"
+#include "FieldSpecificationFactory.hpp"
 #include "common/logger/Logger.hpp"
 
 namespace geos
@@ -73,5 +75,43 @@ void PermeabilitySpecification::postInputInitialization()
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PermeabilitySpecification, string const &, Group * const )
+
+template<>
+void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpecification const & ps,
+                                                               dataRepository::Group & manager )
+{
+  stdArray< string, 3 > suffixes = {{ "_x", "_y", "_z" }};
+
+  R1Tensor scales = ps.getScales();
+
+  for( string const & regionName : ps.getRegionNames() )
+  {
+    string const objectPath = "ElementRegions/" + regionName;
+
+    for( integer comp = 0; comp < 3; ++comp )
+    {
+      string const childName = ps.getName() + "_" + regionName + suffixes[ comp ];
+
+      FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
+      fs.setFieldName( ps.getFieldName() );
+      fs.setObjectPath( objectPath );
+      fs.setScale( scales[ comp ] );
+      fs.initialCondition( true );
+      fs.setComponent( comp );
+
+      for( auto const & setName : ps.getSetNames() )
+      {
+        fs.addSetName( setName );
+      }
+
+      if( !ps.getFunctionName().empty() )
+      {
+        fs.setFunctionName( ps.getFunctionName() );
+      }
+
+    }
+  }
+
+}
 
 }

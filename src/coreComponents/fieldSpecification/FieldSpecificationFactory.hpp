@@ -21,39 +21,37 @@
 #define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONFACTORY_HPP
 
 
-#include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
-#include "FieldSpecificationABC.hpp"
 
 namespace geos
 {
 
+class PermeabilitySpecification;
+
 /**
- * @class FieldSpecificationFactory
- *
- * This class provides a way to create FieldSpecification objects using
- * other type of specifications. One could think of those types of
- * specification to blueprints or "high-level" specification
+ * @brief List of high-level field specifications to expand into FieldSpecification objects.
  */
-class FieldSpecificationFactory
-{
-public:
+using ExpandableSpecTypes = types::TypeList< PermeabilitySpecification >;
 
-  /// @brief Generate FieldSpecifications based on the given "higher-level"
-  ///        specification
-  /// @param specification The higher-level specification used as a blueprint
-  ///                      to create FieldSpecification
-  /// @param manager The parent to store the created FieldSpecifications
-  virtual void generate( FieldSpecificationABC const & specification,
-                         dataRepository::Group & manager ) const = 0;
+/**
+ * @brief Generate FieldSpecifications based on the given "higher-level" specification
+ * @tparam SPEC_TYPE The type of the high-level specification
+ * @param specification The high-level specification used as a blueprint
+ *                      to create FieldSpecification
+ * @param manager The parent to store the created FieldSpecifications
+ */
+template< typename SPEC_TYPE >
+void generateFieldSpecifications( SPEC_TYPE const & specification, dataRepository::Group & manager ) = delete;
 
-  /// @return The key that represents the element this factory is about.
-  /// Purpose: link the factory to the specification it uses.
-  virtual string const getKey() const = 0;
+/**
+ * @brief Expand high-level field specifications
+ * @param manager The manager group
+ * Expand all field specificiation listed in ExpandableSpecTypes
+ */
+void expandFieldSpecifications( dataRepository::Group & manager );
 
-};
-
-}
+} // namespace geos
 
 
 #endif //GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONFACTORY_HPP

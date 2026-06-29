@@ -25,6 +25,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshObjectPath.hpp"
 #include "FieldSpecificationABC.hpp"
+#include "FieldSpecificationFactory.hpp"
 
 namespace geos
 {
@@ -166,6 +167,12 @@ private:
   R1Tensor m_scales;
 
 };
+
+/// @copydoc geos::FieldSpecificationFactory::generateFieldSpecifications
+template<>
+void
+generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpecification const & specification,
+                                                          dataRepository::Group & manager );
 
 }
 

@@ -15,12 +15,10 @@
 
 #include "FieldSpecificationManager.hpp"
 #include "FieldSpecificationABC.hpp"
+#include "FieldSpecificationFactory.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshObjectPath.hpp"
-#include "PermeabilitySpecification.hpp"
-#include "FieldSpecificationFactory.hpp"
-#include "PermeabilitySpecificationFactory.hpp"
 
 namespace geos
 {
@@ -37,8 +35,6 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 
   GEOS_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
   m_instance = this;
-
-  registerFactory( std::make_unique< PermeabilitySpecificationFactory >() );
 }
 
 FieldSpecificationManager::~FieldSpecificationManager()
@@ -73,21 +69,9 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-void FieldSpecificationManager::registerFactory( std::unique_ptr< FieldSpecificationFactory > factory )
-{
-  m_factories.emplace( factory->getKey(), std::move( factory ) );
-}
-
 void FieldSpecificationManager::postInputInitialization()
 {
-  forSubGroups< FieldSpecificationABC >( [&]( FieldSpecificationABC const & spec )
-  {
-    auto it = m_factories.find( spec.getCatalogName() );
-    if( it != m_factories.end() )
-    {
-      it->second->generate( spec, *this );
-    }
-  } );
+  expandFieldSpecifications( *this );
 }
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
