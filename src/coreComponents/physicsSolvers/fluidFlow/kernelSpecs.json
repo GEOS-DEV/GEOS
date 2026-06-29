@@ -65,64 +65,58 @@
     "explicit": []
   },
 
-  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_IsothermalDirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NCOMP",
+      "FLUID_TYPE"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxPolicy", "geos::parallelDevicePolicy<>" ]
     ],
     "combinations": {
       "NAME": [
-        "DirichletFluxComputeKernel"
+        "DirichletFluxComputeKernel",
+        "DirichletFluxComputeZFormulationKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
-      "KERNEL_TYPE": [
-        "constitutive::InvariantImmiscibleFluid",
-        "constitutive::DeadOilFluid",
+      "NCOMP": [ 2, 3, 4, 5 ],
+      "FLUID_TYPE": [
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
         "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
       ]
     },
-    "explicit": []
+    "explicit": [
+    ]
   },
 
-  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_ThermalDirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NCOMP",
+      "FLUID_TYPE"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxPolicy", "geos::parallelDevicePolicy<>" ]
     ],
     "combinations": {
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
-      "KERNEL_TYPE": [
-        "constitutive::DeadOilFluid",
-        "constitutive::BlackOilFluid",
-        "constitutive::CO2BrinePhillipsFluid",
-        "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+      "NCOMP": [ 2, 3, 4, 5 ],
+      "FLUID_TYPE": [
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid"
       ]
     },
     "explicit": []
@@ -170,5 +164,62 @@
       "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
     },
     "explicit": []
+  },
+
+  "CompositionalMultiphaseBase_FluidUpdateKernel" : {
+    "vars": [
+      "POLICY_TYPE",
+      "FLUID_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "POLICY_TYPE": [
+        "geos::parallelDevicePolicy<>",
+        "geos::serialPolicy"
+      ],
+      "FLUID_TYPE": [
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": [
+    ]
+  },
+
+  "CompositionalMultiphaseBase_HydrostaticPressureKernel" : {
+    "vars": [
+      "FLUID_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "FLUID_TYPE": [
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": [
+    ]
   }
 }
