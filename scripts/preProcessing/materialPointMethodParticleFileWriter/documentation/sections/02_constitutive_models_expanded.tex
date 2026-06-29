@@ -1360,3 +1360,132 @@ cmake --build <build-dir> --target geosx
 \end{lstlisting}
 
 Once built, the external material is used like any other continuum model: add a corresponding XML tag to the \texttt{Constitutive} block, add its name to the relevant \texttt{ParticleRegion} material list, and assign the matching material index with PFW geometry objects or wrappers.  External cohesive-zone laws use a related but separate registration list and are documented with the cohesive-zone infrastructure in Section~\ref{sec:cohesive-zone-implementation}.
+\subsection{Material-point constitutive driver}
+\label{subsec:material-point-driver}
+\index{material-point driver}
+\index{constitutiveModels!material-point driver}
+\index{stress control!material-point driver}
+\index{setupMPM!material-point driver}
+
+The material-point constitutive driver is an optional, isolated path for running one-point constitutive tests without entering the production \texttt{SolidMechanics\_MPM} solver.  It is intended for material-model verification, calibration studies, parameter sweeps, and optimizer loops where the required map is
+\begin{equation}
+  \left\{\hbox{material parameters, initial state, loading path}\right\}
+  \longrightarrow
+  \left\{\hbox{stress, state, energy, and diagnostic histories}\right\}.
+\end{equation}
+The driver constructs the selected GEOS constitutive model from XML, initializes a single material point, applies a prescribed strain/stress path, writes a CSV history, and leaves the grid, particle-to-grid transfer, contact, boundary-condition, and repartitioning machinery untouched.  This separation is deliberate: failures or experimental controls in the material-point tool should not alter ordinary MPM simulations.
+
+\paragraph{Build and executable discovery.}
+The compiled executable is named \texttt{geos\_mpm\_material\_point\_driver}.  It is controlled by the CMake cache option \texttt{GEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER}, which is off by default.  With the LLNL helper script, request it explicitly with
+\begin{lstlisting}[language=bash,caption={Building the optional material-point executable.},label={lst:material-point-build},basicstyle=\ttfamily\small]
+./setupMPM --dane --enable-material-point-driver
+# or
+./setupMPM --tuolumne --enable-material-point-driver
+\end{lstlisting}
+A direct CMake configuration can instead pass \texttt{-DGEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER=ON}.  Once a build directory has been configured with the driver enabled, \texttt{setupMPM --rebuild} also rebuilds the driver target.  The PFW Python layer looks first at \texttt{GEOS\_MPM\_MATERIAL\_POINT\_DRIVER}; if that environment variable is not set, it reads the active \texttt{userDefs\_<user>.py} file and uses \texttt{geos\_mpm\_material\_point\_driver} next to the configured \texttt{geosx} executable.
+
+\paragraph{Python front end and sidecar files.}
+The user-facing Python package is under
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+scripts/preProcessing/materialPointMethodParticleFileWriter/material_point_driver/
+\end{lstlisting}
+with a compatibility entry point at
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_material_point.py
+\end{lstlisting}
+A case dictionary can reference a material from \texttt{pfw\_materials.py}, override parameters, provide initial state, and define a load path.  The Python front end writes the sidecar files needed by the compiled driver: a material XML file, a load-path CSV, a JSON copy of the case, a run script, the output CSV path, and an optional stress-control diagnostics CSV.
+
+A minimal workflow is
+\begin{lstlisting}[language=bash,caption={Preparing and running a material-point case from Python.},label={lst:material-point-python},basicstyle=\ttfamily\small]
+cd scripts/preProcessing/materialPointMethodParticleFileWriter
+python3 pfw_material_point.py --write-example /tmp/material_point_case.json
+python3 pfw_material_point.py \
+  --case /tmp/material_point_case.json \
+  --export-compiled-driver-prefix /tmp/material_point_case
+/tmp/material_point_case.run.sh
+\end{lstlisting}
+Direct calls through \texttt{run\_material\_point(...)} capture the compiled driver's standard output and standard error in a per-case \texttt{.driver.log} file.  This keeps verbose allocator messages out of sweep output while preserving the complete driver log for debugging.
+
+\paragraph{Control modes and sign convention.}
+The load path is specified in GEOS Voigt order,
+\begin{equation}
+  [xx, yy, zz, yz, xz, xy].
+\end{equation}
+Each component has one of the modes listed in Table~\ref{tab:material-point-control-modes}.  GEOS stress is tension-positive.  A compressive pressure target \(P\) is therefore written as a normal stress target \(-P\).
+
+\begin{longtable}{@{}p{0.23\linewidth}p{0.68\linewidth}@{}}
+\caption{Material-point load-control modes.\label{tab:material-point-control-modes}}\\
+\toprule
+\textbf{Mode} & \textbf{Meaning}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mode} & \textbf{Meaning}\\
+\midrule
+\endhead
+\texttt{strain} & The load-path value is the component value imposed for that step.\\
+\texttt{strainRate} & The load-path value is multiplied by the time step to form a strain increment.\\
+\texttt{trueStrainRate} & The load-path value is interpreted as a logarithmic normal strain rate for normal components.\\
+\texttt{stress} & The driver solves for the strain increment needed to match the target Cauchy stress component.\\
+\bottomrule
+\end{longtable}
+
+For stress-controlled components, the driver restores the beginning-of-step material state before each residual evaluation, evaluates trial strain increments, and commits only the accepted update.  The compiled driver supports several stress-control algorithms: finite-difference Newton, regularized Newton, scalar bracketing for one controlled component, multi-component pattern search, and a bounded servo or barostat-style correction.  The \texttt{stressControlFailurePolicy} can be \texttt{error}, \texttt{stop}, or \texttt{continue}.  The \texttt{continue} mode is useful for parameter sweeps because it writes completed rows and marks nonconverged rows instead of aborting the entire sweep.
+
+Stress-controlled components can also be bounded by accumulated strain.  The bounds apply only to components whose mode is \texttt{stress}; prescribed strain and rate controls are not clipped.  Bounds may be specified as a component map or as six Voigt-ordered values:
+\begin{lstlisting}[language=Python,caption={Stress-control strain bounds in a Python case.},label={lst:material-point-strain-bounds},basicstyle=\ttfamily\small]
+case["solver"] = {
+    "stressControlMinStrain": {"xx": 0.0, "yy": 0.0},
+    "stressControlMaxStrain": {"xx": 0.5, "yy": 0.5},
+}
+\end{lstlisting}
+The equivalent compiled-driver flags are
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\small]
+--stress-control-min-strain xx=0,yy=0
+--stress-control-max-strain xx=0.5,yy=0.5
+\end{lstlisting}
+
+\paragraph{Material direction and material-frame transport.}
+The material-point case accepts either a single vector or a full row-wise \(3\times 3\) material frame in the same convention used by PFW material directions.  A vector input is normalized and completed to an orthonormal frame using a tangent hint when provided.  The current frame can then be updated by one of the following modes:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{fixed}: keep the initial frame fixed.
+  \item \texttt{rotation}: transport the frame with the polar rotation.
+  \item \texttt{fiber}: push fiber-like directions forward with the deformation gradient and renormalize.
+  \item \texttt{normal}: transport a plane normal with the cofactor of the deformation gradient and rebuild tangents.
+  \item \texttt{graphite}: treat the first row as a graphitic or layered-material normal and transport it as a normal while rebuilding an in-plane basis.
+  \item \texttt{mpmCofactor}: apply the cofactor-style MPM material-direction update to the frame rows.
+\end{itemize}
+For \texttt{Graphite}, the first material-frame row is the basal-plane normal consumed by the constitutive model.  Other anisotropic models should document which row or axis is physically meaningful for their own update.
+
+\paragraph{Initial state, temperature, and energy.}
+The initial block can set stress, density, temperature, temperature rate, specific internal energy, length scale, strength scale, material direction, and model-specific fields.  Numeric fields not owned by the generic driver are forwarded with \texttt{--initial-field name=value}, allowing verification cases to initialize model-specific damage, plastic-work, porosity, relaxation, or hardening variables without adding a driver option for every constitutive wrapper.
+
+The energy integrator can be disabled, delegated to a material-owned field, or driven by stress power.  In stress-power mode the driver accumulates
+\begin{equation}
+  \dot e = \frac{\boldsymbol{\sigma}:\mathbf{D}}{\rho},
+\end{equation}
+with trapezoidal integration over the accepted step.  The \texttt{retentionFactor} controls how much of this mechanical work is retained in \texttt{specificInternalEnergy}; the full mechanical work remains available as \texttt{accumulatedStressPower}.  Temperature can be prescribed, kept isothermal, advanced from a heat capacity in adiabatic-style tests, or read back from a material-owned state when such a coupling exists.
+
+\paragraph{Diagnostics and output.}
+The main output CSV contains one row per step, including time, convergence status, stress, accumulated strain, deformation gradient, velocity gradient, material frame, density, Jacobian, energy terms, and any recognized model state fields such as plastic strain, plastic work, damage, effective moduli, and temperature.  Stress-control diagnostics can be enabled with a solver block such as
+\begin{lstlisting}[language=Python,caption={Stress-control diagnostics request.},label={lst:material-point-stress-diagnostics},basicstyle=\ttfamily\small]
+case["solver"]["stressControlDiagnostics"] = {
+    "enabled": True,
+    "level": "iteration",  # step, iteration, or full
+}
+\end{lstlisting}
+The diagnostics file records trial stages, controlled strain guesses, trial stresses, target stresses, residuals, material-frame information, selected internal variables, and accepted/final states.  The \texttt{full} level includes finite-difference perturbation rows and is intended for diagnosing singular or poorly conditioned stress-control Jacobians.
+
+\paragraph{Verification workflows.}
+The optional material-point verification directory is
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+scripts/preProcessing/materialPointMethodParticleFileWriter/verification/materialPoint/
+\end{lstlisting}
+It is excluded from ordinary MPM verification-suite discovery because it requires the optional executable.  The local \texttt{runTest} script exercises a uniaxial-stress \texttt{VonMisesJ} case: \(xx\) strain is prescribed and the other five stress components are controlled to zero, with stress and plastic-strain histories compared against the small-strain elastic-perfectly-plastic solution.  The graphite triaxial sweep scripts generate pressure/orientation response curves and stress-control diagnostics for either a plane-strain transverse condition or a full transverse stress-control analogue:
+\begin{lstlisting}[language=bash,caption={Material-point verification entry points.},label={lst:material-point-verification},basicstyle=\ttfamily\small]
+cd scripts/preProcessing/materialPointMethodParticleFileWriter/verification/materialPoint
+./runTest
+./runGraphiteTriaxialSweep
+./runGraphiteTriaxialFullStressTest
+\end{lstlisting}
+These verification scripts are data generators as well as checks: their CSV summaries, response plots, and stress-control diagnostic plots are intended to make calibration and solver-robustness problems visible rather than hiding them behind a single pass/fail value.
