@@ -84,6 +84,13 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
 
   switch( m_chemicalSystemType )
   {
+    case ChemicalSystemType::mascagnite:
+      m_numPrimarySpecies = 3;
+      m_numSecondarySpecies = 2;
+      m_numKineticReactions = 1;
+      m_solventDensity = mascagniteSystem.getSolventDensity();
+      break;
+
     case ChemicalSystemType::ultramafic:
       m_numPrimarySpecies = 8;
       m_numSecondarySpecies = 24;

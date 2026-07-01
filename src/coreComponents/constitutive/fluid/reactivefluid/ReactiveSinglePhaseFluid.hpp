@@ -52,6 +52,7 @@ enum class ChemicalSystemType : integer
   carbonate,
   carbonateAllEquilibrium,
   ultramafic,
+  mascagnite,
   forge,
   momasEasy,
   momasMedium,
@@ -231,6 +232,7 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::mascagniteSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::forgeSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
@@ -286,6 +288,20 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
+      case ChemicalSystemType::mascagnite:
+        return ReactionKernelWrapper< mascagniteSystemType >( m_primarySpeciesAggregateConcentration,
+                                                              m_primarySpeciesMobileAggregateConcentration,
+                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_initialPrimarySpeciesConcentration,
+                                                              m_secondarySpeciesConcentration,
+                                                              m_kineticReactionRates,
+                                                              m_aggregateSpeciesRates,
+                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                              m_numPrimarySpecies,
+                                                              m_numSecondarySpecies,
+                                                              m_numKineticReactions,
+                                                              mascagniteSystem );
       case ChemicalSystemType::forge:
         return ReactionKernelWrapper< forgeSystemType >( m_primarySpeciesAggregateConcentration,
                                                                            m_primarySpeciesMobileAggregateConcentration,

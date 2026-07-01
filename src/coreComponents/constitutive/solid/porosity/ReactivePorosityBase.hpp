@@ -74,9 +74,17 @@ public:
   {
     for( integer r=0; r < numKineticReactions; ++r )
     {
-      real64 const volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
-      volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
-
+      real64 volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
+      if (volumeFractionIncrement < 0) { // Dissolution
+        real64 const decayRate = -volumeFractionIncrement / volumeFractions_n[r];
+        volumeFractions[r] = volumeFractions_n[r] * exp(-decayRate);  
+        if (volumeFractions[r] < 1e-6) {
+          volumeFractions[r] = 1e-6; // Avoid negative or very small volume fractions
+          volumeFractionIncrement = 0.0; // No further change in porosity from this reaction
+        }
+      } else { // Precipitation
+        volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;  
+      }
       reactionPorosityIncrement -= volumeFractionIncrement;
     }
   }
@@ -96,11 +104,13 @@ public:
                                  m_molarWeights,
                                  m_mineralDensities );
 
-    m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
+    real64 const phi0 = m_porosity_n[k][q];
+    real64 const logPorosity = log(std::max(phi0, 1e-8)) + reactionPorosityIncrement / phi0;    
+    m_newPorosity[k][q] = exp(logPorosity);
 
-    if( m_newPorosity[k][q] < 0 )
+    if( m_newPorosity[k][q] < 1e-8 )
     {
-      m_newPorosity[k][q] = 0;
+      m_newPorosity[k][q] = 1e-8;
     }
     else if( m_newPorosity[k][q] > 1.0 )
     {
