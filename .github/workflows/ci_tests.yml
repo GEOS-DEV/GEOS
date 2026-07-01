@@ -42,7 +42,7 @@ jobs:
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -95,7 +95,7 @@ jobs:
       CI_REPOSITORY_OWNER: ${{ github.repository_owner }}
     steps:
     - name: Checkout CI config
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         sparse-checkout: |
           .github/ci/orgs
@@ -289,7 +289,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -326,7 +326,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         submodules: false
         lfs: false
@@ -502,7 +502,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         submodules: false
         lfs: false
