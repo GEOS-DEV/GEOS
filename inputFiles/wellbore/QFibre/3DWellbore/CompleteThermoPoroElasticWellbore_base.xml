@@ -1,0 +1,592 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <SinglePhasePoromechanics
+      name="thermoPoroElasticSolver"
+      solidSolverName="solidMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ casing, cement, seal, reservoir }">
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        maxAllowedResidualNorm="1e19"
+        newtonTol="1.0e-3"
+        newtonMaxIter="200"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="solidMechSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ casing, cement, seal, reservoir }">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-4"/>
+    </SolidMechanicsLagrangianFEM>
+   
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0"
+      isThermal="1"
+      targetRegions="{ casing, cement, seal, reservoir }">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-4"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="casing"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ fluid, casing, casingThermalCond }"/>
+
+    <CellElementRegion
+      name="cement"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ fluid, cement, cementThermalCond }"/>
+
+    <CellElementRegion
+      name="seal"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ fluid, seal, rockThermalCond }"/>
+
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ 3_hexahedra }"
+      materialList="{ fluid, reservoir, rockThermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <PorousElasticIsotropic
+      name="casing"
+      solidModelName="casingSolid"
+      porosityModelName="casingPorosity"
+      permeabilityModelName="casingPerm"
+      solidInternalEnergyModelName="casingInternalEnergy"/>
+
+    <PorousElasticIsotropic
+      name="cement"
+      solidModelName="cementSolid"
+      porosityModelName="cementPorosity"
+      permeabilityModelName="cementPerm"
+      solidInternalEnergyModelName="cementInternalEnergy"/>
+
+    <PorousElasticIsotropic
+      name="seal"
+      solidModelName="sealSolid"
+      porosityModelName="sealPorosity"
+      permeabilityModelName="sealPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <PorousElasticIsotropic
+      name="reservoir"
+      solidModelName="reservoirSolid"
+      porosityModelName="reservoirPorosity"
+      permeabilityModelName="reservoirPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <!-- SPHINX_PoroElasticProperties -->
+    <BiotPorosity
+      name="casingPorosity"
+      defaultReferencePorosity="1e-6"
+      defaultGrainBulkModulus="167e9"/>
+
+    <BiotPorosity
+      name="cementPorosity"
+      defaultReferencePorosity="0.2"
+      defaultGrainBulkModulus="1e20"/>
+
+    <BiotPorosity
+      name="sealPorosity"
+      defaultReferencePorosity="0.05"
+      defaultGrainBulkModulus="1e20"/>
+
+    <BiotPorosity
+      name="reservoirPorosity"
+      defaultReferencePorosity="0.22"
+      defaultGrainBulkModulus="1e20"/>
+    <!-- SPHINX_PoroElasticPropertiesEnd -->
+
+    <!-- SPHINX_HeatCapacityProperties -->
+    <SolidInternalEnergy
+      name="casingInternalEnergy"
+      referenceVolumetricHeatCapacity="1.375e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+
+    <SolidInternalEnergy
+      name="cementInternalEnergy"
+      referenceVolumetricHeatCapacity="4.2e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="4.56e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+    <!-- SPHINX_HeatCapacityPropertiesEnd -->
+
+    <!-- SPHINX_PermeabilityProperties -->
+    <ConstantPermeability
+      name="casingPerm"
+      permeabilityComponents="{ 1.0e-100, 1.0e-100, 1.0e-100 }"/>
+
+    <ConstantPermeability
+      name="cementPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+    <ConstantPermeability
+      name="sealPerm"
+      permeabilityComponents="{ 1.0e-20, 1.0e-20, 1.0e-20 }"/>
+
+    <ConstantPermeability
+      name="reservoirPerm"
+      permeabilityComponents="{ 5.0e-15, 5.0e-15, 5.0e-15 }"/>
+    <!-- SPHINX_PermeabilityPropertiesEnd -->
+
+    <!-- SPHINX_ThermalProperties -->
+    <SinglePhaseThermalConductivity
+      name="casingThermalCond"
+      defaultThermalConductivityComponents="{ 40, 40, 40 }"/>
+
+    <SinglePhaseThermalConductivity
+      name="cementThermalCond"
+      defaultThermalConductivityComponents="{ 0.34, 0.34, 0.34 }"/>
+
+    <SinglePhaseThermalConductivity
+      name="rockThermalCond"
+      defaultThermalConductivityComponents="{ 2.65, 2.65, 2.65 }"/>
+    <!-- SPHINX_ThermalPropertiesEnd -->
+
+    <!-- SPHINX_FluidProperties -->
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="3.7e-4"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="4.187e3"
+      referenceInternalEnergy="0.001"/>
+    <!-- SPHINX_FluidPropertiesEnd -->
+
+	<!-- SPHINX_ThermoElasticProperties -->
+    <ElasticIsotropic
+      name="casingSolid"
+      defaultDensity="7500"
+      defaultBulkModulus="166.66666667e9"
+      defaultShearModulus="76.92307692e9"
+      defaultDrainedLinearTEC="1.2e-5"/>
+
+    <ElasticIsotropic
+      name="cementSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="6.88888889e9"
+      defaultShearModulus="5.16666667e9"
+      defaultDrainedLinearTEC="2.0e-5"/>
+
+    <ElasticIsotropic
+      name="sealSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="13.33333333e9"
+      defaultShearModulus="8e9"
+      defaultDrainedLinearTEC="2.0e-5"/>
+
+    <ElasticIsotropic
+      name="reservoirSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="17647058823.529415"
+      defaultShearModulus="6766917293.233083"
+      defaultDrainedLinearTEC="2.0e-5"/>
+    <!-- SPHINX_ThermoElasticPropertiesEnd -->
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <!-- SPHINX_FixedFarFieldBC -->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+    <!-- SPHINX_FixedFarFieldBCEnd -->
+
+    <FieldSpecification
+      name="initialSigma_x_casing"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="casingSolid_stress"
+      component="0"
+      scale="2201900000.0"/>
+    <FieldSpecification
+      name="initialSigma_y_casing"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="casingSolid_stress"
+      component="1"
+      scale="2198000000.0"/>
+    <FieldSpecification
+      name="initialSigma_z_casing"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="casingSolid_stress"
+      component="2"
+      scale="2186800000.0"/>
+
+    <FieldSpecification
+      name="initialSigma_x_cement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="cementSolid_stress"
+      component="0"
+      scale="144173333.3582"/>
+    <FieldSpecification
+      name="initialSigma_y_cement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="cementSolid_stress"
+      component="1"
+      scale="140273333.3582"/>
+    <FieldSpecification
+      name="initialSigma_z_cement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="cementSolid_stress"
+      component="2"
+      scale="129073333.3582"/>
+
+    <FieldSpecification
+      name="initialSigma_x_seal"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="sealSolid_stress"
+      component="0"
+      scale="288399999.9254"/>
+    <FieldSpecification
+      name="initialSigma_y_seal"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="sealSolid_stress"
+      component="1"
+      scale="284499999.9254"/>
+    <FieldSpecification
+      name="initialSigma_z_seal"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="sealSolid_stress"
+      component="2"
+      scale="273299999.9254"/>
+
+    <FieldSpecification
+      name="initialSigma_x_reservoir"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="reservoirSolid_stress"
+      component="0"
+      scale="384941176.4705883"/>
+    <FieldSpecification
+      name="initialSigma_y_reservoir"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="reservoirSolid_stress"
+      component="1"
+      scale="381041176.4705883"/>
+    <FieldSpecification
+      name="initialSigma_z_reservoir"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="reservoirSolid_stress"
+      component="2"
+      scale="369841176.4705883"/>
+
+    <!-- SPHINX_PorePressureBC -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="zeroPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="pressure"
+      scale="0e6"/>
+
+    <FieldSpecification
+      name="farfieldPressure"
+      setNames="{ xneg, xpos, yneg, ypos }"       
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="innerPressure"
+      setNames="{ reservoir_innerFace }"     
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="28e6"/>
+
+    <!-- SPHINX_TemperatureBC -->
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="373"/>
+
+    <FieldSpecification
+      name="farfieldTemperature"
+      setNames="{ xneg, xpos, yneg, ypos }"       
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="373"/>
+
+    <FieldSpecification
+      name="innerTemperature"
+      setNames="{ reservoir_innerFace }"     
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="293.0"/>
+    <!-- SPHINX_TemperatureBCEnd -->
+
+    <Traction
+      name="innerTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-28e6"
+      setNames="{ reservoir_innerFace }"/>
+
+  </FieldSpecifications>
+
+  <Tasks>
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"
+      name="singlephasePoromechanicsPreEquilibrationStep"
+      poromechanicsSolverName="thermoPoroElasticSolver" />
+
+    <!-- SPHINX_StrainCollection -->
+    <PackCollection
+      name="strainCollection_casing"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="averageStrain"/>
+    <PackCollection
+      name="strainCollection_cement"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="averageStrain"/>
+    <PackCollection
+      name="strainCollection_seal"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="averageStrain"/>
+    <PackCollection
+      name="strainCollection_reservoir"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="averageStrain"/>
+    <!-- SPHINX_TemperatureCollectionEnd -->
+    
+    <!-- SPHINX_TemperatureCollection -->
+    <PackCollection
+      name="temperatureCollection_casing"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="temperature"/>
+    <PackCollection
+      name="temperatureCollection_cement"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="temperature"/>
+    <PackCollection
+      name="temperatureCollection_seal"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="temperature"/>
+    <PackCollection
+      name="temperatureCollection_reservoir"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="temperature"/>
+    <!-- SPHINX_TemperatureCollectionEnd -->
+
+    <!-- SPHINX_PressureCollection -->
+    <PackCollection
+      name="pressureCollection_casing"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="pressure"/>
+    <PackCollection
+      name="pressureCollection_cement"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="pressure"/>
+    <PackCollection
+      name="pressureCollection_seal"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="pressure"/>
+    <PackCollection
+      name="pressureCollection_reservoir"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="pressure"/>
+    <!-- SPHINX_PressureCollectionEnd -->
+
+    <!-- SPHINX_SolidStressCollection -->
+    <PackCollection
+      name="stressCollection_casing"
+      objectPath="ElementRegions/casing/0_hexahedra"
+      fieldName="casingSolid_stress"/>
+    <PackCollection
+      name="stressCollection_cement"
+      objectPath="ElementRegions/cement/1_hexahedra"
+      fieldName="cementSolid_stress"/>
+    <PackCollection
+      name="stressCollection_seal"
+      objectPath="ElementRegions/seal/2_hexahedra"
+      fieldName="sealSolid_stress"/>
+    <PackCollection
+      name="stressCollection_reservoir"
+      objectPath="ElementRegions/reservoir/3_hexahedra"
+      fieldName="reservoirSolid_stress"/>
+    <!-- SPHINX_SolidStressCollectionEnd -->
+
+  </Tasks>
+
+  <Outputs>
+    <!-- SPHINX_StrainTimeHistory -->
+    <TimeHistory
+      name="strainHistoryOutput_casing"
+      sources="{ /Tasks/strainCollection_casing }"
+      filename="strainHistory_casing"/>
+    <TimeHistory
+      name="strainHistoryOutput_cement"
+      sources="{ /Tasks/strainCollection_cement }"
+      filename="strainHistory_cement"/>
+    <TimeHistory
+      name="strainHistoryOutput_seal"
+      sources="{ /Tasks/strainCollection_seal }"
+      filename="strainHistory_seal"/>
+    <TimeHistory
+      name="strainHistoryOutput_reservoir"
+      sources="{ /Tasks/strainCollection_reservoir }"
+      filename="strainHistory_reservoir"/>
+    <!-- SPHINX_TemperatureTimeHistoryEnd -->
+
+    <!-- SPHINX_TemperatureTimeHistory -->
+    <TimeHistory
+      name="temperatureHistoryOutput_casing"
+      sources="{ /Tasks/temperatureCollection_casing }"
+      filename="temperatureHistory_casing"/>
+    <TimeHistory
+      name="temperatureHistoryOutput_cement"
+      sources="{ /Tasks/temperatureCollection_cement }"
+      filename="temperatureHistory_cement"/>
+    <TimeHistory
+      name="temperatureHistoryOutput_seal"
+      sources="{ /Tasks/temperatureCollection_seal }"
+      filename="temperatureHistory_seal"/>
+    <TimeHistory
+      name="temperatureHistoryOutput_reservoir"
+      sources="{ /Tasks/temperatureCollection_reservoir }"
+      filename="temperatureHistory_reservoir"/>
+    <!-- SPHINX_TemperatureTimeHistoryEnd -->
+
+    <!-- SPHINX_PressureTimeHistory -->
+    <TimeHistory
+      name="pressureHistoryOutput_casing"
+      sources="{ /Tasks/pressureCollection_casing }"
+      filename="pressureHistory_casing"/>
+    <TimeHistory
+      name="pressureHistoryOutput_cement"
+      sources="{ /Tasks/pressureCollection_cement }"
+      filename="pressureHistory_cement"/>
+    <TimeHistory
+      name="pressureHistoryOutput_seal"
+      sources="{ /Tasks/pressureCollection_seal }"
+      filename="pressureHistory_seal"/>
+    <TimeHistory
+      name="pressureHistoryOutput_reservoir"
+      sources="{ /Tasks/pressureCollection_reservoir }"
+      filename="pressureHistory_reservoir"/>
+    <!-- SPHINX_PressureTimeHistoryEnd -->
+
+    <!-- SPHINX_SolidStressTimeHistory -->
+    <TimeHistory
+      name="stressHistoryOutput_casing"
+      sources="{ /Tasks/stressCollection_casing }"
+      filename="stressHistory_casing"/>
+    <TimeHistory
+      name="stressHistoryOutput_cement"
+      sources="{ /Tasks/stressCollection_cement }"
+      filename="stressHistory_cement"/>
+    <TimeHistory
+      name="stressHistoryOutput_seal"
+      sources="{ /Tasks/stressCollection_seal }"
+      filename="stressHistory_seal"/>
+    <TimeHistory
+      name="stressHistoryOutput_reservoir"
+      sources="{ /Tasks/stressCollection_reservoir }"
+      filename="stressHistory_reservoir"/>
+    <!-- SPHINX_SolidStressTimeHistoryEnd -->
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
