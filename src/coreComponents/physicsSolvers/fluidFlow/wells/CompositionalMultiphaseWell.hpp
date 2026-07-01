@@ -34,6 +34,9 @@ class ConstitutiveManager;
 class MultiFluidBase;
 }
 
+class TableLayout;
+class TableCSVFormatter;
+
 /**
  * @class CompositionalMultiphaseWell
  *
@@ -366,6 +369,16 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Initializes rates tables
+   */
+  void initializeRatesTables();
+
+  /**
+   * @brief Initializes rates CSV
+   */
+  void initializeRatesCSV();
+
 
 
   /// flag indicating whether mass or molar formulation should be used
@@ -398,7 +411,21 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  /// Structure containing members related to rates tables
+  struct RatesTable
+  {
+    /// Precomputed columns names
+    stdVector< string > columnNames;
 
+    // CSV table layout
+    std::unique_ptr< TableLayout > layout;
+  };
+
+  /// Precomputed tables indexed on surface condition (0 = reservoir, 1 = surface)
+  stdArray< RatesTable, 2 > m_ratesTables;
+
+  // CSV formatters for rates tables
+  stdArray< std::unique_ptr< TableCSVFormatter >, 2 > m_ratesCSVFormatters;
 
 };
 

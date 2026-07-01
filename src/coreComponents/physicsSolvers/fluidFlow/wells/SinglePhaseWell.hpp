@@ -270,6 +270,8 @@ public:
 
 protected:
 
+  virtual void initializePostSubGroups() override;
+
   void printRates( real64 const & time_n,
                    real64 const & dt,
                    DomainPartition & domain ) override;
@@ -297,6 +299,31 @@ private:
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion ) override;
 
+  /**
+   * @brief Initializes rates tables
+   */
+  void initializeRatesTables();
+
+  /**
+   * @brief Initializes rates CSV
+   */
+  void initializeRatesCSV();
+
+  /// Structure containing members related to rates tables
+  struct RatesTable
+  {
+    /// Precomputed columns names
+    stdVector< string > columnNames;
+
+    // CSV table layout
+    std::unique_ptr< TableLayout > layout;
+  };
+
+  /// Precomputed tables indexed on surface condition (0 = reservoir, 1 = surface)
+  stdArray< RatesTable, 2 > m_ratesTables;
+
+  // CSV formatters for rates tables
+  stdArray< std::unique_ptr< TableCSVFormatter >, 2 > m_ratesCSVFormatters;
 };
 
 } // namespace geos
