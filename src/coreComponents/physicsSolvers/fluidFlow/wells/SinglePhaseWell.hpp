@@ -300,17 +300,29 @@ private:
                                         WellElementSubRegion const & subRegion ) override;
 
   /**
+   * @brief Initializes rates tables
+   */
+  void initializeRatesTables();
+
+  /**
    * @brief Initializes rates CSV
    */
   void initializeRatesCSV();
 
-  /// Precomputed CSV columns names indexed on surface condition (0 = reservoir, 1 = surface)
-  stdVector< string > m_ratesCSVColumnNames[2];
+  /// Structure containing members related to rates tables
+  struct RatesTable
+  {
+    /// Precomputed columns names
+    stdVector< string > columnNames;
 
-  // CSV table layout indexed on surface condition (0 = reservoir, 1 = surface)
-  stdArray< std::unique_ptr< TableLayout >, 2 > m_ratesCSVLayouts;
+    // CSV table layout
+    std::unique_ptr< TableLayout > layout;
+  };
 
-  // CSV table formatter indexed on surface condition (0 = reservoir, 1 = surface)
+  /// Precomputed tables indexed on surface condition (0 = reservoir, 1 = surface)
+  stdArray< RatesTable, 2 > m_ratesTables;
+
+  // CSV formatters for rates tables
   stdArray< std::unique_ptr< TableCSVFormatter >, 2 > m_ratesCSVFormatters;
 };
 

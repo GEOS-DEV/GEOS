@@ -123,6 +123,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
 void SinglePhaseWell::initializePostSubGroups()
 {
+  initializeRatesTables();
   initializeRatesCSV();
 }
 
@@ -1218,7 +1219,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 namespace
 {
 
-stdVector< string > buildRatesCSVColumnNames( bool useSurfaceConditions )
+stdVector< string > buildRatesTableColumnNames( bool useSurfaceConditions )
 {
   string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
   string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -1233,14 +1234,21 @@ stdVector< string > buildRatesCSVColumnNames( bool useSurfaceConditions )
 
 } // namespace
 
-void SinglePhaseWell::initializeRatesCSV()
+void SinglePhaseWell::initializeRatesTables()
 {
-  m_ratesCSVColumnNames[ 0 ] = buildRatesCSVColumnNames( false );
-  m_ratesCSVColumnNames[ 1 ] = buildRatesCSVColumnNames( true );
+  m_ratesTables[ 0 ].columnNames = buildRatesTableColumnNames( false );
+  m_ratesTables[ 1 ].columnNames = buildRatesTableColumnNames( true );
   for( integer i = 0; i < 2; ++i )
   {
-    m_ratesCSVLayouts[ i ] = std::make_unique< TableLayout >( m_ratesCSVColumnNames[ i ] );
-    m_ratesCSVFormatters[ i ] = std::make_unique< TableCSVFormatter >( *m_ratesCSVLayouts[ i ] );
+    m_ratesTables[ i ].layout = std::make_unique< TableLayout >( m_ratesTables[ i ].columnNames );
+  }
+}
+
+void SinglePhaseWell::initializeRatesCSV()
+{
+  for( integer i = 0; i < 2; ++i )
+  {
+    m_ratesCSVFormatters[ i ] = std::make_unique< TableCSVFormatter >( *(m_ratesTables[ i ].layout) );
   }
 }
 

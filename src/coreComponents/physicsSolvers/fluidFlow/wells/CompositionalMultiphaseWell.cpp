@@ -495,6 +495,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
   if( m_writeCSV > 0 )
   {
+    CompositionalMultiphaseWell::initializeRatesTables();
     CompositionalMultiphaseWell::initializeRatesCSV();
   }
 
@@ -2157,10 +2158,10 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 namespace
 {
 
-stdVector< string > buildRatesCSVColumnNames( integer numPhase,
-                                              integer numComp,
-                                              string const & massUnit,
-                                              bool useSurfaceConditions )
+stdVector< string > buildRatesTableColumnNames( integer numPhase,
+                                                integer numComp,
+                                                string const & massUnit,
+                                                bool useSurfaceConditions )
 {
   string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
   string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -2185,15 +2186,22 @@ stdVector< string > buildRatesCSVColumnNames( integer numPhase,
 
 } // namespace
 
-void CompositionalMultiphaseWell::initializeRatesCSV()
+void CompositionalMultiphaseWell::initializeRatesTables()
 {
   string const & massUnit = m_useMass ? "kg" : "mol";
-  m_ratesCSVColumnNames[ 0 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, false );
-  m_ratesCSVColumnNames[ 1 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, true );
+  m_ratesTables[ 0 ].columnNames = buildRatesTableColumnNames( m_numPhases, m_numComponents, massUnit, false );
+  m_ratesTables[ 1 ].columnNames = buildRatesTableColumnNames( m_numPhases, m_numComponents, massUnit, true );
   for( integer i = 0; i < 2; ++i )
   {
-    m_ratesCSVLayouts[ i ] = std::make_unique< TableLayout >( m_ratesCSVColumnNames[ i ] );
-    m_ratesCSVFormatters[ i ] = std::make_unique< TableCSVFormatter >( *m_ratesCSVLayouts[ i ] );
+    m_ratesTables[ i ].layout = std::make_unique< TableLayout >( m_ratesTables[ i ].columnNames );
+  }
+}
+
+void CompositionalMultiphaseWell::initializeRatesCSV()
+{
+  for( integer i = 0; i < 2; ++i )
+  {
+    m_ratesCSVFormatters[ i ] = std::make_unique< TableCSVFormatter >( *(m_ratesTables[ i ].layout) );
   }
 }
 
@@ -2256,8 +2264,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
       string const unitKey = useSurfaceConditions ? "s" : "r";
 
-      stdVector< string > const & columnNames = m_ratesCSVColumnNames[ useSurfaceConditions ? 1 : 0 ];
-      size_t const numColumns = columnNames.size();
+      size_t const numColumns = m_ratesTables[ useSurfaceConditions ? 1 : 0 ].columnNames.size();
       auto const buildRow = [&]( real64 const bhp,
                                  real64 const totalRate,
                                  real64 const totalVolRate,
