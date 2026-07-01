@@ -30,6 +30,8 @@
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
@@ -685,7 +687,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              fields::flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
+                                             [&]( FieldSpecification const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
                                                   ElementSubRegionBase & subRegion,
@@ -708,7 +710,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
                                                    ElementSubRegionBase & subRegion,
@@ -742,7 +744,6 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
-          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() )
@@ -822,7 +823,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              fields::flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -977,17 +978,18 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
