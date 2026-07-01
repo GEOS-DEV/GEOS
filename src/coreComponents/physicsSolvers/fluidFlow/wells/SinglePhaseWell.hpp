@@ -300,12 +300,18 @@ private:
                                         WellElementSubRegion const & subRegion ) override;
 
   /**
-   * @brief Initializes rates CSV columns
+   * @brief Initializes rates CSV
    */
-  void initializeRatesCSVColumns();
+  void initializeRatesCSV();
 
   /// Precomputed CSV columns names indexed on surface condition (0 = reservoir, 1 = surface)
   stdVector< string > m_ratesCSVColumnNames[2];
+
+  // CSV table layout indexed on surface condition (0 = reservoir, 1 = surface)
+  stdArray< std::unique_ptr< TableLayout >, 2 > m_ratesCSVLayouts;
+
+  // CSV table formatter indexed on surface condition (0 = reservoir, 1 = surface)
+  stdArray< std::unique_ptr< TableCSVFormatter >, 2 > m_ratesCSVFormatters;
 };
 
 } // namespace geos

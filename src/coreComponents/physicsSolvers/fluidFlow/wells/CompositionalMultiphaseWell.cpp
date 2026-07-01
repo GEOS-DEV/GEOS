@@ -495,7 +495,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
   if( m_writeCSV > 0 )
   {
-    CompositionalMultiphaseWell::initializeRatesCSVColumns();
+    CompositionalMultiphaseWell::initializeRatesCSV();
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -2185,11 +2185,16 @@ stdVector< string > buildRatesCSVColumnNames( integer numPhase,
 
 } // namespace
 
-void CompositionalMultiphaseWell::initializeRatesCSVColumns()
+void CompositionalMultiphaseWell::initializeRatesCSV()
 {
   string const & massUnit = m_useMass ? "kg" : "mol";
   m_ratesCSVColumnNames[ 0 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, false );
   m_ratesCSVColumnNames[ 1 ] = buildRatesCSVColumnNames( m_numPhases, m_numComponents, massUnit, true );
+  for( integer i = 0; i < 2; ++i )
+  {
+    m_ratesCSVLayouts[ i ] = std::make_unique< TableLayout >( m_ratesCSVColumnNames[ i ] );
+    m_ratesCSVFormatters[ i ] = std::make_unique< TableCSVFormatter >( *m_ratesCSVLayouts[ i ] );
+  }
 }
 
 void CompositionalMultiphaseWell::printRates( real64 const & time_n,
@@ -2285,18 +2290,16 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
       auto const writeCSVRow = [&]( TableData const & data )
       {
+        TableCSVFormatter const & csvFormatter = *m_ratesCSVFormatters[ useSurfaceConditions ? 1 : 0 ];
         if( !std::filesystem::exists( fileName ) || std::filesystem::is_empty( fileName ) )
         {
           makeDirsForPath( m_ratesOutputDir );
-          TableLayout const tableLayout( columnNames );
-          TableCSVFormatter const csvFormatter( tableLayout );
           std::ofstream outputFile( fileName );
           csvFormatter.headerToStream( outputFile );
           outputFile.close();
           GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName.string() ) );
         }
         std::ofstream outputFile( fileName, std::ios_base::app );
-        TableCSVFormatter const csvFormatter;
         csvFormatter.dataToStream( outputFile, data );
         outputFile.close();
       };
