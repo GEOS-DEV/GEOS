@@ -108,6 +108,10 @@ public:
     static constexpr char const * damageDependenceConstantString() { return "damageDependenceConstant"; }
   };
 
+protected:
+
+  virtual void postInputInitialization() override;
+
 private:
 
   /// Default (uniform) diffusivity of the intact bulk material [m^2/s], read from XML

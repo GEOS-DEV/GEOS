@@ -46,6 +46,32 @@ DamageDiffusion::DamageDiffusion( string const & name, Group * const parent ):
   registerField< fields::diffusion::bulkDiffusivity >( &m_bulkDiffusivity );
 }
 
+void DamageDiffusion::postInputInitialization()
+{
+  // DamageDiffusion is a single-fluid-phase model: its diffusivity is an anisotropic tensor
+  // driven by damage (D_dim = bulkDiffusivity * exp(alpha_dim * damage)), not a per-phase
+  // quantity. DiffusionBase::postInputInitialization() enforces numPhases >= 2 because it was
+  // written for compositional multiphase diffusion, so we deliberately do not call it. We keep
+  // the remaining base checks (upper bound, multiplier-size consistency) but allow a single phase.
+  ConstitutiveBase::postInputInitialization();
+
+  integer const numPhases = numFluidPhases();
+  GEOS_THROW_IF_LT_MSG( numPhases, 1,
+                        "invalid number of phases",
+                        InputError, getDataContext() );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        "invalid number of phases",
+                        InputError, getDataContext() );
+
+  GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
+                 GEOS_FMT( "the arrays in `{}` and `{}` must have the same size",
+                           viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
+                 InputError,
+                 getWrapperDataContext( viewKeyStruct::phaseNamesString()),
+                 getWrapperDataContext( viewKeyStruct::defaultPhaseDiffusivityMultiplierString()),
+                 getDataContext() );
+}
+
 void DamageDiffusion::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   DiffusionBase::allocateConstitutiveData( parent, numPts );
