@@ -1,0 +1,43 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file CompositionalMultiphaseFVM_IsothermalDirichletFluxComputeKernels.cpp
+ */
+
+#include "physicsSolvers/fluidFlow/kernels/compositional/DirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/DirichletFluxComputeKernel_impl.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/DirichletFluxComputeZFormulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/DirichletFluxComputeZFormulationKernel_impl.hpp"
+
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+
+namespace geos
+{
+  namespace isothermalCompositionalMultiphaseFVMKernels
+  {
+    template class @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>;
+
+    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
+    computeFlux( localIndex const,
+                 typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
+                 NoOpFunc&& ) const;
+
+    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
+    complete( localIndex const,
+              typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
+              NoOpFunc&& ) const;
+  }
+}

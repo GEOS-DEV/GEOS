@@ -6482,18 +6482,22 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RelpermDriverType">
-		<!--baseline => Baseline file-->
-		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
  - Enable log output-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
-		<!--relperm => Relperm model to test-->
+		<xsd:attribute name="output" type="string" default="" />
+		<!--phaseNames => The names of the phases for which saturations are defined-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
+		<!--relperm => Relative permeability model to test-->
 		<xsd:attribute name="relperm" type="groupNameRef" use="required" />
-		<!--steps => Number of saturation steps to take-->
+		<!--saturationControls => Functions controlling saturation time history of the selected phases-->
+		<xsd:attribute name="saturationControls" type="string_array" use="required" />
+		<!--steps => Number of steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6728,8 +6732,6 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="TriaxialDriverType">
 		<!--axialControl => Function controlling axial stress or strain (depending on test mode)-->
 		<xsd:attribute name="axialControl" type="groupNameRef" use="required" />
-		<!--baseline => Baseline file-->
-		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
 		<xsd:attribute name="initialStress" type="real64" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
@@ -6739,13 +6741,18 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
 		<xsd:attribute name="material" type="groupNameRef" use="required" />
-		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
+		<!--mode => Test mode. Valid options:
+* mixedControl
+* strainControl
+* stressControl-->
 		<xsd:attribute name="mode" type="geos_TriaxialDriver_Mode" use="required" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
+		<xsd:attribute name="output" type="string" default="" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
 		<!--radialControl => Function controlling radial stress or strain (depending on test mode)-->
 		<xsd:attribute name="radialControl" type="groupNameRef" use="required" />
-		<!--steps => Number of load steps to take-->
+		<!--steps => Number of steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7553,12 +7560,12 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
-		<!--cohesion => Cohesion-->
-		<xsd:attribute name="cohesion" type="real64" use="required" />
+		<!--defaultCohesion => Default cohesion value-->
+		<xsd:attribute name="defaultCohesion" type="real64" use="required" />
+		<!--defaultFrictionCoefficient => Default friction coefficient value-->
+		<xsd:attribute name="defaultFrictionCoefficient" type="real64" use="required" />
 		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
 		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
-		<!--frictionCoefficient => Friction coefficient-->
-		<xsd:attribute name="frictionCoefficient" type="real64" use="required" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
