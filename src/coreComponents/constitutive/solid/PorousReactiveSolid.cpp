@@ -35,13 +35,38 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( name, parent )
-{}
+{
+  this->registerWrapper( "fluidModelName", &m_fluidModelName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the fluid constitutive model. When set, its (constant) compressibility "
+                    "is handed to the porosity model for the pore-mineral-pressure / porosity coupling." );
+}
 
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
 void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
+}
+
+template< typename SOLID_TYPE,
+          typename PERM_TYPE >
+void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializePreSubGroups()
+{
+  CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializePreSubGroups();
+
+  // If a fluid model is specified, read its (constant) compressibility and hand it to the porosity
+  // model. The porosity model needs the fluid bulk modulus for the pore-mineral-pressure / porosity
+  // coupling but has no direct handle on the fluid. The fluid is looked up through its
+  // CompressibleSinglePhaseFluid base, which also covers the reactive and thermal variants.
+  if( !m_fluidModelName.empty() )
+  {
+    CompressibleSinglePhaseFluid const & fluid =
+      this->getParent().template getGroup< CompressibleSinglePhaseFluid >( m_fluidModelName );
+    BiotReactivePorosity & porosity =
+      dynamicCast< BiotReactivePorosity & >( this->getBasePorosityModel() );
+    porosity.setFluidCompressibility( fluid.compressibility() );
+  }
 }
 
 // Register all PorousReactiveSolid model types.

@@ -27,6 +27,7 @@
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
 
 namespace geos
 {
@@ -324,6 +325,8 @@ public:
    */
   virtual void initializeState() const override final;
 
+  virtual void initializePreSubGroups() override;
+
   /**
    * @brief Const/non-mutable accessor for density
    * @return Accessor
@@ -337,6 +340,10 @@ private:
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPermModel;
+
+  /// Name of the fluid model used to read the (constant) fluid compressibility for the
+  /// pore-mineral-pressure / porosity coupling (optional; empty => fluid treated as incompressible)
+  string m_fluidModelName;
 };
 
 
