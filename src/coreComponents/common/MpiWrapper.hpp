@@ -26,8 +26,6 @@
 
 #include <numeric>
 
-#include <atomic>
-
 #if defined(GEOS_USE_MPI)
   #include <mpi.h>
 #define MPI_PARAM( x ) x
@@ -957,7 +955,7 @@ void saveStackTrace();
 struct MpiDesyncGuard
 {
   MPI_Comm const & m_comm;
-  std::atomic<bool> m_collectiveOperationSuccess{ false };
+  bool m_collectiveOperationSuccess{ false };
 
   explicit MpiDesyncGuard( MPI_Comm const & comm )
     : m_comm( comm )

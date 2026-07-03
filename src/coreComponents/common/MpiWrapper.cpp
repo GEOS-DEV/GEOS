@@ -66,7 +66,7 @@ void MpiDesyncGuard::failed()
 
 void MpiDesyncGuard::succeeded()
 {
-  m_collectiveOperationSuccess.store( true, std::memory_order_release );
+  m_collectiveOperationSuccess = true;
   g_lastSuccessfulStacktrace = g_currentStacktrace;
 }
 
