@@ -183,7 +183,7 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
       }
       case 1:
       {
-        result = MpiWrapper::sum( result, MPI_COMM_WORLD ) / MPI_Comm_size( MPI_COMM_WORLD );
+        result = MpiWrapper::sum( result, MPI_COMM_WORLD ) / MpiWrapper::commSize( MPI_COMM_WORLD );
         break;
       }
       case 2:

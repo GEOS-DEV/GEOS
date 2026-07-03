@@ -42,16 +42,19 @@ MPI_Comm MPI_COMM_GEOS;
 int MPI_COMM_GEOS = 0;
 #endif
 
+namespace internal
+{
+
 #if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
 std::string g_currentStacktrace;
 std::string g_lastSuccessfulStacktrace;
 
-void MpiWrapper::saveStackTrace()
+void saveStackTrace()
 {
   g_currentStacktrace = LvArray::system::stackTrace( true );
 }
 
-void MpiWrapper::MpiDesyncGuard::failed()
+void MpiDesyncGuard::failed()
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "MPI desync detected: rank {) timed out\n"
                              "{}\n"
@@ -61,13 +64,13 @@ void MpiWrapper::MpiDesyncGuard::failed()
   MPI_Abort( m_comm, 1 );
 }
 
-void MpiWrapper::MpiDesyncGuard::succeeded()
+void MpiDesyncGuard::succeeded()
 {
   m_collectiveOperationSuccess.store( true, std::memory_order_release );
   g_lastSuccessfulStacktrace = g_currentStacktrace;
 }
 
-void MpiWrapper::MpiDesyncGuard::detectMpiDesync()
+void MpiDesyncGuard::detectMpiDesync()
 {
   MPI_Request request;
   MPI_Ibarrier( m_comm, &request );
@@ -94,11 +97,13 @@ void MpiWrapper::MpiDesyncGuard::detectMpiDesync()
 }
 #endif
 
+} // namespace internal
+
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  MpiDesyncGuard const mpiDesyncGuard( comm );
+  internal::MpiDesyncGuard const mpiDesyncGuard( comm );
 #endif
   MPI_Barrier( comm );
 #endif
