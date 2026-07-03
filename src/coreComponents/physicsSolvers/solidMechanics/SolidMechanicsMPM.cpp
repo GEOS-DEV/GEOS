@@ -2730,9 +2730,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     boxSums[i] = MpiWrapper::sum( boxSums[i], MPI_COMM_GEOS );
   }
 
-  int rank;
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];

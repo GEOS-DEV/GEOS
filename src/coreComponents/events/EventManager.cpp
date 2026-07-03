@@ -169,10 +169,8 @@ bool EventManager::run( DomainPartition & domain )
       }
       m_currentSubEvent = 0;
 
-#ifdef GEOS_USE_MPI
       // Find the min dt across processes
       m_dt = MpiWrapper::min( m_dt, MPI_COMM_GEOS );
-#endif
     }
     LogPart logPart( "TIMESTEP", MpiWrapper::commRank() == 0 );
 

@@ -67,9 +67,7 @@ void HaltEvent::estimateEventTiming( real64 const GEOS_UNUSED_PARAM( time ),
 
   // The timing for the ranks may differ slightly, so synchronize
   // TODO: Only do the communication when you are close to the end?
-#ifdef GEOS_USE_MPI
   forecast = MpiWrapper::min( forecast, MPI_COMM_WORLD );
-#endif
 
   setForecast( forecast );
 

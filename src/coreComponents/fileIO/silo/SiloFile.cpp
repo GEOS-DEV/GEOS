@@ -277,13 +277,7 @@ SiloFile::~SiloFile()
 
 void SiloFile::makeSiloDirectories()
 {
-
-  int rank=0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-
-  if( rank==0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     makeDirsForPath( joinPath( m_siloDirectory, m_siloDataSubDirectory ) );
   }
@@ -342,11 +336,7 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
                                   integer const eventCounter,
                                   bool const isRestart )
 {
-
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
 
   if( isRestart )
@@ -376,11 +366,7 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
 
 void SiloFile::waitForBaton( int const domainNumber, string const & restartFileName )
 {
-
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
 
   m_baseFileName = restartFileName;
@@ -411,11 +397,7 @@ void SiloFile::handOffBaton()
 {
   PMPIO_HandOffBaton( m_baton, m_dbFilePtr );
 
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-  if( rank==0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     DBClose( m_dbBaseFilePtr );
   }
@@ -573,11 +555,7 @@ void SiloFile::writeMeshObject( string const & meshName,
   }
 
   // write multimesh object
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
     DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
@@ -648,11 +626,7 @@ void SiloFile::writeBeamMesh( string const & meshName,
 
   //----write multimesh object
   {
-    int rank = 0;
-  #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-  #endif
-    if( rank == 0 )
+    if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
     {
       DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
       DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
@@ -681,11 +655,7 @@ void SiloFile::writePointMesh( string const & meshName,
 
   //----write multimesh object
   {
-    int rank = 0;
-  #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-  #endif
-    if( rank == 0 )
+    if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
     {
       writeMultiXXXX( DB_POINTMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
     }
@@ -809,10 +779,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       DBFreeOptlist( optlist );
     }
     // write multimesh object
-    int rank = 0;
-  #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-  #endif
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
     if( rank == 0 )
     {
 
@@ -1966,11 +1933,7 @@ void SiloFile::writePolygonMeshObject( const string & meshName,
   }
 
   // write multimesh object
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-#endif
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_WORLD ) == 0 )
   {
     DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
     DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
@@ -2107,10 +2070,7 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
 {
   (void)centering;
 
-  int size = 1;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_size( MPI_COMM_GEOS, &size );
-#endif
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
 
   string_array vBlockNames( size );
   array1d< char * > BlockNames( size );
@@ -2255,11 +2215,7 @@ void SiloFile::writeDataField( string const & meshName,
   }
 
   // write multimesh object
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     int tensorRank = siloFileUtilities::GetTensorRank< TYPE >();
     DBAddOption( optlist, DBOPT_TENSOR_RANK, const_cast< int * >(&tensorRank));
@@ -2524,11 +2480,7 @@ void SiloFile::writeDataField( string const & meshName,
   }
 
   // write multimesh object
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
 //    int tensorRank = siloTensorRank;
 //    DBAddOption(optlist, DBOPT_TENSOR_RANK, const_cast<int*> (&tensorRank));
@@ -2812,11 +2764,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
   }
 
   // write multimesh object
-  int rank = 0;
-#ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-#endif
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     int tensorRank = siloFileUtilities::GetTensorRank< TYPE >();
     DBAddOption( optlist, DBOPT_TENSOR_RANK, const_cast< int * >(&tensorRank));

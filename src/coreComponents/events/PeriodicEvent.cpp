@@ -173,7 +173,6 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
 
     // Because the function applied to an object may differ by rank, synchronize
     // (Note: this shouldn't occur very often, since it is only called if the base forecast <= 0)
-#ifdef GEOS_USE_MPI
     switch( m_functionStatOption )
     {
       case 0:
@@ -191,7 +190,6 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
         result = MpiWrapper::max( result, MPI_COMM_WORLD );
       }
     }
-#endif
   }
 
   // Forcast event
