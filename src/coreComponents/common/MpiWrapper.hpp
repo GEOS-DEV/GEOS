@@ -944,26 +944,25 @@ MPI_Op getMpiPairReductionOp()
 
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
 /**
-  * @brief Save the stack trace for desync diagnostics for MPI collective calls.
-  */
-void saveStackTrace();
-
-/**
-  * @struct MpiDesyncGuard
-  * @brief RAII helper to detect MPI desynchronizations from MPI collective operations.
-  */
+ * @struct MpiDesyncGuard
+ * @brief RAII helper to detect MPI desynchronizations from MPI collective operations.
+ */
 struct MpiDesyncGuard
 {
   MPI_Comm const & m_comm;
   bool m_collectiveOperationSuccess{ false };
 
+  static constexpr int maxFrames = 30;
+  stdArray< void *, maxFrames > m_frames{};
+  int m_frameCount = 0;
+
   explicit MpiDesyncGuard( MPI_Comm const & comm )
     : m_comm( comm )
-  { saveStackTrace(); }
+  { saveStackFrames(); }
 
   ~MpiDesyncGuard()
   { detectMpiDesync(); }
-  
+
   /// @brief Detects MPI desynchronizations from MPI collective operations.
   void detectMpiDesync();
 
@@ -975,6 +974,13 @@ struct MpiDesyncGuard
 
   MpiDesyncGuard( MpiDesyncGuard const & ) = delete;
   MpiDesyncGuard & operator=( MpiDesyncGuard const & ) = delete;
+
+  /// @brief Save the stacktrace frames
+  void saveStackFrames();
+  /// @brief Symbolize and demangle the captured stacktrace frames
+  string symbolizeStackTrace( stdArray< void *, maxFrames > const & frames,
+                              int const frameCount ) const;
+
 };
 #endif
 

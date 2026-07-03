@@ -24,6 +24,13 @@
 #include <chrono>
 #include <thread>
 
+#if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
+#if defined(__GLIBC__) || defined(__APPLE__)
+#include <dlfcn.h>
+#include <execinfo.h>
+#endif
+#endif
+
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -46,28 +53,60 @@ namespace internal
 {
 
 #if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
-std::string g_currentStacktrace;
-std::string g_lastSuccessfulStacktrace;
+stdArray< void *, MpiDesyncGuard::maxFrames > g_lastSuccessfulFrames;
+int g_lastSuccessfulFrameCount = 0;
 
-void saveStackTrace()
+void MpiDesyncGuard::saveStackFrames()
 {
-  g_currentStacktrace = LvArray::system::stackTrace( true );
+  // LvArray already implements an equivalent (see internal `collect()` in LvArray/src/system.cpp)
+  // but it is not exposed to the public API. (TODO) Remove this in favor of LvArray's `collect()`
+  // if it becomes public.
+#if defined(__GLIBC__) || defined(__APPLE__)
+  m_frameCount = backtrace( m_frames.data(), MpiDesyncGuard::maxFrames );
+#else
+  m_frameCount = 0;
+#endif
+}
+
+string MpiDesyncGuard::symbolizeStackTrace( stdArray< void *, maxFrames > const & frames,
+                                            int const frameCount ) const
+{
+  // adapted from LvArray::system::getFunctionNameFromFrame()
+  std::ostringstream oss;
+#if defined(__GLIBC__) || defined(__APPLE__)
+  for( int i = 0; i < m_frameCount; ++i )
+  {
+    Dl_info dli;
+    bool const dlOk = dladdr( m_frames[ i ], &dli );
+
+    oss << "Frame " << i << ": "
+        << ( dlOk ?
+         ( dli.dli_sname ? LvArray::system::demangle( dli.dli_sname ) : dli.dli_fname ) :
+         "Unknown" )
+        << "\n";
+  }
+#else
+  GEOS_UNUSED_VAR( frames, frameCount );
+#endif
+  return oss.str();
 }
 
 void MpiDesyncGuard::failed()
 {
-  GEOS_LOG_RANK_0( GEOS_FMT( "MPI desync detected: rank {) timed out\n"
+  GEOS_LOG_RANK_0( GEOS_FMT( "MPI desync detected: rank timed out\n"
                              "{}\n"
                              "Last successful stacktrace:\n"
                              "{}",
-                             g_currentStacktrace, g_lastSuccessfulStacktrace ) );
+                             symbolizeStackTrace( m_frames, m_frameCount ),
+                             symbolizeStackTrace( g_lastSuccessfulFrames, g_lastSuccessfulFrameCount ) ) );
   MPI_Abort( m_comm, 1 );
 }
 
 void MpiDesyncGuard::succeeded()
 {
   m_collectiveOperationSuccess = true;
-  g_lastSuccessfulStacktrace = g_currentStacktrace;
+  g_lastSuccessfulFrames = m_frames;
+  g_lastSuccessfulFrameCount = m_frameCount;
 }
 
 void MpiDesyncGuard::detectMpiDesync()
