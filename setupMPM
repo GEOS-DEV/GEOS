@@ -66,7 +66,7 @@ Options:
   --run-root DIR            Active-machine defaultRunDirectory root.
                             Default: /p/lustre1/$USER/geosxRuns on Dane,
                             /p/lustre5/$USER/geosxRuns on Tuolumne,
-                            /p/lustre2/$USER/geosxRuns on RZHound.
+                            /p/lustre1/$USER/geosxRuns on RZHound.
   --test-dir DIR            Active-machine testRunDirectory.
   --default-run-dir DIR     Active-machine defaultRunDirectory. Default: RUN_ROOT.
   --build-root DIR          Active-machine CMake build root. Default: repo root.
@@ -103,7 +103,7 @@ Options:
   --install-root DIR        Active-machine CMake install root.
                             Default: /p/lustre1/$USER/geosxInstalls on Dane,
                             /p/lustre5/$USER/geosxInstalls on Tuolumne,
-                            /p/lustre2/$USER/geosxInstalls on RZHound.
+                            /p/lustre1/$USER/geosxInstalls on RZHound.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
   --enable-vtk, --with-vtk, --build-vtk
@@ -147,7 +147,8 @@ Options:
   --leos-header HEADER      Optional C++ include token for the LEOS wrapper, e.g.
                             <LEOS/LEOS.hh> or "/path/to/LEOS.hh". Implies --enable-leos.
   --tpl-dir DIR             Existing minimal TPL install/view root. If provided, exported as
-                            GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure.
+                            GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure
+                            and passed to CMake as -DGEOS_TPL_DIR=DIR.
   --queue QUEUE             Tuolumne Flux queue written to runClean_$USER.sh. Default: pdebug
   --flux-time TIME          Tuolumne Flux walltime written to runClean_$USER.sh. Default: 30m
   --jobs N                  Build parallelism. Default: GEOS_BUILD_JOBS or 32
@@ -1267,6 +1268,15 @@ load_rzhound_modules() {
   load_module_any "CMake" cmake/3.26.3 cmake/3.29.2
   load_module_any "Ninja" ninja/1.10.2 ninja
 }
+
+export_tpl_dir_if_requested() {
+  if [ -n "$TPL_DIR" ]; then
+    [ -d "$TPL_DIR" ] || fail "TPL directory does not exist: $TPL_DIR. Pass an existing directory with --tpl-dir."
+    export GEOS_TPL_DIR="$TPL_DIR"
+    export GEOS_MPM_TPL_DIR="$TPL_DIR"
+    log "using minimal TPL dir: $TPL_DIR"
+  fi
+}
 prepare_tuolumne_environment() {
   load_tuolumne_modules
 
@@ -1278,12 +1288,7 @@ prepare_tuolumne_environment() {
   export HSA_XNACK="${HSA_XNACK:-1}"
   export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 
-  if [ -n "$TPL_DIR" ]; then
-    [ -d "$TPL_DIR" ] || fail "TPL directory does not exist: $TPL_DIR. Pass an existing directory with --tpl-dir."
-    export GEOS_TPL_DIR="$TPL_DIR"
-    export GEOS_MPM_TPL_DIR="$TPL_DIR"
-    log "using minimal TPL dir: $TPL_DIR"
-  fi
+  export_tpl_dir_if_requested
 }
 
 prepare_dane_environment() {
@@ -1292,6 +1297,8 @@ prepare_dane_environment() {
   # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
+
+  export_tpl_dir_if_requested
 }
 
 prepare_rzhound_environment() {
@@ -1300,6 +1307,8 @@ prepare_rzhound_environment() {
   # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
+
+  export_tpl_dir_if_requested
 }
 
 prepare_build_environment() {
@@ -1308,15 +1317,9 @@ prepare_build_environment() {
       prepare_tuolumne_environment
       ;;
     dane)
-      if [ -n "$TPL_DIR" ]; then
-        log "ignoring --tpl-dir for Dane CPU setup"
-      fi
       prepare_dane_environment
       ;;
     rzhound)
-      if [ -n "$TPL_DIR" ]; then
-        log "ignoring --tpl-dir for RZHound CPU setup"
-      fi
       prepare_rzhound_environment
       ;;
   esac
@@ -1426,6 +1429,9 @@ configure_and_build() {
     config_cmd+=(--buildpath "$BUILD_DIR")
   else
     config_cmd+=(--buildrootdir "$BUILD_ROOT")
+  fi
+  if [ -n "$TPL_DIR" ]; then
+    config_cmd+=("-DGEOS_TPL_DIR=$TPL_DIR")
   fi
   if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
     # Preserve the MPM minimal build, but enable the VTK-backed output code.
@@ -2034,9 +2040,9 @@ case "$SETUP_MACHINE" in
     DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre5/$LC_USER/geosxInstalls"
     ;;
   rzhound)
-    DEFAULT_ACTIVE_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
-    DEFAULT_ACTIVE_TEST_DIR="/p/lustre2/$LC_USER/geosxTests"
-    DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre2/$LC_USER/geosxInstalls"
+    DEFAULT_ACTIVE_RUN_ROOT="/p/lustre1/$LC_USER/geosxRuns"
+    DEFAULT_ACTIVE_TEST_DIR="/p/lustre1/$LC_USER/geosxTests"
+    DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre1/$LC_USER/geosxInstalls"
     ;;
  esac
 
@@ -2165,14 +2171,14 @@ if [ -n "$RZHOUND_RUN_ROOT_OVERRIDE" ]; then
 elif [ "$SETUP_MACHINE" = "rzhound" ]; then
   RZHOUND_RUN_ROOT="$RUN_ROOT"
 else
-  RZHOUND_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
+  RZHOUND_RUN_ROOT="/p/1/$LC_USER/geosxRuns"
 fi
 if [ -n "$RZHOUND_TEST_RUN_DIR_OVERRIDE" ]; then
   RZHOUND_TEST_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_TEST_RUN_DIR_OVERRIDE")")
 elif [ "$SETUP_MACHINE" = "rzhound" ]; then
   RZHOUND_TEST_RUN_DIR="$TEST_RUN_DIR"
 else
-  RZHOUND_TEST_RUN_DIR="/p/lustre2/$LC_USER/geosxTests"
+  RZHOUND_TEST_RUN_DIR="/p/lustre1/$LC_USER/geosxTests"
 fi
 if [ -n "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE" ]; then
   RZHOUND_DEFAULT_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE")")
