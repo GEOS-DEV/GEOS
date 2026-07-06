@@ -29,6 +29,51 @@ namespace constitutive
 {
 
 /**
+ * @brief EOS-consistent hydrostatic pressure-temperature initialization state.
+ *
+ * The MPM pressure-temperature initialization event uses this solver-neutral
+ * structure to ask a constitutive model for a density, deformation-gradient
+ * determinant, energy, temperature, stress, and wave-speed state that is
+ * thermodynamically consistent with the model's own EOS.  Models that do not
+ * implement the helper keep the default unsupported implementation.
+ */
+struct TemperaturePressureInitializationState
+{
+  /// Positive-compressive pressure represented by the returned state.
+  real64 pressure = 0.0;
+
+  /// Temperature represented by the returned state.
+  real64 temperature = 0.0;
+
+  /// Current mass density.
+  real64 density = 0.0;
+
+  /// Determinant of the initial deformation gradient.
+  real64 jacobian = 1.0;
+
+  /// Material-owned specific internal energy.
+  real64 specificInternalEnergy = 0.0;
+
+  /// Tangent specific heat at the initialized state, when available.
+  real64 tangentSpecificHeat = 0.0;
+
+  /// Hydrostatic tangent bulk modulus or acoustic estimate, when available.
+  real64 bulkModulus = 0.0;
+
+  /// Acoustic wave speed, when available.
+  real64 soundSpeed = 0.0;
+
+  /// Optional phase diagnostic: 0=solid/non-phase, 1=mixed, 2=liquid.
+  real64 phaseFlag = 0.0;
+
+  /// Optional liquid-fraction diagnostic.
+  real64 liquidFraction = 0.0;
+
+  /// Cauchy stress in Voigt notation, using GEOS compression-negative convention.
+  real64 stress[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+};
+
+/**
  * @brief Base class for all continuum constitutive kernel wrapper classes.
  *
  * The responsibility of this base is to:
@@ -434,6 +479,34 @@ public:
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
+
+  /**
+   * @brief Return true when this material can solve a hydrostatic pressure-temperature initial state.
+   * @param phaseName Optional model-specific phase selector, for example "auto", "solid", or "liquid".
+   */
+  virtual bool supportsTemperaturePressureInitialization( string const & phaseName ) const
+  {
+    GEOS_UNUSED_VAR( phaseName );
+    return false;
+  }
+
+  /**
+   * @brief Compute an EOS-consistent hydrostatic pressure-temperature initial state.
+   * @param pressure Positive-compressive target pressure.
+   * @param temperature Target temperature.
+   * @param phaseName Optional model-specific phase selector.
+   * @return Constitutive state for the initialization event to copy into particles and material arrays.
+   */
+  virtual TemperaturePressureInitializationState computeTemperaturePressureInitializationState( real64 const pressure,
+                                                                                               real64 const temperature,
+                                                                                               string const & phaseName ) const
+  {
+    GEOS_UNUSED_VAR( pressure );
+    GEOS_UNUSED_VAR( temperature );
+    GEOS_UNUSED_VAR( phaseName );
+    GEOS_ERROR( "This constitutive model does not implement pressure-temperature initialization." );
+    return {};
+  }
 
   /**
    * @brief Number of elements storing solid data

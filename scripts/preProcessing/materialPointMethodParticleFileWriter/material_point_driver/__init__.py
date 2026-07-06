@@ -17,7 +17,7 @@ from .pfw_material_point import (  # noqa: F401
     flatten_result,
     frame_from_normal,
     initialize_state,
-    kroonblawd_graphite_case,
+    triaxial_graphite_case,
     parse_material_frame,
     polar_rotation,
     read_case,

@@ -50,6 +50,10 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_damage(),
   m_basalPlaneDamage(),
   m_comminutionDamage(),
+  m_enableDistension(),
+  m_basalNormalDistension(),
+  m_transverseDistension(),
+  m_porosity(),
   m_temperature(),
   m_temperatureRate(),
   m_jacobian(),
@@ -138,17 +142,22 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::failureStrengthString(), &m_failureStrength ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Maximum theoretical strength" );
+    setDescription( "Maximum principal tensile failure strength; basal plane-normal tensile strength is implied by the positive signed-distortion yield branch" );
 
   registerWrapper( viewKeyStruct::maximumPrincipalStressDamageString(), &m_maximumPrincipalStressDamage ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to apply Max principal Stress Failure / Damage criterion" );
+    setDescription( "Flag to include maximum-principal stress in the pre-plastic energy-regularized brittle tensile return" );
 
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Crack speed for brittle failure" );
+    setDescription( "Maximum damage evolution speed; DBL_MAX disables the damage-rate limiter" );
+
+  registerWrapper( viewKeyStruct::enableDistensionString(), &m_enableDistension ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to activate stress-free closure of basal-normal and transverse distension reservoirs" );
 
   registerWrapper( viewKeyStruct::scaleFractureEnergyReleaseRateString(), &m_scaleFractureEnergyReleaseRate ).
     setApplyDefaultValue( 0 ).
@@ -163,16 +172,16 @@ Graphite::Graphite( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::basalPlaneFractureEnergyReleaseRateString(), &m_basalPlaneFractureEnergyReleaseRate ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Fracture energy release rates for basal shear and normal modes" );
+    setDescription( "Fracture energy release rate for basal shear and basal normal-opening modes; DBL_MAX disables basal fracture-energy regularization" );
 
   registerWrapper( viewKeyStruct::totalFractureEnergyReleaseRateString(), &m_totalFractureEnergyReleaseRate ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Fracture Energy Release Rate for non-basal shear and normal modes" );
+    setDescription( "Fracture energy release rate for non-basal comminution/plastic work and maximum-principal tensile failure; finite value is required when maximumPrincipalStressDamage=1" );
 
   registerWrapper( viewKeyStruct::damageEvolutionExponentString(), &m_damageEvolutionExponent ).
     setApplyDefaultValue( 32.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Exponent used in work-based damage evolution D = min(1, W/(G_f/l))^n" );
+    setDescription( "Exponent used in work-based plastic-damage evolution D = min(1, W/(G_f/l))^n; the pre-plastic brittle tensile return is energy-regularized directly" );
 
   registerWrapper( viewKeyStruct::damagedMaterialFrictionalSlopeString(), &m_damagedMaterialFrictionalSlope ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -334,6 +343,21 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Internal comminution/powder damage used to transition strengths to residual powder response" );
 
+  registerWrapper( viewKeyStruct::basalNormalDistensionString(), &m_basalNormalDistension ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Closeable distension strain normal to basal planes" );
+
+  registerWrapper( viewKeyStruct::transverseDistensionString(), &m_transverseDistension ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Closeable distension strain in the basal/transverse plane" );
+
+  registerWrapper( viewKeyStruct::porosityString(), &m_porosity ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Distension-derived porosity, phi = 1 - exp[-(basalNormalDistension + transverseDistension)]" );
+
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setApplyDefaultValue( 300.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -396,6 +420,9 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_basalPlaneDamage.resize( 0, numConstitutivePointsPerParentIndex );
   m_comminutionDamage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_basalNormalDistension.resize( 0, numConstitutivePointsPerParentIndex );
+  m_transverseDistension.resize( 0, numConstitutivePointsPerParentIndex );
+  m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_temperature.resize( 0 );
   m_temperatureRate.resize( 0 );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
@@ -461,22 +488,29 @@ void Graphite::postInputInitialization()
 
   GEOS_THROW_IF( stability <= 1.e-12, "Transversely isotropic elastic constants are not positive definite.", InputError );
 
-  GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
+  GEOS_THROW_IF( !( m_failureStrength > 0.0 ), "failureStrength must be a positive maximum-principal tensile strength.", InputError );
   GEOS_THROW_IF( m_maximumPrincipalStressDamage != 0 &&
                m_maximumPrincipalStressDamage != 1, "Max Princ. Stress Damage flag should be 0 or 1", InputError );
-  GEOS_THROW_IF( m_crackSpeed <= 0, "Crack speed should be positive", InputError );
+  GEOS_THROW_IF( m_enableDistension != 0 &&
+               m_enableDistension != 1, "enableDistension flag should be 0 or 1", InputError );
+  GEOS_THROW_IF( !( m_crackSpeed > 0.0 ), "crackSpeed must be positive; use DBL_MAX to disable the damage-rate limiter.", InputError );
   GEOS_THROW_IF( m_scaleFractureEnergyReleaseRate != 0 && m_scaleFractureEnergyReleaseRate != 1,  "Fracture energy scale flag should be 0 or 1", InputError );
   if( m_fractureEnergyStrengthScaleExponent < 0.0 )
   {
     m_fractureEnergyStrengthScaleExponent = ( m_scaleFractureEnergyReleaseRate == 1 ) ? 1.0 : 0.0;
   }
-  GEOS_THROW_IF( m_fractureEnergyStrengthScaleExponent < 0.0, "fractureEnergyStrengthScaleExponent must be non-negative.", InputError );
+  GEOS_THROW_IF( !( m_fractureEnergyStrengthScaleExponent >= 0.0 ), "fractureEnergyStrengthScaleExponent must be non-negative.", InputError );
 
   GEOS_THROW_IF( m_enableCrackTipStressConcentration != 0 &&  m_enableCrackTipStressConcentration != 1,  "Crack tip flag should be 0 or 1", InputError );
 
-  GEOS_THROW_IF( m_basalPlaneFractureEnergyReleaseRate <= 0.0, "Basal plane fracture energy release rate must be a positive number.", InputError );
-  GEOS_THROW_IF( m_totalFractureEnergyReleaseRate <= 0.0, "Total Fracture Energy Release Rate must be a positive number.", InputError );
-  GEOS_THROW_IF( m_damageEvolutionExponent <= 0.0, "damageEvolutionExponent must be a positive number.", InputError );
+  GEOS_THROW_IF( !( m_basalPlaneFractureEnergyReleaseRate > 0.0 ), "basalPlaneFractureEnergyReleaseRate must be positive; use DBL_MAX to disable basal fracture-energy regularization.", InputError );
+  GEOS_THROW_IF( !( m_totalFractureEnergyReleaseRate > 0.0 ), "totalFractureEnergyReleaseRate must be positive; use DBL_MAX to disable non-basal fracture-energy regularization.", InputError );
+  GEOS_THROW_IF( !( m_damageEvolutionExponent > 0.0 ), "damageEvolutionExponent must be positive.", InputError );
+
+  GEOS_THROW_IF( ( m_maximumPrincipalStressDamage == 1 ) &&
+                 !( m_totalFractureEnergyReleaseRate < DBL_MAX ),
+                 "maximumPrincipalStressDamage=1 requires a finite totalFractureEnergyReleaseRate for energy-regularized maximum-principal tensile failure.",
+                 InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 

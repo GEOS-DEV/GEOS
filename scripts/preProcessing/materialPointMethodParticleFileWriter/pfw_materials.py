@@ -2152,6 +2152,58 @@ graphiteSingleCrystal['maximumPlasticStrain'] = 0.020
 _set_graphite_auxiliary_properties(graphiteSingleCrystal)
 # #################################################################################################
 
+
+###################################################################################################
+# GRAPHITE TRIAXIAL TEST:
+# Room-temperature single-crystal graphite approximation.  The transverse plane corresponds to the
+# basal plane; the axial direction corresponds to the c axis.
+#
+graphiteTriaxialTest = {}
+graphiteTriaxialTest['name'] = 'graphiteTriaxialTest'
+graphiteTriaxialTest['version'] = 2605190001
+graphiteTriaxialTest['model'] = 'Graphite'
+graphiteTriaxialTest['defaultDensity'] = 2.267
+graphiteTriaxialTest['defaultYoungModulusTransverse'] = 45.0
+graphiteTriaxialTest['defaultYoungModulusAxial'] = 18.0
+graphiteTriaxialTest['defaultPoissonRatioTransverse'] = 0.30
+graphiteTriaxialTest['defaultPoissonRatioAxialTransverse'] = 0.25
+graphiteTriaxialTest['defaultShearModulusAxialTransverse'] = 1.1
+graphiteTriaxialTest['defaultYoungModulusTransversePressureDerivative'] = 25.0
+graphiteTriaxialTest['defaultYoungModulusAxialPressureDerivative'] = 12.0
+graphiteTriaxialTest['defaultShearModulusAxialTransversePressureDerivative'] = 0.75
+graphiteTriaxialTest['defaultYoungModulusTransversePressureScale'] = 10.0
+graphiteTriaxialTest['defaultYoungModulusAxialPressureScale'] = 80.0
+graphiteTriaxialTest['defaultShearModulusAxialTransversePressureScale'] = 40.0
+graphiteTriaxialTest['failureStrength'] = 0.5e10
+graphiteTriaxialTest['maximumPrincipalStressDamage'] = 0
+graphiteTriaxialTest['crackSpeed'] = 3.5e-10
+graphiteTriaxialTest['scaleFractureEnergyReleaseRate'] = 0
+graphiteTriaxialTest['basalPlaneFractureEnergyReleaseRate'] = 1.e20
+graphiteTriaxialTest['totalFractureEnergyReleaseRate'] = 1.e20
+graphiteTriaxialTest['damagedMaterialFrictionalSlope'] = 0.30
+graphiteTriaxialTest['distortionShearResponseX2'] = 30.0
+graphiteTriaxialTest['distortionShearResponseY1'] = 1.0
+graphiteTriaxialTest['distortionShearResponseY2'] = 4.0
+graphiteTriaxialTest['distortionShearResponseM1'] = .2
+graphiteTriaxialTest['positiveDistortionShearResponseX2'] = 30.0
+graphiteTriaxialTest['positiveDistortionShearResponseY1'] = 0.5
+graphiteTriaxialTest['positiveDistortionShearResponseY2'] = 2.0
+graphiteTriaxialTest['positiveDistortionShearResponseM1'] = .2
+graphiteTriaxialTest['inPlaneShearResponseX2'] = 30.0
+graphiteTriaxialTest['inPlaneShearResponseY1'] = 1.5
+graphiteTriaxialTest['inPlaneShearResponseY2'] = 4.5
+graphiteTriaxialTest['inPlaneShearResponseM1'] = .2
+graphiteTriaxialTest['coupledShearResponseX2'] = 30.0
+graphiteTriaxialTest['coupledShearResponseY1'] = 0.5
+graphiteTriaxialTest['coupledShearResponseY2'] = 1.5
+graphiteTriaxialTest['coupledShearResponseM1'] = .2
+graphiteTriaxialTest['distortionStrainHardeningC0'] = 0.0
+graphiteTriaxialTest['inPlaneStrainHardeningC0'] = 0.0
+graphiteTriaxialTest['coupledStrainHardeningC0'] = 0.0
+graphiteTriaxialTest['maximumPlasticStrain'] = 0.050
+_set_graphite_auxiliary_properties(graphiteTriaxialTest)
+# #################################################################################################
+
 ###################################################################################################
 # PYROLYTIC GRAPHITE:
 # Strongly anisotropic graphite approximation with slightly reduced basal-plane stiffness relative

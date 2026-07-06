@@ -40,3 +40,21 @@ dt,xx,yy,zz,yz,xz,xy
 and the six component values are interpreted according to the six modes passed
 through `--control`.  Supported modes are `strain`, `strainRate`,
 `trueStrainRate`, and `stress`.
+
+Stress-control strain bounds
+-----------------------------
+
+Stress-controlled unknowns can be bounded in accumulated GEOS Voigt strain with:
+
+```bash
+--stress-control-min-strain xx=0,yy=0
+--stress-control-max-strain xx=0.5,yy=0.5
+```
+
+The arguments may be component assignments or six comma-separated Voigt values.
+The bounds are enforced only for components whose `--control` mode is `stress`;
+prescribed strain/rate controls are unchanged.  This is useful for triaxial
+compression-style drivers where lateral stress control should not find a free
+surface/cavitation branch by contracting a lateral stretch below its initial
+value.  In the Graphite Triaxial full-stress wrapper the default lower bound
+is `xx=0,yy=0`, which corresponds to a minimum lateral true strain of zero.

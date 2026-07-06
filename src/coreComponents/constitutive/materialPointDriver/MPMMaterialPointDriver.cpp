@@ -115,6 +115,22 @@ enum class StressControlFailurePolicy
   Continue
 };
 
+enum class StressControlAlgorithm
+{
+  Newton,
+  RegularizedNewton,
+  Servo,
+  Hybrid
+};
+
+enum class StressControlDiagnosticsLevel
+{
+  Off,
+  Step,
+  Iteration,
+  Full
+};
+
 struct InitialField
 {
   std::string name;
@@ -166,7 +182,33 @@ struct Options
   real64 stressBracketInitialScale = 0.0;
   real64 stressBracketMaxStrain = 5.0e-2;
   real64 stressBracketGrowth = 2.0;
-  StressControlFailurePolicy stressControlFailurePolicy = StressControlFailurePolicy::Error;
+  StressControlAlgorithm stressControlAlgorithm = StressControlAlgorithm::Hybrid;
+  real64 stressControlRegularization = 1.0e-12;
+  real64 stressControlMaxStrainCorrection = 5.0e-2;
+  real64 stressControlServoCompliance = 1.0e-2;
+  real64 stressControlServoRelaxation = 0.5;
+  real64 stressControlServoDerivativeFloor = 1.0e-8;
+  int stressControlServoIterations = 12;
+  int stressControlPatternIterations = 0;
+  real64 stressControlPatternInitialStep = 0.0;
+  real64 stressControlPatternMinStep = 1.0e-12;
+  real64 stressControlPatternShrink = 0.5;
+  real64 stressControlPatternGrowth = 1.25;
+  Vec6 stressControlMinStrain = { -std::numeric_limits< real64 >::infinity(),
+                                  -std::numeric_limits< real64 >::infinity(),
+                                  -std::numeric_limits< real64 >::infinity(),
+                                  -std::numeric_limits< real64 >::infinity(),
+                                  -std::numeric_limits< real64 >::infinity(),
+                                  -std::numeric_limits< real64 >::infinity() };
+  Vec6 stressControlMaxStrain = {  std::numeric_limits< real64 >::infinity(),
+                                   std::numeric_limits< real64 >::infinity(),
+                                   std::numeric_limits< real64 >::infinity(),
+                                   std::numeric_limits< real64 >::infinity(),
+                                   std::numeric_limits< real64 >::infinity(),
+                                   std::numeric_limits< real64 >::infinity() };
+  StressControlFailurePolicy stressControlFailurePolicy = StressControlFailurePolicy::Continue;
+  std::string stressControlDiagnosticsPath;
+  StressControlDiagnosticsLevel stressControlDiagnosticsLevel = StressControlDiagnosticsLevel::Off;
 
   localIndex constantSteps = 0;
   real64 constantDt = 0.0;
@@ -186,6 +228,7 @@ struct DriverState
   Mat3 materialFrameReference = {};
   Mat3 materialFrame = {};
   Vec6 totalStrain = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+  Vec6 previousStrainIncrement = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   Vec6 stress = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   real64 referenceDensity = 1.0;
   real64 density = 1.0;
@@ -289,6 +332,87 @@ Vec3 parseVec3( std::string const & input )
   return Vec3{ values[0], values[1], values[2] };
 }
 
+std::string voigtComponentName( int const component )
+{
+  static std::array< char const *, 6 > const names = { "xx", "yy", "zz", "yz", "xz", "xy" };
+  if( component >= 0 && component < 6 )
+  {
+    return names[static_cast< std::size_t >( component )];
+  }
+  return "unknown";
+}
+
+int parseVoigtComponentIndex( std::string const & input )
+{
+  std::string const name = toLower( trim( input ) );
+  static std::array< char const *, 6 > const names = { "xx", "yy", "zz", "yz", "xz", "xy" };
+  for( int c = 0; c < 6; ++c )
+  {
+    if( name == names[static_cast< std::size_t >( c )] )
+    {
+      return c;
+    }
+  }
+  throw std::runtime_error( "Unknown Voigt component name in strain bound: " + input );
+}
+
+real64 parseStrainBoundValue( std::string const & token, bool const isLowerBound )
+{
+  std::string const value = toLower( trim( token ) );
+  if( value.empty() || value == "none" || value == "off" || value == "nan" || value == "na" )
+  {
+    return isLowerBound ? -std::numeric_limits< real64 >::infinity()
+                        :  std::numeric_limits< real64 >::infinity();
+  }
+  if( value == "inf" || value == "+inf" || value == "infinity" || value == "+infinity" )
+  {
+    return std::numeric_limits< real64 >::infinity();
+  }
+  if( value == "-inf" || value == "-infinity" )
+  {
+    return -std::numeric_limits< real64 >::infinity();
+  }
+  return std::stod( value );
+}
+
+Vec6 parseStressControlStrainBound( std::string const & input, bool const isLowerBound )
+{
+  real64 const disabled = isLowerBound ? -std::numeric_limits< real64 >::infinity()
+                                       :  std::numeric_limits< real64 >::infinity();
+  Vec6 bound = { disabled, disabled, disabled, disabled, disabled, disabled };
+  std::vector< std::string > const tokens = split( input, ',' );
+
+  bool const assignments = input.find( '=' ) != std::string::npos;
+  if( assignments )
+  {
+    for( std::string const & token : tokens )
+    {
+      if( token.empty() )
+      {
+        continue;
+      }
+      std::size_t const pos = token.find( '=' );
+      if( pos == std::string::npos )
+      {
+        throw std::runtime_error( "Stress-control strain bounds must be all component assignments or all six values" );
+      }
+      int const component = parseVoigtComponentIndex( token.substr( 0, pos ) );
+      bound[static_cast< std::size_t >( component )] = parseStrainBoundValue( token.substr( pos + 1 ), isLowerBound );
+    }
+    return bound;
+  }
+
+  if( tokens.size() != 6 )
+  {
+    throw std::runtime_error( "Stress-control strain bound expects six comma-separated values or component assignments" );
+  }
+  for( int c = 0; c < 6; ++c )
+  {
+    bound[static_cast< std::size_t >( c )] = parseStrainBoundValue( tokens[static_cast< std::size_t >( c )], isLowerBound );
+  }
+  return bound;
+}
+
 std::string readFile( std::string const & path )
 {
   std::ifstream input( path );
@@ -316,6 +440,22 @@ void writeUsage( std::ostream & os )
      << "  --temperature-mode prescribed|isothermal|adiabatic|fromMaterial\n"
      << "  --energy-mode off|stressPower|material\n"
      << "  --stress-control-failure-policy error|stop|continue\n"
+     << "  --stress-control-algorithm newton|regularizedNewton|servo|hybrid\n"
+     << "  --stress-control-regularization value\n"
+     << "  --stress-control-max-strain-correction value\n"
+     << "  --stress-control-servo-compliance value\n"
+     << "  --stress-control-servo-relaxation value\n"
+     << "  --stress-control-servo-derivative-floor value\n"
+     << "  --stress-control-servo-iterations n\n"
+     << "  --stress-control-pattern-iterations n\n"
+     << "  --stress-control-pattern-initial-step value (0 means automatic)\n"
+     << "  --stress-control-pattern-min-step value\n"
+     << "  --stress-control-pattern-shrink value\n"
+     << "  --stress-control-pattern-growth value\n"
+     << "  --stress-control-min-strain xx=0,yy=0 or six comma-separated values\n"
+     << "  --stress-control-max-strain xx=0.5,yy=0.5 or six comma-separated values\n"
+     << "  --stress-control-diagnostics path/to/trace.csv\n"
+     << "  --stress-control-diagnostics-level off|step|iteration|full\n"
      << "  --stress-bracket-initial-scale value (0 means automatic)\n"
      << "  --stress-bracket-max-strain value\n"
      << "  --stress-bracket-growth value\n"
@@ -387,9 +527,53 @@ StressControlFailurePolicy parseStressControlFailurePolicy( std::string const & 
   throw std::runtime_error( "Unknown stress-control failure policy: " + token );
 }
 
+StressControlAlgorithm parseStressControlAlgorithm( std::string const & token )
+{
+  std::string const mode = toLower( token );
+  if( mode == "newton" || mode == "exact" ) return StressControlAlgorithm::Newton;
+  if( mode == "regularizednewton" || mode == "regularized" || mode == "lm" ||
+      mode == "levenberg" || mode == "levenbergmarquardt" || mode == "levenberg_marquardt" )
+  {
+    return StressControlAlgorithm::RegularizedNewton;
+  }
+  if( mode == "servo" || mode == "barostat" || mode == "controller" || mode == "relaxed" ) return StressControlAlgorithm::Servo;
+  if( mode == "hybrid" || mode == "robust" || mode == "newtonservo" || mode == "newton_servo" ||
+      mode == "newtonlmservo" || mode == "newton_lm_servo" )
+  {
+    return StressControlAlgorithm::Hybrid;
+  }
+  throw std::runtime_error( "Unknown stress-control algorithm: " + token );
+}
+
+StressControlDiagnosticsLevel parseStressControlDiagnosticsLevel( std::string const & token )
+{
+  std::string const mode = toLower( token );
+  if( mode == "off" || mode == "none" || mode == "false" || mode == "0" ) return StressControlDiagnosticsLevel::Off;
+  if( mode == "step" || mode == "summary" ) return StressControlDiagnosticsLevel::Step;
+  if( mode == "iteration" || mode == "iterations" || mode == "iter" ) return StressControlDiagnosticsLevel::Iteration;
+  if( mode == "full" || mode == "debug" || mode == "trace" || mode == "all" ) return StressControlDiagnosticsLevel::Full;
+  throw std::runtime_error( "Unknown stress-control diagnostics level: " + token );
+}
+
+bool stressControlUsesRegularization( StressControlAlgorithm const algorithm )
+{
+  return algorithm == StressControlAlgorithm::RegularizedNewton || algorithm == StressControlAlgorithm::Hybrid;
+}
+
+bool stressControlUsesServo( StressControlAlgorithm const algorithm )
+{
+  return algorithm == StressControlAlgorithm::Servo || algorithm == StressControlAlgorithm::Hybrid;
+}
+
 bool permissiveStressControlFailurePolicy( StressControlFailurePolicy const policy )
 {
   return policy == StressControlFailurePolicy::Stop || policy == StressControlFailurePolicy::Continue;
+}
+
+bool stressControlDiagnosticsAtLeast( StressControlDiagnosticsLevel const level,
+                                      StressControlDiagnosticsLevel const requested )
+{
+  return static_cast< int >( level ) >= static_cast< int >( requested );
 }
 
 bool hasStressControl( Options const & options )
@@ -465,6 +649,38 @@ Options parseCommandLine( int argc, char ** argv )
     else if( key == "--stress-bracket-initial-scale" || key == "--stress-control-bracket-initial-scale" ) options.stressBracketInitialScale = std::stod( requireValue( key ) );
     else if( key == "--stress-bracket-max-strain" || key == "--stress-control-bracket-max-strain" ) options.stressBracketMaxStrain = std::stod( requireValue( key ) );
     else if( key == "--stress-bracket-growth" || key == "--stress-control-bracket-growth" ) options.stressBracketGrowth = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-algorithm" || key == "--stress-algorithm" || key == "--stress-control-method" ) options.stressControlAlgorithm = parseStressControlAlgorithm( requireValue( key ) );
+    else if( key == "--stress-control-regularization" || key == "--stress-regularization" || key == "--stress-lm-regularization" ) options.stressControlRegularization = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-max-strain-correction" || key == "--stress-max-strain-correction" ) options.stressControlMaxStrainCorrection = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-servo-compliance" || key == "--stress-servo-compliance" || key == "--barostat-compliance" ) options.stressControlServoCompliance = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-servo-relaxation" || key == "--stress-servo-relaxation" || key == "--barostat-gain" ) options.stressControlServoRelaxation = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-servo-derivative-floor" || key == "--stress-servo-derivative-floor" ) options.stressControlServoDerivativeFloor = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-servo-iterations" || key == "--stress-servo-iterations" || key == "--barostat-iterations" ) options.stressControlServoIterations = std::stoi( requireValue( key ) );
+    else if( key == "--stress-control-pattern-iterations" || key == "--stress-pattern-iterations" || key == "--max-stress-pattern-iterations" ) options.stressControlPatternIterations = std::stoi( requireValue( key ) );
+    else if( key == "--stress-control-pattern-initial-step" || key == "--stress-pattern-initial-step" ) options.stressControlPatternInitialStep = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-pattern-min-step" || key == "--stress-pattern-min-step" ) options.stressControlPatternMinStep = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-pattern-shrink" || key == "--stress-pattern-shrink" ) options.stressControlPatternShrink = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-pattern-growth" || key == "--stress-pattern-growth" ) options.stressControlPatternGrowth = std::stod( requireValue( key ) );
+    else if( key == "--stress-control-min-strain" || key == "--stress-min-strain" || key == "--min-stress-control-strain" )
+    {
+      options.stressControlMinStrain = parseStressControlStrainBound( requireValue( key ), true );
+    }
+    else if( key == "--stress-control-max-strain" || key == "--stress-max-strain" || key == "--max-stress-control-strain" )
+    {
+      options.stressControlMaxStrain = parseStressControlStrainBound( requireValue( key ), false );
+    }
+    else if( key == "--stress-control-diagnostics" || key == "--stress-diagnostics" || key == "--stress-control-trace" )
+    {
+      options.stressControlDiagnosticsPath = requireValue( key );
+      if( options.stressControlDiagnosticsLevel == StressControlDiagnosticsLevel::Off )
+      {
+        options.stressControlDiagnosticsLevel = StressControlDiagnosticsLevel::Iteration;
+      }
+    }
+    else if( key == "--stress-control-diagnostics-level" || key == "--stress-diagnostics-level" || key == "--stress-control-trace-level" )
+    {
+      options.stressControlDiagnosticsLevel = parseStressControlDiagnosticsLevel( requireValue( key ) );
+    }
     else if( key == "--stress-control-failure-policy" || key == "--stress-failure-policy" )
     {
       options.stressControlFailurePolicy = parseStressControlFailurePolicy( requireValue( key ) );
@@ -515,6 +731,59 @@ Options parseCommandLine( int argc, char ** argv )
   if( options.heatCapacity <= 0.0 )
   {
     throw std::runtime_error( "--heat-capacity must be positive" );
+  }
+  if( options.stressControlRegularization < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-regularization must be non-negative" );
+  }
+  if( options.stressControlMaxStrainCorrection < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-max-strain-correction must be non-negative" );
+  }
+  if( options.stressControlServoCompliance < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-servo-compliance must be non-negative" );
+  }
+  if( options.stressControlServoRelaxation < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-servo-relaxation must be non-negative" );
+  }
+  if( options.stressControlServoDerivativeFloor < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-servo-derivative-floor must be non-negative" );
+  }
+  if( options.stressControlServoIterations < 0 )
+  {
+    throw std::runtime_error( "--stress-control-servo-iterations must be non-negative" );
+  }
+  if( options.stressControlPatternIterations < 0 )
+  {
+    throw std::runtime_error( "--stress-control-pattern-iterations must be non-negative" );
+  }
+  if( options.stressControlPatternInitialStep < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-pattern-initial-step must be non-negative" );
+  }
+  if( options.stressControlPatternMinStep < 0.0 )
+  {
+    throw std::runtime_error( "--stress-control-pattern-min-step must be non-negative" );
+  }
+  if( options.stressControlPatternShrink <= 0.0 || options.stressControlPatternShrink >= 1.0 )
+  {
+    throw std::runtime_error( "--stress-control-pattern-shrink must be greater than 0 and less than 1" );
+  }
+  if( options.stressControlPatternGrowth < 1.0 )
+  {
+    throw std::runtime_error( "--stress-control-pattern-growth must be at least 1" );
+  }
+  for( int c = 0; c < 6; ++c )
+  {
+    if( options.stressControlMinStrain[static_cast< std::size_t >( c )] >
+        options.stressControlMaxStrain[static_cast< std::size_t >( c )] )
+    {
+      throw std::runtime_error( "Stress-control strain lower bound exceeds upper bound for component " +
+                                voigtComponentName( c ) );
+    }
   }
   return options;
 }
@@ -954,6 +1223,94 @@ void buildTrialKinematics( Options const & options,
   }
 }
 
+bool finiteLowerStrainBound( real64 const value )
+{
+  return std::isfinite( value );
+}
+
+bool finiteUpperStrainBound( real64 const value )
+{
+  return std::isfinite( value );
+}
+
+void enforceStressControlStrainBounds( Options const & options,
+                                       DriverState const & stateOld,
+                                       std::vector< real64 > & unknowns )
+{
+  int unknownIndex = 0;
+  for( int c = 0; c < 6; ++c )
+  {
+    if( options.controlModes[c] != ControlMode::Stress )
+    {
+      continue;
+    }
+    if( static_cast< std::size_t >( unknownIndex ) >= unknowns.size() )
+    {
+      return;
+    }
+
+    real64 const currentTotalStrain = stateOld.totalStrain[static_cast< std::size_t >( c )];
+    real64 lowerIncrement = -std::numeric_limits< real64 >::infinity();
+    real64 upperIncrement =  std::numeric_limits< real64 >::infinity();
+    real64 const lower = options.stressControlMinStrain[static_cast< std::size_t >( c )];
+    real64 const upper = options.stressControlMaxStrain[static_cast< std::size_t >( c )];
+    if( finiteLowerStrainBound( lower ) )
+    {
+      lowerIncrement = lower - currentTotalStrain;
+    }
+    if( finiteUpperStrainBound( upper ) )
+    {
+      upperIncrement = upper - currentTotalStrain;
+    }
+    if( lowerIncrement > upperIncrement )
+    {
+      lowerIncrement = upperIncrement;
+    }
+
+    real64 & unknown = unknowns[static_cast< std::size_t >( unknownIndex )];
+    unknown = std::min( std::max( unknown, lowerIncrement ), upperIncrement );
+    ++unknownIndex;
+  }
+}
+
+std::vector< real64 > boundedStressControlUnknowns( Options const & options,
+                                                    DriverState const & stateOld,
+                                                    std::vector< real64 > const & unknowns )
+{
+  std::vector< real64 > bounded = unknowns;
+  enforceStressControlStrainBounds( options, stateOld, bounded );
+  return bounded;
+}
+
+void validateStressControlStrainBounds( Options const & options, DriverState const & state )
+{
+  real64 const tolerance = 256.0 * std::numeric_limits< real64 >::epsilon();
+  for( int c = 0; c < 6; ++c )
+  {
+    if( options.controlModes[c] != ControlMode::Stress )
+    {
+      continue;
+    }
+    real64 const value = state.totalStrain[static_cast< std::size_t >( c )];
+    real64 const lower = options.stressControlMinStrain[static_cast< std::size_t >( c )];
+    real64 const upper = options.stressControlMaxStrain[static_cast< std::size_t >( c )];
+    if( finiteLowerStrainBound( lower ) && value + tolerance < lower )
+    {
+      std::ostringstream message;
+      message << "Stress-controlled component " << voigtComponentName( c )
+              << " has total strain " << value << " below minimum " << lower;
+      throw std::runtime_error( message.str() );
+    }
+    if( finiteUpperStrainBound( upper ) && value - tolerance > upper )
+    {
+      std::ostringstream message;
+      message << "Stress-controlled component " << voigtComponentName( c )
+              << " has total strain " << value << " above maximum " << upper;
+      throw std::runtime_error( message.str() );
+    }
+  }
+}
+
 real64 stressPower( Vec6 const & stress, Mat3 const & L )
 {
   return stress[0] * L[0][0]
@@ -1340,7 +1697,8 @@ TrialResult evaluateTrial( ContinuumBase & model,
 
   TrialResult result;
   result.state = stateOld;
-  buildTrialKinematics( options, step, unknowns, result.strainIncrement, result.L );
+  std::vector< real64 > const boundedUnknowns = boundedStressControlUnknowns( options, stateOld, unknowns );
+  buildTrialKinematics( options, step, boundedUnknowns, result.strainIncrement, result.L );
 
   result.state.F = integrateDeformationGradient( stateOld.F, result.L, step.dt );
   result.state.jacobian = determinant( result.state.F );
@@ -1356,7 +1714,9 @@ TrialResult evaluateTrial( ContinuumBase & model,
   for( int c = 0; c < 6; ++c )
   {
     result.state.totalStrain[c] += result.strainIncrement[c];
+    result.state.previousStrainIncrement[c] = result.strainIncrement[c];
   }
+  validateStressControlStrainBounds( options, result.state );
 
   // The constitutive model sees the beginning-of-step temperature by default.
   // Adiabatic temperature increments are applied after the accepted stress update.
@@ -1440,6 +1800,296 @@ real64 l2Norm( std::vector< real64 > const & values )
   return std::sqrt( sum );
 }
 
+std::string csvEscape( std::string const & text )
+{
+  bool needsQuotes = text.empty();
+  for( char const c : text )
+  {
+    needsQuotes = needsQuotes || c == ',' || c == '"' || c == '\n' || c == '\r';
+  }
+  if( !needsQuotes )
+  {
+    return text;
+  }
+
+  std::string escaped;
+  escaped.reserve( text.size() + 2 );
+  escaped.push_back( '"' );
+  for( char const c : text )
+  {
+    if( c == '"' )
+    {
+      escaped.push_back( '"' );
+      escaped.push_back( '"' );
+    }
+    else if( c == '\n' || c == '\r' )
+    {
+      escaped.push_back( ' ' );
+    }
+    else
+    {
+      escaped.push_back( c );
+    }
+  }
+  escaped.push_back( '"' );
+  return escaped;
+}
+
+void appendDiagnosticValue( std::ofstream & output, real64 const value )
+{
+  output << ',' << std::setprecision( 17 ) << value;
+}
+
+void appendDiagnosticString( std::ofstream & output, std::string const & value )
+{
+  output << ',' << csvEscape( value );
+}
+
+Vec6 nanVec6()
+{
+  real64 const nan = std::numeric_limits< real64 >::quiet_NaN();
+  return Vec6{ nan, nan, nan, nan, nan, nan };
+}
+
+Mat3 nanMat3()
+{
+  real64 const nan = std::numeric_limits< real64 >::quiet_NaN();
+  return Mat3{ Vec3{ nan, nan, nan }, Vec3{ nan, nan, nan }, Vec3{ nan, nan, nan } };
+}
+
+real64 pressureFromStress( Vec6 const & stress )
+{
+  return -( stress[0] + stress[1] + stress[2] ) / 3.0;
+}
+
+real64 firstFieldValueOrNaN( ContinuumBase const & model, std::string const & fieldName )
+{
+  std::vector< real64 > const values = getFieldFirstEntryIfPresent( model, fieldName );
+  if( values.empty() )
+  {
+    return std::numeric_limits< real64 >::quiet_NaN();
+  }
+  return values[0];
+}
+
+std::vector< real64 > fieldValuesOrNaN( ContinuumBase const & model,
+                                        std::string const & fieldName,
+                                        std::size_t const count )
+{
+  std::vector< real64 > values = getFieldFirstEntryIfPresent( model, fieldName );
+  values.resize( count, std::numeric_limits< real64 >::quiet_NaN() );
+  return values;
+}
+
+struct StressControlDiagnostics
+{
+  StressControlDiagnosticsLevel level = StressControlDiagnosticsLevel::Off;
+  std::ofstream output;
+  localIndex recordCount = 0;
+
+  bool active() const
+  {
+    return output.is_open() && level != StressControlDiagnosticsLevel::Off;
+  }
+
+  bool shouldRecord( StressControlDiagnosticsLevel const requested ) const
+  {
+    return active() && stressControlDiagnosticsAtLeast( level, requested );
+  }
+
+  void open( Options const & options )
+  {
+    level = options.stressControlDiagnosticsLevel;
+    if( options.stressControlDiagnosticsPath.empty() || level == StressControlDiagnosticsLevel::Off )
+    {
+      return;
+    }
+    output.open( options.stressControlDiagnosticsPath );
+    if( !output )
+    {
+      throw std::runtime_error( "Could not open stress-control diagnostic CSV: " + options.stressControlDiagnosticsPath );
+    }
+    writeHeader();
+  }
+
+  void writeHeader()
+  {
+    std::array< std::string, 6 > const voigt = { "xx", "yy", "zz", "yz", "xz", "xy" };
+    output << "record,step,timeOld,timeTrial,dt,stage,iteration,subiteration,accepted,converged,residualNorm,message";
+    for( std::string const & name : voigt ) output << ",startStress_" << name;
+    output << ",startPressure,trialPressure";
+    for( std::string const & name : voigt ) output << ",unknown_" << name;
+    for( std::string const & name : voigt ) output << ",strainIncrement_" << name;
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) output << ",L_" << i << j;
+    for( std::string const & name : voigt ) output << ",stress_" << name;
+    for( std::string const & name : voigt ) output << ",target_" << name;
+    for( std::string const & name : voigt ) output << ",residual_" << name;
+    for( std::string const & name : voigt ) output << ",totalStrain_" << name;
+    for( std::string const & name : voigt ) output << ",strainMin_" << name;
+    for( std::string const & name : voigt ) output << ",strainMax_" << name;
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) output << ",F_" << i << j;
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) output << ",materialDirection_" << i << j;
+    output << ",density,jacobian,temperature,effectiveBulkModulus,effectiveShearModulus,damage,basalPlaneDamage,comminutionDamage";
+    for( std::string const & name : voigt ) output << ",plasticStrain_" << name;
+    output << '\n';
+  }
+
+  void record( ContinuumBase const & model,
+               localIndex const stepIndex,
+               DriverState const & stateOld,
+               Options const & options,
+               PathStep const & step,
+               std::string const & stage,
+               int const iteration,
+               int const subiteration,
+               std::vector< real64 > const & unknowns,
+               TrialResult const * const trial,
+               bool const accepted,
+               std::string const & message,
+               StressControlDiagnosticsLevel const requested = StressControlDiagnosticsLevel::Iteration )
+  {
+    if( !shouldRecord( requested ) )
+    {
+      return;
+    }
+
+    std::vector< real64 > const boundedUnknowns = boundedStressControlUnknowns( options, stateOld, unknowns );
+    Vec6 unknownByComponent = nanVec6();
+    int unknownIndex = 0;
+    for( int c = 0; c < 6; ++c )
+    {
+      if( options.controlModes[c] == ControlMode::Stress )
+      {
+        if( static_cast< std::size_t >( unknownIndex ) < boundedUnknowns.size() )
+        {
+          unknownByComponent[c] = boundedUnknowns[static_cast< std::size_t >( unknownIndex )];
+        }
+        ++unknownIndex;
+      }
+    }
+
+    Vec6 strainIncrement = nanVec6();
+    Mat3 L = nanMat3();
+    try
+    {
+      buildTrialKinematics( options, step, boundedUnknowns, strainIncrement, L );
+    }
+    catch( std::exception const & )
+    {
+      strainIncrement = nanVec6();
+      L = nanMat3();
+    }
+
+    Vec6 stress = nanVec6();
+    Vec6 target = nanVec6();
+    Vec6 residualByComponent = nanVec6();
+    Vec6 totalStrain = nanVec6();
+    Mat3 F = nanMat3();
+    Mat3 materialFrame = nanMat3();
+    real64 residualNorm = std::numeric_limits< real64 >::quiet_NaN();
+    real64 trialPressure = std::numeric_limits< real64 >::quiet_NaN();
+    int converged = -1;
+    real64 density = std::numeric_limits< real64 >::quiet_NaN();
+    real64 jacobian = std::numeric_limits< real64 >::quiet_NaN();
+    real64 temperature = std::numeric_limits< real64 >::quiet_NaN();
+
+    if( trial != nullptr )
+    {
+      stress = trial->state.stress;
+      trialPressure = pressureFromStress( stress );
+      totalStrain = trial->state.totalStrain;
+      F = trial->state.F;
+      materialFrame = trial->state.materialFrame;
+      residualNorm = l2Norm( stressResidual( options, step, stress ) );
+      converged = residualNorm <= options.stressTolerance ? 1 : 0;
+      density = trial->state.density;
+      jacobian = trial->state.jacobian;
+      temperature = trial->state.temperature;
+    }
+
+    for( int c = 0; c < 6; ++c )
+    {
+      if( options.controlModes[c] == ControlMode::Stress )
+      {
+        target[c] = step.values[c];
+        if( trial != nullptr )
+        {
+          residualByComponent[c] = stress[c] - target[c];
+        }
+      }
+    }
+
+    output << recordCount++;
+    appendDiagnosticValue( output, static_cast< real64 >( stepIndex ) );
+    appendDiagnosticValue( output, stateOld.time );
+    appendDiagnosticValue( output, stateOld.time + step.dt );
+    appendDiagnosticValue( output, step.dt );
+    appendDiagnosticString( output, stage );
+    output << ',' << iteration << ',' << subiteration << ',' << ( accepted ? 1 : 0 ) << ',' << converged;
+    appendDiagnosticValue( output, residualNorm );
+    appendDiagnosticString( output, message );
+    for( real64 const value : stateOld.stress ) appendDiagnosticValue( output, value );
+    appendDiagnosticValue( output, pressureFromStress( stateOld.stress ) );
+    appendDiagnosticValue( output, trialPressure );
+    for( real64 const value : unknownByComponent ) appendDiagnosticValue( output, value );
+    for( real64 const value : strainIncrement ) appendDiagnosticValue( output, value );
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) appendDiagnosticValue( output, L[i][j] );
+    for( real64 const value : stress ) appendDiagnosticValue( output, value );
+    for( real64 const value : target ) appendDiagnosticValue( output, value );
+    for( real64 const value : residualByComponent ) appendDiagnosticValue( output, value );
+    for( real64 const value : totalStrain ) appendDiagnosticValue( output, value );
+    for( real64 const value : options.stressControlMinStrain ) appendDiagnosticValue( output, value );
+    for( real64 const value : options.stressControlMaxStrain ) appendDiagnosticValue( output, value );
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) appendDiagnosticValue( output, F[i][j] );
+    for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) appendDiagnosticValue( output, materialFrame[i][j] );
+    appendDiagnosticValue( output, density );
+    appendDiagnosticValue( output, jacobian );
+    appendDiagnosticValue( output, temperature );
+    appendDiagnosticValue( output, firstFieldValueOrNaN( model, "effectiveBulkModulus" ) );
+    appendDiagnosticValue( output, firstFieldValueOrNaN( model, "effectiveShearModulus" ) );
+    appendDiagnosticValue( output, firstFieldValueOrNaN( model, "damage" ) );
+    appendDiagnosticValue( output, firstFieldValueOrNaN( model, "basalPlaneDamage" ) );
+    appendDiagnosticValue( output, firstFieldValueOrNaN( model, "comminutionDamage" ) );
+    std::vector< real64 > const plasticStrain = fieldValuesOrNaN( model, "plasticStrain", 6 );
+    for( real64 const value : plasticStrain ) appendDiagnosticValue( output, value );
+    output << '\n';
+    output.flush();
+  }
+};
+
+void recordStressControlDiagnostic( StressControlDiagnostics * const diagnostics,
+                                    ContinuumBase const & model,
+                                    localIndex const stepIndex,
+                                    DriverState const & stateOld,
+                                    Options const & options,
+                                    PathStep const & step,
+                                    std::string const & stage,
+                                    int const iteration,
+                                    int const subiteration,
+                                    std::vector< real64 > const & unknowns,
+                                    TrialResult const * const trial,
+                                    bool const accepted,
+                                    std::string const & message,
+                                    StressControlDiagnosticsLevel const requested = StressControlDiagnosticsLevel::Iteration )
+{
+  if( diagnostics != nullptr )
+  {
+    diagnostics->record( model,
+                         stepIndex,
+                         stateOld,
+                         options,
+                         step,
+                         stage,
+                         iteration,
+                         subiteration,
+                         unknowns,
+                         trial,
+                         accepted,
+                         message,
+                         requested );
+  }
+}
+
 std::vector< real64 > solveLinearSystem( std::vector< std::vector< real64 > > A,
                                          std::vector< real64 > b )
 {
@@ -1506,6 +2156,522 @@ bool isFinite( std::vector< real64 > const & values )
   return true;
 }
 
+std::vector< real64 > solveRegularizedLeastSquares( std::vector< std::vector< real64 > > const & jacobian,
+                                                    std::vector< real64 > const & rhs,
+                                                    real64 const requestedRegularization )
+{
+  std::size_t const n = rhs.size();
+  std::vector< std::vector< real64 > > normal( n, std::vector< real64 >( n, 0.0 ) );
+  std::vector< real64 > normalRhs( n, 0.0 );
+
+  for( std::size_t row = 0; row < n; ++row )
+  {
+    for( std::size_t i = 0; i < n; ++i )
+    {
+      normalRhs[i] += jacobian[row][i] * rhs[row];
+      for( std::size_t j = 0; j < n; ++j )
+      {
+        normal[i][j] += jacobian[row][i] * jacobian[row][j];
+      }
+    }
+  }
+
+  real64 diagonalScale = 0.0;
+  for( std::size_t i = 0; i < n; ++i )
+  {
+    diagonalScale = std::max( diagonalScale, std::abs( normal[i][i] ) );
+  }
+  real64 const regularization = requestedRegularization > 0.0 ?
+                                requestedRegularization :
+                                1.0e-12 * std::max( real64( 1.0 ), diagonalScale );
+  for( std::size_t i = 0; i < n; ++i )
+  {
+    normal[i][i] += regularization;
+  }
+  return solveLinearSystem( normal, normalRhs );
+}
+
+void limitStressControlStepDirection( Options const & options, std::vector< real64 > & stepDirection )
+{
+  real64 const limit = options.stressControlMaxStrainCorrection;
+  if( limit <= 0.0 )
+  {
+    return;
+  }
+  for( real64 & value : stepDirection )
+  {
+    value = std::max( -limit, std::min( limit, value ) );
+  }
+}
+
+bool updateBestStressControlCandidate( ContinuumBase & model,
+                                       DriverState const & stateOld,
+                                       RepositorySnapshot const & snapshot,
+                                       Options const & options,
+                                       PathStep const & step,
+                                       MaterialFrameUpdate const materialFrameUpdate,
+                                       std::vector< real64 > const & candidateUnknowns,
+                                       std::vector< real64 > & bestUnknowns,
+                                       real64 & bestResidualNorm,
+                                       bool & haveBest,
+                                       real64 & candidateResidualNorm,
+                                       StressControlDiagnostics * const diagnostics,
+                                       localIndex const stepIndex,
+                                       std::string const & stage,
+                                       int const iteration,
+                                       int const subiteration,
+                                       StressControlDiagnosticsLevel const diagnosticsLevel )
+{
+  candidateResidualNorm = std::numeric_limits< real64 >::infinity();
+  std::vector< real64 > const boundedUnknowns = boundedStressControlUnknowns( options, stateOld, candidateUnknowns );
+  try
+  {
+    TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, boundedUnknowns, materialFrameUpdate, false );
+    recordStressControlDiagnostic( diagnostics,
+                                   model,
+                                   stepIndex,
+                                   stateOld,
+                                   options,
+                                   step,
+                                   stage,
+                                   iteration,
+                                   subiteration,
+                                   boundedUnknowns,
+                                   &trial,
+                                   false,
+                                   std::string(),
+                                   diagnosticsLevel );
+    std::vector< real64 > const residual = stressResidual( options, step, trial.state.stress );
+    candidateResidualNorm = l2Norm( residual );
+    if( isFinite( candidateResidualNorm ) && candidateResidualNorm < bestResidualNorm )
+    {
+      bestResidualNorm = candidateResidualNorm;
+      bestUnknowns = boundedUnknowns;
+      haveBest = true;
+    }
+    return isFinite( candidateResidualNorm ) && candidateResidualNorm <= options.stressTolerance;
+  }
+  catch( std::exception const & error )
+  {
+    recordStressControlDiagnostic( diagnostics,
+                                   model,
+                                   stepIndex,
+                                   stateOld,
+                                   options,
+                                   step,
+                                   stage,
+                                   iteration,
+                                   subiteration,
+                                   boundedUnknowns,
+                                   nullptr,
+                                   false,
+                                   error.what(),
+                                   diagnosticsLevel );
+    return false;
+  }
+
+}
+
+real64 characteristicPrescribedStrainIncrement( Options const & options, PathStep const & step );
+
+std::vector< std::vector< real64 > > stressControlPatternDirections( std::size_t const numUnknowns )
+{
+  std::vector< std::vector< real64 > > directions;
+  if( numUnknowns == 0 )
+  {
+    return directions;
+  }
+
+  for( std::size_t j = 0; j < numUnknowns; ++j )
+  {
+    std::vector< real64 > positive( numUnknowns, 0.0 );
+    positive[j] = 1.0;
+    directions.push_back( positive );
+
+    std::vector< real64 > negative( numUnknowns, 0.0 );
+    negative[j] = -1.0;
+    directions.push_back( negative );
+  }
+
+  if( numUnknowns <= 4 )
+  {
+    std::size_t const numSignPatterns = std::size_t( 1 ) << numUnknowns;
+    real64 const scale = 1.0 / std::sqrt( static_cast< real64 >( numUnknowns ) );
+    for( std::size_t mask = 0; mask < numSignPatterns; ++mask )
+    {
+      std::vector< real64 > direction( numUnknowns, 0.0 );
+      for( std::size_t j = 0; j < numUnknowns; ++j )
+      {
+        bool const positive = ( mask & ( std::size_t( 1 ) << j ) ) != 0;
+        direction[j] = positive ? scale : -scale;
+      }
+      directions.push_back( direction );
+    }
+  }
+  else
+  {
+    real64 const scale = 1.0 / std::sqrt( static_cast< real64 >( numUnknowns ) );
+    std::vector< real64 > positive( numUnknowns, scale );
+    std::vector< real64 > negative( numUnknowns, -scale );
+    directions.push_back( positive );
+    directions.push_back( negative );
+  }
+
+  return directions;
+}
+
+bool patternStressControlFallback( ContinuumBase & model,
+                                   DriverState const & stateOld,
+                                   RepositorySnapshot const & snapshot,
+                                   Options const & options,
+                                   PathStep const & step,
+                                   MaterialFrameUpdate const materialFrameUpdate,
+                                   StressControlDiagnostics * const diagnostics,
+                                   localIndex const stepIndex,
+                                   std::vector< real64 > & bestUnknowns,
+                                   real64 & bestResidualNorm,
+                                   bool & haveBest,
+                                   std::string & stopReason )
+{
+  if( bestUnknowns.empty() || options.stressControlPatternIterations <= 0 )
+  {
+    return false;
+  }
+
+  std::vector< real64 > unknowns = haveBest ? bestUnknowns :
+                                   std::vector< real64 >( bestUnknowns.size(), 0.0 );
+  enforceStressControlStrainBounds( options, stateOld, unknowns );
+  std::vector< std::vector< real64 > > const directions = stressControlPatternDirections( unknowns.size() );
+  if( directions.empty() )
+  {
+    return false;
+  }
+
+  real64 stepSize = options.stressControlPatternInitialStep > 0.0 ?
+                    options.stressControlPatternInitialStep :
+                    characteristicPrescribedStrainIncrement( options, step );
+  stepSize = std::max( stepSize, 10.0 * options.finiteDifferenceEpsilon );
+  real64 const minStepSize = std::max( options.stressControlPatternMinStep,
+                                       10.0 * std::numeric_limits< real64 >::epsilon() );
+  real64 const maxStepSize = std::max( options.stressControlMaxStrainCorrection,
+                                       stepSize );
+  bool improved = false;
+
+  for( int iteration = 0; iteration < options.stressControlPatternIterations && stepSize >= minStepSize; ++iteration )
+  {
+    real64 currentNorm = std::numeric_limits< real64 >::infinity();
+    bool const currentExact = updateBestStressControlCandidate( model,
+                                                                stateOld,
+                                                                snapshot,
+                                                                options,
+                                                                step,
+                                                                materialFrameUpdate,
+                                                                unknowns,
+                                                                bestUnknowns,
+                                                                bestResidualNorm,
+                                                                haveBest,
+                                                                currentNorm,
+                                                                diagnostics,
+                                                                stepIndex,
+                                                                "pattern_current",
+                                                                iteration,
+                                                                0,
+                                                                StressControlDiagnosticsLevel::Iteration );
+    if( currentExact )
+    {
+      stopReason = "used stress-control pattern-search fallback";
+      return true;
+    }
+    if( !isFinite( currentNorm ) )
+    {
+      currentNorm = bestResidualNorm;
+    }
+
+    real64 bestLocalNorm = currentNorm;
+    std::vector< real64 > bestLocalUnknowns = unknowns;
+    for( std::size_t directionIndex = 0; directionIndex < directions.size(); ++directionIndex )
+    {
+      std::vector< real64 > correction = directions[directionIndex];
+      for( real64 & value : correction )
+      {
+        value *= stepSize;
+      }
+      limitStressControlStepDirection( options, correction );
+
+      bool nonzeroCorrection = false;
+      for( real64 const value : correction )
+      {
+        if( std::abs( value ) > 10.0 * std::numeric_limits< real64 >::epsilon() )
+        {
+          nonzeroCorrection = true;
+          break;
+        }
+      }
+      if( !nonzeroCorrection )
+      {
+        continue;
+      }
+
+      std::vector< real64 > candidate = unknowns;
+      for( std::size_t j = 0; j < candidate.size(); ++j )
+      {
+        candidate[j] += correction[j];
+      }
+      enforceStressControlStrainBounds( options, stateOld, candidate );
+
+      real64 candidateNorm = std::numeric_limits< real64 >::infinity();
+      bool const exact = updateBestStressControlCandidate( model,
+                                                           stateOld,
+                                                           snapshot,
+                                                           options,
+                                                           step,
+                                                           materialFrameUpdate,
+                                                           candidate,
+                                                           bestUnknowns,
+                                                           bestResidualNorm,
+                                                           haveBest,
+                                                           candidateNorm,
+                                                           diagnostics,
+                                                           stepIndex,
+                                                           "pattern_candidate",
+                                                           iteration,
+                                                           static_cast< int >( directionIndex ),
+                                                           StressControlDiagnosticsLevel::Iteration );
+      if( exact )
+      {
+        stopReason = "used stress-control pattern-search fallback";
+        return true;
+      }
+      if( isFinite( candidateNorm ) && candidateNorm < bestLocalNorm )
+      {
+        bestLocalNorm = candidateNorm;
+        bestLocalUnknowns = candidate;
+      }
+    }
+
+    if( bestLocalNorm < currentNorm )
+    {
+      unknowns = bestLocalUnknowns;
+      enforceStressControlStrainBounds( options, stateOld, unknowns );
+      improved = true;
+      stepSize = std::min( maxStepSize, stepSize * options.stressControlPatternGrowth );
+    }
+    else
+    {
+      stepSize *= options.stressControlPatternShrink;
+    }
+  }
+
+  if( improved )
+  {
+    stopReason = "used best available stress-control pattern-search fallback trial";
+  }
+  return improved;
+}
+
+bool servoStressControlFallback( ContinuumBase & model,
+                                 DriverState const & stateOld,
+                                 RepositorySnapshot const & snapshot,
+                                 Options const & options,
+                                 PathStep const & step,
+                                 MaterialFrameUpdate const materialFrameUpdate,
+                                 StressControlDiagnostics * const diagnostics,
+                                 localIndex const stepIndex,
+                                 std::vector< real64 > & bestUnknowns,
+                                 real64 & bestResidualNorm,
+                                 bool & haveBest,
+                                 std::string & stopReason )
+{
+  if( bestUnknowns.empty() || options.stressControlServoIterations <= 0 )
+  {
+    return false;
+  }
+
+  std::vector< real64 > unknowns = haveBest ? bestUnknowns :
+                                   std::vector< real64 >( bestUnknowns.size(), 0.0 );
+  enforceStressControlStrainBounds( options, stateOld, unknowns );
+  bool improved = false;
+  real64 const relaxation = std::min( real64( 1.0 ), std::max( real64( 0.0 ), options.stressControlServoRelaxation ) );
+  real64 const compliance = std::max( options.stressControlServoCompliance, real64( 0.0 ) );
+  real64 const derivativeFloor = std::max( options.stressControlServoDerivativeFloor,
+                                           std::numeric_limits< real64 >::epsilon() );
+
+  for( int iteration = 0; iteration < options.stressControlServoIterations; ++iteration )
+  {
+    try
+    {
+      TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, unknowns, materialFrameUpdate, false );
+      recordStressControlDiagnostic( diagnostics,
+                                     model,
+                                     stepIndex,
+                                     stateOld,
+                                     options,
+                                     step,
+                                     "servo_current",
+                                     iteration,
+                                     0,
+                                     unknowns,
+                                     &trial,
+                                     false,
+                                     std::string() );
+      std::vector< real64 > const residual = stressResidual( options, step, trial.state.stress );
+      real64 const residualNorm = l2Norm( residual );
+      if( isFinite( residualNorm ) && residualNorm < bestResidualNorm )
+      {
+        bestResidualNorm = residualNorm;
+        bestUnknowns = unknowns;
+        haveBest = true;
+        improved = true;
+      }
+      if( isFinite( residualNorm ) && residualNorm <= options.stressTolerance )
+      {
+        stopReason = "used stress-control servo fallback";
+        return true;
+      }
+      if( !isFinite( residualNorm ) || !isFinite( residual ) )
+      {
+        stopReason = "stress-control servo fallback encountered a non-finite residual";
+        return improved;
+      }
+
+      std::vector< real64 > correction( unknowns.size(), 0.0 );
+      for( std::size_t j = 0; j < unknowns.size(); ++j )
+      {
+        real64 const dx = std::max( options.finiteDifferenceEpsilon,
+                                    options.finiteDifferenceEpsilon * std::max( real64( 1.0 ), std::abs( unknowns[j] ) ) );
+        real64 derivative = 0.0;
+        bool haveDerivative = false;
+        try
+        {
+          std::vector< real64 > perturbed = unknowns;
+          perturbed[j] += dx;
+          enforceStressControlStrainBounds( options, stateOld, perturbed );
+          TrialResult perturbedResult = evaluateTrial( model,
+                                                       stateOld,
+                                                       snapshot,
+                                                       options,
+                                                       step,
+                                                       perturbed,
+                                                       materialFrameUpdate,
+                                                       false );
+          recordStressControlDiagnostic( diagnostics,
+                                         model,
+                                         stepIndex,
+                                         stateOld,
+                                         options,
+                                         step,
+                                         "servo_fd",
+                                         iteration,
+                                         static_cast< int >( j ),
+                                         perturbed,
+                                         &perturbedResult,
+                                         false,
+                                         std::string(),
+                                         StressControlDiagnosticsLevel::Full );
+          std::vector< real64 > const perturbedResidual = stressResidual( options, step, perturbedResult.state.stress );
+          if( perturbedResidual.size() == residual.size() && isFinite( perturbedResidual ) )
+          {
+            derivative = ( perturbedResidual[j] - residual[j] ) / dx;
+            haveDerivative = std::abs( derivative ) > derivativeFloor;
+          }
+        }
+        catch( std::exception const & )
+        {
+          haveDerivative = false;
+        }
+
+        if( haveDerivative )
+        {
+          correction[j] = -relaxation * residual[j] / derivative;
+        }
+        else if( compliance > real64( 0.0 ) )
+        {
+          correction[j] = -relaxation * compliance * residual[j];
+        }
+      }
+      limitStressControlStepDirection( options, correction );
+
+      bool nonzeroCorrection = false;
+      for( real64 const value : correction )
+      {
+        if( std::abs( value ) > 10.0 * std::numeric_limits< real64 >::epsilon() )
+        {
+          nonzeroCorrection = true;
+          break;
+        }
+      }
+      if( !nonzeroCorrection )
+      {
+        stopReason = "stress-control servo correction vanished";
+        return improved;
+      }
+
+      real64 bestLocalNorm = residualNorm;
+      std::vector< real64 > bestLocalUnknowns = unknowns;
+      std::array< real64, 5 > const servoLineFactors = { 1.0, 0.5, 0.25, -0.5, -1.0 };
+      for( std::size_t lineIndex = 0; lineIndex < servoLineFactors.size(); ++lineIndex )
+      {
+        real64 const sign = servoLineFactors[lineIndex];
+        std::vector< real64 > candidate = unknowns;
+        for( std::size_t j = 0; j < unknowns.size(); ++j )
+        {
+          candidate[j] += sign * correction[j];
+        }
+        real64 candidateNorm = std::numeric_limits< real64 >::infinity();
+        bool const exact = updateBestStressControlCandidate( model,
+                                                             stateOld,
+                                                             snapshot,
+                                                             options,
+                                                             step,
+                                                             materialFrameUpdate,
+                                                             candidate,
+                                                             bestUnknowns,
+                                                             bestResidualNorm,
+                                                             haveBest,
+                                                             candidateNorm,
+                                                             diagnostics,
+                                                             stepIndex,
+                                                             "servo_candidate",
+                                                             iteration,
+                                                             static_cast< int >( lineIndex ),
+                                                             StressControlDiagnosticsLevel::Iteration );
+        if( exact )
+        {
+          stopReason = "used stress-control servo fallback";
+          return true;
+        }
+        if( isFinite( candidateNorm ) && candidateNorm < bestLocalNorm )
+        {
+          bestLocalNorm = candidateNorm;
+          bestLocalUnknowns = candidate;
+          improved = true;
+        }
+      }
+
+      if( bestLocalNorm < residualNorm )
+      {
+        unknowns = bestLocalUnknowns;
+        enforceStressControlStrainBounds( options, stateOld, unknowns );
+      }
+      else
+      {
+        break;
+      }
+    }
+    catch( std::exception const & error )
+    {
+      stopReason = std::string( "stress-control servo fallback trial failed: " ) + error.what();
+      return improved;
+    }
+  }
+
+  if( improved )
+  {
+    stopReason = "used best available stress-control servo fallback trial";
+  }
+  return improved;
+}
+
 real64 characteristicPrescribedStrainIncrement( Options const & options, PathStep const & step )
 {
   Vec6 strainIncrement = {};
@@ -1542,6 +2708,8 @@ bool scalarStressControlFallback( ContinuumBase & model,
                                   Options const & options,
                                   PathStep const & step,
                                   MaterialFrameUpdate const materialFrameUpdate,
+                                  StressControlDiagnostics * const diagnostics,
+                                  localIndex const stepIndex,
                                   std::vector< real64 > & bestUnknowns,
                                   real64 & bestResidualNorm,
                                   bool & haveBest,
@@ -1561,11 +2729,31 @@ bool scalarStressControlFallback( ContinuumBase & model,
   std::vector< Sample > samples;
   bool exact = false;
 
-  auto evaluate = [&]( real64 const x, real64 & residualValue ) -> bool
+  auto evaluate = [&]( real64 const x,
+                       real64 & residualValue,
+                       std::string const & stage,
+                       int const iteration,
+                       int const subiteration ) -> bool
   {
+    std::vector< real64 > trialUnknowns{ x };
+    enforceStressControlStrainBounds( options, stateOld, trialUnknowns );
+    real64 const boundedX = trialUnknowns[0];
     try
     {
-      TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, std::vector< real64 >{ x }, materialFrameUpdate, false );
+      TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, trialUnknowns, materialFrameUpdate, false );
+      recordStressControlDiagnostic( diagnostics,
+                                     model,
+                                     stepIndex,
+                                     stateOld,
+                                     options,
+                                     step,
+                                     stage,
+                                     iteration,
+                                     subiteration,
+                                     trialUnknowns,
+                                     &trial,
+                                     false,
+                                     std::string() );
       std::vector< real64 > const residual = stressResidual( options, step, trial.state.stress );
       if( residual.size() != 1 || !isFinite( residual ) )
       {
@@ -1576,18 +2764,31 @@ bool scalarStressControlFallback( ContinuumBase & model,
       if( isFinite( residualNorm ) && residualNorm < bestResidualNorm )
       {
         bestResidualNorm = residualNorm;
-        bestUnknowns[0] = x;
+        bestUnknowns[0] = boundedX;
         haveBest = true;
       }
       if( residualNorm <= options.stressTolerance )
       {
         exact = true;
       }
-      samples.push_back( Sample{ x, residualValue } );
+      samples.push_back( Sample{ boundedX, residualValue } );
       return true;
     }
     catch( std::exception const & error )
     {
+      recordStressControlDiagnostic( diagnostics,
+                                     model,
+                                     stepIndex,
+                                     stateOld,
+                                     options,
+                                     step,
+                                     stage,
+                                     iteration,
+                                     subiteration,
+                                     trialUnknowns,
+                                     nullptr,
+                                     false,
+                                     error.what() );
       stopReason = std::string( "scalar stress-control fallback trial failed: " ) + error.what();
       return false;
     }
@@ -1614,24 +2815,25 @@ bool scalarStressControlFallback( ContinuumBase & model,
     {
       real64 const xMid = 0.5 * ( lo.x + hi.x );
       real64 rMid = 0.0;
-      if( !evaluate( xMid, rMid ) )
+      if( !evaluate( xMid, rMid, "scalar_bisection", iteration, 0 ) )
       {
         break;
       }
+      real64 const boundedMid = samples.empty() ? xMid : samples.back().x;
       if( std::abs( rMid ) <= options.stressTolerance )
       {
-        bestUnknowns[0] = xMid;
+        bestUnknowns[0] = boundedMid;
         bestResidualNorm = std::abs( rMid );
         haveBest = true;
         return true;
       }
       if( residualsBracketRoot( lo.r, rMid ) )
       {
-        hi = Sample{ xMid, rMid };
+        hi = Sample{ boundedMid, rMid };
       }
       else
       {
-        lo = Sample{ xMid, rMid };
+        lo = Sample{ boundedMid, rMid };
       }
     }
     return false;
@@ -1639,7 +2841,7 @@ bool scalarStressControlFallback( ContinuumBase & model,
 
   real64 const x0 = haveBest ? bestUnknowns[0] : 0.0;
   real64 r0 = 0.0;
-  evaluate( x0, r0 );
+  evaluate( x0, r0, "scalar_initial", 0, 0 );
   if( exact )
   {
     return true;
@@ -1658,7 +2860,7 @@ bool scalarStressControlFallback( ContinuumBase & model,
     {
       real64 const x = x0 + sign * scale;
       real64 r = 0.0;
-      if( !evaluate( x, r ) )
+      if( !evaluate( x, r, "scalar_bracket", iteration, sign < 0.0 ? 0 : 1 ) )
       {
         continue;
       }
@@ -1666,7 +2868,7 @@ bool scalarStressControlFallback( ContinuumBase & model,
       {
         return true;
       }
-      Sample const current{ x, r };
+      Sample const current{ samples.empty() ? x : samples.back().x, r };
       for( Sample const & previous : samples )
       {
         real64 const duplicateTolerance = std::numeric_limits< real64 >::epsilon() *
@@ -1702,7 +2904,9 @@ TrialResult solveStep( ContinuumBase & model,
                        DriverState const & stateOld,
                        Options const & options,
                        PathStep const & step,
-                       MaterialFrameUpdate const materialFrameUpdate )
+                       MaterialFrameUpdate const materialFrameUpdate,
+                       StressControlDiagnostics * const diagnostics,
+                       localIndex const stepIndex )
 {
   RepositorySnapshot snapshot;
   snapshot.capture( model );
@@ -1726,15 +2930,39 @@ TrialResult solveStep( ContinuumBase & model,
   }
 
   std::vector< real64 > unknowns( static_cast< std::size_t >( numUnknowns ), 0.0 );
+  for( int c = 0, unknownIndex = 0; c < 6; ++c )
+  {
+    if( options.controlModes[c] == ControlMode::Stress )
+    {
+      unknowns[static_cast< std::size_t >( unknownIndex++ )] = stateOld.previousStrainIncrement[c];
+    }
+  }
+  enforceStressControlStrainBounds( options, stateOld, unknowns );
   std::vector< real64 > bestUnknowns = unknowns;
   real64 bestResidualNorm = std::numeric_limits< real64 >::infinity();
   bool haveBest = false;
   std::string stopReason;
   int iteration = 0;
 
-  for( iteration = 0; iteration < options.maxNewtonIterations; ++iteration )
+  if( options.stressControlAlgorithm != StressControlAlgorithm::Servo )
   {
+    for( iteration = 0; iteration < options.maxNewtonIterations; ++iteration )
+    {
+    enforceStressControlStrainBounds( options, stateOld, unknowns );
     TrialResult current = evaluateTrial( model, stateOld, snapshot, options, step, unknowns, materialFrameUpdate, false );
+    recordStressControlDiagnostic( diagnostics,
+                                   model,
+                                   stepIndex,
+                                   stateOld,
+                                   options,
+                                   step,
+                                   "newton_current",
+                                   iteration,
+                                   0,
+                                   unknowns,
+                                   &current,
+                                   false,
+                                   std::string() );
     std::vector< real64 > residual = stressResidual( options, step, current.state.stress );
     real64 const residualNorm = l2Norm( residual );
     if( isFinite( residualNorm ) && residualNorm < bestResidualNorm )
@@ -1764,13 +2992,39 @@ TrialResult solveStep( ContinuumBase & model,
       std::vector< real64 > perturbed = unknowns;
       real64 const dx = std::max( options.finiteDifferenceEpsilon,
                                   options.finiteDifferenceEpsilon * std::max( 1.0, std::abs( perturbed[j] ) ) );
-      perturbed[j] += dx;
+      real64 const baseUnknown = perturbed[static_cast< std::size_t >( j )];
+      perturbed[static_cast< std::size_t >( j )] += dx;
+      enforceStressControlStrainBounds( options, stateOld, perturbed );
+      real64 effectiveDx = perturbed[static_cast< std::size_t >( j )] - baseUnknown;
+      if( std::abs( effectiveDx ) <= 16.0 * std::numeric_limits< real64 >::epsilon() * std::max( real64( 1.0 ), std::abs( baseUnknown ) ) )
+      {
+        perturbed = unknowns;
+        perturbed[static_cast< std::size_t >( j )] -= dx;
+        enforceStressControlStrainBounds( options, stateOld, perturbed );
+        effectiveDx = perturbed[static_cast< std::size_t >( j )] - baseUnknown;
+      }
       TrialResult perturbedResult = evaluateTrial( model, stateOld, snapshot, options, step, perturbed, materialFrameUpdate, false );
+      recordStressControlDiagnostic( diagnostics,
+                                     model,
+                                     stepIndex,
+                                     stateOld,
+                                     options,
+                                     step,
+                                     "newton_fd",
+                                     iteration,
+                                     j,
+                                     perturbed,
+                                     &perturbedResult,
+                                     false,
+                                     std::string(),
+                                     StressControlDiagnosticsLevel::Full );
       std::vector< real64 > perturbedResidual = stressResidual( options, step, perturbedResult.state.stress );
       for( int i = 0; i < numUnknowns; ++i )
       {
         jacobian[static_cast< std::size_t >( i )][static_cast< std::size_t >( j )] =
-          ( perturbedResidual[static_cast< std::size_t >( i )] - residual[static_cast< std::size_t >( i )] ) / dx;
+          ( std::abs( effectiveDx ) > 0.0 ?
+            ( perturbedResidual[static_cast< std::size_t >( i )] - residual[static_cast< std::size_t >( i )] ) / effectiveDx :
+            real64( 0.0 ) );
       }
     }
 
@@ -1783,17 +3037,45 @@ TrialResult solveStep( ContinuumBase & model,
     std::vector< real64 > stepDirection;
     try
     {
-      stepDirection = solveLinearSystem( jacobian, rhs );
+      if( stressControlUsesRegularization( options.stressControlAlgorithm ) )
+      {
+        stepDirection = solveRegularizedLeastSquares( jacobian, rhs, options.stressControlRegularization );
+      }
+      else
+      {
+        stepDirection = solveLinearSystem( jacobian, rhs );
+      }
     }
     catch( std::exception const & error )
     {
       stopReason = error.what();
-      if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+      if( stressControlUsesRegularization( options.stressControlAlgorithm ) )
       {
+        try
+        {
+          stepDirection = solveRegularizedLeastSquares( jacobian, rhs, 1.0e-8 );
+          stopReason = "used regularized stress-control Jacobian after linear solve failure";
+        }
+        catch( std::exception const & regularizedError )
+        {
+          stopReason = regularizedError.what();
+          if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+          {
+            break;
+          }
+          break;
+        }
+      }
+      else
+      {
+        if( permissiveStressControlFailurePolicy( options.stressControlFailurePolicy ) )
+        {
+          break;
+        }
         break;
       }
-      break;
     }
+    limitStressControlStepDirection( options, stepDirection );
 
     real64 acceptedNorm = residualNorm;
     std::vector< real64 > acceptedUnknowns = unknowns;
@@ -1806,7 +3088,21 @@ TrialResult solveStep( ContinuumBase & model,
       {
         trialUnknowns[static_cast< std::size_t >( j )] += damping * stepDirection[static_cast< std::size_t >( j )];
       }
+      enforceStressControlStrainBounds( options, stateOld, trialUnknowns );
       TrialResult trial = evaluateTrial( model, stateOld, snapshot, options, step, trialUnknowns, materialFrameUpdate, false );
+      recordStressControlDiagnostic( diagnostics,
+                                     model,
+                                     stepIndex,
+                                     stateOld,
+                                     options,
+                                     step,
+                                     "line_search",
+                                     iteration,
+                                     lineSearch,
+                                     trialUnknowns,
+                                     &trial,
+                                     false,
+                                     std::string() );
       std::vector< real64 > trialResidual = stressResidual( options, step, trial.state.stress );
       real64 const trialNorm = l2Norm( trialResidual );
       if( isFinite( trialNorm ) && trialNorm < bestResidualNorm )
@@ -1834,9 +3130,17 @@ TrialResult solveStep( ContinuumBase & model,
       break;
     }
     unknowns = acceptedUnknowns;
+    enforceStressControlStrainBounds( options, stateOld, unknowns );
+    }
+  }
+  else
+  {
+    stopReason = "stress-control servo algorithm selected";
   }
 
-  if( numUnknowns == 1 && ( !haveBest || bestResidualNorm > options.stressTolerance ) )
+  if( numUnknowns == 1 &&
+      options.stressControlAlgorithm != StressControlAlgorithm::Servo &&
+      ( !haveBest || bestResidualNorm > options.stressTolerance ) )
   {
     scalarStressControlFallback( model,
                                  stateOld,
@@ -1844,14 +3148,65 @@ TrialResult solveStep( ContinuumBase & model,
                                  options,
                                  step,
                                  materialFrameUpdate,
+                                 diagnostics,
+                                 stepIndex,
                                  bestUnknowns,
                                  bestResidualNorm,
                                  haveBest,
                                  stopReason );
   }
 
-  std::vector< real64 > const & finalUnknowns = haveBest ? bestUnknowns : unknowns;
+  if( options.stressControlPatternIterations > 0 &&
+      ( !haveBest || bestResidualNorm > options.stressTolerance ) )
+  {
+    patternStressControlFallback( model,
+                                  stateOld,
+                                  snapshot,
+                                  options,
+                                  step,
+                                  materialFrameUpdate,
+                                  diagnostics,
+                                  stepIndex,
+                                  bestUnknowns,
+                                  bestResidualNorm,
+                                  haveBest,
+                                  stopReason );
+  }
+
+  if( stressControlUsesServo( options.stressControlAlgorithm ) &&
+      ( !haveBest || bestResidualNorm > options.stressTolerance ) )
+  {
+    servoStressControlFallback( model,
+                                stateOld,
+                                snapshot,
+                                options,
+                                step,
+                                materialFrameUpdate,
+                                diagnostics,
+                                stepIndex,
+                                bestUnknowns,
+                                bestResidualNorm,
+                                haveBest,
+                                stopReason );
+  }
+
+  std::vector< real64 > finalUnknowns = haveBest ? bestUnknowns : unknowns;
+  enforceStressControlStrainBounds( options, stateOld, finalUnknowns );
   TrialResult finalTrial = evaluateTrial( model, stateOld, snapshot, options, step, finalUnknowns, materialFrameUpdate, false );
+  recordStressControlDiagnostic( diagnostics,
+                                 model,
+                                 stepIndex,
+                                 stateOld,
+                                 options,
+                                 step,
+                                 "final_best",
+                                 iteration,
+                                 0,
+                                 finalUnknowns,
+                                 &finalTrial,
+                                 false,
+                                 stopReason,
+                                 StressControlDiagnosticsLevel::Step );
   finalTrial.newtonIterations = std::min( iteration + 1, options.maxNewtonIterations );
   finalTrial.residualNorm = l2Norm( stressResidual( options, step, finalTrial.state.stress ) );
   finalTrial.converged = finalTrial.residualNorm <= options.stressTolerance;
@@ -1869,6 +3224,20 @@ TrialResult solveStep( ContinuumBase & model,
   }
 
   TrialResult accepted = evaluateTrial( model, stateOld, snapshot, options, step, finalUnknowns, materialFrameUpdate, true );
+  recordStressControlDiagnostic( diagnostics,
+                                 model,
+                                 stepIndex,
+                                 stateOld,
+                                 options,
+                                 step,
+                                 "accepted",
+                                 iteration,
+                                 0,
+                                 finalUnknowns,
+                                 &accepted,
+                                 true,
+                                 stopReason,
+                                 StressControlDiagnosticsLevel::Step );
   accepted.newtonIterations = finalTrial.newtonIterations;
   accepted.residualNorm = finalTrial.residualNorm;
   accepted.converged = finalTrial.converged;
@@ -1895,6 +3264,8 @@ void writeOutputHeader( std::ofstream & output, ContinuumBase const & model )
   output << "step,time,dt";
   std::array< std::string, 6 > const voigt = { "xx", "yy", "zz", "yz", "xz", "xy" };
   for( std::string const & name : voigt ) output << ",eps_" << name;
+  for( std::string const & name : voigt ) output << ",stressControlStrainMin_" << name;
+  for( std::string const & name : voigt ) output << ",stressControlStrainMax_" << name;
   for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) output << ",F_" << i << j;
   for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) output << ",L_" << i << j;
   for( std::string const & name : voigt ) output << ",stress_" << name;
@@ -1935,6 +3306,7 @@ void writeOutputHeader( std::ofstream & output, ContinuumBase const & model )
 
 void writeOutputRow( std::ofstream & output,
                      ContinuumBase const & model,
+                     Options const & options,
                      localIndex const stepIndex,
                      PathStep const & step,
                      TrialResult const & result )
@@ -1943,6 +3315,8 @@ void writeOutputRow( std::ofstream & output,
   appendCsvValue( output, result.state.time );
   appendCsvValue( output, step.dt );
   for( real64 const value : result.state.totalStrain ) appendCsvValue( output, value );
+  for( real64 const value : options.stressControlMinStrain ) appendCsvValue( output, value );
+  for( real64 const value : options.stressControlMaxStrain ) appendCsvValue( output, value );
   for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) appendCsvValue( output, result.state.F[i][j] );
   for( int i = 0; i < 3; ++i ) for( int j = 0; j < 3; ++j ) appendCsvValue( output, result.L[i][j] );
   for( real64 const value : result.state.stress ) appendCsvValue( output, value );
@@ -2083,6 +3457,9 @@ int run( int argc, char ** argv )
   }
   writeOutputHeader( output, model );
 
+  StressControlDiagnostics stressControlDiagnostics;
+  stressControlDiagnostics.open( options );
+
   for( localIndex stepIndex = 0; stepIndex < static_cast< localIndex >( path.size() ); ++stepIndex )
   {
     PathStep const & step = path[static_cast< std::size_t >( stepIndex )];
@@ -2094,7 +3471,13 @@ int run( int argc, char ** argv )
     TrialResult result;
     try
     {
-      result = solveStep( model, state, options, step, frameUpdate );
+      result = solveStep( model,
+                          state,
+                          options,
+                          step,
+                          frameUpdate,
+                          &stressControlDiagnostics,
+                          stepIndex + 1 );
     }
     catch( std::exception const & error )
     {
@@ -2109,7 +3492,7 @@ int run( int argc, char ** argv )
     }
 
     result.state.time = state.time + step.dt;
-    writeOutputRow( output, model, stepIndex + 1, step, result );
+    writeOutputRow( output, model, options, stepIndex + 1, step, result );
     output.flush();
     state = result.state;
 
