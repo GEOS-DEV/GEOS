@@ -614,7 +614,7 @@ stress = recompose(principalStress, eigenvectors)
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.96\linewidth]{figures/graphite_deformation_modes.png}
-  \caption{Graphite weak-plane deformation modes.  The supplied diagram illustrates the basal-plane normal, in-plane shear, distortion shear, plane-normal tensile damage, and coupled shear/slip on weak planes.  The assigned material direction \(\mathbf a\) is the normal to the weak graphitic planes; in-plane, distortion, plane-normal, and coupled weak-plane stress modes are limited by separate pressure-dependent strength functions.}
+  \caption{Graphite weak-plane deformation modes.  The material direction \(\mathbf a\) (shown as \(\mathbf n\)) is the normal to the graphitic basal planes.  The constitutive update decomposes stress into in-plane shear, positive and negative signed-distortion shear, coupled shear/slip on weak planes, and a pre-plastic plane-normal tensile opening candidate.}
   \label{fig:graphite-deformation-modes}
 \end{figure}
 
@@ -717,7 +717,7 @@ The trial stress increment is
 where \(\dot T=\texttt{temperatureRate}\).  Thus thermal expansion is anisotropic: \(\alpha_L\) is applied along the symmetry-axis normal and \(\alpha_T\) in the basal plane.  In current GEOS-MPM workflows, \texttt{temperature} and \texttt{temperatureRate} are generally prescribed by global solver events that define a transient thermal response; the graphite update consumes these fields to represent thermal expansion and temperature-dependent properties.  A future coupled heat-transfer solver could instead define local particle temperature and temperature-rate fields.
 
 \paragraph{Mode decomposition of stress.}
-After the trial stress is computed, the model decomposes it into four symmetric tensor parts.  In the notation of Eq.~\eqref{eq:graphite-ti-basis},
+After the trial stress and any pre-plastic brittle tensile return are computed, the model decomposes the current stress into four symmetric tensor parts.  In the notation of Eq.~\eqref{eq:graphite-ti-basis},
 \begin{align}
   \boldsymbol{\sigma}_1 &= \mathbb B^{(1)}:\boldsymbol{\sigma},
   &\hbox{plane-normal/axial part},\\
@@ -758,7 +758,7 @@ where \(\mathbf a\) is the basal-plane normal and \(\mathbf b,\mathbf c\) span t
   q_{\mathrm{c}} = \sqrt{\frac{3}{2}}\,\|\boldsymbol{\sigma}_5\|.
   \label{eq:graphite-mode-invariants}
 \end{equation}
-These are the internal stress measures corresponding to signed normal distortion, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled separately by comparing \(\sigma_n=\mathbf a\cdot\boldsymbol{\sigma}\mathbf a\) with \texttt{failureStrength}.
+These are the internal stress measures corresponding to signed normal distortion, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled by the pre-plastic brittle candidate described below when \texttt{basalPlaneFractureEnergyReleaseRate} is finite; its peak strength is then implied by the positive signed-distortion branch.  If the basal fracture energy is disabled, the legacy plane-normal tensile cap based on \texttt{failureStrength} is retained for backward compatibility.
 
 \paragraph{Pressure-dependent point-slope strengths.}
 Each active strength branch \(m\in\{d-,d+,\mathrm{ip},\mathrm{c}\}\) has a pressure-dependent strength curve controlled by \texttt{*ResponseX2}, \texttt{*ResponseY1}, \texttt{*ResponseY2}, and \texttt{*ResponseM1}.  The existing \texttt{distortionShearResponse*} inputs define the \(I_d^-\) branch.  The optional \texttt{positiveDistortionShearResponse*} inputs define the \(I_d^+\) branch and default to the corresponding \texttt{distortionShearResponse*} values when omitted, so old input files recover the previous unsigned distortion response.  With \(x_1=0\), \(x_2>0\), \(Y_1\ge 0\), \(Y_2>Y_1\), and low-pressure tangent slope \(M_1\), the code uses a point-slope form
@@ -801,8 +801,94 @@ Here \(C_m\) is one of \texttt{distortionStrainHardeningC0}, \texttt{inPlaneStra
 \end{equation}
 The intact slope is raised as needed to satisfy the convexity condition in Eq.~\eqref{eq:graphite-point-slope-convexity}.  The fully comminuted powder branch has zero cohesion, uses \texttt{damagedMaterialFrictionalSlope} subject to the same slope limits, and retains the same unscaled branch-specific \(Y_2^0\) plateau.  The active strength is a smooth blend of the intact and powder branches using the internal damage variable for that mode.  This makes \texttt{strengthScale} a flaw-controlled low-pressure multiplier while preserving a common pressure-dominated high-confinement strength for intact and comminuted material.  Fracture energies may be scaled separately through \(G_f^{\mathrm{eff}}=G_f\,s_p^{\eta_G}\), where \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).
 
+
+\paragraph{Pre-plastic brittle tensile fracture.}
+Finite fracture energies activate a brittle tensile return before the pressure-dependent modal return.  This stage is intended to let brittle tensile failure dominate when a tensile surface is crossed during the elastic predictor, rather than allowing a later plastic projection to hide the tensile violation.  The effective fracture energies are
+\begin{equation}
+  G_b^{\mathrm{eff}} = G_b s_p^{\eta_G},
+  \qquad
+  G_t^{\mathrm{eff}} = G_t s_p^{\eta_G},
+  \label{eq:graphite-effective-fracture-energy}
+\end{equation}
+for finite input values, where \(G_b=\texttt{basalPlaneFractureEnergyReleaseRate}\), \(G_t=\texttt{totalFractureEnergyReleaseRate}\), \(s_p=\texttt{strengthScale}\), and \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).  A \texttt{DBL\_MAX} fracture-energy input disables the corresponding energy-regularized candidate.
+
+The basal normal-opening candidate uses
+\begin{equation}
+  \mathbf n_b=\mathbf a,
+  \qquad
+  \sigma_b=\mathbf a\cdot\boldsymbol{\sigma}^{\mathrm{tr}}\mathbf a,
+  \qquad
+  T_b=Y_{d+}\!\left(p=-\frac{T_b}{3};D=0,s_p,\chi\right),
+  \label{eq:graphite-basal-tensile-strength}
+\end{equation}
+where \(Y_{d+}\) is the positive signed-distortion strength from Eq.~\eqref{eq:graphite-strengthscale-damage} evaluated on the uniaxial plane-normal tensile path and with zero damage.  The scalar equation for \(T_b\) is solved internally, so basal normal-opening strength follows the existing positive-distortion yield surface instead of being prescribed by \texttt{failureStrength}.  The maximum-principal candidate is active only when \texttt{maximumPrincipalStressDamage=1} and \(G_t^{\mathrm{eff}}\) is finite:
+\begin{equation}
+  \mathbf n_p=\hbox{eigenvector associated with }\sigma_{\max}^{\mathrm{tr}},
+  \qquad
+  \sigma_p=\sigma_{\max}^{\mathrm{tr}},
+  \qquad
+  T_p=s_p\,\sigma_f,
+  \label{eq:graphite-principal-tensile-strength}
+\end{equation}
+where \(\sigma_f=\texttt{failureStrength}\).  Thus \texttt{failureStrength} is the arbitrary-direction maximum-principal tensile strength; basal normal-opening can be weaker or stronger depending on where the uniaxial plane-normal path intersects the positive-distortion surface.
+
+When the crack-tip stress concentration option is active, the same factor \(C_{\mathrm{tip}}=\texttt{crackTipStressConcentration}\) reduces the effective tensile cap for either active brittle candidate,
+\begin{equation}
+  \bar T_i = \frac{T_i}{C_{\mathrm{tip}}},
+  \qquad i\in\{b,p\}.
+  \label{eq:graphite-brittle-effective-strength}
+\end{equation}
+Let \(\mathbf N_i=\mathbf n_i\otimes\mathbf n_i\), let \(\mathbb S_{\mathrm{TI}}=\mathbb C_{\mathrm{TI}}^{-1}\), and define the normal compliance and regularized fracture energy density
+\begin{equation}
+  S_i = \mathbf N_i:\mathbb S_{\mathrm{TI}}:\mathbf N_i,
+  \qquad
+  g_i=\frac{G_i^{\mathrm{eff}}}{\ell},
+  \qquad
+  \ell=\texttt{lengthScale}.
+  \label{eq:graphite-brittle-compliance}
+\end{equation}
+The current damage entering the cap is \(D_b=\max(\texttt{basalPlaneDamage},\texttt{comminutionDamage})\) for the basal candidate and \(D_p=\max(\texttt{damage},\texttt{basalPlaneDamage},\texttt{comminutionDamage})\) for the principal candidate.  With \(H(D)=\texttt{smoothStep}(D,0,1)\), the active tensile cap is
+\begin{equation}
+  \sigma_{c,i}(D_i)=\bar T_i\left[1-H(D_i)\right].
+  \label{eq:graphite-brittle-cap}
+\end{equation}
+A candidate is active when \(\sigma_i>\sigma_{c,i}\).  If both candidates are active, the implementation applies the larger normalized violation \(\sigma_i/\sigma_{c,i}\) first and repeats a small active-set loop so the second tensile surface can also return if it remains violated.
+
+The energy check uses the tensile elastic energy density in the candidate direction,
+\begin{equation}
+  \psi_i^{\mathrm{tr}}=\frac{1}{2}\left(\sigma_i^{\mathrm{tr}}\right)^2S_i,
+  \qquad
+  \psi_i^{\mathrm{pk}}=\frac{1}{2}\bar T_i^2S_i.
+  \label{eq:graphite-brittle-energy}
+\end{equation}
+If \(\psi_i^{\mathrm{tr}}\ge g_i\), or if the peak energy \(\psi_i^{\mathrm{pk}}\ge g_i\), the computed damage target is full failure.  Otherwise the post-peak fracture strain scale is
+\begin{equation}
+  \epsilon_{f,i}=\frac{2\left(g_i-\psi_i^{\mathrm{pk}}\right)}{\bar T_i},
+  \label{eq:graphite-brittle-softening-strain}
+\end{equation}
+and the new damage is the monotone solution of
+\begin{equation}
+  D_i^{n+1}=D_i^n+
+  \frac{S_i\left\langle\sigma_i^{\mathrm{tr}}-\bar T_i\left[1-H(D_i^{n+1})\right]\right\rangle_+}{\epsilon_{f,i}},
+  \label{eq:graphite-brittle-damage-update}
+\end{equation}
+bounded to \([D_i^n,1]\).  A finite \texttt{crackSpeed} is not a damage driver in this energy-regularized branch; it is a maximum per-step damage-growth limiter,
+\begin{equation}
+  D_i^{n+1}\le D_i^n + \frac{c_f\Delta t}{\ell},
+  \qquad c_f=\texttt{crackSpeed}.
+  \label{eq:graphite-crackspeed-limiter}
+\end{equation}
+The default \texttt{DBL\_MAX} value makes this limiter inactive.  After damage is selected, the stress is returned by subtracting only the tensile normal component needed to reach the degraded cap,
+\begin{equation}
+  \boldsymbol{\sigma}^{B} = \boldsymbol{\sigma}^{\mathrm{tr}}
+  -\left\langle \sigma_i^{\mathrm{tr}}-\sigma_{c,i}(D_i^{n+1})\right\rangle_+
+  \mathbf n_i\otimes\mathbf n_i.
+  \label{eq:graphite-brittle-stress-return}
+\end{equation}
+A basal return updates \texttt{basalPlaneDamage} and the host-visible \texttt{damage}; a maximum-principal return updates the host-visible \texttt{damage} without treating the crack as a basal-plane shear/opening damage state.  The elastic strain associated with this brittle stress drop is subtracted from the later plastic-strain increment, so pre-plastic fracture dissipation is not counted again as plastic work.
+
 \paragraph{Mode return and reconstruction.}
-The inelastic correction uses a single quadratic TI strength index,
+After any pre-plastic brittle tensile return, the remaining stress is decomposed into the TI modal pieces and corrected by a single quadratic strength index,
 \begin{equation}
   R^2 =
   \left(\frac{I_d^+}{Y_{d+}(p)}\right)^2+
@@ -842,28 +928,18 @@ The relaxation/hardening coordinate is then advanced approximately as
 \end{equation}
 where \(\epsilon^p_{\max}=\texttt{maximumPlasticStrain}\).  This history variable is the argument in Eq.~\eqref{eq:graphite-hardening-multiplier}.
 
-Damage can evolve through several mechanisms.  First, when \texttt{maximumPrincipalStressDamage=1}, the model evaluates the largest principal stress and advances damage if
+Damage can evolve through the pre-plastic brittle tensile return in Eqs.~\eqref{eq:graphite-brittle-damage-update}--\eqref{eq:graphite-brittle-stress-return} and through plastic work accumulated after the modal return.  The brittle branch uses \texttt{totalFractureEnergyReleaseRate} for maximum-principal tensile failure and \texttt{basalPlaneFractureEnergyReleaseRate} for basal normal opening; \texttt{damageEvolutionExponent} does not control this branch.  The finite \texttt{crackSpeed} value, when supplied, only caps the computed damage increment by Eq.~\eqref{eq:graphite-crackspeed-limiter}.  If both fracture energies are disabled and \texttt{maximumPrincipalStressDamage=0}, the legacy plastic rate-damage response is retained for backward compatibility.
+
+The work-based paths accumulate basal-plane plastic work and non-basal plastic work after any brittle stress drop has been removed from the plastic strain increment.  The basal work combines legacy Mode-I basal-plane plastic opening work, when the basal brittle return is disabled, and basal-plane shear work.  The total work path excludes the basal plane-normal and basal shear parts.  These work measures are regularized by fracture energy per unit characteristic length,
 \begin{equation}
-  C_{\mathrm{tip}}\,\sigma_{\max} > s_p\,\sigma_f,
-  \label{eq:graphite-maxprincipal-damage}
-\end{equation}
-where \(\sigma_f=\texttt{failureStrength}\) and \(C_{\mathrm{tip}}=\texttt{crackTipStressConcentration}\).  The crack-tip multiplier is produced by the shared crack-tip modifier described in Section~\ref{subsubsec:crack-tip-stress-concentration}.  Second, if \texttt{crackSpeed} is finite and an inelastic correction has occurred, damage advances over the time-to-failure scale
-\begin{equation}
-  \Delta D = \frac{\Delta t}{\ell/c_f},
+  D_b^{\mathrm{calc}}=
+     \left[\min\left(1,\frac{W_b}{G_b^{\mathrm{eff}}/\ell}\right)\right]^{n_D},
   \qquad
-  \ell=\texttt{lengthScale},
-  \quad c_f=\texttt{crackSpeed}.
-  \label{eq:graphite-crackspeed-damage}
-\end{equation}
-Third, the model accumulates basal-plane plastic work and non-basal plastic work.  The basal work combines Mode-I basal-plane plastic opening work and basal-plane shear work; the total work path excludes the basal plane-normal and basal shear parts.  These work measures are regularized by fracture energy per unit characteristic length,
-\begin{equation}
-  D \leftarrow \max\left(D,
-     \left[\min\left(1,\frac{W_b}{G_b/\ell}\right)\right]^{n_D},
-     \left[\min\left(1,\frac{W_t}{G_t/\ell}\right)\right]^{n_D}
-  \right),
+  D_t^{\mathrm{calc}}=
+     \left[\min\left(1,\frac{W_t}{G_t^{\mathrm{eff}}/\ell}\right)\right]^{n_D},
   \label{eq:graphite-work-damage}
 \end{equation}
-where \(G_b=\texttt{basalPlaneFractureEnergyReleaseRate}\), \(G_t=\texttt{totalFractureEnergyReleaseRate}\), and \(n_D=\texttt{damageEvolutionExponent}\).  The effective fracture energy uses \(G_f^{\mathrm{eff}}=G_f s_p^{\eta_G}\), where \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).  If the exponent is omitted, the legacy \texttt{scaleFractureEnergyReleaseRate} flag initializes it to either zero or one.  Equation~\eqref{eq:graphite-work-damage} makes damage remain near zero until the accumulated work approaches the specified regularized fracture-work threshold, then ramps it toward one.
+where \(n_D=\texttt{damageEvolutionExponent}\).  The basal work updates \texttt{basalPlaneDamage}; the non-basal work updates \texttt{comminutionDamage}.  For each computed work-damage target, a finite \texttt{crackSpeed} also imposes the limiter in Eq.~\eqref{eq:graphite-crackspeed-limiter}; with the default \texttt{DBL\_MAX} value, the limiter is inactive.  The host-visible \texttt{damage} field is always updated to the maximum of its previous value, \texttt{basalPlaneDamage}, and \texttt{comminutionDamage}.
 
 \paragraph{Thermal effects.}
 Thermal effects in the current model enter through anisotropic thermal expansion in Eq.~\eqref{eq:graphite-trial-stress} and through any temperature-dependent parameter paths exposed by the material model.  In the current solver workflow, \texttt{temperature} and \texttt{temperatureRate} are normally imposed by global events, such as a \texttt{TemperatureProfile} or \texttt{TemperatureRamp}, to represent a prescribed transient thermal response.  The graphite constitutive update consumes \texttt{temperatureRate} to subtract \(\boldsymbol{\alpha}\dot T\) from the mechanical rate of deformation.  Local temperature fields could instead be supplied in the future by a coupled heat-transfer solver, because temperature is already a particle field shared by PFW initialization, events, output, and constitutive models as described in Section~\ref{subsubsec:constitutive-temperature}.
@@ -878,7 +954,17 @@ construct TI stiffness from Brannon basis tensors B1...B5
 stress_trial = oldStress + C_TI : (D - alpha * temperatureRate) * dt
 if inelasticity is disabled: accept stress_trial
 
-decompose stress_trial into sigma1, sigma2, sigma4, sigma5
+compute scaled strengths and fracture energies; compute crack-tip factor if enabled
+if Gb is finite or (maximumPrincipalStressDamage and Gt finite):
+  evaluate basal normal candidate: sigma_b = a . stress_trial . a,
+    T_b from the positive-distortion uniaxial plane-normal intersection
+  evaluate principal candidate if enabled: sigma_p = max principal stress,
+    T_p = failureStrength * strengthScale
+  return active brittle tensile candidates to their degraded caps;
+    damage is energy-regularized and optionally capped by crackSpeed
+  compute elastic strain associated with the brittle stress drop
+
+decompose post-brittle stress into sigma1, sigma2, sigma4, sigma5
 compute signed distortion Id+/Id-, in-plane, and coupled shear invariants
 compute branch strengths Y_d-, Y_d+, Y_ip, Y_c from point-slope curves
 apply strengthScale to low-pressure intact branch only; keep Y2 unscaled
@@ -889,8 +975,9 @@ as damage grows: remove tensile plane-normal and spherical tensile strength
 
 if any mode yielded:
   compute plastic strain increment from total strain increment minus TI elastic increment
+  subtract brittle elastic strain increment to avoid double-counting fracture work
   update relaxation/hardening coordinate
-  update max-principal, crack-speed, basal-work, and total-work damage paths
+  update basal-work and total-work damage paths, with optional crackSpeed cap
 store stress, damage, relaxation, plastic strain, plastic work, and diagnostics
 \end{lstlisting}
 
@@ -912,13 +999,13 @@ The model is useful when the important physics are anisotropic graphitic weak pl
 \texttt{defaultYoungModulusAxial}\newline \texttt{defaultYoungModulusTransverse}\newline \texttt{defaultShearModulusAxialTransverse} & Baseline transversely isotropic elastic moduli along the basal-plane normal, in the basal plane, and in mixed axial-transverse shear.\\
 \texttt{defaultPoissonRatioAxialTransverse}\newline \texttt{defaultPoissonRatioTransverse} & Poisson couplings for the TI elastic law.\\
 \texttt{*PressureDerivative}\newline \texttt{*PressureScale} & Optional pressure slopes and saturation scales for \(E_z\), \(E_p\), and \(G_{zp}\).  Omitted pressure scales recover the linear pressure dependence.\\
-\texttt{failureStrength}\newline \texttt{maximumPrincipalStressDamage}\newline \texttt{enableCrackTipStressConcentration} & Tensile/principal-stress damage controls and crack-tip modifier coupling.\\
+\texttt{failureStrength}\newline \texttt{maximumPrincipalStressDamage}\newline \texttt{enableCrackTipStressConcentration} & Maximum-principal tensile strength, flag for the energy-regularized principal brittle candidate, and crack-tip modifier coupling.  Basal normal-opening strength is derived from the positive signed-distortion yield branch when basal fracture energy is finite.\\
 \texttt{distortionShearResponse*} & Point-slope parameters for the negative signed-distortion branch \(I_d^-\).\\
 \texttt{positiveDistortionShearResponse*} & Optional point-slope parameters for the positive signed-distortion branch \(I_d^+\); omitted values default to \texttt{distortionShearResponse*}.\\
 \texttt{inPlaneShearResponse*} & Point-slope parameters for basal-plane in-plane shear.\\
 \texttt{coupledShearResponse*} & Point-slope parameters for coupled shear/slip involving the weak plane normal.\\
 \texttt{distortionStrainHardeningC0}\newline \texttt{inPlaneStrainHardeningC0}\newline \texttt{coupledStrainHardeningC0}\newline \texttt{maximumPlasticStrain} & Plastic-strain hardening controls through the relaxation coordinate.\\
-\texttt{basalPlaneFractureEnergyReleaseRate}\newline \texttt{totalFractureEnergyReleaseRate}\newline \texttt{scaleFractureEnergyReleaseRate}\newline \texttt{crackSpeed} & Damage regularization and rate controls.\\
+\texttt{basalPlaneFractureEnergyReleaseRate}\newline \texttt{totalFractureEnergyReleaseRate}\newline \texttt{scaleFractureEnergyReleaseRate}\newline \texttt{crackSpeed} & Fracture-energy regularization and optional damage-rate cap.  Finite basal energy enables the basal normal-opening brittle return; finite total energy regularizes non-basal plastic work and the maximum-principal brittle return.  \texttt{crackSpeed=DBL\_MAX} disables the cap.\\
 \texttt{alphaL}\newline \texttt{alphaT}\newline \texttt{temperature}\newline \texttt{temperatureRate} & Anisotropic thermal expansion path.\\
 \texttt{materialDirection} & Particle material basis; the first row is the graphitic plane normal used by the constitutive model.\\
 \bottomrule

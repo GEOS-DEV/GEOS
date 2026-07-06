@@ -71,6 +71,10 @@ public:
    * @param[in] damage The ArrayView holding the host-visible DFG damage for each quadrature point.
    * @param[in] basalPlaneDamage The ArrayView holding basal-plane fracture damage for each quadrature point.
    * @param[in] comminutionDamage The ArrayView holding comminution/powder damage for each quadrature point.
+   * @param[in] enableDistension Flag to activate stress-free closure of directional distension.
+   * @param[in] basalNormalDistension The ArrayView holding basal-normal closeable distension for each quadrature point.
+   * @param[in] transverseDistension The ArrayView holding transverse closeable distension for each quadrature point.
+   * @param[in] porosity The ArrayView holding distension-derived porosity for each quadrature point.
    * @param[in] temperature The ArrayView holding the temperature for each element/particle.
    * @param[in] temperatureRate The ArrayView holding the temperature rate for each element/particle.
    * @param[in] jacobian The ArrayView holding the jacobian for each quadrature point.
@@ -116,6 +120,10 @@ public:
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & basalPlaneDamage,
                    arrayView2d< real64 > const & comminutionDamage,
+                   int const & enableDistension,
+                   arrayView2d< real64 > const & basalNormalDistension,
+                   arrayView2d< real64 > const & transverseDistension,
+                   arrayView2d< real64 > const & porosity,
                    arrayView1d< real64 > const & temperature,
                    arrayView1d< real64 > const & temperatureRate,
                    arrayView2d< real64 > const & jacobian,
@@ -189,6 +197,10 @@ public:
     m_damage( damage ),
     m_basalPlaneDamage( basalPlaneDamage ),
     m_comminutionDamage( comminutionDamage ),
+    m_enableDistension( enableDistension ),
+    m_basalNormalDistension( basalNormalDistension ),
+    m_transverseDistension( transverseDistension ),
+    m_porosity( porosity ),
     m_temperature( temperature ),
     m_temperatureRate( temperatureRate ),
     m_jacobian( jacobian ),
@@ -316,6 +328,118 @@ public:
                                                            real64 const ( &materialDirection )[3],
                                                            const real64 timeIncrement,
                                                            real64 ( &plasticStrainIncrement )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  void computeTransverselyIsotropicElasticStrainIncrementFromStressIncrement( real64 const ( &stressIncrement )[6],
+                                                                              const real64 Ez,
+                                                                              const real64 Ep,
+                                                                              const real64 nuzp,
+                                                                              const real64 nup,
+                                                                              const real64 Gzp,
+                                                                              real64 const ( &materialDirection )[3],
+                                                                              real64 ( &elasticStrainIncrement )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  real64 computeTransverselyIsotropicNormalCompliance( const real64 Ez,
+                                                       const real64 Ep,
+                                                       const real64 nuzp,
+                                                       const real64 nup,
+                                                       const real64 Gzp,
+                                                       real64 const ( &materialDirection )[3],
+                                                       real64 const ( &normal )[3] ) const;
+
+  GEOS_HOST_DEVICE
+  real64 computeUniaxialPlaneNormalTensileStrength( const real64 strengthScale,
+                                                    const real64 distortionHardeningMultiplier ) const;
+
+  GEOS_HOST_DEVICE
+  real64 symmetricStressAlongNormal( real64 const ( &stress )[6],
+                                     real64 const ( &normal )[3] ) const;
+
+  GEOS_HOST_DEVICE
+  real64 computeMaximumPrincipalStressAndDirection( real64 const ( &stress )[6],
+                                                    real64 ( &normal )[3] ) const;
+
+  GEOS_HOST_DEVICE
+  void subtractNormalStressComponent( const real64 stressDrop,
+                                      real64 const ( &normal )[3],
+                                      real64 ( &stress )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  real64 limitDamageIncrementByCrackSpeed( localIndex const k,
+                                           const real64 timeIncrement,
+                                           const real64 oldDamage,
+                                           const real64 computedDamage ) const;
+
+  GEOS_HOST_DEVICE
+  real64 computeTransverseSpectralStrainPart( real64 const ( &strainDense )[3][3],
+                                              real64 const ( &materialDirection )[3],
+                                              const bool compressivePart,
+                                              real64 ( &strainPartDense )[3][3] ) const;
+
+  GEOS_HOST_DEVICE
+  bool applyTransverselyIsotropicDistensionClosure( localIndex const k,
+                                                    localIndex const q,
+                                                    const real64 timeIncrement,
+                                                    real64 const ( &materialDirection )[3],
+                                                    real64 ( &DForStress )[6],
+                                                    real64 ( &velocityGradientForStress )[3][3],
+                                                    real64 ( &closurePlasticStrainIncrement )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  void addUnrotatedPlasticStrainStateIncrement( localIndex const k,
+                                                localIndex const q,
+                                                real64 const ( &rotationTranspose )[3][3],
+                                                real64 const ( &endRotation )[3][3],
+                                                real64 const ( &plasticStrainStateIncrement )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  void updateDistensionPorosity( localIndex const k,
+                                 localIndex const q ) const;
+
+  GEOS_HOST_DEVICE
+  void addDistensionFromTensileOpening( localIndex const k,
+                                        localIndex const q,
+                                        const real64 openingStrain,
+                                        real64 const ( &openingNormal )[3],
+                                        real64 const ( &materialDirection )[3],
+                                        const bool basalOpening ) const;
+
+  GEOS_HOST_DEVICE
+  void addDistensionFromInelasticStrain( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( &materialDirection )[3],
+                                         real64 const ( &inelasticStrainIncrement )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  bool applyEnergyRegularizedBrittleTensileReturn( localIndex const k,
+                                                   localIndex const q,
+                                                   const real64 timeIncrement,
+                                                   const real64 stressMeasure,
+                                                   const real64 oldDamage,
+                                                   const real64 effectiveStrength,
+                                                   const real64 fractureEnergyReleaseRate,
+                                                   const real64 normalCompliance,
+                                                   real64 const ( &normal )[3],
+                                                   real64 const ( &materialDirection )[3],
+                                                   const bool updateBasalPlaneDamage,
+                                                   real64 ( &stress )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  bool applyEnergyRegularizedBrittleTensileReturns( localIndex const k,
+                                                    localIndex const q,
+                                                    const real64 timeIncrement,
+                                                    const real64 principalTensileStrength,
+                                                    const real64 basalNormalTensileStrength,
+                                                    const real64 basalPlaneFractureEnergyReleaseRate,
+                                                    const real64 totalFractureEnergyReleaseRate,
+                                                    const real64 Ez,
+                                                    const real64 Ep,
+                                                    const real64 nuzp,
+                                                    const real64 nup,
+                                                    const real64 Gzp,
+                                                    real64 const ( &materialDirection )[3],
+                                                    real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
   real64 transverselyIsotropicB1( real64 const (&materialDirection)[3],
@@ -467,6 +591,18 @@ private:
   /// Internal comminution/powder damage. This variable blends the crystal strength
   /// to the residual pressure-dependent powder envelope for all shear modes.
   arrayView2d< real64 > const m_comminutionDamage;
+
+  /// Flag to activate stress-free closure of transversely isotropic distension reservoirs.
+  int const m_enableDistension;
+
+  /// Closeable distension strain normal to the basal planes.
+  arrayView2d< real64 > const m_basalNormalDistension;
+
+  /// Closeable distension strain in the basal/transverse plane.
+  arrayView2d< real64 > const m_transverseDistension;
+
+  /// Distension-derived porosity for plotting/coupling, phi = 1 - exp[-(zeta_N+zeta_T)].
+  arrayView2d< real64 > const m_porosity;
 
   /// A reference to the ArrayView holding the temperature for each quadrature point.
   arrayView1d< real64 > const m_temperature;
@@ -707,6 +843,30 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 unrotatedMaterialDirection[3] = {};
   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, rotationTranspose, materialDirection );
 
+  real64 unrotatedVelocityGradientForStress[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( unrotatedVelocityGradientForStress, unrotatedVelocityGradient );
+
+  real64 DForStress[6] = {};
+  LvArray::tensorOps::copy< 6 >( DForStress, D );
+
+  real64 distensionClosurePlasticStrainIncrement[6] = {};
+  bool distensionClosureOccurred = false;
+  bool const distensionClosurePossible =
+    ( m_enableDistension == 1 ) &&
+    ( !m_disableInelasticity ) &&
+    ( ( m_basalNormalDistension[k][q] > 0.0 ) ||
+      ( m_transverseDistension[k][q] > 0.0 ) );
+  if( distensionClosurePossible )
+  {
+    distensionClosureOccurred = applyTransverselyIsotropicDistensionClosure( k,
+                                                                             q,
+                                                                             timeIncrement,
+                                                                             unrotatedMaterialDirection,
+                                                                             DForStress,
+                                                                             unrotatedVelocityGradientForStress,
+                                                                             distensionClosurePlasticStrainIncrement );
+  }
+
   // Use beginning of step normal stress to compute stress dependence of Ez
   real64 temp[3] = {};
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
@@ -809,7 +969,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                            Gzp,                  // Shear modulus coupled plane
                                            unrotatedMaterialDirection,     // preferred direction
                                            oldStress,            // stress at start of step
-                                           D,                    // D=sym(L)
+                                           DForStress,           // D=sym(L) with any stress-free distension closure removed
                                            stress,               // stress at end of step
                                            k );
 
@@ -824,40 +984,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     return;
   }
-
-  // Decompose stress tensor into pieces.
-  real64 sigma1Dense[3][3] = {};
-  real64 sigma2Dense[3][3] = {};
-  real64 sigma4Dense[3][3] = {};
-  real64 sigma5Dense[3][3] = {};
-  for( int i=0; i<3; i++ )
-  {
-    for( int j=0; j<3; j++ )
-    {
-      for( int p=0; p<3; p++ )
-      {
-        for( int w=0; w<3; w++ )
-        {
-          sigma1Dense[i][j] += transverselyIsotropicB1( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
-          sigma2Dense[i][j] += transverselyIsotropicB2( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
-          sigma4Dense[i][j] += transverselyIsotropicB4( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
-          sigma5Dense[i][j] += transverselyIsotropicB5( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
-        }
-      }
-    }
-  }
-
-  real64 sigma1[6] = {0};   // axial
-  real64 sigma2[6] = {0};   // in-plane normal
-  real64 sigma4[6] = {0};   // in-plane total stress
-  real64 sigma5[6] = {0};   // weak plane - shear
-  LvArray::tensorOps::denseToSymmetric< 3 >( sigma1, sigma1Dense );
-  LvArray::tensorOps::denseToSymmetric< 3 >( sigma2, sigma2Dense );
-  LvArray::tensorOps::denseToSymmetric< 3 >( sigma4, sigma4Dense );
-  LvArray::tensorOps::denseToSymmetric< 3 >( sigma5, sigma5Dense );
-
-  // Trial pressure to compute pressure-dependence of strength
-  real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
   // strengthScale is a particle-scale strength multiplier supplied by the
   // host code.  It modifies low-pressure flaw-controlled strengths and slopes,
@@ -876,23 +1002,45 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_totalFractureEnergyReleaseRate * fractureEnergyScale : DBL_MAX;
   real64 const failureStrength = m_failureStrength * strengthScale;
 
+  real64 const distortionHardeningMultiplier =
+    1.0 + ( m_distortionStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
+
+  bool const basalEnergyRegularizedBrittle = basalPlaneFractureEnergyReleaseRate < DBL_MAX;
+  bool const principalEnergyRegularizedBrittle =
+    ( m_maximumPrincipalStressDamage == 1 ) && ( totalFractureEnergyReleaseRate < DBL_MAX );
+
+  real64 const basalNormalTensileStrength = basalEnergyRegularizedBrittle ?
+    computeUniaxialPlaneNormalTensileStrength( strengthScale, distortionHardeningMultiplier ) : 0.0;
+
+  real64 brittleStrainIncrement[6] = {};
+
   // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
   // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
-  // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.  TODO:
-  // switch this back later to reduce memory footprint of the model.
-  // real64 crackTipStressConcentration = 1.0;
+  // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.
   m_crackTipStressConcentration[k] = 1.0;
-  if( ( m_enableCrackTipStressConcentration == 1 ) and
-      ( m_distanceToCrackTip[k] > 0 ) and
-      ( basalPlaneFractureEnergyReleaseRate < DBL_MAX ) and
-      ( totalFractureEnergyReleaseRate < DBL_MAX ) )
+  real64 referenceFractureEnergyReleaseRate = DBL_MAX;
+  if( ( basalPlaneFractureEnergyReleaseRate < DBL_MAX ) && ( totalFractureEnergyReleaseRate < DBL_MAX ) )
   {
-    real64 fractureEnergyReleaseRate = 0.5*( basalPlaneFractureEnergyReleaseRate + totalFractureEnergyReleaseRate );
-    real64 constrainedModulus =  m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k];
-    real64 nominalIntactStrength = failureStrength;
+    referenceFractureEnergyReleaseRate = 0.5*( basalPlaneFractureEnergyReleaseRate + totalFractureEnergyReleaseRate );
+  }
+  else if( totalFractureEnergyReleaseRate < DBL_MAX )
+  {
+    referenceFractureEnergyReleaseRate = totalFractureEnergyReleaseRate;
+  }
+  else if( basalPlaneFractureEnergyReleaseRate < DBL_MAX )
+  {
+    referenceFractureEnergyReleaseRate = basalPlaneFractureEnergyReleaseRate;
+  }
 
-    real64 fractureProcessZoneRadius =
-      LvArray::math::max( 1.e-12, constrainedModulus * fractureEnergyReleaseRate /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
+  if( ( m_enableCrackTipStressConcentration == 1 ) &&
+      ( m_distanceToCrackTip[k] > 0.0 ) &&
+      ( referenceFractureEnergyReleaseRate < DBL_MAX ) )
+  {
+    real64 const constrainedModulus =  m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k];
+    real64 const nominalIntactStrength = failureStrength;
+
+    real64 const fractureProcessZoneRadius =
+      LvArray::math::max( 1.e-12, constrainedModulus * referenceFractureEnergyReleaseRate /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
     // distanceToCrackTip is the inverse-kernel DFG estimate of the
     // unresolved crack-tip distance. If that distance is smaller than the
     // fracture-process-zone radius, the resolved strength is unchanged. If it
@@ -904,40 +1052,60 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                 fractureProcessZoneRadius ) );
   }
 
-  // Check for tensile failure in preferred direction
+  if( basalEnergyRegularizedBrittle || principalEnergyRegularizedBrittle )
+  {
+    real64 trialStress[6] = {};
+    LvArray::tensorOps::copy< 6 >( trialStress, stress );
+
+    bool const brittleReturnOccurred =
+      applyEnergyRegularizedBrittleTensileReturns( k,
+                                                   q,
+                                                   timeIncrement,
+                                                   failureStrength,
+                                                   basalNormalTensileStrength,
+                                                   basalPlaneFractureEnergyReleaseRate,
+                                                   totalFractureEnergyReleaseRate,
+                                                   Ez,
+                                                   Ep,
+                                                   nuzp,
+                                                   nup,
+                                                   Gzp,
+                                                   unrotatedMaterialDirection,
+                                                   stress );
+    if( brittleReturnOccurred )
+    {
+      real64 brittleStressDrop[6] = {};
+      LvArray::tensorOps::copy< 6 >( brittleStressDrop, trialStress );
+      LvArray::tensorOps::subtract< 6 >( brittleStressDrop, stress );
+      computeTransverselyIsotropicElasticStrainIncrementFromStressIncrement( brittleStressDrop,
+                                                                             Ez,
+                                                                             Ep,
+                                                                             nuzp,
+                                                                             nup,
+                                                                             Gzp,
+                                                                             unrotatedMaterialDirection,
+                                                                             brittleStrainIncrement );
+    }
+  }
+
+  // Check for legacy tensile failure in the preferred direction only when the
+  // basal normal-opening fracture energy is disabled.  With finite basal
+  // fracture energy, normal opening is handled by the pre-plastic brittle
+  // tensile return whose peak strength is derived from the positive-distortion
+  // yield surface.
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
   int basalModeIFracture = 0;
-
-  if( planeNormalStress > failureStrength )
-  { // If load step is plastic (likely) then this will trigger
-    // evolution of modeIplastic work towards plastic fracture
+  if( ( !basalEnergyRegularizedBrittle ) && ( planeNormalStress > failureStrength ) )
+  {
     basalModeIFracture = 1;
   }
 
-  // If user has specified a maximum principal stress, compute eigen values of
-  // trial stress and use that to evolve damage.
-  if ( m_maximumPrincipalStressDamage == 1 )
-  {
-    real64 principalStresses[3] = { 0 };
-    real64 eigenVectors[3][3] = { { 0 } };
-    LvArray::tensorOps::symEigenvectors< 3 >( principalStresses, eigenVectors, stress );
-
-    // Find the largest principalStress
-    real64 maximumPrincipalStress = 0.0;
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      maximumPrincipalStress = LvArray::math::max( principalStresses[i], maximumPrincipalStress );
-    }
-
-    if( maximumPrincipalStress*m_crackTipStressConcentration[k] > failureStrength )
-    {
-      real64 const newBasalPlaneDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] + m_crackSpeed * timeIncrement / m_lengthScale[k] ) );
-      m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], newBasalPlaneDamage );
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], newBasalPlaneDamage );
-    }
-  }
-
+  bool const legacyPlasticRateDamage =
+    ( m_maximumPrincipalStressDamage == 0 ) &&
+    !( basalPlaneFractureEnergyReleaseRate < DBL_MAX ) &&
+    !( totalFractureEnergyReleaseRate < DBL_MAX ) &&
+    ( m_crackSpeed < DBL_MAX );
 
   // Test if damage is exactly 0 but there is significant accumulated plastic work.
   // This should only occur if the damage has been healed by an event in the solver,
@@ -969,6 +1137,40 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   real64 const tensileStressMultiplier = 1.0 - smoothStep( dfgDamage, 0.0, 1.0 );
 
+  // Decompose the stress tensor after any pre-plastic brittle tensile return.
+  real64 sigma1Dense[3][3] = {};
+  real64 sigma2Dense[3][3] = {};
+  real64 sigma4Dense[3][3] = {};
+  real64 sigma5Dense[3][3] = {};
+  for( int i=0; i<3; i++ )
+  {
+    for( int j=0; j<3; j++ )
+    {
+      for( int p=0; p<3; p++ )
+      {
+        for( int w=0; w<3; w++ )
+        {
+          sigma1Dense[i][j] += transverselyIsotropicB1( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
+          sigma2Dense[i][j] += transverselyIsotropicB2( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
+          sigma4Dense[i][j] += transverselyIsotropicB4( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
+          sigma5Dense[i][j] += transverselyIsotropicB5( unrotatedMaterialDirection, i, j, p, w )*stress[voigtMap[p][w]];
+        }
+      }
+    }
+  }
+
+  real64 sigma1[6] = {0};   // axial
+  real64 sigma2[6] = {0};   // in-plane normal
+  real64 sigma4[6] = {0};   // in-plane total stress
+  real64 sigma5[6] = {0};   // weak plane - shear
+  LvArray::tensorOps::denseToSymmetric< 3 >( sigma1, sigma1Dense );
+  LvArray::tensorOps::denseToSymmetric< 3 >( sigma2, sigma2Dense );
+  LvArray::tensorOps::denseToSymmetric< 3 >( sigma4, sigma4Dense );
+  LvArray::tensorOps::denseToSymmetric< 3 >( sigma5, sigma5Dense );
+
+  // Post-brittle trial pressure to compute pressure-dependence of strength.
+  real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
+
   // flags indicating whether plastic strain needs to be updated.
   bool plastic = false;
 
@@ -984,7 +1186,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // Plane-normal tension is limited by the intact Weibull-scaled tensile
   // strength and is then continuously degraded by damage.  Compression is left
   // intact so that damaged material can compact and develop frictional strength.
-  if( planeNormalStress > 0.0 )
+  if( ( !basalEnergyRegularizedBrittle ) && ( planeNormalStress > 0.0 ) )
   {
     real64 const tensileCapMultiplier =
       LvArray::math::min( 1.0, failureStrength / LvArray::math::max( planeNormalStress, 1.0e-20 ) );
@@ -1038,8 +1240,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 const coupledDamage = LvArray::math::max( basalPlaneDamage, comminutionDamage );
   real64 const inPlaneDamage = comminutionDamage;
 
-  real64 const distortionHardeningMultiplier =
-    1.0 + ( m_distortionStrainHardeningC0 - 1.0 ) * smoothStep( m_relaxation[k][q], 0.0, 1.0 );
   real64 const negativeDistortionStrength =
     evaluateGraphiteModeStrength( pressure, distortionDamage, strengthScale,
                                   m_distortionShearResponseX2,
@@ -1140,6 +1340,32 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // if pressure is above brittle ductile transition pressure.
   // plastic strain doesn't currently affect material response, but
   // it may be useful for plotting regions of high-pressure yield.
+  real64 plasticStrainStateIncrement[6] = {};
+  bool updatePlasticStrainState = false;
+  if( distensionClosureOccurred )
+  {
+    LvArray::tensorOps::copy< 6 >( plasticStrainStateIncrement, distensionClosurePlasticStrainIncrement );
+    LvArray::tensorOps::scale< 6 >( plasticStrainStateIncrement, -1.0 );
+    updatePlasticStrainState = true;
+  }
+
+  // When directional distension is enabled, store the brittle tensile opening
+  // strain in the accumulated inelastic/plastic-strain state as a closeable
+  // contribution.  Subsequent distension closure subtracts the corresponding
+  // strain from this state, while hardening, plastic work, and damage remain
+  // driven only by the stress-producing plastic increment below.
+  bool brittleStrainOccurred = false;
+  for( int i=0; i<6; ++i )
+  {
+    brittleStrainOccurred = brittleStrainOccurred ||
+                            ( LvArray::math::abs( brittleStrainIncrement[i] ) > 0.0 );
+  }
+  if( ( m_enableDistension == 1 ) && brittleStrainOccurred )
+  {
+    LvArray::tensorOps::add< 6 >( plasticStrainStateIncrement, brittleStrainIncrement );
+    updatePlasticStrainState = true;
+  }
+
   if( plastic )
   {
     // CC: debug
@@ -1150,9 +1376,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     //                                      "inPlaneShearStress: " << inPlaneShearStress << " (" << inPlaneShearStrength << ")" << ", " <<
     //                                      "coupledShearStress: " << coupledShearStress << " (" << coupledYieldStrength << ")");
 
-    // increment plastic strain
+    // Increment stress-producing plastic strain. This excludes stress-free
+    // distension closure so hardening, plastic work, and damage remain driven
+    // by irreversible inelastic deformation. The plotted plastic strain state
+    // is updated separately below and includes the negative closure increment
+    // so dilatant plastic volume can be recovered as gaps/pores close.
     real64 plasticStrainIncrement[6] = {0};
-    computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradient,     // Velocity gradient tensor
+    computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradientForStress, // Velocity gradient tensor with stress-free distension closure removed
                                                         oldStress,                     // Stress at start of step
                                                         stress,                        // Stress at end of step
                                                         Ez,                            // Elastic modulus preferred direction
@@ -1164,19 +1394,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                                                                // normal)
                                                         timeIncrement,                 // timeStep
                                                         plasticStrainIncrement );
-
-    // Unrotate old plastic strain
-    real64 oldPlasticStrain[6] = {};
-    LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
-    oldPlasticStrain[3] *= 0.5;
-    oldPlasticStrain[4] *= 0.5;
-    oldPlasticStrain[5] *= 0.5;
-
-    real64 unrotatedOldPlasticStrain[6] = {};
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
-    unrotatedOldPlasticStrain[3] *= 2.0;
-    unrotatedOldPlasticStrain[4] *= 2.0;
-    unrotatedOldPlasticStrain[5] *= 2.0;
+    LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, brittleStrainIncrement );
+    LvArray::tensorOps::add< 6 >( plasticStrainStateIncrement, plasticStrainIncrement );
+    updatePlasticStrainState = true;
 
     // GEOS_LOG_RANK( "Particle: " << k << "\n " <<
     //               "\tOld Stress: {" << oldStress[0] << ", " << oldStress[1] << ", "<< oldStress[2] << ", "<< oldStress[3] << ", "<<
@@ -1192,25 +1412,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // plasticStrainIncrement[2] << ", " << plasticStrainIncrement[3] << ", "<< plasticStrainIncrement[4]<< ", " <<
     // plasticStrainIncrement[5] << "}" );
 
-    // Add plastic strain increment
-    real64 unrotatedNewPlasticStrain[6] = {};
-    LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
-    LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
-
-    // Rotate new plastic strain
-    unrotatedNewPlasticStrain[3] *= 0.5;
-    unrotatedNewPlasticStrain[4] *= 0.5;
-    unrotatedNewPlasticStrain[5] *= 0.5;
-
-    real64 newPlasticStrain[ 6 ] = {};
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
-    newPlasticStrain[3] *= 2.0;
-    newPlasticStrain[4] *= 2.0;
-    newPlasticStrain[5] *= 2.0;
-
-    // Assign new plastic strain to state variable
-    LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
-
     // increment relaxation
     // For symmetric matrix need to double off diagonal elements for l2Norm?
     real64 plasticStrainIncrementForNorm[6] = { plasticStrainIncrement[0],
@@ -1222,7 +1423,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrementForNorm ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
 
-    if( m_crackSpeed < DBL_MAX )
+    if( legacyPlasticRateDamage )
     {
       real64 const timeToFailure = m_lengthScale[k] / m_crackSpeed;
       if( basalModeIFracture == 1 )
@@ -1272,7 +1473,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       // normalized by the host-provided length scale.  The exponent controls how
       // sharply the work ratio approaches the DFG-visible failed state.
       real64 const normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      real64 const newBasalPlaneDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      real64 const computedBasalPlaneDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      real64 const newBasalPlaneDamage = limitDamageIncrementByCrackSpeed( k,
+                                                                           timeIncrement,
+                                                                           m_basalPlaneDamage[k][q],
+                                                                           computedBasalPlaneDamage );
       m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], newBasalPlaneDamage );
       m_damage[k][q] = LvArray::math::max( m_damage[k][q], m_basalPlaneDamage[k][q] );
     }
@@ -1297,14 +1502,35 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       // branch.  The public damage is still updated so DFG can introduce strong
       // discontinuities and separate powder clouds.
       real64 const normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      real64 const newComminutionDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      real64 const computedComminutionDamage = LvArray::math::pow( normalizedWork, m_damageEvolutionExponent );
+      real64 const newComminutionDamage = limitDamageIncrementByCrackSpeed( k,
+                                                                            timeIncrement,
+                                                                            m_comminutionDamage[k][q],
+                                                                            computedComminutionDamage );
       m_comminutionDamage[k][q] = LvArray::math::max( m_comminutionDamage[k][q], newComminutionDamage );
       m_damage[k][q] = LvArray::math::max( m_damage[k][q], m_comminutionDamage[k][q] );
+    }
+
+    if( m_enableDistension == 1 )
+    {
+      addDistensionFromInelasticStrain( k,
+                                        q,
+                                        unrotatedMaterialDirection,
+                                        plasticStrainIncrement );
     }
 
     m_damage[k][q] = LvArray::math::max( m_damage[k][q],
                                          LvArray::math::max( m_basalPlaneDamage[k][q],
                                                              m_comminutionDamage[k][q] ) );
+  }
+
+  if( updatePlasticStrainState )
+  {
+    addUnrotatedPlasticStrainStateIncrement( k,
+                                             q,
+                                             rotationTranspose,
+                                             endRotation,
+                                             plasticStrainStateIncrement );
   }
 }
 
@@ -1465,6 +1691,803 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
   plasticStrainIncrement[3] *= 2.0;
   plasticStrainIncrement[4] *= 2.0;
   plasticStrainIncrement[5] *= 2.0;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::computeTransverselyIsotropicElasticStrainIncrementFromStressIncrement( real64 const ( &stressIncrement )[6],
+                                                                                              const real64 Ez,
+                                                                                              const real64 Ep,
+                                                                                              const real64 nuzp,
+                                                                                              const real64 nup,
+                                                                                              const real64 Gzp,
+                                                                                              real64 const ( &materialDirection )[3],
+                                                                                              real64 ( &elasticStrainIncrement )[6] ) const
+{
+  real64 const s1 = 1.0/Ez;
+  real64 const s2 = -nup/Ep;
+  real64 const s3 = -nuzp/Ez;
+  real64 const s4 = (1.0+nup)/Ep;
+  real64 const s5 = 1.0/(2.0*Gzp);
+
+  real64 elasticStrainIncrementDense[3][3] = {};
+  int const voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      for( int p=0; p<3; ++p )
+      {
+        for( int w=0; w<3; ++w )
+        {
+          elasticStrainIncrementDense[i][j] +=
+            ( s1 * transverselyIsotropicB1( materialDirection, i, j, p, w ) +
+              s2 * transverselyIsotropicB2( materialDirection, i, j, p, w ) +
+              s3 * transverselyIsotropicB3( materialDirection, i, j, p, w ) +
+              s4 * transverselyIsotropicB4( materialDirection, i, j, p, w ) +
+              s5 * transverselyIsotropicB5( materialDirection, i, j, p, w ) ) * stressIncrement[voigtMap[p][w]];
+        }
+      }
+    }
+  }
+
+  LvArray::tensorOps::denseToSymmetric< 3 >( elasticStrainIncrement, elasticStrainIncrementDense );
+  elasticStrainIncrement[3] *= 2.0;
+  elasticStrainIncrement[4] *= 2.0;
+  elasticStrainIncrement[5] *= 2.0;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::computeTransverselyIsotropicNormalCompliance( const real64 Ez,
+                                                                       const real64 Ep,
+                                                                       const real64 nuzp,
+                                                                       const real64 nup,
+                                                                       const real64 Gzp,
+                                                                       real64 const ( &materialDirection )[3],
+                                                                       real64 const ( &normal )[3] ) const
+{
+  real64 const s1 = 1.0/Ez;
+  real64 const s2 = -nup/Ep;
+  real64 const s3 = -nuzp/Ez;
+  real64 const s4 = (1.0+nup)/Ep;
+  real64 const s5 = 1.0/(2.0*Gzp);
+
+  real64 compliance = 0.0;
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      real64 const Nij = normal[i]*normal[j];
+      for( int p=0; p<3; ++p )
+      {
+        for( int w=0; w<3; ++w )
+        {
+          real64 const Npw = normal[p]*normal[w];
+          compliance += Nij *
+            ( s1 * transverselyIsotropicB1( materialDirection, i, j, p, w ) +
+              s2 * transverselyIsotropicB2( materialDirection, i, j, p, w ) +
+              s3 * transverselyIsotropicB3( materialDirection, i, j, p, w ) +
+              s4 * transverselyIsotropicB4( materialDirection, i, j, p, w ) +
+              s5 * transverselyIsotropicB5( materialDirection, i, j, p, w ) ) * Npw;
+        }
+      }
+    }
+  }
+
+  return LvArray::math::max( compliance, 1.0e-30 );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::computeUniaxialPlaneNormalTensileStrength( const real64 strengthScale,
+                                                                    const real64 distortionHardeningMultiplier ) const
+{
+  real64 const safeStrengthScale = LvArray::math::max( strengthScale, 1.0e-12 );
+  real64 const safeHardeningMultiplier = LvArray::math::max( distortionHardeningMultiplier, 0.0 );
+  real64 const safeY2 = LvArray::math::max( m_positiveDistortionShearResponseY2, 1.0e-20 );
+  real64 const safeX2 = LvArray::math::max( m_positiveDistortionShearResponseX2, 1.0e-20 );
+
+  real64 const maxY1 = safeY2 * ( 1.0 - 1.0e-12 );
+  real64 const intactY1 = LvArray::math::max( 0.0,
+                                              LvArray::math::min( safeStrengthScale * safeHardeningMultiplier *
+                                                                  m_positiveDistortionShearResponseY1,
+                                                                  maxY1 ) );
+  real64 const intactSecantSlope = ( safeY2 - intactY1 ) / safeX2;
+  real64 const intactM1 = LvArray::math::max( safeStrengthScale * safeHardeningMultiplier *
+                                              m_positiveDistortionShearResponseM1,
+                                              intactSecantSlope );
+
+  // For uniaxial basal-normal tension, sigma = T a x a, the positive signed-distortion
+  // strength branch is evaluated at p = -T/3 and the tensile intersection satisfies
+  // T = Y_1^eff - M_1^eff T/3 on the tensile side of the pressure-dependent envelope.
+  return LvArray::math::max( 1.0e-20, intactY1 / ( 1.0 + intactM1 / 3.0 ) );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::symmetricStressAlongNormal( real64 const ( &stress )[6],
+                                                    real64 const ( &normal )[3] ) const
+{
+  real64 stressNormal[3] = {};
+  LvArray::tensorOps::Ri_eq_symAijBj< 3 >( stressNormal, stress, normal );
+  return LvArray::tensorOps::AiBi< 3 >( normal, stressNormal );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::computeMaximumPrincipalStressAndDirection( real64 const ( &stress )[6],
+                                                                    real64 ( &normal )[3] ) const
+{
+  real64 principalStresses[3] = { 0.0, 0.0, 0.0 };
+  real64 eigenVectors[3][3] = { { 0.0 } };
+  LvArray::tensorOps::symEigenvectors< 3 >( principalStresses, eigenVectors, stress );
+
+  int maximumIndex = 0;
+  for( int i=1; i<3; ++i )
+  {
+    if( principalStresses[i] > principalStresses[maximumIndex] )
+    {
+      maximumIndex = i;
+    }
+  }
+
+  normal[0] = eigenVectors[0][maximumIndex];
+  normal[1] = eigenVectors[1][maximumIndex];
+  normal[2] = eigenVectors[2][maximumIndex];
+  LvArray::tensorOps::normalize< 3 >( normal );
+
+  return principalStresses[maximumIndex];
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::subtractNormalStressComponent( const real64 stressDrop,
+                                                     real64 const ( &normal )[3],
+                                                     real64 ( &stress )[6] ) const
+{
+  if( stressDrop <= 0.0 )
+  {
+    return;
+  }
+
+  real64 correctionDense[3][3] = {};
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      correctionDense[i][j] = stressDrop * normal[i] * normal[j];
+    }
+  }
+
+  real64 correction[6] = {};
+  LvArray::tensorOps::denseToSymmetric< 3 >( correction, correctionDense );
+  LvArray::tensorOps::subtract< 6 >( stress, correction );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::limitDamageIncrementByCrackSpeed( localIndex const k,
+                                                          const real64 timeIncrement,
+                                                          const real64 oldDamage,
+                                                          const real64 computedDamage ) const
+{
+  real64 const boundedOldDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, oldDamage ) );
+  real64 const boundedComputedDamage = LvArray::math::max( boundedOldDamage,
+                                                           LvArray::math::min( 1.0, computedDamage ) );
+
+  if( m_crackSpeed >= DBL_MAX )
+  {
+    return boundedComputedDamage;
+  }
+
+  real64 const rateLimitedDamage =
+    LvArray::math::min( 1.0,
+                        boundedOldDamage +
+                        m_crackSpeed * timeIncrement / LvArray::math::max( m_lengthScale[k], 1.0e-20 ) );
+
+  return LvArray::math::max( boundedOldDamage,
+                             LvArray::math::min( boundedComputedDamage, rateLimitedDamage ) );
+}
+
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::computeTransverseSpectralStrainPart( real64 const ( &strainDense )[3][3],
+                                                             real64 const ( &materialDirection )[3],
+                                                             const bool compressivePart,
+                                                             real64 ( &strainPartDense )[3][3] ) const
+{
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      strainPartDense[i][j] = 0.0;
+    }
+  }
+
+  real64 transverseProjector[3][3] = {};
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      transverseProjector[i][j] = delta( i, j ) - materialDirection[i]*materialDirection[j];
+    }
+  }
+
+  real64 transverseStrainDense[3][3] = {};
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      for( int p=0; p<3; ++p )
+      {
+        for( int w=0; w<3; ++w )
+        {
+          transverseStrainDense[i][j] += transverseProjector[i][p] * strainDense[p][w] * transverseProjector[w][j];
+        }
+      }
+    }
+  }
+
+  real64 transverseTrace = 0.0;
+  real64 transverseFrobeniusSquared = 0.0;
+  for( int i=0; i<3; ++i )
+  {
+    transverseTrace += transverseStrainDense[i][i];
+    for( int j=0; j<3; ++j )
+    {
+      transverseFrobeniusSquared += transverseStrainDense[i][j] * transverseStrainDense[i][j];
+    }
+  }
+
+  real64 const transverseDiscriminant = LvArray::math::max( 0.0,
+                                                            2.0*transverseFrobeniusSquared -
+                                                            transverseTrace*transverseTrace );
+  real64 const transverseSpread = LvArray::math::sqrt( transverseDiscriminant );
+  real64 const transverseMinimum = 0.5 * ( transverseTrace - transverseSpread );
+  real64 const transverseMaximum = 0.5 * ( transverseTrace + transverseSpread );
+  real64 const spectralTolerance = 1.0e-14 * ( LvArray::math::abs( transverseTrace ) + transverseSpread + 1.0 );
+
+  if( compressivePart )
+  {
+    if( transverseMinimum >= -spectralTolerance )
+    {
+      return 0.0;
+    }
+  }
+  else if( transverseMaximum <= spectralTolerance )
+  {
+    return 0.0;
+  }
+
+  real64 transverseStrain[6] = {};
+  LvArray::tensorOps::denseToSymmetric< 3 >( transverseStrain, transverseStrainDense );
+
+  real64 principalStrains[3] = { 0.0, 0.0, 0.0 };
+  real64 eigenVectors[3][3] = { { 0.0 } };
+  LvArray::tensorOps::symEigenvectors< 3 >( principalStrains, eigenVectors, transverseStrain );
+
+  real64 tracePart = 0.0;
+  for( int a=0; a<3; ++a )
+  {
+    real64 const spectralMagnitude = compressivePart ?
+      LvArray::math::max( 0.0, -principalStrains[a] ) :
+      LvArray::math::max( 0.0, principalStrains[a] );
+
+    if( spectralMagnitude > 0.0 )
+    {
+      real64 projectedDirection[3] = { eigenVectors[0][a], eigenVectors[1][a], eigenVectors[2][a] };
+      real64 const normalComponent = LvArray::tensorOps::AiBi< 3 >( projectedDirection, materialDirection );
+      for( int i=0; i<3; ++i )
+      {
+        projectedDirection[i] -= normalComponent * materialDirection[i];
+      }
+
+      real64 const projectedNorm = LvArray::math::sqrt( LvArray::math::max( 0.0,
+        projectedDirection[0]*projectedDirection[0] +
+        projectedDirection[1]*projectedDirection[1] +
+        projectedDirection[2]*projectedDirection[2] ) );
+
+      if( projectedNorm > 1.0e-10 )
+      {
+        real64 const inverseProjectedNorm = 1.0 / projectedNorm;
+        for( int i=0; i<3; ++i )
+        {
+          projectedDirection[i] *= inverseProjectedNorm;
+        }
+
+        for( int i=0; i<3; ++i )
+        {
+          for( int j=0; j<3; ++j )
+          {
+            strainPartDense[i][j] += spectralMagnitude * projectedDirection[i] * projectedDirection[j];
+          }
+        }
+        tracePart += spectralMagnitude;
+      }
+    }
+  }
+
+  return tracePart;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool GraphiteUpdates::applyTransverselyIsotropicDistensionClosure( localIndex const k,
+                                                                   localIndex const q,
+                                                                   const real64 timeIncrement,
+                                                                   real64 const ( &materialDirection )[3],
+                                                                   real64 ( &DForStress )[6],
+                                                                   real64 ( &velocityGradientForStress )[3][3],
+                                                                   real64 ( &closurePlasticStrainIncrement )[6] ) const
+{
+  if( timeIncrement <= 0.0 )
+  {
+    return false;
+  }
+
+  real64 const normalReservoir = LvArray::math::max( 0.0, m_basalNormalDistension[k][q] );
+  real64 const transverseReservoir = LvArray::math::max( 0.0, m_transverseDistension[k][q] );
+  if( ( normalReservoir <= 0.0 ) && ( transverseReservoir <= 0.0 ) )
+  {
+    return false;
+  }
+
+  int const voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  real64 strainIncrementDense[3][3] = {};
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      strainIncrementDense[i][j] = DForStress[voigtMap[i][j]] * timeIncrement;
+    }
+  }
+
+  real64 closureStrainDense[3][3] = {};
+  bool closureOccurred = false;
+
+  real64 normalStrainIncrement = 0.0;
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      normalStrainIncrement += materialDirection[i] * strainIncrementDense[i][j] * materialDirection[j];
+    }
+  }
+
+  if( ( normalStrainIncrement < 0.0 ) && ( normalReservoir > 0.0 ) )
+  {
+    real64 const normalClosure = LvArray::math::min( normalReservoir, -normalStrainIncrement );
+    closureOccurred = closureOccurred || ( normalClosure > 0.0 );
+    m_basalNormalDistension[k][q] = LvArray::math::max( 0.0, m_basalNormalDistension[k][q] - normalClosure );
+    for( int i=0; i<3; ++i )
+    {
+      for( int j=0; j<3; ++j )
+      {
+        closureStrainDense[i][j] += normalClosure * materialDirection[i] * materialDirection[j];
+      }
+    }
+  }
+
+  if( transverseReservoir > 0.0 )
+  {
+    real64 transverseCompressionDense[3][3] = {};
+    real64 const transverseCompression = computeTransverseSpectralStrainPart( strainIncrementDense,
+                                                                              materialDirection,
+                                                                              true,
+                                                                              transverseCompressionDense );
+
+    if( transverseCompression > 0.0 )
+    {
+      real64 const transverseClosure = LvArray::math::min( transverseReservoir, transverseCompression );
+      closureOccurred = closureOccurred || ( transverseClosure > 0.0 );
+      real64 const transverseScale = transverseClosure / LvArray::math::max( transverseCompression, 1.0e-20 );
+      m_transverseDistension[k][q] = LvArray::math::max( 0.0, m_transverseDistension[k][q] - transverseClosure );
+      for( int i=0; i<3; ++i )
+      {
+        for( int j=0; j<3; ++j )
+        {
+          closureStrainDense[i][j] += transverseScale * transverseCompressionDense[i][j];
+        }
+      }
+    }
+  }
+
+  if( !closureOccurred )
+  {
+    return false;
+  }
+
+  real64 closureStrain[6] = {};
+  LvArray::tensorOps::denseToSymmetric< 3 >( closureStrain, closureStrainDense );
+  real64 const inverseTimeIncrement = 1.0 / timeIncrement;
+  for( int i=0; i<6; ++i )
+  {
+    DForStress[i] += closureStrain[i] * inverseTimeIncrement;
+  }
+
+  closurePlasticStrainIncrement[0] += closureStrain[0];
+  closurePlasticStrainIncrement[1] += closureStrain[1];
+  closurePlasticStrainIncrement[2] += closureStrain[2];
+  closurePlasticStrainIncrement[3] += 2.0 * closureStrain[3];
+  closurePlasticStrainIncrement[4] += 2.0 * closureStrain[4];
+  closurePlasticStrainIncrement[5] += 2.0 * closureStrain[5];
+
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      velocityGradientForStress[i][j] += closureStrainDense[i][j] * inverseTimeIncrement;
+    }
+  }
+
+  updateDistensionPorosity( k, q );
+  return true;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::addUnrotatedPlasticStrainStateIncrement( localIndex const k,
+                                                               localIndex const q,
+                                                               real64 const ( &rotationTranspose )[3][3],
+                                                               real64 const ( &endRotation )[3][3],
+                                                               real64 const ( &plasticStrainStateIncrement )[6] ) const
+{
+  real64 oldPlasticStrain[6] = {};
+  LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
+  oldPlasticStrain[3] *= 0.5;
+  oldPlasticStrain[4] *= 0.5;
+  oldPlasticStrain[5] *= 0.5;
+
+  real64 unrotatedOldPlasticStrain[6] = {};
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
+  unrotatedOldPlasticStrain[3] *= 2.0;
+  unrotatedOldPlasticStrain[4] *= 2.0;
+  unrotatedOldPlasticStrain[5] *= 2.0;
+
+  real64 unrotatedNewPlasticStrain[6] = {};
+  LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
+  LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainStateIncrement );
+
+  unrotatedNewPlasticStrain[3] *= 0.5;
+  unrotatedNewPlasticStrain[4] *= 0.5;
+  unrotatedNewPlasticStrain[5] *= 0.5;
+
+  real64 newPlasticStrain[6] = {};
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
+  newPlasticStrain[3] *= 2.0;
+  newPlasticStrain[4] *= 2.0;
+  newPlasticStrain[5] *= 2.0;
+
+  LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::updateDistensionPorosity( localIndex const k,
+                                                localIndex const q ) const
+{
+  real64 const combinedDistension =
+    LvArray::math::max( 0.0, m_basalNormalDistension[k][q] ) +
+    LvArray::math::max( 0.0, m_transverseDistension[k][q] );
+  m_porosity[k][q] = LvArray::math::max( 0.0,
+                                         LvArray::math::min( 1.0,
+                                                             1.0 - LvArray::math::exp( -combinedDistension ) ) );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::addDistensionFromTensileOpening( localIndex const k,
+                                                       localIndex const q,
+                                                       const real64 openingStrain,
+                                                       real64 const ( &openingNormal )[3],
+                                                       real64 const ( &materialDirection )[3],
+                                                       const bool basalOpening ) const
+{
+  if( ( m_enableDistension != 1 ) || ( openingStrain <= 0.0 ) )
+  {
+    return;
+  }
+
+  real64 const normalProjection = LvArray::tensorOps::AiBi< 3 >( openingNormal, materialDirection );
+  real64 const basalWeight = basalOpening ? 1.0 :
+    LvArray::math::max( 0.0, LvArray::math::min( 1.0, normalProjection * normalProjection ) );
+  real64 const transverseWeight = basalOpening ? 0.0 : LvArray::math::max( 0.0, 1.0 - basalWeight );
+
+  real64 const normalDistensionIncrement = basalWeight * openingStrain;
+  real64 const transverseDistensionIncrement = transverseWeight * openingStrain;
+  if( ( normalDistensionIncrement <= 0.0 ) && ( transverseDistensionIncrement <= 0.0 ) )
+  {
+    return;
+  }
+
+  m_basalNormalDistension[k][q] += normalDistensionIncrement;
+  m_transverseDistension[k][q] += transverseDistensionIncrement;
+  updateDistensionPorosity( k, q );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GraphiteUpdates::addDistensionFromInelasticStrain( localIndex const k,
+                                                        localIndex const q,
+                                                        real64 const ( &materialDirection )[3],
+                                                        real64 const ( &inelasticStrainIncrement )[6] ) const
+{
+  real64 const boundedBasalDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] ) );
+  real64 const boundedComminutionDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_comminutionDamage[k][q] ) );
+  real64 const normalWeight = smoothStep( LvArray::math::max( boundedBasalDamage, boundedComminutionDamage ), 0.0, 1.0 );
+  real64 const transverseWeight = smoothStep( boundedComminutionDamage, 0.0, 1.0 );
+
+  if( ( normalWeight <= 0.0 ) && ( transverseWeight <= 0.0 ) )
+  {
+    return;
+  }
+
+  real64 strainDense[3][3] = { { inelasticStrainIncrement[0], 0.5*inelasticStrainIncrement[5], 0.5*inelasticStrainIncrement[4] },
+                               { 0.5*inelasticStrainIncrement[5], inelasticStrainIncrement[1], 0.5*inelasticStrainIncrement[3] },
+                               { 0.5*inelasticStrainIncrement[4], 0.5*inelasticStrainIncrement[3], inelasticStrainIncrement[2] } };
+
+  bool distensionChanged = false;
+  if( normalWeight > 0.0 )
+  {
+    real64 normalOpening = 0.0;
+    for( int i=0; i<3; ++i )
+    {
+      for( int j=0; j<3; ++j )
+      {
+        normalOpening += materialDirection[i] * strainDense[i][j] * materialDirection[j];
+      }
+    }
+
+    real64 const normalIncrement = normalWeight * LvArray::math::max( 0.0, normalOpening );
+    if( normalIncrement > 0.0 )
+    {
+      m_basalNormalDistension[k][q] += normalIncrement;
+      distensionChanged = true;
+    }
+  }
+
+  if( transverseWeight > 0.0 )
+  {
+    real64 transverseOpeningDense[3][3] = {};
+    real64 const transverseOpening = computeTransverseSpectralStrainPart( strainDense,
+                                                                          materialDirection,
+                                                                          false,
+                                                                          transverseOpeningDense );
+    real64 const transverseIncrement = transverseWeight * LvArray::math::max( 0.0, transverseOpening );
+    if( transverseIncrement > 0.0 )
+    {
+      m_transverseDistension[k][q] += transverseIncrement;
+      distensionChanged = true;
+    }
+  }
+
+  if( distensionChanged )
+  {
+    updateDistensionPorosity( k, q );
+  }
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool GraphiteUpdates::applyEnergyRegularizedBrittleTensileReturn( localIndex const k,
+                                                                   localIndex const q,
+                                                                   const real64 timeIncrement,
+                                                                   const real64 stressMeasure,
+                                                                   const real64 oldDamage,
+                                                                   const real64 effectiveStrength,
+                                                                   const real64 fractureEnergyReleaseRate,
+                                                                   const real64 normalCompliance,
+                                                                   real64 const ( &normal )[3],
+                                                                   real64 const ( &materialDirection )[3],
+                                                                   const bool updateBasalPlaneDamage,
+                                                                   real64 ( &stress )[6] ) const
+{
+  if( ( fractureEnergyReleaseRate >= DBL_MAX ) || ( stressMeasure <= 0.0 ) )
+  {
+    return false;
+  }
+
+  real64 const boundedOldDamage = LvArray::math::max( 0.0, LvArray::math::min( 1.0, oldDamage ) );
+  real64 const safeStrength = LvArray::math::max( effectiveStrength, 1.0e-20 );
+  real64 const safeCompliance = LvArray::math::max( normalCompliance, 1.0e-30 );
+  real64 const oldCap = safeStrength * ( 1.0 - smoothStep( boundedOldDamage, 0.0, 1.0 ) );
+
+  if( stressMeasure <= oldCap * ( 1.0 + 1.0e-12 ) + 1.0e-20 )
+  {
+    return false;
+  }
+
+  real64 const regularizedFractureEnergy = fractureEnergyReleaseRate / LvArray::math::max( m_lengthScale[k], 1.0e-20 );
+  real64 const trialEnergy = 0.5 * stressMeasure * stressMeasure * safeCompliance;
+  real64 const peakEnergy = 0.5 * safeStrength * safeStrength * safeCompliance;
+
+  real64 const maximumStepDamage =
+    limitDamageIncrementByCrackSpeed( k, timeIncrement, boundedOldDamage, 1.0 );
+
+  real64 newDamage = boundedOldDamage;
+  if( maximumStepDamage <= boundedOldDamage )
+  {
+    newDamage = boundedOldDamage;
+  }
+  else if( ( trialEnergy >= regularizedFractureEnergy ) || ( peakEnergy >= regularizedFractureEnergy ) )
+  {
+    newDamage = maximumStepDamage;
+  }
+  else
+  {
+    real64 const softeningStrain =
+      2.0 * ( regularizedFractureEnergy - peakEnergy ) / safeStrength;
+
+    real64 lowerDamage = boundedOldDamage;
+    real64 upperDamage = maximumStepDamage;
+    real64 const upperCap = safeStrength * ( 1.0 - smoothStep( upperDamage, 0.0, 1.0 ) );
+    real64 const upperResidual =
+      upperDamage - boundedOldDamage -
+      safeCompliance * LvArray::math::max( 0.0, stressMeasure - upperCap ) /
+      LvArray::math::max( softeningStrain, 1.0e-20 );
+
+    if( upperResidual < 0.0 )
+    {
+      newDamage = upperDamage;
+    }
+    else
+    {
+      for( int iter=0; iter<32; ++iter )
+      {
+        real64 const middleDamage = 0.5 * ( lowerDamage + upperDamage );
+        real64 const middleCap = safeStrength * ( 1.0 - smoothStep( middleDamage, 0.0, 1.0 ) );
+        real64 const middleResidual =
+          middleDamage - boundedOldDamage -
+          safeCompliance * LvArray::math::max( 0.0, stressMeasure - middleCap ) /
+          LvArray::math::max( softeningStrain, 1.0e-20 );
+
+        if( middleResidual >= 0.0 )
+        {
+          upperDamage = middleDamage;
+        }
+        else
+        {
+          lowerDamage = middleDamage;
+        }
+      }
+      newDamage = upperDamage;
+    }
+  }
+
+  real64 const newCap = safeStrength * ( 1.0 - smoothStep( newDamage, 0.0, 1.0 ) );
+  real64 const stressDrop = LvArray::math::max( 0.0, stressMeasure - newCap );
+  subtractNormalStressComponent( stressDrop, normal, stress );
+
+  addDistensionFromTensileOpening( k,
+                                   q,
+                                   safeCompliance * stressDrop,
+                                   normal,
+                                   materialDirection,
+                                   updateBasalPlaneDamage );
+
+  if( updateBasalPlaneDamage )
+  {
+    m_basalPlaneDamage[k][q] = LvArray::math::max( m_basalPlaneDamage[k][q], newDamage );
+  }
+  m_damage[k][q] = LvArray::math::max( m_damage[k][q], newDamage );
+
+  return stressDrop > 0.0;
+}
+
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool GraphiteUpdates::applyEnergyRegularizedBrittleTensileReturns( localIndex const k,
+                                                                    localIndex const q,
+                                                                    const real64 timeIncrement,
+                                                                    const real64 principalTensileStrength,
+                                                                    const real64 basalNormalTensileStrength,
+                                                                    const real64 basalPlaneFractureEnergyReleaseRate,
+                                                                    const real64 totalFractureEnergyReleaseRate,
+                                                                    const real64 Ez,
+                                                                    const real64 Ep,
+                                                                    const real64 nuzp,
+                                                                    const real64 nup,
+                                                                    const real64 Gzp,
+                                                                    real64 const ( &materialDirection )[3],
+                                                                    real64 ( &stress )[6] ) const
+{
+  bool anyReturn = false;
+  real64 const crackTipFactor = LvArray::math::max( m_crackTipStressConcentration[k], 1.0 );
+  bool const basalEnabled = basalPlaneFractureEnergyReleaseRate < DBL_MAX;
+  bool const principalEnabled = ( m_maximumPrincipalStressDamage == 1 ) &&
+                                ( totalFractureEnergyReleaseRate < DBL_MAX );
+
+  for( int activeSetIteration=0; activeSetIteration<2; ++activeSetIteration )
+  {
+    real64 basalNormal[3] = { materialDirection[0], materialDirection[1], materialDirection[2] };
+    real64 basalStress = 0.0;
+    real64 basalOldDamage = 0.0;
+    real64 basalEffectiveStrength = 1.0e-20;
+    real64 basalViolationRatio = -1.0;
+
+    if( basalEnabled )
+    {
+      basalStress = symmetricStressAlongNormal( stress, basalNormal );
+      basalOldDamage = LvArray::math::max( LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] ) ),
+                                           LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_comminutionDamage[k][q] ) ) );
+      basalEffectiveStrength = LvArray::math::max( basalNormalTensileStrength / crackTipFactor, 1.0e-20 );
+      real64 const basalCap = basalEffectiveStrength * ( 1.0 - smoothStep( basalOldDamage, 0.0, 1.0 ) );
+      if( basalStress > basalCap * ( 1.0 + 1.0e-12 ) + 1.0e-20 )
+      {
+        basalViolationRatio = basalStress / LvArray::math::max( basalCap, 1.0e-20 );
+      }
+    }
+
+    real64 principalNormal[3] = { 1.0, 0.0, 0.0 };
+    real64 principalStress = 0.0;
+    real64 principalOldDamage = 0.0;
+    real64 principalEffectiveStrength = 1.0e-20;
+    real64 principalViolationRatio = -1.0;
+
+    if( principalEnabled )
+    {
+      principalStress = computeMaximumPrincipalStressAndDirection( stress, principalNormal );
+      principalOldDamage = LvArray::math::max( LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_damage[k][q] ) ),
+                                               LvArray::math::max( LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlaneDamage[k][q] ) ),
+                                                                    LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_comminutionDamage[k][q] ) ) ) );
+      principalEffectiveStrength = LvArray::math::max( principalTensileStrength / crackTipFactor, 1.0e-20 );
+      real64 const principalCap = principalEffectiveStrength * ( 1.0 - smoothStep( principalOldDamage, 0.0, 1.0 ) );
+      if( principalStress > principalCap * ( 1.0 + 1.0e-12 ) + 1.0e-20 )
+      {
+        principalViolationRatio = principalStress / LvArray::math::max( principalCap, 1.0e-20 );
+      }
+    }
+
+    bool returnedThisIteration = false;
+    if( ( principalViolationRatio < 0.0 ) && ( basalViolationRatio < 0.0 ) )
+    {
+      break;
+    }
+    else if( principalViolationRatio >= basalViolationRatio )
+    {
+      real64 const principalCompliance =
+        computeTransverselyIsotropicNormalCompliance( Ez, Ep, nuzp, nup, Gzp, materialDirection, principalNormal );
+      returnedThisIteration = applyEnergyRegularizedBrittleTensileReturn( k,
+                                                                          q,
+                                                                          timeIncrement,
+                                                                          principalStress,
+                                                                          principalOldDamage,
+                                                                          principalEffectiveStrength,
+                                                                          totalFractureEnergyReleaseRate,
+                                                                          principalCompliance,
+                                                                          principalNormal,
+                                                                          materialDirection,
+                                                                          false,
+                                                                          stress );
+    }
+    else
+    {
+      real64 const basalCompliance = LvArray::math::max( 1.0 / Ez, 1.0e-30 );
+      returnedThisIteration = applyEnergyRegularizedBrittleTensileReturn( k,
+                                                                          q,
+                                                                          timeIncrement,
+                                                                          basalStress,
+                                                                          basalOldDamage,
+                                                                          basalEffectiveStrength,
+                                                                          basalPlaneFractureEnergyReleaseRate,
+                                                                          basalCompliance,
+                                                                          basalNormal,
+                                                                          materialDirection,
+                                                                          true,
+                                                                          stress );
+    }
+
+    anyReturn = anyReturn || returnedThisIteration;
+    if( !returnedThisIteration )
+    {
+      break;
+    }
+  }
+
+  return anyReturn;
 }
 
 GEOS_HOST_DEVICE
@@ -1824,6 +2847,18 @@ public:
     /// string/key for internal comminution damage state.
     static constexpr char const * comminutionDamageString() { return "comminutionDamage"; }
 
+    /// string/key for flag to enable stress-free closure of directional distension.
+    static constexpr char const * enableDistensionString() { return "enableDistension"; }
+
+    /// string/key for basal-normal closeable distension.
+    static constexpr char const * basalNormalDistensionString() { return "basalNormalDistension"; }
+
+    /// string/key for transverse closeable distension.
+    static constexpr char const * transverseDistensionString() { return "transverseDistension"; }
+
+    /// string/key for distension-derived porosity.
+    static constexpr char const * porosityString() { return "porosity"; }
+
     /// string/key for quadrature point temperature value
     static constexpr char const * temperatureString() { return "temperature"; }
 
@@ -1965,6 +3000,10 @@ public:
                             m_damage,
                             m_basalPlaneDamage,
                             m_comminutionDamage,
+                            m_enableDistension,
+                            m_basalNormalDistension,
+                            m_transverseDistension,
+                            m_porosity,
                             m_temperature,
                             m_temperatureRate,
                             m_jacobian,
@@ -2045,6 +3084,10 @@ public:
                           m_damage,
                           m_basalPlaneDamage,
                           m_comminutionDamage,
+                          m_enableDistension,
+                          m_basalNormalDistension,
+                          m_transverseDistension,
+                          m_porosity,
                           m_temperature,
                           m_temperatureRate,
                           m_jacobian,
@@ -2303,6 +3346,18 @@ protected:
 
   /// State variable: comminution/powder damage for each quadrature point.
   array2d< real64 > m_comminutionDamage;
+
+  /// Optional flag to activate stress-free closure of directional distension.
+  int m_enableDistension;
+
+  /// State variable: closeable distension normal to basal planes.
+  array2d< real64 > m_basalNormalDistension;
+
+  /// State variable: closeable distension in the basal/transverse plane.
+  array2d< real64 > m_transverseDistension;
+
+  /// State variable: distension-derived porosity for plotting/coupling.
+  array2d< real64 > m_porosity;
 
   /// State variable: The temperature values for each element/particle
   array1d< real64 > m_temperature;

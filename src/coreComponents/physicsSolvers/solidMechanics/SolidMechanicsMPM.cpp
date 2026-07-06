@@ -8910,6 +8910,313 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 }
 
 /**
+ * @brief Apply an EOS-consistent hydrostatic pressure-temperature initialization event.
+ */
+void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & particleManager,
+                                                          SetInitialTemperatureAndPressureMPMEvent const & event )
+{
+  GEOS_MARK_FUNCTION;
+
+  string_array const & targetRegions = event.getTargetRegions();
+  bool const targetAll = std::find( targetRegions.begin(), targetRegions.end(), string( "all" ) ) != targetRegions.end();
+  bool const initializeStress = event.getInitializeStress() != 0;
+  real64 minMassLocal = LvArray::NumericLimits< real64 >::max;
+  localIndex initializedLocal = 0;
+
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+  {
+    if( !( targetAll || std::find( targetRegions.begin(), targetRegions.end(), region.getName() ) != targetRegions.end() ) )
+    {
+      return;
+    }
+
+    auto & targetSubRegions = region.getSubRegions();
+    for( int r = 0; r < targetSubRegions.size(); ++r )
+    {
+      ParticleSubRegion & subRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      if( activeParticleIndices.size() == 0 )
+      {
+        continue;
+      }
+
+      string const & solidMaterialName =
+        subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+
+      GEOS_ERROR_IF( !constitutiveModel.supportsTemperaturePressureInitialization( event.getInitialPhase() ),
+                     "SetInitialTemperatureAndPressure event '" << event.getName()
+                     << "' targets region '" << region.getName() << "' using material '" << solidMaterialName
+                     << "', but that material does not implement pressure-temperature initialization for phase selector '"
+                     << event.getInitialPhase() << "'." );
+
+      TemperaturePressureInitializationState const state =
+        constitutiveModel.computeTemperaturePressureInitializationState( event.getPressure(),
+                                                                        event.getTemperature(),
+                                                                        event.getInitialPhase() );
+
+      GEOS_ERROR_IF( state.density <= 0.0,
+                     "SetInitialTemperatureAndPressure material '" << solidMaterialName
+                     << "' returned nonpositive density " << state.density << "." );
+      GEOS_ERROR_IF( state.jacobian <= 0.0,
+                     "SetInitialTemperatureAndPressure material '" << solidMaterialName
+                     << "' returned nonpositive Jacobian " << state.jacobian << "." );
+
+      real64 const J = state.jacobian;
+      real64 const sx = m_planeStrain == 1 ? LvArray::math::sqrt( J ) : LvArray::math::pow( J, 1.0 / 3.0 );
+      real64 const sy = sx;
+      real64 const sz = m_planeStrain == 1 ? 1.0 : sx;
+      real64 const scale[3] = { sx, sy, sz };
+      real64 const cofactorScale[3] = { sy * sz, sx * sz, sx * sy };
+
+      arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
+      arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+      arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+      arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+      arrayView1d< real64 > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
+      arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
+      arrayView1d< real64 > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
+      arrayView1d< real64 > const particleSupplementalPressure = subRegion.getField< fields::mpm::particleSupplementalPressure >();
+      arrayView1d< real64 > const particleWavespeed = subRegion.getField< fields::mpm::particleWavespeed >();
+      arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+      arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+      arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+      arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+      arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
+      arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+      arrayView2d< real64 > const particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
+      arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+      arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
+      arrayView2d< real64 const > const particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
+      arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+      arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+      arrayView3d< real64 > const particleCohesiveReferenceDeformationGradient =
+        subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
+
+      bool const hasParticleHeatCapacity = subRegion.hasWrapper( fields::mpm::particleHeatCapacity::key() );
+      bool const hasParticleReferenceTemperature = subRegion.hasWrapper( fields::mpm::particleReferenceTemperature::key() );
+      arrayView1d< real64 > particleHeatCapacity;
+      arrayView1d< real64 > particleReferenceTemperature;
+      if( hasParticleHeatCapacity )
+      {
+        particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
+      }
+      if( hasParticleReferenceTemperature )
+      {
+        particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
+      }
+
+      for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        real64 const currentVolume = particleVolume[p];
+        GEOS_ERROR_IF( currentVolume <= 0.0,
+                       "SetInitialTemperatureAndPressure encountered nonpositive particle volume in region '"
+                       << region.getName() << "'." );
+
+        particleMass[p] = state.density * currentVolume;
+        particleDensity[p] = state.density;
+        particleReferenceVolume[p] = currentVolume / J;
+        particleVolume[p] = currentVolume;
+        particleInternalEnergy[p] = state.specificInternalEnergy;
+        particleTemperature[p] = state.temperature;
+        particleTemperatureRate[p] = 0.0;
+        particleSupplementalPressure[p] = 0.0;
+        particleWavespeed[p] = state.soundSpeed;
+
+        if( hasParticleHeatCapacity )
+        {
+          particleHeatCapacity[p] = state.tangentSpecificHeat;
+        }
+        if( hasParticleReferenceTemperature )
+        {
+          particleReferenceTemperature[p] = state.temperature;
+        }
+
+        for( int i = 0; i < 3; ++i )
+        {
+          for( int j = 0; j < 3; ++j )
+          {
+            particleDeformationGradient[p][i][j] = i == j ? scale[i] : 0.0;
+            particleCohesiveReferenceDeformationGradient[p][i][j] = i == j ? scale[i] : 0.0;
+            particleFDot[p][i][j] = 0.0;
+            particleVelocityGradient[p][i][j] = 0.0;
+            particleReferenceRVectors[p][i][j] = particleRVectors[p][i][j] / scale[j];
+          }
+        }
+
+        for( int i = 0; i < 3; ++i )
+        {
+          particleReferenceSurfacePosition[p][i] = particleSurfacePosition[p][i] / scale[i];
+          particleReferenceSurfaceNormal[p][i] = particleSurfaceNormal[p][i] / cofactorScale[i];
+          particleReferenceSurfaceTraction[p][i] = particleSurfaceTraction[p][i] / cofactorScale[i];
+        }
+
+        if( initializeStress )
+        {
+          for( int i = 0; i < 6; ++i )
+          {
+            particleStress[p][i] = state.stress[i];
+          }
+        }
+
+        minMassLocal = LvArray::math::min( minMassLocal, particleMass[p] );
+        ++initializedLocal;
+      }
+
+      arrayView2d< real64 > const constitutiveDensity = constitutiveModel.getDensity();
+      arrayView2d< real64 > const constitutiveWavespeed = constitutiveModel.getWavespeed();
+      arrayView3d< real64, solid::STRESS_USD > const constitutiveStress = constitutiveModel.getStress();
+      arrayView3d< real64, solid::STRESS_USD > const constitutiveOldStress = constitutiveModel.getOldStress();
+
+      for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveDensity[p][0] = state.density;
+        constitutiveWavespeed[p][0] = state.soundSpeed;
+        if( initializeStress )
+        {
+          for( int i = 0; i < 6; ++i )
+          {
+            constitutiveStress[p][0][i] = state.stress[i];
+            constitutiveOldStress[p][0][i] = state.stress[i];
+          }
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "deformationGradient" ) )
+      {
+        arrayView3d< real64 > const constitutiveDeformationGradient =
+          constitutiveModel.getReference< array3d< real64 > >( "deformationGradient" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          localIndex const p = activeParticleIndices[pp];
+          for( int i = 0; i < 3; ++i )
+          {
+            for( int j = 0; j < 3; ++j )
+            {
+              constitutiveDeformationGradient[p][i][j] = i == j ? scale[i] : 0.0;
+            }
+          }
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "velocityGradient" ) )
+      {
+        arrayView3d< real64 > const constitutiveVelocityGradient =
+          constitutiveModel.getReference< array3d< real64 > >( "velocityGradient" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          localIndex const p = activeParticleIndices[pp];
+          LvArray::tensorOps::fill< 3, 3 >( constitutiveVelocityGradient[p], 0.0 );
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "temperature" ) )
+      {
+        arrayView1d< real64 > const constitutiveTemperature =
+          constitutiveModel.getReference< array1d< real64 > >( "temperature" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveTemperature[activeParticleIndices[pp]] = state.temperature;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "temperatureRate" ) )
+      {
+        arrayView1d< real64 > const constitutiveTemperatureRate =
+          constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveTemperatureRate[activeParticleIndices[pp]] = 0.0;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) )
+      {
+        arrayView1d< real64 > const constitutiveSpecificInternalEnergy =
+          constitutiveModel.getReference< array1d< real64 > >( "specificInternalEnergy" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveSpecificInternalEnergy[activeParticleIndices[pp]] = state.specificInternalEnergy;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "tangentSpecificHeat" ) )
+      {
+        arrayView1d< real64 > const constitutiveTangentSpecificHeat =
+          constitutiveModel.getReference< array1d< real64 > >( "tangentSpecificHeat" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveTangentSpecificHeat[activeParticleIndices[pp]] = state.tangentSpecificHeat;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "bulkModulus" ) )
+      {
+        arrayView1d< real64 > const constitutiveBulkModulus =
+          constitutiveModel.getReference< array1d< real64 > >( "bulkModulus" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveBulkModulus[activeParticleIndices[pp]] = state.bulkModulus;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "supplementalPressure" ) )
+      {
+        arrayView1d< real64 > const constitutiveSupplementalPressure =
+          constitutiveModel.getReference< array1d< real64 > >( "supplementalPressure" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveSupplementalPressure[activeParticleIndices[pp]] = 0.0;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "liquidFraction" ) )
+      {
+        arrayView1d< real64 > const constitutiveLiquidFraction =
+          constitutiveModel.getReference< array1d< real64 > >( "liquidFraction" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutiveLiquidFraction[activeParticleIndices[pp]] = state.liquidFraction;
+        }
+      }
+
+      if( constitutiveModel.hasWrapper( "phaseFlag" ) )
+      {
+        arrayView1d< real64 > const constitutivePhaseFlag =
+          constitutiveModel.getReference< array1d< real64 > >( "phaseFlag" );
+        for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+        {
+          constitutivePhaseFlag[activeParticleIndices[pp]] = state.phaseFlag;
+        }
+      }
+
+
+      GEOS_LOG_RANK_0( "SetInitialTemperatureAndPressure initialized region '" << region.getName()
+                       << "', subregion '" << subRegion.getName() << "', material '" << solidMaterialName
+                       << "' with P=" << state.pressure
+                       << ", T=" << state.temperature
+                       << ", density=" << state.density
+                       << ", J=" << state.jacobian
+                       << ", e=" << state.specificInternalEnergy
+                       << ", phaseFlag=" << state.phaseFlag
+                       << ", liquidFraction=" << state.liquidFraction );
+    }
+  } );
+
+  if( initializedLocal > 0 && minMassLocal < LvArray::NumericLimits< real64 >::max )
+  {
+    real64 const minMassGlobal = MpiWrapper::min( minMassLocal );
+    if( minMassGlobal > 0.0 )
+    {
+      m_smallMass = LvArray::math::min( m_smallMass, minMassGlobal * 1.0e-16 );
+    }
+  }
+}
+
+
+/**
  * @brief Triggers events.
  *
  * Executable statements are unchanged; comments document intent where practical.
@@ -9122,6 +9429,14 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           }
         }
       } );
+      event.setIsComplete( 1 );
+    }
+
+    if( event.getCatalogName() == "SetInitialTemperatureAndPressure" )
+    {
+      SetInitialTemperatureAndPressureMPMEvent const & setInitialState =
+        dynamicCast< SetInitialTemperatureAndPressureMPMEvent const & >( event );
+      setInitialTemperatureAndPressure( particleManager, setInitialState );
       event.setIsComplete( 1 );
     }
 

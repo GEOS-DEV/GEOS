@@ -23,6 +23,7 @@
 #include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
 #include "events/mpmEvents/AnnealMPMEvent.hpp"
 #include "events/mpmEvents/InitializeStressMPMEvent.hpp"
+#include "events/mpmEvents/SetInitialTemperatureAndPressureMPMEvent.hpp"
 #include "events/mpmEvents/HealMPMEvent.hpp"
 #include "events/mpmEvents/PolymerHealMPMEvent.hpp"
 #include "events/mpmEvents/CrystalHealMPMEvent.hpp"
