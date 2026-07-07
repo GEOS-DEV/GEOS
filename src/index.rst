@@ -39,7 +39,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-ref:: QuickStart
+        :ref:`QuickStart`
             :expand:
             :color: info
             :click-parent:
@@ -55,7 +55,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-ref:: Tutorials
+        :ref:`Tutorials`
             :expand:
             :color: info
             :click-parent:
@@ -71,7 +71,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-ref:: BasicExamples
+        :ref:`BasicExamples`
             :expand:
             :color: info
             :click-parent:
@@ -87,7 +87,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-ref:: AdvancedExamples
+        :ref:`AdvancedExamples`
             :expand:
             :color: info
             :click-parent:
@@ -103,7 +103,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-ref:: UserGuide
+        :ref:`UserGuide`
             :expand:
             :color: info
             :click-parent:
