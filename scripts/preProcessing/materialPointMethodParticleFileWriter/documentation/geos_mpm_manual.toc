@@ -120,35 +120,35 @@
 \contentsline {subsubsection}{\numberline {2.7.1.9}\texttt {CeramicDamage}}{47}{subsubsection.2.7.1.9}%
 \contentsline {paragraph}{Primary input parameters and state.}{47}{subsubsection.2.7.1.9}%
 \contentsline {paragraph}{Strength scaling, porosity scaling, and pressure.}{48}{table.2.3}%
-\contentsline {paragraph}{Yield surface and third-invariant dependence.}{48}{equation.2.7.128}%
-\contentsline {paragraph}{Return mapping.}{49}{figure.caption.8}%
-\contentsline {paragraph}{Damage regularization options.}{50}{equation.2.7.132}%
-\contentsline {paragraph}{Strength scale and crack-tip scaling.}{50}{equation.2.7.134}%
-\contentsline {paragraph}{DFG use and porosity interpretation.}{51}{equation.2.7.135}%
-\contentsline {paragraph}{Implementation pseudocode.}{52}{equation.2.7.135}%
+\contentsline {paragraph}{Yield surface and third-invariant dependence.}{49}{equation.2.7.129}%
+\contentsline {paragraph}{Return mapping.}{50}{figure.caption.8}%
+\contentsline {paragraph}{Damage regularization options.}{50}{equation.2.7.133}%
+\contentsline {paragraph}{Strength scale and crack-tip scaling.}{50}{equation.2.7.135}%
+\contentsline {paragraph}{DFG use and porosity interpretation.}{51}{equation.2.7.136}%
+\contentsline {paragraph}{Implementation pseudocode.}{52}{equation.2.7.136}%
 \contentsline {subsubsection}{\numberline {2.7.1.10}\texttt {Chiumenti}}{52}{subsubsection.2.7.1.10}%
 \contentsline {subsubsection}{\numberline {2.7.1.11}\texttt {Graphite}}{53}{subsubsection.2.7.1.11}%
 \contentsline {paragraph}{Kinematics and material basis.}{53}{figure.caption.9}%
-\contentsline {paragraph}{Elastic trial stress.}{53}{equation.2.7.140}%
-\contentsline {paragraph}{Mode decomposition of stress.}{56}{equation.2.7.156}%
-\contentsline {paragraph}{Pressure-dependent point-slope strengths.}{57}{equation.2.7.164}%
-\contentsline {paragraph}{Pre-plastic brittle tensile fracture.}{58}{equation.2.7.168}%
-\contentsline {paragraph}{Mode return and reconstruction.}{59}{equation.2.7.179}%
-\contentsline {paragraph}{Plastic strain, hardening, and damage evolution.}{60}{equation.2.7.181}%
-\contentsline {paragraph}{Thermal effects.}{60}{equation.2.7.184}%
-\contentsline {paragraph}{Update algorithm.}{60}{equation.2.7.184}%
+\contentsline {paragraph}{Elastic trial stress.}{53}{equation.2.7.141}%
+\contentsline {paragraph}{Mode decomposition of stress.}{56}{equation.2.7.157}%
+\contentsline {paragraph}{Pressure-dependent point-slope strengths.}{57}{equation.2.7.165}%
+\contentsline {paragraph}{Pre-plastic brittle tensile fracture.}{58}{equation.2.7.169}%
+\contentsline {paragraph}{Mode return and reconstruction.}{59}{equation.2.7.180}%
+\contentsline {paragraph}{Plastic strain, hardening, and damage evolution.}{60}{equation.2.7.182}%
+\contentsline {paragraph}{Thermal effects.}{60}{equation.2.7.185}%
+\contentsline {paragraph}{Update algorithm.}{60}{equation.2.7.185}%
 \contentsline {paragraph}{Capabilities and limitations.}{61}{lstnumber.2.53.33}%
 \contentsline {subsubsection}{\numberline {2.7.1.12}\texttt {Geomechanics}}{62}{subsubsection.2.7.1.12}%
 \contentsline {paragraph}{Stress measures and sign convention.}{62}{subsubsection.2.7.1.12}%
-\contentsline {paragraph}{Yield surface and cap.}{63}{equation.2.7.185}%
+\contentsline {paragraph}{Yield surface and cap.}{63}{equation.2.7.186}%
 \contentsline {paragraph}{Supported shear-limit parameterizations.}{63}{figure.caption.11}%
-\contentsline {paragraph}{Nonlinear elasticity.}{65}{equation.2.7.193}%
-\contentsline {paragraph}{Cap hardening, porosity, and crush curve.}{65}{equation.2.7.196}%
-\contentsline {paragraph}{Strain hardening and damage softening.}{65}{equation.2.7.198}%
-\contentsline {paragraph}{Optional creep relaxation.}{66}{equation.2.7.204}%
-\contentsline {paragraph}{Optional compaction/buckling multiplier.}{66}{equation.2.7.209}%
-\contentsline {paragraph}{Numerical update algorithm.}{67}{equation.2.7.210}%
-\contentsline {paragraph}{Input parameterization.}{67}{equation.2.7.212}%
+\contentsline {paragraph}{Nonlinear elasticity.}{65}{equation.2.7.194}%
+\contentsline {paragraph}{Cap hardening, porosity, and crush curve.}{65}{equation.2.7.197}%
+\contentsline {paragraph}{Strain hardening and damage softening.}{65}{equation.2.7.199}%
+\contentsline {paragraph}{Optional creep relaxation.}{66}{equation.2.7.205}%
+\contentsline {paragraph}{Optional compaction/buckling multiplier.}{66}{equation.2.7.210}%
+\contentsline {paragraph}{Numerical update algorithm.}{67}{equation.2.7.211}%
+\contentsline {paragraph}{Input parameterization.}{67}{equation.2.7.213}%
 \contentsline {paragraph}{Implementation notes.}{68}{table.2.6}%
 \contentsline {subsection}{\numberline {2.7.2}Fluid models}{69}{subsection.2.7.2}%
 \contentsline {subsubsection}{\numberline {2.7.2.1}\texttt {Gas}}{69}{subsubsection.2.7.2.1}%
@@ -160,12 +160,12 @@
 \contentsline {subsubsection}{\numberline {2.7.3.4}Temperature}{71}{subsubsection.2.7.3.4}%
 \contentsline {subsection}{\numberline {2.7.4}External material models}{72}{subsection.2.7.4}%
 \contentsline {subsection}{\numberline {2.7.5}Material-point constitutive driver}{73}{subsection.2.7.5}%
-\contentsline {paragraph}{Build and executable discovery.}{73}{equation.2.7.221}%
+\contentsline {paragraph}{Build and executable discovery.}{73}{equation.2.7.222}%
 \contentsline {paragraph}{Python front end and sidecar files.}{73}{lstnumber.2.61.3}%
 \contentsline {paragraph}{Control modes and sign convention.}{74}{lstnumber.2.62.6}%
 \contentsline {paragraph}{Material direction and material-frame transport.}{75}{lstnumber.-3.2}%
 \contentsline {paragraph}{Initial state, temperature, and energy.}{75}{lstnumber.-3.2}%
-\contentsline {paragraph}{Diagnostics and output.}{75}{equation.2.7.223}%
+\contentsline {paragraph}{Diagnostics and output.}{75}{equation.2.7.224}%
 \contentsline {paragraph}{Verification workflows.}{75}{lstnumber.2.64.4}%
 \contentsline {section}{\numberline {2.8}Particle types and interpolation/update options}{76}{section.2.8}%
 \contentsline {subsection}{\numberline {2.8.1}Mapping notation and effective support}{76}{subsection.2.8.1}%
@@ -205,10 +205,10 @@
 \contentsline {subsection}{\numberline {2.10.3}Step-level cohesive force update}{97}{subsection.2.10.3}%
 \contentsline {subsection}{\numberline {2.10.4}Available cohesive constitutive models}{99}{subsection.2.10.4}%
 \contentsline {paragraph}{\texttt {UncoupledCohesiveZone}.}{99}{subsection.2.10.4}%
-\contentsline {paragraph}{\texttt {CoupledCohesiveZone}.}{99}{equation.2.10.310}%
-\contentsline {paragraph}{\texttt {BicrystalCohesiveZone}.}{99}{equation.2.10.311}%
-\contentsline {paragraph}{\texttt {PolymerCohesiveZone}.}{99}{equation.2.10.311}%
-\contentsline {paragraph}{\texttt {SurfaceInformedPolymerCohesiveZone}.}{100}{equation.2.10.312}%
+\contentsline {paragraph}{\texttt {CoupledCohesiveZone}.}{99}{equation.2.10.311}%
+\contentsline {paragraph}{\texttt {BicrystalCohesiveZone}.}{99}{equation.2.10.312}%
+\contentsline {paragraph}{\texttt {PolymerCohesiveZone}.}{99}{equation.2.10.312}%
+\contentsline {paragraph}{\texttt {SurfaceInformedPolymerCohesiveZone}.}{100}{equation.2.10.313}%
 \contentsline {subsection}{\numberline {2.10.5}Input controls and current limitations}{101}{subsection.2.10.5}%
 \contentsline {section}{\numberline {2.11}Experimental weak-trace projection}{101}{section.2.11}%
 \contentsline {subsection}{\numberline {2.11.1}Purpose and relation to cohesive-zone weak interfaces}{101}{subsection.2.11.1}%
@@ -219,21 +219,21 @@
 \contentsline {subsection}{\numberline {2.11.6}Placement in the explicit step and interaction with nodal contact}{103}{subsection.2.11.6}%
 \contentsline {subsection}{\numberline {2.11.7}Input controls and diagnostic fields}{104}{subsection.2.11.7}%
 \contentsline {subsection}{\numberline {2.11.8}Known limitations and recommended verification}{104}{subsection.2.11.8}%
-\contentsline {section}{\numberline {2.12}Contact options: fields, normals, gap closure, and overlap control}{104}{section.2.12}%
+\contentsline {section}{\numberline {2.12}Contact options: fields, normals, gap closure, and overlap control}{105}{section.2.12}%
 \contentsline {subsection}{\numberline {2.12.1}Nodal contact state and activation}{105}{subsection.2.12.1}%
 \contentsline {subsection}{\numberline {2.12.2}Prescribed multi-field contact groups}{106}{subsection.2.12.2}%
 \contentsline {subsection}{\numberline {2.12.3}Damage-field-gradient partitioning}{106}{subsection.2.12.3}%
 \contentsline {subsection}{\numberline {2.12.4}Experimental weak-trace interaction with contact}{108}{subsection.2.12.4}%
 \contentsline {subsection}{\numberline {2.12.5}Surface normals and surface positions}{108}{subsection.2.12.5}%
 \contentsline {subsection}{\numberline {2.12.6}Automatic particle normal and position reconstruction}{109}{subsection.2.12.6}%
-\contentsline {subsection}{\numberline {2.12.7}Logistic-regression surface reconstruction}{109}{subsection.2.12.7}%
+\contentsline {subsection}{\numberline {2.12.7}Logistic-regression surface reconstruction}{110}{subsection.2.12.7}%
 \contentsline {subsection}{\numberline {2.12.8}Volume method for contact surface position}{111}{subsection.2.12.8}%
 \contentsline {subsection}{\numberline {2.12.9}Pair-normal weighting between fields}{111}{subsection.2.12.9}%
 \contentsline {subsection}{\numberline {2.12.10}Separability criteria}{112}{subsection.2.12.10}%
 \contentsline {subsection}{\numberline {2.12.11}Gap closure and frictional contact}{112}{subsection.2.12.11}%
 \contentsline {subsection}{\numberline {2.12.12}Global and group-dependent friction coefficients}{113}{subsection.2.12.12}%
 \contentsline {subsection}{\numberline {2.12.13}Overdensification and overlap correction}{114}{subsection.2.12.13}%
-\contentsline {subsection}{\numberline {2.12.14}Summary examples and verification targets}{114}{subsection.2.12.14}%
+\contentsline {subsection}{\numberline {2.12.14}Summary examples and verification targets}{115}{subsection.2.12.14}%
 \contentsline {subsection}{\numberline {2.12.15}Input controls and cross references}{116}{subsection.2.12.15}%
 \contentsline {section}{\numberline {2.13}Robustness controls: deletion, deformation-gradient reset, and particle splitting}{117}{section.2.13}%
 \contentsline {subsection}{\numberline {2.13.1}Particle deletion and active-particle compaction}{117}{subsection.2.13.1}%

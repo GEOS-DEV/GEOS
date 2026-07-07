@@ -684,12 +684,16 @@ The base flow strength combines yield, decaying shear softening, and chain stret
   + H(T)\left\langle \lambda_{chain}^{2}-\lambda_{chain}^{-1}\right\rangle,
   \label{eq:surface-polymer-base-flow}
 \end{equation}
-where \(\kappa\) is the accumulated plastic-strain-like history and \(\langle x\rangle=\max(x,0)\).  The chain stretch is based on the isochoric stretch rather than raw volumetric compression,
+where \(\kappa\) is the accumulated plastic-strain-like history and \(\langle x\rangle=\max(x,0)\).  The implementation first computes the raw maximum principal stretch,
 \begin{equation}
-  \lambda_{chain}=\max_i\left(J^{-1/3}\lambda_i\right),
+  \lambda_{max,p}=\max_i \lambda_i,
+\end{equation}
+then combines that tensile stretch with the isochoric branch,
+\begin{equation}
+  \lambda_{chain}=\max\left(\lambda_{max,p}, J^{-1/3}\lambda_{max,p}\right),
   \label{eq:surface-polymer-chain-stretch}
 \end{equation}
-where \(\lambda_i\) are principal stretches.  This choice prevents pure hydrostatic compression from looking like chain extension, while still allowing constrained compression and shear under pressure to reach finite extensibility.
+where \(\lambda_i\) are principal stretches.  This is the same chain-stretch measure used by the source implementation.  It preserves the previous tensile calibration, keeps pure hydrostatic compression at \(\lambda_{chain}=1\), and still allows constrained compression or shear under pressure to reach finite extensibility.
 
 The pressure-sensitive yield correction is written using tensile-positive mean stress \(p_t=\operatorname{tr}\boldsymbol{\sigma}/3\),
 \begin{equation}
@@ -715,10 +719,10 @@ The finite-extensibility failure criterion remains independent of pressure,
   \lambda_{chain}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
   \label{eq:surface-polymer-maximum-stretch-failure}
 \end{equation}
-Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  For visualization, the primitive plottable particle fields should include \texttt{particleStress}, \texttt{particleDamage}, and \texttt{particlePlasticStrain}.  Equivalent plastic strain should be constructed as a VisIt expression from the plastic-strain tensor components rather than stored as an additional derived particle field.
+Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  The implementation leaves \texttt{equivalentPlasticStrain} at plot level as a constitutive history variable, and the verification also requests the primitive particle fields \texttt{particleStress}, \texttt{particleDamage}, and \texttt{particlePlasticStrain}.  Generic visualizations may use the stored equivalent history when available or construct an equivalent-plastic-strain expression from the plastic-strain tensor components.
 
 \begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
-compute F, J, principal stretches, and lambda_chain=max_i(J^(-1/3)*lambda_i)
+compute F, J, lambda_max_p=max_i(lambda_i), and lambda_chain=max(lambda_max_p, J^(-1/3)*lambda_max_p)
 compute S_T(T), crystallinity multipliers, K, G, Y, S_soft, H
 compute elastic trial stress and invariants q_trial, p_t_trial
 p_eff = max(p_t_trial, -compressivePressureStrengtheningCap)
@@ -7021,12 +7025,22 @@ where \(h=\texttt{thickness}\).  The normal volumetric film stress is retained, 
 \end{align}
 The optional \texttt{compressivePressureStrengtheningCap} has the same meaning as in the continuum model: it caps only pressure-assisted deviatoric strength, not the compressive normal traction carried by the finite-thickness layer.
 
-The cohesive chain stretch is computed from a thin-film deformation gradient formed from normal jump and tangential slip.  Maximum-stretch failure is not pressure-gated,
+The cohesive chain stretch is computed by passing a thin-film deformation gradient formed from normal jump and tangential slip through the same helper used by the continuum model.  In schematic form,
+\begin{equation}
+  \mathbf F_{film}=\begin{bmatrix}
+    1 & \gamma & 0\\
+    0 & 1+\epsilon_n & 0\\
+    0 & 0 & 1
+  \end{bmatrix},
+  \qquad
+  \lambda_{chain}^{cz}=\max\left(\lambda_{max,p}^{cz}, J_{film}^{-1/3}\lambda_{max,p}^{cz}\right).
+\end{equation}
+Maximum-stretch failure is not pressure-gated,
 \begin{equation}
   \lambda_{chain}^{cz}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
   \label{eq:surface-polymer-cz-failure}
 \end{equation}
-Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
+Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, chain-stretch measure, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
 
 
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}

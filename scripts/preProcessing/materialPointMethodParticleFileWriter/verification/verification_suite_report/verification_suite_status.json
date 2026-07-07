@@ -1,7 +1,7 @@
 [
   {
     "case_id": "surfaceInformedPolymerLayer",
-    "source_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/surfaceInformedPolymerLayer",
+    "source_dir": "/g/g19/homel1/geos/mpm/verification/surfaceInformedPolymerLayer",
     "input_file": "pfw_input_surfaceInformedPolymerLayer.py",
     "output_prefix": "surfaceInformedPolymerLayer",
     "family": "surfaceInformedPolymerLayer",
@@ -13,7 +13,7 @@
     "warnings": [],
     "suite": "verification",
     "input": "pfw_input_surfaceInformedPolymerLayer.py",
-    "single_allocation_job_id": "6290987",
+    "single_allocation_job_id": "6614959",
     "subcases": [
       {
         "name": "continuum_tension",
@@ -30,10 +30,10 @@
           "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer__continuum_tension",
           "userDefs": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_homel1.py",
           "bank": "mahem",
-          "geos_job_id": "6290987",
+          "geos_job_id": "6614959",
           "post_job_id": "",
           "status": "completed-single-allocation",
-          "dispatch_elapsed_seconds": 4.942
+          "dispatch_elapsed_seconds": 4.731
         }
       },
       {
@@ -51,10 +51,10 @@
           "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer__continuum_compression",
           "userDefs": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_homel1.py",
           "bank": "mahem",
-          "geos_job_id": "6290987",
+          "geos_job_id": "6614959",
           "post_job_id": "",
           "status": "completed-single-allocation",
-          "dispatch_elapsed_seconds": 2.243
+          "dispatch_elapsed_seconds": 2.717
         }
       },
       {
@@ -72,10 +72,10 @@
           "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer__cohesive_tension",
           "userDefs": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_homel1.py",
           "bank": "mahem",
-          "geos_job_id": "6290987",
+          "geos_job_id": "6614959",
           "post_job_id": "",
           "status": "completed-single-allocation",
-          "dispatch_elapsed_seconds": 1.882
+          "dispatch_elapsed_seconds": 2.477
         }
       },
       {
@@ -93,10 +93,10 @@
           "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/surfaceInformedPolymerLayer/output/surfaceInformedPolymerLayer__cohesive_compression",
           "userDefs": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_homel1.py",
           "bank": "mahem",
-          "geos_job_id": "6290987",
+          "geos_job_id": "6614959",
           "post_job_id": "",
           "status": "completed-single-allocation",
-          "dispatch_elapsed_seconds": 1.866
+          "dispatch_elapsed_seconds": 2.419
         }
       }
     ],
@@ -106,45 +106,45 @@
       {
         "case_id": "surfaceInformedPolymerLayer",
         "subcase": "Continuum tension",
-        "geos_job_id": "6290987",
+        "geos_job_id": "6614959",
         "geos_state": "",
         "geos_elapsed": "",
         "geos_total_cpu": "",
         "geos_ncpus": "",
-        "dispatch_elapsed_seconds": 4.942,
+        "dispatch_elapsed_seconds": 4.731,
         "returncode": 0
       },
       {
         "case_id": "surfaceInformedPolymerLayer",
         "subcase": "Continuum compression",
-        "geos_job_id": "6290987",
+        "geos_job_id": "6614959",
         "geos_state": "",
         "geos_elapsed": "",
         "geos_total_cpu": "",
         "geos_ncpus": "",
-        "dispatch_elapsed_seconds": 2.243,
+        "dispatch_elapsed_seconds": 2.717,
         "returncode": 0
       },
       {
         "case_id": "surfaceInformedPolymerLayer",
         "subcase": "Cohesive-zone tension",
-        "geos_job_id": "6290987",
+        "geos_job_id": "6614959",
         "geos_state": "",
         "geos_elapsed": "",
         "geos_total_cpu": "",
         "geos_ncpus": "",
-        "dispatch_elapsed_seconds": 1.882,
+        "dispatch_elapsed_seconds": 2.477,
         "returncode": 0
       },
       {
         "case_id": "surfaceInformedPolymerLayer",
         "subcase": "Cohesive-zone compression",
-        "geos_job_id": "6290987",
+        "geos_job_id": "6614959",
         "geos_state": "",
         "geos_elapsed": "",
         "geos_total_cpu": "",
         "geos_ncpus": "",
-        "dispatch_elapsed_seconds": 1.866,
+        "dispatch_elapsed_seconds": 2.419,
         "returncode": 0
       }
     ],

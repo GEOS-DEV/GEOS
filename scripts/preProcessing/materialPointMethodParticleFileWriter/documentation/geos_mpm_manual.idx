@@ -297,13 +297,13 @@
 \indexentry{contact!weak trace projection|hyperpage}{103}
 \indexentry{weak trace projection!input controls|hyperpage}{104}
 \indexentry{weak trace projection!limitations|hyperpage}{104}
-\indexentry{contact!options|hyperpage}{104}
-\indexentry{contact!multi-field|hyperpage}{104}
-\indexentry{damage-field gradient|hyperpage}{104}
-\indexentry{DFG|hyperpage}{104}
-\indexentry{contact!normal|hyperpage}{104}
-\indexentry{contact!gap closure|hyperpage}{104}
-\indexentry{overdensification|hyperpage}{104}
+\indexentry{contact!options|hyperpage}{105}
+\indexentry{contact!multi-field|hyperpage}{105}
+\indexentry{damage-field gradient|hyperpage}{105}
+\indexentry{DFG|hyperpage}{105}
+\indexentry{contact!normal|hyperpage}{105}
+\indexentry{contact!gap closure|hyperpage}{105}
+\indexentry{overdensification|hyperpage}{105}
 \indexentry{contact!activation|hyperpage}{105}
 \indexentry{contact!prescribed groups|hyperpage}{106}
 \indexentry{particleGroup|hyperpage}{106}
@@ -316,8 +316,8 @@
 \indexentry{explicitSurfaceNormalInfluence|hyperpage}{108}
 \indexentry{computeParticleSurfaceNormalsAndPositions|hyperpage}{109}
 \indexentry{normalAndPositionMethod|hyperpage}{109}
-\indexentry{contact!logistic regression|hyperpage}{109}
-\indexentry{LogisticRegression|hyperpage}{109}
+\indexentry{contact!logistic regression|hyperpage}{110}
+\indexentry{LogisticRegression|hyperpage}{110}
 \indexentry{contact!volume position|hyperpage}{111}
 \indexentry{DFGAndVolumeIntegration|hyperpage}{111}
 \indexentry{contactNormalType|hyperpage}{111}
@@ -337,9 +337,9 @@
 \indexentry{overlapThreshold2|hyperpage}{114}
 \indexentry{computeSPHJacobian|hyperpage}{114}
 \indexentry{directionalOverlapCorrection|hyperpage}{114}
-\indexentry{contact!examples|hyperpage}{114}
-\indexentry{DFG!large deformation contact|hyperpage}{114}
-\indexentry{cohesive zone!explicit surface contact|hyperpage}{114}
+\indexentry{contact!examples|hyperpage}{115}
+\indexentry{DFG!large deformation contact|hyperpage}{115}
+\indexentry{cohesive zone!explicit surface contact|hyperpage}{115}
 \indexentry{contact!input summary|hyperpage}{116}
 \indexentry{robustness controls|hyperpage}{117}
 \indexentry{particle deletion|hyperpage}{117}

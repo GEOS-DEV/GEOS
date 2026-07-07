@@ -50,7 +50,7 @@
   \item cohesive traction, \hyperpage{97}
   \item cohesive zone, \hyperpage{29}, \hyperpage{96}
     \subitem constitutive models, \hyperpage{99}
-    \subitem explicit surface contact, \hyperpage{114}
+    \subitem explicit surface contact, \hyperpage{115}
     \subitem force update, \hyperpage{97}
     \subitem implementation, \hyperpage{96}
     \subitem initialization, \hyperpage{97}
@@ -92,16 +92,16 @@
   \item constitutiveUpdateFlag, \hyperpage{117}
   \item contact, \hyperpage{33}
     \subitem activation, \hyperpage{105}
-    \subitem examples, \hyperpage{114}
+    \subitem examples, \hyperpage{115}
     \subitem friction, \hyperpage{112}
     \subitem friction table, \hyperpage{113}
-    \subitem gap closure, \hyperpage{104}, \hyperpage{112}
+    \subitem gap closure, \hyperpage{105}, \hyperpage{112}
     \subitem input summary, \hyperpage{116}
-    \subitem logistic regression, \hyperpage{109}
-    \subitem multi-field, \hyperpage{104}
-    \subitem normal, \hyperpage{104}
+    \subitem logistic regression, \hyperpage{110}
+    \subitem multi-field, \hyperpage{105}
+    \subitem normal, \hyperpage{105}
     \subitem normal weighting, \hyperpage{111}
-    \subitem options, \hyperpage{104}
+    \subitem options, \hyperpage{105}
     \subitem prescribed groups, \hyperpage{106}
     \subitem separability, \hyperpage{112}
     \subitem surface normal, \hyperpage{108}
@@ -138,7 +138,7 @@
     \subitem ceramic, \hyperpage{47}
     \subitem PFW example, \hyperpage{140}
     \subitem regularization, \hyperpage{47}
-  \item damage-field gradient, \hyperpage{104}
+  \item damage-field gradient, \hyperpage{105}
   \item damage-field-gradient partitioning
     \subitem neighbor list, \hyperpage{12}
   \item damageFieldPartitioning, \hyperpage{106}
@@ -150,9 +150,9 @@
     \subitem event controls, \hyperpage{161}
   \item dependencies
     \subitem PFW, \hyperpage{122}
-  \item DFG, \hyperpage{104}
+  \item DFG, \hyperpage{105}
     \subitem CeramicDamage, \hyperpage{47}
-    \subitem large deformation contact, \hyperpage{114}
+    \subitem large deformation contact, \hyperpage{115}
     \subitem neighbor list, \hyperpage{11}
     \subitem partitioning, \hyperpage{106}
     \subitem PFW example, \hyperpage{140}
@@ -348,7 +348,7 @@
   \item linked reports, \hyperpage{170}
   \item liquid model, \hyperpage{69}
   \item LLNL-specific material models, \hyperpage{170}
-  \item LogisticRegression, \hyperpage{109}
+  \item LogisticRegression, \hyperpage{110}
 
   \indexspace
 
@@ -450,7 +450,7 @@
   \item \texttt{objects}, \hyperpage{126}
   \item output controls
     \subitem PFW, \hyperpage{152}
-  \item overdensification, \hyperpage{104}
+  \item overdensification, \hyperpage{105}
   \item overlapCorrection, \hyperpage{114}
   \item overlapThreshold1, \hyperpage{114}
   \item overlapThreshold2, \hyperpage{114}

@@ -76,6 +76,10 @@ pfw["zmax"] =  0.5 * cell_size
 # constitutive thin-film curve.  Use a deliberately slow cosine ramp so the
 # boundary reactions approach the quasi-static analytical update.
 stop_time = 20.0
+# The constitutive fit is reference-temperature based, but this verification
+# should run at a fixed physical temperature.  Initialize both particle and
+# cohesive-zone temperatures to 300 K through the particle file and an event.
+benchmark_temperature = float(os.environ.get("SURFACE_POLYMER_TEMPERATURE", "300.0"))
 pfw["endTime"] = stop_time
 pfw["plotInterval"] = stop_time / 4.0
 pfw["restartInterval"] = 2.0 * stop_time
@@ -124,7 +128,7 @@ pfw["plottableFields"] = [
 # retains surface fields because the cohesive-zone event builds an interface from flagged
 # surfaces, surface normals, and surface positions.
 pfw["particleFileFields"] = [
-        'Velocity', 'MaterialType', 'ContactGroup', 'SurfaceFlag', 'CZTag', 'RVector',
+        'Velocity', 'MaterialType', 'ContactGroup', 'Temperature', 'SurfaceFlag', 'CZTag', 'RVector',
         "SurfaceNormal",
         "SurfacePosition"
 ]
@@ -148,6 +152,18 @@ elastic_tie_cz = material_db.surfacePolymerVerificationElasticTieCohesiveZone.co
 polymer_cz = material_db.vitonFKM75SurfacePolymerCohesiveZone.copy()
 
 polymer_cz["thickness"] = film_thickness
+
+def temperature_profile_event():
+    # TemperatureProfile updates both active particles and all cohesive-zone entries.
+    # Keep it active over the full run with a constant table so the benchmark
+    # response is at the requested physical temperature rather than the material
+    # reference temperature used by the constitutive cards.
+    return f"""
+<TemperatureProfile
+    time="0.0"
+    interval="{stop_time}"
+    temperatureTable="{{{{0.0, {benchmark_temperature}}}, {{{stop_time}, {benchmark_temperature}}}}}"
+    interpolationType="Linear"/>"""
 
 def continuum_interface_tag(pt):
     # Lower bar/polymer interface gets tag 0 and upper bar/polymer interface gets tag 1.
@@ -228,7 +244,7 @@ if model_kind == "continuum":
     name="surfacePolymerElasticTieEvent"
     startTime="0.0"
     regionNames="{surfacePolymerLowerElasticTieRegion, surfacePolymerUpperElasticTieRegion}"
-    czVolumeNormalization="1"/>"""
+    czVolumeNormalization="1"/>""" + temperature_profile_event()
 else:
     pfw["useEvents"] = 1
     pfw["materials"] = [block["name"]]
@@ -264,7 +280,7 @@ else:
     name="surfacePolymerCZEvent"
     startTime="0.0"
     regionNames="{surfacePolymerCZRegion}"
-    czVolumeNormalization="1"/>"""
+    czVolumeNormalization="1"/>""" + temperature_profile_event()
 
 pfw_expected = {
     "variant_label": variant_label,
@@ -275,6 +291,7 @@ pfw_expected = {
     "gage_length": domain_height,
     "film_thickness": film_thickness,
     "stop_time": stop_time,
+    "benchmark_temperature": benchmark_temperature,
     "bulk_modulus": polymer["defaultBulkModulus"],
     "shear_modulus": polymer["defaultShearModulus"],
     "default_yield_strength": polymer["defaultYieldStrength"],

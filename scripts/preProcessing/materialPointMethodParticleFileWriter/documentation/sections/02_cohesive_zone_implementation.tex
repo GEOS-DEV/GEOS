@@ -175,12 +175,22 @@ where \(h=\texttt{thickness}\).  The normal volumetric film stress is retained, 
 \end{align}
 The optional \texttt{compressivePressureStrengtheningCap} has the same meaning as in the continuum model: it caps only pressure-assisted deviatoric strength, not the compressive normal traction carried by the finite-thickness layer.
 
-The cohesive chain stretch is computed from a thin-film deformation gradient formed from normal jump and tangential slip.  Maximum-stretch failure is not pressure-gated,
+The cohesive chain stretch is computed by passing a thin-film deformation gradient formed from normal jump and tangential slip through the same helper used by the continuum model.  In schematic form,
+\begin{equation}
+  \mathbf F_{film}=\begin{bmatrix}
+    1 & \gamma & 0\\
+    0 & 1+\epsilon_n & 0\\
+    0 & 0 & 1
+  \end{bmatrix},
+  \qquad
+  \lambda_{chain}^{cz}=\max\left(\lambda_{max,p}^{cz}, J_{film}^{-1/3}\lambda_{max,p}^{cz}\right).
+\end{equation}
+Maximum-stretch failure is not pressure-gated,
 \begin{equation}
   \lambda_{chain}^{cz}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
   \label{eq:surface-polymer-cz-failure}
 \end{equation}
-Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
+Thus pure compression can be supported by the film stiffness and volumetric stress, while compression plus large shear or constrained deformation can still reach finite chain extensibility.  The model uses the same reference-temperature scale, crystallinity controls, softening parameters, hardening exponent, chain-stretch measure, and pressure cap as \texttt{SurfaceInformedPolymer}.  It is intended for thin polymer layers represented as cohesive interfaces, not for zero-thickness brittle fracture.
 
 
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
