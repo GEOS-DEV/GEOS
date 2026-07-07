@@ -258,6 +258,15 @@ public:
                        MeshLevel & mesh,
                        MPI_Op op );
 
+  void replaceGridFieldsOwnerToGhost( stdVector< std::string > const & fieldNames,
+                                      DomainPartition & domain,
+                                      NodeManager & nodeManager,
+                                      MeshLevel & mesh );
+
+  void synchronizePostBoundaryKinematicFieldsForG2P( DomainPartition & domain,
+                                                     NodeManager & nodeManager,
+                                                     MeshLevel & mesh );
+
   /**
    * @brief Computes a per-step active grid-field mask from synchronized grid mass.
    *

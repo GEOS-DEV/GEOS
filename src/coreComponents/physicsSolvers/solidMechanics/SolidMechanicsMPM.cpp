@@ -4043,6 +4043,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                                   particleManager,
                                                                   nodeManager,
                                                                   partition );
+  synchronizePostBoundaryKinematicFieldsForG2P( domain,
+                                                nodeManager,
+                                                mesh );
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 15. Map grid state back to particles.
@@ -9963,45 +9966,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       event.setIsComplete( 1 );
     }
 
-    if( event.getCatalogName() == "DeformationUpdate" )
-    {
-       DeformationUpdateMPMEvent & deformationUpdate = dynamicCast< DeformationUpdateMPMEvent & >( event );
-
-        m_prescribedFTable = deformationUpdate.getPrescribedFTable();
-        m_prescribedBoundaryFTable = deformationUpdate.getPrescribedBoundaryFTable();
-        m_stressControl = deformationUpdate.getStressControl();
-
-        m_fTableInterpType = deformationUpdate.getFTableInterpolation();
-        m_stressTableInterpType = deformationUpdate.getStressTableInterpolation();
-
-        m_fTable = deformationUpdate.getFTable();
-        m_stressTable = deformationUpdate.getStressTable();
-
-        // F table
-        for( int i  = 0; i < m_fTable.size( 0 ); ++i)
-        {
-          // Update time of table relative to simulation time
-          m_fTable[i][0] += time_n;
-          
-          // Use instantaneous domain values and start deformation from there
-          if( deformationUpdate.getRelativeDeformation() )
-          {
-            for( int j = 0; j < 3; ++j)
-            {
-              m_fTable[i][j+1] *= m_domainF[j];
-            }   
-          }  
-        }
-
-        // Stress table
-        for( int i  = 0; i < m_stressTable.size( 0 ); ++i)
-        {
-          // Update time of table relative to simulation time
-          m_stressTable[i][0] += time_n;
-        }
-
-        event.setIsComplete( 1 );
-    }
 
     if( event.getCatalogName() == "ReferenceCohesiveZones" )
     {
@@ -14746,6 +14710,101 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                     iComm,
                                                     syncGridOnDevice,
                                                     unpackEvents2 );
+}
+
+/**
+ * @brief Replaces ghost-node copies with owner/master-node values for non-additive grid fields.
+ *
+ * This is the owner-to-ghost half of syncGridFields().  It must be used for
+ * post-BC kinematic fields because a ghost-to-owner MPI_SUM reduction would add
+ * already-final velocities/accelerations and corrupt the owner value.
+ */
+void SolidMechanicsMPM::replaceGridFieldsOwnerToGhost( stdVector< std::string > const & fieldNames,
+                                                       DomainPartition & domain,
+                                                       NodeManager & nodeManager,
+                                                       MeshLevel & mesh )
+{
+  GEOS_MARK_FUNCTION;
+
+  if( fieldNames.empty() )
+  {
+    return;
+  }
+
+  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+  if( neighbors.empty() )
+  {
+    return;
+  }
+
+  bool const syncGridOnDevice = false;
+
+  for( auto const & name : fieldNames )
+  {
+    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+    wrapper.move( LvArray::MemorySpace::host, true );
+  }
+
+  FieldIdentifiers fieldsToBeSynced;
+  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
+
+  MPI_iCommData iComm;
+  iComm.resize( neighbors.size() );
+
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
+                                                                  mesh,
+                                                                  neighbors,
+                                                                  iComm,
+                                                                  syncGridOnDevice );
+
+  parallelDeviceEvents packEvents;
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
+                                               mesh,
+                                               neighbors,
+                                               iComm,
+                                               syncGridOnDevice,
+                                               packEvents );
+
+  waitAllDeviceEvents( packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors,
+                                                   iComm,
+                                                   syncGridOnDevice,
+                                                   packEvents );
+
+  parallelDeviceEvents unpackEvents;
+  CommunicationTools::getInstance().finalizeUnpack( mesh,
+                                                    neighbors,
+                                                    iComm,
+                                                    syncGridOnDevice,
+                                                    unpackEvents );
+}
+
+/**
+ * @brief Synchronizes final post-BC kinematic grid fields before G2P gathers.
+ *
+ * P2G grid fields are synchronized before grid dynamics/contact, but essential
+ * boundary conditions are applied after that sync and immediately before G2P.
+ * Owned particles may gather from shared ghost nodes near partition boundaries;
+ * therefore the final non-additive kinematic fields used by PIC/FLIP/XPIC/FMPM
+ * must be owner-replaced after BC enforcement.
+ */
+void SolidMechanicsMPM::synchronizePostBoundaryKinematicFieldsForG2P( DomainPartition & domain,
+                                                                      NodeManager & nodeManager,
+                                                                      MeshLevel & mesh )
+{
+  stdVector< std::string > fieldNames = { viewKeyStruct::gridVelocityString(),
+                                          viewKeyStruct::gridAccelerationString(),
+                                          viewKeyStruct::gridDVelocityString() };
+
+  if( m_updateMethod == mpm::UpdateMethodOption::FMPM )
+  {
+    fieldNames.push_back( viewKeyStruct::gridUncontactedVelocityString() );
+  }
+
+  replaceGridFieldsOwnerToGhost( fieldNames,
+                                 domain,
+                                 nodeManager,
+                                 mesh );
 }
 
 
