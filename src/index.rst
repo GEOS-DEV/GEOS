@@ -39,7 +39,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        :ref:`QuickStart`
+        .. button-link:: QuickStart.html
             :expand:
             :color: info
             :click-parent:
@@ -55,7 +55,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        :ref:`Tutorials`
+        .. button-link:: tutorials/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -71,7 +71,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        :ref:`BasicExamples`
+        .. button-link:: basicExamples/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -87,7 +87,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        :ref:`AdvancedExamples`
+        .. button-link:: advancedExamples/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -103,7 +103,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        :ref:`UserGuide`
+        .. button-link:: userGuide/Index.html
             :expand:
             :color: info
             :click-parent:
