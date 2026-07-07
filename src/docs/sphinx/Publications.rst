@@ -20,11 +20,6 @@ Referencing GEOS
 Preprints and Early-Views
 =========================
 
-.. list-table::
-   :widths: 100
-   :header-rows: 0
-
-
 
 2026
 ====
