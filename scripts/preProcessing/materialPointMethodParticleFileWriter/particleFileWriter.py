@@ -726,6 +726,7 @@ parameters = {
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
+               'eventReporting': (None, True), # MPM: enable event information reporting.
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
                'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
@@ -780,7 +781,7 @@ parameters = {
                'normalAndPositionMethod': ( None, True ),  # MPM: surface normal/position method.
                'numSurfaceIntegrationPoints': ( None, True ),  # MPM: surface integration points per cohesive node.
                'objects': ( None, False ),  # PFW: geometric objects used to create particles.
-               'outputType': ( 'vtk', False ),  # PFW: plot-file backend.
+               'outputType': ( 'silo', False ),  # PFW: plot-file backend.
                'overlapCorrection': ( None, True ),  # MPM: overlap-correction mode.
                'overlapThreshold1': ( None, True ),  # MPM: first overlap-correction threshold.
                'overlapThreshold2': ( None, True ),  # MPM: second overlap-correction threshold.
@@ -1503,7 +1504,7 @@ if generateParticleFile:
                                                     + str(matDir[1]) + delim \
                                                     + str(matDir[2]) + delim + "0" + delim + "1" + delim + "0" + delim + "0" + delim + "0" + delim + "1"
                         else:
-                          print("matDir isn't the size 3 or 3x3")
+                          print("matDir isn't the size 3 or 3x3", matDir, object, object.name)
 
                       if "SurfaceNormal" in particleFileFields:
                         if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):

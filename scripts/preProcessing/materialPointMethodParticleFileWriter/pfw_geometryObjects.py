@@ -8539,6 +8539,9 @@ class materialDirectionWrapper(BaseWrapper):
                matDir):
     super().__init__(name,
                      subObject)
+    if np.shape(matDir) == (2,):
+        matDir = np.append(matDir, 0.0)
+        log2file("Material direction wrapper passed 2d material direction (appending 0.0 to end)")
 
     if np.shape(matDir) == (3,):
       # matDir will be a row-wise 3x3 where the first row is u1=matDir_3x1, and rows 2 and 3 are orthogonal.
@@ -10197,8 +10200,14 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
     self.x0 = 0.5*(x1+x2) # box center.
     
     # if specified define self.matDir, otherwise it will be inherited from subobject
-    if (matDir is not None):
-      self.matDir = matDir
+    if matDir is None and layerNormal is None:
+      raise "Must specify matDir and/or layerNormal for layeredStrengthScaleBoxWrapper"
+    
+    self.matDir = np.asarray(matDir)
+    matDir_sz = np.size(self.matDir)
+    if (matDir_sz == 2):
+      self.matDir = np.append(self.matDir, 0.0)
+      matDir_sz = 3
    
     # corner to corner vector for bounding box, used to define slices.
     h = np.linalg.norm(x2[:dim]-x1[:dim]) 
@@ -10212,15 +10221,14 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
     # multiple directions, matDirs that will be stored in the matDir variable 
     # read by pfw.  By default we let layer normal be the first direction.    
     if layerNormal is None:    
-      if (np.size(matDir) == 9):
-        self.layerNormal = np.asarray(matDir[0])
-      elif (np.size(matDir) == 3):
-        self.layerNormal = np.asarray(matDir)
+      if (matDir_sz == 9):
+        self.layerNormal = np.asarray(self.matDir[0])
+      elif (matDir_sz == 3):
+        self.layerNormal = np.asarray(self.matDir)
     else:
       self.layerNormal = layerNormal
     norm = np.linalg.norm(self.layerNormal)
     self.layerNormal = self.layerNormal / norm
-       
 
     # number of slices for strength scale layers based on prescribed thickness
     # adjusted to have an integer number of slices.
