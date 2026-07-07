@@ -35,6 +35,7 @@ set( events_headers
      mpmEvents/MaterialSwapMPMEvent.hpp
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/InitializeStressMPMEvent.hpp
+     mpmEvents/SetInitialTemperatureAndPressureMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
      mpmEvents/PolymerHealMPMEvent.hpp
      mpmEvents/CrystalHealMPMEvent.hpp
@@ -68,6 +69,7 @@ set( events_sources
      mpmEvents/MaterialSwapMPMEvent.cpp
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/InitializeStressMPMEvent.cpp
+     mpmEvents/SetInitialTemperatureAndPressureMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
      mpmEvents/PolymerHealMPMEvent.cpp
      mpmEvents/CrystalHealMPMEvent.cpp

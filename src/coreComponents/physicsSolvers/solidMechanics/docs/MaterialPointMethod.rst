@@ -343,7 +343,7 @@ Inputs are:
 Graphite
 --------------------------
 
-Transversely isotropic constitutive model defined by a basal plane material direction
+Transversely isotropic damage/plasticity model for graphitic materials with a basal-plane normal stored in the first row of ``MaterialDirection``.  The current MPM form uses signed distortion, in-plane shear, and coupled weak-plane shear modes with pressure-dependent point-slope strengths.  A finite ``basalPlaneFractureEnergyReleaseRate`` activates an energy-regularized pre-plastic basal-normal tensile return whose peak normal strength is implied by the positive signed-distortion yield branch.  When ``maximumPrincipalStressDamage=1``, ``failureStrength`` is the maximum-principal tensile strength and ``totalFractureEnergyReleaseRate`` regularizes that principal-stress brittle return.  ``crackSpeed`` defaults to ``DBL_MAX`` and, when finite, caps the per-step damage increase rather than replacing the fracture-energy normalization.
 
 Geomechanics
 -------------------------

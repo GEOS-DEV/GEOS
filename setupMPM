@@ -24,6 +24,13 @@
 # This keeps the otherwise minimal MPM build profile, but preserves VTK_DIR and
 # enables GEOS VTK output classes.  It does not build the VTK TPL from source.
 #
+# Optional RZHound minimal-TPL bootstrap:
+#   ./setupMPM --rzhound --build-tpls --tpl-dir /usr/WS1/$USER/GEOS_TPL --configure-only
+# This runs the RZHound TPL builder before configuring GEOS, then uses the
+# resulting flat TPL view through --tpl-dir.  The TPL build is intentionally
+# RZHound-only because Dane and Tuolumne normally use site-provided TPL stacks or
+# separate machine-specific build recipes.
+#
 # Optional stand-alone constitutive material-point driver:
 #   ./setupMPM --dane --enable-material-point-driver
 #   ./setupMPM --tuolumne --enable-material-point-driver
@@ -66,7 +73,7 @@ Options:
   --run-root DIR            Active-machine defaultRunDirectory root.
                             Default: /p/lustre1/$USER/geosxRuns on Dane,
                             /p/lustre5/$USER/geosxRuns on Tuolumne,
-                            /p/lustre2/$USER/geosxRuns on RZHound.
+                            /p/lustre1/$USER/geosxRuns on RZHound.
   --test-dir DIR            Active-machine testRunDirectory.
   --default-run-dir DIR     Active-machine defaultRunDirectory. Default: RUN_ROOT.
   --build-root DIR          Active-machine CMake build root. Default: repo root.
@@ -103,7 +110,7 @@ Options:
   --install-root DIR        Active-machine CMake install root.
                             Default: /p/lustre1/$USER/geosxInstalls on Dane,
                             /p/lustre5/$USER/geosxInstalls on Tuolumne,
-                            /p/lustre2/$USER/geosxInstalls on RZHound.
+                            /p/lustre1/$USER/geosxInstalls on RZHound.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
   --enable-vtk, --with-vtk, --build-vtk
@@ -147,7 +154,14 @@ Options:
   --leos-header HEADER      Optional C++ include token for the LEOS wrapper, e.g.
                             <LEOS/LEOS.hh> or "/path/to/LEOS.hh". Implies --enable-leos.
   --tpl-dir DIR             Existing minimal TPL install/view root. If provided, exported as
-                            GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure.
+                            GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure
+                            and passed to CMake as -DGEOS_TPL_DIR=DIR.
+  --build-tpls              Build the RZHound minimal TPL view before configuring GEOS.
+                            Currently supported only with --rzhound. If --tpl-dir
+                            is not supplied, defaults to /usr/WS1/$USER/GEOS_TPL.
+                            Pass --enable-vtk as well if the TPL view should include VTK.
+  --tpl-builder FILE        RZHound TPL builder script to run for --build-tpls.
+                            Default: ./build_rzhound_mpm_tpls.sh in this checkout.
   --queue QUEUE             Tuolumne Flux queue written to runClean_$USER.sh. Default: pdebug
   --flux-time TIME          Tuolumne Flux walltime written to runClean_$USER.sh. Default: 30m
   --jobs N                  Build parallelism. Default: GEOS_BUILD_JOBS or 32
@@ -171,7 +185,8 @@ Options:
   --overwrite-userdefs      Replace a non-generated mpm/userDefs_$USER.py.
                             Generated files preserve inactive machine entries.
   --overwrite-runclean      Replace mpm/runClean_$USER.sh.
-  --skip-build, --no-build  Generate local files but do not configure or build.
+  --skip-build, --no-build  Generate local files but do not configure/build GEOS.
+                            An explicit --build-tpls request still runs first.
   --configure-only          Configure CMake but do not build.
   --dry-run                 Print actions without changing files.
   -h, --help                Show this help.
@@ -397,6 +412,16 @@ truthy() {
   esac
 }
 
+run_with_optional_timeout() {
+  local seconds="$1"
+  shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$seconds" "$@"
+  else
+    "$@"
+  fi
+}
+
 find_vtk_config() {
   local vtk_root="$1"
   [ -d "$vtk_root" ] || return 1
@@ -555,9 +580,14 @@ detect_bank() {
     return 0
   fi
 
-  local output parsed
+  local output parsed bank_timeout
+  bank_timeout="${GEOS_MPM_BANK_QUERY_TIMEOUT:-8s}"
   if command -v mshare >/dev/null 2>&1; then
-    output=$(mshare 2>/dev/null || mshare -u "$LC_USER" -p ALL 2>/dev/null || mshare -u "$LC_USER" 2>/dev/null || mshare "$LC_USER" 2>/dev/null || true)
+    output=$(run_with_optional_timeout "$bank_timeout" mshare 2>/dev/null ||
+             run_with_optional_timeout "$bank_timeout" mshare -u "$LC_USER" -p ALL 2>/dev/null ||
+             run_with_optional_timeout "$bank_timeout" mshare -u "$LC_USER" 2>/dev/null ||
+             run_with_optional_timeout "$bank_timeout" mshare "$LC_USER" 2>/dev/null ||
+             true)
     parsed=$(parse_mshare_bank "$output" || true)
     if [ -n "$parsed" ]; then
       printf '%s\n' "$parsed"
@@ -566,7 +596,9 @@ detect_bank() {
   fi
 
   if command -v bankinfo >/dev/null 2>&1; then
-    output=$(bankinfo -u "$LC_USER" 2>/dev/null || bankinfo 2>/dev/null || true)
+    output=$(run_with_optional_timeout "$bank_timeout" bankinfo -u "$LC_USER" 2>/dev/null ||
+             run_with_optional_timeout "$bank_timeout" bankinfo 2>/dev/null ||
+             true)
     parsed=$(parse_bankinfo_bank "$output" || true)
     if [ -n "$parsed" ]; then
       printf '%s\n' "$parsed"
@@ -1267,6 +1299,39 @@ load_rzhound_modules() {
   load_module_any "CMake" cmake/3.26.3 cmake/3.29.2
   load_module_any "Ninja" ninja/1.10.2 ninja
 }
+
+export_tpl_dir_if_requested() {
+  if [ -n "$TPL_DIR" ]; then
+    if [ ! -d "$TPL_DIR" ]; then
+      if [ "$DRY_RUN" -eq 1 ] && [ "$BUILD_TPLS" -eq 1 ]; then
+        log "dry-run: TPL directory does not exist yet but would be created by --build-tpls: $TPL_DIR"
+      else
+        fail "TPL directory does not exist: $TPL_DIR. Pass an existing directory with --tpl-dir or use --build-tpls on RZHound."
+      fi
+    fi
+    export GEOS_TPL_DIR="$TPL_DIR"
+    export GEOS_MPM_TPL_DIR="$TPL_DIR"
+    log "using minimal TPL dir: $TPL_DIR"
+  fi
+}
+
+build_tpls_if_requested() {
+  if [ "$BUILD_TPLS" -ne 1 ]; then
+    return 0
+  fi
+
+  local tpl_cmd
+  tpl_cmd=("bash" "$TPL_BUILDER" "--tpl-root" "$TPL_DIR" "--geos-root" "$REPO_ROOT_PHYSICAL" "--jobs" "$JOBS")
+  if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
+    tpl_cmd+=("--enable-vtk")
+  fi
+  if [ "$LOAD_MODULES" -ne 1 ]; then
+    tpl_cmd+=("--no-modules")
+  fi
+
+  log "building RZHound minimal TPL view at $TPL_DIR"
+  run_cmd "${tpl_cmd[@]}"
+}
 prepare_tuolumne_environment() {
   load_tuolumne_modules
 
@@ -1278,12 +1343,7 @@ prepare_tuolumne_environment() {
   export HSA_XNACK="${HSA_XNACK:-1}"
   export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 
-  if [ -n "$TPL_DIR" ]; then
-    [ -d "$TPL_DIR" ] || fail "TPL directory does not exist: $TPL_DIR. Pass an existing directory with --tpl-dir."
-    export GEOS_TPL_DIR="$TPL_DIR"
-    export GEOS_MPM_TPL_DIR="$TPL_DIR"
-    log "using minimal TPL dir: $TPL_DIR"
-  fi
+  export_tpl_dir_if_requested
 }
 
 prepare_dane_environment() {
@@ -1292,6 +1352,8 @@ prepare_dane_environment() {
   # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
+
+  export_tpl_dir_if_requested
 }
 
 prepare_rzhound_environment() {
@@ -1300,6 +1362,8 @@ prepare_rzhound_environment() {
   # Do not let a previous Tuolumne/ROCm environment leak into a CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
+
+  export_tpl_dir_if_requested
 }
 
 prepare_build_environment() {
@@ -1308,21 +1372,17 @@ prepare_build_environment() {
       prepare_tuolumne_environment
       ;;
     dane)
-      if [ -n "$TPL_DIR" ]; then
-        log "ignoring --tpl-dir for Dane CPU setup"
-      fi
       prepare_dane_environment
       ;;
     rzhound)
-      if [ -n "$TPL_DIR" ]; then
-        log "ignoring --tpl-dir for RZHound CPU setup"
-      fi
       prepare_rzhound_environment
       ;;
   esac
 }
 
 configure_and_build() {
+  build_tpls_if_requested
+
   if [ "$SKIP_BUILD" -eq 1 ]; then
     log "skipping CMake configure/build"
     return 0
@@ -1426,6 +1486,9 @@ configure_and_build() {
     config_cmd+=(--buildpath "$BUILD_DIR")
   else
     config_cmd+=(--buildrootdir "$BUILD_ROOT")
+  fi
+  if [ -n "$TPL_DIR" ]; then
+    config_cmd+=("-DGEOS_TPL_DIR=$TPL_DIR")
   fi
   if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
     # Preserve the MPM minimal build, but enable the VTK-backed output code.
@@ -1572,6 +1635,8 @@ if [ -n "$VTK_DIR_OVERRIDE" ]; then
   ENABLE_MPM_VTK=1
 fi
 TPL_DIR=""
+BUILD_TPLS=0
+TPL_BUILDER=""
 DEFAULT_QUEUE="pdebug"
 LOAD_MODULES=1
 MODULE_PURGE=0
@@ -1827,6 +1892,16 @@ while [ "$#" -gt 0 ]; do
       TPL_DIR="$2"
       shift 2
       ;;
+    --build-tpls|--build-rzhound-tpls|--build-rzhound-mpm-tpls)
+      BUILD_TPLS=1
+      shift
+      ;;
+    --tpl-builder|--tpl-build-script)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      TPL_BUILDER="$2"
+      BUILD_TPLS=1
+      shift 2
+      ;;
     --queue)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       DEFAULT_QUEUE="$2"
@@ -1914,6 +1989,9 @@ fi
 if [ "$REBUILD_ONLY" -eq 1 ] && [ "$SKIP_BUILD" -eq 1 ]; then
   fail "--rebuild cannot be combined with --skip-build/--no-build"
 fi
+if [ "$REBUILD_ONLY" -eq 1 ] && [ "$BUILD_TPLS" -eq 1 ]; then
+  fail "--rebuild cannot be combined with --build-tpls because rebuild mode does not reconfigure GEOS"
+fi
 if [ "$BUILD_TARGET" = "geos_mpm_material_point_driver" ]; then
   if [ "$MPM_MATERIAL_POINT_DRIVER_DISABLED_EXPLICITLY" -eq 1 ]; then
     fail "--build-target geos_mpm_material_point_driver cannot be combined with --disable-material-point-driver"
@@ -1979,6 +2057,19 @@ fi
 if [ -n "$TPL_DIR" ]; then
   TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
 fi
+if [ "$BUILD_TPLS" -eq 1 ]; then
+  [ "$SETUP_MACHINE" = "rzhound" ] || fail "--build-tpls is currently supported only with --rzhound"
+  if [ -z "$TPL_DIR" ]; then
+    TPL_DIR="/usr/WS1/$LC_USER/GEOS_TPL"
+  fi
+  TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
+  if [ -z "$TPL_BUILDER" ]; then
+    TPL_BUILDER="$REPO_ROOT_PHYSICAL/build_rzhound_mpm_tpls.sh"
+  else
+    TPL_BUILDER=$(abs_path "$TPL_BUILDER")
+  fi
+  [ -f "$TPL_BUILDER" ] || fail "RZHound TPL builder not found: $TPL_BUILDER. Pass --tpl-builder /path/to/build_rzhound_mpm_tpls.sh."
+fi
 if [ -n "$VTK_DIR_OVERRIDE" ]; then
   VTK_DIR_OVERRIDE=$(trim_trailing_slashes "$(abs_path "$VTK_DIR_OVERRIDE")")
 fi
@@ -2034,9 +2125,9 @@ case "$SETUP_MACHINE" in
     DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre5/$LC_USER/geosxInstalls"
     ;;
   rzhound)
-    DEFAULT_ACTIVE_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
-    DEFAULT_ACTIVE_TEST_DIR="/p/lustre2/$LC_USER/geosxTests"
-    DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre2/$LC_USER/geosxInstalls"
+    DEFAULT_ACTIVE_RUN_ROOT="/p/lustre1/$LC_USER/geosxRuns"
+    DEFAULT_ACTIVE_TEST_DIR="/p/lustre1/$LC_USER/geosxTests"
+    DEFAULT_ACTIVE_INSTALL_ROOT="/p/lustre1/$LC_USER/geosxInstalls"
     ;;
  esac
 
@@ -2165,14 +2256,14 @@ if [ -n "$RZHOUND_RUN_ROOT_OVERRIDE" ]; then
 elif [ "$SETUP_MACHINE" = "rzhound" ]; then
   RZHOUND_RUN_ROOT="$RUN_ROOT"
 else
-  RZHOUND_RUN_ROOT="/p/lustre2/$LC_USER/geosxRuns"
+  RZHOUND_RUN_ROOT="/p/lustre1/$LC_USER/geosxRuns"
 fi
 if [ -n "$RZHOUND_TEST_RUN_DIR_OVERRIDE" ]; then
   RZHOUND_TEST_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_TEST_RUN_DIR_OVERRIDE")")
 elif [ "$SETUP_MACHINE" = "rzhound" ]; then
   RZHOUND_TEST_RUN_DIR="$TEST_RUN_DIR"
 else
-  RZHOUND_TEST_RUN_DIR="/p/lustre2/$LC_USER/geosxTests"
+  RZHOUND_TEST_RUN_DIR="/p/lustre1/$LC_USER/geosxTests"
 fi
 if [ -n "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE" ]; then
   RZHOUND_DEFAULT_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$RZHOUND_DEFAULT_RUN_DIR_OVERRIDE")")
@@ -2289,6 +2380,10 @@ log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"
 if [ -n "$TPL_DIR" ]; then
   log "TPL dir: $TPL_DIR"
+fi
+if [ "$BUILD_TPLS" -eq 1 ]; then
+  log "RZHound TPL build: enabled"
+  log "RZHound TPL builder: $TPL_BUILDER"
 fi
 log "Flux queue for generated runClean: $DEFAULT_QUEUE"
 log "Dane Slurm partition for generated runClean: $DANE_PARTITION"

@@ -41,6 +41,7 @@ namespace geos
 {
 
 class SpatialPartition;
+class SetInitialTemperatureAndPressureMPMEvent;
 
 /**
  * @class SolidMechanicsMPM
@@ -237,6 +238,9 @@ public:
                       const real64 time_n,
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
+
+  void setInitialTemperatureAndPressure( ParticleManager & particleManager,
+                                         SetInitialTemperatureAndPressureMPMEvent const & event );
 
   void checkEventCompletion( const real64 time_n );
 
