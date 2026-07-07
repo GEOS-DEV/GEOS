@@ -907,6 +907,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_enableWeakInterfaceTraceProjection( 0 ),
   m_enablePrescribedBoundaryTransverseVelocities(),
   m_enableSurfaceTension( 0 ),
+  m_eventReporting( 0 ),
   m_exactJIntegration( 0 ),
   m_explicitSurfaceNormalInfluence( 0.0 ),
   m_frictionCoefficient( -1.0 ),
@@ -1321,6 +1322,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable surface tension forces on particles" );
+
+  registerWrapper( "eventReporting", &m_eventReporting ).
+    setApplyDefaultValue( m_eventReporting ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to print event status information" );
 
   registerWrapper( "exactJIntegration", &m_exactJIntegration ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -8950,7 +8957,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         }
       }
 
-      // All dependencies are complete. Convert delay/duration into an absolute
+      // 3. All dependencies are complete. Convert delay/duration into an absolute
       // start/end time.
       real64 const scheduledStartTime = time_n + event.getDelay();
       real64 const scheduledEndTime = scheduledStartTime + event.getDuration();
@@ -8959,7 +8966,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       event.setStartTime( scheduledStartTime );
       event.setEndTime( scheduledEndTime );
 
-      GEOS_LOG_RANK_0( "Dependencies met for " << event.getName() << " (" << event.getCatalogName() << ")" << ", starting at " << event.getStartTime() << " and ending at " << event.getEndTime() );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, "Dependencies met, starting " << event.getName() << " (" << event.getCatalogName() << ")" << ", starting at " << event.getStartTime() << " and ending at " << event.getEndTime() );
     }
 
     real64 const startTime = event.getStartTime();
@@ -8973,12 +8980,12 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       return;
     }
 
-    // 5. This is the important fix missing from the feature branch:
-    //    non-dependent events also need hasStarted set, otherwise events that
+    // 5. Non-dependent events also need hasStarted set, otherwise events that
     //    depend on them may never trigger unless the event manually sets complete.
     if( !event.hasStarted() )
     {
       event.setHasStarted( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, "Started " << event.getName() << " (" << event.getCatalogName() << ")" << " at " << time_n );
     }
 
     // ------------------------------------------------------------------------------------------------------
@@ -8991,6 +8998,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       GEOS_LOG_RANK_0( "Performing material swap" );
       performMaterialSwap( particleManager, materialSwap.getSourceRegion(), materialSwap.getDestinationRegion() );
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (MaterialSwap) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "UpdateSurfaces" )
@@ -9184,6 +9192,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( time_n >= endTime - dt / 2 )
       {
         event.setIsComplete( 1 );
+        GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (Anneal) completed at " << time_n);
       }
     }
 
@@ -9209,6 +9218,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         } );
       } );
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (Heal) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "InsertPeriodicContactSurfaces" )
@@ -9250,6 +9260,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         } );
       } );
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (InsertPeriodicContactSurfaces) completed at " << time_n);
     }
 
     // Resets kinematic damage to 0.0
@@ -9318,6 +9329,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         }
       } );
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (PolymerHeal) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "DeformationUpdate" )
@@ -9358,6 +9370,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       }
 
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (DeformationUpdate) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "CrystalHeal" )
@@ -9493,6 +9506,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                   }
                 } );
                 event.setIsComplete( 1 );
+                GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (CrystalHeal) completed at " << time_n);
               }
               else
               {
@@ -9636,6 +9650,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       initializeFrictionCoefficients();
 
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (FrictionCoefficientSwap) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "BodyForceUpdate" )
@@ -9646,46 +9661,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       LvArray::tensorOps::copy< 3 >( m_bodyForce, bodyForceUpdate.getBodyForce() );
 
       event.setIsComplete( 1 );
-    }
-
-    if( event.getCatalogName() == "DeformationUpdate" )
-    {
-       DeformationUpdateMPMEvent & deformationUpdate = dynamicCast< DeformationUpdateMPMEvent & >( event );
-
-        m_prescribedFTable = deformationUpdate.getPrescribedFTable();
-        m_prescribedBoundaryFTable = deformationUpdate.getPrescribedBoundaryFTable();
-        m_stressControl = deformationUpdate.getStressControl();
-
-        m_fTableInterpType = deformationUpdate.getFTableInterpolation();
-        m_stressTableInterpType = deformationUpdate.getStressTableInterpolation();
-
-        m_fTable = deformationUpdate.getFTable();
-        m_stressTable = deformationUpdate.getStressTable();
-
-        // F table
-        for( int i  = 0; i < m_fTable.size( 0 ); ++i)
-        {
-          // Update time of table relative to simulation time
-          m_fTable[i][0] += time_n;
-          
-          // Use instantaneous domain values and start deformation from there
-          if( deformationUpdate.getRelativeDeformation() )
-          {
-            for( int j = 0; j < 3; ++j)
-            {
-              m_fTable[i][j+1] *= m_domainF[j];
-            }   
-          }  
-        }
-
-        // Stress table
-        for( int i  = 0; i < m_stressTable.size( 0 ); ++i)
-        {
-          // Update time of table relative to simulation time
-          m_stressTable[i][0] += time_n;
-        }
-
-        event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (BodyForceUpdate) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "ReferenceCohesiveZones" )
@@ -9741,8 +9717,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
     if( event.getCatalogName() == "ResetDeformationGradient" )
     {
       m_resetDefGradForScaledSurfaceParticles = 1;
-
-      event.setIsComplete( 1 );
     }
 
     if( event.getCatalogName() == "TemperatureProfile" )
@@ -9805,6 +9779,7 @@ void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
     if( time_n > event.getEndTime() )
     {
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (" << event.getCatalogName() << ") completed at " << time_n);
       return;
     }
 
@@ -9813,16 +9788,19 @@ void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
     if( event.getCatalogName() == "MachineSample" )
     {
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (MachineSample) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "ResetDeformationGradient" )
     {
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (ResetDeformationGradient) completed at " << time_n);
     }
 
     if( event.getCatalogName() == "UpdateSurfaces" )
     {
       event.setIsComplete( 1 );
+      GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (UpdateSurfaces) completed at " << time_n);
     }
   } );
 }

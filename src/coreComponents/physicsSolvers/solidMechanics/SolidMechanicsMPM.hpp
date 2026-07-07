@@ -1278,6 +1278,7 @@ protected:
   int m_enableWeakInterfaceTraceProjection;
   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   int m_enableSurfaceTension;
+  int m_eventReporting;
   int m_exactJIntegration;
   real64 m_explicitSurfaceNormalInfluence;
   real64 m_frictionCoefficient;
