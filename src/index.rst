@@ -39,7 +39,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-link:: QuickStart.html
+        .. button-link:: docs/sphinx/QuickStart.html
             :expand:
             :color: info
             :click-parent:
@@ -55,7 +55,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-link:: tutorials/Index.html
+        .. button-link:: docs/sphinx/tutorials/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -71,7 +71,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-link:: basicExamples/Index.html
+        .. button-link:: docs/sphinx/basicExamples/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -87,7 +87,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-link:: advancedExamples/Index.html
+        .. button-link:: docs/sphinx/advancedExamples/Index.html
             :expand:
             :color: info
             :click-parent:
@@ -103,7 +103,7 @@ you have suggestions for improving the guides below, please post an issue on our
 
         +++
 
-        .. button-link:: userGuide/Index.html
+        .. button-link:: docs/sphinx/userGuide/Index.html
             :expand:
             :color: info
             :click-parent:
