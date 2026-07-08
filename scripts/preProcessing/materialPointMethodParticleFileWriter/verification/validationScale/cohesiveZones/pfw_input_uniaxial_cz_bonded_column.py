@@ -123,7 +123,7 @@ pfw["boxAverageWriteInterval"]=stopTime/2000
 
 pfw["frictionCoefficient"]=0.01
 pfw["contactGapCorrection"] = "Implicit"
-pfw["explicitSurfaceNormalInfluence"]= 1000.0
+pfw["explicitSurfaceNormalInfluence"]= 72.16878364870321
 pfw["useSurfacePositionForContact"]= 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
 

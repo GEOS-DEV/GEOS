@@ -87,7 +87,7 @@ pfw["maxParticleJacobian"]=10.0
 
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]=1
-pfw["explicitSurfaceNormalInfluence"]=1000
+pfw["explicitSurfaceNormalInfluence"]=266.7968432263687
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",

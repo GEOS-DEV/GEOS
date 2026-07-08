@@ -77,7 +77,7 @@ pfw["maxParticleJacobian"]=10.0
 
 pfw["enableContact"]=0 # Disabled to allow cz to interpentrate during initialization
 pfw["contactGapCorrection"] = "Implicit"
-pfw["explicitSurfaceNormalInfluence"]= 1000
+pfw["explicitSurfaceNormalInfluence"]= 200.0976324197765
 pfw["useSurfacePositionForContact"]= 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
 

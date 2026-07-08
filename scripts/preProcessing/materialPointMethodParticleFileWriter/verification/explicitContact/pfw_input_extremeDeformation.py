@@ -79,7 +79,7 @@ pfw["updateOrder"]=2
 
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]=1
-pfw["explicitSurfaceNormalInfluence"]=1000
+pfw["explicitSurfaceNormalInfluence"]=14.28717193729562
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
 
 pfw["particleFileFields"] = ["Velocity",

@@ -140,7 +140,7 @@ pfw["updateMethod"] = "FMPM"
 pfw["updateOrder"] = 2
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000
+pfw["explicitSurfaceNormalInfluence"] = 53.2702603781035
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 1
 
 # Current GEOS expects the writeStatistics enum string, not a legacy 0/1 flag.

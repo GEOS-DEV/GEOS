@@ -112,7 +112,8 @@ pfw["contactGapCorrection"] = "Implicit"   # Simple, Implicit, or Softened
 pfw["contactNormalType"] = "Aligned"        # pass-through solver key
 pfw["contactNormalExponent"] = 2.0           # pass-through solver key
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000.0
+# Dimensionless; the solver divides this by the active grid-cell diagonal.
+pfw["explicitSurfaceNormalInfluence"] = 25.0
 
 pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "SurfaceFlag", "RVector",
@@ -227,7 +228,8 @@ pfw["particleFileFields"] = [
 ]
 
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000.0
+# Dimensionless; the solver divides this by the active grid-cell diagonal.
+pfw["explicitSurfaceNormalInfluence"] = 25.0
 pfw["cohesiveFieldPartitioning"] = 1
 pfw["preventCZInterpenetration"] = 1
 

@@ -664,7 +664,7 @@ This solver has many solver specific variables. The following list describes eac
    * - real
      - explicitSurfaceNormalInfluence
      - 0.0
-     - Value determines weighting of explicit particle surface normals from implicit grid surface normals for contact calculations
+     - Dimensionless weighting of explicit particle surface normals relative to implicit grid surface normals for contact calculations; the solver divides this value by the active grid-cell diagonal before scattering
    * - bool
      - useSurfacePositionForContact
      - 0

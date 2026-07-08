@@ -133,10 +133,19 @@ The grid surface normal accumulated during particle-to-grid mapping has the form
 \begin{equation}
   \widetilde{\mathbf{n}}_{I\alpha}
   =\sum_{p\in\mathcal{P}_{I\alpha}} V_p\,\nabla N_{Ip}
-  +\eta\sum_{p\in\mathcal{P}^{s}_{I\alpha}} V_p N_{Ip}\,\mathbf{n}^{s}_p,
+  +\frac{\alpha}{h_{\mathrm{diag}}}
+   \sum_{p\in\mathcal{P}^{s}_{I\alpha}} V_p N_{Ip}\,\mathbf{n}^{s}_p,
   \label{eq:contact-normal-scatter}
 \end{equation}
-where $\mathcal{P}_{I\alpha}$ is the set of particles mapped to node $I$ and field $\alpha$, $\mathcal{P}^{s}_{I\alpha}$ is the subset with explicit surface normals, and $\eta=\texttt{explicitSurfaceNormalInfluence}$.  The first term is the implicit volume-gradient normal used by DFG-style surface reconstruction.  The second term lets explicitly supplied particle surface normals dominate the grid normal when the influence factor is chosen large enough.  The normalized vector is
+where $\mathcal{P}_{I\alpha}$ is the set of particles mapped to node $I$ and field $\alpha$, $\mathcal{P}^{s}_{I\alpha}$ is the subset with explicit surface normals, and $\alpha=\texttt{explicitSurfaceNormalInfluence}$ is dimensionless.  The grid metric is the active cell diagonal,
+\begin{equation}
+  h_{\mathrm{diag}}=
+  \begin{cases}
+    \sqrt{h_x^2+h_y^2}, & \text{plane strain},\\
+    \sqrt{h_x^2+h_y^2+h_z^2}, & \text{three dimensions}.
+  \end{cases}
+\end{equation}
+The first term is the implicit volume-gradient normal used by DFG-style surface reconstruction.  The second term lets explicitly supplied particle surface normals dominate the grid normal when the dimensionless influence factor is chosen large enough.  Dividing by $h_{\mathrm{diag}}$ makes this explicit contribution scale like $V_p\nabla N_{Ip}$, so the relative weighting is independent of the model's physical length scale and of uniform mesh refinement.  The scale is computed from the grid spacing, not from partition-local nodal sums, so the treatment does not introduce a new decomposition-dependent threshold.  The normalized vector is
 \begin{equation}
   \hat{\mathbf{n}}_{I\alpha}=\frac{\widetilde{\mathbf{n}}_{I\alpha}}{\|\widetilde{\mathbf{n}}_{I\alpha}\|},
 \end{equation}
@@ -454,7 +463,7 @@ Attribute & Internal effect \\
 \texttt{frictionCoefficientTable} & Defines pairwise group-dependent friction coefficients; must be square, must match the number of contact groups, and is indexed by $A\bmod N_g$ and $B\bmod N_g$ when DFG adds fields. \\
 \begin{tabular}[t]{@{}l@{}}\texttt{computeParticleSurface}\\\texttt{NormalsAndPositions}\end{tabular} & Triggers automatic particle normal/position reconstruction. \\
 \texttt{normalAndPositionMethod} & Chooses \texttt{LogisticRegression} or \texttt{DFGAndVolumeIntegration} for automatic reconstruction. \\
-\texttt{explicitSurfaceNormalInfluence} & Controls the relative strength of explicit particle normals in the grid normal scatter. \\
+\texttt{explicitSurfaceNormalInfluence} & Dimensionless control for the relative strength of explicit particle normals in the grid normal scatter; internally divided by the active grid-cell diagonal. \\
 \texttt{useSurfacePositionForContact} & Allows surface-position fields to replace center-of-volume positions in the gap calculation when available. \\
 \texttt{LRtolerance}, \texttt{maxLRIterations} & Control convergence and iteration limit of the logistic-regression fit. \\
 \texttt{surfaceQualityThreshold}, \texttt{separabilityMinDamage} & Control same-group DFG separability. \\

@@ -429,7 +429,7 @@
       "flag": "OPTIONAL",
       "default": "m_explicitSurfaceNormalInfluence",
       "restart": "NO_WRITE",
-      "description": "Determines the relative weighting for implicit and explicit surface normals",
+      "description": "Dimensionless relative weight for explicit particle surface normals; the solver divides this value by the active grid-cell diagonal before scattering to grid normals",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 1338
     },
@@ -440,7 +440,7 @@
       "restart": "NO_WRITE",
       "description": "Coefficient of friction, currently assumed to be the same everywhere",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1344
+      "line": 1346
     },
     {
       "name": "frictionCoefficientTable",
@@ -449,7 +449,7 @@
       "restart": "NO_WRITE",
       "description": "Friction coefficient table for different groups",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1350
+      "line": 1352
     },
     {
       "name": "FSubcycles",
@@ -458,7 +458,7 @@
       "restart": "NO_WRITE",
       "description": "Number of sub cycles to more accurately integrate the deformation gradient",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1355
+      "line": 1357
     },
     {
       "name": "flagParticlesWithBadMappingArraysForDeletion",
@@ -467,7 +467,7 @@
       "restart": "NO_WRITE",
       "description": "Flag particles for deletion if particle-grid mapping construction detects an out-of-bounds particle/stencil location; compact active-ordinal mapping rows before using them.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1361
+      "line": 1363
     },
     {
       "name": "fTable",
@@ -476,7 +476,7 @@
       "restart": "NO_WRITE",
       "description": "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1367
+      "line": 1369
     },
     {
       "name": "fTableInterpType",
@@ -485,7 +485,7 @@
       "restart": "NO_WRITE",
       "description": "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1372
+      "line": 1374
     },
     {
       "name": "generalizedVortexMMS",
@@ -494,7 +494,7 @@
       "restart": "NO_WRITE",
       "description": "Option for CPDI domain scaling",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1378
+      "line": 1380
     },
     {
       "name": "globalFaceReactions",
@@ -503,7 +503,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Stores the global face reactions for stress control between timesteps",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1384
+      "line": 1386
     },
     {
       "name": "globalMaximum",
@@ -512,7 +512,7 @@
       "restart": "WRITE_AND_READ",
       "description": "global maximum",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1389
+      "line": 1391
     },
     {
       "name": "globalMinimum",
@@ -521,7 +521,7 @@
       "restart": "WRITE_AND_READ",
       "description": "global minimum",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1394
+      "line": 1396
     },
     {
       "name": "gpuScheme",
@@ -530,7 +530,7 @@
       "restart": "NO_WRITE",
       "description": "GPU Scheme (Atomics, No atomics, Random shuffling, Minimal atomics)",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1399
+      "line": 1401
     },
     {
       "name": "LBar",
@@ -539,7 +539,7 @@
       "restart": "NO_WRITE",
       "description": "Used to choose the Lbar method. 0 = do nothing, 1 = run trD through the SPH kernel, 2 = straight-up volume average",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1405
+      "line": 1407
     },
     {
       "name": "LBarScale",
@@ -548,7 +548,7 @@
       "restart": "NO_WRITE",
       "description": "Scales the contribution of volume-averaged trD to particle L, alleviates checkerboarding",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1411
+      "line": 1413
     },
     {
       "name": "localMaximum",
@@ -557,7 +557,7 @@
       "restart": "WRITE_AND_READ",
       "description": "local maximum",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1417
+      "line": 1419
     },
     {
       "name": "localMaximumNoGhost",
@@ -566,7 +566,7 @@
       "restart": "WRITE_AND_READ",
       "description": "local maximum without ghost cells",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1422
+      "line": 1424
     },
     {
       "name": "localMinimum",
@@ -575,7 +575,7 @@
       "restart": "WRITE_AND_READ",
       "description": "local minimum",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1427
+      "line": 1429
     },
     {
       "name": "localMinimumNoGhost",
@@ -584,7 +584,7 @@
       "restart": "WRITE_AND_READ",
       "description": "local minimum without ghost cells",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1432
+      "line": 1434
     },
     {
       "name": "logMomentum",
@@ -593,7 +593,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for writing end-of-step momentum balance diagnostics to mpm_momentumHistory.csv.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1437
+      "line": 1439
     },
     {
       "name": "logStartCycle",
@@ -602,7 +602,7 @@
       "restart": "NO_WRITE",
       "description": "Cycle to start writing mpm_momentumHistory.csv rows.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1442
+      "line": 1444
     },
     {
       "name": "LRtolerance",
@@ -611,7 +611,7 @@
       "restart": "NO_WRITE",
       "description": "Tolerance for logistic regression calculations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1447
+      "line": 1449
     },
     {
       "name": "m_ijkMap",
@@ -620,7 +620,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Map from indices in each spatial dimension to local node ID",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1453
+      "line": 1455
     },
     {
       "name": "maxLRIterations",
@@ -629,7 +629,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum number of iterations for logistic regression calculations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1458
+      "line": 1460
     },
     {
       "name": "maxNodalNeighbors",
@@ -638,7 +638,7 @@
       "restart": "NO_WRITE",
       "description": "Stores that maximum number of particles mapping to one node",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1464
+      "line": 1466
     },
     {
       "name": "maxParticleJacobian",
@@ -647,7 +647,7 @@
       "restart": "NO_WRITE",
       "description": "Jacobian value above which particles are deleted",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1470
+      "line": 1472
     },
     {
       "name": "maxParticleVelocity",
@@ -656,7 +656,7 @@
       "restart": "NO_WRITE",
       "description": "Velocity above which particles are deleted",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1476
+      "line": 1478
     },
     {
       "name": "maxParticleVelocitySquared",
@@ -665,7 +665,7 @@
       "restart": "NO_WRITE",
       "description": "Square of the max particle velocity",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1482
+      "line": 1484
     },
     {
       "name": "minParticleJacobian",
@@ -674,7 +674,7 @@
       "restart": "NO_WRITE",
       "description": "Jacobian value below which particles are deleted",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1487
+      "line": 1489
     },
     {
       "name": "needsNeighborList",
@@ -683,7 +683,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to construct neighbor list",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1493
+      "line": 1495
     },
     {
       "name": "needsNodalNeighborList",
@@ -692,7 +692,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to construct nodal neighbor list",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1499
+      "line": 1501
     },
     {
       "name": "neighborRadius",
@@ -701,7 +701,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Neighbor radius for SPH-type calculations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1505
+      "line": 1507
     },
     {
       "name": "nextBoxAverageWriteTime",
@@ -710,7 +710,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Next time to write box averages",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1511
+      "line": 1513
     },
     {
       "name": "nextParticleDataWriteTime",
@@ -719,7 +719,7 @@
       "restart": "NO_WRITE",
       "description": "Next time to write particle data",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1517
+      "line": 1519
     },
     {
       "name": "nextProfileWriteTime",
@@ -728,7 +728,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Next time to write MPM profile output when using a time-based profile interval",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1523
+      "line": 1525
     },
     {
       "name": "nextReactionWriteTime",
@@ -737,7 +737,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Next time to write reactions",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1529
+      "line": 1531
     },
     {
       "name": "nextTracerWriteTime",
@@ -746,7 +746,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Next time to write MPM lagrangian tracer output when using a time-based tracer interval",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1535
+      "line": 1537
     },
     {
       "name": "normalAndPositionMethod",
@@ -755,7 +755,7 @@
       "restart": "NO_WRITE",
       "description": "Method for computing particle surface normals and positions",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1541
+      "line": 1543
     },
     {
       "name": "numberOfSubRegions",
@@ -764,7 +764,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Stores the total number of subregions",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1547
+      "line": 1549
     },
     {
       "name": "numContactFlags",
@@ -773,7 +773,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Number of contact flags that can appear due to damage",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1553
+      "line": 1555
     },
     {
       "name": "numContactGroups",
@@ -782,7 +782,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Number of prescribed contact groups",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1558
+      "line": 1560
     },
     {
       "name": "numDims",
@@ -791,7 +791,7 @@
       "restart": "WRITE_AND_READ",
       "description": "The number of active spatial dimensions, 2 for plane strain, 3 otherwise",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1564
+      "line": 1566
     },
     {
       "name": "numElements",
@@ -800,7 +800,7 @@
       "restart": "WRITE_AND_READ",
       "description": "number of elements along partition directions",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1570
+      "line": 1572
     },
     {
       "name": "numSurfaceIntegrationPoints",
@@ -809,7 +809,7 @@
       "restart": "NO_WRITE",
       "description": "Number of surface integration points for cohesive grid nodes",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1575
+      "line": 1577
     },
     {
       "name": "numVelocityFields",
@@ -818,7 +818,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Number of velocity fields",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1581
+      "line": 1583
     },
     {
       "name": "overlapCorrection",
@@ -827,7 +827,7 @@
       "restart": "NO_WRITE",
       "description": "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1586
+      "line": 1588
     },
     {
       "name": "overlapThreshold1",
@@ -836,7 +836,7 @@
       "restart": "NO_WRITE",
       "description": "Overlap correction threshold 1",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1593
+      "line": 1595
     },
     {
       "name": "overlapThreshold2",
@@ -845,7 +845,7 @@
       "restart": "NO_WRITE",
       "description": "Overlap correction threshold 2",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1599
+      "line": 1601
     },
     {
       "name": "overwriteExistingNormalsAndPositions",
@@ -854,7 +854,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to that determines if existing particle normals and positions are overriden",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1605
+      "line": 1607
     },
     {
       "name": "particleDataWriteInterval",
@@ -863,7 +863,7 @@
       "restart": "NO_WRITE",
       "description": "Interval to write particle data to file",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1611
+      "line": 1613
     },
     {
       "name": "profileDirection",
@@ -872,7 +872,7 @@
       "restart": "NO_WRITE",
       "description": "Direction for MPM profile output. Valid values are x, y, and z.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1617
+      "line": 1619
     },
     {
       "name": "profileCycleInterval",
@@ -881,7 +881,7 @@
       "restart": "NO_WRITE",
       "description": "Cycle interval for MPM profile output. Use either profileCycleInterval or profileWriteInterval. A value of 0 means no cycle-based interval.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1623
+      "line": 1625
     },
     {
       "name": "profileHistory",
@@ -890,7 +890,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to enable MPM profile CSV output. One CSV file is written per requested profile variable.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1629
+      "line": 1631
     },
     {
       "name": "profileNumSlices",
@@ -899,7 +899,7 @@
       "restart": "NO_WRITE",
       "description": "Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1635
+      "line": 1637
     },
     {
       "name": "profileVariables",
@@ -908,7 +908,7 @@
       "restart": "NO_WRITE",
       "description": "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, supplementalPressure, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1641
+      "line": 1643
     },
     {
       "name": "profileWriteInterval",
@@ -917,7 +917,7 @@
       "restart": "NO_WRITE",
       "description": "Time interval for MPM profile output. Use either profileWriteInterval or profileCycleInterval. A value of 0 means no time-based interval.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1646
+      "line": 1648
     },
     {
       "name": "partitionExtent",
@@ -926,7 +926,7 @@
       "restart": "WRITE_AND_READ",
       "description": "parititon extent",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1652
+      "line": 1654
     },
     {
       "name": "planeStrain",
@@ -935,7 +935,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Flag for performing plane strain calculations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1657
+      "line": 1659
     },
     {
       "name": "plotGridFields",
@@ -944,7 +944,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to enable plotting of grid fields in vtk output",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1663
+      "line": 1665
     },
     {
       "name": "plottableFields",
@@ -953,7 +953,7 @@
       "restart": "NO_WRITE",
       "description": "If specified, determines which fields are written to vtk. Helpful for reducing the vtk output file sizes",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1669
+      "line": 1671
     },
     {
       "name": "plottableFieldsSorted",
@@ -962,7 +962,7 @@
       "restart": "NO_WRITE",
       "description": "Sorted array of plottable fields",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1674
+      "line": 1676
     },
     {
       "name": "plotUnscaledParticles",
@@ -971,7 +971,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for plotting particles without CPDI domain scaling",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1679
+      "line": 1681
     },
     {
       "name": "prescribedBcTable",
@@ -980,7 +980,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to have time-dependent boundary condition types",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1685
+      "line": 1687
     },
     {
       "name": "prescribedBoundaryFTable",
@@ -989,7 +989,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to have time-dependent boundary conditions described by a global background grid F",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1691
+      "line": 1693
     },
     {
       "name": "prescribedBoundaryTransverseVelocities",
@@ -998,7 +998,7 @@
       "restart": "NO_WRITE",
       "description": "Prescribed transverse velocity components for faces whose enablePrescribedBoundaryTransverseVelocities entry is set.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1696
+      "line": 1698
     },
     {
       "name": "prescribedFTable",
@@ -1007,7 +1007,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1701
+      "line": 1703
     },
     {
       "name": "preventCZInterpenetration",
@@ -1016,7 +1016,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to use contact normal forces instead of CZ forces in compression",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1706
+      "line": 1708
     },
     {
       "name": "reactionHistory",
@@ -1025,7 +1025,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether to output face reaction history",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1712
+      "line": 1714
     },
     {
       "name": "reactionWriteInterval",
@@ -1034,7 +1034,7 @@
       "restart": "NO_WRITE",
       "description": "Interval between writing reactions to files",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1718
+      "line": 1720
     },
     {
       "name": "resetDefGradForFullyDamagedParticles",
@@ -1043,7 +1043,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for resetting deformation gradient of fully damaged particles",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1724
+      "line": 1726
     },
     {
       "name": "resetDefGradForScaledSurfaceParticles",
@@ -1052,7 +1052,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for resetting deformation gradient of CPDI scaled surface particles",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1730
+      "line": 1732
     },
     {
       "name": "separabilityMinDamage",
@@ -1061,7 +1061,7 @@
       "restart": "NO_WRITE",
       "description": "Damage threshold for field separability",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1736
+      "line": 1738
     },
     {
       "name": "setDomainTemperature",
@@ -1070,7 +1070,7 @@
       "restart": "NO_WRITE",
       "description": "Flag that activates domain temperature interpolation from table.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1742
+      "line": 1744
     },
     {
       "name": "setDomainTemperatureRate",
@@ -1079,7 +1079,7 @@
       "restart": "NO_WRITE",
       "description": "Flag that activates domain temperature rateinterpolation from table.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1747
+      "line": 1749
     },
     {
       "name": "shapeFunctionDiagnostics",
@@ -1088,7 +1088,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to perform diagnostics on particle shape functions.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1752
+      "line": 1754
     },
     {
       "name": "smallMass",
@@ -1097,7 +1097,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Optional small mass threshold for ignoring extremely low-mass nodes. If omitted, an automatic threshold is computed from the global minimum particle mass.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1757
+      "line": 1759
     },
     {
       "name": "solverProfiling",
@@ -1106,7 +1106,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for timing subroutines in the solver",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1764
+      "line": 1766
     },
     {
       "name": "stressControl",
@@ -1115,7 +1115,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for whether stress control using box averages is enabled",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1769
+      "line": 1771
     },
     {
       "name": "stressControlAdaptiveSeek",
@@ -1124,7 +1124,7 @@
       "restart": "NO_WRITE",
       "description": "Use the adaptive-seek stress controller for normal stress-control components. This opt-in controller learns a normal stress tangent, filters box stress over a strain scale, and enters a bounded compression seek mode when a compressive target has no load path.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1774
+      "line": 1776
     },
     {
       "name": "stressControlAdaptiveInitialized",
@@ -1133,7 +1133,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Internal initialization flag for adaptive-seek stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1782
+      "line": 1784
     },
     {
       "name": "stressControlWaveWarningIssued",
@@ -1142,7 +1142,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Internal one-shot wave/inertia warning flag for adaptive-seek stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1787
+      "line": 1789
     },
     {
       "name": "stressControlSeekWarningIssued",
@@ -1151,7 +1151,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Internal one-shot seek/unreachable warning flag for adaptive-seek stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1792
+      "line": 1794
     },
     {
       "name": "stressControlITerm",
@@ -1160,7 +1160,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Stress control integral term",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1797
+      "line": 1799
     },
     {
       "name": "stressControlKd",
@@ -1169,7 +1169,7 @@
       "restart": "NO_WRITE",
       "description": "Derivative gain of stress PID controller",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1802
+      "line": 1804
     },
     {
       "name": "stressControlKi",
@@ -1178,7 +1178,7 @@
       "restart": "NO_WRITE",
       "description": "Integral gain of stress PID controller",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1807
+      "line": 1809
     },
     {
       "name": "stressControlKp",
@@ -1187,7 +1187,7 @@
       "restart": "NO_WRITE",
       "description": "Proportional gain of stress PID controller",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1812
+      "line": 1814
     },
     {
       "name": "stressControlLastError",
@@ -1196,7 +1196,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Stress control error from previous timestep",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1817
+      "line": 1819
     },
     {
       "name": "stressControlFilteredStress",
@@ -1205,7 +1205,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Filtered stress used by adaptive-seek stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1822
+      "line": 1824
     },
     {
       "name": "stressControlWindowStartStress",
@@ -1214,7 +1214,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Filtered stress at the start of the current adaptive tangent update window.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1827
+      "line": 1829
     },
     {
       "name": "stressControlPreviousDomainL",
@@ -1223,7 +1223,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Previous applied domain velocity-gradient diagonal used for adaptive stress-control tangent learning.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1832
+      "line": 1834
     },
     {
       "name": "stressControlAccumulatedStrain",
@@ -1232,7 +1232,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Accumulated normal strain increments for the current adaptive stress-control tangent update window.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1837
+      "line": 1839
     },
     {
       "name": "stressControlSeekStrain",
@@ -1241,7 +1241,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Accumulated bounded seek strain in each normal stress-control direction.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1842
+      "line": 1844
     },
     {
       "name": "stressControlReengageStrain",
@@ -1250,7 +1250,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Accumulated strain used to blend bounded seek mode back to adaptive active control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1847
+      "line": 1849
     },
     {
       "name": "stressControlAdaptiveState",
@@ -1259,7 +1259,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Internal adaptive-seek stress-control state per normal direction.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1852
+      "line": 1854
     },
     {
       "name": "stressControlTangent",
@@ -1268,7 +1268,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Learned normal tangent d(sigma_ii)/d(epsilon_jj) used by adaptive-seek stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1857
+      "line": 1859
     },
     {
       "name": "stressControlResponseStrain",
@@ -1277,7 +1277,7 @@
       "restart": "NO_WRITE",
       "description": "Macroscopic strain interval over which adaptive stress control removes filtered stress error.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1862
+      "line": 1864
     },
     {
       "name": "stressControlFilterStrain",
@@ -1286,7 +1286,7 @@
       "restart": "NO_WRITE",
       "description": "Macroscopic strain interval used to low-pass filter stress for adaptive stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1868
+      "line": 1870
     },
     {
       "name": "stressControlAdaptStrainWindow",
@@ -1295,7 +1295,7 @@
       "restart": "NO_WRITE",
       "description": "Accumulated macroscopic strain window for each adaptive tangent update.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1874
+      "line": 1876
     },
     {
       "name": "stressControlAdaptGain",
@@ -1304,7 +1304,7 @@
       "restart": "NO_WRITE",
       "description": "Normalized rank-one update gain for the adaptive stress-control tangent.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1880
+      "line": 1882
     },
     {
       "name": "stressControlMaxRateRatio",
@@ -1313,7 +1313,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum active stress-control strain-rate norm divided by the prescribed/reference strain-rate norm.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1886
+      "line": 1888
     },
     {
       "name": "stressControlMaxFeedbackRateRatio",
@@ -1322,7 +1322,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum feedback strain-rate norm divided by the prescribed/reference strain-rate norm.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1892
+      "line": 1894
     },
     {
       "name": "stressControlSeekRateRatio",
@@ -1331,7 +1331,7 @@
       "restart": "NO_WRITE",
       "description": "Bounded seek strain-rate ratio used while a compressive target has no load path.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1898
+      "line": 1900
     },
     {
       "name": "stressControlMaxSeekRateRatio",
@@ -1340,7 +1340,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum seek strain-rate norm divided by the prescribed/reference strain-rate norm.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1904
+      "line": 1906
     },
     {
       "name": "stressControlMinStrainRate",
@@ -1349,7 +1349,7 @@
       "restart": "NO_WRITE",
       "description": "Minimum reference strain rate for adaptive stress control when no prescribed deformation rate is active.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1910
+      "line": 1912
     },
     {
       "name": "stressControlMaxSeekStrain",
@@ -1358,7 +1358,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum accumulated seek strain before a compressive target is declared unreachable.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1916
+      "line": 1918
     },
     {
       "name": "stressControlMaxSeekStrainIncrement",
@@ -1367,7 +1367,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum absolute stress-control strain increment in one step during adaptive/seek control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1922
+      "line": 1924
     },
     {
       "name": "stressControlCommandFilterStrain",
@@ -1376,7 +1376,7 @@
       "restart": "NO_WRITE",
       "description": "Optional macroscopic strain interval used to smooth the applied adaptive stress-control strain rate. A value of zero disables command filtering.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1928
+      "line": 1930
     },
     {
       "name": "stressControlMaxRateChangeRatio",
@@ -1385,7 +1385,7 @@
       "restart": "NO_WRITE",
       "description": "Optional per-step cap on the change of an adaptive stress-control strain rate, divided by the reference strain rate. A value of zero disables this cap.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1935
+      "line": 1937
     },
     {
       "name": "stressControlJammingPressureRatio",
@@ -1394,7 +1394,7 @@
       "restart": "NO_WRITE",
       "description": "Fraction of target compressive pressure indicating that a load path has appeared during seek mode.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1942
+      "line": 1944
     },
     {
       "name": "stressControlReengageTangentRatio",
@@ -1403,7 +1403,7 @@
       "restart": "NO_WRITE",
       "description": "Fraction of initial tangent scale needed to re-engage active control after seek mode.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1948
+      "line": 1950
     },
     {
       "name": "stressControlReengageRampStrain",
@@ -1412,7 +1412,7 @@
       "restart": "NO_WRITE",
       "description": "Macroscopic strain interval over which seek mode is blended back to adaptive active control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1954
+      "line": 1956
     },
     {
       "name": "stressControlWaveWarnRatio",
@@ -1421,7 +1421,7 @@
       "restart": "NO_WRITE",
       "description": "Raw-minus-filtered stress ratio that warns about inertial/wave dominated stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1960
+      "line": 1962
     },
     {
       "name": "stressControlWaveCutbackRatio",
@@ -1430,7 +1430,7 @@
       "restart": "NO_WRITE",
       "description": "Raw-minus-filtered stress ratio above which tangent adaptation remains frozen during re-engagement.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1966
+      "line": 1968
     },
     {
       "name": "stressControlStressFloor",
@@ -1439,7 +1439,7 @@
       "restart": "NO_WRITE",
       "description": "Stress floor used in adaptive stress-control ratios. If zero, a target-based floor is used.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1972
+      "line": 1974
     },
     {
       "name": "stressControlTangentFloorRatio",
@@ -1448,7 +1448,7 @@
       "restart": "NO_WRITE",
       "description": "Lower bound for learned tangent diagonals as a fraction of the initial tangent scale.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1978
+      "line": 1980
     },
     {
       "name": "stressControlTangentCeilingRatio",
@@ -1457,7 +1457,7 @@
       "restart": "NO_WRITE",
       "description": "Upper bound for learned tangent diagonals as a fraction of the initial tangent scale.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1984
+      "line": 1986
     },
     {
       "name": "stressControlMaxCouplingRatio",
@@ -1466,7 +1466,7 @@
       "restart": "NO_WRITE",
       "description": "Maximum absolute learned off-diagonal normal tangent divided by the corresponding diagonal tangent.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1990
+      "line": 1992
     },
     {
       "name": "stressControlSolverDampingRatio",
@@ -1475,7 +1475,7 @@
       "restart": "NO_WRITE",
       "description": "Damping used in the small damped least-squares solve for active adaptive stress control.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 1996
+      "line": 1998
     },
     {
       "name": "stressTable",
@@ -1484,7 +1484,7 @@
       "restart": "NO_WRITE",
       "description": "Array that stores the time-depended grid aligned stresses",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2002
+      "line": 2004
     },
     {
       "name": "stressTableInterpType",
@@ -1493,7 +1493,7 @@
       "restart": "NO_WRITE",
       "description": "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial).",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2007
+      "line": 2009
     },
     {
       "name": "subdivideParticles",
@@ -1502,7 +1502,7 @@
       "restart": "NO_WRITE",
       "description": "Option for splitting particles when they span more than a grid cell (prevents numerical fracture)",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2013
+      "line": 2015
     },
     {
       "name": "surfaceDetection",
@@ -1511,7 +1511,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for automatic surface detection on the 1st cycle",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2019
+      "line": 2021
     },
     {
       "name": "surfaceNormalAndPositionDamageThreshold",
@@ -1520,7 +1520,7 @@
       "restart": "NO_WRITE",
       "description": "Sets the damage threshold at which explicit particle surface normals and positions are disabled",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2025
+      "line": 2027
     },
     {
       "name": "surfaceQualityThreshold",
@@ -1529,7 +1529,7 @@
       "restart": "NO_WRITE",
       "description": "Particle-Grid DFG alignment threshold for separability",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2031
+      "line": 2033
     },
     {
       "name": "surfaceTensionForceSign",
@@ -1538,7 +1538,7 @@
       "restart": "NO_WRITE",
       "description": "Sign multiplier for the grid continuum-surface-stress force. Leave at +1; set to -1 only when validating against an opposite normal/color convention.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2037
+      "line": 2039
     },
     {
       "name": "surfaceTensionGradientTolerance",
@@ -1547,7 +1547,7 @@
       "restart": "NO_WRITE",
       "description": "Lower bound for |grad color| used to regularize surface-tension normals. Units are inverse length. A non-positive value selects an automatic value.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2044
+      "line": 2046
     },
     {
       "name": "surfaceTensionPairs",
@@ -1556,7 +1556,7 @@
       "restart": "NO_WRITE",
       "description": "Rows of { phaseA, phaseB, gamma }. Phases are particleGroup/contact-group ids. Use phaseB=-1 for a phase-void/free-surface pair. gamma has units of force/length.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2051
+      "line": 2053
     },
     {
       "name": "thinFeatureDFGThreshold",
@@ -1565,7 +1565,7 @@
       "restart": "NO_WRITE",
       "description": "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2057
+      "line": 2059
     },
     {
       "name": "totalBinderVolume",
@@ -1574,7 +1574,7 @@
       "restart": "NO_WRITE",
       "description": "Total volume of binder",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2063
+      "line": 2065
     },
     {
       "name": "treatFullyDamagedAsSingleField",
@@ -1583,7 +1583,7 @@
       "restart": "NO_WRITE",
       "description": "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2069
+      "line": 2071
     },
     {
       "name": "updateMethod",
@@ -1592,7 +1592,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Update method. Options are:; * ; *",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2075
+      "line": 2077
     },
     {
       "name": "updateOrder",
@@ -1601,7 +1601,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Order for update method, only applies to XPIC and FMPM",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2081
+      "line": 2083
     },
     {
       "name": "useCrackTipDetection",
@@ -1610,7 +1610,7 @@
       "restart": "NO_WRITE",
       "description": "Set to activate crack-tip detection and distance calc",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2087
+      "line": 2089
     },
     {
       "name": "useEvents",
@@ -1619,7 +1619,7 @@
       "restart": "NO_WRITE",
       "description": "Enable events",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2093
+      "line": 2095
     },
     {
       "name": "useInternalForceAsFaceReaction",
@@ -1628,7 +1628,7 @@
       "restart": "NO_WRITE",
       "description": "Will use internal force component at boundary node as reaction",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2099
+      "line": 2101
     },
     {
       "name": "useNodePosForArea",
@@ -1637,7 +1637,7 @@
       "restart": "NO_WRITE",
       "description": "Option to compute nodal area from grid surface normals and positions (results may be inaccurate if implicit surface normals and positiosn are used)",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2105
+      "line": 2107
     },
     {
       "name": "useReferenceVectorsForParticleUpdate",
@@ -1646,7 +1646,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for determining the integration scheme of particle vector attributes",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2111
+      "line": 2113
     },
     {
       "name": "useSurfacePositionForContact",
@@ -1655,7 +1655,7 @@
       "restart": "NO_WRITE",
       "description": "Flag for to use particle mapped surface positions in contact calculations",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2117
+      "line": 2119
     },
     {
       "name": "weakInterfaceTraceGapStabilization",
@@ -1664,7 +1664,7 @@
       "restart": "NO_WRITE",
       "description": "Optional beta stabilization on the prescribed weak-interface trace gap.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2123
+      "line": 2125
     },
     {
       "name": "weakInterfaceTraceMinWeight",
@@ -1673,7 +1673,7 @@
       "restart": "NO_WRITE",
       "description": "Minimum active trace support weight required on each side of a weak-interface trace projection.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2129
+      "line": 2131
     },
     {
       "name": "weakInterfaceTracePairs",
@@ -1682,7 +1682,7 @@
       "restart": "NO_WRITE",
       "description": "Optional contact-group pairs for weak-interface trace projection. Empty means all group pairs.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2135
+      "line": 2137
     },
     {
       "name": "weakInterfaceTraceProjectionIterations",
@@ -1691,7 +1691,7 @@
       "restart": "NO_WRITE",
       "description": "Number of local Jacobi iterations for the weak-interface trace projection. Values greater than one reduce slip without using a full one-shot projection.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2140
+      "line": 2142
     },
     {
       "name": "weakInterfaceTraceProjectionScale",
@@ -1700,7 +1700,7 @@
       "restart": "NO_WRITE",
       "description": "Under-relaxation scale alpha for each weak-interface trace projection impulse.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2146
+      "line": 2148
     },
     {
       "name": "weakInterfaceTraceSuppressNodalContact",
@@ -1709,7 +1709,7 @@
       "restart": "NO_WRITE",
       "description": "Skip ordinary nodal contact for contact-group pairs handled by weak-interface trace projection.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2152
+      "line": 2154
     },
     {
       "name": "timeIntegrationOption",
@@ -1718,7 +1718,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Time integration method. Options are:; * ; *",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2158
+      "line": 2160
     },
     {
       "name": "tracerCoordinates",
@@ -1727,7 +1727,7 @@
       "restart": "NO_WRITE",
       "description": "Coordinates used to initialize MPM lagrangian tracers. Each row is x,y,z; each tracer follows the nearest particle selected during initialization.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2164
+      "line": 2166
     },
     {
       "name": "tracerCycleInterval",
@@ -1736,7 +1736,7 @@
       "restart": "NO_WRITE",
       "description": "Cycle interval for MPM lagrangian tracer CSV output. Use either tracerCycleInterval or tracerWriteInterval. A value of 0 means no cycle-based interval.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2169
+      "line": 2171
     },
     {
       "name": "tracerHistory",
@@ -1745,7 +1745,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to enable MPM lagrangian tracer CSV output. One CSV file is written per tracer point.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2175
+      "line": 2177
     },
     {
       "name": "tracerOutputPrefix",
@@ -1754,7 +1754,7 @@
       "restart": "NO_WRITE",
       "description": "Filename prefix for MPM lagrangian tracer CSV files.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2181
+      "line": 2183
     },
     {
       "name": "tracerParticleIDs",
@@ -1763,7 +1763,7 @@
       "restart": "WRITE_AND_READ",
       "description": "Particle global IDs selected for MPM lagrangian tracers.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2187
+      "line": 2189
     },
     {
       "name": "tracerVariables",
@@ -1772,7 +1772,7 @@
       "restart": "NO_WRITE",
       "description": "Particle variables to write to each MPM lagrangian tracer CSV file. Supported names include particleID, mass, volume, materialType, porosity, density, damage, temperature, internalEnergy, kineticEnergy, speed, velocityX, velocityY, velocityZ, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2192
+      "line": 2194
     },
     {
       "name": "tracerWriteInterval",
@@ -1781,7 +1781,7 @@
       "restart": "NO_WRITE",
       "description": "Time interval for MPM lagrangian tracer CSV output. Use either tracerWriteInterval or tracerCycleInterval. A value of 0 means no time-based interval.",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2197
+      "line": 2199
     },
     {
       "name": "writeParticleData",
@@ -1790,7 +1790,7 @@
       "restart": "NO_WRITE",
       "description": "Flag to enable writing particle data to file",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2203
+      "line": 2205
     }
   ],
   "event_data": [

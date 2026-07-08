@@ -87,7 +87,7 @@ pfw["minParticleJacobian"]=0.01
 pfw["maxParticleJacobian"]=10.0
 
 pfw["contactGapCorrection"] = "Implicit"
-pfw["explicitSurfaceNormalInfluence"]= 1000
+pfw["explicitSurfaceNormalInfluence"]= 78.5674201318386
 pfw["useSurfacePositionForContact"]= 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
 

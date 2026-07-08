@@ -131,7 +131,7 @@ pfw["damageFieldPartitioning"] = 0
 pfw["needsNeighborList"] = 0
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000.0
+pfw["explicitSurfaceNormalInfluence"] = 3479.576615494966
 pfw["frictionCoefficient"] = 0.25
 
 # Basic diagnostics and guardrails.

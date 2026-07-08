@@ -93,7 +93,7 @@ pfw["prescribedBoundaryTransverseVelocities"]=[[0.0, 0.0],
 
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]=1
-pfw["explicitSurfaceNormalInfluence"]=1000
+pfw["explicitSurfaceNormalInfluence"]=141.4213562373095
 
 pfw["useEvents"]=1
 pfw["plotGridFields"] = 1

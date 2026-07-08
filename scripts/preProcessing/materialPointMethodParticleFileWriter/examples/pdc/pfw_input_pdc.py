@@ -95,7 +95,7 @@ pfw["frictionCoefficient"] = 0.25
 
 # Exact contact surface options.
 pfw["contactGapCorrection"] = "Implicit"
-pfw["explicitSurfaceNormalInfluence"] = 1000.  # 1000
+pfw["explicitSurfaceNormalInfluence"] = 1566.973537146728
 pfw["useSurfacePositionForContact"] = 1  # 1
 
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------

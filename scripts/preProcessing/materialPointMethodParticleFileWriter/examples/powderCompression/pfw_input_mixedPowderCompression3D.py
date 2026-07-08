@@ -116,7 +116,7 @@ pfw["damageFieldPartitioning"] = 1
 # below from the spherical grain surfaces.
 pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000.0
+pfw["explicitSurfaceNormalInfluence"] = 24.09361547974769
 
 # =============================================================================
 # Profile history output

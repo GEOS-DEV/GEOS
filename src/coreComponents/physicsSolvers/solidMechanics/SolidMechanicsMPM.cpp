@@ -1339,7 +1339,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_explicitSurfaceNormalInfluence ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Determines the relative weighting for implicit and explicit surface normals" );
+    setDescription( "Dimensionless relative weight for explicit particle surface normals; "
+                    "the solver divides this value by the active grid-cell diagonal "
+                    "before scattering to grid normals" );
 
   registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
     setApplyDefaultValue( m_frictionCoefficient ).
@@ -14460,7 +14462,8 @@ localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
 /**
  * @brief Computes particle surface normals and positions.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Explicit particle normals are weighted by a dimensionless input scaled with
+ * the active grid-cell diagonal before they are mapped to the grid.
  */
 void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
                                                                    NodeManager & nodeManager )
@@ -14471,7 +14474,20 @@ void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManag
   int const planeStrain = m_planeStrain;
   int const numDims = m_numDims;
   int const numVelocityFields = m_numVelocityFields;
-  real64 const explicitSurfaceNormalInfluence = m_explicitSurfaceNormalInfluence;
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  real64 const gridCellDiagonal =
+    planeStrain == 1
+    ? LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] )
+    : LvArray::tensorOps::l2Norm< 3 >( hEl );
+
+  GEOS_ERROR_IF( gridCellDiagonal <= 0.0,
+                 "Invalid MPM grid-cell diagonal for explicit surface normal influence." );
+
+  real64 const explicitSurfaceNormalInfluence =
+    m_explicitSurfaceNormalInfluence / gridCellDiagonal;
   int const numNodes = nodeManager.size();
   real64 const smallMass = m_smallMass;
 
@@ -14527,7 +14543,8 @@ void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManag
               particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
               particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ) )
           {
-            // Also maps explicit particle surface normals which will dominate if m_explicitSurfaceNormalInfluence is large
+            // Also maps explicit particle surface normals. The user influence is dimensionless and
+            // has already been scaled by the inverse active grid-cell diagonal.
             // If particle surface normal was disabled due to damage or CPDI domain scaling (e.g. zeroed) then the
             // following does not add anything to gridSurfaceNormal
             particleContributionToGrid += explicitSurfaceNormalInfluence * particleSurfaceNormal[p][i] * shapeFunctionValue * particleVolume[p];
@@ -17901,7 +17918,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
    *
    * with an optional explicit particle-normal contribution:
    *
-   *   + explicitSurfaceNormalInfluence * V_p N_Ip n_p[i]
+   *   + explicitSurfaceNormalInfluence / h_diag * V_p N_Ip n_p[i]
    *
    * Surface position is mapped along the particle surface normal:
    *
@@ -17967,18 +17984,28 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex const numDims = m_numDims;
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
+  int const planeStrain = m_planeStrain;
 #ifndef GEOS_USE_DEVICE
   GEOS_UNUSED_VAR( numContactGroups );
   GEOS_UNUSED_VAR( damageFieldPartitioning );
 #endif
-  real64 const explicitSurfaceNormalInfluence =
-    m_explicitSurfaceNormalInfluence;
 
   // Grid spacing and local grid origin are small fixed-size arrays. Copying
   // them to stack arrays makes them safe and cheap to capture by value.
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  real64 const gridCellDiagonal =
+    planeStrain == 1
+    ? LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] )
+    : LvArray::tensorOps::l2Norm< 3 >( hEl );
+
+  GEOS_ERROR_IF( gridCellDiagonal <= 0.0,
+                 "Invalid MPM grid-cell diagonal for explicit surface normal influence." );
+
+  real64 const explicitSurfaceNormalInfluence =
+    m_explicitSurfaceNormalInfluence / gridCellDiagonal;
 
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
@@ -18546,10 +18573,10 @@ localIndex const mappedNode =
 
           // Optional explicit particle surface normal:
           //
-          //   n_I += influence * V_p N_Ip n_p
+          //   n_I += influence / h_diag * V_p N_Ip n_p
           //
-          // This can dominate the gradient-based normal if the influence is
-          // intentionally large.
+          // The user-specified influence is dimensionless; dividing by the
+          // active grid-cell diagonal makes this term scale like V_p grad N_Ip.
           if( hasExplicitSurfaceNormal )
           {
             real64 const explicitSurfaceNormalScale =

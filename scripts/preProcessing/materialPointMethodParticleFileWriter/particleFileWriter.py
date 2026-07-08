@@ -736,7 +736,7 @@ parameters = {
                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
                'exactJIntegration': ( None, True ),  # MPM: enforce exact J integration for F updates.
-               'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: weight explicit vs implicit surface normals.
+               'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: dimensionless weight of explicit vs implicit surface normals; solver scales by inverse grid-cell diagonal.
                'frictionCoefficient': ( None, True ),  # MPM: global friction coefficient.
                'frictionCoefficientTable': ( None, True ),  # MPM: friction coefficients by contact group.
                'frictionCoefficientRuleOfMixtures': ( None, True ),  # MPM: rule of mixtures for friction coefficient.

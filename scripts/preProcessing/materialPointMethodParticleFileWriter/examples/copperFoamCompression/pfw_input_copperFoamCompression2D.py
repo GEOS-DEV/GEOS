@@ -114,7 +114,7 @@ pfw["damageFieldPartitioning"] = 1
 # below from the pore surfaces.
 pfw["contactGapCorrection"] = "Implicit" # Activate contact only if gap <=0
 pfw["useSurfacePositionForContact"] = 1
-pfw["explicitSurfaceNormalInfluence"] = 1000.0
+pfw["explicitSurfaceNormalInfluence"] = 19.68758675709231
 
 # =============================================================================
 # Profile history output

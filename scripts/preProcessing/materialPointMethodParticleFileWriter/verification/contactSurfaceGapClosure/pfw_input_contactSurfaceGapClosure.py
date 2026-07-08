@@ -159,7 +159,7 @@ pfw["updateMethod"] = "FMPM"
 pfw["updateOrder"] = 2
 pfw["contactGapCorrection"] = contact_gap_correction
 pfw["useSurfacePositionForContact"] = 1 if surface_mode == "explicit" else 0
-pfw["explicitSurfaceNormalInfluence"] = 1000 if surface_mode == "explicit" else 0
+pfw["explicitSurfaceNormalInfluence"] = 47.14045207910317 if surface_mode == "explicit" else 0
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 0 if surface_mode == "explicit" else 1
 pfw["useInternalForceAsFaceReaction"] = 1
 pfw["writeStatistics"] = "all"
