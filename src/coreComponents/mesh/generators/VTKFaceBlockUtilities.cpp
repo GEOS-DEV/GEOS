@@ -239,14 +239,14 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
 {
   // Each edge is first associated to an hash and to an id.
   // Then we loop over all the edges of each cell and compute its hash to recover the associated id.
-  std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
+  stdUnorderedMap< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
     vtkCell * c = edges->GetCell( i );
     vtkIdList * edgePointIds = c->GetPointIds();
     GEOS_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
     std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
-    face2dIds[minMax] = i;
+    face2dIds.get_inserted( minMax ) = i;
   }
 
   ArrayOfArrays< localIndex > face2dToElems2d( LvArray::integerConversion< localIndex >( edges->GetNumberOfCells() ) );

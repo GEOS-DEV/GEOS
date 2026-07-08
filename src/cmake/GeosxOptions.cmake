@@ -36,8 +36,6 @@ if( GEOS_ENABLE_BOUNDS_CHECK )
   set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
 endif()
 
-option( ENABLE_PVTPackage "" ON )
-
 option( ENABLE_HPCREACT "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )

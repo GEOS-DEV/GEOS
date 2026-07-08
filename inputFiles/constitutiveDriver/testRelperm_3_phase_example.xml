@@ -1,0 +1,97 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="test_3_phase_baker"
+      relperm="3_phase_baker"
+      output="testRelperm_3_phase_example_3_phase_baker.txt"
+      steps="1325"
+      phaseNames="{ water, oil }"
+      saturationControls="{ waterSaturation, oilSaturation }"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_3_phase_stoneii"
+      relperm="3_phase_stoneii"
+      output="testRelperm_3_phase_example_3_phase_stoneii.txt"
+      steps="1325"
+      phaseNames="{ water, oil }"
+      saturationControls="{ waterSaturation, oilSaturation }"
+      logLevel="1" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="event_3_phase_baker"
+      target="/Tasks/test_3_phase_baker" />
+    <SoloEvent
+      name="event_3_phase_stoneii"
+      target="/Tasks/test_3_phase_stoneii" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_START -->
+  <Constitutive>
+    <TableRelativePermeability
+      name="3_phase_baker"
+      phaseNames="{ gas, oil, water }"
+      threePhaseInterpolator="BAKER"
+      nonWettingIntermediateRelPermTableNames="{ krg, krog }"
+      wettingIntermediateRelPermTableNames="{ krw, krow }" />
+    <TableRelativePermeability
+      name="3_phase_stoneii"
+      phaseNames="{ gas, oil, water }"
+      threePhaseInterpolator="STONEII"
+      nonWettingIntermediateRelPermTableNames="{ krg, krog }"
+      wettingIntermediateRelPermTableNames="{ krw, krow }" />
+  </Constitutive>
+  <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_3P_END -->
+
+  <Functions>
+    <!-- Water-Oil System (Coordinate: Sw) -->
+    <TableFunction
+      name="krw"
+      coordinates="{ 0.15000, 0.20000, 0.23500, 0.27750, 0.32000, 0.36250, 0.40500, 0.44750, 0.49000, 0.53250, 0.57500, 0.61750, 0.66000, 0.70250, 0.75000, 0.78750, 0.83000, 0.87250, 0.91500, 0.95750, 1.00000 }"
+      values="{ 0.00000, 0.00000, 0.00191, 0.00938, 0.02250, 0.04126, 0.06566, 0.09571, 0.13141, 0.17274, 0.21973, 0.27235, 0.33062, 0.39454, 0.47266, 0.53931, 0.62016, 0.70665, 0.79879, 0.89657, 1.00000 }"
+      interpolation="linear" />
+    <TableFunction
+      name="krow"
+      coordinates="{ 0.00000, 0.04250, 0.08500, 0.12750, 0.17000, 0.21250, 0.25000, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.76500, 0.80000, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00050, 0.00337, 0.01077, 0.02481, 0.04763, 0.08137, 0.12815, 0.19011, 0.26938, 0.36809, 0.48837, 0.63237, 0.77025, 1.00000 }"
+      interpolation="linear" />
+    
+    <!-- Gas-Oil System (Coordinate: Sg) -->
+    <TableFunction
+      name="krg"
+      coordinates="{ 0.00000, 0.05000, 0.08500, 0.12750, 0.17000, 0.21250, 0.25500, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.75000, 0.80750, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00144, 0.00704, 0.01688, 0.03094, 0.04925, 0.07178, 0.09855, 0.12956, 0.16479, 0.20427, 0.24797, 0.29591, 0.34808, 0.40448, 0.46512, 0.52999, 0.57422, 0.67243, 0.75000 }"
+      interpolation="linear" />
+    <TableFunction
+      name="krog"
+      coordinates="{ 0.00000, 0.04250, 0.10000, 0.12750, 0.17000, 0.21250, 0.25500, 0.29750, 0.34000, 0.38250, 0.42500, 0.46750, 0.51000, 0.55250, 0.59500, 0.63750, 0.68000, 0.72250, 0.76500, 0.80000, 0.85000 }"
+      values="{ 0.00000, 0.00000, 0.00000, 0.00702, 0.02851, 0.05809, 0.09395, 0.13513, 0.18102, 0.23117, 0.28525, 0.34300, 0.40419, 0.46864, 0.53619, 0.60670, 0.68006, 0.75617, 0.83491, 0.90169, 1.00000 }"
+      interpolation="linear" />
+
+    <TableFunction
+      name="waterSaturation"
+      coordinates="{ 0, 51, 101, 150, 198, 245, 291, 336, 380, 423, 465, 506, 546, 585, 623, 660, 696, 731, 765, 798, 830, 861, 891, 920, 948, 975, 1001, 1026, 1050, 1073, 1095, 1116, 1136, 1155, 1173, 1190, 1206, 1221, 1235, 1248, 1260, 1271, 1281, 1290, 1298, 1305, 1311, 1316, 1320, 1323, 1325 }"
+      values="{ 0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.42, 0.44, 0.46, 0.48, 0.5, 0.52, 0.54, 0.56, 0.58, 0.6, 0.62, 0.64, 0.66, 0.68, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8, 0.82, 0.84, 0.86, 0.88, 0.9, 0.92, 0.94, 0.96, 0.98, 1 }"
+      interpolation="lower" />
+
+    <TableFunction
+      name="oilSaturation"
+      coordinates="{ 0, 50, 51, 100, 101, 149, 150, 197, 198, 244, 245, 290, 291, 335, 336, 379, 380, 422, 423, 464, 465, 505, 506, 545, 546, 584, 585, 622, 623, 659, 660, 695, 696, 730, 731, 764, 765, 797, 798, 829, 830, 860, 861, 890, 891, 919, 920, 947, 948, 974, 975, 1000, 1001, 1025, 1026, 1049, 1050, 1072, 1073, 1094, 1095, 1115, 1116, 1135, 1136, 1154, 1155, 1172, 1173, 1189, 1190, 1205, 1206, 1220, 1221, 1234, 1235, 1247, 1248, 1259, 1260, 1270, 1271, 1280, 1281, 1289, 1290, 1297, 1298, 1304, 1305, 1310, 1311, 1315, 1316, 1319, 1320, 1322, 1323, 1324, 1325 }"
+      values="{ 0, 1, 0, 0.98, 0, 0.96, 0, 0.94, 0, 0.92, 0, 0.9, 0, 0.88, 0, 0.86, 0, 0.84, 0, 0.82, 0, 0.8, 0, 0.78, 0, 0.76, 0, 0.74, 0, 0.72, 0, 0.7, 0, 0.68, 0, 0.66, 0, 0.64, 0, 0.62, 0, 0.6, 0, 0.58, 0, 0.56, 0, 0.54, 0, 0.52, 0, 0.5, 0, 0.48, 0, 0.46, 0, 0.44, 0, 0.42, 0, 0.4, 0, 0.38, 0, 0.36, 0, 0.34, 0, 0.32, 0, 0.3, 0, 0.28, 0, 0.26, 0, 0.24, 0, 0.22, 0, 0.2, 0, 0.18, 0, 0.16, 0, 0.14, 0, 0.12, 0, 0.1, 0, 0.08, 0, 0.06, 0, 0.04, 0, 0.02, 0 }"
+      interpolation="linear" />
+  </Functions>
+</Problem>
