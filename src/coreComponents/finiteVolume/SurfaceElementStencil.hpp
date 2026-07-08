@@ -28,10 +28,13 @@ namespace geos
 /**
  * @brief Describes properties of SurfaceElementStencil.
  *
- * This type of stencil allows for up to 6 surface elements to be connected in a flux computation.
- * The total number of pairwise connections is thus: 6*(6-1)/2 = 15.
+ * This type of stencil allows for up to 10 surface elements to be connected in a flux computation.
+ * The total number of pairwise connections is thus: 10*(10-1)/2 = 45.
+ * (Raised from 6 to 10 to support fracture-fracture junctions where up to ~7 fault
+ *  faces share a single connector edge; see StencilTraits template parameter order:
+ *  <CONTAINER, MAX_NUM_POINTS_IN_FLUX, MAX_STENCIL_SIZE, MAX_NUM_CONNECTIONS>.)
  */
-using SurfaceElementStencilTraits = StencilTraits< ArrayOfArrays, 6, 6, 15 >;
+using SurfaceElementStencilTraits = StencilTraits< ArrayOfArrays, 10, 10, 45 >;
 
 /**
  * @brief Provides access to the SurfaceElementStencil that may be called from a kernel function.
