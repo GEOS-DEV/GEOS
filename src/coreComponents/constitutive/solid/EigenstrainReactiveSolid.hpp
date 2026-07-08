@@ -100,8 +100,8 @@ public:
   {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
-    real64 const porosity_crit = 1e-5; // critical porosity below which the surface area is set to 0
-    real64 const g = std::max(1e-10, ((porosity - porosity_crit) / (initialPorosity - porosity_crit))); // accesibility factor
+    real64 const porosity_crit = 1e-8; // critical porosity below which the surface area is set to 0
+    real64 const g = std::max(0.0, ((porosity - porosity_crit) / (initialPorosity - porosity_crit))); // accesibility factor
     real64 area_total = 0.0;    
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
     {
