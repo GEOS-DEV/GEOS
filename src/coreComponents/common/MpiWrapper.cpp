@@ -74,10 +74,10 @@ string MpiDesyncGuard::symbolizeStackTrace( stdArray< void *, maxFrames > const 
   // adapted from LvArray::system::getFunctionNameFromFrame()
   std::ostringstream oss;
 #if defined(__GLIBC__) || defined(__APPLE__)
-  for( int i = 0; i < m_frameCount; ++i )
+  for( int i = 0; i < frameCount; ++i )
   {
     Dl_info dli;
-    bool const dlOk = dladdr( m_frames[ i ], &dli );
+    bool const dlOk = dladdr( frames[ i ], &dli );
 
     oss << "Frame " << i << ": "
         << ( dlOk ?
@@ -93,12 +93,12 @@ string MpiDesyncGuard::symbolizeStackTrace( stdArray< void *, maxFrames > const 
 
 void MpiDesyncGuard::failed()
 {
-  GEOS_LOG_RANK_0( GEOS_FMT( "MPI desync detected: rank timed out\n"
-                             "{}\n"
-                             "Last successful stacktrace:\n"
-                             "{}",
-                             symbolizeStackTrace( m_frames, m_frameCount ),
-                             symbolizeStackTrace( g_lastSuccessfulFrames, g_lastSuccessfulFrameCount ) ) );
+  GEOS_LOG_RANK( GEOS_FMT( "MPI desync detected: rank timed out\n"
+                           "{}\n"
+                           "Last successful stacktrace:\n"
+                           "{}",
+                           symbolizeStackTrace( m_frames, m_frameCount ),
+                           symbolizeStackTrace( g_lastSuccessfulFrames, g_lastSuccessfulFrameCount ) ) );
   MPI_Abort( m_comm, 1 );
 }
 
