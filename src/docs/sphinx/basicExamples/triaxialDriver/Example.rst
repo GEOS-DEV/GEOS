@@ -28,14 +28,14 @@ The XML file for this test case is located at:
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+  inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
 
 
 This example also uses a set of table files located at:
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/tables/
+  inputFiles/constitutiveDriver/tables/
 
 
 Last, a Python script for post-processing the results is provided:
@@ -89,10 +89,12 @@ The initial stress is specified by ``initialStress="-10.e6"``. To ensure static 
 This stress has a negative value due to the negative sign convention for compressive stress in GEOS.
 
 
-Then, ``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written. 
+Then, ``steps="200"`` defines the number of load steps and ``output="simulationResults.txt"`` specifies an output file to which the simulation results will be written.
+If the ``output`` parameter is omitted, the results are written to the standard log as a formatted table.
+The ``precision`` parameter controls the number of digits used in output formatting.
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
@@ -114,7 +116,7 @@ If the residual friction angle is set to be less than the initial one, strain we
 Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -133,7 +135,7 @@ In this case, users should define two different time history functions (``strain
 Note that for standard tests with simple loading history, functions can be embedded directly in the XML file without using external tables.
 
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTION -->
     :end-before: <!-- SPHINX_FUNCTION_END -->
@@ -141,23 +143,23 @@ Note that for standard tests with simple loading history, functions can be embed
 
 The ``strainFunction`` TableFunction is an example of a 1D interpolated function, which describes the strain as a function of time ``inputVarNames="{ time }"``. This table is defined using a single coordinate file:
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/time.geos
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/tables/time.geos
   :language: none
 
 And a single voxel file:
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/tables/axialStrain.geos
   :language: none
 
 
 Similarly, the correlation between the confining stress and time is given through the ``stressFunction`` defined using the same coordinate file:
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/time.geos
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/tables/time.geos
   :language: none
 
 And a different voxel file:
 
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/tables/radialStress.geos
+.. literalinclude:: ../../../../../inputFiles/constitutiveDriver/tables/radialStress.geos
   :language: none
 
 
@@ -166,19 +168,6 @@ Instead of monotonic changing the axial load, two loading/unloading cycles are s
 This way, both plastic loading and elastic unloading can be modeled. 
 
 Note that by convention in GEOS, ``stressFunction`` and ``strainFunction`` have negative values for a compressive test.
-
-
-------------------------------------------------------------------
-Mesh
-------------------------------------------------------------------
-
-Even if discretization is not required for the ``TriaxialDriver``, a dummy mesh should be defined to pass all the necessary checks when initializing GEOS and running the module. A dummy mesh should be created in the ``Mesh`` section and assigned to the ``cellBlocks`` in the ``ElementRegions`` section. 
-
-
-.. literalinclude:: ../../../../../inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
-    :language: xml
-    :start-after: <!-- SPHINX_MESH -->
-    :end-before: <!-- SPHINX_MESH_END -->
 
 
 Once calibrated, the testing constitutive models can be easily used in full field-scale simulation by adding solver, discretization, and boundary condition blocks to the xml file. Also, it is possible to run a full GEOS model and generate identical results as those provided by the ``TriaxialDriver``.
@@ -192,7 +181,7 @@ The ``TriaxialDriver`` is launched like any other GEOS simulation by using the f
 
 .. code-block:: sh
 
-   path/to/geosx -i triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+  path/to/geosx -i inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
 
 
 The running log appears to the console to indicate if the case can be successfully executed or not:
@@ -205,12 +194,6 @@ The running log appears to the console to indicate if the case can be successful
    Adding Event: SoloEvent, triaxialDriver
       TableFunction: strainFunction
       TableFunction: stressFunction
-   Adding Mesh: InternalMesh, mesh1
-   Adding Object CellElementRegion named dummy from ObjectManager::Catalog.
-   Total number of nodes:8
-   Total number of elems:1
-   Rank 0: Total number of nodes:8
-	   dummy/cellBlock01 does not have a discretization associated with it.
    Time: 0s, dt:1s, Cycle: 0
    Cleaning up events
    Umpire            HOST sum across ranks:   23.2 KB
@@ -231,12 +214,12 @@ This output file has a brief header explaining the meaning of each column. Each 
 .. code:: sh
 
   # column 1 = time
-  # column 2 = axial_strain
-  # column 3 = radial_strain_1
-  # column 4 = radial_strain_2
-  # column 5 = axial_stress
-  # column 6 = radial_stress_1
-  # column 7 = radial_stress_2
+  # column 2 = strain,axial
+  # column 3 = strain,radial_1
+  # column 4 = strain,radial_2
+  # column 5 = stress,axial
+  # column 6 = stress,radial_1
+  # column 7 = stress,radial_2
   # column 8 = newton_iter
   # column 9 = residual_norm
   0.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00 -1.0000e+07 -1.0000e+07 -1.0000e+07 0.0000e+00 0.0000e+00 
@@ -246,7 +229,7 @@ This output file has a brief header explaining the meaning of each column. Each 
   1.0000e-01 -4.0000e-04 1.0000e-04 1.0000e-04 -1.6000e+07 -1.0000e+07 -1.0000e+07 1.0000e+00 0.0000e+00 
   ...
 
-Note that the file contains two columns for radial strains (``radial_strain_1`` and ``radial_strain_2``) and two columns for radial stresses (``radial_stress_1`` and ``radial_stress_2``). For isotropic materials, the stresses and strains along the two radial axes would be the same. However, the stresses and strains in the radial directions can differ for cases with anisotropic materials and true-triaxial loading conditions.
+Note that the file contains two columns for radial strains (``strain,radial_1`` and ``strain,radial_2``) and two columns for radial stresses (``stress,radial_1`` and ``stress,radial_2``). For isotropic materials, the stresses and strains along the two radial axes would be the same. However, the stresses and strains in the radial directions can differ for cases with anisotropic materials and true-triaxial loading conditions.
 
 This output file can be processed and visualized using any tool. As an example here, with the provided python script, the simulated stress-strain curve, p-q diagram and relationship between volumetric strain and axial strain are plotted, and used to validate results against experimental observations:
 
