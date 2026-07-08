@@ -1,0 +1,119 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Boundary conditions, F-table, and stress control}
+\label{sec:pfw-boundary-controls}
+\index{boundary conditions!PFW}
+\index{Ftable!PFW}
+\index{Stress Control!PFW}
+
+This section describes how users control the boundary and related domain-motion features through a \texttt{pfw\_input} file.  The internal solver algorithms are described in Section~\ref{sec:bc-internals}.  PFW writes most of these keys directly as attributes on the generated \texttt{SolidMechanics\_MPM} XML node, so new solver-side attributes can often be exercised through PFW without adding a special PFW wrapper.
+
+\subsection{Face ordering and boundary-condition types}
+\index{boundaryConditionTypes}
+
+Boundary-condition arrays use the face order
+\begin{equation}
+  \{x^-,x^+,y^-,y^+,z^-,z^+\}.
+\end{equation}
+The primary PFW key is \texttt{boundaryConditionTypes}.  Its values are the integer enum values used by the solver: \texttt{0} for \texttt{Outflow}, \texttt{1} for \texttt{Symmetry}, \texttt{2} for \texttt{Moving}, and \texttt{3} for \texttt{Contact}.  For example, a two-dimensional compression-style input often uses moving boundaries in the loading direction, outflow or free sides in the lateral direction, and symmetry through the suppressed $z$ direction:
+\begin{lstlisting}[language=Python,caption={PFW boundary face order and type selection.}]
+# Face order: x-, x+, y-, y+, z-, z+
+pfw["boundaryConditionTypes"] = [0, 0, 2, 2, 1, 1]
+\end{lstlisting}
+If this key is omitted, the solver initializes all six faces to \texttt{Outflow}.
+
+\subsection{Time-dependent boundary-type switching}
+\index{bcTable}
+\index{prescribedBcTable}
+
+To switch boundary types during a run, enable \texttt{prescribedBcTable} and provide \texttt{bcTable}.  Each row contains a time followed by six boundary-type integers in the same face order.  The solver uses zero-order hold selection at approximately the time-step midpoint, not interpolation.
+\begin{lstlisting}[language=Python,caption={PFW boundary-condition table.}]
+pfw["prescribedBcTable"] = 1
+pfw["bcTable"] = [
+  [0.0, 0, 0, 2, 2, 1, 1],
+  [1.0e-3, 3, 3, 2, 2, 1, 1],
+]
+\end{lstlisting}
+The table must have seven entries per row.  The first column is time; the remaining columns are the six boundary types.
+
+\subsection{Boundary-driven F-table deformation}
+\index{prescribedBoundaryFTable}
+\index{fTable}
+\index{fTableInterpType}
+
+Moving boundaries require a source of domain motion.  The common PFW pattern is to set \texttt{prescribedBoundaryFTable = 1}, choose an interpolation type, and provide an \texttt{fTable}.  The table columns are time, $F_{xx}$, $F_{yy}$, and $F_{zz}$.  The first row should normally start at time zero with unit stretches.
+\begin{lstlisting}[language=Python,caption={Boundary-driven diagonal deformation history.}]
+pfw["boundaryConditionTypes"] = [2, 2, 2, 2, 1, 1]
+pfw["prescribedBoundaryFTable"] = 1
+pfw["fTableInterpType"] = "Cosine"   # Linear, Cosine, or Smoothstep
+pfw["fTable"] = [
+  [0.0,     1.00, 1.00, 1.00],
+  [1.0e-3, 1.00, 0.90, 1.00],
+]
+\end{lstlisting}
+PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
+
+\subsection{Periodic homogeneous deformation}
+\index{prescribedFTable}
+\index{periodic boundaries!PFW}
+
+Use \texttt{prescribedFTable = 1} for a superposed homogeneous velocity-gradient update in periodic directions.  Periodicity itself is controlled by the background-grid key \texttt{periodic}, not by \texttt{boundaryConditionTypes}.  A periodic homogeneous compression example has the form
+\begin{lstlisting}[language=Python,caption={Periodic F-table control.}]
+pfw["periodic"] = [True, True, True]
+pfw["prescribedFTable"] = 1
+pfw["fTableInterpType"] = "Smoothstep"
+pfw["fTable"] = [
+  [0.0,     1.0, 1.0, 1.0],
+  [5.0e-4, 0.9, 0.9, 0.9],
+]
+\end{lstlisting}
+This is distinct from \texttt{prescribedBoundaryFTable}: the periodic path modifies particle velocity gradients and wraps particles through the periodic spatial partition, while the boundary path imposes velocities on selected physical grid faces.
+
+\subsection{Prescribed tangential velocities on moving faces}
+\index{prescribedBoundaryTransverseVelocities}
+\index{enablePrescribedBoundaryTransverseVelocities}
+
+Tangential velocity components on moving faces are free unless explicitly enabled.  The enable flag is a six-entry face array; the velocity array has shape \texttt{6 x 2}, with the two entries on each face corresponding to the two tangential coordinate directions used internally by the solver.
+\begin{lstlisting}[language=Python,caption={Tangential velocities on moving faces.}]
+pfw["enablePrescribedBoundaryTransverseVelocities"] = [0, 0, 1, 0, 0, 0]
+pfw["prescribedBoundaryTransverseVelocities"] = [
+  [0.0, 0.0], [0.0, 0.0],
+  [0.0, -0.1],   # y- face tangential values
+  [0.0, 0.0],
+  [0.0, 0.0], [0.0, 0.0],
+]
+\end{lstlisting}
+This feature is used for shear, peel, and tool-like moving-boundary setups where the normal motion comes from \texttt{fTable} or stress control but a tangential sliding speed must also be prescribed.  In the current PFW script, \texttt{prescribedBoundaryTransverseVelocities} has a standard default, while \texttt{enablePrescribedBoundaryTransverseVelocities} is passed through to the solver as an XML attribute when the user supplies it.
+
+\subsection{Boundary contact-wall controls}
+\index{boundaryFaceFrictionCoefficients}
+\index{boundaryFaceCoefficientsOfRestitution}
+
+Boundary contact walls are selected with boundary type \texttt{3}.  Optional per-face friction coefficients are supplied with \texttt{boundaryFaceFrictionCoefficients}.  The solver also registers \texttt{boundaryFaceCoefficientsOfRestitution}, but the reviewed active code path does not use this coefficient in the normal wall update.
+\begin{lstlisting}[language=Python,caption={Contact-wall boundary setup.}]
+pfw["boundaryConditionTypes"] = [3, 3, 3, 3, 1, 1]
+pfw["boundaryFaceFrictionCoefficients"] = [0.0, 0.0, 0.2, 0.2, 0.0, 0.0]
+# Registered by the solver, but not active in the current normal-contact update:
+pfw["boundaryFaceCoefficientsOfRestitution"] = [1, 1, 1, 1, 1, 1]
+\end{lstlisting}
+Contact-wall calculations can use particle-mapped surface positions when they are available, otherwise the active boundary-contact code falls back to center-of-volume information at the grid node.  Cases that require explicit surface-position or surface-normal fields should include those fields directly, or enable the related explicit-contact or cohesive-zone options that make PFW add \texttt{SurfaceNormal} and \texttt{SurfacePosition} automatically.
+
+\subsection{Stress-control inputs}
+\index{stressControl}
+\index{stressTable}
+
+Stress control is configured with a three-entry \texttt{stressControl} flag, a \texttt{stressTable}, an interpolation type, and PID-like gains.  The table columns are time followed by target normal stresses in the grid-aligned directions.  Stress control generates \texttt{domainL}; moving faces then impose the associated boundary velocities when the moving-face branch is active, which in the reviewed code means \texttt{prescribedBoundaryFTable} is active or at least one \texttt{stressControl} entry equals one.
+\begin{lstlisting}[language=Python,caption={Stress-control input pattern.}]
+pfw["boundaryConditionTypes"] = [2, 2, 2, 2, 2, 2]
+pfw["prescribedBoundaryFTable"] = 1
+pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stopTime, 1.0, 1.0, 1.0]]
+pfw["stressControl"] = [1, 1, 1]
+pfw["stressTableInterpType"] = "Smoothstep"
+pfw["stressTable"] = [
+  [0.0,      -1.0e6, -1.0e6, -1.0e6],
+  [stopTime, -5.0e6, -5.0e6, -5.0e6],
+]
+pfw["stressControlKp"] = 0.01
+pfw["stressControlKi"] = 0.0
+pfw["stressControlKd"] = 0.001
+\end{lstlisting}
+A practical pattern is to include a neutral \texttt{fTable} with unit stretches when using stress control on moving faces, then let the controller determine the actual velocity-gradient components.

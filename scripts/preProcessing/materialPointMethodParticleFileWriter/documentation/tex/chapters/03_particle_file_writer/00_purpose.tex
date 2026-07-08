@@ -1,0 +1,16 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Purpose and generated products}
+\label{sec:pfw-purpose}
+\index{ParticleFileWriter!purpose}
+\index{particle file}
+
+The material point method solver tracks material state on Lagrangian particles and solves the equations of motion on an Eulerian background grid.  In GEOS-MPM, the background grid is constructed by the GEOS internal mesh generator, but the particles are created externally through a set of Python tools collectively referred to as the ParticleFileWriter, or \emph{PFW}.  As its name implies, the ParticleFileWriter creates the particle file: a plain-text description of the position, velocity, and geometry of each material point ``particle,'' along with auxiliary variables that define material type, contact group, surface state, particle type, and other optional properties.  This pre-processor exists as a separate Python toolset so that users can create custom configurations, geometries, and loading paths without editing or rebuilding the GEOS C++ source code.
+
+PFW is therefore both a particle generator and a GEOS input generator.  Starting from a Python case definition, it writes
+\begin{itemize}[leftmargin=*]
+\item the particle file read by the \texttt{ParticleMeshGenerator};
+\item the GEOS XML input containing the \texttt{InternalMesh}, \texttt{ParticleRegion}, constitutive blocks, solver block, finite-element space, events, diagnostics, and output blocks;
+\item optional run scripts and scheduler settings; and
+\item optional data or Python dependencies staged into the run directory.
+\end{itemize}
+The division of labor is intentional: GEOS owns the background grid and time integration, while PFW owns the initial particle state and the user-facing construction logic for nontrivial geometries.

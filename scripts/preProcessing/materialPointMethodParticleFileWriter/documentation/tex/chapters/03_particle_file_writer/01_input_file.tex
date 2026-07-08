@@ -1,0 +1,35 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{The \texttt{pfw\_input} file}
+\label{sec:pfw-input}
+\index{pfw input}
+\index{pfw dictionary}
+\index{Python input file}
+
+A PFW case file is a Python file that is imported during case creation.  It can define any local Python variables, helper functions, classes, or objects needed to build the case.  Only data that must be passed to the PFW pre-processor, however, should be placed in the dictionary named \texttt{pfw}.  The dictionary is the contract between the case script and \texttt{particleFileWriter.py}.  Values outside the dictionary remain ordinary Python workspace variables used by the input script; values inside \texttt{pfw} are interpreted as PFW controls, particle-generation controls, or solver XML attributes.
+
+The import-based design makes a \texttt{pfw\_input} file more flexible than a static keyword file.  Users commonly compute dimensions from parameters, loop over material definitions, read tabulated data, construct lists of geometry objects, or select between load cases before filling the final \texttt{pfw} dictionary.  PFW recognizes a set of predefined keys and also passes many unrecognized keys through as attributes on \texttt{SolidMechanics\_MPM}, after filtering known PFW-only metadata.  This pass-through behavior lets new solver controls be exercised before a dedicated PFW wrapper is added.
+
+\begin{lstlisting}[language=Python,caption={Minimal shape of a PFW input file.}]
+import numpy as np
+import pfw_geometryObjects as geom
+import pfw_materials as mat
+
+# Local variables are allowed. They are not PFW inputs unless assigned to pfw.
+refine = 2
+cpp = 12
+length = 1.0
+
+pfw = {}
+pfw["xmin"], pfw["xmax"] = -0.5*length, 0.5*length
+pfw["ymin"], pfw["ymax"] = -0.5*length, 0.5*length
+pfw["zmin"], pfw["zmax"] = -0.5*length, 0.5*length
+pfw["xpar"], pfw["ypar"], pfw["zpar"] = refine, refine, refine
+pfw["nI"], pfw["nJ"], pfw["nK"] = pfw["xpar"]*cpp, pfw["ypar"]*cpp, pfw["zpar"]*cpp
+pfw["ppc"] = 2
+pfw["endTime"] = 1.0e-5
+pfw["outputType"] = "silo"       # or "vtk"
+pfw["materials"] = [mat.elasticIsotropic("solid", rho=1000.0, E=1.0e6, nu=0.25)]
+pfw["objects"] = [geom.box("block", mat=0, x0=[-0.4,-0.4,-0.4], x1=[0.4,0.4,0.4])]
+\end{lstlisting}
+
+The input file is imported as a module, so normal Python caveats apply.  Expensive work at module import time will be repeated whenever PFW imports the file.  For large geometry construction, users can put object generation in helper functions or use the \texttt{make\_objects} pattern supported by the current PFW script so that geometry construction can be restricted to the rank slice being generated.

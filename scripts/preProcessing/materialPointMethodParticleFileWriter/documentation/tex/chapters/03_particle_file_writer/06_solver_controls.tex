@@ -1,0 +1,331 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Solver controls}
+
+\label{sec:pfw-solver-controls}
+\index{solver controls}
+\index{ParticleFileWriter!solver controls}
+\providecommand{\pfwidx}[1]{\index{PFW parameter!#1@\texttt{#1}}}
+\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
+
+The PFW parameter catalogue in Appendix~\ref{app:pfw} lists all keys discovered in \texttt{particleFileWriter.py}; Appendix~\ref{app:solver-attributes} lists the corresponding solver-side wrappers discovered from \texttt{SolidMechanics\_MPM}.  This section gives copyable solver-control fragments from the verification, validation, and example inputs, but it intentionally avoids re-documenting controls that are treated in detail elsewhere in this chapter.  Geometry construction is described in Sections~\ref{sec:pfw-geometry-objects} and~\ref{sec:pfw-materials}; boundary, F-table, and stress-control inputs are described in Section~\ref{sec:pfw-boundary-controls}; diagnostics are described in Section~\ref{sec:pfw-diagnostics}; and output controls are described in Section~\ref{sec:pfw-output-controls}.  The examples below are therefore fragments to be placed into a complete \texttt{pfw\_input} file after the grid, material, and object definitions have been supplied.
+
+PFW has two solver-control paths.  Keys that appear in its internal parameter table and are marked as solver attributes are written directly to the generated \texttt{SolidMechanics\_MPM} XML node.  Unknown \texttt{pfw} keys are also written as solver attributes, after a warning and typo-suggestion pass, so newly registered solver options can often be exercised without modifying PFW.  Because this pass-through behavior can also expose spelling mistakes, always inspect the generated \texttt{mpm\_*.xml} file when introducing a new key.
+
+\subsection{Core time integration and update controls}
+\index{solver controls!time integration}
+\index{solver controls!update method}
+\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{endTime}\pfwidx{plotInterval}\pfwidx{restartInterval}\pfwidx{solverProfiling}
+
+Most production and V\&V examples use explicit dynamics.  The time-integration enumeration is described in Appendix~\ref{app:solver-attributes}; the particle/grid update algorithms are described in Section~\ref{sec:particle-types-and-mapping}.  A minimal explicit-dynamic block is
+
+\begin{lstlisting}[language=Python,caption={Minimal explicit-dynamic solver-control block.}]
+stop_time = 1.0e-3
+
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["updateMethod"] = "FLIP"       # FLIP, PIC, XPIC, or FMPM
+pfw["updateOrder"] = 2             # used by XPIC and FMPM
+pfw["cflFactor"] = 0.25
+pfw["initialDt"] = 1.0e-16
+
+pfw["endTime"] = stop_time
+pfw["plotInterval"] = stop_time / 100.0
+pfw["restartInterval"] = 2.0 * stop_time
+pfw["solverProfiling"] = 0
+\end{lstlisting}
+
+\texttt{cflFactor} limits the stable explicit step computed by the solver, while \texttt{initialDt} is usually chosen very small so that the first step is accepted even before wave-speed and cell-size estimates have settled.  \texttt{updateMethod} should be chosen together with the particle type: CPDI examples commonly use \texttt{FLIP} or \texttt{FMPM}, single-point B-spline examples commonly use \texttt{FMPM}, and highly dissipative smoke tests may use \texttt{PIC}.  \texttt{XPIC} and \texttt{FMPM} use \texttt{updateOrder} as the order of the projection/filter approximation.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.26\linewidth}p{0.31\linewidth}X@{}}
+\toprule
+Example pattern & Representative suite input & Solver-control emphasis\\
+\midrule
+Elastic or hyperelastic contact & \path{examples/elasticDisk/pfw_input_elasticDisk.py} & Explicit dynamics, FMPM, domain deformation, basic contact and robustness guards.\\
+Contact-normal and gap tests & \path{verification/contact/pfw_input_symmetricInterface_explicit.py} and \path{verification/contact/pfw_input_symmetricInterface_implicit.py} & Explicit vs implicit surface data, contact gap closure, DFG contact.\\
+CPDI damage benchmark & \path{examples/brazilianDisk_FLIP/pfw_input_brazilianDisk_FLIP.py} & CPDI domain scaling, FLIP, neighbor list, damage and DFG.\\
+B-spline / FMPM benchmark & \path{examples/brazilianDisk_BSpline/pfw_input_brazilianDisk_BSpline.py} and \path{examples/brazilianDisk_FMPM/pfw_input_brazilianDisk_FMPM.py} & B-spline particles, FMPM order, DFG contact.\\
+Notched-bar damage & \path{verification/sizeEffect/pfw_input_notchedBar.py} & Damage localization, fracture/contact enrichment, crack-tip controls.\\
+Cohesive-zone tests & \path{verification/cohesiveZones/pfw_input_cz_flip.py} and \path{verification/cohesiveZones/pfw_input_multi_cz.py} & Cohesive events, explicit surface data, CZ tags, cohesive constitutive cards.\\
+\bottomrule
+\end{tabularx}
+\caption{Representative source inputs used to construct the compact solver-control examples in this section.}
+\label{tab:pfw-solver-control-examples}
+\end{table}
+
+\subsection{Example: hyperelastic single-field contact}
+\index{single-field contact!PFW example}
+\index{hyperelasticity!PFW example}
+\pfwidx{updateMethod}\pfwidx{damageFieldPartitioning}\pfwidx{cpdiDomainScaling}\pfwidx{particleFileFields}\pfwidx{frictionCoefficient}
+
+A single velocity field gives the classical MPM no-slip, non-penetrating contact behavior for particles that map to the same grid nodes.  In PFW this is obtained by assigning the contacting bodies to the same contact group, usually \texttt{group=0}, and leaving \texttt{damageFieldPartitioning} disabled.  The material assignment itself follows Section~\ref{sec:pfw-materials}; the example below uses a hyperelastic material entry from \texttt{pfw\_materials.py} and two objects in the same group.
+
+\begin{lstlisting}[language=Python,caption={Single-field hyperelastic contact.}]
+import pfw_materials as matdb
+import pfw_geometryObjects as geom
+
+rubber = matdb.hyperelasticNaturalRubber.copy()
+rubber["name"] = "rubber"
+rubber.refreshMaterialString()
+
+pfw["materials"] = [rubber["name"]]
+pfw["materialPropertyString"] = rubber["materialString"]
+
+# Same group -> one velocity field when DFG is off.
+left_disk  = geom.cylinder("leftDisk",  [-0.25, 0.0, zmin], [-0.25, 0.0, zmax], 0.2,
+                          mat=0, group=0, particleType="CPDI", dim=2)
+right_disk = geom.cylinder("rightDisk", [ 0.25, 0.0, zmin], [ 0.25, 0.0, zmax], 0.2,
+                          mat=0, group=0, particleType="CPDI", dim=2)
+pfw["objects"] = [left_disk, right_disk]
+
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["updateMethod"] = "FLIP"
+pfw["cpdiDomainScaling"] = 1
+pfw["damageFieldPartitioning"] = 0
+pfw["frictionCoefficient"] = 0.0       # not used between particles in one field
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "RVector"]
+\end{lstlisting}
+
+Use this pattern for compact smoke tests where the goal is to verify the constitutive response or deformation kinematics without material-contact separation.  If bodies should slip or separate, assign different groups and use the contact examples below, or enable DFG contact for self-contact after damage localization.
+
+\subsection{Example: two-material frictional contact with group-dependent coefficients}
+\index{friction!PFW example}
+\index{group-dependent friction table}
+\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{useSurfacePositionForContact}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{particleFileFields}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}
+
+The global \texttt{frictionCoefficient} is convenient when all contact pairs share one Coulomb coefficient.  For mixed materials, assign each object a contact group and provide \texttt{frictionCoefficientTable}.  Section~\ref{sec:contact-options} describes the solver-side contact algorithm and the modulo indexing used when DFG adds additional velocity fields.
+
+\begin{lstlisting}[language=Python,caption={Group-dependent friction and explicit surface contact.}]
+# Geometry objects are assigned group=0 for matrix and group=1 for inclusion/tool.
+# The table is indexed by contact group, not material ID.
+pfw["frictionCoefficient"] = 0.25      # fallback/global value
+pfw["frictionCoefficientTable"] = [
+    [0.00, 0.15],     # group 0 with groups 0,1
+    [0.15, 0.45],     # group 1 with groups 0,1
+]
+pfw["frictionCoefficientRuleOfMixtures"] = 0
+
+# Contact surface reconstruction and gap closure; see Section 2.11.
+pfw["contactGapCorrection"] = "Implicit"   # Simple, Implicit, or Softened
+pfw["contactNormalType"] = "Aligned"        # pass-through solver key
+pfw["contactNormalExponent"] = 2.0           # pass-through solver key
+pfw["useSurfacePositionForContact"] = 1
+pfw["explicitSurfaceNormalInfluence"] = 1000.0
+
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "RVector",
+                             "SurfaceNormal", "SurfacePosition"]
+\end{lstlisting}
+
+If explicit surface normals or positions are requested but the corresponding particle-file columns are absent, PFW adds \texttt{SurfaceNormal} and \texttt{SurfacePosition} automatically and emits a warning.  It is better to list them explicitly in production inputs so that the intent is visible in version control.
+
+\subsection{Example: CPDI, FLIP, domain scaling, and damage-enabled DFG}
+\index{CPDI!PFW example}
+\index{DFG!PFW example}
+\index{damage!PFW example}
+\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{disableSurfaceNormalsAndPositionsOnCPDIScaling}\pfwidx{plotUnscaledParticles}\pfwidx{particleFileFields}
+
+The Brazilian-disk FLIP example is representative of CPDI damage simulations.  CPDI domain scaling improves contact/fracture behavior for distorted domains; DFG contact introduces two fields when the damage-gradient criteria are met; and the neighbor list is typically required by damage models, field-gradient partitioning, or surface reconstruction.
+
+\begin{lstlisting}[language=Python,caption={CPDI/FLIP damage and DFG control block.}]
+pfw["updateMethod"] = "FLIP"
+pfw["cpdiDomainScaling"] = 1
+pfw["damageFieldPartitioning"] = 1
+pfw["needsNeighborList"] = 1
+
+# DFG and damaged-particle behavior.
+pfw["separabilityMinDamage"] = 0.5
+pfw["treatFullyDamagedAsSingleField"] = 1
+pfw["resetDefGradForFullyDamagedParticles"] = 1
+pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"] = 1
+# Useful output during development of CPDI scaling and DFG contact.
+pfw["plotUnscaledParticles"] = 1
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "Damage", "StrengthScale",
+                             "RVector"]
+\end{lstlisting}
+
+Initial surface flags are supplied explicitly through geometry painting or the \texttt{SurfaceFlag} particle-file field.  The evolving damage field still controls DFG separability.
+
+\subsection{Example: notched bar with crack-tip correction controls}
+\index{notched bar!PFW example}
+\index{crack-tip detection!PFW}
+\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{particleFileFields}
+
+The notched-bar verification input constructs an initial notch by painting damage and surface data on particles.  Solver-side crack-tip controls are direct pass-through keys: they are registered by \texttt{SolidMechanics\_MPM} even though they are not part of the older PFW default table.  This is the normal pattern for newly added solver controls.
+
+\begin{lstlisting}[language=Python,caption={Notched-bar crack-tip and DFG controls.}]
+pfw["updateMethod"] = "FMPM"
+pfw["updateOrder"] = 2
+pfw["cpdiDomainScaling"] = 1
+pfw["damageFieldPartitioning"] = 1
+pfw["needsNeighborList"] = 1
+
+# Direct solver pass-through keys for crack-tip aware damage/contact runs.
+pfw["useCrackTipDetection"] = 1
+pfw["crackTipDetectionThreshold"] = 0.75
+pfw["surfaceQualityThreshold"] = 0.2
+pfw["thinFeatureDFGThreshold"] = 1.5
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "Damage", "StrengthScale",
+                             "RVector", "SurfaceNormal", "SurfacePosition"]
+\end{lstlisting}
+
+The numerical values above are starting values, not universal defaults.  The thresholds should be verified against the chosen grid spacing, damage regularization length, notch radius, and constitutive damage law.
+
+\subsection{Example: B-spline particles, FMPM, and DFG contact}
+\index{B-spline MPM!PFW example}
+\index{FMPM!PFW example}
+\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{normalAndPositionMethod}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{contactGapCorrection}\pfwidx{frictionCoefficient}\pfwidx{particleFileFields}
+
+B-spline particles are selected through the geometry object's \texttt{particleType}, not by a top-level PFW key.  The solver-control part is the FMPM/DFG combination.  The B-spline examples in the example suite use \texttt{cpdiDomainScaling=0} because the particles are single-point B-spline particles rather than CPDI domains.
+
+\begin{lstlisting}[language=Python,caption={B-spline/FMPM/DFG solver controls.}]
+# Geometry example, shown only to emphasize where the particle type is assigned.
+sample = geom.cylinder("sample", [0.0, cy, zmin], [0.0, cy, zmax], radius,
+                       mat=0, group=0, dim=2,
+                       particleType="SinglePointBSpline")
+pfw["objects"] = [sample]
+
+pfw["updateMethod"] = "FMPM"
+pfw["updateOrder"] = 2
+pfw["cpdiDomainScaling"] = 0
+pfw["damageFieldPartitioning"] = 1
+pfw["needsNeighborList"] = 1
+
+# Optional normal/position reconstruction controls for contact studies.
+pfw["normalAndPositionMethod"] = "LogisticRegression"
+pfw["maxLRIterations"] = 25
+pfw["LRtolerance"] = 1.0e-8
+pfw["contactGapCorrection"] = "Implicit"
+pfw["frictionCoefficient"] = 0.25
+
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "Damage"]
+\end{lstlisting}
+
+For FMPM, \texttt{updateOrder} controls the number of projection/filter passes.  Higher order can reduce lumped-mass projection error but costs additional particle-grid transfers.  The boundary/contact caveat for the specific wall-contact boundary condition is described in Sections~\ref{sec:particle-types-and-mapping} and~\ref{sec:bc-internals}; multi-field contact and moving velocity boundaries use the incremental correction path described there.
+
+\subsection{Example: cohesive-zone run controls}
+\index{cohesive zone!PFW example}
+\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{particleFileFields}\pfwidx{useSurfacePositionForContact}\pfwidx{explicitSurfaceNormalInfluence}
+
+Cohesive-zone runs require both a cohesive constitutive card in \texttt{materialPropertyString} and a \texttt{CohesiveZone} event in \texttt{mpmEventsString}.  Section~\ref{sec:cz-implementation} describes the internal cohesive algorithm; Section~\ref{sec:pfw-materials} describes the material-string workflow.
+
+\begin{lstlisting}[language=Python,caption={Cohesive-zone PFW controls with explicit surface data.}]
+pfw["updateMethod"] = "FMPM"
+pfw["updateOrder"] = 2
+pfw["needsNeighborList"] = 1
+pfw["useEvents"] = 1
+
+# Surface columns are required by the cohesive initialization/contact geometry.
+pfw["particleFileFields"] = [
+    "Velocity", "MaterialType", "ContactGroup", "SurfaceFlag", "CZTag",
+    "RVector", "SurfaceNormal", "SurfacePosition",
+]
+
+pfw["useSurfacePositionForContact"] = 1
+pfw["explicitSurfaceNormalInfluence"] = 1000.0
+pfw["cohesiveFieldPartitioning"] = 1
+pfw["preventCZInterpenetration"] = 1
+
+# Section 3.6 shows how to build or edit cohesive material cards.
+# Newline-separated XML attributes avoid visible-space artifacts in this listing.
+cz_card = "\n".join([
+    "<CoupledCohesiveZone",
+    "name='cz'",
+    "maxNormalStress='0.01'",
+    "maxShearStress='0.01'",
+    "characteristicNormalDisplacement='0.05'",
+    "characteristicTangentialDisplacement='0.05'/>",
+])
+pfw["materialPropertyString"] = (
+    matdb.elasticDemo["materialString"] + "\n" + cz_card
+)
+
+pfw["mpmEventsString"] = "\n".join([
+    "<CohesiveZone",
+    "name='czEvent'",
+    "startTime='0.0'",
+    "constitutiveModel='cz'",
+    "czVolumeNormalization='1'/>",
+])
+\end{lstlisting}
+
+Older cohesive-failure style controls such as \texttt{enableCohesiveFailure}, \texttt{cohesiveLaw}, \texttt{maxCohesiveNormalStress}, and displacement-scale parameters are still registered through the solver interface and appear in some legacy V\&V inputs.  New cohesive-zone examples should prefer explicit cohesive constitutive cards and \texttt{CohesiveZone} events so that the material law, tags, and initialization event are all visible in the generated XML.
+
+\subsection{Example: body force, manufactured solution, and miscellaneous pass-through controls}
+\index{body force!PFW example}
+\index{manufactured solution!PFW example}
+\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{neighborRadius}\pfwidx{useAPIC}\pfwidx{useReferenceVectorsForParticleUpdate}\pfwidx{FSubcycles}\pfwidx{plotGridFields}
+
+A few solver controls are used in specialized verification or method-development runs.  PFW will write recognized keys whose table entry emits a solver attribute and will also pass through unknown solver keys.  This makes it possible to keep the PFW input and the GEOS XML input synchronized while a new option is being developed.
+
+\begin{lstlisting}[language=Python,caption={Specialized solver pass-through examples.}]
+# Uniform body acceleration or source term; see the BodyForceUpdate event for
+# time-dependent body-force changes.
+pfw["bodyForce"] = [0.0, -9.81e-3, 0.0]
+
+# Manufactured-solution or algorithm-development flags.
+pfw["generalizedVortexMMS"] = 1
+pfw["neighborRadius"] = 2.5
+pfw["useAPIC"] = 0
+pfw["useReferenceVectorsForParticleUpdate"] = 1
+pfw["plotGridFields"] = 1
+\end{lstlisting}
+
+The solver registers \texttt{FSubcycles} for deformation-gradient subcycling, but in the reviewed PFW table it is marked as a local/non-emitted key.  If a case needs this control, inspect the generated XML and either update the PFW parameter table so \texttt{FSubcycles} emits as a solver attribute or add the attribute in a post-generation XML edit until the PFW table is corrected.
+
+\subsection{Robustness guards commonly paired with solver controls}
+\index{robustness controls!PFW}
+\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{logLevel}
+
+The deletion and reset algorithms are documented in Section~\ref{sec:robustness-controls}.  The following guards are often included in solver-control examples so that unstable particles are removed before they corrupt the grid state.
+
+\begin{lstlisting}[language=Python,caption={Common robustness guard parameters.}]
+pfw["maxParticleVelocity"] = 10.0
+pfw["minParticleJacobian"] = 0.01
+pfw["maxParticleJacobian"] = 10.0
+pfw["logLevel"] = 1
+\end{lstlisting}
+
+These values are unit-system and problem dependent.  They should be set wide enough that valid material response is not clipped, but tight enough to catch failed particles, bad initial overlap, or runaway constitutive states early in a calculation.
+
+\subsection{Coverage map for solver-control examples}
+\index{solver controls!example coverage}
+
+Table~\ref{tab:pfw-control-coverage} summarizes where a user can find a PFW usage example for the main solver-control keys that are not already treated as primary topics in Sections~\ref{sec:pfw-boundary-controls}-\ref{sec:pfw-output-controls}.  The generated appendices remain the authoritative inventory of all registered keys.
+
+{\renewcommand{\arraystretch}{1.12}
+\footnotesize
+\begin{longtable}{@{}p{0.30\linewidth}p{0.26\linewidth}p{0.36\linewidth}@{}}
+\caption{PFW solver-control example coverage in Section~\ref{sec:pfw-solver-controls}.}\label{tab:pfw-control-coverage}\\
+\toprule
+Control family & Keys shown here & Example subsection\\
+\midrule
+\endfirsthead
+\toprule
+Control family & Keys shown here & Example subsection\\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Time integration and output schedule & \texttt{timeIntegrationOption}, \texttt{cflFactor}, \texttt{initialDt}, \texttt{endTime}, \texttt{plotInterval}, \texttt{restartInterval}, \texttt{solverProfiling} & Core explicit-dynamic block\\
+Particle/grid update & \texttt{updateMethod}, \texttt{updateOrder} & Core block; B-spline/FMPM example\\
+Single-field contact & \texttt{damageFieldPartitioning=0}, same object \texttt{group} & Hyperelastic single-field example\\
+Group contact and friction & \texttt{frictionCoefficient}, \texttt{frictionCoefficientTable}, \texttt{frictionCoefficientRuleOfMixtures} & Two-material friction example\\
+Contact normals and gap closure & \texttt{contactGapCorrection}, \texttt{contactNormalType}, \texttt{contactNormalExponent}, \texttt{useSurfacePositionForContact}, \texttt{explicitSurfaceNormalInfluence} & Two-material friction example; B-spline/FMPM example\\
+CPDI and DFG damage & \texttt{cpdiDomainScaling}, \texttt{damageFieldPartitioning}, \texttt{needsNeighborList}, \texttt{separabilityMinDamage}, \texttt{treatFullyDamagedAsSingleField} & CPDI/FLIP damage example\\
+Painted surface flags & \texttt{particleFileFields}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
+Crack-tip controls & \texttt{useCrackTipDetection}, \texttt{crackTipDetectionThreshold} & Notched-bar example\\
+Logistic-regression surface reconstruction & \texttt{normalAndPositionMethod}, \texttt{maxLRIterations}, \texttt{LRtolerance} & B-spline/FMPM example\\
+Cohesive-zone event controls & \texttt{useEvents}, \texttt{mpmEventsString}, \texttt{cohesiveFieldPartitioning}, \texttt{preventCZInterpenetration} & Cohesive-zone example\\
+Legacy cohesive-failure controls & \texttt{enableCohesiveFailure}, \texttt{cohesiveLaw}, cohesive strength/displacement scales & Cohesive-zone notes; see Section~\ref{sec:cz-implementation}\\
+Special verification controls & \texttt{bodyForce}, \texttt{generalizedVortexMMS}, \texttt{neighborRadius}, \texttt{useAPIC}, \texttt{useReferenceVectorsForParticleUpdate} & Miscellaneous pass-through example\\
+Robustness guards & \texttt{maxParticleVelocity}, \texttt{minParticleJacobian}, \texttt{maxParticleJacobian}, \texttt{logLevel} & Robustness guard block\\
+\end{longtable}}

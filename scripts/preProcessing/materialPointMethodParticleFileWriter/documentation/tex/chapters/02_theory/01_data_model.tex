@@ -1,0 +1,7 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{MPM data model}
+\index{particles}
+\index{background grid}
+GEOS-MPM evolves material state on particles while using a background finite-element grid to solve momentum balance.  The PFW-generated input normally creates two meshes: an \texttt{InternalMesh} named \texttt{background} and a \texttt{ParticleMesh} named \texttt{particles}.  The solver target regions include the background mesh region and one or more \texttt{ParticleRegion} blocks that bind particle blocks to constitutive material names.
+
+At runtime, particles carry mass, volume, position, velocity, deformation information, material identity, particle type, contact group, surface/cohesive flags, thermal fields, and optional material directions.  Grid nodes receive mapped mass, momentum/velocity, internal and external forces, damage gradients, contact/cohesive terms, and optional diagnostic fields.  Particle-to-grid and grid-to-particle transfers are governed by particle type, interpolation/update method, CFL and time-step controls, contact settings, and boundary conditions.

@@ -1,0 +1,118 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\chapter{Getting started and install}
+\label{ch:getting-started}
+\index{getting started}
+\index{install}
+\index{setupMPM}
+
+\section{Recommended source-tree entry points}
+\index{source tree}
+The MPM code spans the GEOS solver, the MPM event package, particle mesh generation, the Python ParticleFileWriter, and suite tooling.  Table~\ref{tab:source-inventory} lists the source paths used while generating this manual.  The most useful initial files are:
+
+\begin{itemize}[leftmargin=*]
+\item \path{src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp} for solver input wrappers, the explicit step sequence, output controls, and diagnostics.
+\item \path{src/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitMPM.hpp} for the low-level nodal and particle update kernels.
+\item \path{src/coreComponents/events/mpmEvents/} for time-dependent MPM events such as deformation updates, stress initialization, pressure loading, material swaps, healing, and cohesive-zone insertion.
+\item \path{scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py} for generated XML, particle files, batch scripts, and PFW input normalization.
+\item \path{scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py} and \path{pfw_materials.py} for geometry and material dictionaries.
+\item \path{inputFiles/materialPointMethod/} for direct XML examples outside the PFW workflow.
+\end{itemize}
+
+\section{LLNL convenience build with \texttt{setupMPM}}
+\label{sec:setupMPM}
+\index{Dane}
+\index{Tuolumne}
+\index{external material models}
+The archive includes a top-level \path{setupMPM} script for LLNL Dane and Tuolumne.  It can infer the machine from the hostname or accept \texttt{--dane} or \texttt{--tuolumne}.  The script creates local MPM convenience files, configures the machine-specific minimal-TPL host config, and builds the \texttt{geosx} target.
+
+\begin{lstlisting}[language=bash,caption={Typical LLNL setupMPM usage.}]
+# Configure and build on Dane.
+./setupMPM --dane --bank <lc_bank>
+
+# Configure and build on Tuolumne.
+./setupMPM --tuolumne --bank <lc_bank>
+
+# Enable VTK output support in the otherwise minimal MPM build.
+./setupMPM --dane --enable-vtk
+
+# Attach out-of-tree/internal constitutive models.
+./setupMPM --dane --external-material-models /path/to/material-models
+
+# Rebuild an existing configured tree after source/header edits.
+./setupMPM --dane --rebuild
+\end{lstlisting}
+
+When external material models are used, the external directory should provide either the external-model CMake hook file or a \path{CMakeLists.txt} that registers the model library.  The setup script forwards that location to CMake through the external constitutive-model directory variable.
+\begin{lstlisting}[caption={External constitutive-model CMake hook names.}]
+GEOSExternalConstitutiveModels.cmake
+CMakeLists.txt
+geos_register_external_constitutive_models()
+GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR
+\end{lstlisting}
+
+\section{Direct CMake build pattern}
+\index{CMake}
+The suite README also records the Dane minimal-TPL build pattern.  Adjust build and install roots to local workspace policy.
+
+\begin{lstlisting}[language=bash,caption={Manual GEOS-MPM build pattern from the suite workflow.}]
+python3 scripts/config-build.py \
+  -hc host-configs/LLNL/dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl.cmake \
+  -bt Release \
+  -br /usr/workspace/$USER/geos-builds \
+  -ir /usr/workspace/$USER/geos-installs
+
+cmake --build \
+  /usr/workspace/$USER/geos-builds/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl-release \
+  -j
+
+export GEOS_EXECUTABLE=/usr/workspace/$USER/geos-builds/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl-release/bin/geosx
+export GEOS_BANK=<your_lc_bank>
+\end{lstlisting}
+
+\section{Running a PFW-generated case}
+\index{ParticleFileWriter!running}
+\index{runClean}
+The ParticleFileWriter workflow creates particle files, GEOS XML inputs, and optionally run scripts.  The basic workflow is:
+
+\begin{enumerate}[leftmargin=*]
+\item Create a user definition file such as \path{userDefs_$USER.py} with paths to the GEOS executable, run directories, and scheduler defaults.
+\item Create a case input named \path{pfw_input_<case>.py}.  The input defines a Python dictionary named \texttt{pfw} and typically imports \path{pfw_geometryObjects.py} and \path{pfw_materials.py}.
+\item Create or use a \path{runClean_$USER.sh} wrapper and set \texttt{fileNames}, \texttt{fileLocation}, and \texttt{runLocation}.
+\item Execute \path{./runClean_$USER.sh}.  Passing an integer requests that the particle file writer use that many MPI tasks under Slurm.
+\end{enumerate}
+
+\begin{lstlisting}[language=bash,caption={Minimal ParticleFileWriter run pattern.}]
+cd scripts/preProcessing/materialPointMethodParticleFileWriter
+./runClean_$USER.sh        # serial PFW generation and job setup
+./runClean_$USER.sh 8      # request eight MPI tasks for PFW generation
+\end{lstlisting}
+
+\section{Running the example, verification, and validation suites}
+\index{verification suite}
+\index{validation suite}
+\index{examples suite}
+The parent suite wrappers are \path{examples/runExamplesSuite}, \path{verification/runVerificationSuite}, and \path{validation/runValidationSuite}.  They support preflight checks, case listing, run preparation, optional submission, and status/report refresh.
+
+\begin{lstlisting}[language=bash,caption={Common suite commands.}]
+# Static compile/deprecated-keyword check only.
+./verification/runVerificationSuite preflight
+
+# List discovered cases; template inputs with XXXX/YYYY/ZZZZ are skipped by default.
+./verification/runVerificationSuite list
+
+# Prepare run directories and invoke PFW, but do not submit GEOS jobs.
+./verification/runVerificationSuite run \
+  --run-root /p/lustre1/$USER/geos-mpm-suite-runs \
+  --geos-path "$GEOS_EXECUTABLE" \
+  --bank "$GEOS_BANK" \
+  --partition pdebug \
+  --output-type silo \
+  --keep-going
+
+# Refresh status/report after jobs have run.
+./verification/runVerificationSuite status \
+  --run-root /p/lustre1/$USER/geos-mpm-suite-runs \
+  --geos-path "$GEOS_EXECUTABLE"
+\end{lstlisting}
+
+Reports are written to \path{<run-root>/<suite-name>/suite_report.md} and \path{suite_report.json}.  The source archive also includes generated PDF reports linked in Chapter~\ref{ch:linked-reports}.

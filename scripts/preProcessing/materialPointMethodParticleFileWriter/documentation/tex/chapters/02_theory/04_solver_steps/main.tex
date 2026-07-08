@@ -1,0 +1,778 @@
+% !TeX root = ../../../../geos_mpm_manual.tex
+\section{Solver steps}
+\label{sec:solver-steps}
+\index{solverSteps}
+\index{explicit dynamic MPM}
+\index{particle-to-grid}
+\index{grid-to-particle}
+The explicit solver step is the implementation spine of the GEOS-MPM solver.  In the reviewed source the public \texttt{solverStep} entry point dispatches to an explicit dynamic update; the explicit step then performs the ordered operations in Table~\ref{tab:solver-steps}.  The ordering follows the standard MPM cycle of particle-grid projection, grid solution, and grid-particle projection introduced by Sulsky, Chen, and Schreyer, with extensions for generalized interpolation, CPDI particle domains, field-gradient partitioning, contact, cohesive zones, prescribed deformation, and GEOS constitutive-model dispatch~\cite{sulsky1994history,bardenhagen2004gimp,sadeghirad2011cpdi,homel2016domaindef,homel2016dfg}.
+
+Throughout this section, particles are indexed by $p$, background-grid nodes by $I$, and multi-material or contact velocity fields by $\alpha$.  The particle position, mass, current volume, velocity, stress, deformation gradient, and velocity gradient are denoted by $\mathbf{x}_p$, $m_p$, $V_p$, $\mathbf{v}_p$, $\boldsymbol{\sigma}_p$, $\mathbf{F}_p$, and $\mathbf{L}_p$.  The particle-to-node basis value and gradient used by the selected particle type are denoted by $N_{Ip}$ and $\nabla N_{Ip}$.  For CPDI particles these symbols represent domain-averaged quantities rather than point samples.  The nodal mass, momentum, velocity, acceleration, internal force, external force, and surface-tension force are denoted by $m_I$, $\mathbf{q}_I$, $\mathbf{v}_I$, $\mathbf{a}_I$, $\mathbf{f}^{\mathrm{int}}_I$, $\mathbf{f}^{\mathrm{ext}}_I$, and $\mathbf{f}^{\mathrm{surf}}_I$.
+
+\begin{longtable}{@{}p{0.08\linewidth}p{0.30\linewidth}p{0.55\linewidth}@{}}
+\caption{Implementation-level explicit MPM solver-step sequence.}\label{tab:solver-steps}\\
+\toprule
+\textbf{Step} & \textbf{Name} & \textbf{Purpose}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Step} & \textbf{Name} & \textbf{Purpose}\\
+\midrule
+\endhead
+1 & Resolve explicit-step managers & Acquire mesh, particle, node, partition, constitutive, field, and communication managers used by the step.\\
+2 & Initialize and reset explicit-step state & On the first cycle perform one-time solver initialization; every cycle reset nodal and temporary particle fields.\\
+3 & Prepare particle topology & Trigger pre-transfer events, optionally split particles, refresh particle maps, ghost data, active-particle lists, and periodic positions.\\
+4 & Build neighborhood and contact state & Build neighbor lists, update surface/contact flags, update boundary-condition tables, and initialize CPDI scaling as needed.\\
+5 & Populate particle-grid mapping & Compute particle-grid supports, basis values, gradients, CPDI/B-spline data, and compact particle-node maps.\\
+6 & Update damage and surface fields & Refresh damage-gradient, crack-tip, SPH-Jacobian, surface-normal, and surface-position data used by fracture/contact models.\\
+7 & Update cohesive-zone state & Initialize cohesive reference configuration and enforce cohesive laws, producing particle cohesive forces.\\
+8 & Compute particle loads and background fields & Evaluate body forces, manufactured-solution loads, and prescribed background stresses.\\
+9 & Map particle state to grid & Transfer mass, volume, momentum, damage, forces, surface fields, and first moments from particles to active grid fields.\\
+10 & Synchronize grid fields across MPI ranks & Communicate nodal reductions on partition boundaries and determine the active nodal field mask.\\
+11 & Compute and synchronize surface-tension forces & Assemble capillary grid forces from synchronized material-volume fields and reduce them across ranks.\\
+12 & Enforce grid symmetry and normalize grid fields & Apply symmetry projection and normalize surface normals, surface positions, and first moments.\\
+13 & Update grid dynamics and contact & Advance nodal momentum/velocity/acceleration and resolve contact between velocity fields.\\
+14 & Apply prescribed deformation and boundary conditions & Apply F-table, stress-control, moving/symmetry/contact/outflow boundary, and FMPM boundary corrections.\\
+15 & Map grid state back to particles & Update particle velocity, position increment, and velocity gradient using FLIP, PIC, XPIC, or FMPM transfer.\\
+16 & Update particle kinematics & Advance deformation gradients, volumes, densities, material directions, surface measures, and kinetic energy.\\
+17 & Update constitutive and thermal state & Call GEOS constitutive kernels, update stress/internal variables, thermal state, and wave-speed dependencies.\\
+18 & Write optional outputs and compute next stable time step & Emit scheduled histories/plot data and compute the CFL-limited candidate time step.\\
+19 & Resize grid and clean particle state & Resize moving domains, remove failed/out-of-range particles, repartition, and reset requested state variables.\\
+20 & Check event completion & Mark instantaneous or elapsed MPM events complete so dependent events can trigger on later cycles.\\
+\bottomrule
+\end{longtable}
+
+The high-level algorithm can be written compactly as Algorithm~\ref{alg:explicit-step}.  The following subsections expand each line with the implementation-specific equations used in the current solver.
+
+\begin{lstlisting}[caption={High-level explicit GEOS-MPM solver step.},label={alg:explicit-step},basicstyle=\ttfamily\small]
+explicitStep(t_n, dt, cycle):
+  1.  managers = getExplicitStepManagers(domain)
+  2.  initializeAndResetExplicitStepState(cycle, managers)
+  3.  prepareParticleTopologyForExplicitStep(dt, t_n, cycle, managers)
+  4.  buildNeighborhoodAndContactStateForExplicitStep(dt, t_n, cycle, managers)
+  5.  populateParticleGridMappingForExplicitStep(particles, nodes)
+  6.  updateDamageAndSurfaceFieldsForExplicitStep(domain, particles, nodes)
+  7.  updateCohesiveZonesForExplicitStep(dt, domain, particles, nodes)
+  8.  computeParticleLoadsAndBackgroundFieldsForExplicitStep(t_n, particles, nodes)
+  9.  performParticleToGridForExplicitStep(t_n, cycle, particles, nodes)
+  10. syncGridFieldsForExplicitStep(domain, nodes, mesh)
+      computeActiveGridFieldsForExplicitStep(domain, nodes, mesh)
+  11. computeAndSyncSurfaceTensionForcesForExplicitStep(particles, domain, nodes, mesh)
+  12. enforceGridFieldSymmetryAndNormalize(nodes)
+  13. updateGridDynamicsAndContactForExplicitStep(dt, particles, nodes)
+  14. applyPrescribedDeformationAndBoundaryConditionsForExplicitStep(dt, t_n, cycle)
+  15. gridToParticle(dt, particles, nodes, domain, mesh)
+  16. updateParticleKinematicsForExplicitStep(dt, t_n, particles, partition)
+  17. updateConstitutiveAndThermalStateForExplicitStep(dt, particles)
+  18. dt_next = writeOutputsAndComputeStableTimeStepForExplicitStep(t_n, dt, cycle)
+  19. resizeGridAndCleanParticlesForExplicitStep(dt, domain, particles, nodes, partition)
+  20. checkEventCompletion(t_n)
+  return dt_next
+\end{lstlisting}
+
+\subsection{Step 1: resolve explicit-step managers}
+\label{subsec:solver-step-1}
+\index{solverSteps!resolve managers}
+The first step is a bookkeeping stage that binds the solver object to the concrete GEOS objects needed by the explicit update: the partition, the particle mesh body, the background mesh level, the \texttt{ParticleManager}, and the background \texttt{NodeManager}.  It also determines whether periodic partitioning is active.  Although this stage does not modify physics state, it establishes the discrete spaces for the rest of the step:
+\begin{equation}
+  \mathcal{P}_h = \{p\}_{p=1}^{N_p}, \qquad
+  \mathcal{G}_h = \{I\}_{I=1}^{N_I}, \qquad
+  \mathcal{V}_h = \{(I,\alpha): I\in\mathcal{G}_h,\; \alpha\in\mathcal{A}_I\},
+\end{equation}
+where $\mathcal{A}_I$ is the set of active velocity/contact fields stored at node $I$.  The multi-field view is important for contact and fracture: conventional single-field MPM enforces velocity continuity through the grid, while crack/contact algorithms introduce distinct local velocity fields to permit discontinuities~\cite{nairn2003cramp,homel2016dfg}.
+
+\begin{lstlisting}[caption={Manager resolution.},basicstyle=\ttfamily\small]
+resolve_managers(domain):
+  partition = domain.partition
+  particleMesh = find mesh body that owns the particle region
+  meshLevel = particleMesh.background_mesh_level
+  particles = meshLevel.particle_manager
+  nodes = meshLevel.node_manager
+  periodic = partition.has_periodic_partitions()
+  return partition, particles, meshLevel, nodes, periodic
+\end{lstlisting}
+
+\subsection{Step 2: initialize and reset explicit-step state}
+\label{subsec:solver-step-2}
+\index{solverSteps!initialization}
+On the first cycle, the solver performs one-time setup.  This includes construction of neighbor-list storage, local and global domain extents, element spacings, boundary and buffer node sets, particle fields, history-file handles, contact velocity-field counts, constitutive-model dependency arrays, and material/contact coefficient tables.  If a neighbor radius is not supplied, the implementation chooses a grid-diagonal length scale, with a plane-strain specialization when appropriate.  This initialization fixes the discrete length scales later used by neighbor searches, surface detection, contact, and CFL estimates.
+
+Every cycle, all grid-resident temporary quantities are reset before the particle-to-grid transfer.  The reset implements the assumption that the background grid is a transient computational scaffold rather than a history-carrying mesh:
+\begin{equation}
+  m_{I\alpha}=0,\quad
+  \mathbf{q}_{I\alpha}=\mathbf{0},\quad
+  \mathbf{f}^{\mathrm{int}}_{I\alpha}=\mathbf{0},\quad
+  \mathbf{f}^{\mathrm{ext}}_{I\alpha}=\mathbf{0},\quad
+  \mathbf{a}_{I\alpha}=\mathbf{0},\quad
+  \mathbf{v}_{I\alpha}=\mathbf{0}.
+\end{equation}
+Auxiliary fields such as material volume, damage, maximum damage, surface normal, surface position, center of mass, center of volume, and contact force are similarly cleared or marked inactive.  This follows the classical MPM practice in which particles carry the material state and the grid is reinitialized each time step~\cite{sulsky1994history,steffen2008choices}.
+
+\begin{lstlisting}[caption={State reset.},basicstyle=\ttfamily\small]
+initialize_and_reset(cycle):
+  if cycle == 0:
+    initialize_neighbor_lists_and_extents()
+    initialize_particle_fields_and_history_files()
+    initialize_constitutive_dependencies()
+    allocate_contact_velocity_fields()
+  set_grid_field_labels_from_solver_configuration()
+  zero_grid_mass_momentum_forces_and_auxiliary_fields()
+\end{lstlisting}
+
+\subsection{Step 3: prepare particle topology}
+\label{subsec:solver-step-3}
+\index{solverSteps!particle topology}
+Before particle-grid transfers, the solver refreshes the topology of the particle set.  Time-windowed MPM events are triggered when their activation criteria are satisfied, particle subdivision is performed when the particle-splitting option is enabled, and the particle manager updates internal maps and block ownership.  In parallel runs, particles needed by neighbor-list or contact operations are ghosted across subdomain boundaries.  The active-particle index set
+\begin{equation}
+  \mathcal{P}_{\mathrm{act}} = \{p\in\mathcal{P}_h : p\text{ is not deleted and belongs to an active region}\}
+\end{equation}
+is then reconstructed.  Periodic ghost particles have their centers corrected so that distances used by mapping, neighbor lists, and contact are computed in the intended periodic image.
+
+This step is algorithmically separate from shape-function construction because the support of CPDI and B-spline particles depends on both particle topology and the background cell topology.  The separation also keeps event-driven operations, such as material swaps or particle transformations, ahead of force and mapping calculations.
+
+\begin{lstlisting}[caption={Particle topology preparation.},basicstyle=\ttfamily\small]
+prepare_particle_topology(dt, t_n, cycle):
+  if events are enabled:
+    trigger_events(t_n, dt, cycle)
+  if particle_splitting is enabled:
+    split_particles_that_satisfy_refinement_criteria()
+  particles.updateMaps()
+  if parallel_neighborhood_data_are_needed:
+    ghost_particles_and_periodic_images()
+  activeParticles = compute_active_particle_indices()
+\end{lstlisting}
+
+
+\subsection{Step 4: build neighborhood and contact state}
+\label{subsec:solver-step-4}
+\index{solverSteps!neighborhoods}
+\index{solverSteps!contact state}
+\index{neighbor list}
+\index{DFG!neighbor list}
+Classical MPM formulations deliberately avoid the persistent element connectivity of a purely Lagrangian finite-element mesh.  Particles carry mass, momentum, deformation, and internal variables, while the Eulerian background grid is reset each step; the only coupling required by the basic method is the compact particle-to-grid and grid-to-particle support of the selected shape functions~\cite{sulsky1994history,bardenhagen2004gimp}.  GEOS-MPM adds a particle-particle neighbor relation when algorithms require nonlocal particle information.  This relation should not be interpreted as a material mesh: it is a transient graph rebuilt from particle positions and ghost particles when needed.  Its primary motivation is damage-field-gradient (DFG) partitioning, in which a nonlocal damage gradient is used to split particles and grid nodes into opposite velocity fields so that damaged material can slip, separate, and later contact automatically~\cite{homel2016dfg}.
+
+For an active particle $p$, the neighbor graph is
+\begin{equation}
+  \mathcal{N}_p = \{q\in\mathcal{P}_{\mathrm{act}} : \|\mathbf{x}_q-\mathbf{x}_p\| \le r_n\},
+\end{equation}
+where $r_n$ is the solver neighbor radius.  In parallel runs, the set also includes ghost particles whose owners lie on neighboring MPI ranks, and periodic images are shifted before the distance test so that the closest periodic copy is used.  The graph is stored as an ordered variable-to-many particle relation.  Each entry records the neighbor particle's region, subregion, and local particle index, so kernels can access fields from different particle subregions without copying all particle data into a single flat material array.
+
+\paragraph{Use in damage-field-gradient contact.}
+\index{damage-field-gradient partitioning!neighbor list}
+DFG contact first constructs a particle-scale scalar damage field and then computes its normalized kernel gradient over the neighbor graph.  In the implementation, explicit surface flags and cohesive-zone flags may be treated as unit damage in this gradient construction, so painted surfaces and inserted cohesive surfaces can participate in the same partitioning logic.  Abstractly, for a scalar indicator $d_q$ and compact kernel $W(r;r_n)$, the particle damage gradient is evaluated in the normalized form
+\begin{equation}
+  \nabla d_p \approx
+  \frac{\sum_{q\in\mathcal{N}_p} V_q d_q\nabla W_{pq}}{\sum_{q\in\mathcal{N}_p} V_q W_{pq}}
+  -
+  \frac{\sum_{q\in\mathcal{N}_p} V_q d_q W_{pq}}{\left(\sum_{q\in\mathcal{N}_p} V_q W_{pq}\right)^2}
+  \sum_{q\in\mathcal{N}_p} V_q \nabla W_{pq},
+  \qquad
+  W_{pq}=W(\|\mathbf{x}_q-\mathbf{x}_p\|;r_n).
+\end{equation}
+The grid receives a representative damage-gradient vector, and particle-to-node mappings are assigned to one of the two DFG velocity fields according to the sign of the alignment between the particle mapping normal and the grid damage gradient.  This converts an evolving diffuse damage band, or a painted explicit surface, into a local kinematic enrichment without requiring the user to enumerate every possible contact pair in advance.  The same neighbor infrastructure therefore supports automatic self-contact, automatic fracture insertion with slip and separation, nonlocal surface detection and healing, crack-tip metrics, SPH-style Jacobian or overlap corrections, $L$-bar and directional overlap-correction options, and surface-tension-style particle interactions.
+
+\paragraph{Kernel radius and related length scales.}
+\index{neighborRadius}
+\index{PFW parameter!neighborRadius}
+The default neighbor radius is the diagonal of one background cell, using the in-plane diagonal for plane-strain calculations,
+\begin{equation}
+  r_{n,0}=\begin{cases}
+    \sqrt{h_x^2+h_y^2}, & \hbox{plane strain},\\[2mm]
+    \sqrt{h_x^2+h_y^2+h_z^2}, & \hbox{3D}.
+  \end{cases}
+\end{equation}
+The user input \texttt{neighborRadius} is interpreted as follows: zero selects this default, a positive value is used directly, and a negative value $-a$ requests $a r_{n,0}$.  Thus \texttt{neighborRadius=-1.5} gives a radius equal to 1.5 cell diagonals.  The same radius is used in several parts of the MPM solver: it defines the halo thickness for particle ghosting, the distance cutoff for particle-neighbor graph construction, the support of the compact nonlocal kernel used by DFG and SPH-type operations, the periodic ghost-image correction offset, and several dimensionless thresholds that are expressed relative to the neighborhood length.  Choosing $r_n$ therefore changes both cost and regularization length; it should usually be varied only as part of a resolution or sensitivity study.
+
+The compact kernel used by these nonlocal particle operations is
+\begin{equation}
+  W(r;r_n)=C_d\left[1-3\left(\frac{r}{r_n}\right)^2+2\left(\frac{r}{r_n}\right)^3\right],\quad 0\le r<r_n,
+  \qquad W=0\quad r\ge r_n,
+\end{equation}
+with a two-dimensional plane-strain normalization and a three-dimensional normalization.  Because the code normalizes scalar fields by the local kernel-weighted particle volume, the method is less sensitive to missing neighbors near free surfaces than an unnormalized convolution, although surface particles still require careful interpretation.
+
+\paragraph{Binning construction.}
+\index{binSizeMultiplier}
+\index{PFW parameter!binSizeMultiplier}
+A naive all-pairs neighbor search is unacceptable for production calculations because it scales as $O(N_p^2)$ per rank.  GEOS-MPM therefore performs a bin sort on the local partition expanded by $r_n$.  The bin width is
+\begin{equation}
+  h_{\mathrm{bin}}=m_b r_n,
+\end{equation}
+where \texttt{binSizeMultiplier} $=m_b\ge 1$.  Larger bins reduce the number of bins but increase the number of candidate particles per bin; smaller bins reduce candidates but increase bin-management overhead.  In plane strain the binning has one bin through the out-of-plane direction; otherwise the bin lattice is three-dimensional.
+
+The implementation first counts particles per bin, resizes the bin arrays, and then populates the bins.  It then performs two passes over active particles.  The first pass counts the number of neighbors of each active particle so the variable-length neighbor relation can be resized exactly.  The second pass repeats the same local bin query and fills the region, subregion, and particle-index arrays.  The search for particle $p$ only visits bins intersecting the sphere of radius $r_n$ about $\mathbf{x}_p$, and each candidate is accepted by the exact distance test $\|\mathbf{x}_q-\mathbf{x}_p\|^2\le r_n^2$.
+
+\begin{lstlisting}[caption={Particle-neighbor list construction by radius-binning.},basicstyle=\ttfamily\small]
+build_particle_neighbor_lists(radius = r_n):
+  exchange or wrap ghost particles over a halo of thickness r_n
+  define an expanded local search box [x_min - r_n, x_max + r_n]
+  bin_width = binSizeMultiplier * r_n
+  create a 2D or 3D bin lattice over the expanded box
+
+  for each particle q in each particle subregion:
+      append q to its spatial bin
+
+  for each active particle p:
+      count candidates q in bins intersecting the radius-r_n ball about p
+      keep candidates satisfying |x_q - x_p|^2 <= r_n^2
+      resize neighbor relation for p to the counted capacity
+
+  for each active particle p:
+      repeat the same bin query and fill
+      (neighborRegion, neighborSubRegion, neighborIndex)
+\end{lstlisting}
+
+\paragraph{Parallel and GPU scalability.}
+The neighbor list is one of the few steps in GEOS-MPM that introduces particle-particle rather than particle-grid communication.  In MPI, the dominant additional requirements are the exchange of ghost particles within $r_n$ of partition boundaries and the use of periodic image corrections before distances are evaluated.  Larger $r_n$ values increase ghost volume, memory footprint, and candidate counts.  On GPUs, the main challenges are variable-length neighbor lists, irregular memory access across particle subregions, dynamic resizing of array-of-arrays storage, and race-free bin population.  The current approach favors a robust two-pass construction: determine capacities first, then fill.  This avoids over-allocation and makes the downstream DFG/contact kernels operate on compact neighbor arrays, at the cost of rebuilding and traversing the bins every step for neighbor-dependent calculations.  The added cost is justified when DFG, automatic contact, automatic fracture, SPH corrections, or related nonlocal options are active; for standard single-field MPM without these features the neighbor list can remain disabled.
+
+The contact state is updated after the neighbor graph is available.  Boundary-condition tables are advanced, contact flags and contact-group metadata are refreshed, damaged-particle surface data may be suppressed, and initial CPDI domain-scaling factors may be initialized.  Domain scaling is included in this step because CPDI particle domains can become distorted in large tensile deformation; the Homel-Brannon-Guilkey domain-scaling strategy controls the onset of numerical fracture in parallel CPDI calculations~\cite{homel2016domaindef}.
+
+\begin{lstlisting}[caption={Neighborhood and contact state update.},basicstyle=\ttfamily\small]
+build_neighborhood_and_contact_state():
+  if neighbor_lists_are_required:
+    build_particle_neighbor_lists(radius = neighborRadius)
+  if surface_detection_or_healing_requires_neighbors:
+    update_surface_flags_from_kernel_volume_neighborhoods()
+  update_boundary_condition_tables()
+  update_contact_flags_and_contact_group_state()
+  disable_inappropriate_surface_data_on_failed_particles()
+  if cycle == 0 and CPDI_domain_scaling_enabled:
+    initialize_CPDI_domain_scaling()
+\end{lstlisting}
+
+\subsection{Step 5: populate particle-grid mapping}
+\label{subsec:solver-step-5}
+\index{solverSteps!particle-grid mapping}
+\index{shape functions}
+\index{CPDI}
+For each active particle, the solver computes a compact list of grid nodes in the particle support together with $N_{Ip}$ and $\nabla N_{Ip}$.  These arrays are the quadrature bridge between Lagrangian material points and the Eulerian background grid.  They determine mass projection, force integration, velocity-gradient reconstruction, and particle advection.
+
+For a single-point particle in a hexahedral background cell, the implementation uses the standard trilinear basis.  If $\boldsymbol{\xi}_p=(\xi_p,\eta_p,\zeta_p)$ is the local coordinate of the particle in the cell and $I$ corresponds to signs $s_I^d\in\{-1,1\}$, then
+\begin{equation}
+  N_{Ip} = \frac{1}{8}(1+s_I^1\xi_p)(1+s_I^2\eta_p)(1+s_I^3\zeta_p),
+  \qquad
+  \nabla N_{Ip}=\mathbf{J}^{-T}\nabla_{\boldsymbol{\xi}}N_I(\boldsymbol{\xi}_p).
+\end{equation}
+The B-spline option uses a tensor product of cubic cardinal B-splines over a $4\times4\times4$ node stencil.  Its smoother basis reduces cell-crossing noise and quadrature artifacts relative to piecewise-linear point sampling, consistent with the GIMP and implementation-choice literature~\cite{bardenhagen2004gimp,steffen2008quadrature,steffen2008choices}.
+
+For CPDI, the code interprets each particle as a convected parallelepiped with corner positions
+\begin{equation}
+  \mathbf{x}_{pc}=\mathbf{x}_p+s_c^1\mathbf{r}_{p1}+s_c^2\mathbf{r}_{p2}+s_c^3\mathbf{r}_{p3},
+  \qquad s_c^d\in\{-1,1\}.
+\end{equation}
+The effective CPDI basis value is the average of background-grid basis values at the particle corners,
+\begin{equation}
+  \bar{N}_{Ip}=\frac{1}{8}\sum_{c=1}^{8} N_I(\mathbf{x}_{pc}),
+\end{equation}
+while the effective gradient is assembled from corner weights
+\begin{align}
+  \bar{\nabla N}_{Ip} &= \sum_{c=1}^{8} N_I(\mathbf{x}_{pc})\,\boldsymbol{\alpha}_{pc}, \\
+  \boldsymbol{\alpha}_{pc} &= \frac{s_c^1(\mathbf{r}_{p2}\times\mathbf{r}_{p3})+s_c^2(\mathbf{r}_{p3}\times\mathbf{r}_{p1})+s_c^3(\mathbf{r}_{p1}\times\mathbf{r}_{p2})}{8\,\mathbf{r}_{p1}\cdot(\mathbf{r}_{p2}\times\mathbf{r}_{p3})}.
+\end{align}
+This is the implementation form of a domain-averaged CPDI transfer; it tracks the convected particle domain more accurately than undeformed point-sample MPM for massive deformation~\cite{sadeghirad2011cpdi}.  Duplicate node entries generated from multiple particle corners are coalesced by summing weights and gradients before the transfer kernels are launched.
+
+\begin{lstlisting}[caption={Particle-grid mapping.},basicstyle=\ttfamily\small]
+for p in activeParticles:
+  if particleType[p] == SinglePoint:
+    compute 8 trilinear basis values and gradients
+  else if particleType[p] == SinglePointBSpline:
+    compute 64 cubic B-spline values and gradients
+  else if particleType[p] == CPDI:
+    compute corner positions and CPDI-averaged basis/gradient
+  coalesce_duplicate_grid_nodes_in_particle_support(p)
+\end{lstlisting}
+
+\subsection{Step 6: update damage and surface fields}
+\label{subsec:solver-step-6}
+\index{solverSteps!damage fields}
+\index{solverSteps!surface fields}
+This step computes fields that mediate dynamic fracture, free-surface detection, and contact partitioning.  When damage partitioning is active, a kernel-smoothed damage field $d(\mathbf{x})$ is constructed from particle damage variables $d_p$ and differentiated to obtain a local material-interface indicator,
+\begin{equation}
+  d(\mathbf{x}) \approx \frac{\sum_p m_p d_p W(\mathbf{x}-\mathbf{x}_p,h)}{\sum_p m_p W(\mathbf{x}-\mathbf{x}_p,h)},
+  \qquad
+  \nabla d(\mathbf{x}) \approx \frac{\sum_p m_p d_p \nabla W(\mathbf{x}-\mathbf{x}_p,h)}{\sum_p m_p W(\mathbf{x}-\mathbf{x}_p,h)}.
+\end{equation}
+The resulting gradient is projected to the grid and used by field-gradient partitioning logic to split nodal velocity fields along damage-induced discontinuities.  This follows the Homel-Herbold idea that the gradient of a kernel-based damage field can define dynamically generated contact pairs without constructing explicit crack surfaces~\cite{homel2016dfg}.  When explicit crack-style data are used, the design is conceptually related to Nairn's CRAMP approach, in which special nodes carry multiple velocity fields to represent displacement discontinuities~\cite{nairn2003cramp}.
+
+Surface normals and surface positions are updated from particle and grid data.  A representative MPM free-surface normal estimate is
+\begin{equation}
+  \mathbf{n}_{p}^{\mathrm{raw}} \propto -\sum_{q\in\mathcal{N}_p} V_q \nabla W(\mathbf{x}_p-\mathbf{x}_q,h),
+  \qquad
+  \mathbf{n}_p=\frac{\mathbf{n}_{p}^{\mathrm{raw}}}{\|\mathbf{n}_{p}^{\mathrm{raw}}\|},
+\end{equation}
+with solver-specific thresholds determining whether the particle is considered a free-surface, damaged-surface, or interior particle.  The code also computes SPH-style Jacobian data and crack-tip distances when the corresponding fracture options are active.
+
+\begin{lstlisting}[caption={Damage and surface field update.},basicstyle=\ttfamily\small]
+if damage_partitioning_enabled:
+  compute_particle_damage_gradient_from_neighbors()
+if crack_tip_detection_enabled:
+  compute_distance_to_crack_tip()
+if surface_or_tension_model_requires_SPH_data:
+  compute_particle_SPH_jacobian()
+project_damage_gradient_to_grid()
+compute_particle_field_mappings()
+if surface_detection_enabled:
+  update_particle_surface_normals_and_positions()
+\end{lstlisting}
+
+\subsection{Step 7: update cohesive-zone state}
+\label{subsec:solver-step-7}
+\index{solverSteps!cohesive zones}
+\index{cohesive zones}
+If cohesive zones are configured, the solver resets the particle cohesive force and then initializes or updates cohesive interfaces.  During initialization, surface flags and normals are projected to the grid, and a reference cohesive configuration is established.  During the update, the cohesive law maps an interface opening/sliding displacement to a traction and accumulates equal-and-opposite particle forces.
+
+A generic cohesive-zone update can be written as
+\begin{align}
+  \boldsymbol{\delta}_{p}^{\mathrm{cz}} &= \left[\!\left[\mathbf{u}\right]\!\right]_p, \\
+  \mathbf{t}_{p}^{\mathrm{cz}} &= \mathcal{T}\!\left(\boldsymbol{\delta}_{p}^{\mathrm{cz}},\boldsymbol{\kappa}_p;\;\text{law parameters}\right), \\
+  \mathbf{f}_{p}^{\mathrm{cz}} &= A_p^{\mathrm{cz}}\mathbf{t}_{p}^{\mathrm{cz}},
+\end{align}
+where $\boldsymbol{\kappa}_p$ denotes cohesive history variables and $A_p^{\mathrm{cz}}$ is an effective interface area.  The exact law is supplied by the configured cohesive-zone model, while the solver controls when the reference configuration is created and how its forces are added to the external-force transfer.
+
+\begin{lstlisting}[caption={Cohesive-zone update.},basicstyle=\ttfamily\small]
+set particleCohesiveForce[p] = 0 for all active p
+if cohesive zones have uninitialized regions:
+  reset cohesive surface flags
+  project particle surface normals to the grid
+  initialize cohesive reference configuration
+if cohesive zones are active:
+  enforce cohesive law and accumulate particle cohesive forces
+\end{lstlisting}
+
+\subsection{Step 8: compute particle loads and background fields}
+\label{subsec:solver-step-8}
+\index{solverSteps!particle loads}
+The particle load stage assembles force-like quantities that will be transferred to the grid in Step~9.  The solver computes prescribed body forces, manufactured-solution body-force terms, cohesive forces from Step~7, and background stresses associated with controls such as borehole pressure or confining pressure.  At the particle level, the non-internal force contribution can be viewed as
+\begin{equation}
+  \mathbf{f}_{p}^{\mathrm{load}} = m_p\mathbf{b}_p
+  + \mathbf{f}_{p}^{\mathrm{traction}}
+  + \mathbf{f}_{p}^{\mathrm{cz}},
+\end{equation}
+while diffuse-interface surface-tension forces are assembled later as the grid force \texttt{gridSurfaceTensionForce} in Step~11.  Background stress fields enter the internal-force calculation through an effective stress difference.  This allows the same MPM divergence operator to represent material stress, manufactured solutions, selected externally prescribed stress fields, and grid-derived capillary forces.
+
+\begin{lstlisting}[caption={Particle load calculation.},basicstyle=\ttfamily\small]
+compute_body_force_on_particles()
+if manufactured_solution_enabled:
+  add_manufactured_solution_body_force(t_n)
+if background_pressure_or_stress_enabled:
+  compute_background_stress_field()
+\end{lstlisting}
+
+\subsection{Step 9: map particle state to grid}
+\label{subsec:solver-step-9}
+\index{solverSteps!particle-to-grid}
+\index{particle-to-grid transfer}
+The particle-to-grid transfer is the discrete weak-form assembly for the explicit grid solve.  For each active particle, each mapped node $I$, and each active velocity field $\alpha$, the code accumulates lumped nodal mass, volume, momentum, damage, forces, surface fields, and first moments.  In the simplest single-field notation,
+\begin{align}
+  m_I &= \sum_p m_p N_{Ip}, \\
+  V_I &= \sum_p V_p N_{Ip}, \\
+  \mathbf{q}_I &= \sum_p m_p \mathbf{v}_p N_{Ip}, \\
+  d_I^{\mathrm{mass}} &= \sum_p m_p d_p N_{Ip}.
+\end{align}
+The force assembly is
+\begin{align}
+  \mathbf{f}^{\mathrm{ext}}_I &= \sum_p \mathbf{f}_{p}^{\mathrm{load}} N_{Ip}, \\
+  \mathbf{f}^{\mathrm{int}}_I &= -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}_{p}^{\mathrm{bg}}-p_{\mathrm{sup},p}\mathbf{I}\right)\nabla N_{Ip},
+  \label{eq:p2g-internal-force}
+\end{align}
+where $p_{\mathrm{sup},p}$ denotes the supplemental pressure supplied by a material model when active.  Equation~\eqref{eq:p2g-internal-force} is the MPM quadrature form of the stress-divergence contribution in the weak momentum balance.  It is the same fundamental particle quadrature used in classical MPM, GIMP, and CPDI, with differences only in the definition of $N_{Ip}$ and $\nabla N_{Ip}$~\cite{sulsky1994history,bardenhagen2004gimp,sadeghirad2011cpdi,steffen2008quadrature}.
+
+The solver additionally maps surface normals, surface positions, maximum damage, centers of mass, and centers of volume.  In parallel/GPU execution, these are accumulated with atomic additions or reductions.  If compact coalesced support arrays are enabled, duplicate particle-node contributions are summed first to reduce redundant atomic operations.
+
+\begin{lstlisting}[caption={Particle-to-grid transfer.},basicstyle=\ttfamily\small]
+for p in activeParticles:
+  for each mapped node I in support(p):
+    for each active velocity field alpha of particle p:
+      m[I,alpha]      += m_p * N_Ip
+      volume[I,alpha] += V_p * N_Ip
+      q[I,alpha]      += m_p * v_p * N_Ip
+      f_ext[I,alpha]  += particle_load_p * N_Ip
+      f_int[I,alpha]  -= V_p * effective_stress_p * grad_N_Ip
+      damage[I,alpha] += m_p * damage_p * N_Ip
+      map_surface_and_moment_fields_if_enabled()
+\end{lstlisting}
+
+\subsection{Step 10: synchronize grid fields across MPI ranks}
+\label{subsec:solver-step-10}
+\index{solverSteps!MPI synchronization}
+After local assembly, nodal quantities shared by neighboring MPI ranks are reduced.  Additive fields, such as mass, material volume, momentum, internal force, external force, contact-surface mass, surface normals, surface positions, centers of mass, and centers of volume, use sum reductions.  Maximum-damage fields use maximum reductions.  The global active-field mask is then computed from the reduced mass:
+\begin{equation}
+  \chi_{I\alpha}=\begin{cases}
+  1, & m_{I\alpha} > m_{\min},\\
+  0, & \text{otherwise},
+  \end{cases}
+\end{equation}
+where $m_{\min}$ is the solver's small-mass threshold.  The mask is also synchronized so that every rank that touches a shared node has a consistent view of active velocity fields.  This reduction stage is essential for the conservation properties of MPM in parallel because mass, momentum, and force contributions are assembled from particle ownership rather than from a single owner of each nodal support.
+
+\begin{lstlisting}[caption={Grid synchronization.},basicstyle=\ttfamily\small]
+sum_reduce(gridMass, gridVolume, gridMomentum,
+           gridInternalForce, gridExternalForce,
+           gridSurfaceMass, gridSurfaceNormal, gridSurfacePosition,
+           gridCenterOfMass, gridCenterOfVolume)
+max_reduce(gridMaxDamage)
+active[I,alpha] = gridMass[I,alpha] > smallMass
+max_reduce(active)
+\end{lstlisting}
+
+\subsection{Step 11: compute and synchronize surface-tension forces}
+\label{subsec:solver-step-11}
+\index{solverSteps!surface tension}
+\index{surface tension}
+\index{continuum surface force}
+\index{continuum surface stress}
+This is an experimental capability to compute surface tension forces from mapped grid fields, avoiding the need for particle-neighbor surface curvature calculations.  When surface tension is enabled, the solver assembles a diffuse-interface capillary force after ordinary P2G synchronization.  This ordering is intentional: the capillary force is computed from the synchronized nodal material-volume field, not from rank-local particle ownership.  The result is accumulated in the separate grid vector field \texttt{gridSurfaceTensionForce}, synchronized with an MPI sum reduction, and later included in the Step~13 grid trial update.  If surface tension is disabled, or if \texttt{surfaceTensionPairs} is empty, this step is a no-op and \texttt{gridSurfaceTensionForce} remains zero.  Symmetry-compatible vector extension of the capillary force is applied with the other grid vector fields in Step~12.
+
+The implementation follows the diffuse-interface idea of the continuum surface-force model of Brackbill, Kothe, and Zemach~\cite{brackbill1992csf}.  In that formulation, a sharp interfacial force is replaced by a body force localized in a finite transition region where a color function varies smoothly.  For a constant surface-tension coefficient $\gamma$, the classical continuum-surface-force expression may be written in terms of a color gradient and curvature, with the force nonzero only where the color changes.  GEOS-MPM uses the equivalent weak-form continuum-surface-stress representation.  This form is convenient for MPM because it looks like another stress-divergence assembly and can use the same particle support gradients already available in the P2G data structures.
+
+Surface-tension pairs are specified as rows
+\begin{equation}
+  \left(a,b,\gamma_{ab}\right) \in \texttt{surfaceTensionPairs},
+\end{equation}
+where $a$ and $b$ are particle-group/contact-group phase labels and $\gamma_{ab}$ has units of force per length.  The special value $b=-1$ denotes a material-void, or free-surface, pair.  For each contact or damage side $d$, the solver interprets the corresponding velocity-field index for phase $a$ as
+\begin{equation}
+  \alpha(a,d)=d\,n_{\mathrm{grp}}+a,
+\end{equation}
+where $n_{\mathrm{grp}}$ is the number of contact groups.  The synchronized material-volume field on this velocity field is used as the discrete color support.
+
+For a material-material pair $(a,b)$, the nodal color used by the implementation is
+\begin{equation}
+  c^{ab}_{I,d}=\begin{cases}
+  \operatorname{clip}_{[0,1]}
+  \left(\dfrac{V_{I,\alpha(a,d)}}{V_{I,\alpha(a,d)}+V_{I,\alpha(b,d)}}\right),
+  & V_{I,\alpha(a,d)}+V_{I,\alpha(b,d)}>V_{\mathrm{tol}},\\[1.1em]
+  0, & \text{otherwise}.
+  \end{cases}
+\end{equation}
+For a material-void pair $(a,-1)$, no void field is stored.  The color is instead formed by normalizing the material volume by the background-grid support volume,
+\begin{equation}
+  c^{a0}_{I,d}=\operatorname{clip}_{[0,1]}
+  \left(\frac{V_{I,\alpha(a,d)}}{V_{\mathrm{cell}}}\right),
+  \qquad
+  V_{\mathrm{cell}}=h_x h_y h_z,
+\end{equation}
+with the inactive dimensions omitted in plane-strain calculations.  The clipping bounds avoid extrapolated colors outside the physical interval, and the volume tolerance prevents division by near-zero support.
+
+Each active particle whose group participates in the pair gathers the color gradient from the effective particle support on the same side $d$:
+\begin{equation}
+  \nabla c^{ab}_{p,d} =
+  \sum_{I\in\mathcal{S}_{p,d}} c^{ab}_{I,d}\,\nabla N_{Ip}.
+\end{equation}
+Here $\mathcal{S}_{p,d}$ is the set of effective mapped nodes and velocity fields on side $d$ for particle $p$.  Gradients with magnitude below \texttt{surfaceTensionGradientTolerance} are ignored.  If the user does not supply this tolerance, the code uses a small grid-scaled default proportional to $1/h_{\min}$.
+
+For retained particles, the interface normal and continuum surface stress are
+\begin{align}
+  \mathbf{n}_{p,d}^{ab} &=
+  \frac{\nabla c^{ab}_{p,d}}{\|\nabla c^{ab}_{p,d}\|}, \\
+  \boldsymbol{\tau}^{\mathrm{surf}}_{p,d} &=
+  s_{\gamma}\,\gamma_{ab}\,\|\nabla c^{ab}_{p,d}\|
+  \left(\mathbf{I}-\mathbf{n}_{p,d}^{ab}\otimes\mathbf{n}_{p,d}^{ab}\right),
+\end{align}
+where $s_{\gamma}$ is the optional \texttt{surfaceTensionForceSign} convention multiplier, normally $+1$.  The tensor projects onto directions tangent to the diffuse interface.  The factor $\|\nabla c\|$ localizes the stress to the transition region, mirroring the role of the color-gradient magnitude in the continuum surface-force model.
+
+The capillary grid force is then assembled weakly as
+\begin{equation}
+  \mathbf{f}^{\mathrm{surf}}_{I\alpha}
+  \mathrel{+}= -V_p\,\boldsymbol{\tau}^{\mathrm{surf}}_{p,d}\,\nabla N_{Ip},
+  \qquad \alpha\in\mathcal{S}_{p,d}.
+  \label{eq:mpm-surface-tension-force}
+\end{equation}
+This is the same sign convention as the MPM stress-divergence term in Eq.~\eqref{eq:p2g-internal-force}, but the result is stored separately from \texttt{gridInternalForce}.  Keeping the capillary contribution in \texttt{gridSurfaceTensionForce} makes the force balance easier to diagnose and allows \texttt{mpm\_momentumHistory.csv} to report internal, external, surface-tension, and contact force sums independently.
+
+\begin{lstlisting}[caption={Surface-tension force assembly.},basicstyle=\ttfamily\small]
+if surface_tension_enabled and surfaceTensionPairs is not empty:
+  clear gridSurfaceTensionForce
+  for p in active_particles:
+    for (phaseA, phaseB, gamma) in surfaceTensionPairs:
+      if particle_group[p] does not participate in the pair:
+        continue
+      for each contact_or_damage_side d:
+        grad_c = 0
+        for each mapped node/field (I, alpha) on side d:
+          c_I = material_material_color_or_material_void_color(I,d)
+          grad_c += c_I * grad_N_Ip
+        if norm(grad_c) <= gradient_tolerance:
+          continue
+        n = grad_c / norm(grad_c)
+        tau_s = force_sign * gamma * norm(grad_c) * (I - outer(n,n))
+        for each mapped node/field (I, alpha) on side d:
+          gridSurfaceTensionForce[I,alpha] -= V_p * tau_s * grad_N_Ip
+  sum_reduce(gridSurfaceTensionForce)
+\end{lstlisting}
+
+Because the force is treated explicitly, the stable-step calculation also includes a capillary-wave estimate.  The implementation takes the largest configured $\gamma$ and the minimum positive particle density and limits the time step by a grid-scale value proportional to
+\begin{equation}
+  \Delta t_{\mathrm{surf}}
+  \sim \sqrt{\frac{\rho_{\min} h_{\min}^{3}}{\gamma_{\max}}},
+\end{equation}
+consistent with the explicit surface-tension stability scaling discussed for continuum surface-force methods~\cite{brackbill1992csf}.  The usual solver CFL factor multiplies this estimate.
+
+\subsection{Step 12: enforce grid symmetry and normalize grid fields}
+\label{subsec:solver-step-12}
+\index{solverSteps!grid normalization}
+Before advancing nodal dynamics, the solver projects selected vector fields onto symmetry-compatible subspaces and normalizes accumulated quantities.  Symmetry projection removes the forbidden normal component on symmetry boundaries,
+\begin{equation}
+  \mathbf{w}_I \leftarrow \mathbf{w}_I - (\mathbf{w}_I\cdot\mathbf{n}_{\Gamma})\mathbf{n}_{\Gamma},
+  \qquad I\in\Gamma_{\mathrm{sym}},
+\end{equation}
+for fields such as surface normals, center of mass, center of volume, and the surface-tension force when enabled.  Surface normals and positions are then normalized:
+\begin{equation}
+  \mathbf{n}_I = \frac{\mathbf{n}^{\mathrm{raw}}_I}{\|\mathbf{n}^{\mathrm{raw}}_I\|},
+  \qquad
+  s_I = \frac{s^{\mathrm{raw}}_I}{m^{\mathrm{surf}}_I},
+\end{equation}
+with zero values assigned below threshold.  Centers of mass and centers of volume are similarly divided by the appropriate mass or material-volume measures.  This operation turns conserved sums from Step~9 into nodal geometric fields used by contact, surface tension, and diagnostics.
+
+\begin{lstlisting}[caption={Symmetry projection and normalization.},basicstyle=\ttfamily\small]
+project_surface_normals_and_moments_on_symmetry_boundaries()
+for each active grid field:
+  if norm(surfaceNormalRaw) > tolerance:
+    surfaceNormal = surfaceNormalRaw / norm(surfaceNormalRaw)
+  if surfaceMass > tolerance:
+    surfacePosition = surfacePositionRaw / surfaceMass
+  normalize_center_of_mass_and_center_of_volume()
+\end{lstlisting}
+
+\subsection{Step 13: update grid dynamics and contact}
+\label{subsec:solver-step-13}
+\index{solverSteps!grid dynamics}
+\index{solverSteps!contact}
+The grid trial update advances each active nodal velocity field using the assembled forces:
+\begin{align}
+  \mathbf{a}_{I\alpha}^{\ast} &= \frac{\mathbf{f}^{\mathrm{int}}_{I\alpha}+\mathbf{f}^{\mathrm{ext}}_{I\alpha}+\mathbf{f}^{\mathrm{surf}}_{I\alpha}}{m_{I\alpha}}, \\
+  \Delta\mathbf{v}_{I\alpha}^{\ast} &= \Delta t\,\mathbf{a}_{I\alpha}^{\ast}, \\
+  \mathbf{q}_{I\alpha}^{\ast} &= \mathbf{q}_{I\alpha}^{n}+\Delta t\left(\mathbf{f}^{\mathrm{int}}_{I\alpha}+\mathbf{f}^{\mathrm{ext}}_{I\alpha}+\mathbf{f}^{\mathrm{surf}}_{I\alpha}\right), \\
+  \mathbf{v}_{I\alpha}^{\ast} &= \frac{\mathbf{q}_{I\alpha}^{\ast}}{m_{I\alpha}}.
+\end{align}
+Here $\mathbf{f}^{\mathrm{surf}}$ is \texttt{gridSurfaceTensionForce}; it is zero when surface tension is disabled.  This is the explicit lumped-mass update underlying FLIP-MPM methods~\cite{sulsky1994history,wallstedt2008explicit}.  Inactive fields are zeroed except where momentum is intentionally preserved for conservation checks.
+
+Contact is then evaluated between pairs of velocity fields $(\alpha,\beta)$ at a node.  The solver first determines whether the pair should be treated as separable, cohesive, self-contact, or no-slip based on mass, surface normals, damage fields, damage-gradient partitioning, contact groups, cohesive-zone flags, and quality thresholds.  Contact normals may be constructed from surface-normal differences, mass-weighted normals, larger-mass normals, mixed rules, aligned rules, or classifier-like logistic rules.  Field-gradient partitioning and explicit-crack MPM both motivate this multi-field contact view~\cite{nairn2003cramp,homel2016dfg}.
+
+For a pair of active fields, define the common nodal velocity
+\begin{equation}
+  \mathbf{v}_{I}^{\alpha\beta} = \frac{m_{I\alpha}\mathbf{v}_{I\alpha}^{\ast}+m_{I\beta}\mathbf{v}_{I\beta}^{\ast}}{m_{I\alpha}+m_{I\beta}}.
+\end{equation}
+The force that would bring field $\alpha$ to the common velocity over one step has normal and tangential components
+\begin{align}
+  f_n &= \frac{m_{I\alpha}}{\Delta t}\left(\mathbf{v}_{I}^{\alpha\beta}-\mathbf{v}_{I\alpha}^{\ast}\right)\cdot\mathbf{n}, \\
+  f_{t,k} &= \frac{m_{I\alpha}}{\Delta t}\left(\mathbf{v}_{I}^{\alpha\beta}-\mathbf{v}_{I\alpha}^{\ast}\right)\cdot\mathbf{s}_k,
+  \qquad k=1,2.
+\end{align}
+If the pair is not separable, the full common velocity is enforced.  If the pair is separable, normal contact is activated by the configured approach/gap criterion, overlap correction may add a limited compressive correction, and tangential force is bounded by the Coulomb cone
+\begin{equation}
+  \|\mathbf{f}_t\| \le \mu |f_n|.
+\end{equation}
+The contact force is applied as an equal-and-opposite pair, preserving pairwise nodal momentum.  This design follows the Bardenhagen-Brackbill-Sulsky and Bardenhagen-Guilkey contact algorithms, including normal-traction-based separation logic, frictional sliding, and impulse limiting for suspect grid information~\cite{bardenhagen2000granular,bardenhagen2001contact}.
+
+\begin{lstlisting}[caption={Grid dynamics and contact.},basicstyle=\ttfamily\small]
+for each active field (I, alpha):
+  totalForce = internalForce[I,alpha] + externalForce[I,alpha] + surfaceTensionForce[I,alpha]
+  acceleration[I,alpha] = totalForce / mass[I,alpha]
+  momentum[I,alpha] += dt * totalForce
+  velocity[I,alpha] = momentum[I,alpha] / mass[I,alpha]
+
+for each node I and each active field pair (alpha, beta):
+  determine_contact_normal_and_separability()
+  compute_common_velocity_and_trial_contact_impulse()
+  apply_gap_overlap_and_friction_limits()
+  apply_equal_and_opposite_contact_forces()
+  update nodal acceleration, momentum, deltaVelocity, and velocity
+\end{lstlisting}
+
+\subsection{Step 14: apply prescribed deformation and boundary conditions}
+\label{subsec:solver-step-14}
+\index{solverSteps!boundary conditions}
+\index{Ftable}
+\index{stress control}
+After the unconstrained grid/contact update, prescribed kinematics and essential boundary conditions are imposed.  The solver interpolates F-table and prescribed-F-table data unless all active directions are under stress control.  A prescribed macroscopic deformation gradient $\bar{\mathbf{F}}(t)$ or velocity gradient $\bar{\mathbf{L}}(t)$ induces affine boundary velocities of the form
+\begin{equation}
+  \mathbf{v}^{\mathrm{bc}}(\mathbf{X},t) = \bar{\mathbf{L}}(t)\left(\mathbf{x}-\mathbf{x}_0\right) + \mathbf{v}_0(t),
+\end{equation}
+where the exact origin and direction masks are set by solver controls.  Stress control interpolates the stress table and updates the prescribed domain deformation measures using PID-like gains supplied in the input.  Moving, symmetry, outflow, and contact boundary conditions are then enforced on the nodal fields.  For FMPM, the code applies an additional uncontacted velocity-boundary correction because the filtered transfer needs to remain compatible with essential constraints.
+
+The timing of boundary-condition imposition is significant: it occurs after trial grid dynamics and contact so that the grid-to-particle transfer sees velocities that already satisfy prescribed domain motion and essential constraints.  This is consistent with explicit MPM practice, where nodal accelerations/velocities are the constrained solution variables for the step~\cite{wallstedt2008explicit,steffen2008choices}.
+
+\begin{lstlisting}[caption={Prescribed deformation and essential boundary conditions.},basicstyle=\ttfamily\small]
+if F_table_or_stress_control_enabled:
+  interpolate_prescribed_F_or_stress_table(t_n, dt)
+  update_prescribed_domain_deformation_measures()
+apply_essential_boundary_conditions(dt, t_n)
+if FMPM_update_is_enabled:
+  apply_FMPM_uncontacted_velocity_boundary_conditions()
+write_profile_outputs_if_scheduled()
+\end{lstlisting}
+
+\subsection{Step 15: map grid state back to particles}
+\label{subsec:solver-step-15}
+\index{solverSteps!grid-to-particle}
+\index{FLIP}
+\index{PIC}
+\index{XPIC}
+\index{FMPM}
+The grid-to-particle transfer updates particle velocity, position increment, and velocity gradient.  For the FLIP update, the code gathers nodal acceleration increments and the time-centered grid velocity:
+\begin{align}
+  \mathbf{v}^{n+1}_p &= \mathbf{v}^{n}_p + \Delta t\sum_I N_{Ip}\mathbf{a}_I, \\
+  \mathbf{x}^{n+1}_p &= \mathbf{x}^{n}_p + \Delta t\sum_I N_{Ip}\left(\mathbf{v}_I - \frac{1}{2}\Delta t\,\mathbf{a}_I\right), \\
+  \mathbf{L}^{n+1}_p &= \sum_I \mathbf{v}_I \otimes \nabla N_{Ip}.
+\end{align}
+For PIC, the particle velocity is reset to the interpolated grid velocity,
+\begin{equation}
+  \mathbf{v}^{n+1}_p = \sum_I N_{Ip}\mathbf{v}_I,
+\end{equation}
+while the same style of position and velocity-gradient gather is used.  The FLIP/PIC distinction is the standard tradeoff between lower numerical dissipation and stronger grid-scale filtering; the role of velocity projection in MPM accuracy has been analyzed by Wallstedt and Guilkey~\cite{wallstedt2007projection}.
+
+The XPIC option performs a recursive particle-grid velocity filtering step.  In operator notation, let $\mathbf{S}$ scatter particle velocities to lumped grid velocities and $\mathbf{S}^{+}$ gather nodal velocities back to particles.  An XPIC/FMPM-style filtered velocity can be described by a truncated series involving repeated applications of $\mathbf{S}^{+}\mathbf{S}$ to damp unresolved particle-grid modes.  The FMPM implementation constructs a first-order lumped grid velocity, then recursively applies
+\begin{align}
+  \mathbf{v}^{(\ell)}_{\mathrm{next}} &= \mathbf{S}^{+}\mathbf{S}\mathbf{v}^{(\ell-1)}_{\mathrm{rem}}, \\
+  \mathbf{v}^{(\ell)}_{\mathrm{rem}} &= \mathbf{v}^{(\ell-1)}_{\mathrm{rem}}-\mathbf{v}^{(\ell)}_{\mathrm{next}}, \\
+  \mathbf{v}^{\mathrm{FMPM}} &= \mathbf{v}^{\mathrm{FMPM}}+\mathbf{v}^{(\ell)}_{\mathrm{rem}},
+\end{align}
+with boundary and material-contact corrections inserted into the recursive update.  The goal is to improve the fidelity of particle-grid-particle transfer while retaining the explicit MPM update structure~\cite{hammerquist2017xpic,nairn2021fmpm}.
+
+\begin{lstlisting}[caption={Grid-to-particle transfer options.},basicstyle=\ttfamily\small]
+if updateMethod == FLIP:
+  gather acceleration increments to particle velocity
+  gather time-centered grid velocity to particle position
+  gather grid velocity gradient
+else if updateMethod == PIC:
+  set particle velocity to gathered grid velocity
+  gather position increment and velocity gradient
+else if updateMethod == XPIC:
+  apply recursive velocity projection filter, then gather kinematics
+else if updateMethod == FMPM:
+  build filtered velocity by recursive scatter-gather corrections
+  apply boundary/contact corrections and gather kinematics
+\end{lstlisting}
+
+\subsection{Step 16: update particle kinematics}
+\label{subsec:solver-step-16}
+\index{solverSteps!particle kinematics}
+\index{deformation gradient}
+After grid-to-particle transfer, particles carry updated velocity-gradient estimates.  If prescribed deformation is active, a superposed macroscopic velocity gradient is applied.  The deformation gradient is then advanced by
+\begin{equation}
+  \dot{\mathbf{F}}_p = \mathbf{L}_p\mathbf{F}_p.
+\end{equation}
+The implementation supports subcycling the explicit deformation-gradient update:
+\begin{equation}
+  \mathbf{F}_{p}^{k+1}=\mathbf{F}_{p}^{k}+\Delta t_{\mathrm{sub}}\,\mathbf{L}_p\mathbf{F}_{p}^{k},
+  \qquad
+  \Delta t_{\mathrm{sub}}=\frac{\Delta t}{N_F}.
+\end{equation}
+When exact Jacobian integration is enabled, the determinant update follows
+\begin{equation}
+  J_p^{n+1}=J_p^n\exp\left(\Delta t\,\mathrm{tr}\,\mathbf{L}_p\right),
+\end{equation}
+and $\mathbf{F}_p$ is rescaled to match the exact determinant.  The code computes $\dot{\mathbf{F}}_p\approx(\mathbf{F}^{n+1}_p-\mathbf{F}^{n}_p)/\Delta t$ for constitutive models requiring that rate.
+
+The particle kinematic update then checks failure/deletion criteria, determinant bounds, and velocity limits; updates current volume and density,
+\begin{equation}
+  V_p^{n+1}=J_p^{n+1}V_{p0},\qquad
+  \rho_p^{n+1}=\frac{m_p}{V_p^{n+1}};
+\end{equation}
+updates CPDI domain vectors and material directions; transforms surface normals, surface positions, and surface tractions; and computes kinetic energy.  These operations keep the particle as the carrier of history-dependent state, which is a central advantage of MPM for large deformation with inelastic constitutive behavior~\cite{sulsky1994history,sadeghirad2011cpdi}.
+
+\begin{lstlisting}[caption={Particle kinematic update.},basicstyle=\ttfamily\small]
+if prescribed_domain_deformation_enabled:
+  add macroscopic velocity gradient to particle L
+if transform_particle_events_are_active:
+  apply particle transformations
+update deformation gradient using F_subcycles
+if exact_J_update_enabled:
+  rescale F to match J_old * exp(trace(L) * dt)
+update particle volume, density, CPDI vectors, material directions,
+       surface fields, deletion flags, and kinetic energy
+\end{lstlisting}
+
+\subsection{Step 17: update constitutive and thermal state}
+\label{subsec:solver-step-17}
+\index{solverSteps!constitutive update}
+\index{temperature update}
+The constitutive update dispatches through GEOS material models assigned to particle regions.  Constitutive dependencies are synchronized into model-specific views, and each material updates stress and internal variables from the particle kinematic state.  If a material exports supplemental pressure, the solver uses that pressure-like scalar only in force assembly:
+\begin{equation}
+  \left(\boldsymbol{\sigma}_p^{n+1},\boldsymbol{\kappa}_p^{n+1},c_p^{n+1}\right)
+  = \mathcal{M}\left(\boldsymbol{\sigma}_p^{n},\boldsymbol{\kappa}_p^{n},\mathbf{F}_p^{n+1},\dot{\mathbf{F}}_p,\mathbf{L}_p,\Delta t,T_p^n,\ldots\right),
+\end{equation}
+where $\boldsymbol{\kappa}_p$ denotes material history variables and $c_p$ is the material wave speed used in the CFL estimate.  Hyperelastic materials may consume $\mathbf{F}_p$ directly, while rate/inelastic materials generally use $\mathbf{L}_p$, $\dot{\mathbf{F}}_p$, and their own history variables.
+
+When a material model does not own the internal-energy/temperature update, the solver supplies a fallback thermo-mechanical update based on stress power.  A representative form is
+\begin{equation}
+  \Delta e_p \approx \frac{\Delta t}{\rho_p}\,\bar{\boldsymbol{\sigma}}_p:\mathbf{L}_p - \Delta e_p^{\mathrm{visc}},
+  \qquad
+  \Delta T_p = \frac{\Delta e_p}{C_{v,p}},
+\end{equation}
+where $\bar{\boldsymbol{\sigma}}_p$ is an average stress over the step and $C_{v,p}$ is heat capacity.  After the material update, solver dependency arrays such as damage, plastic strain, temperature, temperature rate, heat capacity, update flags, and wave speed are refreshed from the constitutive model views.
+
+\begin{lstlisting}[caption={Constitutive and thermal update.},basicstyle=\ttfamily\small]
+update_constitutive_dependencies_before_stress_update()
+for each particle region and material model:
+  call material stress/update kernel with F, Fdot, L, stress, dt, state
+if material_does_not_update_temperature:
+  update internal energy and temperature from stress power
+update_solver_dependencies_from_constitutive_state()
+\end{lstlisting}
+
+\subsection{Step 18: write optional outputs and compute the next stable time step}
+\label{subsec:solver-step-18}
+\index{solverSteps!outputs}
+\index{solverSteps!stable time step}
+At the end of the physical update, scheduled diagnostics are written.  These include box averages, particle-history files, tracer outputs, reaction histories, profiles, plot/restart data, and other histories configured in the input/PFW workflow.  Diagnostic quantities are evaluated after the constitutive update so that histories reflect the end-of-step particle state.
+
+The next explicit time step is computed from a CFL estimate.  The reviewed implementation forms the maximum particle signal speed
+\begin{equation}
+  s_{\max}=\max_{p\in\mathcal{P}_{\mathrm{act}}}\left(c_p+\|\mathbf{v}_p\|\right),
+\end{equation}
+uses a characteristic grid length $h_{\min}$, and returns
+\begin{equation}
+  \Delta t_{\mathrm{CFL}} = C_{\mathrm{CFL}}\frac{h_{\min}}{s_{\max}}.
+\end{equation}
+If no active particles contribute, the function returns a very large sentinel value.  The CFL structure is consistent with explicit MPM/GIMP time integration analyses, where stability depends on wave speed, particle/grid discretization, and update scheme~\cite{wallstedt2008explicit,guilkey2003implicit}.
+
+\begin{lstlisting}[caption={Output and stable time step.},basicstyle=\ttfamily\small]
+if scheduled:
+  write_box_average_history()
+  write_particle_history()
+  write_tracer_history()
+  write_plot_or_restart_outputs()
+
+s_max = max_p( waveSpeed[p] + norm(velocity[p]) )
+if s_max > 0:
+  dt_next = cflFactor * min_grid_spacing / s_max
+else:
+  dt_next = huge_value
+\end{lstlisting}
+
+\subsection{Step 19: resize grid and clean particle state}
+\label{subsec:solver-step-19}
+\index{solverSteps!grid resize}
+\index{solverSteps!particle deletion}
+This cleanup step performs post-update domain management.  If prescribed boundary deformation, prescribed domain deformation, or stress control is active, the background grid/domain measures are resized.  In affine form, a nodal reference position may be updated by a domain velocity-gradient increment such as
+\begin{equation}
+  \mathbf{x}_{I}^{\mathrm{ref},n+1}\approx\left(\mathbf{I}+\Delta t\,\bar{\mathbf{L}}\right)\mathbf{x}_{I}^{\mathrm{ref},n},
+\end{equation}
+with corresponding updates to element spacing, local/global extents, and diagnostic box-average bounds.  CPDI domain vectors are scaled or unscaled around this resize depending on plotting and domain-scaling options.
+
+Particles flagged as failed, out of range, or otherwise invalid are deleted or compacted.  In parallel runs, the partition is updated, particles are redistributed, and periodic corrections are reapplied.  If reset-deformation-gradient events are active, the relevant particle deformation measures are reset after output and before the next step begins.  This cleanup ensures that the next cycle starts from a consistent particle set, updated domain geometry, and zeroed transient grid state.
+
+\begin{lstlisting}[caption={Grid resize and cleanup.},basicstyle=\ttfamily\small]
+if prescribed_boundary_F_or_stress_control_requires_resize:
+  resize_background_grid_and_domain_bounds()
+  update_box_average_extents_if_needed()
+if CPDI_domain_scaling_enabled:
+  apply_or_remove_CPDI_plot_scaling_as_requested()
+flag_particles_outside_valid_domain()
+delete_or_compact_bad_particles()
+if running_in_parallel:
+  repartition_and_update_periodic_particle_positions()
+if reset_deformation_gradient_requested:
+  reset_selected_particle_deformation_gradients()
+\end{lstlisting}
+
+\subsection{Step 20: check event completion}
+\label{subsec:solver-step-20}
+\index{solverSteps!event completion}
+At the end of the explicit update, the solver checks MPM events that were active during the step and marks completed events.  This is especially important for instantaneous events and for events that participate in dependency chains: setting the completion flag at the end of the active step allows dependent events to begin on subsequent cycles without re-running the completed event.
+
+\begin{lstlisting}[caption={Event-completion update.},basicstyle=\ttfamily\small]
+if events_enabled:
+  for each event:
+    if event interval elapsed or event is instantaneous and active this step:
+      event.isComplete = true
+\end{lstlisting}

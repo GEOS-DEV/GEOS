@@ -1,0 +1,203 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Diagnostics}
+\label{sec:pfw-diagnostics}
+\index{diagnostics}
+
+PFW exposes several lightweight CSV diagnostics that are separate from plot-file output.  They are commonly used for verification plots, automated suite checks, and rapid inspection of a run before opening Silo or VTK files.  Each diagnostic has an enable flag and its own write schedule.  Time-based schedules use a write interval in simulation time, while cycle-based schedules, when available, use an integer cycle interval.  For GEOS string-array inputs such as \texttt{profileVariables} and \texttt{tracerVariables}, either pass the GEOS brace syntax directly or use the tracer helpers in \path{pfw_tracerPoints.py}.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Diagnostic & Principal PFW controls \\
+\midrule
+Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInternalForceAsFaceReaction} \\
+Box averages & \texttt{boxAverageHistory}, \texttt{boxAverageWriteInterval}, \texttt{boxAverageMin}, \texttt{boxAverageMax}, \texttt{boxAverageResizeWithDomain} \\
+Profiles & \texttt{profileHistory}, \texttt{profileDirection}, \texttt{profileVariables}, \texttt{profileNumSlices}, \texttt{profileWriteInterval}, \texttt{profileCycleInterval} \\
+Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVariables}, \texttt{tracerWriteInterval}, \texttt{tracerCycleInterval}, \texttt{tracerOutputPrefix} \\
+\bottomrule
+\end{tabularx}
+\caption{PFW diagnostic controls summarized in Section~\ref{sec:pfw-diagnostics}.}
+\label{tab:pfw-diagnostics-controls}
+\end{table}
+
+\subsection{Reaction history}
+\label{subsec:pfw-reaction-history}
+\index{reactionHistory}
+\pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInternalForceAsFaceReaction}
+
+Boundary reactions are enabled with \texttt{reactionHistory}.  The write cadence is controlled by \texttt{reactionWriteInterval}; if this interval is zero or omitted, the solver can write every step.  The output is \path{reactionHistory.csv}.  Section~\ref{subsec:bc-reactions-internals} describes the internal accumulation algorithm, and Section~\ref{sec:csv-histories} summarizes the reaction file layout and post-processing conventions.
+
+\begin{lstlisting}[language=Python,caption={Reaction-history controls using the default velocity-correction measure.}]
+pfw["reactionHistory"] = 1
+pfw["reactionWriteInterval"] = stopTime / 1000.0
+
+# Default behavior: reaction comes from the imposed nodal velocity correction.
+pfw["useInternalForceAsFaceReaction"] = 0
+\end{lstlisting}
+
+The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInternalForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The spelling matches the current GEOS solver attribute.
+
+\begin{lstlisting}[language=Python,caption={Reaction-history controls using the boundary internal-force component.}]
+pfw["reactionHistory"] = 1
+pfw["reactionWriteInterval"] = stopTime / 2000.0
+
+# Spelling matches the current GEOS solver attribute.
+pfw["useInternalForceAsFaceReaction"] = 1
+\end{lstlisting}
+
+The internal-force option is a diagnostic correction; it does not change the boundary condition.  An APIC-consistent boundary mapping would address the same issue more directly, because the affine part of the particle velocity field would be represented during the boundary projection rather than being corrected only after the velocity has been mapped to the grid.
+
+The six reaction values are forces, not stresses.  To interpret a face reaction as an engineering stress, divide by the actual material surface area that carries load, not necessarily by the nominal area of the background-grid face.  This distinction matters for porous specimens, trimmed objects, cylindrical or curved boundaries embedded in a box, damaged surfaces, and cases where only part of a boundary face is occupied by material.  A typical post-processing calculation is
+\begin{equation}
+  \sigma_{\mathrm{eng}}(t) = \frac{R_{y^+}(t)}{A_{\mathrm{material}}(t)},
+\end{equation}
+where \(A_{\mathrm{material}}\) should match the specimen area used in the experiment or analytical comparison.
+
+\subsection{Box-average history}
+\label{subsec:pfw-box-average-history}
+\index{boxAverageHistory}
+\pfwidx{boxAverageHistory}\pfwidx{boxAverageWriteInterval}\pfwidx{boxAverageMin}\pfwidx{boxAverageMax}\pfwidx{boxAverageResizeWithDomain}
+
+Setting \texttt{boxAverageHistory} writes \path{boxAverageHistory.csv}.  The output contains averages of stress, density, damage, internal energy, kinetic energy, strain, material volume, temperature, and the diagonal domain-deformation components.  If \texttt{boxAverageMin} and \texttt{boxAverageMax} are omitted, the solver initializes the averaging box from the full computational domain.  This full-domain default is the common choice for homogeneous verification problems, triaxial tests, and bulk compression runs.
+
+\begin{lstlisting}[language=Python,caption={Full-domain box-average history.}]
+pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"] = stopTime / 1000.0
+
+# Omit boxAverageMin and boxAverageMax to use the full initial domain.
+\end{lstlisting}
+
+A fixed subregion is selected with \texttt{boxAverageMin} and \texttt{boxAverageMax}.  These are solver attributes and may be passed through the \texttt{pfw} dictionary.  A fixed box is useful for excluding platens, buffer layers, free surfaces, voids, or boundary artifacts.
+
+\begin{lstlisting}[language=Python,caption={Fixed Eulerian sub-box average.}]
+Lx = pfw["xmax"] - pfw["xmin"]
+Ly = pfw["ymax"] - pfw["ymin"]
+
+pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"] = stopTime / 500.0
+pfw["boxAverageMin"] = [-0.25 * Lx, -0.25 * Ly, pfw["zmin"]]
+pfw["boxAverageMax"] = [ 0.25 * Lx,  0.25 * Ly, pfw["zmax"]]
+pfw["boxAverageResizeWithDomain"] = 0
+\end{lstlisting}
+
+When a moving grid, D-table style domain update, or F-table boundary condition changes the domain length, the volume used in volume-normalized quantities changes as well.  If the diagnostic should follow a deforming specimen or the full current domain, set \texttt{boxAverageResizeWithDomain=1} so the box limits scale with the diagonal domain stretch.  If the diagnostic should remain a fixed Eulerian measurement window, keep \texttt{boxAverageResizeWithDomain=0} and provide explicit limits.  In either case, interpret density, stress, and energy histories with the selected averaging volume in mind.
+
+\subsection{Profiles}
+\label{subsec:pfw-profiles}
+\index{profile output}
+\pfwidx{profileHistory}\pfwidx{profileDirection}\pfwidx{profileVariables}\pfwidx{profileNumSlices}\pfwidx{profileWriteInterval}\pfwidx{profileCycleInterval}
+
+Profile outputs reduce particle data into one-dimensional spatial bins and write one CSV file per requested variable.  Files are named \path{profile_<direction>_<variable>.csv}.  The direction can be \texttt{x}, \texttt{y}, or \texttt{z}.  Supported variables include \texttt{density}, \texttt{damage}, \texttt{temperature}, \texttt{internalEnergy}, \texttt{kineticEnergy}, \texttt{velocityX}, \texttt{velocityY}, \texttt{velocityZ}, \texttt{volumeFraction}, \texttt{plasticStrainMagnitude}, the six stress components, and the six plastic-strain components.
+
+The following example requests two x-profiles.  With \texttt{profileNumSlices=0}, the solver uses the background-grid resolution in the profile direction.  The write interval is time-based.
+
+\begin{lstlisting}[language=Python,caption={X-profiles of density and axial stress using grid-cell spacing.}]
+pfw["profileHistory"] = 1
+pfw["profileDirection"] = "x"
+pfw["profileVariables"] = "{ density, stressXX }"
+pfw["profileNumSlices"] = 0          # use grid resolution in x
+pfw["profileWriteInterval"] = stopTime / 200.0
+pfw["profileCycleInterval"] = 0
+\end{lstlisting}
+
+The next example uses a sparse y-profile and a sparse temporal schedule.  This pattern is useful for long calculations where full plot files are too expensive to write frequently, but low-dimensional diagnostics are needed for convergence or stability checks.
+
+\begin{lstlisting}[language=Python,caption={Sparse Y-profile of several variables.}]
+pfw["profileHistory"] = 1
+pfw["profileDirection"] = "y"
+pfw["profileVariables"] = (
+    "{ density, volumeFraction, velocityY, damage, "
+    "stressXX, stressYY, plasticStrainMagnitude }"
+)
+pfw["profileNumSlices"] = 64
+pfw["profileWriteInterval"] = 0.0
+pfw["profileCycleInterval"] = 100
+\end{lstlisting}
+
+Use either \texttt{profileWriteInterval} or \texttt{profileCycleInterval} for a given run.  Keeping the inactive interval at zero makes the intended scheduling mode explicit in the generated XML.
+
+\subsection{Tracers}
+\label{subsec:pfw-tracers}
+\index{tracers}
+\pfwidx{tracerHistory}\pfwidx{tracerCoordinates}\pfwidx{tracerVariables}\pfwidx{tracerWriteInterval}\pfwidx{tracerCycleInterval}\pfwidx{tracerOutputPrefix}
+
+Tracer histories select the nearest active particle to each requested coordinate during initialization, store that particle ID, and then follow the same particle through time.  Each tracer file is named from \texttt{tracerOutputPrefix}; rows contain \texttt{t,x,y,z} followed by the requested particle variables.  The helper module \path{pfw_tracerPoints.py} is recommended because it formats \texttt{tracerCoordinates} and \texttt{tracerVariables} using the GEOS array syntax expected by the XML parser.
+
+A single point at the center of the two-disk collision domain is useful for checking symmetry and the time at which the two disks first interact.
+
+\begin{lstlisting}[language=Python,caption={Single tracer at the center of the colliding-disks domain.}]
+import pfw_tracerPoints as tracers
+
+center_point = [
+    0.5 * (pfw["xmin"] + pfw["xmax"]),
+    0.5 * (pfw["ymin"] + pfw["ymax"]),
+    0.0,
+]
+
+tracers.set_tracers(
+    pfw,
+    points=[center_point],
+    variables=["particleID", "speed", "velocityX", "velocityY", "stressXX", "stressYY"],
+    write_interval=stopTime / 400.0,
+    output_prefix="collidingDisks_center",
+)
+\end{lstlisting}
+
+For the copper-foam compression example, two transverse planes of tracers at \(0.1L\) and \(0.9L\) along the impact direction provide a compact way to monitor compaction-wave arrival, velocity dispersion, and stress heterogeneity.
+
+\begin{lstlisting}[language=Python,caption={Two planes of tracers in the copper-foam compression example.}]
+import pfw_tracerPoints as tracers
+
+L = domainSize["z"]
+plane_count = 9
+plane_span_x = domainSize["x"]
+plane_span_y = domainSize["y"]
+
+front_plane = tracers.plane_grid(
+    center=[0.0, 0.0, 0.1 * L], axis1="x", axis2="y",
+    span1=plane_span_x, span2=plane_span_y,
+    count1=plane_count, count2=plane_count,
+)
+back_plane = tracers.plane_grid(
+    center=[0.0, 0.0, 0.9 * L], axis1="x", axis2="y",
+    span1=plane_span_x, span2=plane_span_y,
+    count1=plane_count, count2=plane_count,
+)
+
+tracers.set_tracers(
+    pfw,
+    points=front_plane + back_plane,
+    variables=["particleID", "density", "speed", "stressZZ", "plasticStrainMagnitude"],
+    write_interval=stopTime / 1000.0,
+    output_prefix="foamPlaneTracer",
+)
+\end{lstlisting}
+
+For a plane-strain borehole, a ring of tracer points on the initial inner radius tracks borehole-surface motion.  The helper is named \texttt{disk}; setting one radial ring and \texttt{include\_center=False} produces only the circular ring.  Increase \texttt{radial\_count} if a full disk of interior monitoring points is desired.
+
+\begin{lstlisting}[language=Python,caption={Tracer ring on the borehole inner surface.}]
+import pfw_tracerPoints as tracers
+
+borehole_center = [0.0, 0.0, 0.0]
+inner_radius = 0.5 * boreholeDiameter
+inner_surface_points = tracers.disk(
+    center=borehole_center,
+    radius=inner_radius,
+    normal_axis="z",
+    radial_count=1,
+    angular_count=64,
+    include_center=False,
+)
+
+tracers.set_tracers(
+    pfw,
+    points=inner_surface_points,
+    variables=["particleID", "velocityX", "velocityY", "stressXX", "stressYY", "damage"],
+    write_interval=stopTime / 1000.0,
+    output_prefix="boreholeInnerSurface",
+)
+\end{lstlisting}
+
+When tracer coordinates lie in void or outside the active particle cloud, the nearest-particle selection may choose an unintended particle.  For surface tracking, place tracers slightly inside the material side of the surface or use generated geometry information to construct points on the material boundary.

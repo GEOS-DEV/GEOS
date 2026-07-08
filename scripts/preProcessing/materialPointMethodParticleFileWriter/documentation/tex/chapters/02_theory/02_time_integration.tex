@@ -1,0 +1,4 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Current time integration status}
+\index{time integration}
+The solver enumerates quasi-static, implicit-dynamic, and explicit-dynamic modes, but the implemented \texttt{solverStep} path in the reviewed source accepts the explicit-dynamic mode.  The explicit path controls the stable time step from the CFL factor, material wave speeds, particle/grid geometry, and additional solver limits such as maximum particle velocity and optional supplemental pressure.

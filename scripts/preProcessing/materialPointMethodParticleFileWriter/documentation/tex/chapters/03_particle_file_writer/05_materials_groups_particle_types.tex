@@ -1,0 +1,242 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Materials, groups, and particle types}
+\label{sec:pfw-materials}
+\index{materials}
+\index{groups}
+\index{particle types}
+\index{MaterialType@\texttt{MaterialType}}
+\index{ContactGroup@\texttt{ContactGroup}}
+\index{ParticleType@\texttt{ParticleType}}
+
+This section describes how PFW assigns the particle-level integers and optional orientation data that connect a generated particle file to the solver-side material, contact, and interpolation algorithms.  Constitutive-model equations and integration details are described in Section~\ref{sec:constitutive}; particle interpolation and update schemes are described in Section~\ref{sec:particle-types-and-mapping}; and multi-field, DFG, and explicit-surface contact options are described in Section~\ref{sec:contact-options}.  The purpose of this PFW section is narrower: it documents how the input script and geometry objects choose the values that are written into the particle file.
+
+PFW can generate particle files for several solver material-model families.  The current source-derived catalogue includes the models listed in Table~\ref{tab:pfw-material-model-list}.  Only the model names are listed here because the physics, parameters, and calibration guidance belong in the constitutive-model documentation and linked material-model reports.
+
+\begin{table}[htbp]
+\centering
+\caption{Solver material-model families visible to PFW in the reviewed source tree.  See Section~\ref{sec:constitutive} and Appendix~\ref{app:geometry-materials} for the generated catalogue.}
+\label{tab:pfw-material-model-list}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.30\linewidth}X@{}}
+\toprule
+\textbf{Family} & \textbf{Model names}\\
+\midrule
+Elastic and anisotropic elastic & \texttt{ElasticIsotropic}, \texttt{ElasticTransverseIsotropic}, \texttt{ElasticTransverseIsotropicPressureDependent}.\\
+Plasticity and hyperelasticity & \texttt{VonMisesJ}, \texttt{PerfectlyPlastic}, \texttt{Hyperelastic}, \texttt{HyperelasticMMS}.\\
+Damage, polymers, graphite, and geomaterials & \texttt{CeramicDamage}, \texttt{Chiumenti}, \texttt{StrainHardeningPolymer}, \texttt{Graphite}, \texttt{Geomechanics}.\\
+Cohesive-zone materials & \texttt{BicrystalCohesiveZone}, \texttt{CoupledCohesiveZone}, \texttt{PolymerCohesiveZone}; see Section~\ref{sec:cohesive-zone-implementation}.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Particle-level assignments made by geometry objects}
+\label{subsec:pfw-material-group-type-assignment}
+\index{geometry objects!material assignment}
+\index{geometry objects!contact group assignment}
+\index{geometry objects!particle type assignment}
+
+Each accepted particle receives three core classification values:
+\begin{align}
+  m_p^{\mathrm{PFW}} &= \texttt{MaterialType},\\
+  g_p^{\mathrm{PFW}} &= \texttt{ContactGroup},\\
+  \tau_p^{\mathrm{PFW}} &= \texttt{ParticleType}.
+\end{align}
+The first two are ordinary particle-file columns when \texttt{MaterialType} and \texttt{ContactGroup} are present in \texttt{particleFileFields}; the particle type is used by PFW while building particle blocks and by the generated \texttt{ParticleMesh} XML entry.  In the reviewed PFW code, the standard particle-type integers are
+\begin{center}
+\begin{tabular}{@{}cl@{}}
+\toprule
+\textbf{Integer} & \textbf{Solver particle type}\\
+\midrule
+0 & \texttt{SinglePoint}\\
+1 & \texttt{SinglePointBSpline}\\
+2 & \texttt{CPDI} (current PFW default)\\
+3 & \texttt{CPTI} placeholder\\
+4 & \texttt{CPDI2} placeholder\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The \texttt{mat} value is a zero-based index into \texttt{pfw["materials"]}.  If \texttt{pfw["materials"] = ["matrix", "inclusion"]}, then \texttt{mat=0} assigns the particle to the \texttt{matrix} material and \texttt{mat=1} assigns it to \texttt{inclusion}.  PFW groups particles with the same material index into separate generated \texttt{ParticleRegion} entries whose \texttt{materialList} names come from \texttt{pfw["materials"]}.  The corresponding material XML snippets must be present in \texttt{pfw["materialPropertyString"]}; Section~\ref{subsec:pfw-material-library} gives examples using \texttt{pfw\_materials.py}.
+
+The \texttt{group} value is the contact-group or material-field label used by the solver contact algorithms.  For prescribed multi-field contact, particles in different groups can map to different nodal velocity fields and interact through the contact update described in Section~\ref{sec:contact-options}.  For DFG contact, the prescribed group is the base field label and the damage-field-gradient split creates additional side fields internally.  The group label is therefore a kinematic/contact classification, not a constitutive material selection; it is common for two particles to share the same material index but have different contact groups, or to have different material indices but the same contact group when no material-field separation is intended.
+
+The \texttt{particleType} value selects the mapping and domain representation described in Section~\ref{sec:particle-types-and-mapping}.  It can be used uniformly for an entire object, or varied by object to mix, for example, CPDI particles in deformable solids with single-point particles in simple fixtures.  Mixing particle types should be deliberate because the particle type controls stencil size, surface/domain geometry, and allowable future options.
+
+\begin{lstlisting}[language=Python,caption={Constant material, group, and particle-type assignments on geometry objects.}]
+import pfw_geometryObjects as geom
+
+# Particle type integers: 0 SinglePoint, 1 SinglePointBSpline,
+# 2 CPDI, 3 CPTI placeholder, 4 CPDI2 placeholder.
+matrix = geom.box("matrix",
+                  x0=[-1.0,-1.0,-1.0], x1=[1.0,1.0,1.0],
+                  mat=0, group=0, particleType=2)
+
+inclusion = geom.sphere("inclusion",
+                        x0=[0.0,0.0,0.0], r=0.25,
+                        mat=1, group=1, particleType=2)
+
+pfw["objects"] = [inclusion, matrix]
+pfw["materials"] = ["matrixElastic", "inclusionCeramic"]
+\end{lstlisting}
+
+PFW obtains these values by querying the accepted object.  If an object provides \texttt{getMat(pt)}, \texttt{getGroup(pt)}, or \texttt{getParticleType(pt)}, those methods are used.  Otherwise PFW falls back to the object attributes \texttt{mat}, \texttt{group}, and \texttt{particleType}; callables are evaluated at the particle point where supported by the current code path.  Objects that can emit multiple material/type combinations should also implement \texttt{getSubregions()} so PFW can build the complete \texttt{ParticleMesh} block list before the particle file is written.  The default implementation returns one pair, \texttt{[(mat, particleType)]}; multi-material objects such as packed beds, voxel imports, and stochastic mixtures override this to enumerate all possible \((\texttt{mat},\texttt{particleType})\) pairs.
+
+\begin{lstlisting}[language=Python,caption={Spatially varying material and group assignment through object methods.}]
+class LayeredBox(geom.box):
+    def getMat(self, pt):
+        return 0 if pt[1] < 0.0 else 1
+
+    def getGroup(self, pt):
+        return 10 if pt[0] < 0.0 else 11
+
+    def getSubregions(self):
+        # PFW needs all material/type pairs before particle generation.
+        return [(0, self.particleType), (1, self.particleType)]
+
+obj = LayeredBox("layered", x0=[-1,-1,-1], x1=[1,1,1], particleType=2)
+pfw["objects"] = [obj]
+pfw["materials"] = ["lowerLayer", "upperLayer"]
+\end{lstlisting}
+
+\subsection{Wrappers and field painters used for assignment}
+\label{subsec:pfw-assignment-wrappers}
+\index{geometry wrappers!material assignment}
+\index{field painters!PFW}
+
+Most simple material, group, and particle-type assignments are made directly in the geometry-object constructor.  The wrapper system described in Section~\ref{sec:pfw-geometry-objects} is used when the same inside/outside geometry should be reused with modified particle fields.  The current \texttt{BaseWrapper} forwards unmodified queries to its sub-object and also checks whether the wrapper itself defines \texttt{mat}, \texttt{group}, \texttt{particleType}, \texttt{matDir}, \texttt{damage}, \texttt{porosity}, \texttt{temperature}, \texttt{surfaceNormal}, \texttt{surfacePosition}, \texttt{surfaceTraction}, or related fields.  This means custom wrappers can be used as field painters without duplicating geometry tests.
+
+The standard field-painting wrappers most relevant to material assignment are summarized in Table~\ref{tab:pfw-assignment-wrapper-list}.  There is no special-purpose \texttt{materialWrapper} in the reviewed source; for material or group changes the usual choices are to pass \texttt{mat}/\texttt{group}/\texttt{particleType} at object construction time, to implement \texttt{getMat}/\texttt{getGroup}/\texttt{getParticleType}, or to write a small \texttt{BaseWrapper}-derived class that sets those fields and forwards all other queries.
+
+\begin{table}[htbp]
+\centering
+\caption{PFW wrappers and field painters related to material, group, particle-type, and constitutive metadata assignment.}
+\label{tab:pfw-assignment-wrapper-list}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.32\linewidth}X@{}}
+\toprule
+\textbf{Wrapper or pattern} & \textbf{Use}\\
+\midrule
+\texttt{materialDirectionWrapper} & Assigns a constant vector or full orthonormal material-direction triad for anisotropic or direction-dependent material models.\\
+\texttt{strengthScaleWrapper}, layered/Voronoi strength wrappers & Assign strength-scale factors for stochastic or spatially varying strength fields used by compatible material models.\\
+\texttt{damageWrapper}, \texttt{damageBoxWrapper}, \texttt{pennyShapedCrackWrapper} & Paint initial damage or seeded crack-like damaged regions.\\
+\texttt{porosityWrapper}, \texttt{pointwisePorosityWrapper}, \texttt{temperatureWrapper} & Assign auxiliary material-state fields when the particle file includes the corresponding columns.\\
+\texttt{surfaceFlagWrapper}, \texttt{surfaceNormalWrapper}, \texttt{surfacePositionWrapper}, \texttt{czTagWrapper} & Assign surface, cohesive-zone, and explicit-surface data that feed contact and cohesive-zone algorithms.\\
+Custom \texttt{BaseWrapper} subclass & Override \texttt{mat}, \texttt{group}, \texttt{particleType}, or the corresponding getter methods while forwarding the rest of the geometry interface.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{lstlisting}[language=Python,caption={Minimal custom wrapper that changes contact group while reusing a geometry.}]
+class groupWrapper(geom.BaseWrapper):
+    def __init__(self, name, subObject, group):
+        super().__init__(name, subObject)
+        self.group = group
+
+left_grain = groupWrapper("left_grain", grain_geometry, group=0)
+right_grain = groupWrapper("right_grain", grain_geometry, group=1)
+\end{lstlisting}
+
+\subsection{Material directions for vector or tensor directions}
+\label{subsec:pfw-material-directions}
+\index{MaterialDirection@\texttt{MaterialDirection}}
+\index{material direction}
+\index{anisotropy!material direction}
+
+The optional \texttt{MaterialDirection} particle-file field stores a local material basis for each particle.  PFW writes this as nine columns, \texttt{MaterialDirectionXX} through \texttt{MaterialDirectionZZ}, which form a row-wise \(3\times 3\) direction matrix.  The identity matrix is used when no object supplies a material direction.  Direction-dependent material models can use this matrix to interpret vector-valued or tensor-valued material axes in the global coordinate system.  For example, a transverse-isotropic material may use the first material axis as the fiber or bedding direction, while other models may use the triad to rotate a preferred damage, strength, or elastic tensor basis.
+
+For simple cases, \texttt{materialDirectionWrapper} can be applied to any geometry object.  If the supplied value is a three-component vector, PFW normalizes it and constructs an orthonormal triad with that vector as the first row.  If the supplied value is already a \(3\times 3\) array, PFW writes it directly.  Users should supply unit vectors or proper rotation matrices; non-orthogonal matrices can make anisotropic constitutive response difficult to interpret even if the input is accepted.
+
+\begin{lstlisting}[language=Python,caption={Assigning a material-direction vector or full material triad.}]
+# A single vector: PFW builds an orthonormal triad with this as axis 1.
+fiber_block = geom.materialDirectionWrapper("fiber_block", matrix,
+                                            matDir=[1.0, 1.0, 0.0])
+
+# A full row-wise triad: useful for verification or crystallographic axes.
+crystal_axes = [[1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0]]
+crystal = geom.materialDirectionWrapper("crystal", inclusion,
+                                         matDir=crystal_axes)
+
+pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
+                             "SurfaceFlag", "MaterialDirection"]
+\end{lstlisting}
+
+Material directions are particle data, not material definitions.  Two particles can use the same material model and material parameters while carrying different local bases.  This is the appropriate mechanism for grains, fibers, bedding planes, or spatially varying anisotropy when the constitutive model reads the \texttt{MaterialDirection} field.
+
+\subsection{The \texttt{pfw\_materials.py} material library}
+\label{subsec:pfw-material-library}
+\index{pfw\_materials.py@\texttt{pfw\_materials.py}}
+\index{materialPropertyString@\texttt{materialPropertyString}}
+\index{materialString@\texttt{materialString}}
+
+The file \texttt{pfw\_materials.py} is a Python material-card library for PFW inputs.  It provides dictionary-compatible material entries with named parameters, a \texttt{name}, a GEOS \texttt{model}, and a generated \texttt{materialString}.  The current library includes engineering metals, engineering ceramics, graphite materials, engineering polymers, explicit-solid examples, example-suite materials, verification materials, and a \texttt{materialDatabase} dictionary keyed by material name.  Appendix~\ref{app:geometry-materials} lists the preset counts discovered in the reviewed source tree.
+
+PFW uses two separate pieces of information when writing the GEOS XML:
+\begin{itemize}[leftmargin=*]
+\item \texttt{pfw["materials"]} is the ordered list of material names used by \texttt{ParticleRegion} entries.  Geometry-object \texttt{mat} indices refer to this list.
+\item \texttt{pfw["materialPropertyString"]} is the concatenated XML text for those material cards inside the generated \texttt{Constitutive} block.
+\end{itemize}
+The material library helps keep those two entries consistent.
+
+\clearpage
+\begin{lstlisting}[language=Python,caption={Using two material entries from \texttt{pfw\_materials.py}.}]
+# [pfw_dependency] pfw_materials.py
+import importlib
+matdb = importlib.import_module("pfw_materials")
+
+matrix = matdb.elasticDemo.copy()
+matrix["name"] = "matrixElastic"
+
+inclusion = matdb.verificationQuartz.copy()
+inclusion["name"] = "inclusionQuartz"
+
+pfw["materials"] = [matrix["name"], inclusion["name"]]
+pfw["materialPropertyString"] = "\n".join([
+    matrix["materialString"],
+    inclusion["materialString"],
+])
+
+matrix_object = geom.box("matrix", [-1,-1,-1], [1,1,1], mat=0, group=0)
+inclusion_object = geom.sphere("inclusion", [0,0,0], 0.25, mat=1, group=1)
+pfw["objects"] = [inclusion_object, matrix_object]
+\end{lstlisting}
+
+The material entries are instances of \texttt{MaterialProperties}, a \texttt{dict} subclass that refreshes the XML card when \texttt{materialString} is accessed.  It is still good practice to copy a library entry before editing it, because the imported module-level object may be reused elsewhere in the same input file.
+
+\begin{lstlisting}[language=Python,caption={Modifying a material parameter and regenerating the XML string.}]
+import importlib
+matdb = importlib.import_module("pfw_materials")
+
+soft_matrix = matdb.elasticDemo.copy()
+soft_matrix["name"] = "softMatrix"
+soft_matrix["defaultYoungModulus"] = 0.50
+soft_matrix["defaultPoissonRatio"] = 0.30
+
+# Accessing materialString refreshes the XML from the current dictionary.
+xml_card = soft_matrix["materialString"]
+
+# An explicit refresh is also available and can be clearer in scripted edits.
+soft_matrix.refreshMaterialString()
+
+pfw["materials"] = [soft_matrix["name"]]
+pfw["materialPropertyString"] = soft_matrix["materialString"]
+\end{lstlisting}
+
+When creating a material dictionary from scratch rather than copying a library entry, use the model-specific required parameter names from Section~\ref{sec:constitutive} and the generated material catalogue, then call \texttt{matdb.finalizeMaterialEntry(custom)} to attach the appropriate generator.  This keeps the user-defined dictionary compatible with the same \texttt{materialString} workflow used by the built-in entries.
+
+\clearpage
+\begin{lstlisting}[language=Python,caption={Finalizing a new material dictionary for PFW use.}]
+custom = {
+    "name": "customElastic",
+    "version": 1,
+    "model": "ElasticIsotropic",
+    "defaultDensity": 1.0,
+    "defaultYoungModulus": 2.0,
+    "defaultPoissonRatio": 0.25,
+}
+custom = matdb.finalizeMaterialEntry(custom)
+
+pfw["materials"] = [custom["name"]]
+pfw["materialPropertyString"] = custom["materialString"]
+\end{lstlisting}

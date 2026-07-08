@@ -1,0 +1,11 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Governing equations at solver level}
+\index{momentum balance}
+\index{deformation gradient}
+The core solver loop represents the standard MPM split:
+\begin{align*}
+  \dot{\rho} + \rho \nabla \cdot \mathbf{v} &= 0, \\
+  \rho \dot{\mathbf{v}} &= \nabla \cdot \boldsymbol{\sigma} + \rho \mathbf{b}, \\
+  \dot{\mathbf{F}} &= \mathbf{L}\mathbf{F}.
+\end{align*}
+Particles store constitutive state and deformation measures; grid nodes provide a transient computational scaffold for velocities, accelerations, forces, and boundary/contact constraints.  Material response is supplied through GEOS constitutive models registered in the input \texttt{Constitutive} block and assigned through \texttt{ParticleRegion} material lists.

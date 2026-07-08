@@ -1,0 +1,32 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Input dependencies}
+\label{sec:pfw-input-dependencies}
+\index{pfw dependency}
+\index{dependencies!PFW}
+
+PFW supports two related dependency mechanisms: ordinary Python imports and explicit run-directory staging.  Ordinary imports are used for code that must be available while the \texttt{pfw\_input} file is executed; explicit staging is used for files that must be copied beside the generated case or made importable in the run directory.
+
+\paragraph{Python and PFW helper imports.}
+Most inputs import standard libraries, numerical packages, and PFW helper modules directly:
+\begin{lstlisting}[language=Python,caption={Typical Python imports in a PFW input file.}]
+import math
+import numpy as np
+import pfw_geometryObjects as geom
+import pfw_materials as mat
+from pfw_tracerPoints import disk, plane_grid, set_tracers
+\end{lstlisting}
+These imports are evaluated when \texttt{particleFileWriter.py} imports the input module.  The PFW run directory and the original input-file directory are inserted into \texttt{sys.path}, so local helper modules can also be imported if they are present or staged.
+
+\paragraph{PFW dependency comments.}
+Input files can request explicit file staging with comments of the form \texttt{\#[pfw\_dependency]}.  The current parser accepts paths relative to the original input directory, paths relative to the PFW directory, absolute paths, and optional destination paths inside the run directory:
+\begin{lstlisting}[language=Python,caption={Examples of PFW dependency staging comments.}]
+#[pfw_dependency] pfw_materials.py
+#[pfw_dependency] input:tables/strength_table.csv
+#[pfw_dependency] pfw:pfw_geometryObjects.py
+#[pfw_dependency] /absolute/path/to/local_geometry.stl
+#[pfw_dependency] input:tables/load_history.csv => tables/load_history.csv
+\end{lstlisting}
+A relative dependency first resolves relative to the original input-file directory and then falls back to the configured PFW directory for compatibility with older examples.  The \texttt{input:} prefix forces input-directory lookup, and the \texttt{pfw:} prefix forces lookup relative to the PFW installation directory.  A destination following \texttt{=>} is always relative to the run directory and cannot be absolute or contain \texttt{..}.  This is useful for material tables, STL files, tabulated load histories, Python helper modules, bitmap/voxel data, and post-processing scripts that should travel with a generated case.
+
+\paragraph{Generated dependency list.}
+After staging, PFW appends the staged paths to \texttt{pfw["dependencies"]}.  That list is workflow metadata and is filtered so that it does not become a solver XML attribute.  Rank zero stages files before the input module is imported on the other ranks, avoiding races on shared file systems.
