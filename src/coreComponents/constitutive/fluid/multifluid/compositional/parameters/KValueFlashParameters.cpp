@@ -28,6 +28,7 @@
 #endif
 
 #include "common/Units.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -85,14 +86,14 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
   integer const numFluidComponent = fluid->numFluidComponents();
 
   GEOS_THROW_IF_NE_MSG( numPhases, numFluidPhase,
-                        GEOS_FMT( "{}: invalid number of phases for the fluid.", fluid->getFullName() ),
-                        InputError );
+                        "invalid number of phases for the fluid.",
+                        InputError, fluid->getDataContext() );
 
   integer const numTables = m_kValueTables.size();
 
   GEOS_THROW_IF_NE_MSG( numTables, (numPhases-1)*numFluidComponent,
-                        GEOS_FMT( "{}: invalid number of k-value tables provided.", fluid->getFullName() ),
-                        InputError );
+                        "invalid number of k-value tables provided.",
+                        InputError, fluid->getDataContext() );
 
   // Check that the tables exist and are 2D
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -102,7 +103,7 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
     FunctionBase * function = functionManager.getGroupPointer< FunctionBase >( functionName );
     GEOS_THROW_IF( function == nullptr,
                    GEOS_FMT( "Function with name {} not found. ", functionName ),
-                   InputError );
+                   InputError, fluid->getDataContext() );
 
     function->initializeFunction();
 
@@ -123,7 +124,7 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
 #endif
     GEOS_THROW_IF_NE_MSG( numDims, 2,
                           GEOS_FMT( "Function with name {} must have a dimension of 2. ", functionName ),
-                          InputError );
+                          InputError, fluid->getDataContext() );
 
   }
 
@@ -381,7 +382,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
         }
         hasAtLeastOneNegative = hasAtLeastOneNegative || hasNegative;
         hasAtLeastOneOneSided = hasAtLeastOneOneSided || (allMoreThanUnity || allLessThanUnity);
-        if( (allMoreThanUnity || allLessThanUnity || hasNegative) && tableData.getTableDataRows().size() < 5 )
+        if( (allMoreThanUnity || allLessThanUnity || hasNegative) && tableData.getCellsData().size() < 5 )
         {
           tableRow[0].value = phaseNames[phaseIndex+1];
           tableRow[1].value = GEOS_FMT( "{0:.3e}", m_pressureValues[0][pressureIndex] );
@@ -397,9 +398,9 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
     }
   }
 
-  if( !tableData.getTableDataRows().empty())
+  if( !tableData.getCellsData().empty())
   {
-    std::vector< TableLayout::Column > columns;
+    stdVector< TableLayout::Column > columns;
     columns.emplace_back( TableLayout::Column().setName( "Phase" ).setValuesAlignment( TableLayout::Alignment::left ) );
     columns.emplace_back( TableLayout::Column().setName( "Pressure" ).setValuesAlignment( TableLayout::Alignment::right ) );
     columns.emplace_back( TableLayout::Column().setName( "Temperature" ).setValuesAlignment( TableLayout::Alignment::right ) );
@@ -423,11 +424,12 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
     }
 
     string const fluidName = fluid->getFullName();
-    GEOS_WARNING( GEOS_FMT( "{}: {}\n{}",
-                            fluidName, message, tableText.toString( tableData ) ));
+    GEOS_WARNING_IF( MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "{}: {}\n{}",
+                               fluidName, message, tableText.toString( tableData ) ));
 
-    GEOS_THROW_IF( hasAtLeastOneNegative, GEOS_FMT( "{}: negative k-value found. ", fluidName ),
-                   InputError );
+    GEOS_THROW_IF( hasAtLeastOneNegative, "negative k-value found. ",
+                   InputError, fluid->getDataContext() );
   }
 
   return true;

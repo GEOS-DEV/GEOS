@@ -50,8 +50,7 @@ public:
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
 
-    string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
-    registerWrapper( key, &m_solverName ).
+    registerWrapper( getSolverWrapperKey(), &m_solverName ).
       setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
       setInputFlag( dataRepository::InputFlags::REQUIRED ).
       setDescription( "Name of the " + SOLVER::coupledSolverAttributePrefix() + " solver" );
@@ -80,6 +79,20 @@ public:
 
 protected:
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+  };
+
+  /// Pointer to the physics solver
+  SOLVER * m_solver;
+
+  // Output directory
+  string const m_outputDir;
+
+  // Flag to enable writing CSV output
+  integer m_writeCSV;
+
   void postInputInitialization() override
   {
     Group & problemManager = this->getGroupByPath( "/Problem" );
@@ -87,8 +100,7 @@ protected:
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                             getDataContext(),
+                   GEOS_FMT( "Could not find solver '{}' of type {}",
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
                    InputError, getDataContext() );
 
@@ -104,19 +116,8 @@ protected:
     }
   }
 
-  struct viewKeyStruct
-  {
-    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
-  };
-
-  /// Pointer to the physics solver
-  SOLVER * m_solver;
-
-  // Output directory
-  string const m_outputDir;
-
-  // Flag to enable writing CSV output
-  integer m_writeCSV;
+  string getSolverWrapperKey() const
+  { return SOLVER::coupledSolverAttributePrefix() + "SolverName"; }
 
 private:
 

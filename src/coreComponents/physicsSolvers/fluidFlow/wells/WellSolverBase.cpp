@@ -19,7 +19,9 @@
 
 #include "WellSolverBase.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -151,9 +153,10 @@ void WellSolverBase::initializePostSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FunctionManager & functionManager = FunctionManager::getInstance();
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+  Group & meshBodies = domain.getMeshBodies();
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -169,9 +172,10 @@ void WellSolverBase::initializePostSubGroups()
       {
         TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
         GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                       "WellSolverBase " << getDataContext() << ": The interpolation method for the perforation status table "
-                                         << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
-                       InputError );
+                       GEOS_FMT( "The interpolation method for the perforation status table {} "
+                                 "should be TableFunction::InterpolationType::Lower",
+                                 tableFunction->getName() ),
+                       InputError, getDataContext() );
       }
     } );
   } );
@@ -309,7 +313,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion & subRegion )
-    { updateSubRegionState( elemManager, subRegion ); } );
+    { updateSubRegionState( subRegion ); } );
   } );
 }
 

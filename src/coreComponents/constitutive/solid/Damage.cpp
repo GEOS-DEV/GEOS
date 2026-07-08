@@ -100,20 +100,20 @@ void Damage< BASE >::postInputInitialization()
   BASE::postInputInitialization();
 
   GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
-                 this->getDataContext() << ": invalid external driving force flag option - must"
-                                           " be 0 or 1",
+                 "invalid external driving force flag option - must"
+                 " be 0 or 1",
                  this->getDataContext() );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
-                 this->getDataContext() << ": tensile strength must be input and positive when the"
-                                           " external driving force flag is turned on",
+                 "tensile strength must be input and positive when the"
+                 " external driving force flag is turned on",
                  this->getDataContext()  );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressiveStrength  <= 0.0,
-                 this->getDataContext() << ": compressive strength must be input and positive when the"
-                                           " external driving force flag is turned on",
+                 "compressive strength must be input and positive when the"
+                 " external driving force flag is turned on",
                  this->getDataContext()  );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
-                 this->getDataContext() << ": delta coefficient must be input and non-negative when the"
-                                           " external driving force flag is turned on",
+                 "delta coefficient must be input and non-negative when the"
+                 " external driving force flag is turned on",
                  this->getDataContext()  );
 
   // set results as array default values
@@ -167,6 +167,8 @@ void Damage< BASE >::saveConvergedState() const
     }
   } );
 }
+
+template class Damage< ElasticIsotropic >;
 
 typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
 

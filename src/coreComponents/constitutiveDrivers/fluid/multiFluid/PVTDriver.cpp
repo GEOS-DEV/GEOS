@@ -18,18 +18,12 @@
  */
 
 #include "PVTDriver.hpp"
-#include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-//#include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
-#include "common/format/StringUtilities.hpp"
-
-#include <fstream>
 
 namespace geos
 {
@@ -39,7 +33,7 @@ using namespace constitutive;
 
 PVTDriver::PVTDriver( const string & name,
                       Group * const parent ):
-  TaskBase( name, parent )
+  ConstitutiveDriver( name, parent )
 {
 
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
@@ -75,140 +69,76 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate that phase compositions should be output" );
-
-  registerWrapper( viewKeyStruct::precisionString(), &m_precision ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_precision ).
-    setDescription( "The precision to use to data out to files" );
-
-  //todo refactor in mother class
-  registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Number of load steps to take" );
-
-  registerWrapper( viewKeyStruct::outputString(), &m_outputFile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "none" ).
-    setDescription( "Output file" );
-
-  registerWrapper( viewKeyStruct::baselineString(), &m_baselineFile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "none" ).
-    setDescription( "Baseline file" );
-
-  addLogLevel< logInfo::LogOutput >();
 }
 
 void PVTDriver::postInputInitialization()
 {
+  ConstitutiveDriver::postInputInitialization();
+
   // Validate some inputs
   GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,
-                 getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) );
 
   GEOS_ERROR_IF( m_outputCompressibility != 0 && m_outputCompressibility != 1,
-                 getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) );
 
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
-                 getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) );
 
-  GEOS_WARNING_IF( m_precision < minPrecision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
-                             minPrecision, maxPrecision, minPrecision ),
-                   getWrapperDataContext( viewKeyStruct::precisionString() ));
+  // Check that the functions exist
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_pressureFunctionName ),
+                 GEOS_FMT( "Pressure function with name '{}' not found", m_pressureFunctionName ),
+                 getWrapperDataContext( viewKeyStruct::pressureFunctionString() ) );
 
-  GEOS_WARNING_IF( maxPrecision < m_precision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
-                             minPrecision, maxPrecision, maxPrecision ),
-                   getWrapperDataContext( viewKeyStruct::precisionString() ) );
+  GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_temperatureFunctionName ),
+                 GEOS_FMT( "Temperature function with name '{}' not found", m_temperatureFunctionName ),
+                 getWrapperDataContext( viewKeyStruct::temperatureFunctionString() ) );
 
   // get number of phases and components
-
   MultiFluidBase & baseFluid = getFluid();
 
   m_numPhases = baseFluid.numFluidPhases();
   m_numComponents = baseFluid.numFluidComponents();
 
-  // Number of rows in numSteps+1
-  integer const numRows = m_numSteps+1;
+  GEOS_ERROR_IF( m_feed.size() != m_numComponents,
+                 GEOS_FMT( "Feed must have the same number of components as the fluid. Feed has {} and fluid has {}",
+                           m_feed.size(), m_numComponents ),
+                 getWrapperDataContext( viewKeyStruct::feedString() ) );
 
-  // Number of columns depends on options
-  // Default column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
-  integer numCols = 3*m_numPhases+4;
-
-  // If the mass density is requested then add NP columns
-  if( m_outputMassDensity != 0 )
-  {
-    numCols += m_numPhases;
-  }
-
-  // If fluid is thermal then add NP columns for the enthalpy
-  if( baseFluid.isThermal() )
-  {
-    numCols += m_numPhases;
-  }
-
-  // If the total compressibility is requested then add a column
-  if( m_outputCompressibility != 0 )
-  {
-    numCols++;
-  }
-
-  // If phase compositions are required we add {1:NP*NC} phase compositions
-  if( m_outputPhaseComposition != 0 )
-  {
-    numCols += m_numPhases * m_numComponents;
-  }
-
-  // resize data table to fit number of timesteps and fluid phases:
-  m_table.resize( numRows, numCols );
+  string_array columnNames;
+  getColumnNames( columnNames );
+  integer const numCols = static_cast< integer >(columnNames.size());
 
   // initialize functions
-
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   TableFunction & pressureFunction = functionManager.getGroup< TableFunction >( m_pressureFunctionName );
   TableFunction & temperatureFunction = functionManager.getGroup< TableFunction >( m_temperatureFunctionName );
 
   pressureFunction.initializeFunction();
   temperatureFunction.initializeFunction();
 
-  // determine time increment
-
   ArrayOfArraysView< real64 > coordinates = pressureFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-  real64 const dt = (maxTime-minTime) / m_numSteps;
+
+  // Allocate the data
+  allocateTable( numCols, minTime, maxTime );
 
   // set input columns
-
-  for( integer n=0; n<m_numSteps+1; ++n )
+  integer const numRows = m_table.size( 0 );
+  for( integer step = 0; step < numRows; ++step )
   {
-    m_table( n, TIME ) = minTime + n*dt;
-    m_table( n, PRES ) = pressureFunction.evaluate( &m_table( n, TIME ) );
-    m_table( n, TEMP ) = temperatureFunction.evaluate( &m_table( n, TIME ) );
+    real64 const time = m_table( step, TIME );
+    m_table( step, PRES ) = pressureFunction.evaluate( &time );
+    m_table( step, TEMP ) = temperatureFunction.evaluate( &time );
   }
 }
 
-
-bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                         real64 const GEOS_UNUSED_PARAM( dt ),
-                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                         integer const GEOS_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+bool PVTDriver::execute()
 {
-  // this code only makes sense in serial
-
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", std::runtime_error );
-
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
 
@@ -223,22 +153,24 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Components ...... " << m_numComponents );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Pressure Control ....... " << m_pressureFunctionName );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Feed ................... " << m_feed );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << (m_outputFile.empty() ? "<none>" : m_outputFile) );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Mass Density .... " << m_outputMassDensity );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Compressibility . " << m_outputCompressibility );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Phase Comp. ..... " << m_outputPhaseComposition );
 
-  // create a dummy discretization with one quadrature point for
   // storing constitutive data
-
   conduit::Node node;
   dataRepository::Group rootGroup( "root", node );
   dataRepository::Group discretization( "discretization", &rootGroup );
 
-  discretization.resize( 1 );   // one element
+  // Allocate as many elements as the number of rows
+  integer const numRows = m_table.size( 0 );
+  discretization.resize( numRows );       // numRows elements
   baseFluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
+
+  baseFluid.initializeState();
 
   // pass the fluid through the ConstitutivePassThru to downcast from the
   // base type to a known model type.  the lambda here then executes the
@@ -250,157 +182,73 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     runTest< FLUID_TYPE >( selectedFluid, m_table );
   } );
 
-  // move table back to host for output
-  m_table.move( hostMemorySpace );
-
-  if( m_outputFile != "none" )
-  {
-    outputResults();
-  }
-
-  if( m_baselineFile != "none" )
-  {
-    compareWithBaseline();
-  }
-
   return false;
 }
 
-void PVTDriver::outputResults()
+void PVTDriver::getColumnNames( string_array & columnNames ) const
 {
-  // TODO: improve file path output to grab command line -o directory
-  //       for the moment, we just use the specified m_outputFile directly
-  constitutive::MultiFluidBase & baseFluid = getFluid();
+  MultiFluidBase const & baseFluid = getFluid();
+  auto const phaseNames = baseFluid.phaseNames();
+  auto const componentNames = baseFluid.componentNames();
 
-  FILE * fp = fopen( m_outputFile.c_str(), "w" );
-
-  integer columnIndex = 0;
-  fprintf( fp, "# column %d = time\n", ++columnIndex );
-  fprintf( fp, "# column %d = pressure\n", ++columnIndex );
-  fprintf( fp, "# column %d = temperature\n", ++columnIndex );
-  fprintf( fp, "# column %d = density\n", ++columnIndex );
+  // Output columns depend on options
+  columnNames.emplace_back( "time" );
+  columnNames.emplace_back( "pressure" );
+  columnNames.emplace_back( "temperature" );
+  columnNames.emplace_back( "density" );
   if( m_outputCompressibility != 0 )
   {
-    fprintf( fp, "# column %d = total compressibility\n", ++columnIndex );
+    columnNames.emplace_back( "total compressibility" );
   }
 
-  auto const phaseNames = baseFluid.phaseNames();
-
-  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
-  columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
-  columnIndex += m_numPhases;
+  for( auto const & phaseName : phaseNames )
+  {
+    columnNames.emplace_back( GEOS_FMT( "phase fraction,{}", phaseName ));
+  }
+  for( auto const & phaseName : phaseNames )
+  {
+    columnNames.emplace_back( GEOS_FMT( "phase density,{}", phaseName ));
+  }
   if( m_outputMassDensity != 0 )
   {
-    fprintf( fp, "# columns %d-%d = phase mass densities\n", columnIndex+1, columnIndex + m_numPhases );
-    columnIndex += m_numPhases;
+    for( auto const & phaseName : phaseNames )
+    {
+      columnNames.emplace_back( GEOS_FMT( "phase mass density,{}", phaseName ));
+    }
   }
-  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
-  columnIndex += m_numPhases;
+  for( auto const & phaseName : phaseNames )
+  {
+    columnNames.emplace_back( GEOS_FMT( "phase viscosity,{}", phaseName ));
+  }
 
   if( baseFluid.isThermal())
   {
-    fprintf( fp, "# columns %d-%d = phase enthalpies\n", columnIndex+1, columnIndex + m_numPhases );
-    columnIndex += m_numPhases;
+    for( auto const & phaseName : phaseNames )
+    {
+      columnNames.emplace_back( GEOS_FMT( "phase enthalpy,{}", phaseName ));
+    }
   }
 
   if( m_outputPhaseComposition != 0 )
   {
-    string const componentNames = stringutilities::join( baseFluid.componentNames(), ", " );
-    for( integer ip = 0; ip < m_numPhases; ++ip )
+    for( auto const & phaseName : phaseNames )
     {
-      fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex+1, columnIndex + m_numComponents,
-               phaseNames[ip].c_str(), componentNames.c_str() );
-      columnIndex += m_numComponents;
+      for( auto const & compName : componentNames )
+      {
+        columnNames.emplace_back( GEOS_FMT( "phase composition,{},{}", phaseName, compName ));
+      }
     }
   }
-
-  integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
-  string const format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
-  for( integer n=0; n<m_table.size( 0 ); ++n )
-  {
-    for( integer col=0; col<m_table.size( 1 ); ++col )
-    {
-      fprintf( fp, format.c_str(), m_table( n, col ) );
-    }
-    fprintf( fp, "\n" );
-  }
-  fclose( fp );
 }
 
-
-void PVTDriver::compareWithBaseline()
+MultiFluidBase & PVTDriver::getFluid()
 {
-  // open baseline file
-
-  std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
-
-  // discard file header
-
-  integer headerRows = 7;
-  if( m_outputCompressibility )
-  {
-    headerRows++;
-  }
-  if( m_outputMassDensity )
-  {
-    headerRows++;
-  }
-  if( getFluid().isThermal())
-  {
-    headerRows++; // Enthalpy
-  }
-  if( m_outputPhaseComposition )
-  {
-    headerRows += getFluid().numFluidPhases();
-  }
-
-  string line;
-  for( integer row=0; row < headerRows; ++row )
-  {
-    getline( file, line );
-  }
-
-  // read data block.  we assume the file size is consistent with m_table,
-  // but check for a premature end-of-file. we then compare results value by value.
-  // we ignore the newton iteration and residual columns, as those may be platform
-  // specific.
-
-  real64 value;
-  for( integer row=0; row < m_table.size( 0 ); ++row )
-  {
-    for( integer col=0; col < m_table.size( 1 ); ++col )
-    {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
-      file >> value;
-
-      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance,
-                     GEOS_FMT( "Results do not match baseline ({} vs {}) at data row {} (row {} with header) and column {}",
-                               m_table[row][col], value, row+1, row+headerRows, col+1 ),
-                     std::runtime_error );
-    }
-  }
-
-  // check we actually reached the end of the baseline file
-
-  file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
-
-  // success
-
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
-
-  file.close();
+  return getConstitutiveManager().getGroup< MultiFluidBase >( m_fluidName );
 }
 
-MultiFluidBase &
-PVTDriver::getFluid()
+MultiFluidBase const & PVTDriver::getFluid() const
 {
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  MultiFluidBase & baseFluid = constitutiveManager.getGroup< MultiFluidBase >( m_fluidName );
-  return baseFluid;
+  return getConstitutiveManager().getGroup< MultiFluidBase >( m_fluidName );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,

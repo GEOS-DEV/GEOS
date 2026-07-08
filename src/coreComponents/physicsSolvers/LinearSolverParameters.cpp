@@ -18,8 +18,12 @@
  */
 
 #include "LinearSolverParameters.hpp"
+#include "common/GeosxConfig.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 namespace geos
 {
@@ -601,6 +605,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "Preconditioner type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "``, ``" ) + "``" );
 
+  registerWrapper( viewKeyStruct::hypredriveInputFileString(), &m_parameters.hypredriveInputFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional authoritative hypredrive YAML file. When provided, hypredrive consumes this file as-is for solver/preconditioner options." );
+
   registerWrapper( viewKeyStruct::stopIfErrorString(), &m_parameters.stopIfError ).
     setApplyDefaultValue( m_parameters.stopIfError ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -813,67 +821,72 @@ void LinearSolverParametersInput::postInputInitialization()
 {
   m_parameters.logLevel = getLogLevel();
 
+#ifndef GEOS_USE_HYPREDRV
+  GEOS_ERROR_IF( !m_parameters.hypredriveInputFile.empty(),
+                 "The hypredriveInputFile option requires GEOS to be built with HYPREDRV support.",
+                 getWrapperDataContext( viewKeyStruct::hypredriveInputFileString() ) );
+#endif
+
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
-                 getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
-                 getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
-                 getWrapperDataContext( viewKeyStruct::directEquilString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directEquilString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
-                 getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
-                 getWrapperDataContext( viewKeyStruct::directIterRefString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directIterRefString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
-                 getWrapperDataContext( viewKeyStruct::directParallelString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directParallelString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0,
-                        getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0,
-                        getWrapperDataContext( viewKeyStruct::krylovMaxRestartString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::krylovMaxRestartString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0,
-                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) );
   GEOS_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0,
-                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0,
-                        getWrapperDataContext( viewKeyStruct::iluFillString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::iluFillString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0,
-                        getWrapperDataContext( viewKeyStruct::iluThresholdString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::iluThresholdString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0,
-                        getWrapperDataContext( viewKeyStruct::amgNumSweepsString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::amgNumSweepsString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0,
-                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) );
   GEOS_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0,
-                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) <<
-                        ": Invalid value." );
+                        "Invalid value.",
+                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) );
 
   // TODO input validation for other AMG parameters ?
 
-  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) )
+  bool deferPrint = false;
+#ifdef GEOS_USE_HYPREDRV
+  deferPrint = hypre::hypredrive::shouldUse( m_parameters );
+#endif
+
+  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) && !deferPrint )
     print();
 }
 
@@ -884,12 +897,23 @@ Group * LinearSolverParametersInput::createChild( string const & childKey,
   return nullptr;
 }
 
-void LinearSolverParametersInput::print()
+void LinearSolverParametersInput::print() const
 {
+#ifdef GEOS_USE_HYPREDRV
+  if( hypre::hypredrive::shouldUse( m_parameters ) )
+  {
+    return;
+  }
+#endif
+
   TableData tableData;
   tableData.addRow( "Log level", getLogLevel());
   tableData.addRow( "Linear solver type", m_parameters.solverType );
   tableData.addRow( "Preconditioner type", m_parameters.preconditionerType );
+  if( !m_parameters.hypredriveInputFile.empty() )
+  {
+    tableData.addRow( "hypredrive input file", string_view( m_parameters.hypredriveInputFile ) );
+  }
   tableData.addRow( "Stop if error", m_parameters.stopIfError );
   if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {

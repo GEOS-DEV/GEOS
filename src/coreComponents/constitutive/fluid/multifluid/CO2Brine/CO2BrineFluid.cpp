@@ -172,7 +172,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
                                       m_phaseNames[m_p1Index], m_phasePVTParaFiles[m_p1Index] );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );
@@ -187,7 +187,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
                                       m_phaseNames[m_p2Index], m_phasePVTParaFiles[m_p2Index] );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );
@@ -200,24 +200,11 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for flash phase (in table from \"{}\").\n",
                                       m_flashModelParaFile );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );
   }
-}
-
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
-{
-#if defined(GEOS_DEVICE_COMPILE)
-  GEOS_THROW_IF( this->getCatalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
-                 GEOS_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
-                           CO2BrineEzrokhiThermalFluid::catalogName(),
-                           CO2BrinePhillipsThermalFluid::catalogName() ),
-                 InputError );
-#endif
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -226,23 +213,26 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
   MultiFluidBase::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( numFluidComponents(), 2,
-                        GEOS_FMT( "{}: invalid number of components", getFullName() ),
-                        InputError );
+                        "invalid number of components",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
-                        InputError );
+                        "invalid number of values",
+                        InputError, getDataContext() );
 
   // Make sure one (and only one) of m_flashModelParaFile or m_solubilityTables is provided
   bool const hasParamFile = !m_flashModelParaFile.empty();
   bool const hasTables = !m_solubilityTables.empty();
   GEOS_THROW_IF( hasParamFile == hasTables,
-                 GEOS_FMT( "{}: One and only one of {} or {} should be specified", getFullName(),
+                 GEOS_FMT( "One and only one of {} or {} should be specified",
                            viewKeyStruct::flashModelParaFileString(),
                            viewKeyStruct::solubilityTablesString() ),
-                 InputError, getDataContext() );
+                 InputError,
+                 getWrapperDataContext( viewKeyStruct::flashModelParaFileString()),
+                 getWrapperDataContext( viewKeyStruct::solubilityTablesString()),
+                 getDataContext() );
 
   // NOTE: for now, the names of the phases are still hardcoded here
   // Later, we could read them from the XML file and we would then have a general class here
@@ -277,7 +267,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       GEOS_FMT( "missing PVT model in line '{}'", str ),
                        InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
@@ -315,7 +305,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         }
         else
         {
-          GEOS_THROW( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+          GEOS_THROW( GEOS_FMT( "invalid PVT function type '{}'", strs[0] ), InputError, getDataContext() );
         }
       }
     }
@@ -324,26 +314,26 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::DENSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Density::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE1::Density::catalogName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::DENSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Density::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE2::Density::catalogName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::VISCOSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Viscosity::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE1::Viscosity::catalogName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::VISCOSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Viscosity::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE2::Viscosity::catalogName() ),
                  InputError, getDataContext() );
 
   // we also detect any inconsistency arising in the enthalpy models
   GEOS_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::ENTHALPY].empty() &&
                  ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Enthalpy::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE1::Enthalpy::catalogName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::ENTHALPY].empty() &&
                  ( PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Enthalpy::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE2::Enthalpy::catalogName() ),
                  InputError, getDataContext() );
 
   // then, we are ready to instantiate the phase models
@@ -377,7 +367,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing flash model in line '{}'", getFullName(), str ),
+                       GEOS_FMT( "missing flash model in line '{}'", str ),
                        InputError, getDataContext() );
 
         if( strs[0] == "FlashModel" )
@@ -394,7 +384,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         }
         else
         {
-          GEOS_THROW( GEOS_FMT( "{}: invalid flash model type '{}'", getFullName(), strs[0] ), InputError );
+          GEOS_THROW( GEOS_FMT( "invalid flash model type '{}'", strs[0] ), InputError, getDataContext() );
         }
       }
     }
@@ -404,7 +394,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   {
     // The user must provide 1 or 2 tables.
     GEOS_THROW_IF( m_solubilityTables.size() != 1 && m_solubilityTables.size() != 2,
-                   GEOS_FMT( "{}: The number of table names in {} must be 1 or 2", getFullName(), viewKeyStruct::solubilityTablesString() ),
+                   GEOS_FMT( "The number of table names in {} must be 1 or 2", viewKeyStruct::solubilityTablesString() ),
                    InputError, getDataContext() );
 
     // If 1 table is provided, it is the CO2 solubility table and water vapourisation is zero
@@ -435,7 +425,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   }
 
   GEOS_THROW_IF( m_flash == nullptr,
-                 GEOS_FMT( "{}: flash model {} not found in input files", getFullName(), FLASH::catalogName() ),
+                 GEOS_FMT( " flash model {} not found in input files", FLASH::catalogName() ),
                  InputError, getDataContext() );
 }
 

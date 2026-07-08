@@ -20,7 +20,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
 #define GEOS_FIELDSPECIFICATION_DIRICHLETBOUNDARYCONDITION_HPP_
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -29,7 +29,7 @@ namespace geos
  * @class DirichletBoundaryCondition
  * A class to manage Dirichlet boundary conditions
  */
-class DirichletBoundaryCondition : public FieldSpecificationBase
+class DirichletBoundaryCondition : public FieldSpecification
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
