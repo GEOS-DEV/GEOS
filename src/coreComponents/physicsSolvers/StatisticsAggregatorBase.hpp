@@ -324,7 +324,7 @@ protected:
 
   /// Data repository paths of the element sets per mesh levels
   /// TODO: can it be generalized with the "all" set
-  std::vector< DiscretizationSetPath > m_discretizationsPaths;
+  stdVector< DiscretizationSetPath > m_discretizationsPaths;
 
   /// The list of mesh element sets to restrict the region statistics to.
   /// Cannot be empty: if the whole mesh-level is to process, "all" must be targeted.
