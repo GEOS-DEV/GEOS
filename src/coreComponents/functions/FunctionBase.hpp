@@ -215,13 +215,14 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
 
   // Make sure the inputs do not exceed the maximum length
   GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS,
-                        getDataContext() << ": Function input size exceeded" );
+                        GEOS_FMT( "{}: Function input size exceeded", getDataContext() ) );
   GEOS_ERROR_IF_GT_MSG( totalVarSize, m_inputVarScale.size(),
-                        getDataContext() << ": Insufficient number of  scale values provided" );
+                        GEOS_FMT( "{}: Insufficient number of scale values provided", getDataContext() ) );
 
   // Make sure the result / set size match
   GEOS_ERROR_IF_NE_MSG( result.size(), set.size(),
-                        getDataContext() << ": To apply a function to a set, the size of the result and set must match" );
+                        GEOS_FMT( "{}: To apply a function to a set, the size of the result and set must match",
+                                  getDataContext() ) );
 
   arrayView1d< real64 const > const scale = m_inputVarScale.toViewConst();
   forAll< POLICY >( set.size(), [=]( localIndex const i )

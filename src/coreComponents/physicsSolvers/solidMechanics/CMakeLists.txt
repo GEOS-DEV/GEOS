@@ -38,6 +38,7 @@ set( solidMechanicsSolvers_headers
      kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
      kernels/ImplicitFiniteStrainQuasiStatic.hpp
      kernels/ImplicitFiniteStrainQuasiStatic_impl.hpp
+     SolidMechanicsInitialization.hpp
      SolidMechanicsStateReset.hpp
      SolidMechanicsStatistics.hpp
      contact/ContactSolverBase.hpp
@@ -64,6 +65,7 @@ set( solidMechanicsSolvers_headers
 set( solidMechanicsSolvers_sources
      SolidMechanicsLagrangianFEM.cpp
      SolidMechanicsMPM.cpp
+     SolidMechanicsInitialization.cpp
      SolidMechanicsStateReset.cpp
      SolidMechanicsStatistics.cpp
      contact/ContactSolverBase.cpp
@@ -82,10 +84,11 @@ geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${depen
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
-  list( APPEND kernelTemplateFileList 
+  list( APPEND kernelTemplateFileList
         kernels/SolidMechanicsKernels.cpp.template
         kernels/SolidMechanicsImplicitFiniteStrainKernels.cpp.template
-        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
+        contact/kernels/SolidMechanicsALMContactPorousKernels.cpp.template )
 
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )

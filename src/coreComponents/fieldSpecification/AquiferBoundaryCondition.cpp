@@ -19,13 +19,15 @@
 
 #include "AquiferBoundaryCondition.hpp"
 
+#include "functions/FunctionManager.hpp"
+
 namespace geos
 {
 
 using namespace dataRepository;
 
 AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group * parent )
-  : FieldSpecificationBase( name, parent ),
+  : FieldSpecification( name, parent ),
   m_waterPhaseIndex( -1 ),
   m_cumulativeFlux( 0.0 )
 {
@@ -99,15 +101,15 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
   registerWrapper( viewKeyStruct::cumulativeFluxString(), &m_cumulativeFlux ).
     setInputFlag( InputFlags::FALSE );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::objectPathString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::objectPathString() ).
     setInputFlag( InputFlags::FALSE );
   setObjectPath( "faceManager" );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
 }
@@ -126,13 +128,14 @@ void AquiferBoundaryCondition::postInputInitialization()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                   "The pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                   GEOS_FMT( "The pressure influence table {} could not be found",
+                             m_pressureInfluenceFunctionName ),
                    InputError, getDataContext() );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
     GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   "The interpolation method for the pressure influence function table " <<
-                   " should be TableFunction::InterpolationType::Linear",
+                   "The interpolation method for the pressure influence function table should be "
+                   "TableFunction::InterpolationType::Linear",
                    InputError, pressureInfluenceFunction.getDataContext(), getDataContext() );
   }
 
@@ -148,8 +151,9 @@ void AquiferBoundaryCondition::postInputInitialization()
                         InputError, getDataContext() );
 
   GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), LvArray::integerConversion< int >( m_phaseComponentNames.size() ),
-                        "The sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
-                        " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
+                        GEOS_FMT( "The sizes of {} and {} are inconsistent",
+                                  viewKeyStruct::aquiferWaterPhaseComponentFractionString(),
+                                  viewKeyStruct::aquiferWaterPhaseComponentNamesString() ),
                         InputError, getDataContext() );
 
 }
@@ -298,7 +302,7 @@ AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWr
                                                   pressureInfluenceFunction.createKernelWrapper() );
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, AquiferBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecification, AquiferBoundaryCondition, string const &, Group * const )
 
 
 } /* namespace geos */

@@ -199,10 +199,10 @@ void setupAndPlayWrongBC( string const & xml )
   problem.applyInitialConditions();
 }
 
-std::vector< string > splitStringByDelimiter( string const & s, string const & delimiter )
+stdVector< string > splitStringByDelimiter( string const & s, string const & delimiter )
 {
   string cpyTokens = s;
-  std::vector< string > tokens;
+  stdVector< string > tokens;
   size_t pos = 0;
   string token;
   while((pos = cpyTokens.find( delimiter )) != string::npos )
@@ -253,13 +253,17 @@ TEST( testIncorrectFieldSpecification, testWrongFieldNames )
   catch( std::exception const & e )
   {
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg1 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg1 ) );
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg2 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg2 ) );
     trowHappened = true;
   }
   ASSERT_TRUE( trowHappened );
@@ -279,7 +283,7 @@ TEST( testIncorrectFieldSpecification, testRightFieldNames )
                                   "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
                                   "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
                                   "water_dViscosity, water_density, water_enthalpy, water_internalEnergy, water_viscosity";
-  std::vector< string > const splitToken = splitStringByDelimiter( tokens, "," );
+  stdVector< string > const splitToken = splitStringByDelimiter( tokens, "," );
   for( auto const & token : splitToken )
   {
     string const xmlTemplate = R"xml(
@@ -321,9 +325,11 @@ TEST( testIncorrectFieldSpecification, testSetNameTargetNothing )
   {
     string const & expectedMsg1 = "does not capture anything in the mesh";
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg1 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg1 ) );
     trowHappened = true;
   }
 
@@ -363,13 +369,17 @@ TEST( testIncorrectFieldSpecification, testSetName )
     string const & expectedMsg1 = "- Does not capture: ElementRegions/Channel2";
     string const & expectedMsg2 = "- Instead, captures: nodeManager, edgeManager, faceManager";
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg1 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg1 ) );
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg2 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg2 ) );
     trowHappened = true;
   }
 
@@ -409,13 +419,17 @@ TEST( testIncorrectFieldSpecification, testMultiSetNames )
     string const & expectedMsg1 = "Set 'xneg':";
     string const & expectedMsg2 = "- Instead, captures: nodeManager, edgeManager, faceManager";
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg1 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg1 ) );
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg2 );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg2 ) );
     trowHappened = true;
   }
 

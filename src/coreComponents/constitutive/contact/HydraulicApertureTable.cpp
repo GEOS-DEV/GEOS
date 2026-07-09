@@ -53,13 +53,13 @@ HydraulicApertureTable::HydraulicApertureTable( string const & name,
 void HydraulicApertureTable::postInputInitialization()
 {
   GEOS_THROW_IF( m_apertureTableName.empty(),
-                 "the aperture table name " << m_apertureTableName << " is empty",
+                 GEOS_FMT( "the aperture table name {} is empty", m_apertureTableName ),
                  InputError, getDataContext() );
 
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                 "the aperture table named " << m_apertureTableName << " could not be found",
+                 GEOS_FMT( "the aperture table named {} could not be found", m_apertureTableName ),
                  InputError, getDataContext() );
 }
 

@@ -161,6 +161,7 @@ bool VTKOutput::execute( real64 const time_n,
                          DomainPartition & domain )
 {
   {
+    GEOS_UNUSED_VAR( dt );
     GEOS_LOG_LEVEL( logInfo::OutputEvents,
                     GEOS_FMT( "{}: writing {} at time {} s (cycle number {})",
                               getName(), m_fieldNames, time_n + dt, cycleNumber ));

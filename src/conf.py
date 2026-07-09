@@ -26,6 +26,8 @@ python_modules = ('geos-mesh-tools',
 for m in python_modules:
     sys.path.insert(0, os.path.abspath(os.path.join(python_root, m)))
 
+sys.path.insert(0, os.path.abspath('../inputFiles/singlePhaseFlow/scripts'))
+
 # Call doxygen in ReadtheDocs
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:

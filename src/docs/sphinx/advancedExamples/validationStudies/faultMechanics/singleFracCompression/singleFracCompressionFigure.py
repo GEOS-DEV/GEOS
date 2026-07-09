@@ -44,7 +44,7 @@ def getMechanicalParametersFromXML(xmlFilePath):
     mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
     param = tree.find('Constitutive/Coulomb')
-    mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
+    mechanicalParameters["frictionCoefficient"] = float(param.get("defaultFrictionCoefficient"))
     return mechanicalParameters
 
 

@@ -39,7 +39,7 @@ void printTypeSummary()
 
 string rtTypes::getTypeName( std::type_index const key )
 {
-  static const std::unordered_map< std::type_index, string > type_names =
+  static const stdUnorderedMap< std::type_index, string > type_names =
   {
     {std::type_index( typeid(integer)), "integer"},
     {std::type_index( typeid(real32)), "real32"},
@@ -135,7 +135,8 @@ Regex constructArrayRegex( string_view subPattern, string_view description, inte
 
     // finish by the original description
     GEOS_ERROR_IF( !stringutilities::startsWith( description, "Input value must " ),
-                   "Description \"" << description << "\" must start by \"Input value must \" to call constructArrayRegex() on it." );
+                   GEOS_FMT( "Description '{}' must start with 'Input value must ' to call constructArrayRegex() on it.",
+                             description ) );
     arrayDesc << description.substr( description.find( " must " ) );
   }
 

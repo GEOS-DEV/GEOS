@@ -27,6 +27,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -207,7 +208,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     // isBoundaryFaceView is default-initialized to zero
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+    fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
     {
       string const & fieldName = fs.getFieldName();
       if( fieldName == flow::bcPressure::key() ||
@@ -227,8 +228,11 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_WARNING( "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n" <<
-                    "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored",
+      GEOS_UNUSED_VAR( bc );
+      GEOS_WARNING( GEOS_FMT( "An aquifer boundary condition named {} was requested in the XML file.\n"
+                              "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM "
+                              "and will be ignored",
+                              bc.getName() ),
                     getDataContext() );
     } );
   } );
@@ -622,7 +626,10 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
                                                      m_numComponents,
                                                      elemDofKey,
                                                      subRegion,
-                                                     localSolution );
+                                                     localSolution,
+                                                     ElementsReporterCollector::disabled(),
+                                                     ElementsReporterCollector::disabled(),
+                                                     ElementsReporterCollector::disabled() );
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
@@ -734,7 +741,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
       // Get all face sets that have Dirichlet BCs
       std::set< string > bcFaceSets;
-      fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+      fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
       {
         string const & fieldName = fs.getFieldName();
         if( fieldName == flow::bcPressure::key() ||
@@ -906,7 +913,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
               else if( numFacesPerElement == 13 )
                 launchKernel( IP_TAG, std::integral_constant< integer, 13 >{} );
               else
-                GEOS_ERROR( "Unsupported number of faces per element: " << numFacesPerElement, getDataContext() );
+                GEOS_ERROR( GEOS_FMT( "Unsupported number of faces per element: {}", numFacesPerElement ), getDataContext() );
             };
 
             // Inner-product selection
@@ -924,7 +931,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
             }
             else
             {
-              GEOS_ERROR( "Unsupported inner product type: " << innerProductType, getDataContext() );
+              GEOS_ERROR( GEOS_FMT( "Unsupported inner product type: {}", innerProductType ), getDataContext() );
             }
           };
 
@@ -933,7 +940,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           else if( m_numPhases == 3 )
             launchWithPhases( std::integral_constant< integer, 3 >{} );
           else
-            GEOS_ERROR( "Unsupported number of phases: " << m_numPhases, getDataContext() );
+            GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", m_numPhases ), getDataContext() );
         } );
       }
     } );
@@ -947,19 +954,19 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecification const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager & targetGroup,
                                           string const & )
     {
       GEOS_UNUSED_VAR( setName );
-      // Using the field specification functions to apply the boundary conditions to the system
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    flow::bcPressure::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time_n + dt,
+                                                                         targetGroup,
+                                                                         flow::bcPressure::key() );
 
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {

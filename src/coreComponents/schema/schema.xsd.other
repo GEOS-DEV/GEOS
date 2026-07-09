@@ -1514,6 +1514,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="FieldApplicator" type="FieldApplicatorType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesALMInitialization" type="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesInitialization" type="MultiphasePoromechanicsConformingFracturesInitializationType" />
@@ -1529,6 +1530,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" type="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
+			<xsd:element name="SolidMechanicsAugmentedLagrangianContactInitialization" type="SolidMechanicsAugmentedLagrangianContactInitializationType" />
+			<xsd:element name="SolidMechanicsEmbeddedFracturesInitialization" type="SolidMechanicsEmbeddedFracturesInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangeContactInitialization" type="SolidMechanicsLagrangeContactInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangianFEMInitialization" type="SolidMechanicsLagrangianFEMInitializationType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
@@ -1549,13 +1554,20 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
+	<xsd:complexType name="FieldApplicatorType" />
 	<xsd:complexType name="HydrofractureInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType" />
-	<xsd:complexType name="PVTDriverType" />
+	<xsd:complexType name="PVTDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType" />
-	<xsd:complexType name="RelpermDriverType" />
+	<xsd:complexType name="RelpermDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
@@ -1564,10 +1576,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="SinglePhaseStatisticsType" />
+	<xsd:complexType name="SolidMechanicsAugmentedLagrangianContactInitializationType" />
+	<xsd:complexType name="SolidMechanicsEmbeddedFracturesInitializationType" />
+	<xsd:complexType name="SolidMechanicsLagrangeContactInitializationType" />
+	<xsd:complexType name="SolidMechanicsLagrangianFEMInitializationType" />
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
 	<xsd:complexType name="SourceFluxStatisticsType" />
-	<xsd:complexType name="TriaxialDriverType" />
+	<xsd:complexType name="TriaxialDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />
@@ -1620,7 +1639,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
-			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompositionalThreePhaseFluidLohrenzBrayClark" type="CompositionalThreePhaseFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseFluid" type="CompositionalTwoPhaseFluidType" />
 			<xsd:element name="CompositionalTwoPhaseFluidLohrenzBrayClark" type="CompositionalTwoPhaseFluidLohrenzBrayClarkType" />
@@ -2075,58 +2093,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="lengthScale" type="real64_array" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseFluidType">
-		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
-		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseEnthalpy" type="real64_array4d" />
-		<!--dPhaseFraction => Derivative of phase fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseFraction" type="real64_array4d" />
-		<!--dPhaseInternalEnergy => Derivative of phase internal energy with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseInternalEnergy" type="real64_array4d" />
-		<!--dPhaseMassDensity => Derivative of phase mass density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseMassDensity" type="real64_array4d" />
-		<!--dPhaseViscosity => Derivative of phase viscosity with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
-		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--phaseCompFraction => Phase component fraction-->
-		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
-		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
-		<xsd:attribute name="phaseCompFraction_n" type="real64_array4d" />
-		<!--phaseDensity => Phase density-->
-		<xsd:attribute name="phaseDensity" type="real64_array3d" />
-		<!--phaseDensity_n => Phase density at the previous converged time step-->
-		<xsd:attribute name="phaseDensity_n" type="real64_array3d" />
-		<!--phaseEnthalpy => Phase enthalpy-->
-		<xsd:attribute name="phaseEnthalpy" type="real64_array3d" />
-		<!--phaseEnthalpy_n => Phase enthalpy at the previous converged time step-->
-		<xsd:attribute name="phaseEnthalpy_n" type="real64_array3d" />
-		<!--phaseFraction => Phase fraction-->
-		<xsd:attribute name="phaseFraction" type="real64_array3d" />
-		<!--phaseInternalEnergy => Phase internal energy-->
-		<xsd:attribute name="phaseInternalEnergy" type="real64_array3d" />
-		<!--phaseInternalEnergy_n => Phase internal energy at the previous converged time step-->
-		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
-		<!--phaseMassDensity => Phase mass density-->
-		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseViscosity => Phase viscosity-->
-		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--totalDensity => Total density-->
-		<xsd:attribute name="totalDensity" type="real64_array2d" />
-		<!--totalDensity_n => Total density at the previous converged time step-->
-		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
-		<!--useMass => (no description available)-->
-		<xsd:attribute name="useMass" type="integer" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalThreePhaseFluidLohrenzBrayClarkType">
 		<!--componentType => (no description available)-->
@@ -2484,8 +2460,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
+		<!--cohesion => Cohesion for each element-->
+		<xsd:attribute name="cohesion" type="real64_array" />
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+		<!--frictionCoefficient => Friction coefficient for each element-->
+		<xsd:attribute name="frictionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--biotCoefficient => Biot coefficient-->
@@ -2510,6 +2490,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2522,6 +2504,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamagePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
@@ -2552,6 +2536,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2564,6 +2550,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--biotCoefficient => Biot coefficient-->
@@ -2588,6 +2576,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2600,6 +2590,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2668,6 +2660,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--preConsolidationPressure => Current preconsolidation pressure-->
 		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
 		<!--recompressionIndex => Recompression index-->
@@ -2682,6 +2676,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Bulk modulus-->
@@ -2700,12 +2696,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--bulkModulus => Bulk modulus-->
@@ -2714,12 +2714,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicFiniteStrainType">
 		<!--bulkModulus => Bulk modulus-->
@@ -2830,6 +2834,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldState" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--pressureIntercept => Pressure intercept-->
 		<xsd:attribute name="pressureIntercept" type="real64_array" />
 		<!--residualFriction => Final friction angle-->
@@ -2842,6 +2848,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
 	<xsd:complexType name="HydraulicApertureTableType" />
@@ -2981,6 +2989,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
@@ -2989,6 +2999,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--yieldStress => Yield stress-->
 		<xsd:attribute name="yieldStress" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDamageElasticIsotropicType" />
 	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType" />
@@ -3250,6 +3262,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dEffectiveConductivity_dT" type="real64_array3d" />
 		<!--effectiveConductivity => Effective conductivity-->
 		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
+		<!--referenceThermalConductivity => Reference thermal conductivity-->
+		<xsd:attribute name="referenceThermalConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="SlipDependentPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
@@ -3428,12 +3442,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoExtendedDruckerPragerType">
 		<!--bulkModulus => Bulk modulus-->
@@ -3450,6 +3468,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldState" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--pressureIntercept => Pressure intercept-->
 		<xsd:attribute name="pressureIntercept" type="real64_array" />
 		<!--residualFriction => Final friction angle-->
@@ -3462,6 +3482,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoModifiedCamClayType">
 		<!--cslSlope => Critical state line slope-->

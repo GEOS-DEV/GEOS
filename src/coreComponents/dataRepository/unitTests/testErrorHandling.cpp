@@ -26,6 +26,7 @@
 
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <signal.h>
 
 using namespace geos;
 using namespace dataRepository;
@@ -65,7 +66,7 @@ void beginLocalLoggerTest( ErrorLogger & errorLogger, string_view filename )
  * @param expectedFileBits reference file parts that must be in the logger file output
  */
 void endLocalLoggerTest( ErrorLogger & errorLogger,
-                         std::vector< string > expectedFileBits )
+                         stdVector< string > expectedFileBits )
 {
   auto const readFile = [] ( string_view filename ) {
     if( !fs::exists( filename ))
@@ -194,9 +195,11 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
                                           testErrorLogger.getCurrentExceptionMsg().m_file, line1,
                                           testErrorLogger.getCurrentExceptionMsg().m_contextsInfo.front().m_formattedContext );
     GEOS_ERROR_IF_EQ_MSG( string( ex.what()).find( whatExpected ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << ex.what() <<
-                          "  expected sequence :\n" << whatExpected );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    ex.what(),
+                                    whatExpected ) );
   }
 
   testErrorLogger.flushCurrentExceptionMessage();
@@ -323,10 +326,12 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     std::ostringstream oss;
     ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" <<oss.str() <<
-                          "  expected sequence :\n" << streamExpected );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    oss.str(),
+                                    streamExpected ) );
   }
 }
 
@@ -355,10 +360,12 @@ TEST( ErrorHandling, testStdException )
       "{}\n",
       testErrorLogger.getCurrentExceptionMsg().m_msg );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << oss.str() <<
-                          "  expected sequence :\n" << streamExpected );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    oss.str(),
+                                    streamExpected ) );
   }
 }
 

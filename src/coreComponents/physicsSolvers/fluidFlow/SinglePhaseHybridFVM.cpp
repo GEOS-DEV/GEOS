@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -144,7 +145,8 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n" <<
+      GEOS_UNUSED_VAR( bc );
+      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n"
                     "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored",
                     getDataContext(), bc.getDataContext() );
     } );
@@ -370,7 +372,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecification const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager & targetGroup,
@@ -391,11 +393,12 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       // next, we use the field specification functions to apply the boundary conditions to the system
 
       // Populate the face pressure vector at the boundaries of the domain
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    flow::bcPressure::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time_n + dt,
+                                                                         targetGroup,
+                                                                         flow::bcPressure::key() );
 
       // Second, modify the residual/jacobian matrix as needed to impose the boundary conditions
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )

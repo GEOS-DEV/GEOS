@@ -239,11 +239,11 @@ void Electrostatics::applyPotentialBC( real64 const time, DofManager const & dof
                                   [&]( string const &, MeshLevel & mesh, string_array const & )
   {
     fsManager.apply< NodeManager >( time, mesh, m_fieldName,
-                                    [&]( FieldSpecificationBase const & bc, string const &, SortedArrayView< localIndex const > const & targetSet,
+                                    [&]( FieldSpecification const & bc, string const &, SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup, string const & GEOS_UNUSED_PARAM( fieldName ))
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy<> >(
-        targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy<> >(
+        bc, targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
         dofManager.rankOffset(), localMatrix, localRhs );
     } );
   } );
@@ -288,7 +288,6 @@ void Electrostatics::applyButlerVolmerCurrent( DofManager const & dofManager, Do
 
     arrayView1d< real64 const > const phi = nodeManager.getReference< array1d< real64 > >( m_fieldName ).toViewConst();
 
-    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( m_fieldName );
