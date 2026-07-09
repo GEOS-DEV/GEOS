@@ -149,38 +149,41 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
 
       for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
-        CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[regionId] );
-        StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
-                                                             setName, m_dataOutputEnabled );
-        stdMap< string, SetType > & regionSetsCompounds = meshSetsCompounds.get_inserted( region.getName() );
-        regionFound = true;
+        ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
+        if( dynamic_cast< CellElementRegion * >(&region) != nullptr )
+        { // we only process cell regions
+          StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
+                                                               setName, m_dataOutputEnabled );
+          stdMap< string, SetType > & regionSetsCompounds = meshSetsCompounds.get_inserted( region.getName() );
+          regionFound = true;
 
-        region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
-        {
-          registerStatsFunc( setRegionStats, subRegion.getName(),
-                             setName, false );
-          subRegionFound = true;
-
-          auto const * const subRegionSetWrapper = subRegion.sets().getWrapperPointer< SetType >( setName );
-          if( subRegionSetWrapper != nullptr )
+          region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
           {
-            confirmedSets.emplace( setName );
+            registerStatsFunc( setRegionStats, subRegion.getName(),
+                               setName, false );
+            subRegionFound = true;
 
-            // Insert the set elements ids in the mesh-level compound. If doubles are found, sets intersect.
-            SetViewType const & subRegionSet = subRegionSetWrapper->reference();
-            arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-            SetType & subRegionSetsCompound = regionSetsCompounds.get_inserted( subRegion.getName() );
-            for( localIndex setIter = 0; setIter < subRegionSet.size(); ++setIter )
+            auto const * const subRegionSetWrapper = subRegion.sets().getWrapperPointer< SetType >( setName );
+            if( subRegionSetWrapper != nullptr )
             {
-              localIndex elemId = subRegionSet[setIter];
-              if( elemGhostRank[elemId] < 0 )
+              confirmedSets.emplace( setName );
+
+              // Insert the set elements ids in the mesh-level compound. If doubles are found, sets intersect.
+              SetViewType const & subRegionSet = subRegionSetWrapper->reference();
+              arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+              SetType & subRegionSetsCompound = regionSetsCompounds.get_inserted( subRegion.getName() );
+              for( localIndex setIter = 0; setIter < subRegionSet.size(); ++setIter )
               {
-                if( !subRegionSetsCompound.insert( elemId ) )
-                  isAnySetIntersects = true;
+                localIndex elemId = subRegionSet[setIter];
+                if( elemGhostRank[elemId] < 0 )
+                {
+                  if( !subRegionSetsCompound.insert( elemId ) )
+                    isAnySetIntersects = true;
+                }
               }
             }
-          }
-        } );
+          } );
+        }
       }
     }
 
@@ -193,21 +196,24 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
                                                          setName, false );
       for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
-        CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[regionId] );
-        StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
-                                                             setName, false );
+        ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
+        if( dynamic_cast< CellElementRegion * >(&region) != nullptr )
+        { // we only process cell regions
+          StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
+                                                               setName, false );
 
-        region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
-        {
-          registerStatsFunc( setRegionStats, subRegion.getName(),
-                             setName, false );
+          region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+          {
+            registerStatsFunc( setRegionStats, subRegion.getName(),
+                               setName, false );
 
-          path.m_setsCompound
-            .get_inserted( region.getName())
-            .insert( meshSetsCompounds
-                       .at( region.getName() )
-                       .extract( subRegion.getName() ) );
-        } );
+            path.m_setsCompound
+              .get_inserted( region.getName())
+              .insert( meshSetsCompounds
+                         .at( region.getName() )
+                         .extract( subRegion.getName() ) );
+          } );
+        }
       }
     }
   }
@@ -365,9 +371,11 @@ StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevelSet const meshSet,
   setStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & setRegionStats )
   {
     string_view regionName = setRegionStats.getTargetName();
-    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( string( regionName ) );
+    ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( string( regionName ) );
+    CellElementRegion * cellRegion = dynamic_cast< CellElementRegion * >(&region); // we only process cell regions, will return null on other types
 
-    func( region, setRegionStats );
+    if( cellRegion != nullptr )
+      func( *cellRegion, setRegionStats );
   } );
 }
 
