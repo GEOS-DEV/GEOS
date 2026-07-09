@@ -40,7 +40,7 @@ template< typename FUNC >
 CRSMatrix< int64_t, int64_t, int64_t >
 buildLayerGraph( multiscale::MeshLevel const & mesh,
                  arrayView1d< localIndex const > const & layerCells,
-                 std::unordered_map< integer, localIndex > const & structIndexToLayerCell,
+                 stdUnorderedMap< integer, localIndex > const & structIndexToLayerCell,
                  integer const layerIndex,
                  integer const minCommonNodes,
                  FUNC && weightFunc )
@@ -151,7 +151,7 @@ localIndex SemistructuredPartitioner::generate( MeshLevel const & mesh,
   array1d< localIndex > layerCells;
   layerCells.reserve( numCellsA );
 
-  std::unordered_map< integer, localIndex > indexToLayer;
+  stdUnorderedMap< integer, localIndex > indexToLayer;
   indexToLayer.reserve( numCellsA );
 
   forAll< serialPolicy >( numCells, [&]( localIndex const i )

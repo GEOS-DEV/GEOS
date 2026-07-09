@@ -39,7 +39,7 @@ void printTypeSummary()
 
 string rtTypes::getTypeName( std::type_index const key )
 {
-  static const std::unordered_map< std::type_index, string > type_names =
+  static const stdUnorderedMap< std::type_index, string > type_names =
   {
     {std::type_index( typeid(integer)), "integer"},
     {std::type_index( typeid(real32)), "real32"},

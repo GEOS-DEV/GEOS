@@ -100,8 +100,8 @@
   <Constitutive>
     <Coulomb
       name="frictionLaw"
-      cohesion="0"
-      frictionCoefficient="0.5"/>
+      defaultCohesion="0"
+      defaultFrictionCoefficient="0.5"/>
 
     <HydraulicApertureTable
       name="hApertureModel"
