@@ -311,13 +311,19 @@ public:
   { return *(m_meshObjectPaths.get()); }
 
   /**
-   * @brief Query whether this field specification uses non-scalar values
-   * @return True if the field specification provides more than one value
-   *         in the 'scale' or 'functionName' attributes
+   * @brief Validate that the size of @p m_scale and @p m_functionName correspond to the
+   *        size of the targeted field or expand them by duplicating values if possible.
+   *
+   * Validate that @p m_scale has the same size as the targeted field.
+   * If @p m_scale as a single value and the targeted field expect multiple, @p m_scale will
+   * be resized to the size of the field and its values be duplicated.
+   * Else, if there is a size mismatch and @p m_scale has more than one value, it throws.
+   * (The same applies for @p m_functionName)
+   *
+   * @note This method can mutate the FieldSpecification by resizing its @p m_scale and
+   *       its @p m_functionName arrays
    */
-  bool usesNonScalarValues() const
-  { return m_scale.size() > 1 || m_functionName.size() > 1; }
-
+  void validateNumArrayComp( localIndex numComp );
 
 protected:
 

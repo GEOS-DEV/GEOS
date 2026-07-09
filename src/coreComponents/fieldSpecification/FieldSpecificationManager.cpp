@@ -68,12 +68,12 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
+void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh )
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
-  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )
+  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification & fs )
   {
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
@@ -129,31 +129,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         isFieldNameFound = 1;
       }
 
-      if( fs.usesNonScalarValues() && targetGroup.hasWrapper( fieldName ) )
+      if( targetGroup.hasWrapper( fieldName ) )
       {
         localIndex numElem = targetGroup.getWrapperBase( fieldName ).numArrayComp();
-
-        GEOS_THROW_IF_NE_MSG( fs.getScales().size(), numElem,
-                              GEOS_FMT( "Field `{}` requires {} values in `{}`, but {} {} given",
-                                        fieldName, numElem,
-                                        FieldSpecification::viewKeyStruct::scaleString(),
-                                        fs.getScales().size(),
-                                        fs.getScales().size() > 1 ? "were" : "was" ),
-                              InputError,
-                              getDataContext() );
-
-        // functionName of size 1 is a "broadcast" to all scales 
-        if( fs.getFunctionNames().size() != 1 )
-        {
-          GEOS_THROW_IF_NE_MSG( static_cast< localIndex >( fs.getFunctionNames().size() ), numElem,
-                                GEOS_FMT( "Field `{}` requires {} values (or one value) in `{}`, but {} {} given",
-                                          fieldName, numElem,
-                                          FieldSpecification::viewKeyStruct::functionNameString(),
-                                          fs.getFunctionNames().size(),
-                                          fs.getFunctionNames().size() > 1 ? "were" : "was" ),
-                                InputError,
-                                getDataContext() );
-        }
+        fs.validateNumArrayComp( numElem );
       }
 
       if( targetSet.size() > 0 )

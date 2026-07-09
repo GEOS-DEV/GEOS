@@ -106,25 +106,61 @@ FieldSpecification::getCatalog()
 
 void FieldSpecification::postInputInitialization()
 {
-  GEOS_THROW_IF( !m_functionName.empty() &&
-                 m_functionName.size() != 1 &&
-                 m_functionName.size() != static_cast< string_array::size_type >( m_scale.size() ),
-                 GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
-                            "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
-                            viewKeyStruct::functionNameString(), m_functionName.size(),
-                            viewKeyStruct::scaleString(), m_scale.size(),
-                            viewKeyStruct::functionNameString(), viewKeyStruct::scaleString() ),
-                 InputError,
-                 getDataContext() );
+  { // both conditions work together
+    GEOS_THROW_IF( !m_functionName.empty() &&
+                   m_functionName.size() != 1 &&
+                   m_functionName.size() != static_cast< string_array::size_type >( m_scale.size() ),
+                   GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
+                              "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
+                              viewKeyStruct::functionNameString(), m_functionName.size(),
+                              viewKeyStruct::scaleString(), m_scale.size(),
+                              viewKeyStruct::functionNameString(), viewKeyStruct::scaleString() ),
+                   InputError,
+                   getDataContext() );
 
-  if( usesNonScalarValues() )
-  {
-    GEOS_THROW_IF( m_component != -1,
+    GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                               viewKeyStruct::componentString(),
                               viewKeyStruct::scaleString() ),
                    InputError,
                    getDataContext() );
+  }
+}
+
+void FieldSpecification::validateNumArrayComp( localIndex numComp )
+{
+  if( m_component != -1 )
+  {
+    return;
+  }
+
+  auto expand = [&]( auto & values, string_view attributeName )
+  {
+    GEOS_THROW_IF( values.size() > 1 && static_cast< localIndex >( values.size() ) != numComp,
+                   GEOS_FMT ( "'{}' has {} entries but the target field '{}' has {} components. "
+                              "'{}' must either have a single entry (applied to every components) "
+                              "or exactly have {} entries.",
+                              attributeName, values.size(), m_fieldName, numComp,
+                              attributeName, numComp ),
+                   InputError,
+                   getDataContext() );
+
+    // "Broadcast"/duplicate values
+    if( values.size() == 1 && numComp > 1 )
+    {
+      auto const value = values[ 0 ];
+      values.resize( numComp );
+      for( localIndex i = 0; i < numComp; ++i )
+      {
+        values[ i ] = value;
+      }
+    }
+  };
+
+  expand( m_scale, viewKeyStruct::scaleString() );
+  if( !m_functionName.empty() )
+  {
+    expand( m_functionName, viewKeyStruct::functionNameString() );
   }
 }
 

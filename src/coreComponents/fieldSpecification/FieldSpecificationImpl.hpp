@@ -399,16 +399,13 @@ private:
 template< typename LAMBDA >
 void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LAMBDA && lambda )
 {
-  if( fs.usesNonScalarValues() )
+  if( fs.getComponent() == -1 )
   {
-    localIndex const numComponents = fs.getScales().size();
-    for( localIndex comp = 0; comp < numComponents; ++comp )
+    for( localIndex comp = 0; comp < fs.getScales().size(); ++comp )
     {
-      // allow for a single functionName to be applied to every component
-      localIndex const fnIdx = ( fs.getFunctionNames().size() == 1 ) ? localIndex( 0 ) : comp;
-      string const & functionName = fs.getFunctionNames().empty() ? string{}
-                                                                  : fs.getFunctionNames()[ fnIdx ];
-
+      string const emptyFunctionName;
+      string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ] 
+                                                                     : emptyFunctionName;
       lambda( comp, fs.getScales()[ comp ], functionName );
     }
   }
