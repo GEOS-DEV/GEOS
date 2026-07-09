@@ -57,6 +57,12 @@
       target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
+      name="statistics"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Tasks/compflowStatistics"/>
+
+    <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
       targetExactTimestep="0"
