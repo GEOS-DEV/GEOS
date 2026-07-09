@@ -54,12 +54,12 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Direction to apply boundary condition to." );
 
-  registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
+  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
-  registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
+  registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
@@ -107,21 +107,21 @@ FieldSpecification::getCatalog()
 void FieldSpecification::postInputInitialization()
 {
   { // both conditions work together
-    GEOS_THROW_IF( !m_functionName.empty() &&
-                   m_functionName.size() != 1 &&
-                   m_functionName.size() != static_cast< string_array::size_type >( m_scale.size() ),
+    GEOS_THROW_IF( !m_functionNames.empty() &&
+                   m_functionNames.size() != 1 &&
+                   m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
                    GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
                               "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
-                              viewKeyStruct::functionNameString(), m_functionName.size(),
-                              viewKeyStruct::scaleString(), m_scale.size(),
-                              viewKeyStruct::functionNameString(), viewKeyStruct::scaleString() ),
+                              viewKeyStruct::functionNamesString(), m_functionNames.size(),
+                              viewKeyStruct::scalesString(), m_scales.size(),
+                              viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
                    InputError,
                    getDataContext() );
 
-    GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
+    GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                               viewKeyStruct::componentString(),
-                              viewKeyStruct::scaleString() ),
+                              viewKeyStruct::scalesString() ),
                    InputError,
                    getDataContext() );
   }
@@ -157,10 +157,10 @@ void FieldSpecification::validateNumArrayComp( localIndex numComp )
     }
   };
 
-  expand( m_scale, viewKeyStruct::scaleString() );
-  if( !m_functionName.empty() )
+  expand( m_scales, viewKeyStruct::scalesString() );
+  if( !m_functionNames.empty() )
   {
-    expand( m_functionName, viewKeyStruct::functionNameString() );
+    expand( m_functionNames, viewKeyStruct::functionNamesString() );
   }
 }
 

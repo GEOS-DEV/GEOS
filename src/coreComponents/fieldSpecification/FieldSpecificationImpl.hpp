@@ -404,7 +404,7 @@ void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LA
     for( localIndex comp = 0; comp < fs.getScales().size(); ++comp )
     {
       string const emptyFunctionName;
-      string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ] 
+      string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ]
                                                                      : emptyFunctionName;
       lambda( comp, fs.getScales()[ comp ], functionName );
     }
@@ -495,10 +495,10 @@ FieldSpecificationImpl::
         string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                           fs.getWrapperDataContext( FieldSpecification::
                                                                       viewKeyStruct::
-                                                                      functionNameString() ) );
+                                                                      functionNamesString() ) );
         ErrorLogger::global().modifyCurrentExceptionMessage()
           .addToMsg( errorMsg )
-          .addContextInfo( fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() )
+          .addContextInfo( fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNamesString() )
                              .getContextInfo()
                              .setPriority( 1 ) );
         throw InputError( e, errorMsg );

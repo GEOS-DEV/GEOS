@@ -31,16 +31,16 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< string_array >( FieldSpecification::viewKeyStruct::functionNameString() ).
+  getWrapper< string_array >( FieldSpecification::viewKeyStruct::functionNamesString() ).
     setDescription( GEOS_FMT( "Name(s) of function(s) that specifies the variation of the production rate variations of this {}."
                               "Multiplied by {}. If no function is provided, a constant value of 1 is used."
                               "The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.",
                               catalogName(),
-                              FieldSpecification::viewKeyStruct::scaleString() ) );
+                              FieldSpecification::viewKeyStruct::scalesString() ) );
 
-  getWrapper< array1d< real64 > >( FieldSpecification::viewKeyStruct::scaleString() ).
+  getWrapper< array1d< real64 > >( FieldSpecification::viewKeyStruct::scalesString() ).
     setDescription( GEOS_FMT( "Multiplier(s) of the {0} value(s). If no {0} is provided, value(s) are used directly.",
-                              FieldSpecification::viewKeyStruct::functionNameString() ) );
+                              FieldSpecification::viewKeyStruct::functionNamesString() ) );
 }
 
 REGISTER_CATALOG_ENTRY( FieldSpecification, SourceFluxBoundaryCondition, string const &, Group * const )
