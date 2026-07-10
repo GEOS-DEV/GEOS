@@ -239,6 +239,7 @@ public:
     }
 
     real64 factor = getDegradationValue( k, q );
+    //real64 factor = 1.0; //JUST TESTING
 
     // compute volumetric and deviatoric strain invariants
     real64 strain[6] = {0};
