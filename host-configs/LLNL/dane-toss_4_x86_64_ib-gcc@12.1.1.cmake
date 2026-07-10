@@ -37,10 +37,9 @@ set(MPI_C_COMPILER "/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-12.1.1-magic/b
 
 set(MPI_CXX_COMPILER "/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-12.1.1-magic/bin/mpicxx" CACHE PATH "")
 
-set(MPI_Fortran_COMPILER "/usr/tce/packages/mvapich2/mvapich2-2.3.7-gcc-12.1.1-magic/bin/mpif90" CACHE PATH "")
+set(MPIEXEC "srun" CACHE PATH "")
 
-set(MPIEXEC_EXECUTABLE "/usr/bin/srun" CACHE PATH "")
-set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
+set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # OpenMP
