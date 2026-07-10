@@ -367,7 +367,7 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
   GEOS_UNUSED_VAR( testName );
   WellManager & wellSolver = *solver.wellSolver();
 
-  wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                            MeshLevel & mesh,
                                                                            string_array const & regionNames )
   {
@@ -378,7 +378,7 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
       WellControls & wellControls = wellSolver.getWellControls( subRegion );
       CompositionalMultiphaseWell * compWell = dynamic_cast< CompositionalMultiphaseWell * >(&wellControls);
       compWell->setWellState( 1 );
-      compWell->initializeWell( domain, mesh, subRegion, time_n );
+      compWell->initializeWell( domain, domain.getMeshBodies(), meshBodyName, mesh, subRegion, time_n );
     } );
   } );
 
@@ -767,7 +767,6 @@ protected:
                                                                             MeshLevel & meshLevel,
                                                                             string_array const & regionNames )
     {
-      GEOS_UNUSED_VAR( meshBodyName );
       ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
       elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
                                                                    [&]( localIndex const,
@@ -776,7 +775,7 @@ protected:
         WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                              .getGroup< WellElementSubRegion >( region.getSubRegionName() );
         WellControls & wellControls = wellSolver.getWellControls( subRegion );
-        wellControls.initializeWell( domain, meshLevel, subRegion, time );
+        wellControls.initializeWell( domain, domain.getMeshBodies(), meshBodyName, meshLevel, subRegion, time );
       } );
     } );
   }
