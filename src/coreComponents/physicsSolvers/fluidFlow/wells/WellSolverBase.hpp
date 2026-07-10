@@ -303,7 +303,7 @@ public:
    * @param elemManager the element region manager
    * fields
    */
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
 
   /**

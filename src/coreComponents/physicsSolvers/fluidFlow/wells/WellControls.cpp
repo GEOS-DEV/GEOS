@@ -28,13 +28,14 @@
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsTask.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
 
 #include "LogLevelsInfo.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
@@ -709,6 +710,8 @@ real64 WellControls::getReferenceElevation() const
 
 void WellControls::implicitStepSetup( real64 const & time_n,
                                       real64 const & GEOS_UNUSED_PARAM( dt ),
+                                      DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                      string const & GEOS_UNUSED_PARAM( meshBodyName ),
                                       ElementRegionManager & elemManager,
                                       WellElementSubRegion & subRegion )
 {
@@ -821,6 +824,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
                                          integer const cycleNumber,
                                          integer const coupledIterationNumber,
                                          DomainPartition & domain,
+                                         string const & meshBodyName,
                                          MeshLevel & meshLevel,
                                          ElementRegionManager & elemManager,
                                          WellElementSubRegion & subRegion,
@@ -835,7 +839,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     {
       setWellState( 1 );
 
-      initializeWell( domain, meshLevel, subRegion, time_n );
+      initializeWell( domain, domain.getMeshBodies(), meshBodyName, meshLevel, subRegion, time_n );
     }
   }
   else
@@ -1128,7 +1132,7 @@ bool WellControls::validateReferenceRegion() const
     return true;
   }
   bool const isRoot = MpiWrapper::commRank() == 0;
-  string const regionName = getReferenceReservoirRegion();
+  string const regionName = referenceReservoirRegion();
   if( regionName.empty() )
   {
     GEOS_WARNING_IF( isRoot,
@@ -1156,6 +1160,7 @@ bool WellControls::validateReferenceRegion() const
   return true;
 }
 
+#if 0
 template< typename STATISTICS >
 bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const & elemManager,
                                                       real64 & averagePressure,
@@ -1163,7 +1168,7 @@ bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const
 {
   averagePressure = 0.0;
   averageTemperature = 0.0;
-  string const regionName = getReferenceReservoirRegion();
+  string const regionName = referenceReservoirRegion();
   if( !regionName.empty())
   {
     ElementRegionBase const & region = elemManager.getRegion( regionName );
@@ -1184,7 +1189,7 @@ bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const
   return true;
 }
 
-template bool WellControls::validateReferenceRegionStatistics< SinglePhaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
-template bool WellControls::validateReferenceRegionStatistics< CompositionalMultiphaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
-
+template bool WellControls::validateReferenceRegionStatistics< singlePhaseStatistics::StatsTask >( ElementRegionManager const &, real64 &, real64 & ) const;
+template bool WellControls::validateReferenceRegionStatistics< compositionalMultiphaseStatistics::StatsTask >( ElementRegionManager const &, real64 &, real64 & ) const;
+#endif
 } //namespace geos

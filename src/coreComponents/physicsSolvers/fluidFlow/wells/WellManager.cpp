@@ -192,7 +192,7 @@ void WellManager::implicitStepSetup( real64 const & time_n,
     ;
   } );
 
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
   {
@@ -204,9 +204,8 @@ void WellManager::implicitStepSetup( real64 const & time_n,
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls & well = getWell( subRegion );
-      well.implicitStepSetup( time_n, dt, elemManager, subRegion );
-    } )
-    ;
+      well.implicitStepSetup( time_n, dt, domain, meshBodyName, elemManager, subRegion );
+    } );
   } );
 }
 real64
@@ -400,6 +399,7 @@ void WellManager::assembleSystem( real64 const time,
                                          iterationsStatistics.getNumTimeSteps(),
                                          nonlinearParams.m_numNewtonIterations,
                                          domain,
+                                         meshBodyName,
                                          meshLevel,
                                          elementRegionManager,
                                          subRegion,

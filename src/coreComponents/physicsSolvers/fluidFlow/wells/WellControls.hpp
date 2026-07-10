@@ -156,11 +156,12 @@ public:
   /**
    * @brief Initialize well for the beginning of a simulation or restart
    * @param domain the domain
+   * @param meshBodies
    * @param mesh the mesh level
    * @param subRegion the well subRegion
    * @param time_n the current time
    */
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
+  virtual void initializeWell( DomainPartition & domain, Group & meshBodies, string const & meshBodyName, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time
@@ -176,6 +177,8 @@ public:
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
+                                  DomainPartition & domain,
+                                  string const & meshBodyName,
                                   ElementRegionManager & elemManager,
                                   WellElementSubRegion & subRegion ) = 0;
 
@@ -491,7 +494,7 @@ public:
    * @brief Getter for the reservoir region associated with reservoir volume constraint
    * @return name of reservoir region
    */
-  string getReferenceReservoirRegion() const { return m_referenceReservoirRegion; }
+  string const & referenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
@@ -618,12 +621,14 @@ public:
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @return the pressure
    */
   real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
 
   /**
    * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @param[in] regionAveragePressure value for pressure
    */
   void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
@@ -815,6 +820,7 @@ public:
                              integer const cycleNumber,
                              integer const coupledIterationNumber,
                              DomainPartition & domain,
+                             string const & meshBodyName,
                              MeshLevel & mesh,
                              ElementRegionManager & elemManager,
                              WellElementSubRegion & subRegion,
@@ -868,10 +874,10 @@ protected:
    * @param[out] averageTemperature Reference to a real64 variable where the retrieved average temperature is stored.
    * @return Boolean value, always returning true upon successful validation.
    */
-  template< typename STATISTICS >
-  bool validateReferenceRegionStatistics( ElementRegionManager const & elementManager,
-                                          real64 & averagePressure,
-                                          real64 & averageTemperature ) const;
+  //template< typename STATISTICS >
+  //bool validateReferenceRegionStatistics( ElementRegionManager const & elementManager,
+  //                                        real64 & averagePressure,
+  //                                        real64 & averageTemperature ) const;
 
 private:
   /// List of names of regions the solver will be applied to
