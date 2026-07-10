@@ -1083,6 +1083,7 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+    string const flowDofKey = dofManager.getKey( m_pressureKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1096,12 +1097,14 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
 
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
+      arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
       forAll< serialPolicy >( bubbleElems.size(), [=, &rowLengths]( localIndex const kk )
       {
+        localIndex const k = bubbleElems[kk];
         localIndex const faceIndex = elemsToFaces[kk][0];
 
-        // Add 1 pressure column for each of the 3 bubble DOFs
+        // (bubble_row, pressure_col): 1 pressure column for each of the 3 bubble DOFs
         for( localIndex i = 0; i < 3; ++i )
         {
           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
@@ -1109,6 +1112,13 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
           {
             rowLengths[rowNumber] += 1;  // One pressure DOF from matrix cell
           }
+        }
+
+        // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb)
+        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+        if( pRow >= 0 && pRow < rowLengths.size() )
+        {
+          rowLengths[pRow] += 3;  // Three bubble DOFs
         }
       } );
     } );
@@ -1156,13 +1166,23 @@ addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
         localIndex const faceIndex = elemsToFaces[kk][0];
         globalIndex const pressureColIndex = pressureDofNumber[k];
 
-        // Add pattern for (bubble_row, pressure_col)
+        // (bubble_row, pressure_col) : A_bp
         for( localIndex i = 0; i < 3; ++i )
         {
           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
           {
             pattern.insertNonZero( rowIndex, pressureColIndex );
+          }
+        }
+
+        // (pressure_row, bubble_col) : A_pb -- transpose location
+        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+        if( pRow >= 0 && pRow < pattern.numRows() )
+        {
+          for( localIndex i = 0; i < 3; ++i )
+          {
+            pattern.insertNonZero( pRow, bubbleDofNumber[faceIndex] + i );
           }
         }
       } );
@@ -1222,7 +1242,8 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
                                                                                   localMatrix,
                                                                                   localRhs,
                                                                                   dt,
-                                                                                  flowDofKey );
+                                                                                  flowDofKey,
+                                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     real64 maxResidual = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy<>,
