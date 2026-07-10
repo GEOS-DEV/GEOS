@@ -252,7 +252,7 @@ public:
    * @brief Getter for the reservoir region associated with reservoir volume constraint
    * @return name of reservoir region
    */
-  string referenceReservoirRegion() const { return m_referenceReservoirRegion; }
+  string const & referenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
@@ -316,12 +316,14 @@ public:
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @return the pressure
    */
   real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
 
   /**
    * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @param[in] regionAveragePressure value for pressure
    */
   void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
