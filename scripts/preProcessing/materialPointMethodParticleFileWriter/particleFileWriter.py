@@ -232,6 +232,37 @@ def _format_solver_child_xml_block(tagName, value, indent="\t\t\t"):
   return "\n" + indent + f"<{tagName}>\n" + childIndent + ("\n" + childIndent).join(body.splitlines()) + "\n" + indent + f"</{tagName}>\n"
 
 
+_NUMERIC_TABLE_XML_PARAMS = {
+  "bcTable",
+  "fTable",
+  "frictionCoefficientTable",
+  "setDomainTemperature",
+  "setDomainTemperatureRate",
+  "stressTable",
+}
+
+
+def _normalize_numeric_table_xml_param(paramName, value):
+  """Convert numeric table-like solver attributes to plain Python lists.
+
+  Python list stringification uses repr() for nested values.  With recent NumPy,
+  repr(np.float64(1.0)) is "np.float64(1.0)", which GEOS correctly rejects in
+  XML numeric arrays.  Keep this guard scoped to known table attributes so
+  non-table XML attribute formatting remains unchanged.
+  """
+  if value is None or isinstance(value, str):
+    return value
+  try:
+    valueArray = np.asarray(value, dtype=float)
+  except Exception as exc:
+    raise ValueError(paramName + " must be a numeric table: " + str(exc))
+  if valueArray.ndim not in (1, 2):
+    raise ValueError(paramName + " must be a 1d or 2d numeric table, got shape " + str(valueArray.shape))
+  if not np.all(np.isfinite(valueArray)):
+    raise ValueError(paramName + " contains NaN or infinity")
+  return valueArray.tolist()
+
+
 def _particle_object_name(particleObject):
   """Return a useful name for diagnostics from a geometry object."""
   name = getattr(particleObject, "name", None)
@@ -933,6 +964,8 @@ parameterStrings = []
 for paramName, paramTuple in parameters.items():
   # Check if param is passed from input script, if not assign default value.
   paramValue = pfw[paramName] if paramName in pfw else paramTuple[0]
+  if paramName in _NUMERIC_TABLE_XML_PARAMS:
+    paramValue = _normalize_numeric_table_xml_param(paramName, paramValue)
 
   # Add solver XML attributes only for parameters marked as solver attributes.
   if paramValue != None and paramTuple[1]:
