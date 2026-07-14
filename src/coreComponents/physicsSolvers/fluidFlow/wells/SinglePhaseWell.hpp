@@ -233,7 +233,10 @@ public:
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) override;
 
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( real64 const time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) override;
 
   /**@}*/
 
@@ -276,7 +279,9 @@ public:
    * @param
    * @param subRegion the well subRegion containing the well elements and their associated
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) override;
 
 
   /*

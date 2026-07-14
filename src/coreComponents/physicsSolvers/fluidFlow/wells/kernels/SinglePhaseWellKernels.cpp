@@ -550,7 +550,7 @@ RateInitializationKernel::
 
   ConstraintTypeId const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  auto const * rateConstraint = wellControls.getRateConstraints().front(); // tjb
+  auto const * rateConstraint = wellControls.getRateConstraints().front();
   real64 const constraintVal = rateConstraint->getConstraintValue( currentTime );
 
   // Estimate the connection rates

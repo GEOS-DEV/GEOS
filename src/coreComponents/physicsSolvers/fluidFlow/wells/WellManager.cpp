@@ -531,7 +531,7 @@ void WellManager::updateState( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
   real64 maxPhaseVolFrac = 0.0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
@@ -543,7 +543,7 @@ void WellManager::updateState( DomainPartition & domain )
       if( wellControls.getWellState())
       {
 
-        real64 const maxRegionPhaseVolFrac = wellControls.updateWellState( elemManager, subRegion );
+        real64 const maxRegionPhaseVolFrac = wellControls.updateWellState( domain.getMeshBody( meshBodyName ), elemManager, subRegion );
 
         maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
       }

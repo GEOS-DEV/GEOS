@@ -80,6 +80,9 @@ public:
    */
   virtual ~CompositionalMultiphaseWell() override;
 
+  compositionalMultiphaseStatistics::StatsAggregator * getStatsAggregator() { return m_reservoirStatsAggregator.get(); }
+  void setReservoirStatsAggregator( std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > aggregator );
+
 
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
   /**
@@ -283,7 +286,10 @@ public:
    * @param elemManager the element region manager
 
    */
-  void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
+  void updateSeparator( real64 time_n,
+                        MeshBody const & meshBody,
+                        ElementRegionManager const & elemManager,
+                        WellElementSubRegion & subRegion );
 
   /**
    * @brief  Calculate well rates at reference element
@@ -310,9 +316,14 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) override;
 
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( real64 time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -393,7 +404,8 @@ protected:
    * @brief Create well separator
    */
   virtual void createSeparator( WellElementSubRegion & subRegion ) override;
-
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
 private:
@@ -439,8 +451,6 @@ private:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
-  /// optional statistics aggregator to get the average pressure of simulated region
-  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
 };

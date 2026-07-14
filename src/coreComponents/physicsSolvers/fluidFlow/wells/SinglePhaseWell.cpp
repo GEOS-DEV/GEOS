@@ -458,8 +458,13 @@ SinglePhaseWell::getReferenceConditions( WellElementSubRegion const & subRegion 
   }
 }
 
-real64 SinglePhaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateSubRegionState( real64 const time_n,
+                                              MeshBody const & meshBody,
+                                              ElementRegionManager const & elemManager,
+                                              WellElementSubRegion & subRegion )
 {
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( meshBody );
 
   if( getWellState())
   {
@@ -583,7 +588,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, Group & meshBodi
     //       to better initialize the rates
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     precomputeReferenceConditions( time_n, meshBodies, meshBody, subRegion );
-    updateSubRegionState( elemManager, subRegion );
+    updateSubRegionState( time_n, meshBody, elemManager, subRegion );
 
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -640,18 +645,20 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, Group & meshBodi
           }
         } );
       }
-      updateSubRegionState( elemManager, subRegion );
+      updateSubRegionState( time_n, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
     }
 
   }
 
 }
 
-real64 SinglePhaseWell::updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateWellState( MeshBody const & meshBody,
+                                         ElementRegionManager const & elemManager,
+                                         WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
-  updateSubRegionState( elemManager, subRegion );
+  updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
   return 0.0;
 }
 
@@ -1226,7 +1233,9 @@ void SinglePhaseWell::resetStateToBeginningOfStep( ElementRegionManager const & 
     subRegion.getField< well::connectionRate_n >();
   connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
-  updateSubRegionState( elemManager, subRegion );
+  MeshLevel const & meshLevel = dynamicCast< MeshLevel const & >( elemManager.getParent() );
+  MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent() );
+  updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
 
 }
 
@@ -1280,7 +1289,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time_n,
 
   validateWellConstraints( time_n, dt, subRegion );
 
-  updateSubRegionState( elemManager, subRegion );
+  updateSubRegionState( time_n, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
 
 }
 

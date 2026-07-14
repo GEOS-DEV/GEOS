@@ -153,6 +153,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
 
 CompositionalMultiphaseWell::~CompositionalMultiphaseWell() = default;
 
+void CompositionalMultiphaseWell::setReservoirStatsAggregator(
+  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > aggregator )
+{
+  m_reservoirStatsAggregator = std::move( aggregator );
+}
+
 void CompositionalMultiphaseWell::postInputInitialization()
 {
   WellControls::postInputInitialization();
@@ -717,6 +723,7 @@ void CompositionalMultiphaseWell::precomputeReferenceConditions( real64 const ti
                                                                  MeshBody & meshBody,
                                                                  WellElementSubRegion const & subRegion )
 {
+  GEOS_UNUSED_VAR( meshBodies );
   GEOS_UNUSED_VAR( subRegion );
   if( !useSurfaceConditions() )
   {
@@ -729,18 +736,14 @@ void CompositionalMultiphaseWell::precomputeReferenceConditions( real64 const ti
     }
     else
     {
-      auto & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-      MeshLevel & flowMeshLevel = meshBody.getMeshLevel( flowSolver.getDiscretizationName() );
-
       if( !m_reservoirStatsAggregator )
-      { // lazily initialize the region statistics aggregator
-        m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( getDataContext(),
-                                                                          meshBodies,
-                                                                          false );
-        m_reservoirStatsAggregator->initStatisticsAggregation( flowSolver );
-        m_reservoirStatsAggregator->enableRegionStatisticsAggregation();
+      {
+        GEOS_THROW_IF( !m_reservoirStatsAggregator,
+                       GEOS_FMT( "Region {} stats aggregator not initialized in WellControl {}.",
+                                 refRegionName, getName() ),
+                       InputError, getDataContext() );
       }
-
+      MeshLevel & flowMeshLevel = meshBody.getMeshLevel( getDiscretizationName() );
       RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( flowMeshLevel, refRegionName );
 
       // compute region stats only if needed (could have already been done for another subRegion)
@@ -826,11 +829,36 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
 }
 
-void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::updateSeparator( real64 const time_n,
+                                                   MeshBody const & meshBody,
+                                                   ElementRegionManager const & elemManager,
+                                                   WellElementSubRegion & subRegion )
 {
-  GEOS_UNUSED_VAR( elemManager );
   GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( elemManager );
 
+
+  // control data
+  // needs to be done because the aggregator requires all cores for mpi
+  string const wellControlsName =  getName();
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( getLogLevel());
+  integer const useSurfaceCond =  useSurfaceConditions();
+
+  if( !useSurfaceCond )
+  {
+    string_view refRegionName = referenceReservoirRegion();
+    if( !refRegionName.empty() )
+    {
+      MeshLevel & flowMeshLevel = meshBody.getMeshLevel( getDiscretizationName());
+      RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( flowMeshLevel, refRegionName );
+
+      // compute region stats only if needed (could have already been done for another subRegion)
+      if( time_n >= 0.0 && !m_reservoirStatsAggregator->isComputed( time_n, stats ) )
+      {
+        m_reservoirStatsAggregator->computeRegionsStatistics( time_n );
+      }
+    }
+  }
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
   {
@@ -848,13 +876,6 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
   // fluid data
   constitutive::MultiFluidBase & fluidSeparator =   getMultiFluidSeparator();
 
-  // control data
-
-  string const wellControlsName =  getName();
-  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( getLogLevel());
-  string const massUnit = m_useMass ? "kg" : "mol";
-
-  integer const useSurfaceCond =  useSurfaceConditions();
   real64 flashPressure;
   real64 flashTemperature;
   if( useSurfaceCond )
@@ -865,26 +886,22 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
   }
   else
   {
-    if( !referenceReservoirRegion().empty() )
+    string_view refRegionName = referenceReservoirRegion();
+    if( !refRegionName.empty() )
     {
-      real64 averagePressure = 0.0;
-      real64 averageTemperature = 0.0;
-      //validateReferenceRegionStatistics< compositionalMultiphaseStatistics >( elemManager, averagePressure, averageTemperature );
-      setRegionAveragePressure( averagePressure );
-      setRegionAverageTemperature( averageTemperature );
-    }
-    // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
-    flashPressure = getRegionAveragePressure();
-    if( flashPressure < 0.0 )
-    {
-      // region name not set, use segment conditions
-      flashPressure   = pres[iwelemRef];
-      flashTemperature = temp[iwelemRef];
+      MeshLevel & flowMeshLevel = meshBody.getMeshLevel( getDiscretizationName());
+      RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( flowMeshLevel, refRegionName );
+
+      setRegionAveragePressure( stats.m_averagePressure );
+      setRegionAverageTemperature( stats.m_averageTemperature );
+      flashPressure = stats.m_averagePressure;
+      flashTemperature = stats.m_averageTemperature;
     }
     else
     {
-      // use reservoir region averages
-      flashTemperature = getRegionAverageTemperature();
+      // region name not set, use segment conditions
+      flashPressure = pres[iwelemRef];
+      flashTemperature = temp[iwelemRef];
     }
   }
 
@@ -895,35 +912,22 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
     // bring everything back to host, capture the scalars by reference
     forAll< serialPolicy >( 1, [fluidSeparatorWrapper,
                                 wellControlsName,
-                                useSurfaceCond,
                                 flashPressure,
                                 flashTemperature,
                                 logSurfaceCondition,
                                 iwelemRef,
-                                pres,
-                                temp,
                                 compFrac] ( localIndex const )
     {
-      //      - Surface conditions: using the surface pressure provided by the user
-      //      - Reservoir conditions: using the pressure in the top element
-      if( useSurfaceCond )
+      fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+      if( logSurfaceCondition )
       {
-        // we need to compute the surface density
-        //fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
-        fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
-        if( logSurfaceCondition )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                   wellControlsName, flashPressure, flashTemperature ) );
-        }
+        GEOS_LOG_RANK( GEOS_FMT( "{}: separator density computed with P = {} Pa and T = {} K",
+                                 wellControlsName, flashPressure, flashTemperature ) );
+      }
 #ifdef GEOS_USE_HIP
-        GEOS_UNUSED_VAR( wellControlsName );
+      GEOS_UNUSED_VAR( wellControlsName );
 #endif
-      }
-      else
-      {
-        fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
-      }
+
     } );
   } );
 }
@@ -977,16 +981,20 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-real64 CompositionalMultiphaseWell::updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 CompositionalMultiphaseWell::updateWellState( MeshBody const & meshBody, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
-  real64 maxPhaseVolFrac =  updateSubRegionState( elemManager, subRegion );
+
+  real64 maxPhaseVolFrac =  updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
   return maxPhaseVolFrac;
 
 }
 
-real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 CompositionalMultiphaseWell::updateSubRegionState( real64 const time_n,
+                                                          MeshBody const & meshBody,
+                                                          ElementRegionManager const & elemManager,
+                                                          WellElementSubRegion & subRegion )
 {
   real64 maxPhaseVolChange=0.0;
 
@@ -1000,7 +1008,7 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
 
     updateFluidModel( subRegion );   //  Calculate fluid properties
 
-    updateSeparator( elemManager, subRegion );   //  Calculate fluid properties at control conditions
+    updateSeparator( time_n, meshBody, elemManager, subRegion );   //  Calculate fluid properties at control conditions
 
     updateVolRatesForConstraint( subRegion );    // remove tjb ??
 
@@ -1175,7 +1183,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
     // 5) Recompute the pressure-dependent properties
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     precomputeReferenceConditions( time_n, meshBodies, meshBody, subRegion );
-    updateSubRegionState( elemManager, subRegion );
+    updateSubRegionState( time_n, meshBody, elemManager, subRegion );
 
     // 6) Estimate the well rates
     // TODO: initialize rates using perforation rates
@@ -1236,7 +1244,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
           }
         } );
       }
-      updateSubRegionState( elemManager, subRegion );
+      updateSubRegionState( time_n, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
     }
 
   }
@@ -2141,7 +2149,9 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( ElementRegionMana
 
   if( isWellOpen( )  )
   {
-    updateSubRegionState( elemManager, subRegion );
+    MeshLevel const & meshLevel = dynamicCast< MeshLevel const & >( elemManager.getParent() );
+    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent() );
+    updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
   }
 
 }
@@ -2389,7 +2399,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 
     validateWellConstraints( time_n, dt, subRegion );
     precomputeReferenceConditions( time_n, domain.getMeshBodies(), domain.getMeshBody( meshBodyName ), subRegion );
-    updateSubRegionState( elemManager, subRegion );
+    updateSubRegionState( time_n, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
   }
 }
 

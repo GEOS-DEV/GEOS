@@ -27,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
@@ -147,7 +148,7 @@ initializePreSubGroups()
 {
   Base::initializePreSubGroups();
 
-  CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
+  CompositionalMultiphaseBase * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::useMassFlagString() );
@@ -166,17 +167,37 @@ initializePreSubGroups()
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
   DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & regionNames )
+  Group & meshBodies = domain.getMeshBodies();
+  this->template forDiscretizationOnMeshTargets<>( meshBodies, [&] ( string const &,
+                                                                     MeshLevel & mesh,
+                                                                     string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
       WellControls & wellControls = Base::wellSolver()->getWellControls( subRegion );
+      CompositionalMultiphaseWell & compositionalMultiphaseWell = dynamic_cast< CompositionalMultiphaseWell & >( wellControls );
       wellControls.setFlowSolverName( flowSolver->getName() );
+      wellControls.setDiscretizationName( flowSolver->getDiscretizationName() );
 
+      if( !wellControls.useSurfaceConditions() )
+      {
+        string_view refRegionName = wellControls.referenceReservoirRegion();
+        bool const useSegmentValues = refRegionName.empty();
+        if( !useSegmentValues )
+        {
+          if( !compositionalMultiphaseWell.getStatsAggregator() )
+          { // lazily initialize the region statistics aggregator
+            auto aggregator = std::make_unique< compositionalMultiphaseStatistics::StatsAggregator >( compositionalMultiphaseWell.getDataContext(),
+                                                                                                      meshBodies,
+                                                                                                      false );
+            aggregator->initStatisticsAggregation( *flowSolver );
+            aggregator->enableRegionStatisticsAggregation();
+            compositionalMultiphaseWell.setReservoirStatsAggregator( std::move( aggregator ) );
+          }
+        }
+      }
     } );
   } );
 }

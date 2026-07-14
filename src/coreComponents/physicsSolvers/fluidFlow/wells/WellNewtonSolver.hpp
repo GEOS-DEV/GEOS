@@ -852,7 +852,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
-      well.updateWellState( elemManager, subRegion );
+      well.updateWellState( dynamicCast< MeshBody const & >( mesh.getParent() ), elemManager, subRegion );
     }
 
   }

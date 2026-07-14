@@ -186,7 +186,10 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         WellElementSubRegion const & subRegion ) = 0;
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( real64 const time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Function to evaluate well constraints after applying the solution update
@@ -358,7 +361,9 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Reset the well state to the beginning of the time step
@@ -418,6 +423,17 @@ public:
    */
   void setFlowSolverName( const std::string & flowSolverName )   { m_flowSolverName = flowSolverName;    }
 
+  /**
+   * @brief return the name of the discretization object
+   * @return the name of the discretization object
+   */
+  std::string getDiscretizationName() const { return m_discretizationName; }
+
+  /**
+   * @brief set the name of the discretization object
+   * @param[in] discretizationName name
+   */
+  void setDiscretizationName( const std::string & discretizationName )   { m_discretizationName = discretizationName;    }
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
@@ -890,6 +906,9 @@ protected:
 
   /// Name of the flow solver managing this well
   std::string m_flowSolverName;
+
+  /// Name of the discretization for the region
+  std::string m_discretizationName;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
