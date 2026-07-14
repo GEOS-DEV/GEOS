@@ -91,6 +91,10 @@ public:
                                  real64 const & strainHardeningSlope,
                                  real64 const & hardeningScaleExponent,
                                  real64 const & maximumStretch,
+                                 real64 const & fractureStretchLambdaMin,
+                                 real64 const & fractureStretchLambda0,
+                                 real64 const & fractureStretchT0,
+                                 real64 const & fractureStretchTemperatureScale,
                                  real64 const & glassTransitionTemperature,
                                  real64 const & temperatureColdSlope,
                                  real64 const & temperatureHotSlope,
@@ -136,6 +140,10 @@ public:
     m_strainHardeningSlope( strainHardeningSlope ),
     m_hardeningScaleExponent( hardeningScaleExponent ),
     m_maximumStretch( maximumStretch ),
+    m_fractureStretchLambdaMin( fractureStretchLambdaMin ),
+    m_fractureStretchLambda0( fractureStretchLambda0 ),
+    m_fractureStretchT0( fractureStretchT0 ),
+    m_fractureStretchTemperatureScale( fractureStretchTemperatureScale ),
     m_glassTransitionTemperature( glassTransitionTemperature ),
     m_temperatureColdSlope( temperatureColdSlope ),
     m_temperatureHotSlope( temperatureHotSlope ),
@@ -228,6 +236,10 @@ private:
   real64 const m_strainHardeningSlope;
   real64 const m_hardeningScaleExponent;
   real64 const m_maximumStretch;
+  real64 const m_fractureStretchLambdaMin;
+  real64 const m_fractureStretchLambda0;
+  real64 const m_fractureStretchT0;
+  real64 const m_fractureStretchTemperatureScale;
 
   real64 const m_glassTransitionTemperature;
   real64 const m_temperatureColdSlope;
@@ -384,12 +396,17 @@ void SurfaceInformedPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
   real64 const lambdaChain = surfaceInformedPolymerHelpers::chainStretch( unrotatedDeformationGradient );
 
-  if( lambdaChain > m_maximumStretch )
+  real64 const T = m_temperature[k];
+  real64 const lambdaFailure = surfaceInformedPolymerHelpers::fractureStretch( T,
+                                                                              m_maximumStretch,
+                                                                              m_fractureStretchLambdaMin,
+                                                                              m_fractureStretchLambda0,
+                                                                              m_fractureStretchT0,
+                                                                              m_fractureStretchTemperatureScale );
+  if( lambdaChain > lambdaFailure )
   {
     m_damage[k][q] = 1.0;
   }
-
-  real64 const T = m_temperature[k];
   real64 const ST = surfaceInformedPolymerHelpers::temperatureScale( T,
                                                                     m_glassTransitionTemperature,
                                                                     m_temperatureColdSlope,
@@ -566,6 +583,10 @@ public:
     static constexpr char const * strainHardeningSlopeString() { return "strainHardeningSlope"; }
     static constexpr char const * hardeningScaleExponentString() { return "hardeningScaleExponent"; }
     static constexpr char const * maximumStretchString() { return "maximumStretch"; }
+    static constexpr char const * fractureStretchLambdaMinString() { return "fractureStretchLambdaMin"; }
+    static constexpr char const * fractureStretchLambda0String() { return "fractureStretchLambda0"; }
+    static constexpr char const * fractureStretchT0String() { return "fractureStretchT0"; }
+    static constexpr char const * fractureStretchTemperatureScaleString() { return "fractureStretchTemperatureScale"; }
 
     static constexpr char const * glassTransitionTemperatureString() { return "glassTransitionTemperature"; }
     static constexpr char const * temperatureColdSlopeString() { return "temperatureColdSlope"; }
@@ -602,6 +623,10 @@ public:
                                           m_strainHardeningSlope,
                                           m_hardeningScaleExponent,
                                           m_maximumStretch,
+                                          m_fractureStretchLambdaMin,
+                                          m_fractureStretchLambda0,
+                                          m_fractureStretchT0,
+                                          m_fractureStretchTemperatureScale,
                                           m_glassTransitionTemperature,
                                           m_temperatureColdSlope,
                                           m_temperatureHotSlope,
@@ -645,6 +670,10 @@ public:
                           m_strainHardeningSlope,
                           m_hardeningScaleExponent,
                           m_maximumStretch,
+                          m_fractureStretchLambdaMin,
+                          m_fractureStretchLambda0,
+                          m_fractureStretchT0,
+                          m_fractureStretchTemperatureScale,
                           m_glassTransitionTemperature,
                           m_temperatureColdSlope,
                           m_temperatureHotSlope,
@@ -686,6 +715,10 @@ protected:
   real64 m_strainHardeningSlope;
   real64 m_hardeningScaleExponent;
   real64 m_maximumStretch;
+  real64 m_fractureStretchLambdaMin;
+  real64 m_fractureStretchLambda0;
+  real64 m_fractureStretchT0;
+  real64 m_fractureStretchTemperatureScale;
 
   real64 m_glassTransitionTemperature;
   real64 m_temperatureColdSlope;

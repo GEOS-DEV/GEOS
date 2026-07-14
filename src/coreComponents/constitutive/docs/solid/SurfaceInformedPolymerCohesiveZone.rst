@@ -140,7 +140,11 @@ units and temperature convention as the corresponding continuum card.
    * - ``hardeningScaleExponent``
      - Exponent :math:`p_H` in the hardening temperature scale.
    * - ``maximumStretch``
-     - Chain stretch at which the cohesive law fails and returns zero traction.
+     - Constant chain stretch at which the cohesive law fails when the optional exponential fracture-stretch law is disabled.
+   * - ``fractureStretchLambdaMin``, ``fractureStretchLambda0``
+     - Optional :math:`\lambda_{min}` and :math:`\lambda_0` in :math:`\lambda_f=\lambda_{min}+\lambda_0\exp((T-T_0)/a)`.
+   * - ``fractureStretchT0``, ``fractureStretchTemperatureScale``
+     - Optional reference temperature :math:`T_0` and temperature scale :math:`a` for the exponential fracture-stretch law.
    * - ``glassTransitionTemperature``
      - Reference temperature :math:`T_g`.
    * - ``temperatureColdSlope``, ``temperatureHotSlope``
@@ -198,7 +202,11 @@ A typical XML block is
       pressureAsymmetryAmplitude="0.0"
       pressureAsymmetryWidth="4.0"
       compressivePressureStrengtheningCap="26.0"
-      maximumStretch="3.0" />
+      maximumStretch="3.0"
+      fractureStretchLambdaMin="1.0"
+      fractureStretchLambda0="0.0"
+      fractureStretchT0="300.0"
+      fractureStretchTemperatureScale="1.0" />
   </Constitutive>
 
 The cohesive law is attached to an MPM interface with a ``CohesiveZoneRegion``
