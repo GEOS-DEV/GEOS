@@ -162,8 +162,22 @@ stretch and :math:`J=\det F`, the implementation uses
 
 This preserves ordinary tensile stretch hardening, avoids artificial chain
 extension in hydrostatic compression, and still allows constrained compression or
-shear under pressure to reach finite chain extensibility.  If
-``maximumStretch`` is exceeded, the material damage flag is set to one.  This
+shear under pressure to reach finite chain extensibility.
+
+By default, the material damage flag is set to one when
+``maximumStretch`` is exceeded.  An optional temperature-dependent fracture
+stretch can be enabled by setting ``fractureStretchLambda0`` to a positive
+value:
+
+.. math::
+
+   \lambda_f(T)=\lambda_{min}+\lambda_0
+   \exp\left(\frac{T-T_0}{a}\right).
+
+The corresponding input names are ``fractureStretchLambdaMin``,
+``fractureStretchLambda0``, ``fractureStretchT0``, and
+``fractureStretchTemperatureScale``.  When the optional law is active,
+``lambda_f`` replaces ``maximumStretch`` as the damage trigger.  This
 maximum-stretch failure is not suppressed by pressure.
 
 
@@ -192,7 +206,11 @@ are grouped below.
    * - ``hardeningScaleExponent``
      - Exponent :math:`p_H` in :math:`H=H_gS_T^{p_H}`.
    * - ``maximumStretch``
-     - Chain stretch at which the damage flag is set to one.
+     - Constant chain stretch at which the damage flag is set to one when the optional exponential fracture-stretch law is disabled.
+   * - ``fractureStretchLambdaMin``, ``fractureStretchLambda0``
+     - Optional :math:`\lambda_{min}` and :math:`\lambda_0` in :math:`\lambda_f=\lambda_{min}+\lambda_0\exp((T-T_0)/a)`.  A non-positive ``fractureStretchLambda0`` disables the law.
+   * - ``fractureStretchT0``, ``fractureStretchTemperatureScale``
+     - Optional reference temperature :math:`T_0` and temperature scale :math:`a` for the exponential fracture-stretch law.
    * - ``glassTransitionTemperature``
      - Reference temperature :math:`T_g` for the normalized scale.
    * - ``temperatureColdSlope``, ``temperatureHotSlope``
@@ -256,7 +274,11 @@ A typical XML block is
       pressureAsymmetryAmplitude="0.0"
       pressureAsymmetryWidth="4.0"
       compressivePressureStrengtheningCap="26.0"
-      maximumStretch="3.0" />
+      maximumStretch="3.0"
+      fractureStretchLambdaMin="1.0"
+      fractureStretchLambda0="0.0"
+      fractureStretchT0="300.0"
+      fractureStretchTemperatureScale="1.0" />
   </Constitutive>
 
 Notes and limitations

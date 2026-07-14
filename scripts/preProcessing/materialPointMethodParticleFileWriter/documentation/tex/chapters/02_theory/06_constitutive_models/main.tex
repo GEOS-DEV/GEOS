@@ -366,7 +366,10 @@ if q_trial + eta*p_eff <= sigma_f0:
   accept elastic trial stress
 else:
   return deviatoric stress to capped pressure-sensitive surface
-if lambda_chain >= maximumStretch:
+lambda_failure = maximumStretch
+if fractureStretchLambda0 > 0:
+  lambda_failure = fractureStretchLambdaMin + fractureStretchLambda0*exp((T - fractureStretchT0)/fractureStretchTemperatureScale)
+if lambda_chain >= lambda_failure:
   damage = 1
 store stress, plasticStrain, kappa, damage
 \end{lstlisting}

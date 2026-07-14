@@ -191,6 +191,35 @@ real64 softeningContribution( real64 const shearSofteningMagnitude,
   return shearSofteningMagnitude * LvArray::math::exp( boundedExpArgument( -exponent ) );
 }
 
+
+/**
+ * @brief Temperature-dependent fracture stretch for stretch-triggered damage.
+ *
+ * If @p fractureStretchLambda0 is non-positive, the legacy constant @p maximumStretch is returned.
+ * Otherwise the damage trigger is
+ *
+ *   lambda_f = lambda_min + lambda_0 exp((T - T_0)/a).
+ *
+ * The exponent is numerically bounded for host/device robustness, but the material law itself does
+ * not impose a high-temperature cap.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 fractureStretch( real64 const temperature,
+                        real64 const maximumStretch,
+                        real64 const fractureStretchLambdaMin,
+                        real64 const fractureStretchLambda0,
+                        real64 const fractureStretchT0,
+                        real64 const fractureStretchTemperatureScale )
+{
+  if( fractureStretchLambda0 <= 0.0 || fractureStretchTemperatureScale <= 0.0 )
+  {
+    return maximumStretch;
+  }
+  real64 const exponent = ( temperature - fractureStretchT0 ) / fractureStretchTemperatureScale;
+  return fractureStretchLambdaMin + fractureStretchLambda0 * LvArray::math::exp( boundedExpArgument( exponent ) );
+}
+
 /**
  * @brief Stretch-hardening driver used by both the continuum and cohesive-zone models.
  */

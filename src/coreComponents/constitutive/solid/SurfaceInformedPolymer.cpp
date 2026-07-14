@@ -40,6 +40,10 @@ SurfaceInformedPolymer::SurfaceInformedPolymer( string const & name, Group * con
   m_strainHardeningSlope( 0.0 ),
   m_hardeningScaleExponent( 1.0 ),
   m_maximumStretch( DBL_MAX ),
+  m_fractureStretchLambdaMin( 1.0 ),
+  m_fractureStretchLambda0( 0.0 ),
+  m_fractureStretchT0( 300.0 ),
+  m_fractureStretchTemperatureScale( 1.0 ),
   m_glassTransitionTemperature( 300.0 ),
   m_temperatureColdSlope( 0.0 ),
   m_temperatureHotSlope( 0.0 ),
@@ -82,7 +86,27 @@ SurfaceInformedPolymer::SurfaceInformedPolymer( string const & name, Group * con
   registerWrapper( viewKeyStruct::maximumStretchString(), &m_maximumStretch ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum principal stretch used to flag damage" );
+    setDescription( "Constant chain stretch used to flag damage when fractureStretchLambda0 is non-positive" );
+
+  registerWrapper( viewKeyStruct::fractureStretchLambdaMinString(), &m_fractureStretchLambdaMin ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Minimum/asymptotic stretch lambda_min in the optional exponential fracture-stretch law" );
+
+  registerWrapper( viewKeyStruct::fractureStretchLambda0String(), &m_fractureStretchLambda0 ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Scale lambda_0 in the optional exponential fracture-stretch law; non-positive values disable the law" );
+
+  registerWrapper( viewKeyStruct::fractureStretchT0String(), &m_fractureStretchT0 ).
+    setApplyDefaultValue( 300.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Reference temperature T_0 in the optional exponential fracture-stretch law" );
+
+  registerWrapper( viewKeyStruct::fractureStretchTemperatureScaleString(), &m_fractureStretchTemperatureScale ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature scale a in the optional exponential fracture-stretch law" );
 
   registerWrapper( viewKeyStruct::glassTransitionTemperatureString(), &m_glassTransitionTemperature ).
     setApplyDefaultValue( 300.0 ).
@@ -213,6 +237,12 @@ void SurfaceInformedPolymer::postInputInitialization()
   GEOS_THROW_IF( m_shearSofteningShapeParameter2 <= 0.0, "Shear softening shape parameter 2 must be positive.", InputError );
   GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be nonnegative.", InputError );
   GEOS_THROW_IF( m_maximumStretch <= 1.0, "Maximum stretch must be greater than one.", InputError );
+  GEOS_THROW_IF( m_fractureStretchLambda0 < 0.0, "Fracture stretch lambda_0 must be nonnegative.", InputError );
+  if( m_fractureStretchLambda0 > 0.0 )
+  {
+    GEOS_THROW_IF( m_fractureStretchLambdaMin <= 1.0, "Fracture stretch lambda_min must be greater than one when the exponential law is active.", InputError );
+    GEOS_THROW_IF( m_fractureStretchTemperatureScale <= 0.0, "Fracture stretch temperature scale must be positive when the exponential law is active.", InputError );
+  }
   GEOS_THROW_IF( m_temperatureTransitionWidth < 0.0, "Temperature transition width must be nonnegative.", InputError );
   GEOS_THROW_IF( m_crystallinityTransitionWidth < 0.0, "Crystallinity transition width must be nonnegative.", InputError );
   GEOS_THROW_IF( m_pressureAsymmetryWidth < 0.0, "Pressure asymmetry width must be nonnegative.", InputError );

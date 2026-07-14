@@ -339,6 +339,10 @@ def generateSurfaceInformedPolymerMaterialString(material):
         'strainHardeningSlope',
         'hardeningScaleExponent',
         'maximumStretch',
+        'fractureStretchLambdaMin',
+        'fractureStretchLambda0',
+        'fractureStretchT0',
+        'fractureStretchTemperatureScale',
         'glassTransitionTemperature',
         'temperatureColdSlope',
         'temperatureHotSlope',
@@ -367,6 +371,10 @@ def generateSurfaceInformedPolymerCohesiveZoneMaterialString(material):
         'strainHardeningSlope',
         'hardeningScaleExponent',
         'maximumStretch',
+        'fractureStretchLambdaMin',
+        'fractureStretchLambda0',
+        'fractureStretchT0',
+        'fractureStretchTemperatureScale',
         'glassTransitionTemperature',
         'temperatureColdSlope',
         'temperatureHotSlope',
@@ -2405,6 +2413,13 @@ def _set_surface_polymer_model_defaults(material):
     material['pressureAsymmetryAmplitude'] = 0.0
     material['pressureAsymmetryWidth'] = 10.0
     material['compressivePressureStrengtheningCap'] = 0.1 * material.get('defaultBulkModulus', 1.0e99)
+    # Optional exponential fracture-stretch law:
+    # lambda_f = lambda_min + lambda_0 exp((T - T_0)/a).
+    # It is disabled when fractureStretchLambda0 is non-positive.
+    material['fractureStretchLambdaMin'] = 1.0
+    material['fractureStretchLambda0'] = 0.0
+    material['fractureStretchT0'] = 300.0
+    material['fractureStretchTemperatureScale'] = 1.0
 
 
 ###################################################################################################
@@ -2453,6 +2468,10 @@ vitonFKM75SurfacePolymerCohesiveZone['shearSofteningShapeParameter2'] = vitonFKM
 vitonFKM75SurfacePolymerCohesiveZone['strainHardeningSlope'] = vitonFKM75SurfacePolymer['strainHardeningSlope']
 vitonFKM75SurfacePolymerCohesiveZone['hardeningScaleExponent'] = vitonFKM75SurfacePolymer['hardeningScaleExponent']
 vitonFKM75SurfacePolymerCohesiveZone['maximumStretch'] = vitonFKM75SurfacePolymer['maximumStretch']
+vitonFKM75SurfacePolymerCohesiveZone['fractureStretchLambdaMin'] = vitonFKM75SurfacePolymer['fractureStretchLambdaMin']
+vitonFKM75SurfacePolymerCohesiveZone['fractureStretchLambda0'] = vitonFKM75SurfacePolymer['fractureStretchLambda0']
+vitonFKM75SurfacePolymerCohesiveZone['fractureStretchT0'] = vitonFKM75SurfacePolymer['fractureStretchT0']
+vitonFKM75SurfacePolymerCohesiveZone['fractureStretchTemperatureScale'] = vitonFKM75SurfacePolymer['fractureStretchTemperatureScale']
 vitonFKM75SurfacePolymerCohesiveZone['glassTransitionTemperature'] = vitonFKM75SurfacePolymer['glassTransitionTemperature']
 vitonFKM75SurfacePolymerCohesiveZone['temperatureColdSlope'] = vitonFKM75SurfacePolymer['temperatureColdSlope']
 vitonFKM75SurfacePolymerCohesiveZone['temperatureHotSlope'] = vitonFKM75SurfacePolymer['temperatureHotSlope']
