@@ -1490,7 +1490,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
 		</xsd:choice>
 		<!--currentControl => Current well control-->
-		<xsd:attribute name="currentControl" type="geos_WellControls_Control" />
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
 	</xsd:complexType>
 	<xsd:complexType name="InjectionMassRateConstraintType" />
 	<xsd:complexType name="InjectionPhaseVolumeRateConstraintType" />
@@ -1508,7 +1508,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:simpleType name="geos_WellControls_Control">
+	<xsd:simpleType name="geos_ConstraintTypeId">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
 		</xsd:restriction>
@@ -1527,7 +1527,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
 		</xsd:choice>
 		<!--currentControl => Current well control-->
-		<xsd:attribute name="currentControl" type="geos_WellControls_Control" />
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

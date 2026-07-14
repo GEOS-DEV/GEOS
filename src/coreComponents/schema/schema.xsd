@@ -6217,7 +6217,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 * totalVolRate
 * massRate
 * uninitialized-->
-		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
+		<xsd:attribute name="control" type="geos_ConstraintTypeId" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
@@ -6481,7 +6481,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:pattern value=".*[\[\]`$].*|none|iteration|convergence|all" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geos_WellControls_Control">
+	<xsd:simpleType name="geos_ConstraintTypeId">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
 		</xsd:restriction>
@@ -6512,7 +6512,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 * totalVolRate
 * massRate
 * uninitialized-->
-		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
+		<xsd:attribute name="control" type="geos_ConstraintTypeId" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
