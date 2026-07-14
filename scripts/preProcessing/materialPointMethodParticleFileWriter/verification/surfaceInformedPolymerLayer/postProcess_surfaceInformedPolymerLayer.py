@@ -11,7 +11,6 @@ states for each variant when VisIt is available.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
 import os
 from pathlib import Path
@@ -19,15 +18,13 @@ import sys
 
 import numpy as np
 
-try:
-    from scipy.interpolate import PchipInterpolator
-except Exception:  # pragma: no cover - scipy may not be available in every post env
-    PchipInterpolator = None
-
 SOURCE_DIR = Path(__file__).resolve().parent
 PFW_ROOT = SOURCE_DIR.parent.parent
 sys.path.insert(0, str(PFW_ROOT))
 from mpm_vv_simple_post import *
+
+#[pfw_dependency] pfw:pfw_materials.py
+import pfw_materials as material_db
 
 VARIANTS = [
     {
@@ -82,52 +79,22 @@ DOMAIN_VOLUME = DOMAIN_WIDTH * CONTINUUM_GAGE_LENGTH * DOMAIN_DEPTH
 # Current inputs write both lengths, so this is only a defensive default.
 CROSS_SECTION_AREA = DOMAIN_WIDTH * 0.01
 STRESS_TO_MPA = 1000.0
-ANALYTICAL_SOURCE = os.environ.get("SURFACE_POLYMER_ANALYTICAL_SOURCE", "geos_card").strip().lower()
-ANALYTICAL_TEMPERATURE_C = float(os.environ.get("SURFACE_POLYMER_ANALYTICAL_TEMPERATURE_C", "21.0"))
-ANALYTICAL_CRYSTALLINITY_PCT = float(os.environ.get("SURFACE_POLYMER_ANALYTICAL_CRYSTALLINITY_PCT", "7.4"))
-ANALYTICAL_DRIVER_PARAMS = {
-    "referenceTemperature_C": 26.5,
-    "glassTransitionTemperature_C": 26.5,
-    "referenceCrystallinity_pct": 7.4,
-    "crystallinityTransitionWidth_C": 8.0,
-    "scaleTemperaturePoints_C": [-50.0, 0.0, 21.0, 26.5, 40.0, 50.0, 70.0],
-    "scaleValues_normalizedToTg": [
-        8.787097658379782,
-        3.5026233380404235,
-        1.6251925860509422,
-        1.0,
-        0.22216527329736693,
-        0.13986649563437228,
-        0.06234303240344235,
-    ],
-    "E_Tg_MPa": 318.0310439541339,
-    "yield_Tg_MPa": 7.4892740548914185,
-    "shearSoftening_Tg_MPa": 1.175514632547253,
-    "hardening_Tg_MPa": 2.048565569441983,
-    "shearSofteningShapeParameter1": 0.20104317478877604,
-    "shearSofteningShapeParameter2": 3.149845645991683,
-    "E_crystallinityCoeff_perPct": 0.14762292766171375,
-    "yield_crystallinityCoeff_perPct": 0.19546864238279185,
-    "hardeningScaleExponent": 0.851980616403875,
-    "pressureAsymmetryAmplitude": 1.0753197990944798,
-    "pressureAsymmetryWidth_C": 4.0,
-    "bulkModulus_MPa": 2800.0,
-    "shearModulus_MPa": 116.07,
-    "maximumStretch": 3.0,
-    "compressivePressureCapRatio": 0.10,
-    "tensilePressureCapRatio": 0.10,
-}
-POLYMER_BULK_MODULUS = 0.2628333333333331
-POLYMER_SHEAR_MODULUS = 0.005291946308724832
-POLYMER_CONSTRAINED_MODULUS = POLYMER_BULK_MODULUS + 4.0 * POLYMER_SHEAR_MODULUS / 3.0
-YIELD_STRENGTH = 0.0030
-SOFTENING_MAGNITUDE = 0.0030
-SOFTENING_R1 = 0.30
-SOFTENING_R2 = 1.25
-HARDENING_SLOPE = 0.0020
-PRESSURE_ASYMMETRY = 0.0
-MAXIMUM_STRETCH = 2.60
+# Analytical comparison properties are read from the same generic FKM/Viton validation
+# material card used by pfw_input_surfaceInformedPolymerLayer.py.  Keep material data in
+# pfw_materials.py rather than embedding a separate calibration data set in this
+# post-processor.
+ANALYTICAL_MATERIAL = material_db.vitonFKM75SurfacePolymer.copy()
 
+POLYMER_BULK_MODULUS = float(ANALYTICAL_MATERIAL["defaultBulkModulus"])
+POLYMER_SHEAR_MODULUS = float(ANALYTICAL_MATERIAL["defaultShearModulus"])
+POLYMER_CONSTRAINED_MODULUS = POLYMER_BULK_MODULUS + 4.0 * POLYMER_SHEAR_MODULUS / 3.0
+YIELD_STRENGTH = float(ANALYTICAL_MATERIAL["defaultYieldStrength"])
+SOFTENING_MAGNITUDE = float(ANALYTICAL_MATERIAL["shearSofteningMagnitude"])
+SOFTENING_R1 = float(ANALYTICAL_MATERIAL["shearSofteningShapeParameter1"])
+SOFTENING_R2 = float(ANALYTICAL_MATERIAL["shearSofteningShapeParameter2"])
+HARDENING_SLOPE = float(ANALYTICAL_MATERIAL["strainHardeningSlope"])
+PRESSURE_ASYMMETRY = float(ANALYTICAL_MATERIAL.get("pressureAsymmetryAmplitude", 0.0))
+MAXIMUM_STRETCH = float(ANALYTICAL_MATERIAL["maximumStretch"])
 
 
 def final_global_strain(variant_name: str) -> float:
@@ -150,136 +117,6 @@ def imposed_film_strain(model_kind: str, global_strain: float) -> float:
     """
     return global_strain * gage_length(model_kind) / FILM_THICKNESS
 
-
-@dataclass
-class SurfacePolymerDriverState:
-    K_MPa: float
-    G_MPa: float
-    Y_MPa: float
-    Ssoft_MPa: float
-    H_MPa: float
-    eta: float
-    r1: float
-    r2: float
-    lambda_max: float
-    compressive_cap_MPa: float
-    tensile_cap_MPa: float
-
-
-class SurfacePolymerCurveDriver:
-    """Report analytical driver copied from the standalone polymer curve script."""
-
-    def __init__(self, params: dict[str, object]):
-        self.params = dict(params)
-
-    def thermal_scale(self, T_C: float) -> float:
-        xp = np.asarray(self.params["scaleTemperaturePoints_C"], dtype=float)
-        yp = np.asarray(self.params["scaleValues_normalizedToTg"], dtype=float)
-        log_y = np.log(yp)
-        if PchipInterpolator is not None:
-            return float(np.exp(PchipInterpolator(xp, log_y, extrapolate=True)(T_C)))
-        return float(np.exp(np.interp(T_C, xp, log_y, left=log_y[0], right=log_y[-1])))
-
-    def crystallinity_activation(self, T_C: float) -> float:
-        Tg = float(self.params["glassTransitionTemperature_C"])
-        w = float(self.params.get("crystallinityTransitionWidth_C", 8.0))
-        z = max(-60.0, min((T_C - Tg) / w, 60.0))
-        return 1.0 / (1.0 + math.exp(-z))
-
-    def crystallinity_factor(self, T_C: float, Xc_pct: float, beta_key: str) -> float:
-        beta = float(self.params.get(beta_key, 0.0))
-        Xref = float(self.params["referenceCrystallinity_pct"])
-        return max(0.05, 1.0 + beta * (Xc_pct - Xref) * self.crystallinity_activation(T_C))
-
-    def eta_T(self, T_C: float) -> float:
-        Tg = float(self.params["glassTransitionTemperature_C"])
-        w = float(self.params.get("pressureAsymmetryWidth_C", 4.0))
-        eta0 = float(self.params.get("pressureAsymmetryAmplitude", 0.0))
-        return eta0 * math.exp(-0.5 * ((T_C - Tg) / w) ** 2)
-
-    def material_state(self, T_C: float, Xc_pct: float) -> SurfacePolymerDriverState:
-        S_T = self.thermal_scale(T_C)
-        CY = self.crystallinity_factor(T_C, Xc_pct, "yield_crystallinityCoeff_perPct")
-        K = float(self.params.get("bulkModulus_MPa", 2800.0))
-        G = float(self.params.get("shearModulus_MPa", self.params["E_Tg_MPa"] / (2.0 * (1.0 + 0.37))))
-        comp_ratio = float(self.params.get("compressivePressureCapRatio", -1.0))
-        tens_ratio = float(self.params.get("tensilePressureCapRatio", -1.0))
-        return SurfacePolymerDriverState(
-            K_MPa=K,
-            G_MPa=G,
-            Y_MPa=float(self.params["yield_Tg_MPa"] * S_T * CY),
-            Ssoft_MPa=float(self.params["shearSoftening_Tg_MPa"] * S_T),
-            H_MPa=float(self.params["hardening_Tg_MPa"] * S_T ** float(self.params["hardeningScaleExponent"])),
-            eta=self.eta_T(T_C),
-            r1=float(self.params["shearSofteningShapeParameter1"]),
-            r2=float(self.params["shearSofteningShapeParameter2"]),
-            lambda_max=float(self.params.get("maximumStretch", 3.0)),
-            compressive_cap_MPa=(comp_ratio * K if comp_ratio >= 0.0 else float("inf")),
-            tensile_cap_MPa=(tens_ratio * K if tens_ratio >= 0.0 else float("inf")),
-        )
-
-    @staticmethod
-    def chain_stretch_confined(eps: float) -> float:
-        J = max(math.exp(eps), 1.0e-300)
-        return max(J ** (-1.0 / 3.0), J ** (2.0 / 3.0))
-
-    @staticmethod
-    def chain_stretch_cz(eps_n: float, gamma: float = 0.0) -> float:
-        F = np.array([[1.0, gamma, 0.0], [0.0, math.exp(eps_n), 0.0], [0.0, 0.0, 1.0]], dtype=float)
-        J = max(float(np.linalg.det(F)), 1.0e-300)
-        Cbar = (J ** (-2.0 / 3.0)) * (F.T @ F)
-        vals = np.linalg.eigvalsh(Cbar)
-        return float(math.sqrt(max(vals.max(), 0.0)))
-
-    @staticmethod
-    def hardening_measure(lambda_chain: float) -> float:
-        return max(0.0, lambda_chain * lambda_chain - 1.0 / max(lambda_chain, 1.0e-30))
-
-    def base_flow_strength(self, kappa: float, lambda_chain: float, material: SurfacePolymerDriverState) -> float:
-        if material.r1 <= 0.0:
-            soft = 0.0
-        else:
-            soft = material.Ssoft_MPa * math.exp(-((max(kappa, 0.0) / material.r1) ** material.r2))
-        return material.Y_MPa + soft + material.H_MPa * self.hardening_measure(lambda_chain)
-
-    def confined_series(
-        self,
-        model: str,
-        final_true_strain: float,
-        npts: int,
-        T_C: float,
-        Xc_pct: float,
-    ) -> tuple[list[float], list[float], list[float]]:
-        material = self.material_state(T_C, Xc_pct)
-        true_strains = np.linspace(0.0, final_true_strain, npts)
-        sign = 1.0 if final_true_strain >= 0.0 else -1.0
-        stresses: list[float] = []
-        kappas: list[float] = []
-        engineering_strains: list[float] = []
-        kappa_previous = 0.0
-
-        for eps in true_strains:
-            lambda_chain = self.chain_stretch_cz(float(eps)) if model == "cz" else self.chain_stretch_confined(float(eps))
-            if lambda_chain >= material.lambda_max and stresses:
-                stress = float("nan")
-                kappa = kappa_previous
-            else:
-                p_t = material.K_MPa * float(eps)
-                p_eff = max(p_t, -material.compressive_cap_MPa) if p_t < 0.0 else min(p_t, material.tensile_cap_MPa)
-                eps_eq_total = 2.0 * abs(float(eps)) / 3.0
-                base = self.base_flow_strength(kappa_previous, lambda_chain, material)
-                q_limit = max(0.0, base - material.eta * p_eff)
-                q_trial = 3.0 * material.G_MPa * eps_eq_total
-                q = min(q_trial, q_limit)
-                kappa = max(kappa_previous, eps_eq_total - q / max(3.0 * material.G_MPa, 1.0e-30))
-                stress = p_t + sign * (2.0 / 3.0) * q
-                kappa_previous = kappa
-
-            engineering_strains.append(math.exp(float(eps)) - 1.0)
-            stresses.append(stress)
-            kappas.append(kappa)
-
-        return engineering_strains, stresses, kappas
 
 
 def softening(kappa: float) -> float:
@@ -486,23 +323,7 @@ def geos_card_analytical_series(model_kind: str, final_strain: float, n: int = 2
     return xs, stresses_mpa, kappas
 
 
-def attached_driver_analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
-    final_engineering_strain = imposed_film_strain(model_kind, final_strain)
-    final_stretch = max(1.0 + final_engineering_strain, 1.0e-12)
-    final_true_strain = math.log(final_stretch)
-    driver = SurfacePolymerCurveDriver(ANALYTICAL_DRIVER_PARAMS)
-    return driver.confined_series(
-        "cz" if model_kind == "cohesive" else "continuum",
-        final_true_strain,
-        n,
-        ANALYTICAL_TEMPERATURE_C,
-        ANALYTICAL_CRYSTALLINITY_PCT,
-    )
-
-
 def analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
-    if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}:
-        return attached_driver_analytical_series(model_kind, final_strain, n)
     return geos_card_analytical_series(model_kind, final_strain, n)
 
 
@@ -1052,11 +873,7 @@ def main() -> int:
     plot_metric(output_dir, "surface_polymer_boundary_stress_domain_stretch.png", "Boundary stress vs domain stretch", "domain stretch F11", "boundary sigma_y [MPa]", domain_stress_series)
     plot_metric(output_dir, "surface_polymer_plastic_strain.png", "Equivalent plastic strain", "film strain", "equivalent plastic strain", plastic_series)
     write_rows(output_dir / "surface_polymer_layer_metrics.csv", rows_out)
-    analytical_model = (
-        "attached surface polymer curve driver, confined path"
-        if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}
-        else "GEOS material-card thin-film update"
-    )
+    analytical_model = "generic FKM/Viton material-card thin-film update"
     write_json(
         output_dir / "surface_polymer_layer_summary.json",
         {
@@ -1065,10 +882,8 @@ def main() -> int:
             "continuum_gage_length": CONTINUUM_GAGE_LENGTH,
             "cohesive_gage_length": COHESIVE_GAGE_LENGTH,
             "analytical_model": analytical_model,
-            "analytical_source": ANALYTICAL_SOURCE,
-            "analytical_temperature_C": ANALYTICAL_TEMPERATURE_C,
-            "analytical_crystallinity_pct": ANALYTICAL_CRYSTALLINITY_PCT,
-            "analytical_parameters": ANALYTICAL_DRIVER_PARAMS if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"} else {
+            "analytical_material": ANALYTICAL_MATERIAL.get("name", "vitonFKM75SurfacePolymer"),
+            "analytical_parameters": {
                 "bulk_modulus": POLYMER_BULK_MODULUS,
                 "shear_modulus": POLYMER_SHEAR_MODULUS,
                 "yield_strength": YIELD_STRENGTH,
@@ -1080,18 +895,12 @@ def main() -> int:
         },
     )
 
-    if ANALYTICAL_SOURCE in {"attached", "attached_driver", "curve_driver"}:
-        analytical_text = (
-            r"The analytical comparison uses the attached surface-polymer curve driver in confined thin-film mode at "
-            + compact_float(ANALYTICAL_TEMPERATURE_C)
-            + r"$^\circ$C and "
-            + compact_float(ANALYTICAL_CRYSTALLINITY_PCT)
-            + r"\% crystallinity."
-        )
-    else:
-        analytical_text = (
-            r"The analytical comparison uses the GEOS material card constants; the continuum expected curve integrates log film strain from the finite-strain update, while the cohesive expected curve uses normal jump divided by thickness as in the CZ law."
-        )
+    analytical_text = (
+        r"The analytical comparison uses the generic FKM/Viton material card constants from "
+        r"\texttt{pfw\_materials.py}; the continuum expected curve integrates log film "
+        r"strain from the finite-strain update, while the cohesive expected curve uses "
+        r"normal jump divided by thickness as in the CZ law."
+    )
     tex = [
         r"\paragraph{Quantitative result.} The continuum variants place a finite-thickness continuum polymer layer between elastic loading bars; the cohesive-zone variants place a finite-thickness polymer CZ between elastic blocks.  Measured curves use boundary reactions when present and fall back to material-volume-corrected box averages otherwise.  "
         + analytical_text

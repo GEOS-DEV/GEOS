@@ -96,42 +96,61 @@ pfw["fTable"]=[[0,            1.0,   1.0,   1.0],
 block = geom.box('block',[-sampleWidth/2, pfw["ymin"] ,-sampleLength/2],[sampleWidth/2,pfw["ymax"] ,sampleLength/2], vel=[0.0,0.0,0.0], mat=0, group=0)
 pfw["objects"]=[block]
 
+# Generic FKM/Viton-like parameters for this legacy StrainHardeningPolymer
+# validation input.  These are deliberately generic validation values and should
+# be replaced by a project material card for material-specific studies.
+viton_density = 1.85
+viton_young_modulus = 0.01577
+viton_poisson_ratio = 0.49
+viton_bulk_modulus = viton_young_modulus / (3.0 * (1.0 - 2.0 * viton_poisson_ratio))
+viton_shear_modulus = viton_young_modulus / (2.0 * (1.0 + viton_poisson_ratio))
+viton_yield_strength = 0.0030
+viton_softening_magnitude = 0.0030
+viton_softening_r1 = 0.30
+viton_softening_r2 = 1.25
+viton_hardening_slope = 0.0020
+viton_maximum_stretch = 2.60
+
 pfw["materials"] = [ "polymer" ]
 pfw["materialPropertyString"]="""
 <StrainHardeningPolymer
-	name="polymer"
-	defaultDensity="2.648"
-	defaultBulkModulus="""+'"'+str(2.8)+'"'+"""
-  bulkModulusA="0."
-  bulkModulusB="4.56"
-  bulkModulusT0="300."
-  
-	defaultShearModulus="""+'"'+str(0.2125)+'"'+"""                                         
-	shearModulusA="0.0"
-  shearModulusB="1.0"
-  shearModulusT0="300."
-  
-  defaultYieldStrength="""+'"'+str(0.75*0.0215)+'"'+"""
-  yieldStrengthA="0.0"
-  yieldStrengthB="1.0"
-  yieldStrengthT0="300.0"             
-	
-  strainHardeningSlope="""+'"'+str(0.0083)+'"'+"""                                         
-  strainHardeningSlopeA="0.0" 
-  strainHardeningSlopeB="1.0" 
-  strainHardeningSlopeT0="300." 	
-  
-  shearSofteningMagnitude="""+'"'+str(0.00925)+'"'+"""                                                           
-  shearSofteningMagnitudeA="0.0"                      
-  shearSofteningMagnitudeB="1.0"                      
-  shearSofteningMagnitudeT0="300."                      
-  
-	shearSofteningShapeParameter1="0.1"                      
-	shearSofteningShapeParameter2="1.0"
- 
-  maximumStretch="1000."
-  maximumStretchA="0.0"     
-  maximumStretchB="1.0"     
-  maximumStretchT0="2.95"    
+    name="polymer"
+    defaultDensity="{density}"
+    defaultBulkModulus="{bulk}"
+    bulkModulusA="0.0"
+    bulkModulusB="0.0"
+    bulkModulusT0="300.0"
+    defaultShearModulus="{shear}"
+    shearModulusA="0.0"
+    shearModulusB="0.0"
+    shearModulusT0="300.0"
+    defaultYieldStrength="{yield_strength}"
+    yieldStrengthA="0.0"
+    yieldStrengthB="0.0"
+    yieldStrengthT0="300.0"
+    strainHardeningSlope="{hardening}"
+    strainHardeningSlopeA="0.0"
+    strainHardeningSlopeB="0.0"
+    strainHardeningSlopeT0="300.0"
+    shearSofteningMagnitude="{softening}"
+    shearSofteningMagnitudeA="0.0"
+    shearSofteningMagnitudeB="0.0"
+    shearSofteningMagnitudeT0="300.0"
+    shearSofteningShapeParameter1="{r1}"
+    shearSofteningShapeParameter2="{r2}"
+    maximumStretch="{maximum_stretch}"
+    maximumStretchA="0.0"
+    maximumStretchB="0.0"
+    maximumStretchT0="300.0"
   />
-"""
+""".format(
+    density=viton_density,
+    bulk=viton_bulk_modulus,
+    shear=viton_shear_modulus,
+    yield_strength=viton_yield_strength,
+    hardening=viton_hardening_slope,
+    softening=viton_softening_magnitude,
+    r1=viton_softening_r1,
+    r2=viton_softening_r2,
+    maximum_stretch=viton_maximum_stretch,
+)
