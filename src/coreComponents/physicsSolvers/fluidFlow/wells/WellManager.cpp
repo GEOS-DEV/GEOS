@@ -426,7 +426,7 @@ void WellManager::assembleSystem( real64 const time,
 
 void WellManager::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
@@ -438,7 +438,7 @@ void WellManager::resetStateToBeginningOfStep( DomainPartition & domain )
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
-      wellControls.resetStateToBeginningOfStep( elemManager, subRegion );
+      wellControls.resetStateToBeginningOfStep( domain, meshBodyName, elemManager, subRegion );
 
 
     } );

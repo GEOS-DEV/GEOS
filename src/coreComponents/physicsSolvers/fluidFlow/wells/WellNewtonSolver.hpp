@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
@@ -852,7 +853,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
-      well.updateWellState( dynamicCast< MeshBody const & >( mesh.getParent() ), elemManager, subRegion );
+      well.updateWellState( domain.getMeshBody( mesh.getParent().getParent().getName() ), elemManager, subRegion );
     }
 
   }

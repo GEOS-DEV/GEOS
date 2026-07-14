@@ -444,8 +444,15 @@ SinglePhaseWell::getReferenceConditions( WellElementSubRegion const & subRegion 
     }
     else
     { // region average stats not initialized or initialized, fallback to top segment values
-      GEOS_WARNING( "Region average statistics of reference region not initialized, fallback to top segment values.",
-                    getDataContext() );
+      static bool firstNoRefRegionMsg = true;
+      if( firstNoRefRegionMsg )
+      {
+        GEOS_WARNING( "SinglePhaseWell: region average statsistics of reference region not initialized,"
+                      " fallback to top segment values.",
+                      getDataContext() );
+        firstNoRefRegionMsg=false;
+      }
+
 
       arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
       arrayView1d< real64 const > const & temp = subRegion.getField< well::temperature >();
@@ -1208,7 +1215,8 @@ SinglePhaseWell::applyWellSystemSolution( DofManager const & dofManager,
 }
 
 
-void SinglePhaseWell::resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain,
+                                                   string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
 
 
@@ -1232,10 +1240,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( ElementRegionManager const & 
   arrayView1d< real64 const > const & connRate_n =
     subRegion.getField< well::connectionRate_n >();
   connRate.setValues< parallelDevicePolicy<> >( connRate_n );
-
-  MeshLevel const & meshLevel = dynamicCast< MeshLevel const & >( elemManager.getParent() );
-  MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent() );
-  updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
+  updateSubRegionState( -1.0, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
 
 }
 

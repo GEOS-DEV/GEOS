@@ -369,7 +369,8 @@ public:
    * @brief Reset the well state to the beginning of the time step
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain,
+                                            string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
   virtual void postInputInitialization() override;
 

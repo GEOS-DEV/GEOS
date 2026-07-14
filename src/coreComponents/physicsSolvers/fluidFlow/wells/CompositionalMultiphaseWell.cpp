@@ -2115,7 +2115,8 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
 }
 
 
-void CompositionalMultiphaseWell::resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition & domain,
+                                                               string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
 
   // get a reference to the primary variables on well elements
@@ -2149,9 +2150,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( ElementRegionMana
 
   if( isWellOpen( )  )
   {
-    MeshLevel const & meshLevel = dynamicCast< MeshLevel const & >( elemManager.getParent() );
-    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent() );
-    updateSubRegionState( -1.0, meshBody, elemManager, subRegion );
+    updateSubRegionState( -1.0, domain.getMeshBody( meshBodyName ), elemManager, subRegion );
   }
 
 }

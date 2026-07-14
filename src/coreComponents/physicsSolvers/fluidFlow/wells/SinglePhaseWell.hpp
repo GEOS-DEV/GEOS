@@ -215,7 +215,8 @@ public:
                                              arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
                                              CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ) )override {};
 
-  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain,
+                                            string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
