@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3972 (2026-07-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17094-c0390d6.tar.gz>
+=====================
+Well model refactor .  Integrated test update due to changes in schema and well variables 
+
 PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
 =====================
 Added statistics `Group` objects for each statistics `Task` instance
