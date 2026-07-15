@@ -314,8 +314,8 @@ StatsAggregatorBase< Impl >::isCompoundSetStatistics( StatsGroupType const & set
 template< typename Impl >
 typename StatsAggregatorBase< Impl >::StatsGroupType &
 StatsAggregatorBase< Impl >::getRegionStatistics( MeshLevel & mesh,
-                                                  string_view setName,
-                                                  string_view regionName ) const
+                                                  string_view regionName,
+                                                  string_view setName ) const
 {
   StatsGroupType & setStats = getSetStatistics( mesh, setName );
   StatsGroupType * const stats = setStats.template getGroupPointer< StatsGroupType >( string( regionName ) );
