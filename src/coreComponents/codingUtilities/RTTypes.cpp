@@ -94,6 +94,8 @@ string rtTypes::getTypeName( std::type_index const key )
  *       be a simple type or a lower-dimensional array. Sub-elements and
  *       axes are given as a comma-separated list enclosed in a curly brace.
  *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
+ * @note At the top level a 1d array also accepts a single unbracketed value
+ *       (eg. "1") which is interpreted as "{ 1 }".
  */
 string constructArrayRegex( string_view subPattern, integer dimension, bool topLevelCall = true )
 {
@@ -107,10 +109,11 @@ string constructArrayRegex( string_view subPattern, integer dimension, bool topL
   string const arrayRegex = dimension == 1 ?
                             "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\}":
                             "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}";
-  // accept spaces around surrounding braces at the top-level
-  return topLevelCall ?
-         "\\s*" + arrayRegex + "\\s*" :
-         arrayRegex;
+  // Allow the top-level to have a single unbracketed value
+  string const topLevelRegex = dimension == 1 ?
+                               "\\s*(" + arrayRegex + "|" + subPatternStr + ")\\s*":
+                               "\\s*" + arrayRegex + "\\s*";
+  return topLevelCall ? topLevelRegex : arrayRegex;
 }
 /**
  * @brief function to build array regexes.
@@ -131,7 +134,12 @@ Regex constructArrayRegex( string_view subPattern, string_view description, inte
     {
       arrayDesc << dimension << " levels of ";
     }
-    arrayDesc << "braces and separated by commas). Each value must ";
+    arrayDesc << "braces and separated by commas";
+    if( dimension == 1 )
+    {
+      arrayDesc << ", or a single value with no braces";
+    }
+    arrayDesc << "). Each value must ";
 
     // finish by the original description
     GEOS_ERROR_IF( !stringutilities::startsWith( description, "Input value must " ),
@@ -185,7 +193,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string_view const groupNameRefRegex = "\\s*[a-zA-Z0-9.\\-_/*\\[\\]]*\\s*";
   // to reference an array of groups, we need to support the / for paths, and * [ ] for fnmatch patterns.
   string_view const groupNameRefArrayDesc = "Input value must be a list of strings that can contain only upper/lower letters, digits, and the characters  . - _ / * [ ]";
-  string_view const groupNameRefArrayRegex = "\\s*\\{([a-zA-Z0-9.\\-_/*\\[\\], ]+)*\\}\\s*";
+  string_view const groupNameRefArrayRegex = "\\s*(\\{([a-zA-Z0-9.\\-_/*\\[\\], ]+)*\\}|[a-zA-Z0-9.\\-_/*\\[\\]]+)\\s*";
 
 
   // Build master list of regexes
