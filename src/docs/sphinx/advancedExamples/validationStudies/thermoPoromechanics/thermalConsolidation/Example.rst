@@ -8,7 +8,7 @@ Thermoporoelastic Consolidation
 **Context**
 
 Thermoporoelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
-In this example, we use the GEOS coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
+In this example, we use the GEOS coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <https://engineeringmechanics.cn/article/id/3369>`__ 
 
 **InputFile**
 
