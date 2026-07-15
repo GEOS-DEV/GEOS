@@ -372,7 +372,7 @@ StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevelSet const meshSet,
   {
     string_view regionName = setRegionStats.getTargetName();
     ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( string( regionName ) );
-    CellElementRegion * cellRegion = dynamic_cast< CellElementRegion * >(&region); // we only process cell regions, will return null on other types
+    CellElementRegion * cellRegion = dynamic_cast< CellElementRegion * >(&region); // we only process cell regions
 
     if( cellRegion != nullptr )
       func( *cellRegion, setRegionStats );
