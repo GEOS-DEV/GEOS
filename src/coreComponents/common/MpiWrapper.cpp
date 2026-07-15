@@ -111,28 +111,12 @@ void MpiDesyncGuard::succeeded()
 
 void MpiDesyncGuard::detectMpiDesync()
 {
-  MPI_Request request;
-  MPI_Ibarrier( m_comm, &request );
+  int minId = m_collectiveOperationTag; MPI_Allreduce( MPI_IN_PLACE, &minId, 1, MPI_INT, MPI_MIN, m_comm );
+  int maxId = m_collectiveOperationTag; MPI_Allreduce( MPI_IN_PLACE, &maxId, 1, MPI_INT, MPI_MAX, m_comm );
 
-  int flag = 0;
-  double start = MpiWrapper::wtime();
-  while( true )
-  {
-    MpiWrapper::test( &request, &flag, MPI_STATUS_IGNORE );
-    if( flag )
-    {
-      succeeded();
-      return;
-    }
+  if( minId != maxId ) { failed(); }
 
-    if( MpiWrapper::wtime() - start > 10 )
-    {
-      failed();
-      return;
-    }
-
-    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-  }
+  succeeded();
 }
 #endif
 
@@ -142,7 +126,7 @@ void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  internal::MpiDesyncGuard const mpiDesyncGuard( comm );
+  internal::MpiDesyncGuard const mpiDesyncGuard( comm, g_collectiveOperationTag );
 #endif
   MPI_Barrier( comm );
 #endif
