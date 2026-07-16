@@ -58,6 +58,8 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
+  virtual void initializePreSubGroups() override;
+
   /**
    * @defgroup Solver Interface Functions
    *

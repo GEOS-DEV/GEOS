@@ -437,6 +437,8 @@ public:
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
+  integer getExtDrivingForceFlag() const { return m_extDrivingForceFlag; }
+
 
   KernelWrapper createKernelUpdates() const
   {

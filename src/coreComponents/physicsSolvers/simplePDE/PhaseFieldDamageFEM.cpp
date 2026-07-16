@@ -23,6 +23,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
@@ -101,6 +102,33 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 
       // TODO this should be in setConstitutiveNames
       setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
+    } );
+  } );
+}
+
+void PhaseFieldDamageFEM::initializePreSubGroups()
+{
+  PhysicsSolverBase::initializePreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
+    {
+      string const & solidModelName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
+      SolidBase & solidModel = subRegion.getConstitutiveModel< SolidBase >( solidModelName );
+
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [&]( auto & damageModel )
+      {
+        GEOS_ERROR_IF( damageModel.getExtDrivingForceFlag() && m_localDissipationOption != LocalDissipation::Linear,
+                       GEOS_FMT( "{}: the external driving force (extDrivingForceFlag) is only supported "
+                                 "with the Linear local dissipation function.", getName() ) );
+      } );
     } );
   } );
 }
