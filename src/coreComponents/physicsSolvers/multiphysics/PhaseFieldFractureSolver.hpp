@@ -39,14 +39,20 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
 
+  /**
+   * @brief main constructor for PhaseFieldFractureSolver objects
+   * @param name the name of this instantiation of PhaseFieldFractureSolver in the repository
+   * @param parent the parent group of this instantiation of PhaseFieldFractureSolver
+   */
   PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
 
-  ~PhaseFieldFractureSolver() override;
+  /// Destructor for the class
+  ~PhaseFieldFractureSolver() override = default;
 
   /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @brief name of the solver in the object catalog
+   * @return string that contains the catalog name to generate a new PhaseFieldFractureSolver object through the object catalog.
    */
   static string catalogName()
   {
@@ -78,19 +84,27 @@ public:
   }
 
   /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
+   * @brief accessor for the pointer to the damage solver
+   * @return a pointer to the damage solver
    */
   PhaseFieldDamageFEM * damageSolver() const
   {
     return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
 
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final {}
+
+private:
+
+  /**
+   * @brief interpolate the nodal damage field onto the quadrature points of the solid constitutive model
+   * @param[in] domain the domain partition
+   */
+  void mapDamageToQuadrature( DomainPartition & domain );
 
 };
 
@@ -120,9 +134,6 @@ struct DamageInterpolationKernel
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
           damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
-          //solution is probably not going to work because the solution of the coupled solver
-          //has both damage and displacements. Using the damageResult field from the Damage solver
-          //is probably better
         }
       }
 
