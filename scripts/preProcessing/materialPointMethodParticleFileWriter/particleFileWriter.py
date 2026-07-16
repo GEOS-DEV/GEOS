@@ -81,7 +81,7 @@ _PFW_SILO_ALL_GRID_FIELDS = [
   "gridDamage",
   "gridDamageGradient",
   "gridMaxDamage",
-  "gridFieldGradientAlignment",
+  "gridMappingNormalTensor",
 ]
 
 _PFW_SILO_GRID_FIELD_PRESETS = {
@@ -892,9 +892,9 @@ parameters = {
                'subdivideParticles': ( None, True ),  # MPM: split particles spanning too much of a cell.
                'surfaceDetection': ( None, True ),  # MPM: automatic initial surface detection.
                'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
-               'surfaceQualityThreshold': ( None, True ),  # MPM: DFG alignment quality threshold.
+               'surfaceQualityThreshold': ( None, True ),  # MPM: mapping-normal tensor quality threshold for same-group DFG.
                'surfaceTensionCoefficient': ( None, True ),  # MPM: surface-tension coefficient.
-               'thinFeatureDFGThreshold': ( None, True ),  # MPM: thin-feature damage threshold.
+               'thinFeatureDFGThreshold': ( None, True ),  # MPM: field-center distance threshold for thin-feature DFG suppression.
                'timeIntegrationOption': ( None, True ),  # MPM: time-integration method.
                'totalBinderVolume': ( None, True ),  # MPM: total binder volume.
                'tracerCoordinates': ( None, True ),  # MPM: initial tracer coordinates.

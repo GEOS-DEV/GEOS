@@ -165,7 +165,7 @@ public:
     // Damage / DFG / crack tips
     static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
     static constexpr char const * gridDamageString() { return "gridDamage"; }
-    static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
+    static constexpr char const * gridMappingNormalTensorString() { return "gridMappingNormalTensor"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
     // Integration / update
@@ -233,6 +233,14 @@ public:
                              arraySlice1d< real64 const > const particleDamageGradient,
                              arraySlice1d< real64 const > const particleSurfaceNormal,
                              arraySlice1d< real64 const > const gridDamageGradient );
+
+  static GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  real64 computeSurfaceQualityFromMappingNormalTensor( int const & planeStrain,
+                                                       arraySlice1d< real64 const > const mappingNormalTensorA,
+                                                       arraySlice1d< real64 const > const mappingNormalTensorB,
+                                                       real64 const & materialVolumeA,
+                                                       real64 const & materialVolumeB );
 
   void triggerEvents( const real64 dt,
                       const real64 time_n,
@@ -1431,7 +1439,7 @@ protected:
   int m_surfaceDetection;
   int m_surfaceHealing;
   real64 m_surfaceNormalAndPositionDamageThreshold;
-  real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
+  real64 m_surfaceQualityThreshold;  // value [0,1]; same-group DFG surfaces require mapping-normal tensor quality >= this threshold.
   real64 m_surfaceTensionForceSign;
   real64 m_surfaceTensionGradientTolerance;
   array2d< real64 > m_surfaceTensionPairs;

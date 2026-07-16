@@ -1527,7 +1527,7 @@
       "flag": "OPTIONAL",
       "default": "m_surfaceQualityThreshold",
       "restart": "NO_WRITE",
-      "description": "Particle-Grid DFG alignment threshold for separability",
+      "description": "Minimum mapping-normal tensor quality required for same-group DFG separability",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 2033
     },
@@ -1563,7 +1563,7 @@
       "flag": "OPTIONAL",
       "default": "m_thinFeatureDFGThreshold",
       "restart": "NO_WRITE",
-      "description": "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces",
+      "description": "Suppresses DFG separability when field-center distance squared is below the configured neighbor-radius threshold",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 2059
     },
@@ -4826,7 +4826,7 @@
     "gridDamage",
     "gridDamageGradient",
     "gridMaxDamage",
-    "gridFieldGradientAlignment"
+    "gridMappingNormalTensor"
   ],
   "geometry_objects": [
     {

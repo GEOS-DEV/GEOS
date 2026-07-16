@@ -148,7 +148,7 @@ pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "RVector"]
 \end{lstlisting}
 
-Initial surface flags are supplied explicitly through geometry painting or the \texttt{SurfaceFlag} particle-file field.  The evolving damage field still controls DFG separability.
+Initial surface flags are supplied explicitly through geometry painting or the \texttt{SurfaceFlag} particle-file field.  DFG separability uses the same mapping normal used for field partitioning: an explicit particle surface normal when available, otherwise the particle damage gradient.
 
 \subsection{Example: notched bar with crack-tip correction controls}
 \index{notched bar!PFW example}
@@ -173,6 +173,8 @@ pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
                              "SurfaceFlag", "Damage", "StrengthScale",
                              "RVector", "SurfaceNormal", "SurfacePosition"]
 \end{lstlisting}
+
+The \texttt{surfaceQualityThreshold} value is compared with the mapping-normal tensor quality using a \(\ge\) check.  A value of 0 disables this quality restriction, while a value of 1 requires the field pair to be fully covered by one coherent normal axis.  The \texttt{thinFeatureDFGThreshold} guard suppresses separation when \(\|\mathbf{x}_A-\mathbf{x}_B\|^2 < (\texttt{thinFeatureDFGThreshold}\,r_n)^2\), where \(r_n\) is the neighbor radius.
 
 The numerical values above are starting values, not universal defaults.  The thresholds should be verified against the chosen grid spacing, damage regularization length, notch radius, and constitutive damage law.
 
@@ -323,7 +325,7 @@ Single-field contact & \texttt{damageFieldPartitioning=0}, same object \texttt{g
 Group contact and friction & \texttt{frictionCoefficient}, \texttt{frictionCoefficientTable}, \texttt{frictionCoefficientRuleOfMixtures} & Two-material friction example\\
 Contact normals and gap closure & \texttt{contactGapCorrection}, \texttt{contactNormalType}, \texttt{contactNormalExponent}, \texttt{useSurfacePositionForContact}, \texttt{explicitSurfaceNormalInfluence} & Two-material friction example; B-spline/FMPM example\\
 CPDI and DFG damage & \texttt{cpdiDomainScaling}, \texttt{damageFieldPartitioning}, \texttt{needsNeighborList}, \texttt{separabilityMinDamage}, \texttt{treatFullyDamagedAsSingleField} & CPDI/FLIP damage example\\
-Painted surface flags & \texttt{particleFileFields}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example\\
+Painted surface flags & \texttt{particleFileFields}, \texttt{surfaceQualityThreshold}, \texttt{thinFeatureDFGThreshold} & Notched-bar example with mapping-normal quality and thin-feature guards\\
 Crack-tip controls & \texttt{useCrackTipDetection}, \texttt{crackTipDetectionThreshold} & Notched-bar example\\
 Logistic-regression surface reconstruction & \texttt{normalAndPositionMethod}, \texttt{maxLRIterations}, \texttt{LRtolerance} & B-spline/FMPM example\\
 Cohesive-zone event controls & \texttt{useEvents}, \texttt{mpmEventsString}, \texttt{cohesiveFieldPartitioning}, \texttt{preventCZInterpenetration} & Cohesive-zone example\\

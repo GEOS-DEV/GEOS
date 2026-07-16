@@ -161,12 +161,13 @@ pfw["plottableFields"] = [
     # DFG/contact-surface diagnostics.
     "gridDamage",
     "gridDamageGradient",
+    "gridMappingNormalTensor",
     "gridSurfaceNormal",
     "gridSurfacePosition",
 ]
 \end{lstlisting}
 
-For Silo, request additional grid fields through the Silo aliases.  The compact diagnostic preset is adequate for many cases where the goal is to verify mass mapping, velocity mapping, internal force balance, and the DFG direction.
+For Silo, request additional grid fields through the Silo aliases.  The compact diagnostic preset is adequate for many cases where the goal is to verify mass mapping, velocity mapping, internal force balance, DFG direction, and the mapping-normal tensor used by the surface-quality check.
 
 \begin{lstlisting}[language=Python,caption={Silo output with the common grid-diagnostic preset.}]
 pfw["outputType"] = "silo"
@@ -192,6 +193,7 @@ pfw["gridFieldNames"] = [
     "gridContactForce",
     "gridDamage",
     "gridDamageGradient",
+    "gridMappingNormalTensor",
     "gridSurfaceNormal",
     "gridSurfacePosition",
     "gridCohesiveForce",
