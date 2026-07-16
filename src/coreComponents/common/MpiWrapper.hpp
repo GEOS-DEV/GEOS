@@ -968,7 +968,10 @@ struct MpiDesyncGuard
   explicit MpiDesyncGuard( MPI_Comm const & comm, int collectiveOperationTag )
     : m_comm( comm )
     , m_collectiveOperationTag( collectiveOperationTag )
-  { saveStackFrames(); }
+  { 
+    ++m_collectiveOperationTag;
+    saveStackFrames();
+  }
 
   ~MpiDesyncGuard()
   { detectMpiDesync(); }
