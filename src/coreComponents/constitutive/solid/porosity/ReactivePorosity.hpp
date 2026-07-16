@@ -84,20 +84,18 @@ public:
       } else { // Precipitation
         volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;  
       }
-      //volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
-
       porosityIncrement -= volumeFractionIncrement;
     }
     
     real64 const phi0 = porosity_n;
-    real64 const logPorosity = log(std::max(phi0, 1e-8)) + porosityIncrement / phi0;
+    real64 const logPorosity = log(std::max(phi0, 1e-4)) + porosityIncrement / phi0;
     porosity = exp(logPorosity);
 
     //porosity = porosity_n + porosityIncrement;
 
-    if( porosity < 1e-8 )
+    if( porosity < 1e-4 )
     {
-      porosity = 1e-8; // Avoid negative or very small porosity values that can cause numerical issues
+      porosity = 1e-4; // Avoid negative or very small porosity values that can cause numerical issues
     }
     else if( porosity > 1.0 )
     {

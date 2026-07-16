@@ -100,8 +100,8 @@ public:
   {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
-    real64 const porosity_crit = 1e-8; // critical porosity below which the surface area is set to 0
-    real64 const g = std::max(0.0, ((porosity - porosity_crit) / (initialPorosity - porosity_crit))); // accesibility factor
+    real64 const porosity_crit = 1e-4; // critical porosity below which the surface area is set to 0
+    real64 const g = std::max(1e-15, ((porosity - porosity_crit) / (initialPorosity - porosity_crit))); // accesibility factor
 
     real64 area_total = 0.0;    
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
@@ -118,7 +118,7 @@ public:
         // Mineral area growth from precipitation
         real64 const area_self = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 );
         // Mineral precipitation on existing surface area of the fracture, where f_cov is the coverage factor, accounting for loss of substrate or coating
-        real64 const f_cov = exp(-std::max(0.0,(volumeFraction_r - initialVolumeFraction_r)) / initialVolumeFraction_r);
+        real64 const f_cov = std::max(1e-15, exp(-std::max(0.0, (volumeFraction_r - initialVolumeFraction_r)) / initialVolumeFraction_r));
         real64 const area_substrate = initialVolumeFraction_r * area_total * f_cov;   
         // Nucleation area                                          
         real64 const area_nuc = 0.0; // area_nuc = area_nuc_max * 1.0 / (1.0 + exp(-k_nuc*(Q_i - 1.0))) * (1.0 - exp(-(Q_i - Qi_crit) / (Q_i_max - Qi_crit))); // sigmoidal function for nucleation area
