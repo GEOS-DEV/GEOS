@@ -25,11 +25,6 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 
-struct stabledt
-{
-  double m_maxdt;
-};
-
 namespace geos
 {
 namespace dataRepository
@@ -39,6 +34,9 @@ class Group;
 class FieldSpecification;
 class FiniteElementBase;
 class DomainPartition;
+
+/// Forward declaration of the local dissipation enum defined in PhaseFieldDamageFEMKernels.hpp.
+enum class PhaseFieldDamageKernelLocalDissipation : integer;
 
 class PhaseFieldDamageFEM : public PhysicsSolverBase
 {
@@ -141,11 +139,8 @@ public:
     ExplicitTransient
   };
 
-  enum class LocalDissipation
-  {
-    Linear,
-    Quadratic,
-  };
+  /// The type of local dissipation function, shared with the damage kernels.
+  using LocalDissipation = PhaseFieldDamageKernelLocalDissipation;
 
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
   {
@@ -160,27 +155,13 @@ public:
     dataRepository::ViewKey fieldVarName = { "fieldName" };
   } PhaseFieldDamageFEMViewKeys;
 
-  inline ParallelVector const * getSolution() const
-  {
-    return &m_solution;
-  }
-
-  inline globalIndex getSize() const
-  {
-    return m_matrix.numGlobalRows();
-  }
-
   string const & getFieldName() const
   {
     return m_fieldName;
   }
 
-protected:
-  virtual void postInputInitialization() override final;
-
 private:
   string m_fieldName;
-  stabledt m_stabledt;
   TimeIntegrationOption m_timeIntegrationOption;
   LocalDissipation m_localDissipationOption;
   integer m_irreversibilityFlag;
@@ -188,14 +169,9 @@ private:
   integer m_fracturePressureTermFlag;
 
   array1d< real64 > m_coeff;
-
-  PhaseFieldDamageFEM();
 };
 
 /// Declare strings associated with enumeration values.
-ENUM_STRINGS( PhaseFieldDamageFEM::LocalDissipation,
-              "Linear",
-              "Quadratic" );
 ENUM_STRINGS( PhaseFieldDamageFEM::TimeIntegrationOption,
               "SteadyState",
               "ImplicitTransient",

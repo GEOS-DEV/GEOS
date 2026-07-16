@@ -53,21 +53,8 @@ public:
                                        CONSTITUTIVE_TYPE,
                                        FE_TYPE >;
 
-  using Base::numDofPerTestSupportPoint;
-  using Base::numDofPerTrialSupportPoint;
-  using Base::m_dofNumber;
-  using Base::m_dofRankOffset;
-  using Base::m_matrix;
-  using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
-  using Base::m_finiteElementSpace;
-  using Base::m_dt;
-  using Base::m_X;
-  using Base::m_nodalDamage;
-  using Base::m_quadDamage;
-  using Base::m_quadExtDrivingForce;
-  using Base::m_localDissipationOption;
   using LocalDissipation = PhaseFieldDamageKernelLocalDissipation;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
@@ -77,7 +64,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
@@ -117,9 +104,9 @@ public:
   //***************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
-   * Adds a stack array for the primary field.
+   * Adds a stack array for the element local nodal displacement.
    */
   struct StackVariables : Base::StackVariables
   {
@@ -140,7 +127,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -156,6 +143,12 @@ public:
     }
   }
 
+  /**
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
+   *
+   * Adds the fracture pressure contribution of Fei et al. (2023, IJNAMG)
+   * on top of the base damage kernel.
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
@@ -164,12 +157,12 @@ public:
   {
     Base::quadraturePointKernel( k, q, stack );
 
-    real64 const ell = m_constitutiveUpdate.getRegularizationLength();
+    real64 const regularizationLength = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy( k );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
     real64 const biotCoeff = m_constitutiveUpdate.getBiotCoefficient( k );
 
-    //Interpolate d and grad_d
+    //Interpolate d and u
     real64 N[ numNodesPerElem ];
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
@@ -187,17 +180,21 @@ public:
       elemPresGradient[i] = m_fluidPressureGradient( k, i );
     }
 
+    real64 const pressureDamageDeriv = m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage );
+    real64 const pressureDamageSecondDeriv = m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage );
+
+    // Pressure work density scaled by the dissipation normalization.
+    real64 const scaledPressureWork = 0.5 * regularizationLength/Gc *
+                                      ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k )
+                                        + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) );
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      /// Add pressure effects
-      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a]
-                                                          + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] );
+      stack.localResidual[ a ] -= detJ * scaledPressureWork * pressureDamageDeriv * N[a];
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
-        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc *
-                                         ( ( 1.0 - biotCoeff ) * volStrain * m_fluidPressure( k ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b]
-                                           + LvArray::tensorOps::AiBi< 3 >( qp_disp, elemPresGradient ) * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
+        stack.localJacobian[ a ][ b ] -= detJ * scaledPressureWork * pressureDamageSecondDeriv * N[a] * N[b];
       }
     }
   }
