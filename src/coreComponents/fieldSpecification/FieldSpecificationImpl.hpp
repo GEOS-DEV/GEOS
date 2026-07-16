@@ -399,7 +399,7 @@ private:
 template< typename LAMBDA >
 void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LAMBDA && lambda )
 {
-  if( fs.getComponent() == -1 )
+  if( fs.getComponent() == -1 && !fs.getScales().empty() )
   {
     for( localIndex comp = 0; comp < fs.getScales().size(); ++comp )
     {
