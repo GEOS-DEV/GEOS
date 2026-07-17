@@ -111,6 +111,15 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  real64 getDegradationValue( localIndex const k, localIndex const q ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+      return m_solidUpdate.getDegradationValue( k, q );
+    else
+      return 1.0;
+  }
+
+  GEOS_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
     if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamagePermeability > )
@@ -309,6 +318,9 @@ private:
     // Add the contributions of pore material stress/pressure
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
+    // Degrade Biot coupling in step with the elastic stiffness degradation
+    real64 const damagedBiotCoefficient = getDegradationValue( k, q ) * biotCoefficient + ( 1.0 - getDegradationValue( k, q ) );
+
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -335,10 +347,10 @@ private:
     real64 const totalPorePressure = pressure + mineralPressure;
 
     // Add the contributions of pressure to the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * totalPorePressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * totalPorePressure );
 
     // Add the contributions of mineral pressure to the stiffness
-    stiffness.m_bulkModulus = bulkModulus - biotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    stiffness.m_bulkModulus = bulkModulus - damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
   }
 
 };
