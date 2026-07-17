@@ -97,6 +97,10 @@ public:
     constexpr static char const * functionNamesString() { return "functionNames"; }
     /// @return The key for scales
     constexpr static char const * scalesString() { return "scales"; }
+    /// @return The key for beginTime
+    constexpr static char const * beginTimeString() { return "beginTime"; }
+    /// @return The key for endTime
+    constexpr static char const * endTimeString() { return "endTime"; }
   };
 
   /**
@@ -141,6 +145,19 @@ public:
   int initialCondition() const
   { return m_initialCondition; }
 
+  /**
+   * Accessor
+   * @return const m_beginTime
+   */
+  real64 getStartTime() const
+  { return m_beginTime; }
+
+  /**
+   * Accessor
+   * @return const m_endTime
+   */
+  real64 getEndTime() const
+  { return m_endTime; }
 
 protected:
 
@@ -167,6 +184,12 @@ private:
 
   /// Scale factor(s) to use on the value of the boundary condition.
   array1d< real64 > m_scales;
+
+  /// Time after which the bc is allowed to be applied
+  real64 m_beginTime;
+
+  /// Time after which the bc will no longer be applied.
+  real64 m_endTime;
 
 };
 

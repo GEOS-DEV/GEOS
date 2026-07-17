@@ -311,6 +311,20 @@ public:
   void setMeshObjectPath( Group const & meshBodies );
 
   /**
+   * Mutator
+   * @param[in] beginTime Time after which the bc is allowed to be applied
+   */
+  void setStartTime( real64 beginTime )
+  { m_beginTime = beginTime; }
+
+  /**
+   * Mutator
+   * @param[in] endTime Time after which the bc will no longer be applied.
+   */
+  void setEndTime( real64 endTime )
+  { m_endTime = endTime; }
+
+  /**
    * @brief Get the Mesh Object Paths object
    *
    * @return reference to const m_meshObjectPaths

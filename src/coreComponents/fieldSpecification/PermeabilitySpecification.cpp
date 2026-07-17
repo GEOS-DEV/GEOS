@@ -61,6 +61,16 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." );
+
+  registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
+    setApplyDefaultValue( -1.0e99 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Time at which the boundary condition will start being applied." );
+
+  registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
+    setApplyDefaultValue( 1.0e99 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Time at which the boundary condition will stop being applied." );
 }
 
 
@@ -72,10 +82,20 @@ void PermeabilitySpecification::postInputInitialization()
 {
   for( real64 scale : getScales() )
   {
-    GEOS_ERROR_IF( scale < 0,
+    GEOS_THROW_IF( scale < 0,
                    GEOS_FMT( "Scale values for a permeability must be non-negative\nA value of {} was given in {} '{}'.",
-                             scale, catalogName(), getName() ) );
+                             scale, catalogName(), getName() ),
+                   InputError,
+                   getDataContext() );
   }
+
+  GEOS_THROW_IF( m_beginTime > m_endTime,
+                 GEOS_FMT( "{} ({}) must be less than {} ({}) in {} '{}'",
+                           viewKeyStruct::beginTimeString(), m_beginTime,
+                           viewKeyStruct::endTimeString(), m_endTime,
+                           catalogName(), getName() ),
+                 InputError,
+                 getDataContext() );
 }
 
 
@@ -97,6 +117,8 @@ void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpeci
     fs.initialCondition( ps.initialCondition() );
     fs.setScales( ps.getScales() );
     fs.setFunctionNames( ps.getFunctionNames() );
+    fs.setStartTime( ps.getStartTime() );
+    fs.setEndTime( ps.getEndTime() );
 
     for( auto const & setName : ps.getSetNames() )
     {
