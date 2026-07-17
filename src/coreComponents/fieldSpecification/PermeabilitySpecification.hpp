@@ -91,56 +91,55 @@ public:
     constexpr static char const * regionNamesString() { return "regionNames"; }
     /// @return The key for fieldName
     constexpr static char const * fieldNameString() { return "fieldName"; }
-    /// @return The key for functionName
-    constexpr static char const * functionNameString() { return "functionName"; }
+    /// @return The key for initialCondition
+    constexpr static char const * initialConditionString() { return "initialCondition"; }
+    /// @return The key for functionNames
+    constexpr static char const * functionNamesString() { return "functionNames"; }
     /// @return The key for scales
     constexpr static char const * scalesString() { return "scales"; }
   };
 
   /**
    * Accessor
-   * @return const reference to m_function
+   * @return const reference to m_functionNames
    */
-  string const & getFunctionName() const
-  {
-    return m_functionName;
-  }
+  string_array const & getFunctionNames() const
+  { return m_functionNames; }
 
   /**
    * Accessor
    * @return const reference to m_regionNames
    */
   string_array const & getRegionNames() const
-  {
-    return m_regionNames;
-  }
+  { return m_regionNames; }
 
   /**
    * Accessor
    * @return const reference to m_fieldName
    */
   virtual const string & getFieldName() const
-  {
-    return m_fieldName;
-  }
+  { return m_fieldName; }
 
   /**
    * Accessor
    * @return const reference to m_setNames
    */
   string_array const & getSetNames() const
-  {
-    return m_setNames;
-  }
+  { return m_setNames; }
 
   /**
    * Accessor
    * @return const m_scales
    */
-  R1Tensor getScales() const
-  {
-    return m_scales;
-  }
+  array1d< real64 > getScales() const
+  { return m_scales; }
+
+  /**
+   * Accessor
+   * @return const m_initialCondition
+   */
+  int initialCondition() const
+  { return m_initialCondition; }
 
 
 protected:
@@ -160,11 +159,14 @@ private:
   /// determining whether or not to apply the boundary condition.
   string m_fieldName;
 
-  /// The name of the function used to generate values for application.
-  string m_functionName;
+  /// Whether or not the boundary condition is an initial condition.
+  int m_initialCondition;
 
-  /// The scale factors to use on the value of the boundary condition.
-  R1Tensor m_scales;
+  /// Name(s) of the function used to generate values for application.
+  string_array m_functionNames;
+
+  /// Scale factor(s) to use on the value of the boundary condition.
+  array1d< real64 > m_scales;
 
 };
 

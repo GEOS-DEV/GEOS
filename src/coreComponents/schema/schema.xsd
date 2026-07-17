@@ -1538,12 +1538,14 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
+		<!--functionNames => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" default="1" />
 		<!--regionNames => Names of the regions that boundary condition is applied to.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" use="required" />
-		<!--scales => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scales" type="R1Tensor" default="{0,0,0}" />
+		<!--scales => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scales" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->

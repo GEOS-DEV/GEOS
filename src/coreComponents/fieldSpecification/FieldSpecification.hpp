@@ -257,13 +257,6 @@ public:
 
   /**
    * Mutator
-   * @param[in] functionName The name of the function
-   */
-  void setFunctionName( string const & functionName )
-  { m_functionName = functionName; }
-
-  /**
-   * Mutator
    * @param[in] objectPath The path for the object
    */
   void setObjectPath( string const & objectPath )

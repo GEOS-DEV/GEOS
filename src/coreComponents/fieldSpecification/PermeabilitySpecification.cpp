@@ -46,15 +46,21 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setDescription( "Name of field that boundary condition is applied to.\n"
                     "A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)" );
 
-  registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+  registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of function that specifies variation of the boundary condition." );
+    setDescription( "Boundary condition is applied as an initial condition." );
+
+  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
-    setApplyDefaultValue( { 0.0, 0.0, 0.0 } ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Apply a scaling factor for the value of the boundary condition." );
+    setSizedFromParent( 0 ).
+    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." );
 }
 
 
@@ -64,12 +70,11 @@ PermeabilitySpecification::~PermeabilitySpecification()
 
 void PermeabilitySpecification::postInputInitialization()
 {
-  R1Tensor scales = getScales();
-  for( int axis = 0; axis < 3; ++axis )
+  for( real64 scale : getScales() )
   {
-    GEOS_ERROR_IF( scales[ axis ] < 0,
+    GEOS_ERROR_IF( scale < 0,
                    GEOS_FMT( "Scale values for a permeability must be non-negative\nA value of {} was given in {} '{}'.",
-                             scales[ axis ], catalogName(), getName() ) );
+                             scale, catalogName(), getName() ) );
   }
 }
 
@@ -80,38 +85,24 @@ template<>
 void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpecification const & ps,
                                                                dataRepository::Group & manager )
 {
-  stdArray< string, 3 > suffixes = {{ "_x", "_y", "_z" }};
-
-  R1Tensor scales = ps.getScales();
-
   for( string const & regionName : ps.getRegionNames() )
   {
     string const objectPath = "ElementRegions/" + regionName;
 
-    for( integer comp = 0; comp < 3; ++comp )
+    string const childName = ps.getName() + "_" + regionName;
+
+    FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
+    fs.setFieldName( ps.getFieldName() );
+    fs.setObjectPath( objectPath );
+    fs.initialCondition( ps.initialCondition() );
+    fs.setScales( ps.getScales() );
+    fs.setFunctionNames( ps.getFunctionNames() );
+
+    for( auto const & setName : ps.getSetNames() )
     {
-      string const childName = ps.getName() + "_" + regionName + suffixes[ comp ];
-
-      FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
-      fs.setFieldName( ps.getFieldName() );
-      fs.setObjectPath( objectPath );
-      fs.setScale( scales[ comp ] );
-      fs.initialCondition( true );
-      fs.setComponent( comp );
-
-      for( auto const & setName : ps.getSetNames() )
-      {
-        fs.addSetName( setName );
-      }
-
-      if( !ps.getFunctionName().empty() )
-      {
-        fs.setFunctionName( ps.getFunctionName() );
-      }
-
+      fs.addSetName( setName );
     }
   }
-
 }
 
 }

@@ -74,7 +74,7 @@ void FieldSpecificationManager::postInputInitialization()
   expandFieldSpecifications( *this );
 }
 
-void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
+void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh )
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   Group const & meshBodies = domain.getMeshBodies();
