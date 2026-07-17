@@ -1,6 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testFieldSpecificationsEnums.cpp )
+     testFieldSpecificationsEnums.cpp
+     testPermeabilitySpecification.cpp )
 
 # Basic dependency list: fieldSpecification library plus gtest and parallel deps
 set( dependencyList ${parallelDeps} fieldSpecification gtest )
