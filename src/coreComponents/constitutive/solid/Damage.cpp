@@ -48,10 +48,16 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The lower limit of the degradation function" );
 
-  this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
-    setApplyDefaultValue( 0 ).
+  this->registerWrapper( viewKeyStruct::fractureModelTypeString(), &m_fractureModelType ).
+    setApplyDefaultValue( FractureModelType::Brittle ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Whether to have external driving force. Can be 0 or 1" );
+    setDescription( "Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation" );
+
+  this->registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
+    setApplyDefaultValue( LocalDissipationOption::Linear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of local dissipation function. Must match the damage solver's "
+                    "localDissipation option. Can be Linear or Quadratic" );
 
   this->registerWrapper( viewKeyStruct::defaultTensileStrengthString(), &m_defaultTensileStrength ).
     setApplyDefaultValue( 0.0 ).
@@ -99,21 +105,24 @@ void Damage< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
 
-  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
-                 "invalid external driving force flag option - must"
-                 " be 0 or 1",
+  GEOS_ERROR_IF( m_fractureModelType != FractureModelType::Brittle && m_localDissipationOption != LocalDissipationOption::Linear,
+                 "the Cohesive and Nucleation crack models are only supported with the Linear "
+                 "local dissipation option",
                  this->getDataContext() );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Cohesive && m_criticalStrainEnergy <= 0.0,
+                 "criticalStrainEnergy must be positive when the Cohesive crack model is used",
+                 this->getDataContext() );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultTensileStrength <= 0.0,
                  "tensile strength must be input and positive when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressiveStrength  <= 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultCompressiveStrength  <= 0.0,
                  "compressive strength must be input and positive when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultDeltaCoefficient < 0.0,
                  "delta coefficient must be input and non-negative when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
 
   // set results as array default values

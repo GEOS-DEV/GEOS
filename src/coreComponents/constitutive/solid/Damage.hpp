@@ -20,11 +20,9 @@
  *
  * In a phase-field for fracture model, the damage variable affects the Elasticity equation
  * with the degradation of the stresses. Instead of sigma = C : epsilon, we have sigma = g(d)*C:epsilon,
- * where g(d) is the degradation function. This degradation function can either be a quadratic one
- * (set LORENTZ 0) or a quasi-quadratic one (set LORENTZ 1). In general, the quadratic one will give you
- * brittle fracture behaviour. The quasi-quadratic one, combined with linear dissipation, will give you
- * cohesive fracture behaviour, with a user-defined critical stress. If you use quadratic dissipation in
- * your damage solver, set QUADRATIC_DISSIPATION to 1.
+ * where g(d) is the degradation function. The base Damage model uses a quadratic degradation
+ * function. DamageSpectral uses a quasi-quadratic one which, combined with linear dissipation,
+ * gives cohesive fracture behaviour with a user-defined critical stress.
  *
  * References:
  *
@@ -43,6 +41,7 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
+#include "common/format/EnumStrings.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 #include "ElasticIsotropic.hpp"
@@ -51,6 +50,30 @@ namespace geos
 {
 namespace constitutive
 {
+
+/// Type of local dissipation function used by the phase-field damage solver.
+enum class LocalDissipationOption : integer
+{
+  Linear,
+  Quadratic,
+};
+
+ENUM_STRINGS( LocalDissipationOption,
+              "Linear",
+              "Quadratic" );
+
+/// Type of crack/fracture model used by the phase-field damage model.
+enum class FractureModelType : integer
+{
+  Brittle,
+  Cohesive,
+  Nucleation,
+};
+
+ENUM_STRINGS( FractureModelType,
+              "Brittle",
+              "Cohesive",
+              "Nucleation" );
 
 // DAMAGE MODEL UPDATES
 //
@@ -80,7 +103,8 @@ public:
                  arrayView1d< real64 > const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
                  real64 const & inputDegradationLowerLimit,
-                 integer const & inputExtDrivingForceFlag,
+                 FractureModelType const & inputFractureModelType,
+                 LocalDissipationOption const & inputLocalDissipationOption,
                  arrayView1d< real64 > const & inputTensileStrength,
                  arrayView1d< real64 > const & inputCompressiveStrength,
                  arrayView1d< real64 > const & inputDeltaCoefficient,
@@ -97,7 +121,8 @@ public:
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
     m_criticalStrainEnergy( inputcriticalStrainEnergy ),
     m_degradationLowerLimit( inputDegradationLowerLimit ),
-    m_extDrivingForceFlag( inputExtDrivingForceFlag ),
+    m_fractureModelType( inputFractureModelType ),
+    m_localDissipationOption( inputLocalDissipationOption ),
     m_tensileStrength( inputTensileStrength ),
     m_compressiveStrength( inputCompressiveStrength ),
     m_deltaCoefficient( inputDeltaCoefficient ),
@@ -114,28 +139,33 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
 
-  //Standard quadratic degradation functions
+  //Degradation functions: quadratic (Brittle/Nucleation) or Lorentz-type rational (Cohesive,
+  //Geelen et al., 2019, CMAME; AT1-only, validated at input-parsing time).
 
   inline
   GEOS_HOST_DEVICE
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    real64 pf;
+    real64 const pf = LvArray::math::max( LvArray::math::min( 1.0, m_newDamage( k, q )), 0.0 );
 
-    if( m_extDrivingForceFlag )
+    switch( m_fractureModelType )
     {
-      pf = LvArray::math::max( LvArray::math::min( 1.0, m_newDamage( k, q )), 0.0 );
+      case FractureModelType::Cohesive:
+      {
+        real64 const m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+        real64 const p = 1;
+        return pow( 1 - pf, 2 ) / ( pow( 1 - pf, 2 ) + m*pf*(1 + p*pf) );
+      }
+      case FractureModelType::Brittle:
+      case FractureModelType::Nucleation:
+      default:
+      {
+        // Set a lower bound tolerance for the degradation
+        real64 const eps = m_degradationLowerLimit;
+        return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
+      }
     }
-    else
-    {
-      pf = m_newDamage( k, q );
-    }
-
-    // Set a lower bound tolerance for the degradation
-    real64 const eps = m_degradationLowerLimit;
-
-    return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
   }
 
 
@@ -143,9 +173,19 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( localIndex const k, real64 const d ) const
   {
-    GEOS_UNUSED_VAR( k );
-
-    return -2*(1 - d);
+    switch( m_fractureModelType )
+    {
+      case FractureModelType::Cohesive:
+      {
+        real64 const m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+        real64 const p = 1;
+        return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+      }
+      case FractureModelType::Brittle:
+      case FractureModelType::Nucleation:
+      default:
+        return -2*(1 - d);
+    }
   }
 
 
@@ -153,9 +193,19 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( localIndex const k, real64 const d ) const
   {
-    GEOS_UNUSED_VAR( k, d );
-
-    return 2.0;
+    switch( m_fractureModelType )
+    {
+      case FractureModelType::Cohesive:
+      {
+        real64 const m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+        real64 const p = 1;
+        return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+      }
+      case FractureModelType::Brittle:
+      case FractureModelType::Nucleation:
+      default:
+        return 2.0;
+    }
   }
 
   //Damage dependence function on fluid pressure terms and its derivatives
@@ -249,7 +299,7 @@ public:
 
     m_volStrain( k, q ) = traceOfStrain;
 
-    if( m_extDrivingForceFlag )
+    if( m_fractureModelType == FractureModelType::Nucleation )
     {
       real64 stressP;
       real64 stressQ;
@@ -335,17 +385,25 @@ public:
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const
   {
-    #if LORENTZ
-    return m_criticalStrainEnergy;
-    #else
-    if( m_extDrivingForceFlag )
-      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
-    else
-      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale);
+    switch( m_fractureModelType )
+    {
+      case FractureModelType::Cohesive:
+        return m_criticalStrainEnergy;
 
-    #endif
+      case FractureModelType::Nucleation:
+        return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
 
-
+      case FractureModelType::Brittle:
+      default:
+        switch( m_localDissipationOption )
+        {
+          case LocalDissipationOption::Linear:
+            return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale);
+          case LocalDissipationOption::Quadratic:
+          default:
+            return 0.0; // unused: AT2 (Quadratic) dissipation never reads the energy threshold
+        }
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -392,8 +450,11 @@ public:
   /// The lower limit of the degradation function
   real64 const m_degradationLowerLimit;
 
-  /// The flag to indicate if the external driving force is used for fracture nucleation
-  integer const m_extDrivingForceFlag;
+  /// The type of crack/fracture model (Brittle, Cohesive, or Nucleation)
+  FractureModelType const m_fractureModelType;
+
+  /// The type of local dissipation function used by the phase-field solver
+  LocalDissipationOption const m_localDissipationOption;
 
   /// A reference view to the tensile strength for each element
   arrayView1d< real64 > const m_tensileStrength;
@@ -437,7 +498,9 @@ public:
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
-  integer getExtDrivingForceFlag() const { return m_extDrivingForceFlag; }
+  FractureModelType getFractureModelType() const { return m_fractureModelType; }
+
+  LocalDissipationOption getLocalDissipationOption() const { return m_localDissipationOption; }
 
 
   KernelWrapper createKernelUpdates() const
@@ -452,7 +515,8 @@ public:
                                                                        m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
-                                                                       m_extDrivingForceFlag,
+                                                                       m_fractureModelType,
+                                                                       m_localDissipationOption,
                                                                        m_tensileStrength.toView(),
                                                                        m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
@@ -469,8 +533,10 @@ public:
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
     /// string/key for degradation lower limit
     static constexpr char const * degradationLowerLimitString() { return "degradationLowerLimit"; }
-    // string/key for c_e switch
-    static constexpr char const * extDrivingForceFlagString() { return "extDrivingForceFlag"; }
+    /// string/key for the crack/fracture model type
+    static constexpr char const * fractureModelTypeString() { return "fractureModelType"; }
+    /// string/key for the local dissipation option
+    static constexpr char const * localDissipationOptionString() { return "localDissipationOption"; }
     /// string/key for the default tensile strength
     static constexpr char const * defaultTensileStrengthString() { return "defaultTensileStrength"; }
     /// string/key for the default compressive strength
@@ -512,8 +578,11 @@ protected:
   /// The lower limit of the degradation function
   real64 m_degradationLowerLimit;
 
-  /// The flag to indicate if the external driving force is used for fracture nucleation
-  integer m_extDrivingForceFlag;
+  /// The type of crack/fracture model (Brittle, Cohesive, or Nucleation)
+  FractureModelType m_fractureModelType;
+
+  /// The type of local dissipation function used by the phase-field solver
+  LocalDissipationOption m_localDissipationOption;
 
   /// The default value of the tensile strength
   real64 m_defaultTensileStrength;

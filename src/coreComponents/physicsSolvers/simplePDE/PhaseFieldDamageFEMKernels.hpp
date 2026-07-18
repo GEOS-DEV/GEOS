@@ -20,24 +20,16 @@
 #ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
-#include "common/format/EnumStrings.hpp"
+#include "constitutive/solid/Damage.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 
 namespace geos
 {
 
-/// Type of local dissipation function used in the phase-field damage model.
-enum class PhaseFieldDamageKernelLocalDissipation : integer
-{
-  Linear,
-  Quadratic,
-};
-
-/// Declare strings associated with enumeration values.
-ENUM_STRINGS( PhaseFieldDamageKernelLocalDissipation,
-              "Linear",
-              "Quadratic" );
+/// Type of local dissipation function used in the phase-field damage model, shared with the
+/// constitutive layer since it also affects degradation-function calibration there.
+using PhaseFieldDamageKernelLocalDissipation = constitutive::LocalDissipationOption;
 
 //*****************************************************************************
 /**
@@ -108,8 +100,7 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           real64 const inputDt,
-                          string const fieldName,
-                          LocalDissipation localDissipationOption ):
+                          string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -124,8 +115,7 @@ public:
           inputDt ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
-    m_localDissipationOption( localDissipationOption )
+    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() )
   {}
 
   //***************************************************************************
@@ -207,8 +197,10 @@ public:
     real64 qp_grad_damage[3] = {0, 0, 0};
     finiteElement::feOps::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
+    LocalDissipation const localDissipationOption = m_constitutiveUpdate.m_localDissipationOption;
+
     // Elastic energy, floored by the threshold for Linear dissipation.
-    real64 const crackDrivingForce = m_localDissipationOption == LocalDissipation::Linear ?
+    real64 const crackDrivingForce = localDissipationOption == LocalDissipation::Linear ?
                                      fmax( threshold, strainEnergyDensity ) :
                                      strainEnergyDensity;
 
@@ -217,7 +209,7 @@ public:
     real64 localDissipationDeriv;            // its damage-derivative, for the Jacobian
     real64 nonlocalDissipationGradientCoeff; // scaling of the damage-gradient term
     real64 drivingForceCoeff;                // scaling of the driving force terms
-    if( m_localDissipationOption == LocalDissipation::Linear )
+    if( localDissipationOption == LocalDissipation::Linear )
     {
       localDissipation = 3.0 / 16.0;
       localDissipationDeriv = 0.0;
@@ -236,7 +228,7 @@ public:
     real64 const degradationSecondDeriv = m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage );
     real64 const scaledDrivingForce = drivingForceCoeff * regularizationLength * crackDrivingForce / Gc;
     // The external driving force only enters the Linear (nucleation) model.
-    real64 const scaledExtDrivingForce = m_localDissipationOption == LocalDissipation::Linear ?
+    real64 const scaledExtDrivingForce = localDissipationOption == LocalDissipation::Linear ?
                                          0.5 * regularizationLength * m_quadExtDrivingForce[k][q] / Gc :
                                          0.0;
 
@@ -298,9 +290,6 @@ protected:
   /// The array containing the external driving force on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadExtDrivingForce;
 
-  /// The type of local dissipation function (Linear or Quadratic).
-  PhaseFieldDamageKernelLocalDissipation const m_localDissipationOption;
-
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
@@ -309,8 +298,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     real64 const,
-                                                                    string const,
-                                                                    PhaseFieldDamageKernelLocalDissipation >;
+                                                                    string const >;
 
 } // namespace geos
 

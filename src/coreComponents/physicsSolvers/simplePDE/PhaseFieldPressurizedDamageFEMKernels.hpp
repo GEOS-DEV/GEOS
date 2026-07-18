@@ -55,7 +55,6 @@ public:
 
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
-  using LocalDissipation = PhaseFieldDamageKernelLocalDissipation;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -80,8 +79,7 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                      arrayView1d< real64 > const inputRhs,
                                      real64 const inputDt,
-                                     string const fieldName,
-                                     LocalDissipation localDissipationOption ):
+                                     string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -94,8 +92,7 @@ public:
           inputMatrix,
           inputRhs,
           inputDt,
-          fieldName,
-          localDissipationOption ),
+          fieldName ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >()  ),
     m_fluidPressureGradient( elementSubRegion.template getReference< array2d< real64 > >( "pressureGradient" ) )
@@ -216,8 +213,7 @@ using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< P
                                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                                arrayView1d< real64 > const,
                                                                                real64 const,
-                                                                               string const,
-                                                                               PhaseFieldDamageKernelLocalDissipation >;
+                                                                               string const >;
 
 } // namespace geos
 

@@ -35,9 +35,6 @@ class FieldSpecification;
 class FiniteElementBase;
 class DomainPartition;
 
-/// Forward declaration of the local dissipation enum defined in PhaseFieldDamageFEMKernels.hpp.
-enum class PhaseFieldDamageKernelLocalDissipation : integer;
-
 class PhaseFieldDamageFEM : public PhysicsSolverBase
 {
 public:
@@ -57,8 +54,6 @@ public:
   static string coupledSolverAttributePrefix() { return "damage"; }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
-  virtual void initializePreSubGroups() override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -141,13 +136,9 @@ public:
     ExplicitTransient
   };
 
-  /// The type of local dissipation function, shared with the damage kernels.
-  using LocalDissipation = PhaseFieldDamageKernelLocalDissipation;
-
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * coeffNameString() { return "coeffField"; }
-    static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
     static constexpr char const * fracturePressureTermFlagString() { return "fracturePressureTermFlag"; }
@@ -165,7 +156,6 @@ public:
 private:
   string m_fieldName;
   TimeIntegrationOption m_timeIntegrationOption;
-  LocalDissipation m_localDissipationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
   integer m_fracturePressureTermFlag;

@@ -45,14 +45,16 @@ public:
                        arrayView1d< real64 > const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
                        real64 const & inputDegradationLowerLimit,
-                       int const & inputExtDrivingForceFlag,
+                       FractureModelType const & inputFractureModelType,
+                       LocalDissipationOption const & inputLocalDissipationOption,
                        arrayView1d< real64 > const & inputTensileStrength,
                        arrayView1d< real64 > const & inputCompressiveStrength,
                        arrayView1d< real64 > const & inputDeltaCoefficient,
                        arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputFractureModelType,
+                                  inputLocalDissipationOption,
                                   inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -63,9 +65,6 @@ public:
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
-  using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
-  using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
-  using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_volStrain;
@@ -76,7 +75,8 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_oldDamage;
   using DamageUpdates< UPDATE_BASE >::m_damageGrad;
-  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
+  using DamageUpdates< UPDATE_BASE >::m_fractureModelType;
+  using DamageUpdates< UPDATE_BASE >::m_localDissipationOption;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressiveStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
@@ -181,7 +181,8 @@ public:
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
   using Damage< BASE >::m_degradationLowerLimit;
-  using Damage< BASE >::m_extDrivingForceFlag;
+  using Damage< BASE >::m_fractureModelType;
+  using Damage< BASE >::m_localDissipationOption;
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressiveStrength;
   using Damage< BASE >::m_deltaCoefficient;
@@ -193,6 +194,7 @@ public:
   static string catalogName() { return string( "DamageVolDev" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
 
   KernelWrapper createKernelUpdates() const
   {
@@ -206,7 +208,8 @@ public:
                                                                        m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
-                                                                       m_extDrivingForceFlag,
+                                                                       m_fractureModelType,
+                                                                       m_localDissipationOption,
                                                                        m_tensileStrength.toView(),
                                                                        m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
