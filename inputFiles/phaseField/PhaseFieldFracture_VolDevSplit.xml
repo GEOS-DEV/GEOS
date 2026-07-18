@@ -33,8 +33,6 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      
-      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -127,7 +125,8 @@
       defaultShearModulus="8.077e4"
       lengthScale="0.25"
       defaultCriticalFractureEnergy="54.0"
-      criticalStrainEnergy="14.88"/>
+      criticalStrainEnergy="14.88"
+      localDissipationOption="Quadratic"/>
   </Constitutive>
 
   <FieldSpecifications>

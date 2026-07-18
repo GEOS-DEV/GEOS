@@ -35,8 +35,6 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      
-      localDissipation="Linear"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
       logLevel="1"
@@ -111,7 +109,7 @@
       lengthScale="0.001"
       defaultCriticalFractureEnergy="91"
       criticalStrainEnergy="0"
-      extDrivingForceFlag="1"
+      fractureModelType="Nucleation"
       defaultTensileStrength="27e6"
       defaultCompressiveStrength="77e6"
       defaultDeltaCoefficient="0.0"/>

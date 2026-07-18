@@ -40,7 +40,6 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      localDissipation="Linear"
       irreversibilityFlag="1"
       damageUpperBound="0.95"
       fracturePressureTermFlag="1"
