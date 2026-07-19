@@ -22,9 +22,6 @@
 
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
@@ -52,11 +49,6 @@ void PhaseFieldPoromechanicsSolver::postInputInitialization()
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-PhaseFieldPoromechanicsSolver::~PhaseFieldPoromechanicsSolver()
-{
-  // TODO Auto-generated destructor stub
-}
-
 void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
@@ -74,12 +66,10 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
 
       string const & discretizationName = damageSolver()->getDiscretizationName();
 
-      //should get reference to damage field here.
       arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
 
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      // begin region loop
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, xNodes, nodalDamage]
                                                                   ( localIndex const,
                                                                   CellElementSubRegion & elementSubRegion )
@@ -114,7 +104,7 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
   }
   else if( solverType ==  static_cast< integer >( SolverType::Poromechanics ) )
   {
-    poromechancisSolver()->flowSolver()->updatePressureGradient( domain );
+    poromechanicsSolver()->flowSolver()->updatePressureGradient( domain );
   }
 }
 

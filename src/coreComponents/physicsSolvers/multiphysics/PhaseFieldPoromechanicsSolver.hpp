@@ -24,7 +24,6 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
@@ -43,7 +42,7 @@ public:
   PhaseFieldPoromechanicsSolver( const string & name,
                                  Group * const parent );
 
-  ~PhaseFieldPoromechanicsSolver() override;
+  ~PhaseFieldPoromechanicsSolver() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -73,7 +72,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the poromechanics solver
    */
-  SinglePhasePoromechanics< SinglePhaseBase > * poromechancisSolver() const
+  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -88,8 +87,6 @@ public:
   }
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
-
-  void mapDamageAndGradientToQuadrature( DomainPartition & domain );
 
   void applyDamageOnTractionBC( DomainPartition & domain );
 
@@ -162,4 +159,4 @@ struct DamageAndDamageGradientInterpolationKernel
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_ */
