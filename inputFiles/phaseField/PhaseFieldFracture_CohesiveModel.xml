@@ -119,14 +119,6 @@
                         scale="0"
                         setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
     <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="2.7"/>
-
-    <FieldSpecification
       name="xpos"
       objectPath="nodeManager"
       fieldName="totalDisplacement"

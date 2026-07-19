@@ -130,13 +130,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="54.0"/>
     
     <FieldSpecification
       name="shearLoad"

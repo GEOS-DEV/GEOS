@@ -124,19 +124,6 @@ void Damage< BASE >::postInputInitialization()
                  "delta coefficient must be input and non-negative when the"
                  " Nucleation crack model is used",
                  this->getDataContext()  );
-
-  // set results as array default values
-  this->template getField< fields::solid::criticalFractureEnergy >().
-    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
-
-  this->template getField< fields::solid::tensileStrength >().
-    setApplyDefaultValue( m_defaultTensileStrength );
-
-  this->template getField< fields::solid::compressiveStrength >().
-    setApplyDefaultValue( m_defaultCompressiveStrength );
-
-  this->template getField< fields::solid::deltaCoefficient >().
-    setApplyDefaultValue( m_defaultDeltaCoefficient );
 }
 
 template< typename BASE >
@@ -153,6 +140,20 @@ void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const 
   m_tensileStrength.resize( parent.size() );
   m_compressiveStrength.resize( parent.size() );
   m_deltaCoefficient.resize( parent.size() );
+
+  // apply the defaults here, after resizing: setApplyDefaultValue() in postInputInitialization()
+  // runs before the arrays exist, so it has nothing to fill in.
+  this->template getField< fields::solid::criticalFractureEnergy >().
+    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
+
+  this->template getField< fields::solid::tensileStrength >().
+    setApplyDefaultValue( m_defaultTensileStrength );
+
+  this->template getField< fields::solid::compressiveStrength >().
+    setApplyDefaultValue( m_defaultCompressiveStrength );
+
+  this->template getField< fields::solid::deltaCoefficient >().
+    setApplyDefaultValue( m_defaultDeltaCoefficient );
 
   BASE::allocateConstitutiveData( parent, numPts );
 }

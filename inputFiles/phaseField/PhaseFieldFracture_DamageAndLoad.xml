@@ -118,14 +118,6 @@
 
   <FieldSpecifications>
     <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="2.7"/>
-
-    <FieldSpecification
       name="xtraction"
       fieldName="totalDisplacement"
       component="0"

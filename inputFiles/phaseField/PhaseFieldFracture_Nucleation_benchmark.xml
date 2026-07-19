@@ -66,38 +66,6 @@
 
   <FieldSpecifications>
     <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="rock_criticalFractureEnergy"
-       scale="9.1e-2"/>
-
-    <FieldSpecification
-      name="tensileStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_tensileStrength"
-      scale="27.0"/>
-
-    <FieldSpecification
-      name="compressiveStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_compressiveStrength"
-      scale="77.0"/>
-
-    <FieldSpecification
-      name="deltaCoefficient"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_deltaCoefficient"
-      scale="3.22"/>
-
-    <FieldSpecification
       name="yPosDisp"
       fieldName="totalDisplacement"
       component="1"

@@ -117,38 +117,6 @@
 
   <FieldSpecifications>
     <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="rock_criticalFractureEnergy"
-       scale="91"/>
-
-    <FieldSpecification
-      name="tensileStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_tensileStrength"
-      scale="27e6"/>
-
-    <FieldSpecification
-      name="compressiveStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_compressiveStrength"
-      scale="77e6"/>
-
-    <FieldSpecification
-      name="deltaCoefficient"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_deltaCoefficient"
-      scale="0.0"/>
-
-    <FieldSpecification
       name="xtraction"
       fieldName="totalDisplacement"
       component="0"
