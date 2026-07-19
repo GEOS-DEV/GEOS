@@ -26,7 +26,6 @@
 
 #include <gtest/gtest.h>
 #include <filesystem>
-#include <csignal>
 
 #include <csignal>
 
@@ -68,7 +67,7 @@ void beginLocalLoggerTest( ErrorLogger & errorLogger, string_view filename )
  * @param expectedFileBits reference file parts that must be in the logger file output
  */
 void endLocalLoggerTest( ErrorLogger & errorLogger,
-                         std::vector< string > expectedFileBits )
+                         stdVector< string > expectedFileBits )
 {
   auto const readFile = [] ( string_view filename ) {
     if( !fs::exists( filename ))

@@ -55,7 +55,7 @@ DECLARE_FIELD( bcLogPrimarySpeciesConcentration,
                "bcLogPrimarySpeciesConcentration",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Boundary condition for natural log of primary species concentration (molality)" );
 
@@ -63,7 +63,7 @@ DECLARE_FIELD( primarySpeciesAggregateMole,
                "primarySpeciesAggregateMole",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Aggregate amount of primary species in mole" );
 

@@ -39,7 +39,7 @@ DECLARE_FIELD( initialPrimarySpeciesConcentration,
                "initialPrimarySpeciesConcentration",
                array3dLayoutSpecies,
                1e-16,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "initialPrimarySpeciesConcentration" );
 
@@ -55,7 +55,7 @@ DECLARE_FIELD( primarySpeciesAggregateConcentration_n,
                "primarySpeciesAggregateConcentration_n",
                array3dLayoutSpecies,
                1e-16,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "primarySpeciesAggregateConcentration at the previous timestep" );
 
@@ -63,7 +63,7 @@ DECLARE_FIELD( primarySpeciesMobileAggregateConcentration,
                "primarySpeciesMobileAggregateConcentration",
                array3dLayoutSpecies,
                1e-16,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "primarySpeciesMobileAggregateConcentration" );
 
@@ -103,7 +103,7 @@ DECLARE_FIELD( aggregateSpeciesRates,
                "aggregateSpeciesRates",
                array3dLayoutSpecies,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
                "aggregateSpeciesRates" );
 

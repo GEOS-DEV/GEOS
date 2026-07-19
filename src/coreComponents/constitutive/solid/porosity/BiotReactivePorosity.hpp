@@ -50,25 +50,29 @@ public:
                                arrayView1d< real64 > const & mineralBulkModulus,
                                arrayView1d< real64 > const & mineralPressure,
                                arrayView1d< real64 > const & mineralPressure_n,
-                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k ): ReactivePorosityBaseUpdates( newPorosity,
-                                                                                                                            porosity_n,
-                                                                                                                            dPorosity_dPressure,
-                                                                                                                            dPorosity_dTemperature,
-                                                                                                                            initialPorosity,
-                                                                                                                            referencePorosity,
-                                                                                                                            volumeFractions,
-                                                                                                                            initialVolumeFractions,
-                                                                                                                            volumeFractions_n,
-                                                                                                                            numKineticReactions,
-                                                                                                                            molarWeights,
-                                                                                                                            mineralDensities,
-                                                                                                                            bulkModulus,
-                                                                                                                            meanEffectiveStressIncrement_k ),
+                               real64 const fluidCompressibility,
+                               arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
+                               integer const fixedPorosity ): ReactivePorosityBaseUpdates( newPorosity,
+                                                                                            porosity_n,
+                                                                                            dPorosity_dPressure,
+                                                                                            dPorosity_dTemperature,
+                                                                                            initialPorosity,
+                                                                                            referencePorosity,
+                                                                                            volumeFractions,
+                                                                                            initialVolumeFractions,
+                                                                                            volumeFractions_n,
+                                                                                            numKineticReactions,
+                                                                                            molarWeights,
+                                                                                            mineralDensities,
+                                                                                            bulkModulus,
+                                                                                            meanEffectiveStressIncrement_k,
+                                                                                            fixedPorosity ),
     m_grainBulkModulus( grainBulkModulus ),
     m_biotCoefficient( biotCoefficient ),
     m_mineralBulkModulus( mineralBulkModulus ),
     m_mineralPressure( mineralPressure ),
-    m_mineralPressure_n( mineralPressure_n )
+    m_mineralPressure_n( mineralPressure_n ),
+    m_fluidCompressibility( fluidCompressibility )
   {}
 
   GEOS_HOST_DEVICE
@@ -76,6 +80,14 @@ public:
 
   GEOS_HOST_DEVICE
   real64 getGrainBulkModulus( localIndex const k ) const { return m_grainBulkModulus[k]; }
+
+  /// @return the fluid bulk modulus K_f = 1/compressibility [Pa] (0 if incompressible)
+  GEOS_HOST_DEVICE
+  real64 getFluidBulkModulus( localIndex const k ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    return m_fluidCompressibility > 0.0 ? 1.0 / m_fluidCompressibility : 0.0;
+  }
 
   GEOS_HOST_DEVICE
   real64 getPoreMineralPressure( localIndex const k ) const { return m_mineralPressure[k]; }
@@ -93,22 +105,28 @@ public:
                                    real64 const & bulkModulus,
                                    real64 const & grainBulkModulus,
                                    real64 const & mineralBulkModulus,
+                                   real64 const & fluidBulkModulus,
                                    real64 const & reactionPorosityIncrement ) const
   {
     GEOS_UNUSED_VAR( pressure_k );
 
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / grainBulkModulus;
     real64 const porosityMultiplierInverse = 1 / ( 1 + biotSkeletonModulusInverse*mineralBulkModulus/referencePorosity );
+    real64 const poreFluidMineralBulkModRatio = ( fluidBulkModulus + mineralBulkModulus ) / fluidBulkModulus;
+
+    real64 const anelasticStrainIncrement = -reactionPorosityIncrement;
 
     porosity = porosity_n
                // change due to stress increment
                + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus * porosityMultiplierInverse
                // change due to pressure increment
-               + biotSkeletonModulusInverse * ( pressure - pressure_n ) * porosityMultiplierInverse
+               + biotSkeletonModulusInverse * poreFluidMineralBulkModRatio * ( pressure - pressure_n ) * porosityMultiplierInverse
                // change due to mineral pressure increment
-               + biotSkeletonModulusInverse * reactionPorosityIncrement * mineralBulkModulus * porosityMultiplierInverse;
+               + biotSkeletonModulusInverse * 3 * anelasticStrainIncrement * mineralBulkModulus * porosityMultiplierInverse
+               // change due to mineral volume fraction increment
+               + reactionPorosityIncrement;  
 
-    dPorosity_dPressure = biotSkeletonModulusInverse * porosityMultiplierInverse;
+    dPorosity_dPressure = biotSkeletonModulusInverse * poreFluidMineralBulkModRatio * porosityMultiplierInverse;
   }
 
   GEOS_HOST_DEVICE
@@ -122,20 +140,21 @@ public:
                                    real64 const & bulkModulus,
                                    real64 const & grainBulkModulus,
                                    real64 const & mineralBulkModulus,
+                                   real64 const & fluidBulkModulus,
                                    real64 const & anelasticStrainIncrement ) const
   {
     // GEOS_UNUSED_VAR( meanEffectiveStressIncrement, bulkModulus );
-
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / grainBulkModulus;
     real64 const mineralPressureMultiplier = mineralBulkModulus / ( referencePorosity + biotSkeletonModulusInverse*mineralBulkModulus );
 
     mineralPressure = mineralPressure_n
                       // change due to inelastic strain increment
-                      + mineralPressureMultiplier * referencePorosity * anelasticStrainIncrement
+                      + mineralPressureMultiplier * referencePorosity * anelasticStrainIncrement * 3
                       // change due to stress increment
                       - mineralPressureMultiplier * biotCoefficient * meanEffectiveStressIncrement / bulkModulus
                       // change due to pressure increment
-                      - mineralPressureMultiplier * biotSkeletonModulusInverse * deltaPressureFromLastStep;
+                      - mineralPressureMultiplier * biotSkeletonModulusInverse * deltaPressureFromLastStep
+                      + mineralPressureMultiplier * referencePorosity / fluidBulkModulus * deltaPressureFromLastStep;
 
     dMineralPres_dMeanEffStressIncre = -mineralPressureMultiplier * biotCoefficient / bulkModulus;
     // dMineralPres_dMeanEffStressIncre = 0.0;
@@ -161,6 +180,7 @@ public:
                                 m_bulkModulus[k],
                                 m_grainBulkModulus[k],
                                 m_mineralBulkModulus[k],
+                                getFluidBulkModulus( k ),
                                 anelasticStrainIncrement );
   }
 
@@ -191,17 +211,21 @@ public:
     // 2. Update the porosity due to solid, pore mineral, and pore fluid pressure
     // Currently ignore thermal effects
     GEOS_UNUSED_VAR( temperature, temperature_k, temperature_n );
-    computePorosityFixedStress( pressure, pressure_k, pressure_n,
-                                m_porosity_n[k][q],
-                                m_referencePorosity[k],
-                                m_newPorosity[k][q],
-                                m_dPorosity_dPressure[k][q],
-                                m_biotCoefficient[k],
-                                m_meanEffectiveStressIncrement_k[k][q],
-                                m_bulkModulus[k],
-                                m_grainBulkModulus[k],
-                                m_mineralBulkModulus[k],
-                                reactionPorosityIncrement );
+    if( !m_fixedPorosity )
+    {
+      computePorosityFixedStress( pressure, pressure_k, pressure_n,
+                                  m_porosity_n[k][q],
+                                  m_referencePorosity[k],
+                                  m_newPorosity[k][q],
+                                  m_dPorosity_dPressure[k][q],
+                                  m_biotCoefficient[k],
+                                  m_meanEffectiveStressIncrement_k[k][q],
+                                  m_bulkModulus[k],
+                                  m_grainBulkModulus[k],
+                                  m_mineralBulkModulus[k],
+                                  getFluidBulkModulus( k ),
+                                  reactionPorosityIncrement );
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -231,6 +255,9 @@ protected:
 
   /// View on the mineral pressure at the previous timestep
   arrayView1d< real64 > const m_mineralPressure_n;
+
+  /// Fluid compressibility [1/Pa] (constant, pushed in from the flow solver's fluid model)
+  real64 const m_fluidCompressibility;
 };
 
 class BiotReactivePorosity : public ReactivePorosityBase
@@ -285,8 +312,17 @@ public:
                           m_mineralBulkModulus,
                           m_mineralPressure,
                           m_mineralPressure_n,
-                          m_meanEffectiveStressIncrement_k );
+                          m_fluidCompressibility,
+                          m_meanEffectiveStressIncrement_k,
+                          m_fixedPorosity );
   }
+
+  /**
+   * @brief Store the (constant) fluid compressibility read from the flow solver's fluid model.
+   * @param fluidCompressibility the fluid compressibility [1/Pa]
+   */
+  void setFluidCompressibility( real64 const fluidCompressibility )
+  { m_fluidCompressibility = fluidCompressibility; }
 
 protected:
   virtual void postInputInitialization() override;
@@ -311,6 +347,9 @@ protected:
 
   /// Mineral pressure at the previous timestep
   array1d< real64 > m_mineralPressure_n;
+
+  /// Fluid compressibility [1/Pa], pushed in from the flow solver's fluid model (0 until set)
+  real64 m_fluidCompressibility = 0.0;
 };
 
 }   /* namespace constitutive */

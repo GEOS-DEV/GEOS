@@ -162,6 +162,15 @@ Similar to other coupled physics solvers, the Hydrofracture solver is specified 
 
 The final solver present in this example is the SurfaceGenerator, which manages how faces in the model break.
 
+.. note::
+   The SurfaceGenerator provides detailed logging to track fracture growth. Set ``logLevel="1"`` on the SurfaceGenerator solver to see per-rank breakdown of fracture element creation during mesh splitting. The default output (at ``logLevel="0"``) shows global statistics including:
+   
+   - Number of nodes split
+   - New fracture elements created
+   - Total fracture elements (cumulative)
+   
+   This information is helpful for monitoring fracture propagation and debugging mesh splitting issues.
+
 .. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
