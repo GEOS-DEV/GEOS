@@ -40,7 +40,7 @@ public:
   DamageSpectralUpdates( arrayView2d< real64 > const & inputNewDamage,
                          arrayView2d< real64 > const & inputOldDamage,
                          arrayView3d< real64 > const & inputDamageGrad,
-                         arrayView2d< real64 > const & inputStrainEnergyDensity,
+                         arrayView2d< real64 > const & inputCrackDrivingForce,
                          arrayView2d< real64 > const & inputVolumetricStrain,
                          arrayView2d< real64 > const & inputExtDrivingForce,
                          real64 const & inputLengthScale,
@@ -54,7 +54,7 @@ public:
                          arrayView1d< real64 > const & inputDeltaCoefficient,
                          arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputCrackDrivingForce, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputFractureModelType,
                                   inputLocalDissipationOption,
                                   inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
@@ -67,7 +67,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
 
-  using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
+  using DamageUpdates< UPDATE_BASE >::m_crackDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_volStrain;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
@@ -202,9 +202,9 @@ public:
 
     real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction( positivePartOfStrain, positivePartOfStrain );
 
-    if( sed > m_strainEnergyDensity( k, q ) )
+    if( sed > m_crackDrivingForce( k, q ) )
     {
-      m_strainEnergyDensity( k, q ) = sed;
+      m_crackDrivingForce( k, q ) = sed;
     }
   }
 
@@ -222,10 +222,10 @@ public:
 
 
   GEOS_HOST_DEVICE
-  virtual real64 getStrainEnergyDensity( localIndex const k,
-                                         localIndex const q ) const override final
+  virtual real64 getCrackDrivingForce( localIndex const k,
+                                       localIndex const q ) const override final
   {
-    return m_strainEnergyDensity( k, q );
+    return m_crackDrivingForce( k, q );
   }
 
 };
@@ -241,7 +241,7 @@ public:
   using Damage< BASE >::m_newDamage;
   using Damage< BASE >::m_oldDamage;
   using Damage< BASE >::m_damageGrad;
-  using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_crackDrivingForce;
   using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
@@ -268,7 +268,7 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
-                                                                       m_strainEnergyDensity.toView(),
+                                                                       m_crackDrivingForce.toView(),
                                                                        m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,

@@ -96,7 +96,7 @@ public:
   DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
                  arrayView2d< real64 > const & inputOldDamage,
                  arrayView3d< real64 > const & inputDamageGrad,
-                 arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputCrackDrivingForce,
                  arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
@@ -114,7 +114,7 @@ public:
     m_newDamage( inputNewDamage ),
     m_oldDamage( inputOldDamage ),
     m_damageGrad( inputDamageGrad ),
-    m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_crackDrivingForce( inputCrackDrivingForce ),
     m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
@@ -344,21 +344,21 @@ public:
   }
 
 
-  // TODO: The code below assumes the strain energy density will never be
+  // TODO: The code below assumes the crack driving force will never be
   //       evaluated in a non-converged / garbage configuration.
 
   GEOS_HOST_DEVICE
-  virtual real64 getStrainEnergyDensity( localIndex const k,
-                                         localIndex const q ) const override
+  virtual real64 getCrackDrivingForce( localIndex const k,
+                                       localIndex const q ) const
   {
     real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
 
-    if( sed > m_strainEnergyDensity( k, q ) )
+    if( sed > m_crackDrivingForce( k, q ) )
     {
-      m_strainEnergyDensity( k, q ) = sed;
+      m_crackDrivingForce( k, q ) = sed;
     }
 
-    return m_strainEnergyDensity( k, q );
+    return m_crackDrivingForce( k, q );
   }
 
   GEOS_HOST_DEVICE
@@ -430,7 +430,7 @@ public:
   arrayView3d< real64 > const m_damageGrad;
 
   /// The strain energy density to drive fracture at the quadrature point
-  arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_crackDrivingForce;
 
   /// The volumetric strain at the quadrature point
   arrayView2d< real64 > const m_volStrain;
@@ -508,7 +508,7 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
-                                                                       m_strainEnergyDensity.toView(),
+                                                                       m_crackDrivingForce.toView(),
                                                                        m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
@@ -558,7 +558,7 @@ protected:
   array3d< real64 > m_damageGrad;
 
   /// The strain energy density to drive fracture at the quadrature point
-  array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_crackDrivingForce;
 
   /// The volumetric strain at the quadrature point
   array2d< real64 > m_volStrain;

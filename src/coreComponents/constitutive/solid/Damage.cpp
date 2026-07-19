@@ -82,7 +82,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
 
   this->template registerField< fields::solid::damageGrad >( &m_damageGrad );
 
-  this->template registerField< fields::solid::strainEnergyDensity >( &m_strainEnergyDensity );
+  this->template registerField< fields::solid::crackDrivingForce >( &m_crackDrivingForce );
 
   this->template registerField< fields::solid::volStrain >( &m_volStrain );
 
@@ -145,7 +145,7 @@ void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const 
   m_newDamage.resize( 0, numPts );
   m_oldDamage.resize( 0, numPts );
   m_damageGrad.resize( 0, numPts, 3 );
-  m_strainEnergyDensity.resize( 0, numPts );
+  m_crackDrivingForce.resize( 0, numPts );
   m_volStrain.resize( 0, numPts );
   m_extDrivingForce.resize( 0, numPts );
   m_biotCoefficient.resize( parent.size() );

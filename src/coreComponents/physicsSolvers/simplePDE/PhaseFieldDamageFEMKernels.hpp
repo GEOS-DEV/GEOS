@@ -182,7 +182,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
+    real64 const crackDrivingForce = m_constitutiveUpdate.getCrackDrivingForce( k, q );
     real64 const regularizationLength = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy( k );
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
@@ -199,10 +199,10 @@ public:
 
     LocalDissipation const localDissipationOption = m_constitutiveUpdate.m_localDissipationOption;
 
-    // Elastic energy, floored by the threshold for Linear dissipation.
-    real64 const crackDrivingForce = localDissipationOption == LocalDissipation::Linear ?
-                                     fmax( threshold, strainEnergyDensity ) :
-                                     strainEnergyDensity;
+    // Crack driving force, floored by the threshold for Linear dissipation.
+    real64 const effectiveCrackDrivingForce = localDissipationOption == LocalDissipation::Linear ?
+                                              fmax( threshold, crackDrivingForce ) :
+                                              crackDrivingForce;
 
     // Coefficients that differ between the Linear and Quadratic dissipation models.
     real64 localDissipation;                 // local dissipation contribution to the residual
@@ -226,7 +226,7 @@ public:
 
     real64 const degradationDeriv = m_constitutiveUpdate.getDegradationDerivative( k, qp_damage );
     real64 const degradationSecondDeriv = m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage );
-    real64 const scaledDrivingForce = drivingForceCoeff * regularizationLength * crackDrivingForce / Gc;
+    real64 const scaledDrivingForce = drivingForceCoeff * regularizationLength * effectiveCrackDrivingForce / Gc;
     // The external driving force only enters the Linear (nucleation) model.
     real64 const scaledExtDrivingForce = localDissipationOption == LocalDissipation::Linear ?
                                          0.5 * regularizationLength * m_quadExtDrivingForce[k][q] / Gc :
