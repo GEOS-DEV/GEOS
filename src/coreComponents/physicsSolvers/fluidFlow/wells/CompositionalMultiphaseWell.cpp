@@ -49,7 +49,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
@@ -69,7 +68,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 
@@ -88,14 +86,48 @@ using namespace compositionalMultiphaseStatistics;
 
 CompositionalMultiphaseBase & getFlowSolver( CompositionalMultiphaseWell & wellSolver )
 {
-  // TODO: change the way we access the flowSolver here
-  return wellSolver.getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
+  return wellSolver.getParent().getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
 }
 
 CompositionalMultiphaseBase const & getFlowSolver( CompositionalMultiphaseWell const & wellSolver )
 {
-  // TODO: change the way we access the flowSolver here
-  return wellSolver.getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
+  return wellSolver.getParent().getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
+}
+
+real64 getBHPReferenceGravityCoef( CompositionalMultiphaseWell const & wellSolver,
+                                   ConstraintSourceId const source )
+{
+  real64 refGravCoef = 0.0;
+  bool foundConstraint = false;
+
+  if( wellSolver.isProducer() )
+  {
+    wellSolver.forSubGroups< MinimumBHPConstraint >( [&]( WellConstraintBase const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+      {
+        refGravCoef = static_cast< MinimumBHPConstraint const & >( constraint ).getReferenceGravityCoef();
+        foundConstraint = true;
+      }
+    } );
+  }
+  else
+  {
+    wellSolver.forSubGroups< MaximumBHPConstraint >( [&]( WellConstraintBase const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+      {
+        refGravCoef = static_cast< MaximumBHPConstraint const & >( constraint ).getReferenceGravityCoef();
+        foundConstraint = true;
+      }
+    } );
+  }
+
+  GEOS_THROW_IF( !foundConstraint,
+                 GEOS_FMT( "Could not find active BHP constraint for well {}", wellSolver.getName() ),
+                 InputError );
+
+  return refGravCoef;
 }
 
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
@@ -491,7 +523,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   // control data
 
   string const wellControlsName =  getName();
-  real64 const & refGravCoef = getReferenceGravityCoef();
+  real64 const refGravCoef = getBHPReferenceGravityCoef( *this, ConstraintSourceId::USER );
 
   real64 & currentBHP =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
@@ -524,7 +556,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     return;
   }
 
-
   integer const numPhase = m_numPhases;
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
@@ -542,7 +573,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   // control data
 
   string const wellControlsName = getName();
-
+  integer const useMassCond = useMass();
   arrayView1d< real64 > const & currentPhaseVolRate =
     getReference< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() );
 
@@ -561,6 +592,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                               totalDens,
                               phaseDens,
                               phaseFrac,
+                              &useMassCond,
                               &currentTotalVolRate,
                               currentPhaseVolRate,
                               &currentMassRate,
@@ -570,8 +602,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     // Step 1: update the total volume rate
 
     real64 const currentTotalRate = connRate[iwelemRef];
-    // Assumes useMass is true
-    currentMassRate = currentTotalRate;
+    if( useMassCond )
+      currentMassRate = currentTotalRate;
     // Step 1.1: compute the inverse of the total density and derivatives
     massDensity = totalDens[iwelemRef][0];
     real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
@@ -631,7 +663,7 @@ void CompositionalMultiphaseWell::calculateReferenceElementRates( WellElementSub
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfCond =  useSurfaceConditions();
-
+  integer const useMassCond = useMass();
   arrayView1d< real64 > const & currentPhaseVolRate =
     getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
 
@@ -658,6 +690,7 @@ void CompositionalMultiphaseWell::calculateReferenceElementRates( WellElementSub
                                 phaseFrac,
                                 logSurfaceCondition,
                                 &useSurfCond,
+                                &useMassCond,
                                 &currentTotalVolRate,
                                 currentPhaseVolRate,
                                 &currentMassRate,
@@ -672,8 +705,8 @@ void CompositionalMultiphaseWell::calculateReferenceElementRates( WellElementSub
       // Step 2: update the total volume rate
 
       real64 const currentTotalRate = connRate[iwelemRef];
-      // Assumes useMass is true
-      currentMassRate = currentTotalRate;
+      if( useMassCond )
+        currentMassRate = currentTotalRate;
       // Step 2.1: compute the inverse of the total density
       massDensity = totalDens[iwelemRef][0];
       real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
@@ -1127,7 +1160,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
 
     arrayView1d< real64 const > const & perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
     arrayView1d< integer const > const & perfStatus = perforationData.getField< fields::perforation::perforationStatus >();
-
+    real64 const refWellElemGravCoef = getBHPReferenceGravityCoef( *this, ConstraintSourceId::USER );
     // 1) Loop over all perforations to compute an average mixture density and component fraction
     // 2) Initialize the reference pressure
     // 3) Estimate the pressures in the well elements using the average density
@@ -1138,6 +1171,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
               numComp,
               numPhase,
               *this,
+              refWellElemGravCoef,
               0.0,     // initialization done at t = 0
               resCompFlowAccessors.get( flow::pressure{} ),
               resCompFlowAccessors.get( flow::temperature{} ),
@@ -2174,8 +2208,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
 
   if( isProducer() )
   {
-    forSubGroups< MinimumBHPConstraint, ProductionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< VolumeRateConstraint >,
-                  ProductionConstraint< LiquidRateConstraint >
+    forSubGroups< MinimumBHPConstraint, ProductionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< VolumeRateConstraint >
                   >( [&]( auto & constraint )
     {
       // Need to use name since there could be multiple constraints of the same type
@@ -2205,8 +2238,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
   else
   {
     forSubGroups< MaximumBHPConstraint, InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
-                  InjectionConstraint< VolumeRateConstraint >,
-                  InjectionConstraint< LiquidRateConstraint >
+                  InjectionConstraint< VolumeRateConstraint >
                   >( [&]( auto & constraint )
     {
       if( constraint.getName() ==  getCurrentConstraint()->getName())

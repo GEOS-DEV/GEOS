@@ -23,7 +23,6 @@
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
 
-#include "WellLiquidRateConstraint.hpp"
 #include "WellMassRateConstraint.hpp"
 #include "WellPhaseVolumeRateConstraint.hpp"
 #include "WellVolumeRateConstraint.hpp"

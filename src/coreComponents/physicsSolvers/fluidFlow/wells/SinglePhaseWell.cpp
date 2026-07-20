@@ -47,7 +47,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalSinglePhaseWellKernels.hpp"
@@ -75,6 +74,42 @@ SinglePhaseBase const & getFlowSolver( SinglePhaseWell const & wellSolver )
 {
   // TODO: change the way we access the flowSolver here
   return wellSolver.getParent().getGroup< SinglePhaseBase >( wellSolver.getFlowSolverName() );
+}
+
+real64 getBHPReferenceGravityCoef( SinglePhaseWell const & wellSolver,
+                                   ConstraintSourceId const source )
+{
+  real64 refGravCoef = 0.0;
+  bool foundConstraint = false;
+
+  if( wellSolver.isProducer() )
+  {
+    wellSolver.forSubGroups< MinimumBHPConstraint >( [&]( WellConstraintBase const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+      {
+        refGravCoef = static_cast< MinimumBHPConstraint const & >( constraint ).getReferenceGravityCoef();
+        foundConstraint = true;
+      }
+    } );
+  }
+  else
+  {
+    wellSolver.forSubGroups< MaximumBHPConstraint >( [&]( WellConstraintBase const & constraint )
+    {
+      if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
+      {
+        refGravCoef = static_cast< MaximumBHPConstraint const & >( constraint ).getReferenceGravityCoef();
+        foundConstraint = true;
+      }
+    } );
+  }
+
+  GEOS_THROW_IF( !foundConstraint,
+                 GEOS_FMT( "Could not find active BHP constraint for well {}", wellSolver.getName() ),
+                 InputError );
+
+  return refGravCoef;
 }
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
@@ -163,6 +198,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( subRegion );
+
   if( useSurfaceConditions() )
   {
     bool const useSegmentValues = referenceReservoirRegion().empty();
@@ -240,7 +276,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & dens = fluid.density();
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDens = fluid.dDensity();
 
-  real64 const & refGravCoef =  getReferenceGravityCoef();
+  real64 const refGravCoef = getBHPReferenceGravityCoef( *this, ConstraintSourceId::USER );
   real64 & currentBHP = getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
 
   // bring everything back to host, capture the scalars by reference
@@ -568,7 +604,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, Group & meshBodi
 
     PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( elemManager, getFlowSolverName());
     PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager, getFlowSolverName() );
-
+    real64 const refWellElemGravCoef = getBHPReferenceGravityCoef( *this, ConstraintSourceId::USER );
     // 1) Loop over all perforations to compute an average density
     // 2) Initialize the reference pressure
     // 3) Estimate the pressures in the well elements using the average density
@@ -578,6 +614,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, Group & meshBodi
               subRegion.size(),
               perforationData.getNumPerforationsGlobal(),
               *this,
+              refWellElemGravCoef,
               0.0,           // initialization done at t = 0
               resSinglePhaseFlowAccessors.get( flow::pressure{} ),
               resSinglePhaseFlowAccessors.get( flow::temperature{} ),

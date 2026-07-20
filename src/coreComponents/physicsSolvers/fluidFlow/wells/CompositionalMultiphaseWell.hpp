@@ -369,6 +369,17 @@ public:
 
   } viewKeysCompMultiphaseWell;
 
+  /**
+   * @brief Checks fluild model compatibility and validity
+   * @param[in] fluid the fluid to check
+   * @param[in] referenceFluid the reference fluid model
+   * @detail
+   * This function will produce an error if one of the well constitutive models
+   * is incompatible with the corresponding models in reservoir
+   * regions connected to that particular well.
+   */
+  void validateFluidModel( constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid )const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -380,16 +391,7 @@ protected:
   void saveState( WellElementSubRegion & subRegion );
   virtual void postRestartInitialization( ) override;
 
-  /**
-   * @brief Checks fluild model compatibility and validity
-   * @param[in] fluid the fluid to check
-   * @param[in] referenceFluid the reference fluid model
-   * @detail
-   * This function will produce an error if one of the well constitutive models
-   * is incompatible with the corresponding models in reservoir
-   * regions connected to that particular well.
-   */
-  void validateFluidModel( constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid )const;
+
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step

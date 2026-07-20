@@ -299,7 +299,6 @@ CompositionalMultiphaseWell const & WellManager::getCompositionalMultiphaseWell(
 }
 void WellManager::initializePostSubGroups()
 {
-#if 0
   GEOS_MARK_FUNCTION;
   // Validate constitutive models
   if( isCompositional() )
@@ -308,7 +307,7 @@ void WellManager::initializePostSubGroups()
     constitutive::ConstitutiveManager const & cm = domain.getConstitutiveManager();
     CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
     string const referenceFluidName = flowSolver.referenceFluidModelName();
-    constitutive::MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< constitutive::MultiFluidBase >( m_referenceFluidModelName );
+    constitutive::MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< constitutive::MultiFluidBase >( referenceFluidName );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel const & mesh,
@@ -318,10 +317,10 @@ void WellManager::initializePostSubGroups()
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             WellElementSubRegion const & subRegion )
       {
-        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseWell::viewKeyStruct::fluidNamesString() );
         constitutive::MultiFluidBase const & fluid = getConstitutiveModel< constitutive::MultiFluidBase >( subRegion, fluidName );
-        WellControls const & wellControls = getWellControls( subRegion );
-        wellControls.validateFluidModel( fluid, referenceFluid );
+        CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
+        wellControls->validateFluidModel( fluid, referenceFluid );
       } );
 
     } );
@@ -330,7 +329,7 @@ void WellManager::initializePostSubGroups()
   {
     // Single phase validation can be added here in the future
   }
-#endif
+
 }
 
 void WellManager::setupDofs( DomainPartition const & domain,
@@ -467,25 +466,7 @@ void WellManager::implicitStepComplete( real64 const & time,
 }
 
 void WellManager::postRestartInitialization()
-{
-#if 0
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-  {
-    // loop over the wells
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-
-    {
-      WellControls & wellControls = getWell( subRegion );
-      wellControls.postRestartInitialization(   );
-
-    } );
-  } );
-#endif
-}
+{}
 void WellManager::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -567,7 +548,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
   integer numNorm = 1;       // mass balance
-  array1d< real64 > localResidualNorm, wellResidalNorm;
+  array1d< real64 > localResidualNorm, wellResidualNorm;
   array1d< real64 > localResidualNormalizer;
 
   if( isThermal() )
@@ -598,27 +579,19 @@ WellManager::calculateResidualNorm( real64 const & time_n,
       // step 1: compute the norm in the subRegion
       if( wellControls.isWellOpen( ) )
       {
-        wellResidalNorm = wellControls.calculateLocalWellResidualNorm( time_n,
-                                                                       dt,
-                                                                       m_nonlinearSolverParameters,
-                                                                       subRegion,
-                                                                       dofManager,
-                                                                       localRhs );
+        wellResidualNorm = wellControls.calculateLocalWellResidualNorm( time_n,
+                                                                        dt,
+                                                                        m_nonlinearSolverParameters,
+                                                                        subRegion,
+                                                                        dofManager,
+                                                                        localRhs );
         for( integer i=0; i<numNorm; i++ )
         {
-          if( wellResidalNorm[i] > localResidualNorm[i] )
+          if( wellResidualNorm[i] > localResidualNorm[i] )
           {
-            localResidualNorm[i] = wellResidalNorm[i];
+            localResidualNorm[i] =  LvArray::math::max( localResidualNorm[i], wellResidualNorm[i] );
           }
         }
-      }
-      else
-      {
-        for( integer i=0; i<numNorm; i++ )
-        {
-          localResidualNorm[i] = 0.0;
-        }
-
       }
     } );
   } );
@@ -788,10 +761,10 @@ WellManager::checkSystemSolution( DomainPartition & domain,
                                                                  rankNegPressureIds,
                                                                  rankNegDensityIds,
                                                                  rankTotalNegDensityIds );
-      globalCheck = MpiWrapper::min( localCheck );
+      globalCheck = std::min( localCheck, globalCheck );
     } );
   } );
-
+  globalCheck  = MpiWrapper::min( globalCheck );
   minPressure  = MpiWrapper::min( minPressure );
   minDensity = MpiWrapper::min( minDensity );
   minTotalDensity = MpiWrapper::min( minTotalDensity );

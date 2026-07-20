@@ -459,16 +459,6 @@ public:
    */
   integer estimateSolution() const { return m_estimateSolution; }
 
-  /**
-   * @brief Getter for the reference gravity coefficient
-   * @return the reference gravity coefficient
-   */
-  real64 getReferenceGravityCoef() const { return m_refGravCoef; }
-
-  /**
-   * @brief Setter for the reference gravity
-   */
-  void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
 
   /**
    * @brief Returns the target bottom hole pressure value.
@@ -556,6 +546,13 @@ public:
    */
 
   void setUseMass( integer useMass )   {  m_useMass=useMass; }
+
+  /**
+   * @brief is useMass option active
+   * @return a boolean
+   */
+
+  integer useMass( )   {  return m_useMass;}
 
   /**
    * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup

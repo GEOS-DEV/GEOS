@@ -200,6 +200,7 @@ PresTempCompFracInitializationKernel::
           integer const numComps,
           integer const numPhases,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
@@ -219,7 +220,6 @@ PresTempCompFracInitializationKernel::
   integer constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
-  real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   real64 const initialPresCoef = wellControls.getInitialPressureCoefficient();
   ConstraintTypeId const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();

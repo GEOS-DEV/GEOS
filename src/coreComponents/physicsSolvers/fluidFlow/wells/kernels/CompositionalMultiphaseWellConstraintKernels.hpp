@@ -31,7 +31,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 namespace geos
 {
 
@@ -237,129 +236,6 @@ struct ConstraintHelper
 
   }
 
-  template< template< typename U > class T, typename U=LiquidRateConstraint >
-  static void assembleConstraintEquation( real64 const & time_n,
-                                          WellControls & wellControls,
-                                          T< LiquidRateConstraint > & constraint,
-                                          WellElementSubRegion const & subRegion,
-                                          string const & wellDofKey,
-                                          localIndex const & rankOffset,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs )
-  {
-    // subRegion data
-
-    localIndex const iwelemRef = subRegion.getTopWellElementIndex();
-    arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
-    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
-    arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
-
-    // setup row/column indices for constraint equation
-    using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-    using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
-    using Deriv = constitutive::multifluid::DerivativeOffset;
-
-    localIndex const eqnRowIndex      = wellElemDofNumber[iwelemRef] + WJ_ROFFSET::CONTROL - rankOffset;
-    globalIndex dofColIndices[COFFSET_WJ::nDer]{};
-    for( integer ic = 0; ic < COFFSET_WJ::nDer; ++ic )
-    {
-      dofColIndices[ ic ] = wellElemDofNumber[iwelemRef] + ic;
-    }
-
-    // fluid data
-    constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-
-    arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluidSeparator.phaseFraction();
-    arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluidSeparator.dPhaseFraction();
-    arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens = fluidSeparator.phaseDensity();
-    arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens = fluidSeparator.dPhaseDensity();
-
-    // constraint data
-    real64 const & targetPhaseRate = constraint.getConstraintValue( time_n );
-    const array1d< int > & phaseIndices = constraint.getPhaseIndices();
-
-
-    // current constraint value
-    arrayView1d< real64 > const & currentPhaseVolRate =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
-    integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-
-    // residual
-    real64 controlEqn =  -targetPhaseRate;
-    for( integer ip= 0; ip < phaseIndices.size(); ++ip )
-    {
-      controlEqn += currentPhaseVolRate[phaseIndices[ip]];
-    }
-
-    // setup Jacobian terms
-    real64 dControlEqn[NC+2+IS_THERMAL]{};
-
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [phaseIndices,
-                                connRate,
-                                phaseDens,
-                                dPhaseDens,
-                                phaseFrac,
-                                dPhaseFrac,
-                                compFrac,
-                                dCompFrac_dCompDens,
-                                &dControlEqn,
-                                &useSurfaceConditions,
-                                localRhs,
-                                controlEqn,
-                                eqnRowIndex,
-                                dofColIndices,
-                                localMatrix,
-                                &iwelemRef] ( localIndex const )
-    {
-
-      stackArray1d< real64, NC > work( NC );
-      for( integer i= 0; i < phaseIndices.size(); ++i )
-      {
-        integer ip = phaseIndices[i];
-        bool const phaseExists = (phaseFrac[iwelemRef][0][ip] > 0);
-        // skip the rest of this function if phase ip is absent
-        if( phaseExists )
-        {
-
-          real64 const currentTotalRate = connRate[iwelemRef];
-
-          real64 const phaseDensInv =  1.0 / phaseDens[iwelemRef][0][ip];
-          real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
-          real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac[iwelemRef][0][ip][Deriv::dP] * phaseDensInv
-                                                           - dPhaseDens[iwelemRef][0][ip][Deriv::dP] * phaseFracTimesPhaseDensInv * phaseDensInv;
-
-          // divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
-          dControlEqn[COFFSET_WJ::dP] += ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
-          dControlEqn[COFFSET_WJ::dQ] += phaseFracTimesPhaseDensInv;
-          if constexpr (IS_THERMAL )
-          {
-            real64 const dPhaseFracTimesPhaseDensInv_dTemp = dPhaseFrac[iwelemRef][0][ip][Deriv::dT] * phaseDensInv
-                                                             - dPhaseDens[iwelemRef][0][ip][Deriv::dT] * phaseFracTimesPhaseDensInv * phaseDensInv;
-            dControlEqn[COFFSET_WJ::dT] += ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dTemp;
-          }
-
-          for( integer ic = 0; ic < NC; ++ic )
-          {
-            real64 temp = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
-            temp += dPhaseFrac[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
-            temp *= currentTotalRate;
-            dControlEqn[COFFSET_WJ::dC+ic] += temp;
-          }
-        }
-      }
-      applyChainRuleInPlace( NC, dCompFrac_dCompDens[iwelemRef], &dControlEqn[COFFSET_WJ::dC], work.data() );
-      // add solver matrices
-      localRhs[eqnRowIndex] += controlEqn;
-      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                                dofColIndices,
-                                                                dControlEqn,
-                                                                COFFSET_WJ::nDer );
-    } );
-
-
-  }
   template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,

@@ -281,6 +281,7 @@ struct PresTempCompFracInitializationKernel
           integer const numComponents,
           integer const numPhases,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
