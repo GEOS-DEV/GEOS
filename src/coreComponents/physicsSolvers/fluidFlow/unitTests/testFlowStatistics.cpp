@@ -313,6 +313,10 @@ void checkTimeStepFluxStats( ProblemManager & problem, TestSet const & testSet,
   SourceFluxStatsAggregator & timestepStats =
     problem.getGroupByPath< SourceFluxStatsAggregator >( testSet.inputs.timeStepFluxStatsPath );
 
+  // Stats run before the solver, so at t=0 elements counts are at 0
+  integer const sourceElementsCount = ( timestepId == 0 ) ? 0 : testSet.inputs.sourceElementsCount;
+  integer const sinkElementsCount   = ( timestepId == 0 ) ? 0 : testSet.inputs.sinkElementsCount;
+
   timestepStats.forMeshLevelStatsWrapper( domain,
                                           [&] ( MeshLevel & meshLevel,
                                                 SourceFluxStatsAggregator::WrappedStats & )
@@ -325,14 +329,14 @@ void checkTimeStepFluxStats( ProblemManager & problem, TestSet const & testSet,
       {
         checkFluxStats( testSet.sourceMassProd[timestepId],
                         testSet.sourceRates[timestepId],
-                        testSet.inputs.sourceElementsCount,
+                        sourceElementsCount,
                         fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
       }
       else if( fluxStats.getFluxName() == testSet.inputs.sinkFluxName )
       {
         checkFluxStats( testSet.sinkMassProd[timestepId],
                         testSet.sinkRates[timestepId],
-                        testSet.inputs.sinkElementsCount,
+                        sinkElementsCount,
                         fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
       }
       else
@@ -347,8 +351,12 @@ void checkTimeStepStats( TestSet const & testSet,
                          real64 const time_n,
                          integer const timestepId )
 {
-  EXPECT_LT( timestepId, testSet.timestepCount ) << GEOS_FMT( "The tested time-step count were higher than expected (t = {} s).",
-                                                              time_n );
+  EXPECT_LT( timestepId, testSet.timestepCount )
+    << GEOS_FMT( "The tested time-step count were higher than expected (t = {} s).", time_n );
+
+  EXPECT_DOUBLE_EQ( time_n, timestepId * testSet.inputs.dt )
+    << GEOS_FMT( "Unexpected time for timestep {}: expected {}, got {}",
+                 timestepId, timestepId * testSet.inputs.dt, time_n );
 }
 
 void checkWholeSimTimeStepStats( ProblemManager & problem,
