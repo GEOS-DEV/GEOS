@@ -96,8 +96,7 @@ public:
    * @param[in] level The lookup key of the MeshLevel
    * @return const reference to the MeshLevel
    */
-  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
-                                          std::is_same< T, const char * >::value, bool > = false >
+  template< typename T >
   MeshLevel & getMeshLevel( T const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
@@ -108,8 +107,7 @@ public:
    * @param[in] level The lookup key of the MeshLevel
    * @return Reference to the MeshLevel
    */
-  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
-                                          std::is_same< T, const char * >::value, bool > = false >
+  template< typename T >
   MeshLevel & getMeshLevel( T const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
@@ -156,7 +154,10 @@ public:
    * @brief Set mesh length scale used to define an absolute length tolerance
    * @param [in] scale length scale
    */
-  void setGlobalLengthScale( real64 scale );
+  void setGlobalLengthScale( real64 scale )
+  {
+    m_globalLengthScale = scale;
+  }
 
   /**
    * @brief Get mesh length scale

@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/GeosxConfig.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreKernels.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "LvArray/src/output.hpp"
@@ -172,11 +173,11 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
   array1d< HYPRE_Int > offsets;
   offsets.resizeWithoutInitializationOrDestruction( hypre::memorySpace, localMatrix.numRows() );
 
+  auto const rowsView = rows.toView();
+  auto const sizesView = sizes.toView();
+  auto const offsetsView = offsets.toView();
   forAll< hypre::execPolicy >( localMatrix.numRows(),
-                               [localMatrix, rankOffset,
-                                rowsView = rows.toView(),
-                                sizesView = sizes.toView(),
-                                offsetsView = offsets.toView()] GEOS_HYPRE_DEVICE ( localIndex const row )
+                               [localMatrix, rankOffset, rowsView, sizesView, offsetsView] GEOS_HYPRE_DEVICE ( localIndex const row )
   {
     rowsView[row] = LvArray::integerConversion< HYPRE_BigInt >( row + rankOffset );
     sizesView[row] = LvArray::integerConversion< HYPRE_Int >( localMatrix.numNonZeros( row ) );
@@ -690,18 +691,20 @@ void HypreMatrix::multiplyRAP( HypreMatrix const & R,
   dst.parCSRtoIJ( dst_parcsr );
 }
 
-void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
-                                HypreMatrix & dst ) const
+void HypreMatrix::multiplyP1tAP2( HypreMatrix const & P1,
+                                  HypreMatrix const & P2,
+                                  HypreMatrix & dst ) const
 {
   GEOS_LAI_ASSERT( ready() );
-  GEOS_LAI_ASSERT( P.ready() );
-  GEOS_LAI_ASSERT_EQ( numLocalRows(), P.numLocalRows() );
-  GEOS_LAI_ASSERT_EQ( numLocalCols(), P.numLocalRows() );
+  GEOS_LAI_ASSERT( P1.ready() );
+  GEOS_LAI_ASSERT( P2.ready() );
+  GEOS_LAI_ASSERT_EQ( numLocalRows(), P1.numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( numLocalCols(), P2.numLocalRows() );
 
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P.unwrapped(),
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P1.unwrapped(),
                                                                  m_parcsr_mat,
-                                                                 P.unwrapped(),
-                                                                 0 );
+                                                                 P2.unwrapped(),
+                                                                 0, 1 );
 
   dst.parCSRtoIJ( dst_parcsr );
 }
@@ -837,22 +840,30 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
   {
     case RowSumType::SumValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, hypre::ops::identity< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const x ){ return x; },
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const a, HYPRE_Real const b ){ return a + b; } );
       break;
     }
     case RowSumType::SumAbsValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::abs< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const x ){ return LvArray::math::abs( x ); },
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const a, HYPRE_Real const b ){ return a + b; } );
       break;
     }
     case RowSumType::SumSqrValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::square< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const x ){ return LvArray::math::square( x ); },
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const a, HYPRE_Real const b ){ return a + b; } );
       break;
     }
     case RowSumType::MaxAbsValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::abs< HYPRE_Real >, LvArray::math::max< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const x ){ return LvArray::math::abs( x ); },
+                                [] GEOS_HYPRE_DEVICE ( HYPRE_Real const a, HYPRE_Real const b ){ return LvArray::math::max( a, b ); } );
       break;
     }
   }
@@ -862,15 +873,12 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                            integer const dofsPerNode ) const
 {
   GEOS_MARK_FUNCTION;
+  GEOS_LAI_ASSERT( ready() );
 
-  localIndex const maxRowEntries = maxRowLength();
-  integer const temp = maxRowEntries % dofsPerNode;
-  GEOS_LAI_ASSERT_EQ( temp, 0 );
+  CRSMatrix< real64, globalIndex > tempMat;
 
-  CRSMatrix< real64 > tempMat;
-
-  tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
-  CRSMatrixView< real64 > const tempMatView = tempMat.toView();
+  tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
+  CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
 
   globalIndex const firstLocalRow = ilower();
   globalIndex const firstLocalCol = jlower();
@@ -881,19 +889,15 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
 
   HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
 
-  auto const getComponent = [dofsPerNode] GEOS_HYPRE_DEVICE ( auto const i )
-  {
-    return LvArray::integerConversion< integer >( i % dofsPerNode );
-  };
-
-  forAll< hypre::execPolicy >( numLocalRows(), [diag, offd, tempMatView, getComponent,
+  forAll< hypre::execPolicy >( numLocalRows(), [diag, offd, tempMatView, dofsPerNode,
                                                 firstLocalRow, firstLocalCol, colMap] GEOS_HYPRE_DEVICE ( localIndex const localRow )
   {
-    integer const rowComponent = getComponent( firstLocalRow + localRow );
+    integer const rowComponent =
+      LvArray::integerConversion< integer >( ( firstLocalRow + localRow ) % dofsPerNode );
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
     {
       HYPRE_BigInt const globalCol = firstLocalCol + diag.colind[k];
-      if( getComponent( globalCol ) == rowComponent )
+      if( LvArray::integerConversion< integer >( globalCol % dofsPerNode ) == rowComponent )
       {
         tempMatView.insertNonZero( localRow, globalCol, diag.values[k] );
       }
@@ -903,7 +907,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
       for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
       {
         HYPRE_BigInt const globalCol = colMap[offd.colind[k]];
-        if( getComponent( globalCol ) == rowComponent )
+        if( LvArray::integerConversion< integer >( globalCol % dofsPerNode ) == rowComponent )
         {
           tempMatView.insertNonZero( localRow, globalCol, offd.values[k] );
         }
@@ -929,24 +933,14 @@ void HypreMatrix::addEntries( HypreMatrix const & src,
   {
     case MatrixPatternOp::Restrict:
     {
-      hypre::addEntriesRestricted( hypre_ParCSRMatrixDiag( src.unwrapped() ),
-                                   hypre::ops::identity< HYPRE_Int >,
-                                   hypre_ParCSRMatrixDiag( unwrapped() ),
-                                   hypre::ops::identity< HYPRE_Int >,
-                                   scale );
-      if( hypre_CSRMatrixNumCols( hypre_ParCSRMatrixOffd( unwrapped() ) ) > 0 )
-      {
-        HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src.unwrapped() );
-        HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( unwrapped() );
-        hypre::addEntriesRestricted( hypre_ParCSRMatrixOffd( src.unwrapped() ),
-                                     [src_colmap] GEOS_HYPRE_DEVICE ( auto i ) { return src_colmap[i]; },
-                                     hypre_ParCSRMatrixOffd( unwrapped() ),
-                                     [dst_colmap] GEOS_HYPRE_DEVICE ( auto i ) { return dst_colmap[i]; },
-                                     scale );
-      }
+      hypre::addMatrixEntries< hypre::AddEntriesRestrictedKernel >( src.unwrapped(), unwrapped(), scale );
       break;
     }
-    case MatrixPatternOp::Same:
+    case MatrixPatternOp::Equal:
+    {
+      hypre::addMatrixEntries< hypre::AddEntriesSamePatternKernel >( src.unwrapped(), unwrapped(), scale );
+      break;
+    }
     case MatrixPatternOp::Subset:
     case MatrixPatternOp::Extend:
     {
@@ -998,7 +992,7 @@ void HypreMatrix::clampEntries( real64 const lo,
   hypre::clampMatrixEntries( hypre_ParCSRMatrixOffd( m_parcsr_mat ), lo, hi, false );
 }
 
-localIndex HypreMatrix::maxRowLength() const
+localIndex HypreMatrix::maxRowLengthLocal() const
 {
   GEOS_LAI_ASSERT( assembled() );
 
@@ -1011,7 +1005,7 @@ localIndex HypreMatrix::maxRowLength() const
     localMaxRowLength.max( (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow] ) );
   } );
 
-  return MpiWrapper::max( localMaxRowLength.get(), comm() );
+  return localMaxRowLength.get();
 }
 
 localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -1055,6 +1049,16 @@ void HypreMatrix::getRowLengths( arrayView1d< localIndex > const & lengths ) con
   } );
 }
 
+void HypreMatrix::getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const
+{
+  GEOS_LAI_ASSERT( assembled() );
+  HYPRE_Int const * const ia_diag = hypre_CSRMatrixI( hypre_ParCSRMatrixDiag( m_parcsr_mat ) );
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOS_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    lengths[localRow] = ia_diag[localRow + 1] - ia_diag[localRow];
+  } );
+}
+
 void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
                               arraySlice1d< globalIndex > const & colIndices,
                               arraySlice1d< real64 > const & values ) const
@@ -1089,6 +1093,89 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   HYPRE_Real * const data = hypre_VectorData( hypre_ParVectorLocalVector( dst.unwrapped() ) );
   hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), data, 0 );
   dst.touch();
+}
+
+void HypreMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMat ) const
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
+  HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
+  globalIndex const firstLocalCol = jlower();
+
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag, offd,
+                                colMap, firstLocalCol] GEOS_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      globalIndex const col = firstLocalCol + diag.colind[k];
+      localMat.insertNonZero( localRow, col, diag.values[k] );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        globalIndex const col = colMap[offd.colind[k]];
+        localMat.insertNonZero( localRow, col, offd.values[k] );
+      }
+    }
+  } );
+}
+
+void HypreMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
+  HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
+  globalIndex const firstLocalCol = jlower();
+
+  localMat.zero();
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag, offd,
+                                colMap, firstLocalCol] GEOS_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      globalIndex const col = firstLocalCol + diag.colind[k];
+      localMat.addToRow< serialAtomic >( localRow, &col, &diag.values[k], 1 );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        globalIndex const col = colMap[offd.colind[k]];
+        localMat.addToRow< serialAtomic >( localRow, &col, &offd.values[k], 1 );
+      }
+    }
+  } );
+}
+
+void HypreMatrix::extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag] GEOS_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    GEOS_ASSERT_GE( localMat.nonZeroCapacity( localRow ), diag.rowptr[localRow + 1] - diag.rowptr[localRow] );
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      localMat.insertNonZero( localRow, diag.colind[k], diag.values[k] );
+    }
+  } );
 }
 
 namespace
@@ -1339,17 +1426,21 @@ void HypreMatrix::write( string const & filename,
     {
       int const rank = MpiWrapper::commRank( comm() );
 
+      globalIndex const numRows = numGlobalRows();
+      globalIndex const numCols = numGlobalCols();
+      globalIndex const numNonzeros = numGlobalNonzeros();
+
       // Write MatrixMarket header
       if( rank == 0 )
       {
         std::ofstream os( filename );
         GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix coordinate real general\n";
-        os << GEOS_FMT( "{} {} {}\n", numGlobalRows(), numGlobalCols(), numGlobalNonzeros() );
+        os << GEOS_FMT( "{} {} {}\n", numRows, numCols, numNonzeros );
       }
 
       // Write matrix values
-      if( numGlobalRows() > 0 && numGlobalCols() > 0 )
+      if( numRows > 0 && numCols > 0 )
       {
         // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
         // Warning: works for a parcsr matrix that is smaller than 2^31-1
@@ -1365,13 +1456,15 @@ void HypreMatrix::write( string const & filename,
           std::ofstream os( filename, std::ios_base::app );
           GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[64];
+          int const width = static_cast< int >( std::log10( std::max( csr.nrow, csr.ncol ) ) ) + 1;
 
           for( HYPRE_Int i = 0; i < csr.nrow; i++ )
           {
             for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
             {
               // MatrixMarket row/col indices are 1-based
-              GEOS_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
+              GEOS_FMT_TO( str, sizeof( str ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n",
+                           width, i + 1, csr.colind[k] + 1, csr.values[k] );
               os << str;
             }
           }
@@ -1475,14 +1568,17 @@ void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
   array1d< HYPRE_Int > pointMarkers( numLocalRows() );
   m_dofManager->getLocalDofComponentLabels( pointMarkers );
 
-  // Create scaling vector
-  scaling.create( numLocalRows(), comm() );
-  HYPRE_ParVector hypre_vec = scaling.unwrapped();
-  HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
-
-  // Compute scaling vector
+  // Let hypre own the temporary vector so tagged scaling is free to resize
+  // and attach metadata without mutating GEOS-managed vector storage.
+  HYPRE_ParVector tempScaling = nullptr;
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixComputeScalingTagged( m_parcsr_mat, 1, HYPRE_MEMORY_HOST, num_tags,
-                                                                pointMarkers.data(), hypre_vec_ptr ) );
+                                                                pointMarkers.data(), &tempScaling ) );
+
+  // Copy the computed values back into the wrapped GEOS vector.
+  scaling.create( numLocalRows(), comm() );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorCopy( tempScaling, scaling.unwrapped() ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( tempScaling ) );
+  scaling.touch();
 }
 
 }// end namespace geos

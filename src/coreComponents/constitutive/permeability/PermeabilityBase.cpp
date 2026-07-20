@@ -30,19 +30,10 @@ namespace constitutive
 
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_permeability(),
-  m_dPerm_dPressure()
+  ConstitutiveBase( name, parent )
 {
-  registerField( fields::permeability::permeability{}, &m_permeability );
-  registerField( fields::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
-}
-
-std::unique_ptr< ConstitutiveBase >
-PermeabilityBase::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
+  registerField< fields::permeability::permeability >( &m_permeability );
+  registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );
 }
 
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
@@ -59,14 +50,14 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
   }
 }
 
-void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void PermeabilityBase::allocateConstitutiveData( Group & parent,
+                                                 localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_permeability.resize( 0, 1, 6 );
   m_dPerm_dPressure.resize( 0, 1, 6 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 }

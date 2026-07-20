@@ -99,11 +99,6 @@ public:
   BartonBandis( string const & name,
                 Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~BartonBandis() override;
-
   static string catalogName() { return "BartonBandis"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -118,17 +113,18 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
+  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
+  {
+    /// string/key for reference normal stress
+    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
+  };
+
 protected:
 
   virtual void postInputInitialization() override;
 
 private:
 
-  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
-  {
-    /// string/key for reference normal stress
-    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
-  };
   /// Reference normal stress
   real64 m_referenceNormalStress;
 };

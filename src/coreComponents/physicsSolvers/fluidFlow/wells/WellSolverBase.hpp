@@ -142,6 +142,14 @@ public:
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
+
+  /**
+   * @brief Open and close perfs based on user defined perf status table
+   * @param time_n evaluation time
+   * @param domain  the domain
+   */
+  void setPerforationStatus( real64 const & time_n, DomainPartition & domain );
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -242,6 +250,7 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;

@@ -26,7 +26,6 @@
     <!-- Sphinx_Solvers_SolidMechanicsLagrangianFEM -->
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"

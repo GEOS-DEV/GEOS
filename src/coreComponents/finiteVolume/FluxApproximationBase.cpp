@@ -70,6 +70,8 @@ FluxApproximationBase::getCatalog()
 
 void FluxApproximationBase::initializePreSubGroups()
 {
+  GEOS_MARK_FUNCTION;
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
@@ -87,11 +89,9 @@ void FluxApproximationBase::initializePreSubGroups()
         {
           stencilParentGroup = &(mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() ));
         }
-
         Group & stencilGroup = stencilParentGroup->registerGroup( getName() );
 
         registerCellStencil( stencilGroup );
-
         registerFractureStencil( stencilGroup );
       }
       else
@@ -116,8 +116,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  for( auto const & [meshBodyName, meshBodyRegions] : m_targetRegions )
   {
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     m_lengthScale = meshBody.getGlobalLengthScale();
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
@@ -142,7 +143,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
           fsManager.apply< FaceManager >( 0.0, // time = 0
                                           mesh,
                                           fieldName,
-                                          [&] ( FieldSpecificationBase const &,
+                                          [&] ( FieldSpecification const &,
                                                 string const & setName,
                                                 SortedArrayView< localIndex const > const & faceSet,
                                                 FaceManager const &,
@@ -171,8 +172,19 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // Compute the aquifer stencil weights
         computeAquiferStencil( domain, mesh );
       }
+      else
+      {
+        // There can be more than one FluxApproximation object so we check if the the group has
+        // already been registered.
+        if( !mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) )
+        {
+          Group & parentMesh = mesh.getShallowParent();
+          Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
+          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+        }
+      }
     } );
-  } );
+  }
 }
 
 void FluxApproximationBase::addFieldName( string const & name )

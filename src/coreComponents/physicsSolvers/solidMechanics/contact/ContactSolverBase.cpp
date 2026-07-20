@@ -44,6 +44,9 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
+
+  addLogLevel< logInfo::ConfigurationStatistics >();
+  addLogLevel< logInfo::ContactTolerance >();
 }
 
 void ContactSolverBase::postInputInitialization()
@@ -51,11 +54,10 @@ void ContactSolverBase::postInputInitialization()
   SolidMechanicsLagrangianFEM::postInputInitialization();
 
   GEOS_THROW_IF( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic,
-                 GEOS_FMT( "{} {}: The attribute `{}` must be `{}`",
-                           this->getCatalogName(), this->getName(),
+                 GEOS_FMT( "The attribute `{}` must be `{}`",
                            viewKeyStruct::timeIntegrationOptionString(),
                            EnumStrings< TimeIntegrationOption >::toString( TimeIntegrationOption::QuasiStatic ) ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -123,9 +125,8 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
 
   // TODO remove once multiple regions are fully supported
   GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
-                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
-                           this->getCatalogName(), this->getName() ),
-                 InputError );
+                 "The number of fracture regions can not be more than one",
+                 InputError, getDataContext() );
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
@@ -197,24 +198,21 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
 void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  if( getLogLevel() >=1 )
+  globalIndex numStick = 0;
+  globalIndex numNewSlip  = 0;
+  globalIndex numSlip  = 0;
+  globalIndex numOpen  = 0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & )
   {
-    globalIndex numStick = 0;
-    globalIndex numNewSlip  = 0;
-    globalIndex numSlip  = 0;
-    globalIndex numOpen  = 0;
+    computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
 
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel const & mesh,
-                                                                 string_array const & )
-    {
-      computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
-
-      GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
-                                 " stick: {:12} | new slip: {:12} | slip:  {:12} | open:  {:12}",
-                                 numStick, numNewSlip, numSlip, numOpen ) );
-    } );
-  }
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
+                               " stick = {:12} | new slip = {:12} | slip =  {:12} | open =  {:12}",
+                               numStick, numNewSlip, numSlip, numOpen ) );
+  } );
 }
 
 real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
@@ -223,7 +221,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_ERROR( getDataContext() << ": ExplicitStep non available for contact solvers." );
+  GEOS_ERROR( "ExplicitStep non available for contact solvers.", getDataContext() );
   return dt;
 }
 
@@ -235,7 +233,9 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addElementFields( { contact::fractureState::key() }, { getUniqueFractureRegionName() } );
+    fieldsToBeSync.addElementFields( { contact::fractureState::key(),
+                                       contact::traction::key() },
+                                     { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

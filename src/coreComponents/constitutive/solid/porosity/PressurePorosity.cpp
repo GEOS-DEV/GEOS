@@ -28,29 +28,15 @@ namespace constitutive
 {
 
 PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent ),
-  m_referencePressure(),
-  m_compressibility()
+  PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference pressure for solid compressibility" );
+    setDescription( "Reference pressure for solid compressibility [Pa]" );
 
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Solid compressibility" );
-}
-
-void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
-void PressurePorosity::postInputInitialization()
-{
-  PorosityBase::postInputInitialization();
-  // TODO valdate input
+    setDescription( "Solid compressibility [Pa^-1]" );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosity, string const &, Group * const )

@@ -70,10 +70,12 @@ ConstantPermeability::deliverClone( string const & name,
   return PermeabilityBase::deliverClone( name, parent );
 }
 
-void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void ConstantPermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
+
+  // TODO move into initializeState?
 
   integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
 

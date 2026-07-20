@@ -36,6 +36,12 @@ namespace constitutive
 {
 class SingleFluidBase;
 }
+
+namespace singlePhaseStatistics
+{
+class StatsAggregator;
+}
+
 class WellElementSubRegion;
 
 /**
@@ -140,6 +146,7 @@ public:
 
   /**
    * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param elemManager the well region manager
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
   virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion );
@@ -164,7 +171,8 @@ public:
                                         real64 const & dt, DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
@@ -277,6 +285,15 @@ protected:
 
 private:
 
+  struct ReferenceConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< singlePhaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   /**
@@ -284,6 +301,13 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
+
+  void precomputeReferenceConditions( real64 time_n,
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
+
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Make sure that the well constraints are compatible

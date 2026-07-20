@@ -4,7 +4,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
@@ -73,8 +72,8 @@
     <!-- SPHINX_MaterialContact -->
     <Coulomb
       name="fractureContact"
-      cohesion="0"
-      frictionCoefficient="0.5"/>
+      defaultCohesion="0"
+      defaultFrictionCoefficient="0.5"/>
     <!-- SPHINX_MaterialContactEnd --> 
   
     <ElasticIsotropic

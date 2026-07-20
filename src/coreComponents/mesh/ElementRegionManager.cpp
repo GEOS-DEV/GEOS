@@ -64,8 +64,7 @@ void ElementRegionManager::setMaxGlobalIndex()
   {
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
-
-  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOS );
+  ObjectManagerBase::setMaxGlobalIndex();
 }
 
 auto const & getUserAvailableKeys()
@@ -82,7 +81,8 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ),
+                 getDataContext() );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
                                         CatalogInterface::factory( childKey, getDataContext(),
@@ -204,7 +204,11 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( meshLevel, lineBlock, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel,
+                             lineBlock,
+                             nodeOffsetGlobal + wellNodeCount,
+                             elemOffsetGlobal + wellElemCount,
+                             cellBlockManager.getGlobalLength() );
 
     // increment counters with global number of nodes and elements
     wellElemCount += lineBlock.numElements();
@@ -218,8 +222,10 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
-                   "Invalid partitioning in well " << lineBlock.getDataContext() <<
-                   ", subregion " << subRegion.getDataContext() );
+                   GEOS_FMT( "Invalid partitioning in well {}, subregion {}",
+                             lineBlock.getName(),
+                             subRegion.getName() ),
+                   getDataContext(), lineBlock.getDataContext(), subRegion.getDataContext() );
 
   } );
 
@@ -363,7 +369,8 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOS_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+  GEOS_ERROR_IF( name != this->getName(),
+                 GEOS_FMT( "Unpacked name ({}) does not equal object name ({})", name, this->getName() ) );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
@@ -652,7 +659,9 @@ ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
       GEOS_ERROR_IF( subRegionName != subRegion.getName(),
-                     "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
+                     GEOS_FMT( "Unpacked subregion name ({}) does not equal object name ({})",
+                               subRegionName,
+                               subRegion.getName() ) );
 
       localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );
@@ -779,11 +788,13 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
     GEOS_UNUSED_VAR( region ); // unused if geos_error_if is nulld
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                   GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
-                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
+                   GEOS_FMT( "subregion {}: Cell block not found at index {}.",
+                             subRegion.getName(), blockIndex ),
+                   region.getDataContext() );
     GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                   GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
-                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
+                   GEOS_FMT( "subregion {}: Cell block at index {} is mapped to more than one subregion.",
+                             subRegion.getName(), blockIndex ),
+                   region.getDataContext() );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

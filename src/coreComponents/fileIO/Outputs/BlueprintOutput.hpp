@@ -36,11 +36,6 @@ class ElementRegionManager;
  */
 class BlueprintOutput : public OutputBase
 {
-protected:
-  /**
-   * @copydoc OutputBase::getTimerCategory
-   */
-  logInfo::OutputTimerBase const & getTimerCategory() const override;
 
 public:
 

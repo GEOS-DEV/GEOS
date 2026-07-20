@@ -191,8 +191,6 @@ public:
 
   ParticleFluid( string const & name, Group * const parent );
 
-  virtual ~ParticleFluid() override;
-
   // *** ConstitutiveBase interface
 
   static string catalogName() { return "ParticleFluid"; }

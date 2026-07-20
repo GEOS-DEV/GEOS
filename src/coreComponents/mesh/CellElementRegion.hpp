@@ -131,9 +131,6 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// @return String key for the coarsening ratio
-    static constexpr char const * coarseningRatioString() {return "coarseningRatio"; }
-
     /// @return String key for the user-requested mesh cellBlocks qualifiers: cellblock names, cellblock match patterns, attribute values.
     static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
   };
@@ -142,10 +139,6 @@ private:
 
   /// @brief List of user-requested mesh cellBlocks qualifiers: cellblock names, cellblock match patterns, attribute values.
   string_array m_cellBlockNames;
-
-  /// @brief Coarsening ratio
-  real64 m_coarseningRatio;
-
 
   /**
    * @return all cell-block names entries from m_cellBlockAttributeValues,

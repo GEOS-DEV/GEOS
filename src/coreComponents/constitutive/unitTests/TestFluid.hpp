@@ -78,7 +78,7 @@ struct Fluid
       7.45513e-02,  1.80000e+07,  3.47000e+03,  6.25000e-04, -1.21200e-01,  3.05992e-05, // KCL    (potassium chloride)
   };
 
-  static std::unordered_map<integer,string> const componentNames;
+  static stdUnorderedMap<integer,string> const componentNames;
   /* UNCRUSTIFY-ON */
 };
 
@@ -182,7 +182,7 @@ public:
   template< typename ARRAY, typename LIST >
   static void createArray( ARRAY & array, LIST const & data )
   {
-    for( auto const value : data )
+    for( auto const & value : data )
     {
       array.emplace_back( value );
     }
@@ -199,7 +199,7 @@ public:
 };
 
 /* UNCRUSTIFY-OFF */
-std::unordered_map<integer,string> const Fluid::componentNames = {
+stdUnorderedMap<integer,string> const Fluid::componentNames = {
   { H2O,    "H2O"    }, // water
   { CO2,    "CO2"    }, // carbon dioxide
   { N2,     "N2"     }, // nitrogen

@@ -29,17 +29,11 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE GEOS_HOST_DEVICE
-#else
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE
-#endif
+/**
+ * @def GEOS_HYPRE_DEVICE
+ * @brief Host/device annotation used by hypre wrappers.
+ */
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
@@ -131,7 +125,7 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 
 #endif
 
-// Check matching requirements on index/value types between GEOSX and Hypre
+// Check matching requirements on index/value types between GEOS and Hypre
 
 // WARNING. We don't have consistent types between HYPRE_Int and localIndex.
 //          Decision needs to be made either to use bigint option, or change
@@ -167,8 +161,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 }
 
 /**
- * @brief Check for previous device errors and report with line information.
- * @param msg custom message to add
+ * @def GEOS_HYPRE_CHECK_DEVICE_ERRORS
+ * @brief Check for previous device errors and report with file/line information.
+ * @param msg Custom message to add.
  */
 #define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
@@ -182,7 +177,7 @@ static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
                "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a non-const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -192,7 +187,7 @@ inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -202,14 +197,24 @@ inline HYPRE_BigInt const * toHypreBigInt( geos::globalIndex const * const index
 }
 
 /**
- * @brief Gather a parallel vector on a every rank.
+ * @brief Gather a parallel vector on every rank.
  * @param vec the vector to gather
- * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @return a newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @note caller takes ownership and must dispose of the vector appropriately
  *
  * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
  * and device-based vectors without relying on Unified Memory.
  */
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
+
+/**
+ * @brief Gather a parallel vector onto a single rank.
+ * @param vec the vector to gather
+ * @param targetRank the rank to gather the vector on
+ * @return a newly allocated serial vector on @p targetRank, nullptr on the rest
+ * @note caller takes ownership and must dispose of the vector appropriately
+ */
+HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
@@ -283,6 +288,50 @@ HYPRE_Int relaxationSolve( HYPRE_Solver solver,
  * @return always 0
  */
 HYPRE_Int relaxationDestroy( HYPRE_Solver solver );
+
+/**
+ * @brief Create a Chebyshev smoother.
+ * @param solver the solver
+ * @param order Chebyshev order (degree)
+ * @param eigNumIter number of eigenvalue estimation iterations
+ * @return always 0
+ */
+HYPRE_Int chebyshevCreate( HYPRE_Solver & solver,
+                           HYPRE_Int const order,
+                           HYPRE_Int const eigNumIter );
+
+/**
+ * @brief Setup a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSetup( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Solve with a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSolve( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Destroy a Chebyshev smoother.
+ * @param solver the solver
+ * @return always 0
+ */
+HYPRE_Int chebyshevDestroy( HYPRE_Solver solver );
 
 /**
  * @brief Returns hypre's identifier of the AMG cycle type.
@@ -375,7 +424,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const typ
 {
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
+    { LinearSolverParameters::AMG::SmootherType::iluk, 0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
   };
   return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
@@ -502,7 +551,8 @@ enum class MGRRestrictionType : HYPRE_Int
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
   cprLike = 13,            //!< CPR-like restriction
-  blockColLumped = 14      //!< Block column-lumped approximation
+  blockColLumped = 14,     //!< Block column-lumped approximation
+  partialColLumped = 15    //!< Partial column-lumped approximation
 };
 
 /**

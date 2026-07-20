@@ -1,3 +1,18 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 /**
  * @file GeosxConfig.hpp
  *
@@ -30,7 +45,7 @@
 #define GEOS_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-/* #undef GEOS_USE_OPENMP */
+#define GEOS_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 /* #undef GEOS_USE_CUDA */
@@ -38,14 +53,14 @@
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
 
+/// Sets the CUDA stack size in KB (CMake option CUDA_STACK_SIZE)
+/* #undef GEOS_CUDA_STACK_SIZE */
+
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
 /// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
 /* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
-
-/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
-#define GEOS_USE_PVTPackage
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
 /* #undef GEOS_USE_PYGEOSX */
@@ -68,6 +83,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOS_USE_HYPRE
 
+/// Enables use of HYPREDRV library (CMake option ENABLE_HYPREDRV)
+/* #undef GEOS_USE_HYPREDRV */
+
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
@@ -81,7 +99,13 @@
 #define GEOS_USE_SUPERLU_DIST
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
-#define GEOS_USE_PETSC
+/* #undef GEOS_USE_PETSC */
+
+///  Enables use of METIS library (CMake option ENABLE_METIS)
+#define GEOS_USE_METIS
+
+///  Enables use of ParMETIS library (CMake option ENABLE_PARMETIS)
+#define GEOS_USE_PARMETIS
 
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
 #define GEOS_USE_SCOTCH
@@ -123,22 +147,22 @@
 #define HDF5_VERSION 1.12.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.2
+#define Conduit_VERSION 0.9.5
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.10.5
+#define RAJA_VERSION 2025.12.0
 
 /// Version information for umpire
-#define umpire_VERSION 2022.10.0
+#define umpire_VERSION 2025.12.0
 
 /// Version information for chai
-/* #undef chai_VERSION */
+#define chai_VERSION 2025.12.0
 
 /// Version information for adiak
 #define adiak_VERSION ..
 
 /// Version information for caliper
-#define caliper_VERSION 2.8.0
+#define caliper_VERSION ..
 
 /// Version information for Metis
 #define metis_VERSION 5.1.0
@@ -147,7 +171,7 @@
 #define parmetis_VERSION 4.0.0
 
 /// Version information for scotch
-#define scotch_VERSION 6.0.9
+/* #undef scotch_VERSION */
 
 /// Version information for superlu_dist
 #define superlu_dist_VERSION 6.3.0
@@ -156,22 +180,22 @@
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for hypre
-#define hypre_VERSION 2.29.0
+#define hypre_VERSION 3.1.0
 
 /// Version information for trilinos
-#define trilinos_VERSION 13.4.1
+#define trilinos_VERSION 16.1.0
 
 /// Version information for petsc
-#define petsc_VERSION 3.13.0
+/* #undef petsc_VERSION */
 
 /// Version information for VTK
-#define VTK_VERSION 9.2.6
+#define VTK_VERSION 9.4.2
 
 /// Version information for fmt
-#define fmt_VERSION 10.0.0
+/* #undef fmt_VERSION */
 
 /// Version information for python
-#define Python3_VERSION 3.10.6
+#define Python3_VERSION 3.9.13
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
@@ -185,4 +209,3 @@
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */
-

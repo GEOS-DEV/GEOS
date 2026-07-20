@@ -30,7 +30,7 @@
  * @name PETSc forward declarations.
  *
  * Forward declare PETSc's matrix struct and pointer aliases in order
- * to avoid including PETSc headers and leaking into the rest of GEOSX.
+ * to avoid including PETSc headers and leaking into the rest of GEOS.
  */
 ///@{
 
@@ -119,6 +119,10 @@ public:
   using MatrixBase::residual;
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
+  using MatrixBase::extract;
+  using MatrixBase::extractLocal;
+  using MatrixBase::multiplyPtAP;
+  using MatrixBase::multiplyP1tAP2;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -283,13 +287,21 @@ public:
   /**
    * @copydoc MatrixBase<PetscMatrix,PetscVector>::maxRowLength
    */
-  virtual localIndex maxRowLength() const override;
+  virtual localIndex maxRowLengthLocal() const override;
 
   virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
+  virtual void getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const override;
+
   virtual void extractDiagonal( PetscVector & dst ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
+
+  virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const override;
 
   virtual void getRowSums( PetscVector & dst,
                            RowSumType const rowSumType ) const override;

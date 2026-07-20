@@ -38,9 +38,9 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName )
 {
-  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel const & meshLevel,
-                                                                        string_array const & regionNames )
+  solver->forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                         MeshLevel const & meshLevel,
+                                                                         string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -79,6 +79,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
+
         // get the reservoir (sub)region and element indices
         localIndex const er = resElementRegion[iperf];
         localIndex const esr = resElementSubRegion[iperf];
@@ -108,6 +109,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
             rowLengths[localRow + idof] += resNumDof;
           }
         }
+
       } );
     } );
   } );
@@ -153,9 +155,9 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
   GEOS_THROW_IF( !badPerforation.first.empty(),
-                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the flow solver",
-                           wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
-                 std::runtime_error );
+                 GEOS_FMT( "The well {} has a connection to the region {} which is not targeted by the flow solver",
+                           badPerforation.first, badPerforation.second ),
+                 geos::RuntimeError, wellSolver->getDataContext() );
   return hasBadPerforations == 0;
 }
 

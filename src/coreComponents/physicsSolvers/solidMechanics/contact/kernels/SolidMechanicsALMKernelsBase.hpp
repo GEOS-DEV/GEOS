@@ -76,7 +76,8 @@ struct ConstraintCheckKernel
     {
       if( ghostRank[k] < 0 )
       {
-        contactWrapper.constraintCheck( dispJump[k],
+        contactWrapper.constraintCheck( k,
+                                        dispJump[k],
                                         deltaDispJump[k],
                                         traction[k],
                                         fractureState[k],
@@ -130,7 +131,8 @@ struct UpdateStateKernel
 
       real64 localPenalty[3][3]{};
       real64 localTractionNew[3]{};
-      contactWrapper.updateTraction( oldDispJump[k],
+      contactWrapper.updateTraction( k,
+                                     oldDispJump[k],
                                      dispJump[k],
                                      penalty[k],
                                      traction[k],
@@ -144,13 +146,25 @@ struct UpdateStateKernel
 
       if( fractureState[k] == fields::contact::FractureState::Open )
       {
-
         LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
       }
       else if( LvArray::math::abs( localTractionNew[ 0 ] ) < normalTractionTolerance[k] )
       {
-        LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
-        fractureState[k] = fields::contact::FractureState::Slip;
+        // When normal traction is lower than normalTractionTolerance, check if cohesion allows stick state
+        // before deciding to transition to slip (fix for high cohesion materials)
+        real64 dLimitTau_dTraction = 0.0;
+        real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( k,
+                                                                                   localTractionNew[ 0 ],
+                                                                                   dLimitTau_dTraction );
+        real64 const currentTau = LvArray::math::sqrt( localTractionNew[1] * localTractionNew[1] +
+                                                       localTractionNew[2] * localTractionNew[2] );
+
+        if( currentTau > limitTau )
+        {
+          // Tangential traction exceeds cohesion limit: transition to slip
+          fractureState[k] = fields::contact::FractureState::Slip;
+        }
+        // else: cohesion allows stick state, keep traction as computed by updateTraction()
       }
 
       LvArray::tensorOps::copy< 3 >( traction[k], localTractionNew );

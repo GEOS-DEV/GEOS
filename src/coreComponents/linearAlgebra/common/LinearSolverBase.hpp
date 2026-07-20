@@ -24,8 +24,32 @@
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "common/Stopwatch.hpp"
 
+#include <string>
+
 namespace geos
 {
+
+/**
+ * @brief Execution metadata associated with a linear-solver invocation.
+ *
+ * This context lets solver backends annotate per-solve setup, logging, and
+ * statistics with the timestep/newton state that produced the linear system.
+ */
+struct LinearSolverExecutionContext
+{
+  /// Human-readable name of the owning solver.
+  std::string solverName;
+  /// Current outer cycle index, or `-1` when unavailable.
+  integer cycleNumber = -1;
+  /// Current timestep-attempt index, or `-1` when unavailable.
+  integer timeStepAttempt = -1;
+  /// Current configuration-attempt index, or `-1` when unavailable.
+  integer configurationAttempt = -1;
+  /// Current nonlinear-iteration index, or `-1` when unavailable.
+  integer nonlinearIteration = -1;
+  /// Timestamp of the last system assembly/setup used by this solve.
+  Timestamp systemSetupTimestamp = 0;
+};
 
 /**
  * @brief Simple interface for linear solvers that allows to extract solution results.
@@ -59,6 +83,15 @@ public:
    * @param [in,out] sol system solution (input = initial guess, output = solution).
    */
   virtual void solve( Vector const & rhs, Vector & sol ) const = 0;
+
+  /**
+   * @brief Provide contextual execution metadata for backends that need it.
+   * @param context The current linear-solve execution context.
+   */
+  virtual void setExecutionContext( LinearSolverExecutionContext const & context )
+  {
+    GEOS_UNUSED_VAR( context );
+  }
 
   /**
    * @brief @return parameters of the solver.

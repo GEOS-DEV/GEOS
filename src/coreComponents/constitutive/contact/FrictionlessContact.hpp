@@ -59,7 +59,8 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState ) const override final;
 
@@ -86,11 +87,6 @@ public:
                        Group * const parent );
 
   /**
-   * @brief default destructor
-   */
-  virtual ~FrictionlessContact() override;
-
-  /**
    * @return A string that is used to register/lookup this class in the registry
    */
   static string catalogName() { return "FrictionlessContact"; }
@@ -106,23 +102,16 @@ public:
    */
   KernelWrapper createKernelUpdates() const;
 
-  /**
-   * @struct Structure to hold scoped key names
-   */
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {};
-
-protected:
-
 };
 
 
 GEOS_HOST_DEVICE
-inline void FrictionlessContactUpdates::updateFractureState( arraySlice1d< real64 const > const & dispJump,
+inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
+                                                             arraySlice1d< real64 const > const & dispJump,
                                                              arraySlice1d< real64 const > const & tractionVector,
                                                              integer & fractureState ) const
 {
-  GEOS_UNUSED_VAR( tractionVector );
+  GEOS_UNUSED_VAR( k, tractionVector );
   using namespace fields::contact;
   fractureState = dispJump[0] > m_displacementJumpThreshold ? FractureState::Open : FractureState::Stick;
 }

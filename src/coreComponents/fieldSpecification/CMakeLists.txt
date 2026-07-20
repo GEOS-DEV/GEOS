@@ -25,9 +25,9 @@ Contains:
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
      EquilibriumInitialCondition.hpp
-     FieldSpecificationBase.hpp
+     FieldSpecification.hpp
      FieldSpecificationManager.hpp
-     LogLevelsInfo.hpp
+     FieldSpecificationImpl.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
@@ -40,7 +40,7 @@ set( fieldSpecification_headers
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
      EquilibriumInitialCondition.cpp
-     FieldSpecificationBase.cpp
+     FieldSpecification.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
      TractionBoundaryCondition.cpp
@@ -64,3 +64,7 @@ blt_add_library( NAME       fieldSpecification
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fieldSpecification LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()

@@ -31,7 +31,9 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/Damage.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
 
@@ -83,6 +85,8 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -563,10 +567,11 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   const real64 residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual ))
+
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residual );
 
   return residual;
 }
@@ -586,21 +591,22 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
     fsManager.template apply< NodeManager >( time,
                                              mesh,
                                              m_fieldName,
-                                             [&]( FieldSpecificationBase const & bc,
+                                             [&]( FieldSpecification const & bc,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   NodeManager & targetGroup,
                                                   string const GEOS_UNUSED_PARAM( fieldName ) ) -> void
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< > >( targetSet,
-                                                                    time,
-                                                                    targetGroup,
-                                                                    m_fieldName,
-                                                                    dofManager.getKey( m_fieldName ),
-                                                                    dofManager.rankOffset(),
-                                                                    localMatrix,
-                                                                    localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy< > >( bc,
+                                                                                         targetSet,
+                                                                                         time,
+                                                                                         targetGroup,
+                                                                                         m_fieldName,
+                                                                                         dofManager.getKey( m_fieldName ),
+                                                                                         dofManager.rankOffset(),
+                                                                                         localMatrix,
+                                                                                         localRhs );
     } );
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );

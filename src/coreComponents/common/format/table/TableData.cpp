@@ -89,11 +89,6 @@ void TableData::clear()
   getErrorsList().clear();
 }
 
-stdVector< stdVector< TableData::CellData > > const & TableData::getTableDataRows() const
-{
-  return m_rows;
-}
-
 void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
                                       arrayView1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
@@ -113,11 +108,11 @@ void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordi
                                   nRow * nCol, nCol, nRow, values.size() ) );
     wellFormedValues.resizeDefault( nRow * nCol, 0 );
   }
-  else
+  else if( values.size() > nRow * nCol )
   {
     m_errors->addError( GEOS_FMT( "Warning: Too much data for the number of columns & rows:\n"
-                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values",
-                                  "Data may be missaligned",
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values."
+                                  " Data may be misaligned",
                                   nRow * nCol, nCol, nRow, values.size() ) );
   }
 
