@@ -14,6 +14,7 @@
  */
 
 #include "BufferOpsDevice.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -247,41 +248,65 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   }
   else if( op == MPI_MAX )
   {
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    if constexpr( std::is_arithmetic< T >::value )
     {
-      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-      int count = 0;
-      real64 LHSNormSquared = 0.0, RHSNormSquared = 0.0;
-
-      // Identify if existing value or incoming value has higher norm
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer, &LHSNormSquared, &RHSNormSquared, &count] GEOS_DEVICE ( T & value )
+      events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
       {
-        LHSNormSquared += value * value; // "value" can be an R1Tensor, in which case this becomes the dot product
-        RHSNormSquared += (*threadBuffer) * (*threadBuffer);
-        ++threadBuffer;
-        ++count;
-      } );
-
-      // Roll back threadBuffer
-      for( int i=0; i<count; i++ )
-      {
-        --threadBuffer;
-      }
-
-      // Load in the buffer if it had higher norm
-      if( LHSNormSquared < RHSNormSquared )
-      {
+        T const * threadBuffer = &devBuffer[ ii * sliceSize ];
         LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
         {
-          value = *threadBuffer;
+          if( *threadBuffer > value )
+          {
+            value = *threadBuffer;
+          }
           ++threadBuffer;
         } );
-      }
-    } ) );
+      } ) );
+    }
+    else
+    {
+      GEOS_ERROR( "MPI_MAX device unpack requires arithmetic values." );
+    }
+  }
+  else if( op == MpiWrapper::maxNormLexicographicVector3Op() )
+  {
+    using ValueType = typename std::remove_cv< T >::type;
+    if constexpr( std::is_same< ValueType, real64 >::value && NDIM == 2 )
+    {
+      GEOS_ERROR_IF( sliceSize != 3,
+                     "The max-norm lexicographic device unpack operation requires 3-component array entries." );
+
+      events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+      {
+        localIndex const index = indices[ii];
+        T const * const incoming = &devBuffer[ii * 3];
+        T current[3] = { var[index][0], var[index][1], var[index][2] };
+
+        real64 const incomingNormSquared =
+          MpiWrapper::vector3NormSquared( incoming );
+
+        real64 const currentNormSquared =
+          MpiWrapper::vector3NormSquared( current );
+
+        if( MpiWrapper::preferMaxNormLexicographicVector3( incoming,
+                                                           incomingNormSquared,
+                                                           current,
+                                                           currentNormSquared ) )
+        {
+          var[index][0] = incoming[0];
+          var[index][1] = incoming[1];
+          var[index][2] = incoming[2];
+        }
+      } ) );
+    }
+    else
+    {
+      GEOS_ERROR( "The max-norm lexicographic device unpack operation requires a 2D real64 array." );
+    }
   }
   else
   {
-    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
+    GEOS_ERROR( "Unsupported MPI operator for device unpack." );
   }
 
   buffer += unpackSize;

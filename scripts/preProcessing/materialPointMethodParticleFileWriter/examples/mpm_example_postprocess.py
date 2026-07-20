@@ -59,6 +59,45 @@ def find_renderer(run_dir: Path, case_name: str, output_prefix: str) -> Path | N
         return matches[0]
     return None
 
+def find_plot_hook(run_dir: Path, case_name: str, output_prefix: str) -> Path | None:
+    candidates = [
+        run_dir / f"plotReactions_{case_name}.py",
+        run_dir / f"plotReactions_{output_prefix}.py",
+        run_dir / f"plotReactions_{case_name.replace('-', '_')}.py",
+        run_dir / f"plotReactions_{output_prefix.replace('-', '_')}.py",
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    matches = sorted(run_dir.glob("plotReactions_*.py"))
+    if matches:
+        return matches[0]
+    return None
+
+
+def run_plot_hook(run_dir: Path, frames_dir: Path, output_dir: Path, case_name: str, output_prefix: str, handle) -> int:
+    hook = find_plot_hook(run_dir, case_name, output_prefix)
+    if hook is None:
+        log_line(handle, "No plotReactions_*.py hook found; skipping case-specific plot hook")
+        return 0
+    log_path = run_dir / f"{output_prefix}_reaction_plot.log"
+    cmd = [
+        sys.executable or "python3",
+        str(hook),
+        "--run-dir", str(run_dir),
+        "--frames-dir", str(frames_dir),
+        "--output-dir", str(frames_dir),
+        "--case-name", case_name,
+        "--output-prefix", output_prefix,
+    ]
+    log_line(handle, "Running case-specific plot hook: " + " ".join(cmd))
+    with log_path.open("w") as lf:
+        lf.write("Command: " + " ".join(cmd) + "\n")
+        lf.flush()
+        proc = subprocess.run(cmd, cwd=str(run_dir), stdout=lf, stderr=subprocess.STDOUT, text=True)
+    if proc.returncode != 0:
+        log_line(handle, f"WARNING: plot hook failed with return code {proc.returncode}; see {log_path}")
+    return proc.returncode
 
 def write_visit_driver(driver: Path, renderer: Path, renderer_args: list[str]) -> None:
     # The key detail is exec(..., globals(), globals()).  VisIt injects functions
@@ -155,6 +194,7 @@ def main() -> int:
     parser.add_argument("--copy-only", action="store_true")
     parser.add_argument("--visit-timeout", type=int, default=600)
     parser.add_argument("--visit-list-databases", action="store_true")
+    parser.add_argument("--no-plots", action="store_true", help="Skip case-specific plotReactions_*.py hooks")
     parser.add_argument("--initial-variable", default=None)
     parser.add_argument("--final-variable", default=None)
     parser.add_argument("--view", default=None)
@@ -218,6 +258,11 @@ def main() -> int:
                     log_line(log, f"VisIt return code: {visit_rc}")
         else:
             log_line(log, "Skipping rendering; copy-only mode")
+
+        if not args.no_plots:
+            run_plot_hook(run_dir, frames_dir, output_dir, args.case_name, output_prefix, log)
+        else:
+            log_line(log, "Skipping reaction plot hooks")
 
         copied = copy_products(run_dir, frames_dir, output_dir, log)
         try:

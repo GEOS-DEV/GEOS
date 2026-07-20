@@ -770,6 +770,14 @@ public:
   void computeParticleFieldMappings( ParticleManager & particleManager,
                                      NodeManager & nodeManager );
 
+  void computeRigidBodyColorFieldMappings( ParticleManager & particleManager,
+                                           NodeManager & nodeManager );
+
+  void rigidBodyParticleUpdate( real64 const time_n,
+                                real64 const dt,
+                                ParticleManager & particleManager,
+                                NodeManager & nodeManager );
+
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
 
@@ -1340,6 +1348,7 @@ protected:
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
   real64 m_nextReactionWriteTime;
+  real64 m_nextRigidBodyHistoryWriteTime;
   real64 m_nextTracerWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
@@ -1377,6 +1386,18 @@ protected:
   stdVector< real64 > m_profilingTimes;
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
+  real64 m_rigidBodyAngularDamping;
+  array2d< integer > m_rigidBodyGridFieldColor;
+  array2d< integer > m_rigidBodyGridFieldContactGroup;
+  int m_rigidBodyHistory;
+  real64 m_rigidBodyHistoryWriteInterval;
+  real64 m_rigidBodyKineticEnergy;
+  real64 m_rigidBodyLinearDamping;
+  int m_rigidBodyMaxGridFields;
+  real64 m_rigidBodyMaxForce;
+  int m_rigidBodyMode;
+  real64 m_rigidBodyObservedMaxForce;
+  real64 m_rigidBodyStopKineticEnergy;
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
   real64 m_separabilityMinDamage;

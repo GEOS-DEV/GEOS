@@ -758,6 +758,7 @@ parameters = {
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.
+               'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
                'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
@@ -933,6 +934,7 @@ parameters = {
 particleFieldOrder=["Velocity",
                     "MaterialType",
                     "ContactGroup",
+                    "ParticleColor",
                     "SurfaceFlag",
                     "Damage",
                     "Porosity",
@@ -1010,6 +1012,10 @@ if requiresSurfaceContactFields:
       'Explicit contact or cohesive-zone events require particleFileFields to include: ' +
       ', '.join(missingFields)
     )
+
+requiresRigidBodyColorField = ('mpmEventsString' in pfw and 'RigidBodyMPM' in str(pfw['mpmEventsString']))
+if requiresRigidBodyColorField and 'ParticleColor' not in particleFileFields:
+  raise ValueError('RigidBodyMPM events require particleFileFields to include ParticleColor')
 
 # Remove new line from last parameter to be added (for XML formatting).
 
@@ -1363,6 +1369,20 @@ if generateParticleFile:
                     else:
                       group = 0
 
+              if "ParticleColor" in particleFileFields:
+                if hasattr(object, 'getParticleColor'):
+                  particleColor = _validate_particle_int_value("ParticleColor", object, object.getParticleColor( pt ), pt)
+                elif hasattr(object, 'getColor'):
+                  particleColor = _validate_particle_int_value("ParticleColor", object, object.getColor( pt ), pt)
+                elif hasattr(object, 'particleColor'):
+                  particleColorValue = object.particleColor( pt ) if callable(object.particleColor) else object.particleColor
+                  particleColor = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
+                elif hasattr(object, 'color'):
+                  particleColorValue = object.color( pt ) if callable(object.color) else object.color
+                  particleColor = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
+                else:
+                  particleColor = 0
+
               if "MaterialDirection" in particleFileFields:
                 # material direction, These will be read from object, will default to [1,0,0] if not 
                 # specified.
@@ -1434,6 +1454,9 @@ if generateParticleFile:
               if "ContactGroup" in particleFileFields:
                 _validate_particle_value("ContactGroup", object, group, pt)
 
+              if "ParticleColor" in particleFileFields:
+                _validate_particle_value("ParticleColor", object, particleColor, pt)
+
               if "MaterialDirection" in particleFileFields:
                 _validate_particle_value("MaterialDirection", object, matDir, pt)
 
@@ -1487,6 +1510,9 @@ if generateParticleFile:
                         
                       if "ContactGroup" in particleFileFields:
                         pString = pString + delim + str(group)
+
+                      if "ParticleColor" in particleFileFields:
+                        pString = pString + delim + str(particleColor)
 
                       if "SurfaceFlag" in particleFileFields:
                         pString = pString + delim + str(surfaceFlag)

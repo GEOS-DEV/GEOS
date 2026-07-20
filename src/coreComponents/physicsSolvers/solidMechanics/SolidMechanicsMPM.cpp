@@ -25,6 +25,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/cohesiveZone/CohesiveZoneBase.hpp"
@@ -70,6 +71,19 @@ using namespace constitutive;
 
 namespace
 {
+
+constexpr real64 explicitSurfaceNormalTolerance = 1.0e-12;
+constexpr real64 explicitSurfaceNormalNormSquaredTolerance =
+  explicitSurfaceNormalTolerance * explicitSurfaceNormalTolerance;
+
+template< typename VECTOR >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool hasExplicitPartitionSurfaceNormal( VECTOR const & normal )
+{
+  return LvArray::tensorOps::l2NormSquared< 3 >( normal ) >
+         explicitSurfaceNormalNormSquaredTolerance;
+}
 
 template< typename T, typename = void >
 struct HasMPMHostStressUpdate : std::false_type
@@ -945,6 +959,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nextParticleDataWriteTime( 0.0 ),
   m_nextProfileWriteTime( 0.0 ),
   m_nextReactionWriteTime( 0.0 ),
+  m_nextRigidBodyHistoryWriteTime( 0.0 ),
   m_nextTracerWriteTime( 0.0 ),
   m_normalAndPositionMethod( mpm::NormalsAndPositionsMethodOption::LogisticRegression ),
 
@@ -982,6 +997,18 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_profilingTimes(),
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
+  m_rigidBodyAngularDamping( 0.0 ),
+  m_rigidBodyGridFieldColor(),
+  m_rigidBodyGridFieldContactGroup(),
+  m_rigidBodyHistory( 0 ),
+  m_rigidBodyHistoryWriteInterval( 0.0 ),
+  m_rigidBodyKineticEnergy( 0.0 ),
+  m_rigidBodyLinearDamping( 0.0 ),
+  m_rigidBodyMaxGridFields( 0 ),
+  m_rigidBodyMaxForce( -1.0 ),
+  m_rigidBodyMode( 0 ),
+  m_rigidBodyObservedMaxForce( 0.0 ),
+  m_rigidBodyStopKineticEnergy( -1.0 ),
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
   m_separabilityMinDamage( 0.5 ),
@@ -1341,7 +1368,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Dimensionless relative weight for explicit particle surface normals; "
                     "the solver divides this value by the active grid-cell diagonal "
-                    "before scattering to grid normals" );
+                    "before scattering to grid normals and by neighborRadius when "
+                    "forming the DFG partition-reference vector" );
 
   registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
     setApplyDefaultValue( m_frictionCoefficient ).
@@ -1722,6 +1750,19 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_reactionWriteInterval ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing reactions to files" );
+
+
+  registerWrapper( "rigidBodyMaxGridFields", &m_rigidBodyMaxGridFields ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_rigidBodyMaxGridFields ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Optional solver-level reservation for color-partitioned rigid-body MPM grid fields. "
+                    "RigidBodyMPM events also reserve their maxGridFields during initialization." );
+
+  registerWrapper( "rigidBodyMode", &m_rigidBodyMode ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal flag indicating that the current explicit MPM step is executing in rigid-body mode." );
 
   registerWrapper( "resetDefGradForFullyDamagedParticles", &m_resetDefGradForFullyDamagedParticles ).
     setApplyDefaultValue( m_resetDefGradForFullyDamagedParticles ).
@@ -2875,7 +2916,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleSupplementalPressure >( getName() );
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
-        subRegion.registerField< particleColor >( getName() );
+        if( !subRegion.hasWrapper( particleColor::key() ) )
+        {
+          subRegion.registerField< particleColor >( getName() );
+        }
 
         // Double-indexed fields (Gauss-point fields, vectors, and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleBodyForce >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -3760,8 +3804,20 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Specified number of damage flags.
   m_numContactFlags = m_damageFieldPartitioning == 1 ? 2 : 1;
 
-  // Total number of velocity fields:
-  m_numVelocityFields = m_numContactGroups * m_numContactFlags;
+  // Total number of velocity fields. Continuum DFG contact uses contactGroup x contactFlag.
+  // RigidBodyMPM events reserve maxGridFields fields for color partitioning; the last field is the weighted-overflow field.
+  if( m_useEvents == 1 )
+  {
+    eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
+    {
+      if( event.getCatalogName() == "RigidBodyMPM" )
+      {
+        RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
+        m_rigidBodyMaxGridFields = std::max( m_rigidBodyMaxGridFields, rigidBodyEvent.getMaxGridFields() );
+      }
+    } );
+  }
+  m_numVelocityFields = std::max( m_numContactGroups * m_numContactFlags, m_rigidBodyMaxGridFields );
 
   // Resize grid field arrays
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -4061,41 +4117,61 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   synchronizePostBoundaryKinematicFieldsForG2P( domain,
                                                 nodeManager,
                                                 mesh );
-  /*
-   * ------------------------------------------------------------------------------------------------------------
-   * 15. Map grid state back to particles.
-   *
-   * Interpolate grid velocity/momentum increments back to particles.
-   * ------------------------------------------------------------------------------------------------------------
-   */
-  logAndProfile( "15. Map grid state back to particles", particleManager, nodeManager );
-  gridToParticle( dt, particleManager, nodeManager, domain, mesh );
+  if( m_rigidBodyMode == 1 )
+  {
+    /*
+     * ----------------------------------------------------------------------------------------------------------
+     * 15. Rigid-body particle update.
+     *
+     * Use the contact/boundary-corrected grid impulse to advance one rigid body per particleColor, then map the
+     * resulting rigid kinematic state back to particles. Internal constitutive evolution is intentionally skipped
+     * while the RigidBodyMPM event is active.
+     * ----------------------------------------------------------------------------------------------------------
+     */
+    logAndProfile( "15. Rigid-body particle update", particleManager, nodeManager );
+    rigidBodyParticleUpdate( time_n,
+                             dt,
+                             particleManager,
+                             nodeManager );
+  }
+  else
+  {
+    /*
+     * ----------------------------------------------------------------------------------------------------------
+     * 15. Map grid state back to particles.
+     *
+     * Interpolate grid velocity/momentum increments back to particles.
+     * ----------------------------------------------------------------------------------------------------------
+     */
+    logAndProfile( "15. Map grid state back to particles", particleManager, nodeManager );
+    gridToParticle( dt, particleManager, nodeManager, domain, mesh );
 
-  /*
-   * ------------------------------------------------------------------------------------------------------------
-   * 16. Update particle kinematics.
-   *
-   * Apply prescribed velocity gradients, update deformation gradients, process transform-particle events, apply SPH
-   * overlap correction, update particle geometry/density, and compute kinetic energy.
-   * ------------------------------------------------------------------------------------------------------------
-   */
-  logAndProfile( "16. Update particle kinematics", particleManager, nodeManager );
-  updateParticleKinematicsForExplicitStep( dt,
-                                           time_n,
-                                           particleManager,
-                                           partition );
+    /*
+     * ----------------------------------------------------------------------------------------------------------
+     * 16. Update particle kinematics.
+     *
+     * Apply prescribed velocity gradients, update deformation gradients, process transform-particle events, apply SPH
+     * overlap correction, update particle geometry/density, and compute kinetic energy.
+     * ----------------------------------------------------------------------------------------------------------
+     */
+    logAndProfile( "16. Update particle kinematics", particleManager, nodeManager );
+    updateParticleKinematicsForExplicitStep( dt,
+                                             time_n,
+                                             particleManager,
+                                             partition );
 
-  /*
-   * ------------------------------------------------------------------------------------------------------------
-   * 17. Update constitutive and thermal state.
-   *
-   * Update optional generic internal-energy terms, constitutive dependencies, stress, and solver dependencies that
-   * depend on the new constitutive state.
-   * ------------------------------------------------------------------------------------------------------------
-   */
-  logAndProfile( "17. Update constitutive and thermal state", particleManager, nodeManager );
-  updateConstitutiveAndThermalStateForExplicitStep( dt,
-                                                    particleManager );
+    /*
+     * ----------------------------------------------------------------------------------------------------------
+     * 17. Update constitutive and thermal state.
+     *
+     * Update optional generic internal-energy terms, constitutive dependencies, stress, and solver dependencies that
+     * depend on the new constitutive state.
+     * ----------------------------------------------------------------------------------------------------------
+     */
+    logAndProfile( "17. Update constitutive and thermal state", particleManager, nodeManager );
+    updateConstitutiveAndThermalStateForExplicitStep( dt,
+                                                      particleManager );
+  }
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5005,6 +5081,18 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
  */
 void SolidMechanicsMPM::applyFMPMUncontactedVelocityBoundaryConditions( NodeManager & nodeManager )
 {
+  /*
+   * RigidBodyMPM recovers boundary/contact forces from the difference between
+   * the post-constraint velocity and gridUncontactedVelocity.  Do not copy the
+   * constrained moving-wall velocity back into the uncontacted seed while a
+   * rigid-body event is active, otherwise F-table wall impulses become
+   * invisible to the rigid bodies.
+   */
+  if( m_rigidBodyMode == 1 )
+  {
+    return;
+  }
+
   if( m_updateMethod != mpm::UpdateMethodOption::FMPM )
   {
     return;
@@ -8375,7 +8463,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
         particleDomainScaledFlag[p] = 0;
       }
 
-      particleColor[p] = 0;
+      // particleColor is imported from the particle file and must remain distinct from the contact group.
+      GEOS_ERROR_IF( particleColor[p] < 0, "particleColor must be non-negative for rigid-body MPM." );
 
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
@@ -9246,6 +9335,10 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
   GEOS_MARK_FUNCTION;
 
   int const planeStrain = m_planeStrain;
+  GEOS_UNUSED_VAR( planeStrain );
+
+  // Rigid-body mode is step-local and is reactivated below when a RigidBodyMPM event is active.
+  m_rigidBodyMode = 0;
 
   //Iterate over every MPM Events to check if conditions are met and if so perform event
   MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
@@ -9308,6 +9401,29 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
     // ------------------------------------------------------------------------------------------------------
     // Event specific handlers
     // ------------------------------------------------------------------------------------------------------
+
+    if( event.getCatalogName() == "RigidBodyMPM" )
+    {
+      RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
+      m_rigidBodyMode = 1;
+      m_rigidBodyMaxGridFields = rigidBodyEvent.getMaxGridFields();
+      m_rigidBodyLinearDamping = rigidBodyEvent.getLinearDamping();
+      m_rigidBodyAngularDamping = rigidBodyEvent.getAngularDamping();
+      m_rigidBodyStopKineticEnergy = rigidBodyEvent.getStopKineticEnergy();
+      m_rigidBodyMaxForce = rigidBodyEvent.getMaxForce();
+      m_rigidBodyHistoryWriteInterval = rigidBodyEvent.getHistoryWriteInterval();
+      m_rigidBodyObservedMaxForce = 0.0;
+      m_rigidBodyKineticEnergy = 0.0;
+      GEOS_ERROR_IF( m_rigidBodyMaxGridFields > m_numVelocityFields,
+                     "RigidBodyMPM maxGridFields exceeds the solver-reserved number of grid velocity fields." );
+      if( rigidBodyEvent.getWriteHistory() == 1 && m_rigidBodyHistory == 0 && MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+      {
+        std::ofstream history( "rigidBodyHistory.csv" );
+        history << "time,color,mass,centerX,centerY,centerZ,velocityX,velocityY,velocityZ,omegaZ,forceX,forceY,forceZ,torqueZ,kineticEnergy\n";
+        m_rigidBodyHistory = 1;
+        m_nextRigidBodyHistoryWriteTime = time_n;
+      }
+    }
 
     if( event.getCatalogName() == "MaterialSwap" )
     {
@@ -10106,6 +10222,27 @@ void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
       event.setIsComplete( 1 );
       GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (" << event.getCatalogName() << ") completed at " << time_n);
       return;
+    }
+
+    if( event.getCatalogName() == "RigidBodyMPM" )
+    {
+      RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
+      bool const optionalStopsEnabled =
+        time_n >= event.getStartTime() + rigidBodyEvent.getMinActiveTime();
+      if( optionalStopsEnabled &&
+          rigidBodyEvent.getMaxForce() > 0.0 && m_rigidBodyObservedMaxForce >= rigidBodyEvent.getMaxForce() )
+      {
+        event.setIsComplete( 1 );
+        GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (RigidBodyMPM maxForce) completed at " << time_n);
+        return;
+      }
+      if( optionalStopsEnabled &&
+          rigidBodyEvent.getStopKineticEnergy() >= 0.0 && m_rigidBodyKineticEnergy <= rigidBodyEvent.getStopKineticEnergy() )
+      {
+        event.setIsComplete( 1 );
+        GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (RigidBodyMPM kinetic energy) completed at " << time_n);
+        return;
+      }
     }
 
     // These are effectively instantaneous events in the feature branch.
@@ -14274,9 +14411,7 @@ void SolidMechanicsMPM::computeSPHJacobian( ParticleManager & particleManager )
 }
 
 /**
- * @brief Projects damage field gradient to grid.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Projects the strongest DFG partition-reference vector to each grid node.
  */
 void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & domain,
                                                           ParticleManager & particleManager,
@@ -14287,7 +14422,17 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
 
   int const numDims = m_numDims;
 
-  // Grid nodes gain the damage field gradient of the particle mapping to them with the largest damage field gradient
+  GEOS_ERROR_IF( m_neighborRadius <= 0.0,
+                 "A positive neighborRadius is required for DFG partition-reference mapping." );
+  GEOS_ERROR_IF( m_explicitSurfaceNormalInfluence < 0.0,
+                 "explicitSurfaceNormalInfluence must be nonnegative." );
+
+  real64 const explicitSurfaceGradientScale =
+    m_explicitSurfaceNormalInfluence / m_neighborRadius;
+
+  // Grid nodes receive the physically strongest partition-reference vector.
+  // Explicit normals and damage gradients compete through the same squared-norm
+  // comparison; vector components provide the deterministic exact-tie break.
 
   // Get grid fields
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
@@ -14296,8 +14441,6 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get particle fields
-    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
-    // arrayView1d< integer const > const particleSurfaceFlag = subRegion.getField< fields::mpm::particleSurfaceFlag >();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
 
@@ -14310,34 +14453,39 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
       {
         localIndex const p = activeParticleIndices[pp];
 
-        // Currently assume surface flags 2 and 3 and above have surface normals defined from PFW
-        // This seems more efficient, e.g. avoid computing l2Norm for every particle, but may need to be changed if
-        // additional surface flag
-        // types are added
-        real64 damageGradient[3] = { };
-        // Tensor condition: ||particleSurfaceNormal[p]||^2 > 1e-12.
-        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 1e-12 )
+        real64 partitionReference[3] = {};
+        if( hasExplicitPartitionSurfaceNormal( particleSurfaceNormal[p] ) )
         {
-          // Tensor equation: damageGradient = (2 + particleID[p]) / m_neighborRadius * (particleSurfaceNormal[p]).
-          LvArray::tensorOps::copy< 3 >( damageGradient, particleSurfaceNormal[p] );
-          LvArray::tensorOps::scale< 3 >( damageGradient, ( 2 + particleID[p] ) / m_neighborRadius );
+          // Explicit normals have inverse-length units for comparison with grad(d).
+          LvArray::tensorOps::copy< 3 >( partitionReference, particleSurfaceNormal[p] );
+          LvArray::tensorOps::scale< 3 >( partitionReference, explicitSurfaceGradientScale );
         }
         else
         {
-          // Tensor equation: damageGradient = particleDamageGradient[p].
-          LvArray::tensorOps::copy< 3 >( damageGradient, particleDamageGradient[p] );
+          LvArray::tensorOps::copy< 3 >( partitionReference, particleDamageGradient[p] );
         }
+
+        // In plane strain, exclude inactive components from both comparison and storage.
+        for( integer i = numDims; i < 3; ++i )
+        {
+          partitionReference[i] = 0.0;
+        }
+
+        real64 const partitionReferenceNormSquared =
+          MpiWrapper::vector3NormSquared( partitionReference );
 
         // Map to grid
         for( localIndex const & g: mappedNodes[pp] )
         {
-          // Tensor condition: ||damageGradient||^2 > ||gridDamageGradient[g]||^2.
-          if( LvArray::tensorOps::l2NormSquared< 3 >( damageGradient ) > LvArray::tensorOps::l2NormSquared< 3 >( gridDamageGradient[g] ) )
+          real64 const gridReferenceNormSquared =
+            MpiWrapper::vector3NormSquared( gridDamageGradient[g] );
+
+          if( MpiWrapper::preferMaxNormLexicographicVector3( partitionReference,
+                                                             partitionReferenceNormSquared,
+                                                             gridDamageGradient[g],
+                                                             gridReferenceNormSquared ) )
           {
-            for( localIndex i=0; i < numDims; ++i )
-            {
-              gridDamageGradient[g][i] = damageGradient[i];
-            }
+            LvArray::tensorOps::copy< 3 >( gridDamageGradient[g], partitionReference );
           }
         }
       } ); // particle loop
@@ -14346,9 +14494,12 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
     ++subRegionIndex;
   } ); // subregion loop
 
-  // Sync damage gradient field
-  // We have written a special MPI_MAX operationthat is equivalent to “take the vector with largest norm.”
-  syncGridFields( { viewKeyStruct::gridDamageGradientString() }, domain, nodeManager, mesh, MPI_MAX );
+  // Reduce whole vectors by squared norm and deterministic lexicographic tie break.
+  syncGridFields( { viewKeyStruct::gridDamageGradientString() },
+                  domain,
+                  nodeManager,
+                  mesh,
+                  MpiWrapper::maxNormLexicographicVector3Op() );
 }
 
 /**
@@ -14361,6 +14512,13 @@ void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particle
 
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
+
+  if( m_rigidBodyMode == 1 )
+  {
+    computeRigidBodyColorFieldMappings( particleManager,
+                                        nodeManager );
+    return;
+  }
 
   // Grid fields
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
@@ -14414,6 +14572,579 @@ void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particle
   } );
 }
 
+
+/**
+ * @brief Assigns particle-node contributions to color-defined rigid-body fields.
+ *
+ * The first maxGridFields-1 distinct colors reaching a grid node receive pure
+ * fields.  Additional colors share the last field.  Later rigid force recovery
+ * splits the force on that overflow field by the same particle-mass support
+ * weights that created the field.
+ */
+void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( ParticleManager & particleManager,
+                                                            NodeManager & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  int const maxGridFields = m_rigidBodyMaxGridFields > 0 ? m_rigidBodyMaxGridFields : m_numVelocityFields;
+  GEOS_ERROR_IF( maxGridFields < 2,
+                 "RigidBodyMPM requires maxGridFields >= 2 so at least one pure field and one overflow field exist." );
+  GEOS_ERROR_IF( maxGridFields > m_numVelocityFields,
+                 "RigidBodyMPM maxGridFields exceeds the number of allocated MPM velocity fields." );
+
+  localIndex const numVelocityFields = m_numVelocityFields;
+  m_rigidBodyGridFieldColor.resize( nodeManager.size(), numVelocityFields );
+  m_rigidBodyGridFieldContactGroup.resize( nodeManager.size(), numVelocityFields );
+  arrayView2d< integer > const nodeFieldColor = m_rigidBodyGridFieldColor.toView();
+  arrayView2d< integer > const nodeFieldContactGroup = m_rigidBodyGridFieldContactGroup.toView();
+
+  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const nodeIndex )
+  {
+    for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      nodeFieldColor[nodeIndex][fieldIndex] = -1;
+      nodeFieldContactGroup[nodeIndex][fieldIndex] = -1;
+    }
+  } );
+
+  auto assignColorToNodeField = [=] GEOS_HOST ( localIndex const nodeIndex,
+                                                int const color,
+                                                int const contactGroup ) -> integer
+  {
+    for( int fieldIndex = 0; fieldIndex < maxGridFields - 1; ++fieldIndex )
+    {
+      if( nodeFieldColor[nodeIndex][fieldIndex] == color )
+      {
+        if( nodeFieldContactGroup[nodeIndex][fieldIndex] < 0 )
+        {
+          nodeFieldContactGroup[nodeIndex][fieldIndex] = contactGroup;
+        }
+        else if( nodeFieldContactGroup[nodeIndex][fieldIndex] != contactGroup )
+        {
+          nodeFieldContactGroup[nodeIndex][fieldIndex] = -2; // mixed contact-group color field
+        }
+        return fieldIndex;
+      }
+    }
+
+    for( int fieldIndex = 0; fieldIndex < maxGridFields - 1; ++fieldIndex )
+    {
+      if( nodeFieldColor[nodeIndex][fieldIndex] < 0 )
+      {
+        nodeFieldColor[nodeIndex][fieldIndex] = color;
+        nodeFieldContactGroup[nodeIndex][fieldIndex] = contactGroup;
+        return fieldIndex;
+      }
+    }
+
+    nodeFieldColor[nodeIndex][maxGridFields - 1] = -2; // mixed-color weighted-overflow field
+    if( nodeFieldContactGroup[nodeIndex][maxGridFields - 1] < 0 )
+    {
+      nodeFieldContactGroup[nodeIndex][maxGridFields - 1] = contactGroup;
+    }
+    else if( nodeFieldContactGroup[nodeIndex][maxGridFields - 1] != contactGroup )
+    {
+      nodeFieldContactGroup[nodeIndex][maxGridFields - 1] = -2;
+    }
+    return maxGridFields - 1;
+  };
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView2d< integer > const mappedFields = m_mappedFields[subRegionIndex];
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView1d< localIndex const > const numEffectiveMappedNodes = m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< integer > const effectiveMappedFields = m_effectiveMappedFields[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[subRegionIndex];
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+
+    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      int const color = particleColor[p];
+      int const contactGroup = particleGroup[p];
+      GEOS_ERROR_IF( color < 0, "RigidBodyMPM particleColor values must be non-negative." );
+      GEOS_ERROR_IF( contactGroup < 0 || contactGroup >= m_numContactGroups,
+                     "RigidBodyMPM particle contact-group values must be valid contact-group ids." );
+
+      bool const isRigidSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+
+      if( !isRigidSurfaceParticle )
+      {
+        /*
+         * Interior particles are massless during the rigid packing stage.
+         * They are still updated by the final color-body kinematics, but they
+         * do not create nodal color fields or participate in contact.
+         */
+        for( integer g = 0; g < numberOfVerticesPerParticle * 8; ++g )
+        {
+          mappedFields[pp][g] = 0;
+        }
+        for( integer g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+        {
+          effectiveMappedFields[pp][g] = 0;
+        }
+        return;
+      }
+
+      for( integer g = 0; g < numberOfVerticesPerParticle * 8; ++g )
+      {
+        mappedFields[pp][g] = assignColorToNodeField( mappedNodes[pp][g], color, contactGroup );
+      }
+
+      for( integer g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+      {
+        effectiveMappedFields[pp][g] = assignColorToNodeField( effectiveMappedNodes[pp][g], color, contactGroup );
+      }
+    } );
+
+    ++subRegionIndex;
+  } );
+
+#ifdef GEOS_USE_DEVICE
+  /*
+   * Field colors are assigned on the host because the first-color-wins policy
+   * is intentionally deterministic.  Contact kernels may run on the device,
+   * so keep the color map device-resident before computeContactForces reads it.
+   */
+  m_rigidBodyGridFieldColor.move( parallelDeviceMemorySpace, true );
+  m_rigidBodyGridFieldContactGroup.move( parallelDeviceMemorySpace, true );
+#endif
+}
+
+/**
+ * @brief Advances particles as one planar rigid body per particleColor.
+ *
+ * The update uses a surface-only shell for the rigid solve.  Surface-flagged
+ * particles contribute to the color-field grid contact, shell mass/inertia, and
+ * force/torque attribution.  Interior particles keep their true mass and state
+ * for the continuum handoff but are massless during the rigid event, and are
+ * moved only by the resulting body kinematics.
+ *
+ * The force recovery uses option B: the total nodal contact/boundary impulse
+ * applied by the standard grid solver,
+ *
+ *   f_I = M_I ( v_I^{post contact/bc} - v_I^{trial} ) / dt,
+ *
+ * is distributed through the same m_p N_Ip / M_I support weights that mapped the
+ * surface shell to the grid.  This intentionally reuses the ordinary MPM
+ * contact and moving-boundary treatment; only the nodal field identity changes
+ * from DFG/contact-group partitioning to first-in ParticleColor partitioning.
+ */
+void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
+                                                 real64 const dt,
+                                                 ParticleManager & particleManager,
+                                                 NodeManager & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_ERROR_IF( m_planeStrain != 1,
+                 "RigidBodyMPM currently implements planar rigid-body updates for 2D plane-strain MPM tests." );
+  GEOS_ERROR_IF( dt <= 0.0, "RigidBodyMPM requires a positive time step." );
+
+  int maxColorLocal = -1;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &maxColorLocal] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      maxColorLocal = std::max( maxColorLocal, particleColor[p] );
+    } );
+  } );
+
+  int const maxColorGlobal = MpiWrapper::allReduce( maxColorLocal,
+                                                    MpiWrapper::Reduction::Max,
+                                                    MPI_COMM_GEOS );
+  if( maxColorGlobal < 0 )
+  {
+    return;
+  }
+
+  localIndex const numBodies = maxColorGlobal + 1;
+  array1d< real64 > massLocal( numBodies );
+  array1d< real64 > massGlobal( numBodies );
+  array1d< real64 > centerNumeratorLocal( 3 * numBodies );
+  array1d< real64 > centerNumeratorGlobal( 3 * numBodies );
+  array1d< real64 > momentumLocal( 3 * numBodies );
+  array1d< real64 > momentumGlobal( 3 * numBodies );
+  array1d< real64 > inertiaLocal( numBodies );
+  array1d< real64 > inertiaGlobal( numBodies );
+  array1d< real64 > angularMomentumLocal( numBodies );
+  array1d< real64 > angularMomentumGlobal( numBodies );
+  array1d< real64 > forceLocal( 3 * numBodies );
+  array1d< real64 > forceGlobal( 3 * numBodies );
+  array1d< real64 > torqueLocal( numBodies );
+  array1d< real64 > torqueGlobal( numBodies );
+
+  auto zeroArray = []( auto & values )
+  {
+    for( localIndex i = 0; i < values.size(); ++i )
+    {
+      values[i] = 0.0;
+    }
+  };
+
+  zeroArray( massLocal );
+  zeroArray( massGlobal );
+  zeroArray( centerNumeratorLocal );
+  zeroArray( centerNumeratorGlobal );
+  zeroArray( momentumLocal );
+  zeroArray( momentumGlobal );
+  zeroArray( inertiaLocal );
+  zeroArray( inertiaGlobal );
+  zeroArray( angularMomentumLocal );
+  zeroArray( angularMomentumGlobal );
+  zeroArray( forceLocal );
+  zeroArray( forceGlobal );
+  zeroArray( torqueLocal );
+  zeroArray( torqueGlobal );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &massLocal, &centerNumeratorLocal, &momentumLocal] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      bool const isRigidSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+      if( !isRigidSurfaceParticle )
+      {
+        return;
+      }
+
+      int const c = particleColor[p];
+      real64 const mp = particleMass[p];
+      massLocal[c] += mp;
+      for( int i = 0; i < 3; ++i )
+      {
+        centerNumeratorLocal[3 * c + i] += mp * particlePosition[p][i];
+        momentumLocal[3 * c + i] += mp * particleVelocity[p][i];
+      }
+    } );
+  } );
+
+  MpiWrapper::allReduce( massLocal, massGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  MpiWrapper::allReduce( centerNumeratorLocal, centerNumeratorGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  MpiWrapper::allReduce( momentumLocal, momentumGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  array1d< real64 > center( 3 * numBodies );
+  array1d< real64 > bodyVelocity( 3 * numBodies );
+  array1d< real64 > omega( numBodies );
+  array1d< real64 > bodyVelocityNew( 3 * numBodies );
+  array1d< real64 > omegaNew( numBodies );
+  zeroArray( center );
+  zeroArray( bodyVelocity );
+  zeroArray( omega );
+  zeroArray( bodyVelocityNew );
+  zeroArray( omegaNew );
+
+  for( localIndex c = 0; c < numBodies; ++c )
+  {
+    if( massGlobal[c] > 0.0 )
+    {
+      for( int i = 0; i < 3; ++i )
+      {
+        center[3 * c + i] = centerNumeratorGlobal[3 * c + i] / massGlobal[c];
+        bodyVelocity[3 * c + i] = momentumGlobal[3 * c + i] / massGlobal[c];
+      }
+    }
+  }
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &inertiaLocal, &angularMomentumLocal] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      bool const isRigidSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+      if( !isRigidSurfaceParticle )
+      {
+        return;
+      }
+
+      int const c = particleColor[p];
+      real64 const mp = particleMass[p];
+      real64 const rx = particlePosition[p][0] - center[3 * c + 0];
+      real64 const ry = particlePosition[p][1] - center[3 * c + 1];
+      real64 const vxRel = particleVelocity[p][0] - bodyVelocity[3 * c + 0];
+      real64 const vyRel = particleVelocity[p][1] - bodyVelocity[3 * c + 1];
+      inertiaLocal[c] += mp * ( rx * rx + ry * ry );
+      angularMomentumLocal[c] += mp * ( rx * vyRel - ry * vxRel );
+    } );
+  } );
+
+  MpiWrapper::allReduce( inertiaLocal, inertiaGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  MpiWrapper::allReduce( angularMomentumLocal, angularMomentumGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  for( localIndex c = 0; c < numBodies; ++c )
+  {
+    omega[c] = inertiaGlobal[c] > 0.0 ? angularMomentumGlobal[c] / inertiaGlobal[c] : 0.0;
+  }
+
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView3d< real64 const > const gridUncontactedVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() );
+  arrayView3d< real64 const > const gridVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
+    arrayView1d< localIndex const > const numEffectiveMappedNodes = m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< integer const > const effectiveMappedFields = m_effectiveMappedFields[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const effectiveShapeFunctionValues = m_effectiveShapeFunctionValues[subRegionIndex];
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(),
+      [=, &forceLocal, &torqueLocal] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      bool const isRigidSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+      if( !isRigidSurfaceParticle )
+      {
+        return;
+      }
+
+      int const c = particleColor[p];
+      real64 const px = particlePosition[p][0] + particleSurfacePosition[p][0];
+      real64 const py = particlePosition[p][1] + particleSurfacePosition[p][1];
+      for( localIndex g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+      {
+        localIndex const nodeIndex = effectiveMappedNodes[pp][g];
+        integer const fieldIndex = effectiveMappedFields[pp][g];
+        real64 const nodalMass = gridMass[nodeIndex][fieldIndex];
+        if( nodalMass <= 0.0 )
+        {
+          continue;
+        }
+
+        real64 const weight = particleMass[p] * effectiveShapeFunctionValues[pp][g] / nodalMass;
+        real64 nodalForce[3] = {};
+        for( int i = 0; i < 3; ++i )
+        {
+          nodalForce[i] = nodalMass * ( gridVelocity[nodeIndex][fieldIndex][i]
+                                      - gridUncontactedVelocity[nodeIndex][fieldIndex][i] ) / dt;
+          forceLocal[3 * c + i] += weight * nodalForce[i];
+        }
+
+        real64 const fx = weight * nodalForce[0];
+        real64 const fy = weight * nodalForce[1];
+        torqueLocal[c] += ( px - center[3 * c + 0] ) * fy - ( py - center[3 * c + 1] ) * fx;
+      }
+    } );
+
+    ++subRegionIndex;
+  } );
+
+  MpiWrapper::allReduce( forceLocal, forceGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  MpiWrapper::allReduce( torqueLocal, torqueGlobal, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  real64 kineticEnergyLocal = 0.0;
+  real64 observedMaxForceLocal = 0.0;
+
+  for( localIndex c = 0; c < numBodies; ++c )
+  {
+    if( massGlobal[c] <= 0.0 )
+    {
+      continue;
+    }
+
+    real64 const linearDampingScale = LvArray::math::max( 0.0, 1.0 - dt * m_rigidBodyLinearDamping );
+    real64 const angularDampingScale = LvArray::math::max( 0.0, 1.0 - dt * m_rigidBodyAngularDamping );
+
+    for( int i = 0; i < 3; ++i )
+    {
+      bodyVelocityNew[3 * c + i] = linearDampingScale * ( bodyVelocity[3 * c + i] + dt * forceGlobal[3 * c + i] / massGlobal[c] );
+    }
+    omegaNew[c] = inertiaGlobal[c] > 0.0
+                  ? angularDampingScale * ( omega[c] + dt * torqueGlobal[c] / inertiaGlobal[c] )
+                  : 0.0;
+
+    real64 const forceNorm = LvArray::math::sqrt( forceGlobal[3 * c + 0] * forceGlobal[3 * c + 0]
+                                               + forceGlobal[3 * c + 1] * forceGlobal[3 * c + 1]
+                                               + forceGlobal[3 * c + 2] * forceGlobal[3 * c + 2] );
+    observedMaxForceLocal = LvArray::math::max( observedMaxForceLocal, forceNorm );
+
+    kineticEnergyLocal += 0.5 * massGlobal[c]
+                          * ( bodyVelocityNew[3 * c + 0] * bodyVelocityNew[3 * c + 0]
+                            + bodyVelocityNew[3 * c + 1] * bodyVelocityNew[3 * c + 1]
+                            + bodyVelocityNew[3 * c + 2] * bodyVelocityNew[3 * c + 2] )
+                          + 0.5 * inertiaGlobal[c] * omegaNew[c] * omegaNew[c];
+  }
+
+  m_rigidBodyObservedMaxForce = MpiWrapper::allReduce( observedMaxForceLocal,
+                                                       MpiWrapper::Reduction::Max,
+                                                       MPI_COMM_GEOS );
+  m_rigidBodyKineticEnergy = MpiWrapper::allReduce( kineticEnergyLocal,
+                                                    MpiWrapper::Reduction::Sum,
+                                                    MPI_COMM_GEOS );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+    arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
+    arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+    ParticleType const particleType = subRegion.getParticleType();
+    arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
+    arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+    arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      int const c = particleColor[p];
+      if( massGlobal[c] <= 0.0 )
+      {
+        return;
+      }
+
+      real64 const theta = dt * omegaNew[c];
+      real64 const cosTheta = cos( theta );
+      real64 const sinTheta = sin( theta );
+
+      auto rotateVector2D = [=] GEOS_HOST ( arraySlice1d< real64 > const vector )
+      {
+        real64 const x = vector[0];
+        real64 const y = vector[1];
+        vector[0] = cosTheta * x - sinTheta * y;
+        vector[1] = sinTheta * x + cosTheta * y;
+      };
+
+      real64 const rxOld = particlePosition[p][0] - center[3 * c + 0];
+      real64 const ryOld = particlePosition[p][1] - center[3 * c + 1];
+      real64 const rzOld = particlePosition[p][2] - center[3 * c + 2];
+      real64 const rxNew = cosTheta * rxOld - sinTheta * ryOld;
+      real64 const ryNew = sinTheta * rxOld + cosTheta * ryOld;
+      real64 const rzNew = rzOld;
+
+      real64 const centerNewX = center[3 * c + 0] + dt * bodyVelocityNew[3 * c + 0];
+      real64 const centerNewY = center[3 * c + 1] + dt * bodyVelocityNew[3 * c + 1];
+      real64 const centerNewZ = center[3 * c + 2] + dt * bodyVelocityNew[3 * c + 2];
+
+      real64 const vx = bodyVelocityNew[3 * c + 0] - omegaNew[c] * ryNew;
+      real64 const vy = bodyVelocityNew[3 * c + 1] + omegaNew[c] * rxNew;
+      real64 const vz = bodyVelocityNew[3 * c + 2];
+
+      particleVelocity[p][0] = vx;
+      particleVelocity[p][1] = vy;
+      particleVelocity[p][2] = vz;
+
+      particlePosition[p][0] = centerNewX + rxNew;
+      particlePosition[p][1] = centerNewY + ryNew;
+      particlePosition[p][2] = centerNewZ + rzNew;
+
+      rotateVector2D( particleSurfaceNormal[p] );
+      rotateVector2D( particleSurfacePosition[p] );
+      if( particleType != ParticleType::SinglePoint )
+      {
+        for( int a = 0; a < 3; ++a )
+        {
+          rotateVector2D( particleRVectors[p][a] );
+        }
+      }
+
+      for( int i = 0; i < 3; ++i )
+      {
+        particleReferenceSurfaceNormal[p][i] = particleSurfaceNormal[p][i];
+        particleReferenceSurfacePosition[p][i] = particleSurfacePosition[p][i];
+      }
+
+      for( int a = 0; a < 3; ++a )
+      {
+        for( int i = 0; i < 3; ++i )
+        {
+          particleReferenceRVectors[p][a][i] = particleRVectors[p][a][i];
+        }
+      }
+
+      for( int i = 0; i < 3; ++i )
+      {
+        for( int j = 0; j < 3; ++j )
+        {
+          particleDeformationGradient[p][i][j] = i == j ? 1.0 : 0.0;
+          particleVelocityGradient[p][i][j] = 0.0;
+        }
+      }
+
+      particleKineticEnergy[p] = 0.5 * particleMass[p] * ( vx * vx + vy * vy + vz * vz );
+    } );
+  } );
+
+  if( m_rigidBodyHistory == 1 && MpiWrapper::commRank( MPI_COMM_GEOS ) == 0
+      && ( m_rigidBodyHistoryWriteInterval <= 0.0 || time_n + dt >= m_nextRigidBodyHistoryWriteTime ) )
+  {
+    std::ofstream history( "rigidBodyHistory.csv", std::ios::app );
+    for( localIndex c = 0; c < numBodies; ++c )
+    {
+      if( massGlobal[c] <= 0.0 )
+      {
+        continue;
+      }
+      real64 const bodyKineticEnergy = 0.5 * massGlobal[c]
+                                      * ( bodyVelocityNew[3 * c + 0] * bodyVelocityNew[3 * c + 0]
+                                        + bodyVelocityNew[3 * c + 1] * bodyVelocityNew[3 * c + 1]
+                                        + bodyVelocityNew[3 * c + 2] * bodyVelocityNew[3 * c + 2] )
+                                      + 0.5 * inertiaGlobal[c] * omegaNew[c] * omegaNew[c];
+      history << time_n + dt << ',' << c << ',' << massGlobal[c] << ','
+              << center[3 * c + 0] << ',' << center[3 * c + 1] << ',' << center[3 * c + 2] << ','
+              << bodyVelocityNew[3 * c + 0] << ',' << bodyVelocityNew[3 * c + 1] << ',' << bodyVelocityNew[3 * c + 2] << ','
+              << omegaNew[c] << ','
+              << forceGlobal[3 * c + 0] << ',' << forceGlobal[3 * c + 1] << ',' << forceGlobal[3 * c + 2] << ','
+              << torqueGlobal[c] << ',' << bodyKineticEnergy << '\n';
+    }
+    m_nextRigidBodyHistoryWriteTime = time_n + dt + LvArray::math::max( 0.0, m_rigidBodyHistoryWriteInterval );
+  }
+}
+
 /**
  * @brief Chooses the DFG side from the sign of the mapping normal against the grid damage gradient.
  */
@@ -14429,17 +15160,15 @@ localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
   real64 mappingNormal[3] = {};
 
   // Use the explicit particle surface normal when it is present; otherwise use
-  // the particle damage gradient as the mapping normal.
-  // Tensor condition: isZero(||particleSurfaceNormal||, 1e-12).
-  if( isZero( LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal ), 1e-12 ) )
+  // the particle damage gradient as the mapping normal. Use the same squared
+  // tolerance as projectDamageFieldGradientToGrid() and avoid a square root.
+  if( hasExplicitPartitionSurfaceNormal( particleSurfaceNormal ) )
   {
-    // Tensor equation: mappingNormal = particleDamageGradient.
-    LvArray::tensorOps::copy< 3 >( mappingNormal, particleDamageGradient );
+    LvArray::tensorOps::copy< 3 >( mappingNormal, particleSurfaceNormal );
   }
   else
   {
-    // Tensor equation: mappingNormal = particleSurfaceNormal.
-    LvArray::tensorOps::copy< 3 >( mappingNormal, particleSurfaceNormal );
+    LvArray::tensorOps::copy< 3 >( mappingNormal, particleDamageGradient );
   }
   // A negative dot product maps the particle-node contribution to the second
   // DFG field for its contact group; otherwise it remains in the first field.
@@ -14823,8 +15552,15 @@ void SolidMechanicsMPM::synchronizePostBoundaryKinematicFieldsForG2P( DomainPart
                                           viewKeyStruct::gridAccelerationString(),
                                           viewKeyStruct::gridDVelocityString() };
 
-  if( m_updateMethod == mpm::UpdateMethodOption::FMPM )
+  if( m_updateMethod == mpm::UpdateMethodOption::FMPM || m_rigidBodyMode == 1 )
   {
+    /*
+     * RigidBodyMPM option-B force recovery uses the total post-contact /
+     * post-boundary nodal impulse, M (v_final - v_uncontacted).  Make the
+     * uncontacted seed velocity owner-to-ghost consistent even for FLIP/PIC
+     * rigid steps, because the rigid update reads it directly rather than
+     * entering the ordinary G2P/FMPM update path.
+     */
     fieldNames.push_back( viewKeyStruct::gridUncontactedVelocityString() );
   }
 
@@ -17978,6 +18714,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const planeStrain = m_planeStrain;
+  int const rigidBodyMode = m_rigidBodyMode;
 #ifndef GEOS_USE_DEVICE
   GEOS_UNUSED_VAR( numContactGroups );
   GEOS_UNUSED_VAR( damageFieldPartitioning );
@@ -18254,6 +18991,17 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ); // DamagedCohesive may not have an explicit surface normal if it was disabled
 
+      if( rigidBodyMode == 1 && !hasExplicitSurfaceNormal )
+      {
+        /*
+         * Surface-only rigid-body MPM: interior particles retain their true
+         * mass and state for the continuum handoff, but are massless/invisible
+         * to the rigid-stage grid contact solve.  The color-body rigid update
+         * below moves them from the surface shell kinematics.
+         */
+        return;
+      }
+
       real64 const px =
         particlePosition[p][0];
 
@@ -18296,11 +19044,10 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
       bool const hasSurfaceNormal =
         surfaceNormalNormSquared > 1.0e-32;
 
-      // partitionField() treats a particle surface normal as present when its
-      // norm is not zero to tolerance 1e-12. Use the same tolerance here so the
-      // quality tensor describes the normal that actually selected the DFG side.
+      // Use the same explicit-normal presence threshold as partitionField()
+      // so the quality tensor describes the normal that selected the DFG side.
       bool const hasPartitionSurfaceNormal =
-        surfaceNormalNormSquared > 1.0e-24;
+        surfaceNormalNormSquared > explicitSurfaceNormalNormSquaredTolerance;
 
       real64 pdg0 = 0.0;
       real64 pdg1 = 0.0;
@@ -18745,6 +19492,11 @@ localIndex const mappedNode =
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridCenterOfMass[mappedNode][fieldIndex][2],
                            massWeightedShape * dzParticleNode );
+        }
+
+        if( rigidBodyMode == 1 )
+        {
+          continue;
         }
 
         // Internal force:
@@ -20011,6 +20763,11 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
+  int const rigidBodyMode = m_rigidBodyMode;
+  arrayView2d< integer const > const rigidBodyGridFieldColor =
+    m_rigidBodyGridFieldColor.toViewConst();
+  arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
+    m_rigidBodyGridFieldContactGroup.toViewConst();
 
   real64 const smallMass = m_smallMass;
   real64 const neighborRadius = m_neighborRadius;
@@ -20022,11 +20779,13 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
+  real64 maxFrictionCoefficient = 0.0;
   for( int i = 0; i < numContactGroups; ++i )
   {
     for( int j = 0; j < numContactGroups; ++j )
     {
       frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
+      maxFrictionCoefficient = LvArray::math::max( maxFrictionCoefficient, m_frictionCoefficientTable[i][j] );
     }
   }
   arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
@@ -20100,6 +20859,38 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
         if( active )
         {
+          bool const rigidBodyContactPair =
+            rigidBodyMode == 1 &&
+            rigidBodyGridFieldColor[g][A] != -1 &&
+            rigidBodyGridFieldColor[g][B] != -1 &&
+            rigidBodyGridFieldColor[g][A] != rigidBodyGridFieldColor[g][B];
+          if( rigidBodyMode == 1 && !rigidBodyContactPair )
+          {
+            /*
+             * RigidBodyMPM has already partitioned this node by first-in
+             * ParticleColor.  In rigid mode the nodal fields are the contact
+             * bodies, so contact is evaluated only between distinct color
+             * fields.  Do not fall back to DFG/contact-group separability for
+             * same-color or unassigned rigid fields.
+             */
+            continue;
+          }
+          if( rigidBodyContactPair )
+          {
+            integer const groupA = rigidBodyGridFieldContactGroup[g][A];
+            integer const groupB = rigidBodyGridFieldContactGroup[g][B];
+            if( groupA >= 0 && groupA < numContactGroups && groupB >= 0 && groupB < numContactGroups )
+            {
+              frictionCoefficient = frictionCoefficientTable[groupA][groupB];
+            }
+            else
+            {
+              /* Mixed-contact-group overflow is expected to be rare; use the
+               * conservative largest tabulated friction coefficient. */
+              frictionCoefficient = maxFrictionCoefficient;
+            }
+          }
+
           bool weakTracePair = enableWeakInterfaceTraceProjection == 1;
           if( weakTracePair && numWeakInterfaceTracePairs > 0 )
           {
@@ -20130,7 +20921,17 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
           // Don't think this is needed if friction coefficient is set to zero
-          if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
+          if( rigidBodyMode == 1 )
+          {
+            /*
+             * The first-in color mapping is the rigid-body partitioning.
+             * Distinct color fields are always a separable contact pair;
+             * cohesive/damage DFG criteria are intentionally bypassed.
+             */
+            separable = true;
+            useCohesiveTangentialForces = 0;
+          }
+          else if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
                                                                            // to pairs for which a cohesive law is
                                                                            // defined
           {
@@ -20414,6 +21215,11 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
+  int const rigidBodyMode = m_rigidBodyMode;
+  arrayView2d< integer const > const rigidBodyGridFieldColor =
+    m_rigidBodyGridFieldColor.toViewConst();
+  arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
+    m_rigidBodyGridFieldContactGroup.toViewConst();
 
   real64 const smallMass = m_smallMass;
   real64 const neighborRadius = m_neighborRadius;
@@ -20425,11 +21231,13 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
+  real64 maxFrictionCoefficient = 0.0;
   for( int i = 0; i < numContactGroups; ++i )
   {
     for( int j = 0; j < numContactGroups; ++j )
     {
       frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
+      maxFrictionCoefficient = LvArray::math::max( maxFrictionCoefficient, m_frictionCoefficientTable[i][j] );
     }
   }
   arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
@@ -20500,13 +21308,53 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
         if( active )
         {
+          bool const rigidBodyContactPair =
+            rigidBodyMode == 1 &&
+            rigidBodyGridFieldColor[g][A] != -1 &&
+            rigidBodyGridFieldColor[g][B] != -1 &&
+            rigidBodyGridFieldColor[g][A] != rigidBodyGridFieldColor[g][B];
+          if( rigidBodyMode == 1 && !rigidBodyContactPair )
+          {
+            /*
+             * RigidBodyMPM uses first-in ParticleColor fields as the contact
+             * partition.  Pairs that are not distinct rigid color fields do
+             * not participate in nodal material contact during the rigid event.
+             */
+            continue;
+          }
+          if( rigidBodyContactPair )
+          {
+            integer const groupA = rigidBodyGridFieldContactGroup[g][A];
+            integer const groupB = rigidBodyGridFieldContactGroup[g][B];
+            if( groupA >= 0 && groupA < numContactGroups && groupB >= 0 && groupB < numContactGroups )
+            {
+              frictionCoefficient = frictionCoefficientTable[groupA][groupB];
+            }
+            else
+            {
+              /* Mixed-contact-group overflow is expected to be rare; use the
+               * conservative largest tabulated friction coefficient. */
+              frictionCoefficient = maxFrictionCoefficient;
+            }
+          }
+
           // Evaluate the separability criterion for the contact pair.
           bool separable = 0;
           int useCohesiveTangentialForces = 0;
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
           // Don't think this is needed if friction coefficient is set to zero
-          if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
+          if( rigidBodyMode == 1 )
+          {
+            /*
+             * The first-in color mapping is the rigid-body partitioning.
+             * Distinct color fields are always a separable contact pair;
+             * cohesive/damage DFG criteria are intentionally bypassed.
+             */
+            separable = true;
+            useCohesiveTangentialForces = 0;
+          }
+          else if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
                                                                            // to pairs for which a cohesive law is
                                                                            // defined
           {
@@ -22694,8 +23542,12 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
         {
           localIndex const g = boundaryNodes[gg];
 
-          // Contact faces prescribe the normal component only while the node is moving into the wall.
-          // Moving faces prescribe the normal component from the domain-rate/F-table state.
+          // Contact faces prescribe the normal component only when the material
+          // surface is moving into the wall relative to the wall.  This relative
+          // test is essential for F-table/stress-control moving walls: a wall
+          // moving into an initially stationary rigid body must still generate
+          // a contact impulse.  Moving faces prescribe the normal component from
+          // the domain-rate/F-table state unconditionally.
           real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
           if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Contact ) )
           {
@@ -22704,13 +23556,23 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             {
               surfacePosition = gridSurfacePosition[g][fieldIndex][dir0];
             }
-            bool const inContact =
-              ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) &&
-              ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 );
+
+            real64 const outwardSign = -1.0 + 2.0 * positiveNormal;
+            real64 const endOfStepGridPosition = ( 1.0 + domainL[dir0] * dt ) * gridPosition[g][dir0];
+            real64 const wallVelocity = domainL[dir0] * endOfStepGridPosition;
+            real64 const relativeNormalVelocity = gridVelocity[g][fieldIndex][dir0] - wallVelocity;
+            real64 const currentOutwardSurfacePosition = outwardSign * surfacePosition;
+            real64 const predictedOutwardSurfacePosition =
+              outwardSign * ( surfacePosition + relativeNormalVelocity * dt );
+
+            bool const movingIntoWall = outwardSign * relativeNormalVelocity > 0.0;
+            bool const intersectsWall = currentOutwardSurfacePosition > 0.0 ||
+                                        predictedOutwardSurfacePosition > 0.0;
+            bool const inContact = movingIntoWall && intersectsWall;
 
             if( inContact )
             {
-              prescribedVelocity = domainL[dir0] * gridPosition[g][dir0];
+              prescribedVelocity = wallVelocity;
             }
 
             // Boundary friction acts only in tangential components.  It is staged
@@ -27313,8 +28175,8 @@ void SolidMechanicsMPM::computeKineticEnergy( ParticleManager & particleManager 
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -27778,8 +28640,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   {
     // Get fields
     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
-    arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 const > const particleSupplementalPressure = subRegion.getField< fields::mpm::particleSupplementalPressure >();
     arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
@@ -27999,6 +28861,7 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
   GEOS_MARK_FUNCTION;
 
   real64 const cflFactor = m_cflFactor;
+  int const rigidBodyMode = m_rigidBodyMode;
 
   RAJA::ReduceMax< parallelDeviceReduce, real64 > maxWavespeed( 0.0 );
   real64 length = m_planeStrain == 1 ? LvArray::math::min( m_hEl[0], m_hEl[1] ) : LvArray::math::min( m_hEl[0], LvArray::math::min( m_hEl[1], m_hEl[2] ) );
@@ -28013,13 +28876,38 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
                                                                                                                  // parallelize
     {
       localIndex const p = activeParticleIndices[pp];
-      // Tensor equation: maxWavespeed = max(maxWavespeed, particleWavespeed[p] + ||particleVelocity[p]||).
-      maxWavespeed.max( particleWavespeed[p] + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
+      real64 const particleAdvectionSpeed = LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] );
+      real64 const speedLimit = rigidBodyMode == 1 ? particleAdvectionSpeed : particleWavespeed[p] + particleAdvectionSpeed;
+      maxWavespeed.max( speedLimit );
     } );
   } );
 
   // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
   real64 dtReturn = maxWavespeed.get() > 1.0e-16 ? cflFactor * length / maxWavespeed.get() : DBL_MAX;
+
+  if( rigidBodyMode == 1 )
+  {
+    /*
+     * In rigid-body mode the material wavespeed is intentionally removed from
+     * the CFL estimate, but prescribed moving walls are still physical contact
+     * surfaces.  Include their F-table/stress-control speed so a wall cannot
+     * move more than O(h) in one step while stationary bodies report zero
+     * material speed.
+     */
+    real64 maxBoundarySpeed = 0.0;
+    for( int i = 0; i < m_numDims; ++i )
+    {
+      maxBoundarySpeed = LvArray::math::max( maxBoundarySpeed,
+                                             LvArray::math::abs( m_domainL[i] * m_xGlobalMin[i] ) );
+      maxBoundarySpeed = LvArray::math::max( maxBoundarySpeed,
+                                             LvArray::math::abs( m_domainL[i] * m_xGlobalMax[i] ) );
+    }
+
+    if( maxBoundarySpeed > 1.0e-16 )
+    {
+      dtReturn = LvArray::math::min( dtReturn, cflFactor * length / maxBoundarySpeed );
+    }
+  }
 
   if( m_enableSurfaceTension == 1 )
   {

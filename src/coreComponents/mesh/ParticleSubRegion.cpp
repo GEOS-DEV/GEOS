@@ -51,6 +51,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleType = particleBlock.getParticleType();
   m_particleID = particleBlock.getParticleID();
   m_particleGroup = particleBlock.getParticleGroup();
+  m_particleColor = particleBlock.getParticleColor();
   m_particleSurfaceFlag = particleBlock.getParticleSurfaceFlag();
   m_particleDamage = particleBlock.getParticleDamage();
   m_particlePorosity = particleBlock.getParticlePorosity();

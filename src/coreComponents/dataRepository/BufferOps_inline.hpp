@@ -17,6 +17,7 @@
 #define GEOS_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
@@ -600,8 +601,9 @@ UnpackArray( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices,op)
 //------------------------------------------------------------------------------
-// Host-side unpack with MPI_REPLACE/MPI_SUM/MPI_MAX semantics.  The normal host
-// UnpackByIndex path always replaces values; MPM grid sync needs reductions for
+// Host-side unpack with replacement, scalar-reduction, and explicit vector
+// reduction semantics. The normal host UnpackByIndex path always replaces values;
+// MPM grid sync needs reductions for
 // ghost-to-owner accumulation.  This host implementation is a correctness-first
 // fallback for Tuolumne/HIP until the device communication path is made robust.
 template< typename T >
@@ -681,6 +683,53 @@ UnpackByIndex( buffer_unit_type const * & buffer,
   localIndex strides[NDIM];
   localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM );
   GEOS_UNUSED_VAR( strides );
+
+  if( op != MPI_SUM && op != MPI_MAX )
+  {
+    GEOS_ERROR_IF( op != MpiWrapper::maxNormLexicographicVector3Op(),
+                   "Unsupported host unpack reduction operation." );
+
+    using ValueType = typename std::remove_cv< T >::type;
+    if constexpr( std::is_same< ValueType, real64 >::value && NDIM == 2 )
+    {
+      GEOS_ERROR_IF( var.size( 1 ) != 3,
+                     "The max-norm lexicographic unpack operation requires 3-component array entries." );
+
+      for( localIndex a = 0; a < indices.size(); ++a )
+      {
+        T incoming[3] = {};
+        for( integer i = 0; i < 3; ++i )
+        {
+          sizeOfUnpackedChars += Unpack( buffer, incoming[i] );
+        }
+
+        localIndex const index = indices[a];
+        T current[3] = { var[index][0], var[index][1], var[index][2] };
+
+        real64 const incomingNormSquared =
+          MpiWrapper::vector3NormSquared( incoming );
+
+        real64 const currentNormSquared =
+          MpiWrapper::vector3NormSquared( current );
+
+        if( MpiWrapper::preferMaxNormLexicographicVector3( incoming,
+                                                           incomingNormSquared,
+                                                           current,
+                                                           currentNormSquared ) )
+        {
+          var[index][0] = incoming[0];
+          var[index][1] = incoming[1];
+          var[index][2] = incoming[2];
+        }
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "The max-norm lexicographic unpack operation requires a 2D real64 array." );
+    }
+
+    return sizeOfUnpackedChars;
+  }
 
   for( localIndex a=0; a<indices.size(); ++a )
   {

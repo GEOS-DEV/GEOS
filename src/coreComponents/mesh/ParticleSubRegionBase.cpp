@@ -36,6 +36,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleRank(),
   m_particleID(),
   m_particleGroup(),
+  m_particleColor(),
   m_particleSurfaceFlag(),
   m_particleDamage(),
   m_particlePorosity(),
@@ -62,6 +63,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleGroupString(), &m_particleGroup ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleColorString(), &m_particleColor ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleSurfaceFlagString(), &m_particleSurfaceFlag ).

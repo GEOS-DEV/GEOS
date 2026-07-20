@@ -32,11 +32,74 @@
 namespace geos
 {
 
+namespace
+{
+
+#ifdef GEOS_USE_MPI
+
+struct MaxNormLexicographicVector3Record
+{
+  real64 values[3];
+};
+
+void maxNormLexicographicVector3Reduction( void * invec,
+                                           void * inoutvec,
+                                           int * len,
+                                           MPI_Datatype * )
+{
+  auto const * const incoming =
+    static_cast< MaxNormLexicographicVector3Record const * >( invec );
+  auto * const current =
+    static_cast< MaxNormLexicographicVector3Record * >( inoutvec );
+
+  for( int i = 0; i < *len; ++i )
+  {
+    real64 const incomingNormSquared =
+      MpiWrapper::vector3NormSquared( incoming[i].values );
+
+    real64 const currentNormSquared =
+      MpiWrapper::vector3NormSquared( current[i].values );
+
+    if( MpiWrapper::preferMaxNormLexicographicVector3(
+          incoming[i].values,
+          incomingNormSquared,
+          current[i].values,
+          currentNormSquared ) )
+    {
+      current[i] = incoming[i];
+    }
+  }
+}
+
+#endif
+
+} // anonymous namespace
+
 #ifdef GEOS_USE_MPI
 MPI_Comm MPI_COMM_GEOS;
 #else
 int MPI_COMM_GEOS = 0;
 #endif
+
+MPI_Op MpiWrapper::maxNormLexicographicVector3Op()
+{
+#ifdef GEOS_USE_MPI
+  static MPI_Op const op = []()
+  {
+    MPI_Op result;
+    GEOS_ERROR_IF_NE( MPI_Op_create( maxNormLexicographicVector3Reduction,
+                                     1,
+                                     &result ),
+                      MPI_SUCCESS );
+    internal::getManagedResources().m_mpiOps.emplace( result );
+    return result;
+  }();
+  return op;
+#else
+  // Keep this distinct from the serial stand-ins for the standard MPI ops.
+  return static_cast< MPI_Op >( 0x5800000f );
+#endif
+}
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {

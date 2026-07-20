@@ -241,6 +241,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::SurfaceFlag:
         case ParticleColumnHeaders::MaterialType:
         case ParticleColumnHeaders::ContactGroup:
+        case ParticleColumnHeaders::ParticleColor:
         case ParticleColumnHeaders::Damage:
         case ParticleColumnHeaders::Porosity:
         case ParticleColumnHeaders::VelocityX:
@@ -306,6 +307,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array2d< real64 > particleVelocity( npInBlock, 3 );
     array3d< real64 > particleMaterialDirection( npInBlock, 3, 3 );
     array1d< int > particleGroup( npInBlock );
+    array1d< int > particleColor( npInBlock );
     array1d< integer > particleSurfaceFlag( npInBlock );
     array1d< real64 > particleDamage( npInBlock );
     array1d< real64 > particlePorosity( npInBlock );
@@ -339,6 +341,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
       // Group
       particleGroup[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ContactGroup )];
+
+      // Rigid body color. This is intentionally separate from the contact group.
+      particleColor[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ParticleColor )];
 
       // surfaceFlag
       particleSurfaceFlag[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceFlag )];
@@ -481,6 +486,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleBlock.setParticleVelocity( particleVelocity );
     particleBlock.setParticleMaterialDirection( particleMaterialDirection );
     particleBlock.setParticleGroup( particleGroup );
+    particleBlock.setParticleColor( particleColor );
     particleBlock.setParticleSurfaceFlag( particleSurfaceFlag );
     particleBlock.setParticleDamage( particleDamage );
     particleBlock.setParticlePorosity( particlePorosity );

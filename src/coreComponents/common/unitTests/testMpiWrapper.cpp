@@ -38,6 +38,57 @@ public:
 
 };
 
+TEST( MpiWrapperTesting, MaxNormLexicographicVector3Ordering )
+{
+  real64 const strong[3] = { 2.0, 0.0, 0.0 };
+  real64 const positiveX[3] = { 1.0, 0.0, 0.0 };
+  real64 const negativeX[3] = { -1.0, 0.0, 0.0 };
+  real64 const positiveY[3] = { 0.0, 1.0, 0.0 };
+
+  real64 const strongNormSquared = MpiWrapper::vector3NormSquared( strong );
+  real64 const unitNormSquared = MpiWrapper::vector3NormSquared( positiveX );
+
+  EXPECT_TRUE( MpiWrapper::preferMaxNormLexicographicVector3(
+                 strong, strongNormSquared, positiveX, unitNormSquared ) );
+  EXPECT_FALSE( MpiWrapper::preferMaxNormLexicographicVector3(
+                  positiveX, unitNormSquared, strong, strongNormSquared ) );
+
+  // Equal squared norms use a deterministic component-wise tie break.
+  EXPECT_TRUE( MpiWrapper::preferMaxNormLexicographicVector3(
+                 positiveX, unitNormSquared, negativeX, unitNormSquared ) );
+  EXPECT_TRUE( MpiWrapper::preferMaxNormLexicographicVector3(
+                 positiveX, unitNormSquared, positiveY, unitNormSquared ) );
+  EXPECT_FALSE( MpiWrapper::preferMaxNormLexicographicVector3(
+                  positiveX, unitNormSquared, positiveX, unitNormSquared ) );
+
+  MPI_Op const op = MpiWrapper::maxNormLexicographicVector3Op();
+  EXPECT_NE( op, MPI_MAX );
+
+#ifdef GEOS_USE_MPI
+  MPI_Datatype vector3Type;
+  ASSERT_EQ( MPI_Type_contiguous( 3, MPI_DOUBLE, &vector3Type ), MPI_SUCCESS );
+  ASSERT_EQ( MPI_Type_commit( &vector3Type ), MPI_SUCCESS );
+
+  int const rank = MpiWrapper::commRank();
+  int const size = MpiWrapper::commSize();
+  real64 local[3] = { rank % 2 == 0 ? -1.0 : 1.0, 0.0, 0.0 };
+  real64 reduced[3] = {};
+
+  ASSERT_EQ( MPI_Allreduce( local,
+                            reduced,
+                            1,
+                            vector3Type,
+                            op,
+                            MPI_COMM_GEOS ),
+             MPI_SUCCESS );
+  EXPECT_EQ( reduced[0], size > 1 ? 1.0 : -1.0 );
+  EXPECT_EQ( reduced[1], 0.0 );
+  EXPECT_EQ( reduced[2], 0.0 );
+
+  ASSERT_EQ( MPI_Type_free( &vector3Type ), MPI_SUCCESS );
+#endif
+}
+
 template< typename FIRST, typename SECOND >
 struct PairTestCase
 {

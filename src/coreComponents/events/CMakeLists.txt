@@ -51,6 +51,7 @@ set( events_headers
      mpmEvents/TemperatureProfileMPMEvent.hpp
      mpmEvents/TransformParticlesMPMEvent.hpp
      mpmEvents/UpdateSurfacesMPMEvent.hpp
+     mpmEvents/RigidBodyMPMEvent.hpp
    )
 
 #
@@ -85,6 +86,7 @@ set( events_sources
      mpmEvents/TemperatureProfileMPMEvent.cpp
      mpmEvents/TransformParticlesMPMEvent.cpp
      mpmEvents/UpdateSurfacesMPMEvent.cpp
+     mpmEvents/RigidBodyMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} functions )

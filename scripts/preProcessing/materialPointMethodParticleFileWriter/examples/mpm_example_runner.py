@@ -48,6 +48,7 @@ def parse_args():
     p.add_argument("--post-partition", default="pdebug")
     p.add_argument("--walltime", default=None, help="Optional GEOS walltime override; by default use pfw_input mWallTime")
     p.add_argument("--no-submit", action="store_true", help="run PFW without submitting GEOS")
+    p.add_argument("--preserve-plot-interval", action="store_true", help="keep pfw[\"plotInterval\"] from the source input instead of overriding it to endTime")
     return p.parse_args()
 
 
@@ -157,8 +158,9 @@ def copy_pfw_files(pfw_root: Path, run_dir: Path, source_dir: Path, input_file: 
                     shutil.copy2(preferred, alias)
 
 
-def append_runtime_overrides(input_path: Path, case: str, bank: str, geos_path: str, walltime: str, submit: bool) -> None:
+def append_runtime_overrides(input_path: Path, case: str, bank: str, geos_path: str, walltime: str, submit: bool, preserve_plot_interval: bool = False) -> None:
     walltime_line = f'pfw["mWallTime"] = {walltime!r}\n' if walltime else ""
+    plot_interval_line = '' if preserve_plot_interval else 'pfw["plotInterval"] = _pfw_end_time\n'
     block = f"""
 
 # -----------------------------------------------------------------------------
@@ -174,8 +176,7 @@ try:
     _pfw_end_time = float(pfw.get("endTime", stopTime))
 except Exception:
     _pfw_end_time = 1.0
-pfw["plotInterval"] = _pfw_end_time
-pfw["restartInterval"] = 2.0 * _pfw_end_time
+{plot_interval_line}pfw["restartInterval"] = 2.0 * _pfw_end_time
 _interp = pfw.get("fTableInterpType", "Linear")
 if _interp == 0 or _interp == "0":
     pfw["fTableInterpType"] = "Linear"
@@ -201,8 +202,7 @@ elif isinstance(_contact_gap, str) and _contact_gap.lower() in ("simple", "impli
 
 
 def run_pfw(args, run_dir: Path):
-    input_stem = Path(args.input).stem
-    cmd = [args.python_cmd, "particleFileWriter.py", input_stem]
+    cmd = [args.python_cmd, "particleFileWriter.py", args.input]
     log(args.case_id, "running particleFileWriter in " + str(run_dir))
     proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     print(proc.stdout, end="")
@@ -299,7 +299,7 @@ def main():
     prompt_to_overwrite(args.case_id, run_dir, output_dir, args.output_prefix, args.force)
     clean_case_outputs(run_dir, output_dir, args.output_prefix, args.force)
     copy_pfw_files(pfw_root, run_dir, source_dir, args.input)
-    append_runtime_overrides(run_dir / args.input, args.case_id, bank, geos_path, args.walltime, not args.no_submit)
+    append_runtime_overrides(run_dir / args.input, args.case_id, bank, geos_path, args.walltime, not args.no_submit, args.preserve_plot_interval)
 
     if args.prepare_only:
         log(args.case_id, "prepare-only requested; staged files and copied input are ready")

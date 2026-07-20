@@ -112,6 +112,19 @@ public:
   { return m_particleGroup; }
 
   /**
+   * @brief Get the rigid-body color of each particle in this subregion.
+   * @return an arrayView1d of const particle rigid-body colors
+   */
+  arrayView1d< int const > getParticleColor() const
+  { return m_particleColor; }
+
+  /**
+   * @copydoc getParticleColor() const
+   */
+  arrayView1d< int > getParticleColor()
+  { return m_particleColor; }
+
+  /**
    * @brief Get the contact group of each particle in this subregion.
    * @return an arrayView1d of const particle surface flags
    */
@@ -452,6 +465,9 @@ public:
     /// @return String key for the member level field for the particle contact group.
     static constexpr char const * particleGroupString() { return "particleGroup"; }
 
+    /// @return String key for the rigid-body color of each particle.
+    static constexpr char const * particleColorString() { return "particleColor"; }
+
     /// @return String key for the member level field for the particle surface flag.
     static constexpr char const * particleSurfaceFlagString() { return "particleSurfaceFlag"; }
 
@@ -591,6 +607,9 @@ protected:
 
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
+
+  /// Member level field for the rigid-body color used by color-partitioned rigid-body MPM.
+  array1d< int > m_particleColor;
 
   /// Member level field for the particle surface flag.
   array1d< integer > m_particleSurfaceFlag;

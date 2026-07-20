@@ -161,6 +161,77 @@ public:
   MpiWrapper() = delete;
 
   /**
+   * @brief Compute the squared norm of a three-component arithmetic vector.
+   *
+   * This helper is shared by local selection and communication reductions so
+   * the primary ordering uses exactly the same floating-point operations.
+   */
+  template< typename VECTOR >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 vector3NormSquared( VECTOR const & vector )
+  {
+    real64 const x = static_cast< real64 >( vector[0] );
+    real64 const y = static_cast< real64 >( vector[1] );
+    real64 const z = static_cast< real64 >( vector[2] );
+    return x * x + y * y + z * z;
+  }
+
+  /**
+   * @brief Return whether @p lhs wins a max-by-squared-norm reduction.
+   *
+   * Squared norm is the primary key. Exact ties are resolved
+   * lexicographically by vector component, giving a deterministic,
+   * associative, commutative selection for finite inputs without perturbing
+   * the physical magnitude.
+   */
+  template< typename LHS_VECTOR, typename RHS_VECTOR >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static bool preferMaxNormLexicographicVector3(
+    LHS_VECTOR const & lhs,
+    real64 const lhsNormSquared,
+    RHS_VECTOR const & rhs,
+    real64 const rhsNormSquared )
+  {
+    if( lhsNormSquared > rhsNormSquared )
+    {
+      return true;
+    }
+
+    if( lhsNormSquared < rhsNormSquared )
+    {
+      return false;
+    }
+
+    for( integer i = 0; i < 3; ++i )
+    {
+      if( lhs[i] > rhs[i] )
+      {
+        return true;
+      }
+
+      if( lhs[i] < rhs[i] )
+      {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @brief Return the custom operation used to reduce three-component
+   * vectors by squared norm and then lexicographic order.
+   *
+   * The grid synchronization pack/unpack path uses this operation as a
+   * reduction selector. It is distinct from MPI_MAX, whose semantics remain
+   * component-wise. Direct collective use requires an MPI datatype whose one
+   * element is exactly three contiguous real64 values.
+   */
+  static MPI_Op maxNormLexicographicVector3Op();
+
+  /**
    * @name FUNCTION GROUP for the direct wrappers around naitive MPI functions
    * @param[in] sendbuf  Pointer to the memory to read the sent data from.
    * @param[out] recvbuf Pointer to the memory to write the received data in.

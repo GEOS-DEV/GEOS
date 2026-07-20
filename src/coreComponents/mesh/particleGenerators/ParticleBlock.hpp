@@ -131,6 +131,16 @@ public:
   void setParticleGroup( array1d< int > const particleGroup )
   { m_particleGroup = particleGroup; } // TODO: Rename to particleContactGroup
 
+  array1d< int > getParticleColor() const override
+  { return m_particleColor; }
+
+  /**
+   * @brief Set the list of particle rigid-body colors.
+   * @param particleColor The input list of rigid-body colors.
+   */
+  void setParticleColor( array1d< int > const particleColor )
+  { m_particleColor = particleColor; }
+
   array1d< integer > getParticleSurfaceFlag() const override
   { return m_particleSurfaceFlag; }
 
@@ -298,6 +308,9 @@ private:
 
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
+
+  /// Member level field for the rigid-body color.
+  array1d< int > m_particleColor;
 
   /// Member level field for the particle surface flag.
   array1d< integer > m_particleSurfaceFlag;
