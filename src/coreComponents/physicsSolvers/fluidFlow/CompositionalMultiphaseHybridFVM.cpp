@@ -27,6 +27,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -207,7 +208,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     // isBoundaryFaceView is default-initialized to zero
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+    fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
     {
       string const & fieldName = fs.getFieldName();
       if( fieldName == flow::bcPressure::key() ||
@@ -625,7 +626,10 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
                                                      m_numComponents,
                                                      elemDofKey,
                                                      subRegion,
-                                                     localSolution );
+                                                     localSolution,
+                                                     ElementsReporterCollector::disabled(),
+                                                     ElementsReporterCollector::disabled(),
+                                                     ElementsReporterCollector::disabled() );
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
@@ -737,7 +741,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
       // Get all face sets that have Dirichlet BCs
       std::set< string > bcFaceSets;
-      fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+      fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
       {
         string const & fieldName = fs.getFieldName();
         if( fieldName == flow::bcPressure::key() ||
@@ -950,19 +954,19 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecification const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager & targetGroup,
                                           string const & )
     {
       GEOS_UNUSED_VAR( setName );
-      // Using the field specification functions to apply the boundary conditions to the system
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    flow::bcPressure::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time_n + dt,
+                                                                         targetGroup,
+                                                                         flow::bcPressure::key() );
 
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {

@@ -309,10 +309,10 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void basicCleanup()
+void basicCleanup( bool inError )
 {
   finalizeLAI();
-  cleanupEnvironment();
+  cleanupEnvironment( inError );
 }
 
 

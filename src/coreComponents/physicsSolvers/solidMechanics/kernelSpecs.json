@@ -188,5 +188,41 @@
       ]
     },
     "explicit": []
+  },
+
+  "SolidMechanicsALMContactPorousKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "ALMContactPorousPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<DruckerPragerExtended, ConstantPermeability>",
+        "PorousSolid<DruckerPragerExtended, CarmanKozenyPermeability>",
+        "PorousSolid<ModifiedCamClay, ConstantPermeability>",
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": []
   }
 }

@@ -29,6 +29,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -39,6 +40,7 @@
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
@@ -897,18 +899,19 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
   fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                            mesh,
                                            fieldKey,
-                                           [&]( FieldSpecificationBase const & fs,
+                                           [&]( FieldSpecification const & fs,
                                                 string const &,
                                                 SortedArrayView< localIndex const > const & lset,
                                                 ElementSubRegionBase & subRegion,
                                                 string const & )
   {
     // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  boundaryFieldKey );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                             parallelDevicePolicy<> >( fs,
+                                                                       lset,
+                                                                       time_n + dt,
+                                                                       subRegion,
+                                                                       boundaryFieldKey );
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
@@ -1058,17 +1061,18 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1391,7 +1395,8 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  integer numNegativePressures = 0;
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minPressure = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1406,23 +1411,25 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-      auto const statistics =
-        singlePhaseBaseKernels::SolutionCheckKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+      auto const statistics = singlePhaseBaseKernels::SolutionCheckKernel::
+                                launch< parallelDevicePolicy<> >( localSolution,
+                                                                  rankOffset,
+                                                                  dofNumber,
+                                                                  ghostRank,
+                                                                  pres,
+                                                                  scalingFactor,
+                                                                  negPresCollector );
 
-      numNegativePressures += statistics.first;
-      minPressure = std::min( minPressure, statistics.second );
+      minPressure = std::min( minPressure, statistics.minNegPres );
     } );
   } );
 
-  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+  rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                        "negative pressure", minPressure, units::Unit::Pressure );
 
-  if( numNegativePressures > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                                        getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
-
-  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+  return (m_allowNegativePressure || rankNegPressureIds.getSignaledElementsCount() == 0) ?  1 : 0;
 }
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
@@ -1432,17 +1439,6 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
   arrayView1d< real64 const > const mass = subRegion.template getField< flow::mass >();
   arrayView1d< real64 > const mass_n = subRegion.template getField< flow::mass_n >();
   mass_n.setValues< parallelDevicePolicy<> >( mass );
-}
-
-void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
-{
-  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
-  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    vol[ei] += dVol[ei];
-    dVol[ei] = 0.0;
-  } );
 }
 
 } /* namespace geos */

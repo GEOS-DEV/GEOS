@@ -945,7 +945,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.get_inserted( bc.getName()) = bcCounter;
     bcCounter++;
   } );
 
@@ -1016,17 +1016,18 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1120,7 +1121,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              fields::flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -1162,7 +1163,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              fields::flow::logPrimarySpeciesConcentration::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -1214,7 +1215,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                fields::flow::temperature::key(),
-                                               [&] ( FieldSpecificationBase const &,
+                                               [&] ( FieldSpecification const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
@@ -1434,7 +1435,7 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ fields::flow::pressure::key() };
 
     if( m_isThermal )
     {
@@ -1528,7 +1529,7 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       fields::flow::pressure::key(), // we have required that pressure is always present
-                                      [&] ( FieldSpecificationBase const &,
+                                      [&] ( FieldSpecification const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const &,
                                             FaceManager &,
@@ -1579,7 +1580,7 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       fields::flow::pressure::key(), // we have required that pressure is always present
-                                      [&] ( FieldSpecificationBase const &,
+                                      [&] ( FieldSpecification const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const &,
                                             FaceManager &,

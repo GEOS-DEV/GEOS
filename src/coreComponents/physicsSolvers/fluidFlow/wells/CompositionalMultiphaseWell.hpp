@@ -20,8 +20,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -32,6 +34,11 @@ namespace constitutive
 {
 class ConstitutiveManager;
 class MultiFluidBase;
+}
+
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
 }
 
 /**
@@ -143,7 +150,7 @@ public:
    * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
+  void updateVolRatesForConstraint( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -185,7 +192,7 @@ public:
    */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -356,6 +363,12 @@ protected:
 
 private:
 
+  struct ReferenceConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
@@ -364,7 +377,12 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  void precomputeReferenceConditions( real64 time_n,
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
 
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -393,6 +411,8 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
 };

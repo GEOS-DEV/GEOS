@@ -783,6 +783,8 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
                                         int const GEOS_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
+  GEOS_MARK_FUNCTION;
+
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 

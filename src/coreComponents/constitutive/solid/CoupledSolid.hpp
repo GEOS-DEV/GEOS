@@ -199,8 +199,12 @@ public:
                                                                     getPermModel() );
   }
 
+public:
+  typedef  PERM_TYPE PermType;
+
   //START_SPHINX_INCLUDE_01
 protected:
+
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
