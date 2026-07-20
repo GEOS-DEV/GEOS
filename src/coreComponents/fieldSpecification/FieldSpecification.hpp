@@ -325,6 +325,13 @@ public:
   { m_endTime = endTime; }
 
   /**
+   * Mutator
+   * @param[in] errorSetMode Time after which the bc will no longer be applied.
+   */
+  void setErrorSetMode( SetErrorMode const & errorSetMode )
+  { m_emptySetErrorMode = errorSetMode; }
+
+  /**
    * @brief Get the Mesh Object Paths object
    *
    * @return reference to const m_meshObjectPaths

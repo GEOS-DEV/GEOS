@@ -71,6 +71,17 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setApplyDefaultValue( 1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
+
+  registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( FieldSpecification::SetErrorMode::error ).
+    setDescription( GEOS_FMT( "Set the log state when a “set” does not target any region\n"
+                              "When set to \"{}\", no output.\n"
+                              "When set to \"{}\", output a warning.\n"
+                              "When set to \"{}\", output a throw.\n",
+                              EnumStrings< FieldSpecification::SetErrorMode >::toString( FieldSpecification::SetErrorMode::silent ),
+                              EnumStrings< FieldSpecification::SetErrorMode >::toString( FieldSpecification::SetErrorMode::warning ),
+                              EnumStrings< FieldSpecification::SetErrorMode >::toString( FieldSpecification::SetErrorMode::error )  ));
 }
 
 
@@ -90,15 +101,15 @@ void PermeabilitySpecification::postInputInitialization()
   }
 
   GEOS_THROW_IF( !m_functionNames.empty() &&
-                  m_functionNames.size() != 1 &&
-                  m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
-                  GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
+                 m_functionNames.size() != 1 &&
+                 m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
+                 GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
                             "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
                             viewKeyStruct::functionNamesString(), m_functionNames.size(),
                             viewKeyStruct::scalesString(), m_scales.size(),
                             viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
-                  InputError,
-                  getDataContext() );
+                 InputError,
+                 getDataContext() );
 
   GEOS_THROW_IF( m_beginTime > m_endTime,
                  GEOS_FMT( "{} ({}) must be less than {} ({}) in {} '{}'",
@@ -130,6 +141,7 @@ void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpeci
     fs.setFunctionNames( ps.getFunctionNames() );
     fs.setStartTime( ps.getStartTime() );
     fs.setEndTime( ps.getEndTime() );
+    fs.setErrorSetMode( ps.getErrorSetMode() );
 
     for( auto const & setName : ps.getSetNames() )
     {

@@ -24,6 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshObjectPath.hpp"
+#include "FieldSpecification.hpp"
 #include "FieldSpecificationABC.hpp"
 #include "FieldSpecificationFactory.hpp"
 
@@ -101,6 +102,8 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
+    /// @return The key errorSetMode
+    constexpr static char const * errorSetModeString() { return "errorSetMode"; }
   };
 
   /**
@@ -159,6 +162,13 @@ public:
   real64 getEndTime() const
   { return m_endTime; }
 
+  /**
+   * Accessor
+   * @return const m_emptySetErrorMode
+   */
+  FieldSpecification::SetErrorMode getErrorSetMode() const
+  { return m_emptySetErrorMode; }
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -190,6 +200,9 @@ private:
 
   /// Time after which the bc will no longer be applied.
   real64 m_endTime;
+
+  /// Enum containing the possible output modes when an error occur
+  FieldSpecification::SetErrorMode m_emptySetErrorMode;
 
 };
 

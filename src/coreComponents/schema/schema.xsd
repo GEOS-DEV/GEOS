@@ -1539,6 +1539,12 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
