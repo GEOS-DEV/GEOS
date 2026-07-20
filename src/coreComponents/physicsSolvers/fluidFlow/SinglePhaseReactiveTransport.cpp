@@ -135,6 +135,11 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Array to store the indices of immobile species. Default is {}, which indicates no immobile species." );
 
+  this->registerWrapper( viewKeyStruct::maxLogConcentrationChangeString(), &m_maxLogConcentrationChange ).
+    setApplyDefaultValue( 5.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum (absolute) log-concentration change in a Newton update. Smaller values are more conservative. A value of 0 or less disables the limit." );
+
   addLogLevel< logInfo::BoundaryConditions >();
 }
 
@@ -1402,6 +1407,62 @@ real64 SinglePhaseReactiveTransport::calculateResidualNorm( real64 const & GEOS_
                                                                globalResidualNorm[0], globalResidualNorm[1] ) );
   }
   return residualNorm;
+}
+
+real64 SinglePhaseReactiveTransport::scalingForSystemSolution( DomainPartition & domain,
+                                                               DofManager const & dofManager,
+                                                               arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION;
+
+  // pressure-based scaling from the base class
+  real64 scalingFactor = SinglePhaseBase::scalingForSystemSolution( domain, dofManager, localSolution );
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  integer const speciesOffset = m_isThermal ? 2 : 1;
+  integer const numPrimarySpecies = m_numPrimarySpecies;
+  real64 maxDeltaLogConc = 0.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      RAJA::ReduceMax< ReducePolicy< parallelDevicePolicy<> >, real64 > subRegionMaxDeltaLogConc( 0.0 );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
+        {
+          localIndex const lid = dofNumber[ei] - rankOffset;
+          for( integer ic = 0; ic < numPrimarySpecies; ++ic )
+          {
+            subRegionMaxDeltaLogConc.max( LvArray::math::abs( localSolution[lid + speciesOffset + ic] ) );
+          }
+        }
+      } );
+
+      maxDeltaLogConc = std::max( maxDeltaLogConc, subRegionMaxDeltaLogConc.get() );
+    } );
+  } );
+
+  maxDeltaLogConc = MpiWrapper::max( maxDeltaLogConc );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max log-concentration change = {} (before scaling)",
+                                                      getName(), fmt::format( "{:.{}f}", maxDeltaLogConc, 3 ) ) );
+
+  if( m_maxLogConcentrationChange > 0.0 && maxDeltaLogConc > m_maxLogConcentrationChange )
+  {
+    scalingFactor = std::min( scalingFactor, m_maxLogConcentrationChange / maxDeltaLogConc );
+  }
+
+  return scalingFactor;
 }
 
 void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofManager,

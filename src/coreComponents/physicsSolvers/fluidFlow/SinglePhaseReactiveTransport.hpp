@@ -127,6 +127,11 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -272,6 +277,7 @@ public:
     static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
     static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
     static constexpr char const * immobilePrimarySpeciesIndicesString() { return "immobilePrimarySpeciesIndices"; }
+    static constexpr char const * maxLogConcentrationChangeString() { return "maxLogConcentrationChange"; }
   };
 
 protected:
@@ -296,6 +302,9 @@ protected:
 
   /// array to store the indices of immobile primary species
   array1d< integer > m_immobilePrimarySpeciesIndices;
+
+  /// max log-concentration change per Newton update
+  real64 m_maxLogConcentrationChange;
 
 private:
 
