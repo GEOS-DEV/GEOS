@@ -2034,7 +2034,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_surfaceQualityThreshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Particle-Grid DFG alignment threshold for separability" );
+    setDescription( "Minimum mapping-normal tensor quality required for same-group DFG separability. "
+                    "Valid range is [0,1]; 0 disables the quality restriction and 1 requires a fully coherent, fully covered normal." );
 
   registerWrapper( "surfaceTensionForceSign", &m_surfaceTensionForceSign ).
     setApplyDefaultValue( m_surfaceTensionForceSign ).
@@ -2060,7 +2061,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_thinFeatureDFGThreshold ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces" );
+    setDescription( "Suppresses DFG separability when the squared distance between field centers is less than "
+                    "(thinFeatureDFGThreshold * neighborRadius)^2." );
 
   registerWrapper( "totalBinderVolume", &m_totalBinderVolume ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2302,13 +2304,16 @@ void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xml
 }
 
 /**
- * @brief Performs post-input/restart setup for input initialization.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Performs post-input/restart setup and validates solver controls.
  */
 void SolidMechanicsMPM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
+
+  GEOS_ERROR_IF( m_surfaceQualityThreshold < 0.0 || m_surfaceQualityThreshold > 1.0,
+                 "surfaceQualityThreshold must be in [0,1]." );
+  GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
+                 "thinFeatureDFGThreshold must be non-negative." );
 
  // Hang constitutive relations for cohesive zones
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -3168,10 +3173,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the maximum damage of any particle mapping to a given node." );
 
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the alignment betwen particle and grid DFG mapping to a given node." );
+        setDescription( "Symmetric orientation tensor accumulated from the particle mapping normals that enter DFG field partitioning. "
+                        "Components are xx, yy, zz, xy, xz, yz." );
 
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -3771,7 +3777,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).resize( numNodes, 3 );
 
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).resize( numNodes, m_numVelocityFields, 6 );
 
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -5436,6 +5442,7 @@ void SolidMechanicsMPM::syncGridFieldsForExplicitStep( DomainPartition & domain,
   stdVector< std::string > fieldNames1 = { viewKeyStruct::gridMassString(),
                                            viewKeyStruct::gridDamageString(),
                                            viewKeyStruct::gridMaterialVolumeString(),
+                                           viewKeyStruct::gridMappingNormalTensorString(),
                                            viewKeyStruct::gridMomentumString(),
                                            viewKeyStruct::gridCenterOfMassString(),
                                            viewKeyStruct::gridCenterOfVolumeString(),
@@ -8469,8 +8476,6 @@ void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager
 
 /**
  * @brief Sets grid field labels.
- *
- * Executable statements are unchanged; comments document intent where practical.
  */
 void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
 {
@@ -8508,7 +8513,9 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).setDimLabels( 1, axesLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).setDimLabels( 1, axesLabels );
 
-  nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).setDimLabels( 1, fieldLabels );
+  string const symmetricTensorLabels[] = { "XX", "YY", "ZZ", "XY", "XZ", "YZ" };
+  nodeManager.getWrapper< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).setDimLabels( 1, fieldLabels );
+  nodeManager.getWrapper< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).setDimLabels( 2, symmetricTensorLabels );
 
   // Apply labels to vector multi-fields
   stdVector< std::string > keys3d = { viewKeyStruct::gridVelocityString(), // 3
@@ -8546,9 +8553,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
 }
 
 /**
- * @brief Initializes grid fields.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Clears all grid fields before particle-to-grid transfer.
  */
 void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 {
@@ -8584,7 +8589,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridDamageString(),
       viewKeyStruct::gridDamageGradientString(),
       viewKeyStruct::gridExplicitSurfaceNormalString(),
-      viewKeyStruct::gridFieldGradientAlignmentString(),
+      viewKeyStruct::gridMappingNormalTensorString(),
       viewKeyStruct::gridMassString(),
       viewKeyStruct::gridActiveString(),
       viewKeyStruct::gridMaterialVolumeString(),
@@ -8664,9 +8669,9 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array2d< real64 > >(
       viewKeyStruct::gridExplicitSurfaceNormalString() );
 
-  arrayView2d< real64 > const gridFieldGradientAlignment =
-    nodeManager.getReference< array2d< real64 > >(
-      viewKeyStruct::gridFieldGradientAlignmentString() );
+  arrayView3d< real64 > const gridMappingNormalTensor =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridMappingNormalTensorString() );
 
   arrayView2d< real64 > const gridMass =
     nodeManager.getReference< array2d< real64 > >(
@@ -8868,7 +8873,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridMaterialVolume[g][fieldIndex] = 0.0;
       gridDamage[g][fieldIndex] = 0.0;
       gridMaxDamage[g][fieldIndex] = 0.0;
-      gridFieldGradientAlignment[g][fieldIndex] = 0.0;
+      LvArray::tensorOps::fill< 6 >( gridMappingNormalTensor[g][fieldIndex], 0.0 );
 
       gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0.0;
       gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
@@ -14347,9 +14352,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
 }
 
 /**
- * @brief Computes particle field mappings.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Assigns each particle-node contribution to a DFG velocity field.
  */
 void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particleManager,
                                                       NodeManager & nodeManager )
@@ -14412,9 +14415,7 @@ void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particle
 }
 
 /**
- * @brief Partitions field.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Chooses the DFG side from the sign of the mapping normal against the grid damage gradient.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -14427,10 +14428,10 @@ localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
 {
   real64 mappingNormal[3] = {};
 
-  // By definition particle surface normals have magnitude 1
+  // Use the explicit particle surface normal when it is present; otherwise use
+  // the particle damage gradient as the mapping normal.
   // Tensor condition: isZero(||particleSurfaceNormal||, 1e-12).
   if( isZero( LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal ), 1e-12 ) )
-  // if( LvArray::tensorOps::l2Norm< 3 >( particleDamageGradient ) > m_explicitSurfaceNormalInfluence / m_neighborRadius )
   {
     // Tensor equation: mappingNormal = particleDamageGradient.
     LvArray::tensorOps::copy< 3 >( mappingNormal, particleDamageGradient );
@@ -14440,18 +14441,10 @@ localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
     // Tensor equation: mappingNormal = particleSurfaceNormal.
     LvArray::tensorOps::copy< 3 >( mappingNormal, particleSurfaceNormal );
   }
-  // Tensor equation: nodeFlag = (damageFieldPartitioning == 1 && dot(gridDamageGradient, mappingNormal) < 0.0) ? 1 :
-  //   0.
-  localIndex nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient, mappingNormal ) < 0.0 ) ? 1 : 0; // 0
-                                                                                                                                              // undamaged
-                                                                                                                                              // for
-                                                                                                                                              // "A"
-                                                                                                                                              // field,
-                                                                                                                                              // 1
-                                                                                                                                              // for
-                                                                                                                                              // "B"
-                                                                                                                                              // field
-  return nodeFlag * numContactGroups + particleGroup; // This ranges from 0 to nMatFields-1
+  // A negative dot product maps the particle-node contribution to the second
+  // DFG field for its contact group; otherwise it remains in the first field.
+  localIndex nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient, mappingNormal ) < 0.0 ) ? 1 : 0;
+  return nodeFlag * numContactGroups + particleGroup;
 }
 
 // Before recomputing these
@@ -18011,14 +18004,13 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
 
-  // Damage-gradient alignment is only meaningful when damage-field
-  // partitioning is enabled. In no-damage runs, avoid reading unused
-  // particle/grid damage-gradient fields or doing threshold divisions; those
-  // fields may be uninitialized in diagnostic/minimal MPM inputs.
-  int const useDamageGradientAlignment = damageFieldPartitioning == 1 ? 1 : 0;
+  // The mapping-normal tensor is only needed when DFG partitioning is enabled.
+  // It accumulates the same particle normal used by partitionField(): explicit
+  // particle surface normal when present, otherwise the particle damage gradient.
+  int const useMappingNormalTensor = damageFieldPartitioning == 1 ? 1 : 0;
 
   real64 const damageGradientThreshold =
-    useDamageGradientAlignment == 1 ? 0.0001 / hEl[0] : 0.0;
+    useMappingNormalTensor == 1 ? 0.0001 / hEl[0] : 0.0;
 
   real64 const damageGradientThresholdSquared =
     damageGradientThreshold * damageGradientThreshold;
@@ -18045,13 +18037,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     nodeManager.getReference< array2d< real64 > >
       ( viewKeyStruct::gridDamageString() );
 
-  arrayView2d< real64 const > const gridDamageGradient =
-    nodeManager.getReference< array2d< real64 > >
-      ( viewKeyStruct::gridDamageGradientString() );
-
-  arrayView2d< real64 > const & gridFieldGradientAlignment =
-    nodeManager.getReference< array2d< real64 > >
-      ( viewKeyStruct::gridFieldGradientAlignmentString() );
+  arrayView3d< real64 > const & gridMappingNormalTensor =
+    nodeManager.getReference< array3d< real64 > >
+      ( viewKeyStruct::gridMappingNormalTensorString() );
 
   arrayView2d< real64 > const & gridMass =
     nodeManager.getReference< array2d< real64 > >
@@ -18302,20 +18290,24 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
       real64 const sn2 =
         particleSurfaceNormal[p][2];
 
-      // Use squared norm to avoid a sqrt. The original condition was
-      // norm(surfaceNormal) > 1e-16.
       real64 const surfaceNormalNormSquared =
         sn0 * sn0 + sn1 * sn1 + sn2 * sn2;
 
       bool const hasSurfaceNormal =
-        surfaceNormalNormSquared > 1e-32;
+        surfaceNormalNormSquared > 1.0e-32;
+
+      // partitionField() treats a particle surface normal as present when its
+      // norm is not zero to tolerance 1e-12. Use the same tolerance here so the
+      // quality tensor describes the normal that actually selected the DFG side.
+      bool const hasPartitionSurfaceNormal =
+        surfaceNormalNormSquared > 1.0e-24;
 
       real64 pdg0 = 0.0;
       real64 pdg1 = 0.0;
       real64 pdg2 = 0.0;
       real64 particleDamageGradientNormSquared = 0.0;
 
-      if( useDamageGradientAlignment == 1 )
+      if( useMappingNormalTensor == 1 && !hasPartitionSurfaceNormal )
       {
         pdg0 = particleDamageGradient[p][0];
         pdg1 = particleDamageGradient[p][1];
@@ -18325,14 +18317,37 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
           pdg0 * pdg0 + pdg1 * pdg1 + pdg2 * pdg2;
       }
 
-      bool const hasParticleDamageGradient =
-        useDamageGradientAlignment == 1 &&
+      bool const hasParticleDamageGradientNormal =
+        useMappingNormalTensor == 1 &&
+        !hasPartitionSurfaceNormal &&
         particleDamageGradientNormSquared > damageGradientThresholdSquared;
 
-      real64 const invParticleDamageGradientNorm =
-        hasParticleDamageGradient
-        ? 1.0 / LvArray::math::sqrt( particleDamageGradientNormSquared )
-        : 0.0;
+      real64 mappingNormal0 = 0.0;
+      real64 mappingNormal1 = 0.0;
+      real64 mappingNormal2 = 0.0;
+      bool hasMappingNormal = false;
+
+      if( useMappingNormalTensor == 1 )
+      {
+        if( hasPartitionSurfaceNormal )
+        {
+          real64 const invSurfaceNormalNorm =
+            1.0 / LvArray::math::sqrt( surfaceNormalNormSquared );
+          mappingNormal0 = sn0 * invSurfaceNormalNorm;
+          mappingNormal1 = sn1 * invSurfaceNormalNorm;
+          mappingNormal2 = sn2 * invSurfaceNormalNorm;
+          hasMappingNormal = true;
+        }
+        else if( hasParticleDamageGradientNormal )
+        {
+          real64 const invParticleDamageGradientNorm =
+            1.0 / LvArray::math::sqrt( particleDamageGradientNormSquared );
+          mappingNormal0 = pdg0 * invParticleDamageGradientNorm;
+          mappingNormal1 = pdg1 * invParticleDamageGradientNorm;
+          mappingNormal2 = pdg2 * invParticleDamageGradientNorm;
+          hasMappingNormal = true;
+        }
+      }
 
       // Stress components in the code's Voigt ordering:
       //
@@ -18487,46 +18502,36 @@ localIndex const mappedNode =
                          &gridMaxDamage[mappedNode][fieldIndex],
                          mappedDamageValue );
 
-        // Damage-gradient alignment:
+        // Mapping-normal orientation tensor:
         //
-        //   A_I += V_p N_Ip
-        //          abs( dot(gradD_p, gradD_I) / (|gradD_p| |gradD_I|) )
+        //   M_I += V_p N_Ip nhat_p otimes nhat_p
         //
-        // This helps judge whether the mapped damage field defines a clean,
-        // separable surface.
-        if( hasParticleDamageGradient )
+        // where nhat_p is the same sign-invariant normal used to choose the
+        // DFG side for this particle-node contribution. Opposite crack-face
+        // normals therefore reinforce the same tensor axis.
+        if( hasMappingNormal )
         {
-          real64 const gdg0 =
-            gridDamageGradient[mappedNode][0];
+          real64 const normalTensorWeight =
+            pVolume * shapeFunctionValue;
 
-          real64 const gdg1 =
-            gridDamageGradient[mappedNode][1];
-
-          real64 const gdg2 =
-            gridDamageGradient[mappedNode][2];
-
-          real64 const gridDamageGradientNormSquared =
-            gdg0 * gdg0 + gdg1 * gdg1 + gdg2 * gdg2;
-
-          if( gridDamageGradientNormSquared > damageGradientThresholdSquared )
-          {
-            real64 const dotDamageGradient =
-              pdg0 * gdg0 + pdg1 * gdg1 + pdg2 * gdg2;
-
-            real64 const invGridDamageGradientNorm =
-              1.0 / LvArray::math::sqrt( gridDamageGradientNormSquared );
-
-            real64 const damageGradientAlignment =
-              LvArray::math::abs( dotDamageGradient *
-                                  invParticleDamageGradientNorm *
-                                  invGridDamageGradientNorm );
-
-            RAJA::atomicAdd( parallelDeviceAtomic{},
-                             &gridFieldGradientAlignment[mappedNode][fieldIndex],
-                             pVolume *
-                             damageGradientAlignment *
-                             shapeFunctionValue );
-          }
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][0],
+                           normalTensorWeight * mappingNormal0 * mappingNormal0 );
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][1],
+                           normalTensorWeight * mappingNormal1 * mappingNormal1 );
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][2],
+                           normalTensorWeight * mappingNormal2 * mappingNormal2 );
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][3],
+                           normalTensorWeight * mappingNormal0 * mappingNormal1 );
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][4],
+                           normalTensorWeight * mappingNormal0 * mappingNormal2 );
+          RAJA::atomicAdd( parallelDeviceAtomic{},
+                           &gridMappingNormalTensor[mappedNode][fieldIndex][5],
+                           normalTensorWeight * mappingNormal1 * mappingNormal2 );
         }
 
         // Surface position projected onto the particle surface normal.
@@ -20031,7 +20036,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   arrayView2d< int const > const gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
   arrayView2d< real64 const > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
-  arrayView2d< real64 const > const gridFieldGradientAlignment = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() );
+  arrayView3d< real64 const > const gridMappingNormalTensor = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() );
   arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView2d< real64 const > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
@@ -20141,9 +20146,12 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           else
           {
 
-            // Surface quality is defined by the average alignment between DFG of the mapped particles and the grid
-            // node.
-            real64 surfaceQuality = ( gridFieldGradientAlignment[g][A] + gridFieldGradientAlignment[g][B] ) / ( gridMaterialVolume[g][A] + gridMaterialVolume[g][B] );
+            real64 const surfaceQuality =
+              computeSurfaceQualityFromMappingNormalTensor( planeStrain,
+                                                            gridMappingNormalTensor[g][A],
+                                                            gridMappingNormalTensor[g][B],
+                                                            gridMaterialVolume[g][A],
+                                                            gridMaterialVolume[g][B] );
 
             separable = evaluateSeparabilityCriterion( planeStrain,
                                                        numContactGroups,
@@ -20430,7 +20438,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   arrayView2d< int const > const gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
   arrayView2d< real64 const > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
-  arrayView2d< real64 const > const gridFieldGradientAlignment = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() );
+  arrayView3d< real64 const > const gridMappingNormalTensor = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() );
   arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView2d< real64 const > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
@@ -20514,9 +20522,12 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
           else
           {
 
-            // Surface quality is defined by the average alignment between DFG of the mapped particles and the grid
-            // node.
-            real64 surfaceQuality = ( gridFieldGradientAlignment[g][A] + gridFieldGradientAlignment[g][B] ) / ( gridMaterialVolume[g][A] + gridMaterialVolume[g][B] );
+            real64 const surfaceQuality =
+              computeSurfaceQualityFromMappingNormalTensor( planeStrain,
+                                                            gridMappingNormalTensor[g][A],
+                                                            gridMappingNormalTensor[g][B],
+                                                            gridMaterialVolume[g][A],
+                                                            gridMaterialVolume[g][B] );
 
             separable = evaluateSeparabilityCriterion( planeStrain,
                                                        numContactGroups,
@@ -20745,9 +20756,119 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
 
 /**
- * @brief Evaluates separability criterion.
+ * @brief Computes the DFG surface quality from the mapping-normal orientation tensor.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * The tensor stores a volume-weighted sum of normalized mapping normals,
+ * M = sum Vp N np np^T.  Its dominant-eigenvalue coherence is one for a
+ * single well-defined normal axis and zero for an isotropic normal cloud.  The
+ * coherence is multiplied by the fraction of mapped material volume that
+ * contributed a valid mapping normal, so poorly covered nodes do not pass a
+ * high quality threshold solely because a tiny amount of material was coherent.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 SolidMechanicsMPM::computeSurfaceQualityFromMappingNormalTensor( int const & planeStrain,
+                                                                        arraySlice1d< real64 const > const mappingNormalTensorA,
+                                                                        arraySlice1d< real64 const > const mappingNormalTensorB,
+                                                                        real64 const & materialVolumeA,
+                                                                        real64 const & materialVolumeB )
+{
+  real64 const mxx = mappingNormalTensorA[0] + mappingNormalTensorB[0];
+  real64 const myy = mappingNormalTensorA[1] + mappingNormalTensorB[1];
+  real64 const mzz = mappingNormalTensorA[2] + mappingNormalTensorB[2];
+  real64 const mxy = mappingNormalTensorA[3] + mappingNormalTensorB[3];
+  real64 const mxz = mappingNormalTensorA[4] + mappingNormalTensorB[4];
+  real64 const myz = mappingNormalTensorA[5] + mappingNormalTensorB[5];
+
+  real64 const totalMaterialVolume = materialVolumeA + materialVolumeB;
+  real64 const normalVolume = planeStrain == 1 ? mxx + myy : mxx + myy + mzz;
+
+  if( totalMaterialVolume <= 1.0e-30 || normalVolume <= 1.0e-30 )
+  {
+    return 0.0;
+  }
+
+  real64 normalCoverage = normalVolume / totalMaterialVolume;
+  if( normalCoverage > 1.0 )
+  {
+    normalCoverage = 1.0;
+  }
+  else if( normalCoverage < 0.0 )
+  {
+    normalCoverage = 0.0;
+  }
+
+  real64 coherence = 0.0;
+  if( planeStrain == 1 )
+  {
+    real64 const invTrace = 1.0 / normalVolume;
+    real64 const a = mxx * invTrace;
+    real64 const b = myy * invTrace;
+    real64 const c = mxy * invTrace;
+    real64 const lambdaMax = 0.5 * ( 1.0 + LvArray::math::sqrt( ( a - b ) * ( a - b ) + 4.0 * c * c ) );
+    coherence = 2.0 * lambdaMax - 1.0;
+  }
+  else
+  {
+    real64 const invTrace = 1.0 / normalVolume;
+    real64 const a00 = mxx * invTrace;
+    real64 const a11 = myy * invTrace;
+    real64 const a22 = mzz * invTrace;
+    real64 const a01 = mxy * invTrace;
+    real64 const a02 = mxz * invTrace;
+    real64 const a12 = myz * invTrace;
+
+    real64 v0 = 1.0;
+    real64 v1 = 0.0;
+    real64 v2 = 0.0;
+    if( a11 >= a00 && a11 >= a22 )
+    {
+      v0 = 0.0;
+      v1 = 1.0;
+    }
+    else if( a22 >= a00 && a22 >= a11 )
+    {
+      v0 = 0.0;
+      v2 = 1.0;
+    }
+
+    for( int iteration = 0; iteration < 12; ++iteration )
+    {
+      real64 const w0 = a00 * v0 + a01 * v1 + a02 * v2;
+      real64 const w1 = a01 * v0 + a11 * v1 + a12 * v2;
+      real64 const w2 = a02 * v0 + a12 * v1 + a22 * v2;
+      real64 const wNorm = LvArray::math::sqrt( w0 * w0 + w1 * w1 + w2 * w2 );
+      if( wNorm <= 1.0e-30 )
+      {
+        break;
+      }
+      real64 const invWNorm = 1.0 / wNorm;
+      v0 = w0 * invWNorm;
+      v1 = w1 * invWNorm;
+      v2 = w2 * invWNorm;
+    }
+
+    real64 const lambdaMax =
+      v0 * ( a00 * v0 + a01 * v1 + a02 * v2 ) +
+      v1 * ( a01 * v0 + a11 * v1 + a12 * v2 ) +
+      v2 * ( a02 * v0 + a12 * v1 + a22 * v2 );
+    coherence = 0.5 * ( 3.0 * lambdaMax - 1.0 );
+  }
+
+  if( coherence > 1.0 )
+  {
+    coherence = 1.0;
+  }
+  else if( coherence < 0.0 )
+  {
+    coherence = 0.0;
+  }
+
+  return coherence * normalCoverage;
+}
+
+/**
+ * @brief Evaluates separability criterion.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -20769,21 +20890,19 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
                                                       arraySlice1d< real64 const > const xA,
                                                       arraySlice1d< real64 const > const xB,
                                                       real64 const & surfaceQuality )
-// m_treatFullyDamagedAsSingleField makes fields inseparable if damageA = damageB = 1, so we aren't putting
-// arbitrary separation planes (and potential surfaces for accumulated overlap that needs corrections)
-// between fully damaged materials. There is a potential issue that approaching damaged bodies
-// would get contact gaps locked in.
 {
   bool separable = false;
 
-  // At least one field is fully damaged and both fields have the minimum separable level of damage.
-  // The "a%b" is the "mod(a,b)" command, and indicates whether materials are from same contact group.
+  // Same-group DFG separation requires high damage on both fields, at least
+  // one field reaching full damage, and a mapping-normal tensor quality that
+  // meets the configured threshold. Different contact groups remain separable.
   if( ( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && ( damageA >= separabilityMinDamage && damageB >= separabilityMinDamage ) ) &&
-        ( surfaceQuality > surfaceQualityThreshold ) ) ||
+        ( surfaceQuality >= surfaceQualityThreshold ) ) ||
       ( A % numContactGroups != B % numContactGroups ) )
   {
-    // damage gradient magnitude is nominally 1/h_el, where there is a sharp crack.  If the damage gradient
-    // is a small fraction of this we are in a fully-damaged, or undamaged region and don't want separation.
+    // A sharp crack has damage-gradient magnitude on the order of 1/h.  A
+    // much smaller nodal gradient indicates a fully damaged or undamaged
+    // region where the crack normal is not well defined.
     real64 xi = 1e-3;
     if( planeStrain == 1 )
     {
@@ -20795,15 +20914,12 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
       xi /= LvArray::tensorOps::l2NormSquared< 3 >( hEl );
     }
 
-    // We artificially map damage for surface particles with explicit normals and positions as one to gridMaxDamage and
-    // gridDamage
-    // If this flag is set, the contact fields are treated as inseparable which is the wrong behavior
+    // With treatFullyDamagedAsSingleField enabled, suppress separation where
+    // the grid damage gradient is too small to identify a meaningful local
+    // crack-normal direction.
     // Tensor condition: (treatFullyDamagedAsSingleField == 1) && ||dmgGrad||^2 < xi.
     if( ( treatFullyDamagedAsSingleField == 1 ) && LvArray::tensorOps::l2NormSquared< 3 >( dmgGrad ) < xi )
     {
-      // separable = ( LvArray::math::min( damageA, damageB ) < 0.9999 ) ? 1 : 0; // Might not need this check with additional
-      // comparision of damage
-      // gradient in if above
       separable = false;
     }
     else
@@ -20812,25 +20928,22 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
     }
   }
 
-  // For a thin (relative to grid spacing) strip of material with surface flags or damaged surfaces, the material at
-  // opposing surfaces will
-  // have opposing
-  // damage-field gradients, and this will create a spurious slip surfaces within the material.
-  // We can detect this case by seeing if the distance between the position of the two fields is small relative to the
-  // grid cell spacing.
-  //  This will
-  // only happen in the case of a thin strip of material when using DFG, so in this case we set separable = 0
-  // The threshold spacing is normalized by the neighbor radius.
-  if( thinFeatureDFGThreshold < 10.0 )  // Threshold defaults to DBL_MAX so we only do this calculation if a lower value is set.
-  {                                       // After testing we may default to a lower value.
+  // When two DFG field centers are closer than the configured fraction of
+  // the neighbor radius, suppress separation to avoid inserting an unresolved
+  // internal slip surface through a thin feature.
+  if( thinFeatureDFGThreshold < 10.0 )
+  {
     real64 dx[3] = {};
     // Tensor equation: dx = xA - xB.
     LvArray::tensorOps::copy< 3 >( dx, xA );
     LvArray::tensorOps::subtract< 3 >( dx, xB );
 
-    real64 productOfSquares = ( dx[0] * dx[0] ) * ( dx[1] * dx[1] ) * ( dx[2] * dx[2] );
+    real64 const sumOfSquares =
+      ( dx[0] * dx[0] ) + ( dx[1] * dx[1] ) + ( dx[2] * dx[2] );
+    real64 const thresholdDistance =
+      thinFeatureDFGThreshold * neighborRadius;
 
-    if( productOfSquares < ( thinFeatureDFGThreshold * neighborRadius ) * ( thinFeatureDFGThreshold * neighborRadius ) )
+    if( sumOfSquares < thresholdDistance * thresholdDistance )
     {
       separable = false;
     }

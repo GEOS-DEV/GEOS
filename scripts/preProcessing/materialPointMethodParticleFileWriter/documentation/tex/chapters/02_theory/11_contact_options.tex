@@ -284,7 +284,7 @@ The pair normal is normalized after the option-specific construction, and the so
 
 The contact law first decides whether two fields are bonded together at the node or represent separable surfaces.  If they are not separable, the nodal correction drives both fields toward the center-of-mass velocity in both normal and tangential directions, which is effectively a no-slip compatibility correction.  If they are separable, the normal and Coulomb-like tangential contact law is applied only when the gap-closure criterion is satisfied.
 
-The reviewed separability criterion is
+The separability criterion is
 \begin{equation}
 \begin{aligned}
   \mathrm{separable} ={}&
@@ -292,14 +292,36 @@ The reviewed separability criterion is
   \land \big(D_A\ge D_{\min}\big) \\
   &\qquad {}
   \land \big(D_B\ge D_{\min}\big)
-  \land \big(Q_s>Q_{\min}\big)\Big] \\
+  \land \big(Q_s\ge Q_{\min}\big)\Big] \\
   &{}\lor \big(A\bmod N_g\ne B\bmod N_g\big),
   \label{eq:contact-separability}
 \end{aligned}
 \end{equation}
-where $D_{\min}=\texttt{separabilityMinDamage}$ and $Q_{\min}=\texttt{surfaceQualityThreshold}$.  The second term means that different prescribed contact groups are separable regardless of damage.  The first term is the same-group DFG/fracture branch: at least one field must be essentially fully damaged, both fields must exceed the minimum damage threshold, and the local damage-gradient/surface alignment must pass the quality threshold.
+where $D_{\min}=\texttt{separabilityMinDamage}$ and $Q_{\min}=\texttt{surfaceQualityThreshold}$.  The second term means that different prescribed contact groups are separable regardless of damage.  The first term is the same-group DFG/fracture branch: at least one field must be essentially fully damaged, both fields must exceed the minimum damage threshold, and the local mapping-normal tensor quality must meet the configured threshold.
 
-Two additional guards can suppress separability.  If \texttt{treatFullyDamagedAsSingleField=1} and the grid damage-gradient magnitude is very small, the code treats the fields as inseparable to avoid arbitrary internal separation planes in fully damaged or undamaged material.  If \texttt{thinFeatureDFGThreshold} is set below its large default value, a same-material DFG pair with very small field-center spacing relative to the neighbor radius is also forced to be inseparable.  This prevents a thin strip of material, whose two physical surfaces are closer than the grid resolution, from being spuriously split into internal slip surfaces.
+For each particle-node contribution, the mapping normal $\hat{\mathbf{m}}_p$ is the same normal used by the DFG partitioner: the normalized explicit particle surface normal when that normal is present, otherwise the normalized particle damage gradient.  The grid stores a sign-invariant orientation tensor for each velocity field,
+\begin{equation}
+  \mathbf{M}_{I\alpha} = \sum_{p\in\mathcal{P}_{I\alpha}} V_p N_{Ip}\,
+  \hat{\mathbf{m}}_p\otimes\hat{\mathbf{m}}_p,
+  \label{eq:dfg-mapping-normal-tensor}
+\end{equation}
+with components stored as \texttt{gridMappingNormalTensor}.  For a pair of fields, $\mathbf{M}_{AB}=\mathbf{M}_{IA}+\mathbf{M}_{IB}$.  Let $d=2$ in plane strain and $d=3$ otherwise, let $\lambda_{\max}$ be the largest eigenvalue of $\mathbf{M}_{AB}$ over the active dimensions, and let $T=\mathrm{tr}(\mathbf{M}_{AB})$ over those same dimensions.  The surface quality is
+\begin{equation}
+  Q_s =
+  \min\!\left(1,\frac{T}{V_{IA}+V_{IB}}\right)
+  \frac{d\lambda_{\max}/T-1}{d-1},
+  \qquad 0\le Q_s\le 1.
+  \label{eq:dfg-surface-quality}
+\end{equation}
+It is one when the mapped material volume is fully covered by one coherent normal axis, including anti-parallel crack-face normals, and it is zero when the valid mapping normals do not define a preferred axis or no valid mapping normal contributes.
+
+Two additional guards can suppress separability.  If \texttt{treatFullyDamagedAsSingleField=1} and the grid damage-gradient magnitude is very small, the code treats the fields as inseparable to avoid arbitrary internal separation planes in fully damaged or undamaged material.  If \texttt{thinFeatureDFGThreshold} is set below its large default value, a DFG pair with very small field-center spacing relative to the neighbor radius is also forced to be inseparable.  The thin-feature guard uses
+\begin{equation}
+  \|\mathbf{x}_A-\mathbf{x}_B\|^2 <
+  \big(\texttt{thinFeatureDFGThreshold}\,r_n\big)^2,
+  \label{eq:dfg-thin-feature-guard}
+\end{equation}
+where $r_n$ is the neighbor radius.  This prevents a thin strip of material, whose two physical surfaces are closer than the grid resolution, from being spuriously split into internal slip surfaces.
 
 \subsection{Gap closure and frictional contact}
 \label{subsec:contact-gap-closure}
@@ -466,8 +488,8 @@ Attribute & Internal effect \\
 \texttt{explicitSurfaceNormalInfluence} & Dimensionless control for the relative strength of explicit particle normals in the grid normal scatter; internally divided by the active grid-cell diagonal. \\
 \texttt{useSurfacePositionForContact} & Allows surface-position fields to replace center-of-volume positions in the gap calculation when available. \\
 \texttt{LRtolerance}, \texttt{maxLRIterations} & Control convergence and iteration limit of the logistic-regression fit. \\
-\texttt{surfaceQualityThreshold}, \texttt{separabilityMinDamage} & Control same-group DFG separability. \\
-\texttt{thinFeatureDFGThreshold} & Suppresses separability for very thin same-material DFG features. \\
+\texttt{surfaceQualityThreshold}, \texttt{separabilityMinDamage} & Control same-group DFG separability; the surface-quality threshold is applied to the mapping-normal orientation tensor. \\
+\texttt{thinFeatureDFGThreshold} & Suppresses separability for DFG pairs whose field centers are closer than the configured fraction of the neighbor radius. \\
 \texttt{treatFullyDamagedAsSingleField} & Suppresses arbitrary splitting in fully damaged regions with small damage-gradient magnitude. \\
 \texttt{overlapCorrection} & Selects \texttt{Off}, \texttt{NormalForce}, \texttt{SPH}, or \texttt{Volume}. \\
 \texttt{overlapThreshold1}, \texttt{overlapThreshold2} & Define ramp thresholds for overlap-correction branches. \\
