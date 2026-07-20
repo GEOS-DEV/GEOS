@@ -1126,9 +1126,13 @@ for obj in objects:
   subregions = obj.getSubregions()
   subregions_all.extend(subregions)
 
+print("subregions_all:", subregions_all)
+
 particleTypesPerMat = [set() for m in materials]
 for s in subregions_all:
   particleTypesPerMat[s[0]].add(s[1])
+
+print("particleTypesPerMat:", particleTypesPerMat)
 
 numSubRegions = 0
 for s in particleTypesPerMat:

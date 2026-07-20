@@ -103,7 +103,7 @@ def read_variant_jobs(source_dir: Path, folder_case_id: str, variant: dict) -> d
         return {}
 
 
-def dispatch_variant(args: argparse.Namespace, source_dir: Path, runner: Path, input_file: str, variant: dict) -> dict:
+def dispatch_variant(args: argparse.Namespace, source_dir: Path, pfw_dir: Path, runner: Path, input_file: str, variant: dict) -> dict:
     cid = variant_case_id(args.case_id, variant)
     env = os.environ.copy()
     env.update({str(k): str(v) for k, v in variant.get("env", {}).items()})
@@ -117,6 +117,7 @@ def dispatch_variant(args: argparse.Namespace, source_dir: Path, runner: Path, i
         "--case-id", cid,
         "--input", input_file,
         "--source-dir", str(source_dir),
+        "--pfw-dir", str(pfw_dir),
         "--output-prefix", str(variant["case_name"]),
         "--python", args.python_cmd,
         "--post-walltime", args.post_walltime,
@@ -210,6 +211,7 @@ def submit_or_run_post(args: argparse.Namespace, source_dir: Path, output_dir: P
 def run_folder(
     *,
     source_dir: Path,
+    pfw_dir: Path = None,
     input_file: str,
     post_script: str,
     variants: Iterable[dict],
@@ -221,7 +223,12 @@ def run_folder(
     args = parse_args(description or f"Run {default_case_id}", variants)
     if args.case_id is None:
         args.case_id = default_case_id
-    root = pfw_root(source_dir)
+    if pfw_dir is None:
+        print("Root not provided")
+        root = pfw_root(source_dir)
+    else:
+        print("Root provided")
+        root = pfw_dir
     runner = root / "mpm_vv_case_runner.py"
     output_dir = source_dir / "output" / args.case_id
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -239,11 +246,11 @@ def run_folder(
     workers = max(1, min(int(args.jobs or 1), len(selected)))
     print(f"[{args.case_id}] dispatching {len(selected)} variant(s) with {workers} worker(s)", flush=True)
     if workers == 1:
-        subcases = [dispatch_variant(args, source_dir, runner, input_file, variant) for variant in selected]
+        subcases = [dispatch_variant(args, source_dir, pfw_dir, runner, input_file, variant) for variant in selected]
     else:
         subcases = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            future_to_variant = {pool.submit(dispatch_variant, args, source_dir, runner, input_file, variant): variant for variant in selected}
+            future_to_variant = {pool.submit(dispatch_variant, args, source_dir, pfw_dir, runner, input_file, variant): variant for variant in selected}
             for future in as_completed(future_to_variant):
                 subcases.append(future.result())
         subcases.sort(key=lambda rec: [v["name"] for v in selected].index(rec["name"]))

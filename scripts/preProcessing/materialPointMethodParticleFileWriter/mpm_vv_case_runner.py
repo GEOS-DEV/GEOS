@@ -33,6 +33,7 @@ def parse_args():
     p.add_argument("--suite", default="verification")
     p.add_argument("--case-id", required=True)
     p.add_argument("--input", required=True)
+    p.add_argument("--pfw-dir", required=False, default=None)
     p.add_argument("--source-dir", required=True)
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
@@ -293,7 +294,11 @@ def submit_post(args, run_dir: Path, output_dir: Path, source_dir: Path, bank: s
 def main():
     args = parse_args()
     source_dir = expand_path(args.source_dir)
-    pfw_root = find_pfw_root(source_dir)
+    pfw_dir = args.pfw_dir
+    if pfw_dir is None:
+        pfw_root = find_pfw_root(source_dir)
+    else:
+        pfw_root = Path(pfw_dir)
     userdefs_path, userdefs = load_userdefs(pfw_root)
     test_root = expand_path(getattr(userdefs, "testRunDirectory"))
     default_root = expand_path(getattr(userdefs, "defaultRunDirectory", test_root))

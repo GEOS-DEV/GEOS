@@ -27,9 +27,9 @@ def _env_float(name: str, default: float) -> float:
 def parse_common_args(description: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--suite", default="verification")
-    parser.add_argument("--source-dir", required=True)
-    parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--case-id", required=True)
+    parser.add_argument("--source-dir", default=None, required=False)
+    parser.add_argument("--output-dir", default=None, required=False)
+    parser.add_argument("--case-id", default=None, required=False)
     parser.add_argument("--python", dest="python_cmd", default=sys.executable)
     parser.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
     parser.add_argument("--no-visit", action="store_true", help="Skip optional VisIt field renders.")

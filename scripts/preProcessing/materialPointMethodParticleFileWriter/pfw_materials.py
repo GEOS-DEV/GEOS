@@ -205,7 +205,32 @@ def generateUncoupledCohesiveZoneMaterialString(material):
         'maxNormalDisplacement',
         'maxTangentialDisplacement',
     ])
+    
 
+def generateCoupledCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'characteristicNormalDisplacement',
+        'characteristicTangentialDisplacement',
+        'defaultMaxNormalStress',
+        'defaultMaxShearStress',
+        'maxNormalDisplacement',
+        'maxTangentialDisplacement',
+        'maxNormalStress',
+        'maxShearStress',
+    ])
+
+
+def generateBicrystalCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'characteristicNormalDisplacement',
+        'characteristicTangentialDisplacement',
+        'defaultMaxNormalStress',
+        'defaultMaxShearStress',
+        'maxNormalDisplacement',
+        'maxTangentialDisplacement',
+        'maxNormalStress',
+        'maxShearStress',
+    ])
 
 def generateGeomechanicsMaterialString(material):
     return _format_material_xml(material, [
@@ -457,6 +482,8 @@ MATERIAL_STRING_GENERATORS = {
     'CeramicDamage': generateCeramicDamageMaterialString,
     'ElasticIsotropic': generateElasticIsotropicMaterialString,
     'UncoupledCohesiveZone': generateUncoupledCohesiveZoneMaterialString,
+    'CoupledCohesiveZone': generateCoupledCohesiveZoneMaterialString,
+    'BicrystalCohesiveZone': generateBicrystalCohesiveZoneMaterialString,
     'Geomechanics': generateGeomechanicsMaterialString,
     'Graphite': generateGraphiteMaterialString,
     'StrainHardeningPolymer': generateStrainHardeningPolymerMaterialString,

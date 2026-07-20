@@ -62,7 +62,7 @@ stopTime = 1.0
 # into the run directory before executing the generated problem. The quartz
 # dictionary supplies both a material name and a GEOS XML material-property
 # string for the ceramic damage model.
-# [pfw_dependency] /pfw_materials.py
+# [pfw_dependency] pfw:pfw_materials.py
 matFile = importlib.import_module("pfw_materials")
 quartz = matFile.quartz
 
@@ -133,8 +133,8 @@ pfw["mSubmitJobs"] = True
 # restart interval is intentionally beyond the end time so no restart files are
 # needed for this demonstration problem.
 pfw["endTime"] = stopTime
-pfw["plotInterval"] = stopTime
-pfw["restartInterval"] = 2.0 * stopTime
+pfw["plotInterval"] = stopTime/200
+pfw["restartInterval"] = 2.0*stopTime
 
 # Silo output is the format used by the VisIt renderer. Use "vtk" instead when
 # preparing an example for ParaView.
@@ -169,7 +169,9 @@ pfw["needsNeighborList"] = 1
 # Write history files for the post-processing script. reactionHistory.csv is used
 # for y-face reaction plots; boxAverageHistory.csv is copied as a diagnostic.
 pfw["reactionHistory"] = 1
+pfw["reactionWriteInterval"]=stopTime/2000
 pfw["boxAverageHistory"] = 1
+pfw["boxAverageWriteInterval"]=stopTime/2000
 
 # Friction coefficient for contact-style interactions in the MPM solver.
 pfw["frictionCoefficient"] = 0.25
