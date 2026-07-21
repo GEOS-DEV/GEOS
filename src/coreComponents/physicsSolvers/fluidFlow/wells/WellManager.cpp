@@ -589,9 +589,17 @@ WellManager::calculateResidualNorm( real64 const & time_n,
         {
           if( wellResidualNorm[i] > localResidualNorm[i] )
           {
-            localResidualNorm[i] =  LvArray::math::max( localResidualNorm[i], wellResidualNorm[i] );
+            localResidualNorm[i] = wellResidualNorm[i];
           }
         }
+      }
+      else
+      {
+        for( integer i=0; i<numNorm; i++ )
+        {
+          localResidualNorm[i] = 0.0;
+        }
+
       }
     } );
   } );
