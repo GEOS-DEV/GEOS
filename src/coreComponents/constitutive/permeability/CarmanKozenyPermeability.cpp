@@ -57,16 +57,17 @@ CarmanKozenyPermeability::deliverClone( string const & name,
 void CarmanKozenyPermeability::allocateConstitutiveData( Group & parent,
                                                          localIndex const numPts )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( 0, 1, 3 );
+  m_permeability.resize( 0, numPts, 3 );
+  m_dPerm_dPressure.resize( 0, numPts, 3 );
+  m_dPerm_dPorosity.resize( 0, numPts, 3 );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numPts );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void CarmanKozenyPermeability::initializeState() const
 {
   localIndex const numE = m_permeability.size( 0 );
-  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+  localIndex const numQuad = m_permeability.size( 1 );
 
   auto permView = m_permeability.toView();
   real64 const permComponents[3] = { m_particleDiameter,
