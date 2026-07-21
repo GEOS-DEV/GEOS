@@ -141,16 +141,6 @@
       values="{ 1.0, 3.0 }"/>
   </Functions>
 
-  <Tasks>
-
-    <CompositionalMultiphaseStatistics
-      name="compflowStatistics"
-      flowSolverName="flowSolver"
-      logLevel="1"
-      computeRegionStatistics="1"/>
-    
-  </Tasks>
-
   <Outputs>
     <VTK
       name="vtkOutput"
