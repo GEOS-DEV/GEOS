@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<!--
+  Rigid-body MPM jamming verification.
+
+  1. Generate particles:
+       python3 generateRigidBodyJamming2DParticles.py
+  2. Run GEOS from this directory:
+       geosx -i mpm_rigidBodyJamming2D.xml
+  3. Check the generated geometry and, after a run, the history files:
+       python3 checkRigidBodyJamming2D.py
+-->
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="backgroundGrid"
+      elementTypes="{ C3D8 }"
+      xCoords="{-0.65,0.65}"
+      yCoords="{-0.50,0.50}"
+      zCoords="{-0.05,0.05}"
+      nx="{52}"
+      ny="{40}"
+      nz="{1}"
+      periodic="{ 0, 0, 0}"
+      cellBlockNames="{ cb1 }"/>
+
+    <ParticleMesh
+      name="particles"
+      particleFile="mpmParticleFile_rigidBodyJamming2D"
+      particleBlockNames="{ pb0 }"
+      particleTypes="{ SinglePoint }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="CellRegion1"
+      meshBody="backgroundGrid"
+      cellBlocks="{ cb1 }"
+      materialList="{ null }"/>
+  </ElementRegions>
+
+  <ParticleRegions>
+    <ParticleRegion
+      name="CopperObjects"
+      meshBody="particles"
+      particleBlocks="{ pb0 }"
+      materialList="{ copper }"/>
+  </ParticleRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanics_MPM
+      name="mpmsolve"
+      discretization="FE1"
+      targetRegions="{ backgroundGrid/CellRegion1, particles/CopperObjects }"
+      timeIntegrationOption="ExplicitDynamic"
+      updateMethod="FLIP"
+      cflFactor="0.35"
+      initialDt="1.0e-9"
+      planeStrain="1"
+      useEvents="1"
+      eventReporting="1"
+      rigidBodyMaxGridFields="4"
+      prescribedBoundaryFTable="1"
+      fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 0.78, 0.78, 1.0}}"
+      fTableInterpType="Cosine"
+      boundaryConditionTypes="{2, 2, 2, 2, 1, 1}"
+      frictionCoefficient="0.35"
+      contactGapCorrection="Implicit"
+      useSurfacePositionForContact="1"
+      explicitSurfaceNormalInfluence="1.0"
+      computeParticleSurfaceNormalsAndPositions="0"
+      overwriteExistingNormalsAndPositions="0"
+      boxAverageHistory="1"
+      boxAverageWriteInterval="2.0e-7"
+      reactionHistory="1"
+      reactionWriteInterval="2.0e-7">
+
+      <MPMEvents>
+        <!-- Establish the rigid compaction table at t=0.  This duplicates the
+             solver-level initial table intentionally: the event path verifies
+             that DeformationUpdate and RigidBodyMPM can be used together. -->
+        <DeformationUpdate
+          name="startRigidCompression"
+          startTime="0.0"
+          prescribedBoundaryFTable="1"
+          prescribedFTable="0"
+          stressControl="{0, 0, 0}"
+          fTableInterpType="Cosine"
+          fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 0.78, 0.78, 1.0}}"/>
+
+        <!-- One body per ParticleColor.  The rigid event ends either at its
+             nominal end time or when the resultant force criterion declares a
+             jammed/contact-loaded state. -->
+        <RigidBodyMPM
+          name="rigidJamming"
+          startTime="0.0"
+          endTime="5.0e-5"
+          maxGridFields="4"
+          linearDamping="2.0e4"
+          angularDamping="2.0e4"
+          maxForce="5.0e5"
+          writeHistory="1"
+          historyWriteInterval="2.0e-7"/>
+
+        <!-- After the rigid packing event, switch to continuum MPM and drive
+             an equibiaxial stress target of 2 x yield stress for copper:
+             sigma_x = sigma_y = -140 MPa. -->
+        <DeformationUpdate
+          name="continuumCompression"
+          dependencies="{ rigidJamming }"
+          delay="0.0"
+          duration="0.0"
+          relativeDeformation="1"
+          prescribedBoundaryFTable="0"
+          prescribedFTable="0"
+          stressControl="{1, 1, 0}"
+          stressTableInterpType="Cosine"
+          stressTable="{{0.0, 0.0, 0.0, 0.0}, {2.0e-5, -1.4e8, -1.4e8, 0.0}}"/>
+      </MPMEvents>
+    </SolidMechanics_MPM>
+  </Solvers>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="null"
+      defaultDensity="1000.0"
+      defaultBulkModulus="1.0e9"
+      defaultShearModulus="1.0e9"/>
+
+    <PerfectlyPlastic
+      name="copper"
+      defaultDensity="8960.0"
+      defaultBulkModulus="1.40e11"
+      defaultShearModulus="4.60e10"
+      defaultYieldStress="7.0e7"/>
+  </Constitutive>
+
+  <Events maxTime="7.5e-5">
+    <PeriodicEvent
+      name="solverApplications"
+      target="/Solvers/mpmsolve"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.0e-6"
+      target="/Outputs/vtkOutput"/>
+    <HaltEvent maxRuntime="900.0"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Outputs>
+    <VTK name="vtkOutput" format="ascii"/>
+  </Outputs>
+
+</Problem>

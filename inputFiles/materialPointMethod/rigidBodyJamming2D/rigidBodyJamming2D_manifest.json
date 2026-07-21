@@ -1,0 +1,163 @@
+{
+  "particleFile": "mpmParticleFile_rigidBodyJamming2D",
+  "dx": 0.0125,
+  "thickness": 0.1,
+  "particleVolume": 1.5625000000000004e-05,
+  "objects": [
+    {
+      "kind": "disk",
+      "color": 0,
+      "center": [
+        -0.34,
+        -0.2
+      ],
+      "radius": 0.105
+    },
+    {
+      "kind": "block",
+      "color": 1,
+      "center": [
+        -0.06,
+        -0.19
+      ],
+      "width": 0.18,
+      "height": 0.115
+    },
+    {
+      "kind": "disk",
+      "color": 2,
+      "center": [
+        0.24,
+        -0.18
+      ],
+      "radius": 0.09
+    },
+    {
+      "kind": "block",
+      "color": 3,
+      "center": [
+        -0.26,
+        0.14
+      ],
+      "width": 0.16,
+      "height": 0.155
+    },
+    {
+      "kind": "disk",
+      "color": 4,
+      "center": [
+        0.05,
+        0.12
+      ],
+      "radius": 0.115
+    },
+    {
+      "kind": "block",
+      "color": 5,
+      "center": [
+        0.34,
+        0.14
+      ],
+      "width": 0.145,
+      "height": 0.135
+    }
+  ],
+  "particleCountsByColor": {
+    "0": 220,
+    "1": 126,
+    "2": 162,
+    "3": 156,
+    "4": 266,
+    "5": 132
+  },
+  "surfaceParticleCountsByColor": {
+    "0": 36,
+    "1": 22,
+    "2": 31,
+    "3": 35,
+    "4": 44,
+    "5": 42
+  },
+  "nonOverlapDiagnostics": [
+    {
+      "colorA": 0,
+      "colorB": 1,
+      "conservativeCircularMargin": 0.0683784677059689
+    },
+    {
+      "colorA": 0,
+      "colorB": 2,
+      "conservativeCircularMargin": 0.38534472514187645
+    },
+    {
+      "colorA": 0,
+      "colorB": 3,
+      "conservativeCircularMargin": 0.13290163688173232
+    },
+    {
+      "colorA": 0,
+      "colorB": 4,
+      "conservativeCircularMargin": 0.2844799302251776
+    },
+    {
+      "colorA": 0,
+      "colorB": 5,
+      "conservativeCircularMargin": 0.5562050485691339
+    },
+    {
+      "colorA": 1,
+      "colorB": 2,
+      "conservativeCircularMargin": 0.10336657357960352
+    },
+    {
+      "colorA": 1,
+      "colorB": 3,
+      "conservativeCircularMargin": 0.16769223376529832
+    },
+    {
+      "colorA": 1,
+      "colorB": 4,
+      "conservativeCircularMargin": 0.10713763725150137
+    },
+    {
+      "colorA": 1,
+      "colorB": 5,
+      "conservativeCircularMargin": 0.3126975759013031
+    },
+    {
+      "colorA": 2,
+      "colorB": 3,
+      "conservativeCircularMargin": 0.3922495361365059
+    },
+    {
+      "colorA": 2,
+      "colorB": 4,
+      "conservativeCircularMargin": 0.15010561809129408
+    },
+    {
+      "colorA": 2,
+      "colorB": 5,
+      "conservativeCircularMargin": 0.14620302850400946
+    },
+    {
+      "colorA": 3,
+      "colorB": 4,
+      "conservativeCircularMargin": 0.08426114429045402
+    },
+    {
+      "colorA": 3,
+      "colorB": 5,
+      "conservativeCircularMargin": 0.38955858916947805
+    },
+    {
+      "colorA": 4,
+      "colorB": 5,
+      "conservativeCircularMargin": 0.07663077329417793
+    }
+  ],
+  "notes": [
+    "SurfaceFlag=2 marks analytic surface particles; interior particles carry zero normal/position.",
+    "All bodies use ContactGroup=0 and distinct ParticleColor values to exercise color partitioning.",
+    "Copper yield stress in the XML is 70 MPa; the continuum stress-control target is -140 MPa in x and y."
+  ]
+}

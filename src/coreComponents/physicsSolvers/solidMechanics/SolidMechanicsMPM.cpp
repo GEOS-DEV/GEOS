@@ -998,6 +998,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
   m_rigidBodyAngularDamping( 0.0 ),
+  m_rigidBodyContactCFL( -1.0 ),
   m_rigidBodyGridFieldColor(),
   m_rigidBodyGridFieldContactGroup(),
   m_rigidBodyHistory( 0 ),
@@ -1006,8 +1007,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_rigidBodyLinearDamping( 0.0 ),
   m_rigidBodyMaxGridFields( 0 ),
   m_rigidBodyMaxForce( -1.0 ),
+  m_rigidBodyMaxTimeStep( -1.0 ),
   m_rigidBodyMode( 0 ),
   m_rigidBodyObservedMaxForce( 0.0 ),
+  m_rigidBodyPenetrationPenaltyBeta( 0.0 ),
   m_rigidBodyStopKineticEnergy( -1.0 ),
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
@@ -4091,8 +4094,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
-  if( m_enableWeakInterfaceTraceProjection == 1 )
+  if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
   {
+    /*
+     * Weak-interface trace projection assumes the continuum
+     * contactGroup x DFG-field layout.  RigidBodyMPM replaces that layout with
+     * first-in ParticleColor fields, so keep the DFG-specific projection out of
+     * the rigid event.
+     */
     enforceWeakInterfaceTraceProjection( dt,
                                          domain,
                                          nodeManager,
@@ -9411,6 +9420,9 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       m_rigidBodyAngularDamping = rigidBodyEvent.getAngularDamping();
       m_rigidBodyStopKineticEnergy = rigidBodyEvent.getStopKineticEnergy();
       m_rigidBodyMaxForce = rigidBodyEvent.getMaxForce();
+      m_rigidBodyContactCFL = rigidBodyEvent.getContactCFL();
+      m_rigidBodyMaxTimeStep = rigidBodyEvent.getMaxTimeStep();
+      m_rigidBodyPenetrationPenaltyBeta = rigidBodyEvent.getRigidBodyPenetrationPenaltyBeta();
       m_rigidBodyHistoryWriteInterval = rigidBodyEvent.getHistoryWriteInterval();
       m_rigidBodyObservedMaxForce = 0.0;
       m_rigidBodyKineticEnergy = 0.0;
@@ -9419,7 +9431,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( rigidBodyEvent.getWriteHistory() == 1 && m_rigidBodyHistory == 0 && MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
       {
         std::ofstream history( "rigidBodyHistory.csv" );
-        history << "time,color,mass,centerX,centerY,centerZ,velocityX,velocityY,velocityZ,omegaZ,forceX,forceY,forceZ,torqueZ,kineticEnergy\n";
+        history << "time,color,mass,mappedContactMass,contactMassRatio,centerX,centerY,centerZ,velocityX,velocityY,velocityZ,omegaZ,forceX,forceY,forceZ,torqueZ,kineticEnergy\n";
         m_rigidBodyHistory = 1;
         m_nextRigidBodyHistoryWriteTime = time_n;
       }
@@ -14737,9 +14749,16 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( ParticleManager & pa
  *   f_I = M_I ( v_I^{post contact/bc} - v_I^{trial} ) / dt,
  *
  * is distributed through the same m_p N_Ip / M_I support weights that mapped the
- * surface shell to the grid.  This intentionally reuses the ordinary MPM
- * contact and moving-boundary treatment; only the nodal field identity changes
- * from DFG/contact-group partitioning to first-in ParticleColor partitioning.
+ * surface shell to the grid.  Because only a fraction of the shell mass may map
+ * to fields receiving a nonzero contact/boundary correction, the recovered
+ * contact force is multiplied by
+ *
+ *   contactMassRatio = shellBodyMass / shellMassMappedToCorrectedFields.
+ *
+ * Interior particles are excluded from both masses.  This intentionally reuses
+ * the ordinary MPM contact and moving-boundary treatment; only the nodal field
+ * identity changes from DFG/contact-group partitioning to first-in ParticleColor
+ * partitioning.
  */
 void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
                                                  real64 const dt,
@@ -14786,6 +14805,9 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
   array1d< real64 > forceGlobal( 3 * numBodies );
   array1d< real64 > torqueLocal( numBodies );
   array1d< real64 > torqueGlobal( numBodies );
+  array1d< real64 > mappedContactMassLocal( numBodies );
+  array1d< real64 > mappedContactMassGlobal( numBodies );
+  array1d< real64 > contactMassRatio( numBodies );
 
   auto zeroArray = []( auto & values )
   {
@@ -14809,6 +14831,9 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
   zeroArray( forceGlobal );
   zeroArray( torqueLocal );
   zeroArray( torqueGlobal );
+  zeroArray( mappedContactMassLocal );
+  zeroArray( mappedContactMassGlobal );
+  zeroArray( contactMassRatio );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -14918,6 +14943,87 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
   arrayView3d< real64 const > const gridVelocity =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
 
+  /*
+   * Compute the mass fraction of each body that actually participated in the
+   * current contact/boundary correction.  A nodal field is counted when the
+   * final velocity differs from the pre-contact trial velocity.  Accumulating
+   * m_p N_Ip through the particle mappings preserves body identity on pure
+   * color fields and gives the intended weighted split on the overflow field.
+   */
+  localIndex mappedMassSubRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView1d< localIndex const > const numEffectiveMappedNodes =
+      m_numEffectiveMappedNodes[mappedMassSubRegionIndex];
+    arrayView2d< integer const > const effectiveMappedFields =
+      m_effectiveMappedFields[mappedMassSubRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes =
+      m_effectiveMappedNodes[mappedMassSubRegionIndex];
+    arrayView2d< real64 const > const effectiveShapeFunctionValues =
+      m_effectiveShapeFunctionValues[mappedMassSubRegionIndex];
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(),
+      [=, &mappedContactMassLocal] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      bool const isRigidSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+      if( !isRigidSurfaceParticle )
+      {
+        return;
+      }
+
+      int const c = particleColor[p];
+
+      for( localIndex g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+      {
+        localIndex const nodeIndex = effectiveMappedNodes[pp][g];
+        integer const fieldIndex = effectiveMappedFields[pp][g];
+        real64 const nodalMass = gridMass[nodeIndex][fieldIndex];
+        if( nodalMass <= 0.0 )
+        {
+          continue;
+        }
+
+        real64 contactVelocityChangeSquared = 0.0;
+        for( int i = 0; i < 3; ++i )
+        {
+          real64 const dVelocity = gridVelocity[nodeIndex][fieldIndex][i]
+                                   - gridUncontactedVelocity[nodeIndex][fieldIndex][i];
+          contactVelocityChangeSquared += dVelocity * dVelocity;
+        }
+        if( contactVelocityChangeSquared <= 1.0e-30 )
+        {
+          continue;
+        }
+
+        mappedContactMassLocal[c] +=
+          particleMass[p] * effectiveShapeFunctionValues[pp][g];
+      }
+    } );
+
+    ++mappedMassSubRegionIndex;
+  } );
+
+  MpiWrapper::allReduce( mappedContactMassLocal,
+                         mappedContactMassGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+
+  for( localIndex c = 0; c < numBodies; ++c )
+  {
+    contactMassRatio[c] = massGlobal[c] > 0.0 && mappedContactMassGlobal[c] > 0.0
+                          ? massGlobal[c] / mappedContactMassGlobal[c]
+                          : 1.0;
+  }
+
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -14963,8 +15069,10 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
         real64 nodalForce[3] = {};
         for( int i = 0; i < 3; ++i )
         {
-          nodalForce[i] = nodalMass * ( gridVelocity[nodeIndex][fieldIndex][i]
-                                      - gridUncontactedVelocity[nodeIndex][fieldIndex][i] ) / dt;
+          real64 const contactBoundaryForce =
+            nodalMass * ( gridVelocity[nodeIndex][fieldIndex][i]
+                          - gridUncontactedVelocity[nodeIndex][fieldIndex][i] ) / dt;
+          nodalForce[i] = contactMassRatio[c] * contactBoundaryForce;
           forceLocal[3 * c + i] += weight * nodalForce[i];
         }
 
@@ -15135,6 +15243,7 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
                                         + bodyVelocityNew[3 * c + 2] * bodyVelocityNew[3 * c + 2] )
                                       + 0.5 * inertiaGlobal[c] * omegaNew[c] * omegaNew[c];
       history << time_n + dt << ',' << c << ',' << massGlobal[c] << ','
+              << mappedContactMassGlobal[c] << ',' << contactMassRatio[c] << ','
               << center[3 * c + 0] << ',' << center[3 * c + 1] << ',' << center[3 * c + 2] << ','
               << bodyVelocityNew[3 * c + 0] << ',' << bodyVelocityNew[3 * c + 1] << ',' << bodyVelocityNew[3 * c + 2] << ','
               << omegaNew[c] << ','
@@ -20764,6 +20873,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
   int const rigidBodyMode = m_rigidBodyMode;
+  real64 const rigidBodyPenetrationPenaltyBeta =
+    rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
   arrayView2d< integer const > const rigidBodyGridFieldColor =
     m_rigidBodyGridFieldColor.toViewConst();
   arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
@@ -20891,7 +21002,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
             }
           }
 
-          bool weakTracePair = enableWeakInterfaceTraceProjection == 1;
+          bool weakTracePair = rigidBodyMode == 0 && enableWeakInterfaceTraceProjection == 1;
           if( weakTracePair && numWeakInterfaceTracePairs > 0 )
           {
             weakTracePair = false;
@@ -20991,8 +21102,16 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           // Outward normal of field A with respect to field B.
           real64 nAB[3] = {};
 
+          // Logistic regression classifies particles with continuum DFG field ids and is not
+          // compatible with first-in ParticleColor field numbering.  In rigid mode, use the
+          // mapped exact/implicit surface normals with mass weighting instead.
+          mpm::ContactNormalTypeOption const activeContactNormalType =
+            rigidBodyMode == 1 && contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
+            ? mpm::ContactNormalTypeOption::MassWeighted
+            : contactNormalType;
+
           // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
-          switch( contactNormalType )
+          switch( activeContactNormalType )
           {
             case mpm::ContactNormalTypeOption::Difference:
               // Tensor equation: nAB = nA - nB.
@@ -21149,6 +21268,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                             smallMass,
                                             useSurfacePositionForContact,
                                             useCohesiveTangentialForces,
+                                            rigidBodyPenetrationPenaltyBeta,
                                             separable,
                                             dt,
                                             frictionCoefficient,
@@ -21216,6 +21336,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
   int const rigidBodyMode = m_rigidBodyMode;
+  real64 const rigidBodyPenetrationPenaltyBeta =
+    rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
   arrayView2d< integer const > const rigidBodyGridFieldColor =
     m_rigidBodyGridFieldColor.toViewConst();
   arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
@@ -21414,8 +21536,16 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
           // Outward normal of field A with respect to field B.
           real64 nAB[3] = {};
 
+          // Logistic regression classifies particles with continuum DFG field ids and is not
+          // compatible with first-in ParticleColor field numbering.  In rigid mode, use the
+          // mapped exact/implicit surface normals with mass weighting instead.
+          mpm::ContactNormalTypeOption const activeContactNormalType =
+            rigidBodyMode == 1 && contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
+            ? mpm::ContactNormalTypeOption::MassWeighted
+            : contactNormalType;
+
           // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
-          switch( contactNormalType )
+          switch( activeContactNormalType )
           {
             case mpm::ContactNormalTypeOption::Difference:
               // Tensor equation: nAB = nA - nB.
@@ -21572,6 +21702,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                               smallMass,
                                               useSurfacePositionForContact,
                                               useCohesiveTangentialForces,
+                                              rigidBodyPenetrationPenaltyBeta,
                                               separable,
                                               dt,
                                               frictionCoefficient,
@@ -21827,6 +21958,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
                                                             real64 const & smallMass,
                                                             int const & useSurfacePositionForContact,
                                                             int const & useCohesiveTangentialForces,
+                                                            real64 const rigidBodyPenetrationPenaltyBeta,
                                                             bool & separable,
                                                             real64 const & dt,
                                                             real64 const & frictionCoefficient,
@@ -21992,6 +22124,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
     }
   }
 
+  if( rigidBodyPenetrationPenaltyBeta > 0.0 && gap < 0.0 )
+  {
+    real64 const effectiveMass = mA * mB / ( mA + mB );
+    real64 const penetration = -gap;
+    jgap += -rigidBodyPenetrationPenaltyBeta * effectiveMass * penetration / dt;
+  }
+
   real64 jtanMag = sqrt( jtan1 * jtan1 + jtan2 * jtan2 );
 
   real64 sAB[3] = {};
@@ -22037,6 +22176,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
                                                           real64 const & smallMass,
                                                           int const & useSurfacePositionForContact,
                                                           int const & useCohesiveTangentialForces,
+                                                          real64 const rigidBodyPenetrationPenaltyBeta,
                                                           bool & separable,
                                                           real64 const & dt,
                                                           real64 const & frictionCoefficient,
@@ -22274,6 +22414,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
       fgap = correctionScale*LvArray::math::max( -maxGapForceMagnitude, -2.0 * overlapLength * mA * mB / ( dt * dt * ( mA + mB ) ) );
 
     }
+  }
+
+  if( rigidBodyPenetrationPenaltyBeta > 0.0 && gap < 0.0 )
+  {
+    real64 const effectiveMass = mA * mB / ( mA + mB );
+    real64 const penetration = -gap;
+    fgap += -rigidBodyPenetrationPenaltyBeta * effectiveMass * penetration / ( dt * dt );
   }
 
   // Determine force for tangential sticking
@@ -23406,6 +23553,8 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   LvArray::tensorOps::copy< 6 >( boundaryFaceFrictionCoefficients, m_boundaryFaceFrictionCoefficients );
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
   int const useInternalForceAsFaceReaction = m_useInternalForceAsFaceReaction;
+  int const rigidBodyMode = m_rigidBodyMode;
+  real64 const rigidBodyPenetrationPenaltyBeta = m_rigidBodyPenetrationPenaltyBeta;
 
   localIndex const numNodes = nodeManager.size();
   localIndex const numVelocityFields = m_numVelocityFields;
@@ -23568,11 +23717,32 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             bool const movingIntoWall = outwardSign * relativeNormalVelocity > 0.0;
             bool const intersectsWall = currentOutwardSurfacePosition > 0.0 ||
                                         predictedOutwardSurfacePosition > 0.0;
-            bool const inContact = movingIntoWall && intersectsWall;
+            real64 const penetration = LvArray::math::max(
+              0.0,
+              LvArray::math::max( currentOutwardSurfacePosition, predictedOutwardSurfacePosition ) );
+            bool const rigidPenaltyActive = rigidBodyMode == 1 &&
+                                            rigidBodyPenetrationPenaltyBeta > 0.0 &&
+                                            gridMass[g][fieldIndex] > smallMass &&
+                                            penetration > 0.0;
+            bool const inContact = intersectsWall && ( movingIntoWall || rigidPenaltyActive );
 
             if( inContact )
             {
               prescribedVelocity = wallVelocity;
+              if( rigidPenaltyActive )
+              {
+                /*
+                 * The additional velocity correction is the impulse form of
+                 *
+                 *   f_pen = beta * m_I * penetration / dt^2.
+                 *
+                 * It points into the domain and is visible to the rigid-body
+                 * option-B force recovery through v_post - v_uncontacted.
+                 */
+                real64 const boundaryPenaltyForceMagnitude =
+                  rigidBodyPenetrationPenaltyBeta * gridMass[g][fieldIndex] * penetration / ( dt * dt );
+                prescribedVelocity -= outwardSign * boundaryPenaltyForceMagnitude * dt / gridMass[g][fieldIndex];
+              }
             }
 
             // Boundary friction acts only in tangential components.  It is staged
@@ -28906,6 +29076,23 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
     if( maxBoundarySpeed > 1.0e-16 )
     {
       dtReturn = LvArray::math::min( dtReturn, cflFactor * length / maxBoundarySpeed );
+    }
+
+    if( m_rigidBodyContactCFL > 0.0 )
+    {
+      real64 const maxParticleSpeed = maxWavespeed.get();
+      real64 const maxClosureSpeed = LvArray::math::max( 2.0 * maxParticleSpeed,
+                                                         maxParticleSpeed + maxBoundarySpeed );
+      if( maxClosureSpeed > 1.0e-16 )
+      {
+        dtReturn = LvArray::math::min( dtReturn,
+                                       m_rigidBodyContactCFL * length / maxClosureSpeed );
+      }
+    }
+
+    if( m_rigidBodyMaxTimeStep > 0.0 )
+    {
+      dtReturn = LvArray::math::min( dtReturn, m_rigidBodyMaxTimeStep );
     }
   }
 

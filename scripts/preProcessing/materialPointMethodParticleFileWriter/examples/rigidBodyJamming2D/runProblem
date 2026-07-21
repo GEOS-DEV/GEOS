@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Rigid-body MPM jamming example.  The PFW input is intentionally copyable and
+# can be run through the normal runClean_<user>.sh workflow.  This wrapper only
+# stages/submits it consistently with the other geos/mpm/examples cases and the
+# examples/runExampleSuite driver.
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
+PASSTHRU=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python)
+      [ "$#" -ge 2 ] || { echo "--python requires an argument" >&2; exit 2; }
+      PYTHON_CMD="$2"
+      PASSTHRU+=("--python" "$2")
+      shift 2
+      ;;
+    --help|-h)
+      echo "Usage: ./runProblem [--python PYTHON] [runner options]"
+      "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" --help || true
+      exit 0
+      ;;
+    *)
+      PASSTHRU+=("$1")
+      shift
+      ;;
+  esac
+done
+
+exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" \
+  --case-id rigidBodyJamming2D \
+  --source-dir "$SCRIPT_DIR" \
+  --input pfw_input_rigidBodyJamming2D.py \
+  --output-prefix rigidBodyJamming2D \
+  --initial-variable particleColor \
+  --final-variable particleColor \
+  --initial-range-mode auto \
+  --final-range-mode auto \
+  --view xy \
+  --preserve-plot-interval \
+  "${PASSTHRU[@]}"

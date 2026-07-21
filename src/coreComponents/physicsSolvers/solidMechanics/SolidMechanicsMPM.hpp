@@ -563,6 +563,7 @@ public:
                                            real64 const & smallMass,
                                            int const & useSurfacePositionForContact,
                                            int const & useCohesiveTangentialForces,
+                                           real64 const rigidBodyPenetrationPenaltyBeta,
                                            bool & separable,
                                            real64 const & dt,
                                            real64 const & frictionCoefficient,
@@ -600,6 +601,7 @@ public:
                                          real64 const & smallMass,
                                          int const & useSurfacePositionForContact,
                                          int const & useCohesiveTangentialForces,
+                                         real64 const rigidBodyPenetrationPenaltyBeta,
                                          bool & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
@@ -1387,6 +1389,7 @@ protected:
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
   real64 m_rigidBodyAngularDamping;
+  real64 m_rigidBodyContactCFL;
   array2d< integer > m_rigidBodyGridFieldColor;
   array2d< integer > m_rigidBodyGridFieldContactGroup;
   int m_rigidBodyHistory;
@@ -1395,8 +1398,10 @@ protected:
   real64 m_rigidBodyLinearDamping;
   int m_rigidBodyMaxGridFields;
   real64 m_rigidBodyMaxForce;
+  real64 m_rigidBodyMaxTimeStep;
   int m_rigidBodyMode;
   real64 m_rigidBodyObservedMaxForce;
+  real64 m_rigidBodyPenetrationPenaltyBeta;
   real64 m_rigidBodyStopKineticEnergy;
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
