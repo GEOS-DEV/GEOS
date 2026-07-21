@@ -59,8 +59,6 @@ public:
 
   };
 
-  static constexpr integer MGR_READINESS = 0;
-
 protected:
   virtual void postInputInitialization() override;
 

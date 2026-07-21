@@ -40,7 +40,12 @@ template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::postInputInitialization()
 {
   Base::postInputInitialization();
+  forceSequential();
+}
 
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::forceSequential()
+{
   GEOS_WARNING_IF( this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit,
                    "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
 

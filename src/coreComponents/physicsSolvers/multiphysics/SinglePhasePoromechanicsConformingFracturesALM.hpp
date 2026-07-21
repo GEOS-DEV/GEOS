@@ -179,6 +179,11 @@ private:
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
+  /**
+  * @brief Force sequential mode with warning on explicit fully-implicit - temporary
+  */
+  void forceSequential();
+
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
                                           integer const solverType ) override;
 
