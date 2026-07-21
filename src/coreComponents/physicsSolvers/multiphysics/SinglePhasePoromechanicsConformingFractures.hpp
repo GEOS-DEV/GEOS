@@ -81,12 +81,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-
-  virtual void setMGRStrategy() override
-  {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
-  }
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   virtual void assembleSystem( real64 const time_n,
                                real64 const dt,

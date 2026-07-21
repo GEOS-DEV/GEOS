@@ -116,12 +116,8 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void setMGRStrategy() override
-  {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
-  }
-
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
+  
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {
     GEOS_MARK_FUNCTION;
