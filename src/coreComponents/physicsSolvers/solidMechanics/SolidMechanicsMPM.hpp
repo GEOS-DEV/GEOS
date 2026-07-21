@@ -1404,6 +1404,7 @@ protected:
   real64 m_rigidBodyPenetrationPenaltyBeta;
   real64 m_rigidBodyStopKineticEnergy;
   int m_resetDefGradForFullyDamagedParticles;
+  int m_resetDefGradForMeltedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
   real64 m_separabilityMinDamage;
   int m_setDomainTemperature;

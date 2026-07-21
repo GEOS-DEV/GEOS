@@ -1013,6 +1013,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_rigidBodyPenetrationPenaltyBeta( 0.0 ),
   m_rigidBodyStopKineticEnergy( -1.0 ),
   m_resetDefGradForFullyDamagedParticles( 0 ),
+  m_resetDefGradForMeltedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
   m_separabilityMinDamage( 0.5 ),
   m_setDomainTemperature(),
@@ -1772,6 +1773,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for resetting deformation gradient of fully damaged particles" );
+
+  registerWrapper( "resetDefGradForMeltedParticles", &m_resetDefGradForMeltedParticles ).
+    setApplyDefaultValue( m_resetDefGradForMeltedParticles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for resetting deformation gradient of melted particles to rotation times isotropic stretch" );
 
   registerWrapper( "resetDefGradForScaledSurfaceParticles", &m_resetDefGradForScaledSurfaceParticles ).
     setApplyDefaultValue( m_resetDefGradForScaledSurfaceParticles ).
@@ -2918,6 +2925,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleKineticEnergy >( getName() );
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleSupplementalPressure >( getName() );
+        subRegion.registerField< particleMeltFlag >( getName() );
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
         if( !subRegion.hasWrapper( particleColor::key() ) )
         {
@@ -8418,6 +8426,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       subRegion.getField< fields::mpm::particleInternalEnergy >();
     arrayView1d< real64 > const particleSupplementalPressure =
       subRegion.getField< fields::mpm::particleSupplementalPressure >();
+    arrayView1d< real64 > const particleMeltFlag =
+      subRegion.getField< fields::mpm::particleMeltFlag >();
 
     ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
     localIndex regionIndexOfSubRegion = region.getIndexInParent();
@@ -8453,6 +8463,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       // Should already be initialized by default value from DECLARE_FIELD, these might be redundant
       particleInternalEnergy[p] = 0.0;
       particleSupplementalPressure[p] = 0.0;
+      particleMeltFlag[p] = 0.0;
 
       if( computeSPHJacobian > 1 )
       {
@@ -9092,6 +9103,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
       arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
       arrayView1d< real64 > const particleSupplementalPressure = subRegion.getField< fields::mpm::particleSupplementalPressure >();
+      arrayView1d< real64 > const particleMeltFlag = subRegion.getField< fields::mpm::particleMeltFlag >();
       arrayView1d< real64 > const particleWavespeed = subRegion.getField< fields::mpm::particleWavespeed >();
       arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
       arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
@@ -9137,6 +9149,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
         particleTemperature[p] = state.temperature;
         particleTemperatureRate[p] = 0.0;
         particleSupplementalPressure[p] = 0.0;
+        particleMeltFlag[p] = state.phaseFlag > 0.0 ? 1.0 : 0.0;
         particleWavespeed[p] = state.soundSpeed;
 
         if( hasParticleHeatCapacity )
@@ -28749,6 +28762,29 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
+    if( constitutiveModel.hasWrapper( "meltFlag" ) )
+    {
+      arrayView1d< real64 const > const constitutiveMeltFlag =
+        constitutiveModel.getReference< array1d< real64 > >( "meltFlag" );
+      arrayView1d< real64 > const particleMeltFlag =
+        subRegion.getField< fields::mpm::particleMeltFlag >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleMeltFlag[p] = constitutiveMeltFlag[p];
+      } );
+    }
+    else
+    {
+      arrayView1d< real64 > const particleMeltFlag =
+        subRegion.getField< fields::mpm::particleMeltFlag >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleMeltFlag[p] = 0.0;
+      } );
+    }
+
     // crack tip distance shouldn't be changed in the constitutive model.
     // if(  constitutiveModel.hasWrapper( "crackTipDistance" ) )
     // {
@@ -29475,6 +29511,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
   int const planeStrain = m_planeStrain;
   int const resetDefGradForFullyDamagedParticles = m_resetDefGradForFullyDamagedParticles;
+  int const resetDefGradForMeltedParticles = m_resetDefGradForMeltedParticles;
   int const resetDefGradForScaledSurfaceParticles = m_resetDefGradForScaledSurfaceParticles;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
 
@@ -29492,7 +29529,11 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     const ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
 
     bool const isFluidMaterial = constitutiveModel.getCatalogName() == "Gas" || constitutiveModel.getCatalogName() == "Liquid";
-    bool const shouldResetDeformationGradientInSubRegion = isFluidMaterial || resetDefGradForFullyDamagedParticles == 1 || resetDefGradForScaledSurfaceParticles == 1;
+    bool const shouldResetDeformationGradientInSubRegion =
+      isFluidMaterial ||
+      resetDefGradForFullyDamagedParticles == 1 ||
+      resetDefGradForMeltedParticles == 1 ||
+      resetDefGradForScaledSurfaceParticles == 1;
 
     if( shouldResetDeformationGradientInSubRegion )
     {
@@ -29504,6 +29545,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
       arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+      arrayView1d< real64 const > const particleMeltFlag = subRegion.getField< fields::mpm::particleMeltFlag >();
 
       arrayView2d< real64 const > particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 const > particleSurfacePosition = subRegion.getParticleSurfacePosition();
@@ -29513,6 +29555,8 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       arrayView2d< real64 > particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
 
       arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+      arrayView3d< real64 const > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+      arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
 
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
@@ -29531,6 +29575,10 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
           resetDefGradForFullyDamagedParticles == 1 &&
           particleDamage[p] > 0.9999999;
 
+        bool const isMeltedParticle =
+          resetDefGradForMeltedParticles == 1 &&
+          particleMeltFlag[p] > 0.5;
+
         bool const isScaledParticle =
           cpdiDomainScaling == 1 &&
           particleDomainScaledFlag[p] == 1;
@@ -29544,7 +29592,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
           isScaledParticle &&
           isFullyDamagedParticle;
 
-        if( isFluidMaterial || resetForScaledSurfaceParticle || resetForFullyDamagedParticle )
+        if( isFluidMaterial || isMeltedParticle || resetForScaledSurfaceParticle || resetForFullyDamagedParticle )
         {
           real64 rotation[3][3] = {};
           real64 deformationGradient[3][3] = {};
@@ -29625,6 +29673,16 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
           // Tensor equation: particleDeformationGradient[p] = rotation * U.
           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], rotation, U );
+
+          if( isMeltedParticle )
+          {
+            // Tensor equations:
+            //   particleRVectors[p][a] = particleDeformationGradient[p] * particleReferenceRVectors[p][a].
+            // This keeps CPDI/Visit domains as rotated boxes after replacing the stretch with its isotropic part.
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][0], particleDeformationGradient[p], particleReferenceRVectors[p][0] );
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][1], particleDeformationGradient[p], particleReferenceRVectors[p][1] );
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][2], particleDeformationGradient[p], particleReferenceRVectors[p][2] );
+          }
         }
       } );
     }

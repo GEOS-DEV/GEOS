@@ -140,6 +140,14 @@ DECLARE_FIELD( particleSupplementalPressure,
                WRITE_AND_READ,
                "Positive-compressive scalar pressure supplement used by MPM force assembly; not included in particleStress." );
 
+DECLARE_FIELD( particleMeltFlag,
+               "meltFlag",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Melt diagnostic copied from constitutive models that expose a meltFlag wrapper." );
+
 DECLARE_FIELD( particleSPHJacobian,
                "particleSPHJacobian",
                array1d< real64 >,
