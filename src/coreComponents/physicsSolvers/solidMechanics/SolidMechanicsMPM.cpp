@@ -3750,7 +3750,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< localIndex > const particleGroup = subRegion.getParticleGroup();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       if( particleGroup[p] < 0 )
       {
@@ -26079,7 +26079,7 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-// Zero this out before additive sum
+      // Zero this out before additive sum
       // Tensor equations:
       //   particleVelocityGradient[p] = 0.0 component-wise.
       //   particleVelocity[p] = 0.0 component-wise.
@@ -26095,7 +26095,7 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
         // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[pp][g].
         LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
         localIndex const fieldIndex = mappedFields[pp][g];
-for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           // particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 *
           // gridAcceleration[mappedNode][fieldIndex][i] * dt )

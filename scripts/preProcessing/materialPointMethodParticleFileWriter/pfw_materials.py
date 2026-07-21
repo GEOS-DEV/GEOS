@@ -205,7 +205,32 @@ def generateUncoupledCohesiveZoneMaterialString(material):
         'maxNormalDisplacement',
         'maxTangentialDisplacement',
     ])
+    
 
+def generateCoupledCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'characteristicNormalDisplacement',
+        'characteristicTangentialDisplacement',
+        'defaultMaxNormalStress',
+        'defaultMaxShearStress',
+        'maxNormalDisplacement',
+        'maxTangentialDisplacement',
+        'maxNormalStress',
+        'maxShearStress',
+    ])
+
+
+def generateBicrystalCohesiveZoneMaterialString(material):
+    return _format_material_xml(material, [
+        'characteristicNormalDisplacement',
+        'characteristicTangentialDisplacement',
+        'defaultMaxNormalStress',
+        'defaultMaxShearStress',
+        'maxNormalDisplacement',
+        'maxTangentialDisplacement',
+        'maxNormalStress',
+        'maxShearStress',
+    ])
 
 def generateGeomechanicsMaterialString(material):
     return _format_material_xml(material, [
@@ -457,6 +482,8 @@ MATERIAL_STRING_GENERATORS = {
     'CeramicDamage': generateCeramicDamageMaterialString,
     'ElasticIsotropic': generateElasticIsotropicMaterialString,
     'UncoupledCohesiveZone': generateUncoupledCohesiveZoneMaterialString,
+    'CoupledCohesiveZone': generateCoupledCohesiveZoneMaterialString,
+    'BicrystalCohesiveZone': generateBicrystalCohesiveZoneMaterialString,
     'Geomechanics': generateGeomechanicsMaterialString,
     'Graphite': generateGraphiteMaterialString,
     'StrainHardeningPolymer': generateStrainHardeningPolymerMaterialString,
@@ -2485,6 +2512,7 @@ vitonFKM75SurfacePolymerCohesiveZone['yieldStrengthCrystallinityCoeff'] = vitonF
 vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryAmplitude'] = vitonFKM75SurfacePolymer['pressureAsymmetryAmplitude']
 vitonFKM75SurfacePolymerCohesiveZone['pressureAsymmetryWidth'] = vitonFKM75SurfacePolymer['pressureAsymmetryWidth']
 vitonFKM75SurfacePolymerCohesiveZone['compressivePressureStrengtheningCap'] = vitonFKM75SurfacePolymer['compressivePressureStrengtheningCap']
+vitonFKM75SurfacePolymerCohesiveZone["materialString"] = generateMaterialString(vitonFKM75SurfacePolymerCohesiveZone)
 # #################################################################################################
 
 
