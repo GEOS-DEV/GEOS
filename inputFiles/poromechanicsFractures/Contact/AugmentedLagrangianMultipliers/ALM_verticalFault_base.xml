@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+
+<Problem>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+<!-- SPHINX_POROMECHANICSSOLVER -->
+    <SinglePhasePoromechanicsConformingFracturesALM
+      name="poroFractureSolver"
+      targetRegions="{ Region, Fault }"
+      initialDt="1e-3"
+      flowSolverName="singlePhaseFlowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        newtonTol="1e-2"
+        newtonMaxIter="10"
+        maxAllowedResidualNorm="1e+15" />
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1" />
+    </SinglePhasePoromechanicsConformingFracturesALM>
+<!-- SPHINX_POROMECHANICSSOLVER_END -->
+
+<!-- SPHINX_MECHANICALSOLVER -->
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="1"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="2.0e0"
+      iterPenaltyT="2.0e0"
+      tolTauLimit="1.e-07"
+      tolJumpN="1.e-5"
+      tolJumpT="1.e-5"
+      targetRegions="{ Region, Fault }"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4" />
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1" />
+    </SolidMechanicsAugmentedLagrangianContact>
+<!-- SPHINX_MECHANICALSOLVER_END -->
+
+<!-- SPHINX_SINGLEPHASEFVM -->
+    <SinglePhaseFVM
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Region, Fault}">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1" />
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1" />
+    </SinglePhaseFVM>
+<!-- SPHINX_SINGLEPHASEFVM_END -->
+  </Solvers>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ water, porousRock }" />
+
+    <SurfaceElementRegion
+      name="Fault"
+      faceBlock="fracture"
+      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
+      defaultAperture="1e-3" />
+  </ElementRegions>
+
+  <Geometry>
+    <Box
+      name="xposFace"
+      xMin="{ 4499.99,    -0.01,  -4500.01 }"
+      xMax="{ 4500.01,   500.01,   4500.01 }" />
+
+    <Box
+      name="xnegFace"
+      xMin="{ -4500.01,   -0.01,  -4500.01 }"
+      xMax="{ -4499.99,  500.01,   4500.01 }" />
+
+    <Box
+      name="yposFace"
+      xMin="{ -4500.01,  499.99,  -4500.01 }"
+      xMax="{  4500.01,  500.01,   4500.01 }" />
+
+    <Box
+      name="ynegFace"
+      xMin="{ -4500.01,   -0.01,  -4500.01 }"
+      xMax="{  4500.01,    0.01,   4500.01 }" />
+
+    <Box
+      name="zposFace"
+      xMin="{ -4500.01,   -0.01,   4499.99 }"
+      xMax="{  4500.01,  500.01,   4500.01 }" />
+
+    <Box
+      name="znegFace"
+      xMin="{ -4500.01,   -0.01,  -4500.01 }"
+      xMax="{  4500.01,  500.01,  -4499.99 }" />
+
+    <Box
+      name="leftReservoir"
+      xMin="{ -4500.01,   -0.01,  -150.01 }"
+      xMax="{     0.01,  500.01,    75.01 }" />
+
+    <Box
+      name="rightReservoir"
+      xMin="{    -0.01,   -0.01,   -75.01 }"
+      xMax="{  4500.01,  500.01,   150.01 }" />
+  </Geometry>
+
+<!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA" />
+    </FiniteVolume>
+
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1" />
+    </FiniteElements>
+  </NumericalMethods>
+<!-- SPHINX_NUMERICAL_END -->
+
+  <FieldSpecifications>
+<!-- SPHINX_BC -->
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00" />
+
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="35.0e6" />
+
+    <FieldSpecification
+      name="xconstraint"
+      component="0"
+      setNames="{ xnegFace, xposFace }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="0.0" />
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{yposFace, ynegFace}" />
+
+    <FieldSpecification
+      name="zconstraint"
+      component="2"
+      setNames="{ znegFace }"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      scale="0.0" />
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="pressure"
+      scale="35.0e6" />
+
+    <FieldSpecification
+      name="initialStress1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="0"
+      scale="-28.5e6" />
+
+    <FieldSpecification
+      name="initialStress2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="1"
+      scale="-38.5e6" />
+
+    <FieldSpecification
+      name="initialStress3"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="2"
+      scale="-28.5e6" />
+
+    <Traction
+      name="tractionTop"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-70.0e6"      
+      setNames="{ zposFace }"/>
+
+    <FieldSpecification
+      name="reservoirPressure"
+      initialCondition="0"
+      setNames="{ leftReservoir, rightReservoir }"
+      objectPath="ElementRegions/Region"
+      fieldName="pressure"
+      scale="10.0e6"
+      functionName="timeFunction" />
+<!-- SPHINX_BC_END -->
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-3, 1.0e-3 }" />
+
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 3.5, 1.0 }" />
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="tractionCollection"
+      objectPath="ElementRegions/Fault/fracture"
+      fieldName="traction" />
+
+    <PackCollection
+      name="displacementJumpCollection"
+      objectPath="ElementRegions/Fault/fracture"
+      fieldName="displacementJump" />
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="verticalFault" />
+
+    <TimeHistory
+      name="tractionOutput"
+      sources="{/Tasks/tractionCollection}"
+      filename="traction_history" />
+
+    <TimeHistory
+      name="displacementJumpOutput"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_history" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
+
+</Problem>

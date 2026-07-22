@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+
+<Problem>
+  <Included>
+     <File name="ALM_verticalFault_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <SurfaceGenerator
+      name="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Region, Fault }"
+      fractureRegion="Fault"
+      initialRockToughness="1e60"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm" />
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2650.0"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15" />
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1020"
+      defaultViscosity="0.001"
+      referencePressure="35e6"
+      referenceDensity="1020"
+      compressibility="1.e-20"
+      referenceViscosity="0.001"
+      viscosibility="0.0" />
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="7.119e10"
+      defaultReferencePorosity="0.15" />
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}" />
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm" />
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0" />
+
+    <ParallelPlatesPermeability
+      name="fracturePerm" />
+
+    <Coulomb
+      name="fractureContact"
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.0" />
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable" />
+
+    <NullModel
+      name="nullSolid" />
+  </Constitutive>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="0"
+      nodesetNames="{ faultNodes }"
+      file="../../MESH/verticalFault_ISG_smoke.vtu"/>
+  </Mesh>
+
+  <FieldSpecifications>
+     <FieldSpecification
+      name="separableFace"
+      fieldName="isFaceSeparable"
+      initialCondition="1"
+      setNames="{ faultNodes }"
+      objectPath="faceManager"
+      scale="1" />
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ faultNodes }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1" />
+  </FieldSpecifications>
+
+  <Events maxTime="100.0">
+    <SoloEvent
+      name="fracture"
+      target="/Solvers/SurfaceGen" />
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="50.0"
+      target="/Outputs/vtkOutput" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="50.0"
+      target="/Solvers/poroFractureSolver" />
+
+    <PeriodicEvent
+      name="tractionCollection"
+      target="/Tasks/tractionCollection" />
+
+    <PeriodicEvent
+      name="tractionOutput"
+      targetExactTimestep="0"
+      target="/Outputs/tractionOutput" />
+
+    <PeriodicEvent
+      name="displacementJumpCollection"
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="displacementJumpOutput"
+      targetExactTimestep="0"
+      target="/Outputs/displacementJumpOutput" />
+
+    <PeriodicEvent
+      name="restartOutput"
+      timeFrequency="50.0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>
