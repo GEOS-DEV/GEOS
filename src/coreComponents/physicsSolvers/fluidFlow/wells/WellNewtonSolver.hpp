@@ -684,8 +684,6 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                              WellElementSubRegion & subRegion )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
-  integer configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 

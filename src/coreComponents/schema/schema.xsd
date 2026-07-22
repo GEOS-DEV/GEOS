@@ -6089,10 +6089,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 					<xsd:selector xpath="MinimumBHPConstraint" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="SolversWellManagerCompositionalMultiphaseWellProductionLiquidRateConstraintUniqueName">
-					<xsd:selector xpath="ProductionLiquidRateConstraint" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="SolversWellManagerCompositionalMultiphaseWellProductionMassRateConstraintUniqueName">
 					<xsd:selector xpath="ProductionMassRateConstraint" />
 					<xsd:field xpath="@name" />
@@ -6131,10 +6127,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 				</xsd:unique>
 				<xsd:unique name="SolversWellManagerSinglePhaseWellMinimumBHPConstraintUniqueName">
 					<xsd:selector xpath="MinimumBHPConstraint" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="SolversWellManagerSinglePhaseWellProductionLiquidRateConstraintUniqueName">
-					<xsd:selector xpath="ProductionLiquidRateConstraint" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversWellManagerSinglePhaseWellProductionMassRateConstraintUniqueName">
@@ -6203,7 +6195,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
 			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
@@ -6372,24 +6363,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ProductionLiquidRateConstraintType">
-		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
- - If the flag is set to 1, constraint included in boundary condition selection. 
- - If the flag is set to 0, constraint excluded from boundary condition selection.-->
-		<xsd:attribute name="constraintActive" type="integer" default="1" />
-		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
--->
-		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
-		<!--liquidRate => Phase rate,  (if useSurfaceCondSitions: [surface m^3/s]; else [reservoir m^3/s]) -->
-		<xsd:attribute name="liquidRate" type="real64" default="0" />
-		<!--phaseNames => List of fluid phase names defining the liquid-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="ProductionMassRateConstraintType">
 		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
  - If the flag is set to 1, constraint included in boundary condition selection. 
@@ -6498,7 +6471,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
 			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />

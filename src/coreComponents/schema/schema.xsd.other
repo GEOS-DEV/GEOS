@@ -1483,7 +1483,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
 			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
@@ -1497,7 +1496,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="InjectionVolumeRateConstraintType" />
 	<xsd:complexType name="MaximumBHPConstraintType" />
 	<xsd:complexType name="MinimumBHPConstraintType" />
-	<xsd:complexType name="ProductionLiquidRateConstraintType" />
 	<xsd:complexType name="ProductionMassRateConstraintType" />
 	<xsd:complexType name="ProductionPhaseVolumeRateConstraintType" />
 	<xsd:complexType name="ProductionVolumeRateConstraintType" />
@@ -1520,7 +1518,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
 			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
