@@ -202,7 +202,7 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 {
   if( tableData.getErrorsList().hasErrors() )
   {
-    std::vector< string > cpyErrors  = tableData.getErrorsList().getErrors();
+    stdVector< string > cpyErrors  = tableData.getErrorsList().getErrors();
     getErrorsList().appendErrors( cpyErrors );
   }
 
@@ -525,8 +525,8 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
     {
       errorCellsLayout.push_back(
         {
-          std::vector< TableLayout::CellLayout >( nbCells,
-                                                  TableLayout::CellLayout( CellType::MergeNext ) ),
+          stdVector< TableLayout::CellLayout >( nbCells,
+                                                TableLayout::CellLayout( CellType::MergeNext ) ),
           1 // subLines count
         } );
       errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
@@ -538,8 +538,8 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
 
   errorCellsLayout.push_back(
     {
-      std::vector< TableLayout::CellLayout >( nbCells,
-                                              TableLayout::CellLayout( CellType::Separator ) ),
+      stdVector< TableLayout::CellLayout >( nbCells,
+                                            TableLayout::CellLayout( CellType::Separator ) ),
       1 // subLines count
     } );
 
