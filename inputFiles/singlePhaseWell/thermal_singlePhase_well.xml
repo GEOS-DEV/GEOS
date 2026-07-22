@@ -1,0 +1,266 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+<!-- SPHINX_FIELD_CASE_SOLVER -->
+  <Solvers>
+
+    <SinglePhaseReservoir
+      name="coupledFlowAndWells"
+      flowSolverName="SinglePhaseFlow"
+      wellSolverName="SinglePhaseWell"
+      logLevel="1"
+      initialDt="1"
+      targetRegions="{ Reservoir, well }">
+      <NonlinearSolverParameters
+          newtonTol="1.0e-3"
+          newtonMaxIter="10"
+          maxTimeStepCuts="10"
+          maxSubSteps="100"
+          lineSearchAction="None" />
+      <LinearSolverParameters
+          solverType="fgmres"
+          preconditionerType="mgr"
+          krylovTol="1.0e-4"
+          krylovMaxIter="250"
+          krylovWeakestTol="0.01"
+          logLevel="1" />
+    </SinglePhaseReservoir>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="TPFA"
+      targetRegions="{ Reservoir }"
+      isThermal="1"
+      temperature="355"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        logLevel="1"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"
+        krylovMaxIter="250"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+
+    <SinglePhaseWell
+      name="SinglePhaseWell"
+      targetRegions="{ well }"
+      isThermal="1"
+      initialDt="86400"
+      writeCSV="1"
+      logLevel="1">
+      <WellControls
+        name="wellControls1"
+        logLevel="1"      
+        type="injector"
+        control="totalVolRate"
+        enableCrossflow="0"
+        referenceElevation="-1650"
+        targetBHP="5e7"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="285.15"
+        targetTotalRateTableName="injectorTotalRateTable"     
+        injectionTemperature="293.15"
+        injectionStream="{1.0}"/>
+
+    </SinglePhaseWell>
+    
+  </Solvers>
+<!-- SPHINX_FIELD_CASE_SOLVER_END -->
+
+<!-- SPHINX_FIELD_CASE_MESH -->
+<Mesh>
+  <InternalMesh
+    name="mesh1"
+    elementTypes="{ C3D8 }"
+    xCoords="{ 0, 1000 }"
+    yCoords="{ 0, 500 }"
+    zCoords="{ -2000,-1700,-1500, -1000 }"
+    nx="{ 100 }"
+    ny="{ 50 }"
+    nz="{ 10,20,10 }"
+    cellBlockNames="{ cellBlock }">
+
+    <InternalWell
+      name="well"
+      wellRegionName="well"
+      wellControlsName="wellControls1"
+      radius="0.1"
+      numElementsPerSegment="1"
+      minElementLength="0.0001"
+      minSegmentLength="0.001"
+      logLevel="2"
+      polylineNodeCoords="{ {495,245,-1500},
+                            {495,245,-1600},
+                            {495,245,-1610},
+                            {495,245,-1620},
+                            {495,245,-1630},
+                            {495,245,-1640},
+                            {495,245,-1650}}"
+      polylineSegmentConn="{ {0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6} }">
+      <Perforation
+          name="Perf_1"
+          distanceFromHead="105" />
+      <Perforation
+          name="Perf_2"
+          distanceFromHead="115" />
+      <Perforation
+          name="Perf_3"
+          distanceFromHead="125" />
+      <Perforation
+          name="Perf_4"
+          distanceFromHead="135" />
+      <Perforation
+          name="Perf_5"
+          distanceFromHead="145" />
+    </InternalWell>
+    
+  </InternalMesh>
+</Mesh>
+<!-- SPHINX_FIELD_CASE_MESH_END -->
+
+<!-- SPHINX_FIELD_CASE_REGION -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ * }"
+      materialList="{ water, rock, thermalCond }"/>
+
+    <WellElementRegion
+        meshBody="mesh1"
+        name="well"
+        materialList="{ water }" />
+
+  </ElementRegions>
+<!-- SPHINX_FIELD_CASE_REGION_END -->
+
+<!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
+  <Constitutive>
+
+    <ThermalCompressibleSinglePhaseFluid
+        name="water"
+        defaultDensity="1000"
+        defaultViscosity="1.0e-3"
+        referencePressure="1e5"
+        referenceDensity="1000"
+        referenceViscosity="1.0E-3"
+        referenceTemperature="277.15"
+        compressibility="4.5e-10"
+        viscosibility="0.0"
+        thermalExpansionCoeff="1e-5"
+        specificHeatCapacity="4186"
+        referenceInternalEnergy="1"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 2, 2, 2 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="10e7"
+      compressibility="4.5e-10"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-15 }"/>
+
+  <SolidInternalEnergy
+      name="rockEnergy"
+      referenceVolumetricHeatCapacity="2.2e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0" />
+
+  </Constitutive>
+<!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
+
+<!-- SPHINX_FIELD_CASE_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="TPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+<!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
+
+<!-- SPHINX_FIELD_CASE_FIELD -->
+  <FieldSpecifications>
+    <HydrostaticEquilibrium
+        name="INITIALISATION"
+        datumElevation="-1650"
+        datumPressure="1.65e7"
+        objectPath="ElementRegions"
+        temperatureVsElevationTableName="initTempTable"/>
+
+  </FieldSpecifications>
+<!-- SPHINX_FIELD_CASE_FIELD_END -->
+
+<!-- SPHINX_FIELD_CASE_OUTPUT -->
+  <Outputs>
+    <VTK
+      name="vtkOutput_well1P"
+      fieldNames="{initialPressure, initialTemperature}" />
+  </Outputs>
+<!-- SPHINX_FIELD_CASE_OUTPUT_END -->
+
+<!-- SPHINX_FIELD_CASE_TFUNC -->
+  <Functions>
+    <!-- Geothermal gradient -->
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ -2000, 0.0 }"
+      values="{ 337.15, 277.15 }"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="injectorTotalRateTable"
+      inputVarNames="{ time }"
+      coordinates="{  0, 10e6, 100.0e6 }"
+      values="{ 0, 1e-2, 1e-2 }" 
+      interpolation="lower"/>
+
+  </Functions>
+<!-- SPHINX_FIELD_CASE_TFUNC_END -->
+
+<!-- SPHINX_FIELD_CASE_EVENTS -->
+<Events minTime="0" maxTime="101.0e6">
+
+  <SoloEvent
+    name="Initial_output"
+    targetTime="0"
+    targetExactTimestep="1"
+    target="/Outputs/vtkOutput_well1P"/>
+
+  <PeriodicEvent name="outputs"
+                 beginTime="10.0e6"
+                 timeFrequency="10.0e6"
+                 targetExactTimestep="1"
+                 target="/Outputs/vtkOutput_well1P" />
+
+  <PeriodicEvent name="solverApplications"
+                 maxEventDt="10.0e6"
+                 target="/Solvers/coupledFlowAndWells" />
+  
+
+
+</Events>
+<!-- SPHINX_FIELD_CASE_EVENTS_END -->
+
+</Problem>
+
