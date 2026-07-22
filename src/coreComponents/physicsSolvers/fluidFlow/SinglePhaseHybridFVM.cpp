@@ -99,7 +99,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
                  "The thermal option is not supported by SinglePhaseHybridFVM",
                  InputError, getDataContext() );
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -113,7 +113,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
   GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

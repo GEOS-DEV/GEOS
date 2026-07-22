@@ -18,6 +18,7 @@
  */
 
 #include "RestartOutput.hpp"
+#include "dataRepository/ProblemManagerBase.hpp"
 
 namespace geos
 {
@@ -44,7 +45,7 @@ bool RestartOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     Timer timer( m_outputTimer );
 
-    Group & rootGroup = this->getGroupByPath( "/Problem" );
+    Group & rootGroup = getProblemManagerBase( *this );
     string const fileName = GEOS_FMT( "{}_restart_{:09}", getFileNameRoot(), cycleNumber );
     rootGroup.prepareToWrite();
     writeTree( joinPath( getOutputDirectory(), fileName ), *(rootGroup.getConduitNode().parent()) );

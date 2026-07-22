@@ -276,7 +276,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 {
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = getDomainPartition();
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 0. Find a "reference" fluid model name (at this point, models are already attached to subregions)
@@ -568,7 +568,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Validate various models against each other (must have same phases and components)
@@ -980,7 +980,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   // check if comp fractions need to be corrected to avoid zero diags etc
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition && m_allowCompDensChopping )
   {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = getDomainPartition();
     chopNegativeCompFractions( domain );
   }
 
@@ -1618,7 +1618,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

@@ -119,7 +119,7 @@ void StatsTask::prepareFluidMetaData()
 {
   using namespace constitutive;
 
-  ConstitutiveManager const & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager const & constitutiveManager = getProblemManagerBase( *this ).getConstitutiveManager();
   MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
 
   m_fluid.m_numPhases = fluid.numFluidPhases();

@@ -469,7 +469,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 {
   PhysicsSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getProblemManagerBase( *this ).getDomainPartition();
 
   Group & meshBodies = domain.getMeshBodies();
 

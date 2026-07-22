@@ -93,7 +93,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = geos::dataRepository::getProblemManagerBase( *self->group ).getDomainPartition();
 
   try
   {

@@ -21,6 +21,7 @@
 #include "LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/ProblemManagerBase.hpp"
 
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -246,12 +247,12 @@ void ConstitutiveDriver::allocateTable( integer const numColumns,
 
 ConstitutiveManager & ConstitutiveDriver::getConstitutiveManager()
 {
-  return this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  return getProblemManagerBase( *this ).getConstitutiveManager();
 }
 
 ConstitutiveManager const & ConstitutiveDriver::getConstitutiveManager() const
 {
-  return this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  return getProblemManagerBase( *this ).getConstitutiveManager();
 }
 
 } /* namespace geos */

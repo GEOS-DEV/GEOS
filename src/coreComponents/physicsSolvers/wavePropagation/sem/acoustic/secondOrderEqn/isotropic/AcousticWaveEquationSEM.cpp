@@ -228,7 +228,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   bool useSourceWaveletTables = m_useSourceWaveletTables;
 
   //Correct size for sourceValue
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getProblemManagerBase( *this ).getEventManager();
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   real64 dt = 0;
@@ -359,7 +359,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     AcousticWaveEquationSEM::initializePML();
   }
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   applyFreeSurfaceBC( 0.0, domain );
 
@@ -447,7 +447,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     //We use the timeStep defined inside the xml
     else if( m_timestepStabilityLimit==0 )
     {
-      EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+      EventManager const & event = getProblemManagerBase( *this ).getEventManager();
       for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
       {
         EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
@@ -503,7 +503,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -697,7 +697,7 @@ void AcousticWaveEquationSEM::initializePML()
   } );
 
   /// Now compute the PML parameters above internally
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -1115,7 +1115,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       p_nm1[a] = (p_np1[a] - 2*p_n[a] + p_nm1[a]) / pow( dt, 2 );
     } );
 
-    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getProblemManagerBase( *this ).getEventManager();
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime / dt ));
 
@@ -1292,7 +1292,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   }
 
   //Modification of cycleNember useful when minTime < 0
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getProblemManagerBase( *this ).getEventManager();
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   //localIndex const cycleNumber = time_n/dt;
   integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));

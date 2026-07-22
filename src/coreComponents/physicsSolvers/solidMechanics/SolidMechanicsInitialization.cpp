@@ -67,8 +67,8 @@ SolidMechanicsInitialization< SOLID_SOLVER >::~SolidMechanicsInitialization() = 
 template< typename SOLID_SOLVER >
 void SolidMechanicsInitialization< SOLID_SOLVER >::postInputInitialization()
 {
-  Group & problemManager = this->getGroupByPath( "/Problem" );
-  Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
+  ProblemManagerBase & problemManager = getProblemManagerBase( *this );
+  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",
@@ -81,7 +81,7 @@ void SolidMechanicsInitialization< SOLID_SOLVER >::postInputInitialization()
 
   if( !m_solidMechanicsStatisticsName.empty() )
   {
-    TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
+    TasksManager & tasksManager = problemManager.getTasksManager();
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
                    GEOS_FMT( "{}: {} task named {} not found",

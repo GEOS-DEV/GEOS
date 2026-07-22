@@ -159,7 +159,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = getDomainPartition();
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
@@ -518,7 +518,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 {
   WellSolverBase::initializePostSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   validateConstitutiveModels( domain );
 
@@ -542,7 +542,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 
 void CompositionalMultiphaseWell::postRestartInitialization()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -562,7 +562,7 @@ void CompositionalMultiphaseWell::postRestartInitialization()
 
 void CompositionalMultiphaseWell::createSeparator()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

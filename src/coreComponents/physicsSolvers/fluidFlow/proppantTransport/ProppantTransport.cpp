@@ -137,7 +137,7 @@ void ProppantTransport::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   ConstitutiveManager & cm = domain.getConstitutiveManager();
 
   // Validate proppant models in regions
@@ -289,7 +289,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
 
   integer const numComponents = m_numComponents;
