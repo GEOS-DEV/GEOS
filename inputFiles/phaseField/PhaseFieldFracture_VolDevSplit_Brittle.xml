@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_DecompositionSplit_base.xml"/>
+  </Included>
+
+  <Events
+    maxTime="30.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="1.0"
+      target="/Outputs/Mode2VolDev_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/Mode2VolDev_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="15.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Constitutive>
+    <DamageVolDevElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"
+      lengthScale="0.25"
+      defaultCriticalFractureEnergy="54.0"
+      criticalStrainEnergy="0"
+      localDissipationOption="Quadratic"/>
+  </Constitutive>
+
+  <Outputs>
+    <Silo
+      name="Mode2VolDev_SiloOutput"/>
+
+    <VTK
+      name="Mode2VolDev_VTKOutput"
+      plotFileRoot="plot"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
