@@ -49,35 +49,32 @@ MPI_Comm MPI_COMM_GEOS;
 int MPI_COMM_GEOS = 0;
 #endif
 
-namespace internal
+namespace desyncDetection
 {
 
 #if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
-stdArray< void *, MpiDesyncGuard::maxFrames > g_lastSuccessfulFrames;
-int g_lastSuccessfulFrameCount = 0;
-
-void MpiDesyncGuard::saveStackFrames()
+void StackTrace::saveStackFrames()
 {
   // LvArray already implements an equivalent (see internal `collect()` in LvArray/src/system.cpp)
   // but it is not exposed to the public API. (TODO) Remove this in favor of LvArray's `collect()`
   // if it becomes public.
 #if defined(__GLIBC__) || defined(__APPLE__)
-  m_frameCount = backtrace( m_frames.data(), MpiDesyncGuard::maxFrames );
+  m_frameCount = backtrace( m_frames.data(), maxFrames );
 #else
   m_frameCount = 0;
 #endif
 }
 
-string MpiDesyncGuard::symbolizeStackTrace( stdArray< void *, maxFrames > const & frames,
-                                            int const frameCount ) const
+/// @brief Symbolize and demangle the captured stacktrace frames
+string symbolizeStackTrace( StackTrace const & trace )
 {
   // adapted from LvArray::system::getFunctionNameFromFrame()
   std::ostringstream oss;
 #if defined(__GLIBC__) || defined(__APPLE__)
-  for( int i = 0; i < frameCount; ++i )
+  for( int i = 0; i < trace.m_frameCount; ++i )
   {
     Dl_info dli;
-    bool const dlOk = dladdr( frames[ i ], &dli );
+    bool const dlOk = dladdr( trace.m_frames[ i ], &dli );
 
     oss << "Frame " << i << ": "
         << ( dlOk ?
@@ -91,25 +88,25 @@ string MpiDesyncGuard::symbolizeStackTrace( stdArray< void *, maxFrames > const 
   return oss.str();
 }
 
-void MpiDesyncGuard::failed()
+void failed( MPI_Comm const & comm )
 {
+  g_lastCollectiveOperationSuccess = false;
   GEOS_LOG_RANK( GEOS_FMT( "MPI desync detected: rank timed out\n"
                            "{}\n"
                            "Last successful stacktrace:\n"
                            "{}",
-                           symbolizeStackTrace( m_frames, m_frameCount ),
-                           symbolizeStackTrace( g_lastSuccessfulFrames, g_lastSuccessfulFrameCount ) ) );
-  MPI_Abort( m_comm, 1 );
+                           symbolizeStackTrace( g_lastStackTrace ),
+                           symbolizeStackTrace( g_lastSuccessfulStackTrace ) ) );
+  MPI_Abort( comm, 1 );
 }
 
-void MpiDesyncGuard::succeeded()
+void succeeded()
 {
-  m_collectiveOperationSuccess = true;
-  g_lastSuccessfulFrames = m_frames;
-  g_lastSuccessfulFrameCount = m_frameCount;
+  g_lastCollectiveOperationSuccess = true;
+  g_lastSuccessfulStackTrace = g_lastStackTrace;
 }
 
-void MpiDesyncGuard::detectMpiDesync()
+bool MpiDesyncGuard::detectMpiDesync()
 {
   MPI_Request request;
   MPI_Ibarrier( m_comm, &request );
@@ -119,16 +116,14 @@ void MpiDesyncGuard::detectMpiDesync()
   while( true )
   {
     MpiWrapper::test( &request, &flag, MPI_STATUS_IGNORE );
+
     if( flag )
     {
-      succeeded();
-      return;
+      return false;
     }
-
     if( MpiWrapper::wtime() - start > 10 )
     {
-      failed();
-      return;
+      return true;
     }
 
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
@@ -136,13 +131,13 @@ void MpiDesyncGuard::detectMpiDesync()
 }
 #endif
 
-} // namespace internal
+} // namespace desyncDetection
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
 #ifdef GEOS_USE_MPI_DESYNC_DETECTION
-  internal::MpiDesyncGuard const mpiDesyncGuard( comm );
+  desyncDetection::MpiDesyncGuard const mpiDesyncGuard( comm, desyncDetection::failed, desyncDetection::succeeded );
 #endif
   MPI_Barrier( comm );
 #endif
