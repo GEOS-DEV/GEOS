@@ -22,7 +22,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
       temperature="297.15"/>
-
+ <!-- SPHINX_COMP_WELL_SOLVER -->
     <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
@@ -68,6 +68,7 @@
           injectionTemperature="297.15"/>
       </CompositionalMultiphaseWell>
     </WellManager>
+    <!-- SPHINX_COMP_WELL_SOLVER_END -->
   </Solvers>
 
   <Mesh>
@@ -236,6 +237,7 @@
       fieldName="pressure"
       scale="5e6"/>
 
+    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_N2"
       initialCondition="1"

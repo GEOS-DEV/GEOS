@@ -239,6 +239,7 @@
   </Constitutive>
 
   <FieldSpecifications>
+    <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -255,6 +256,7 @@
       fieldName="facePressure"
       scale="5e6"/>
 
+    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
