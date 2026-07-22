@@ -159,7 +159,7 @@ void logHypredriveInputs( PhysicsSolverManager & physicsSolverManager,
 #endif
 
 ProblemManager::ProblemManager( conduit::Node & root ):
-  Group( keys::ProblemManager, root ),
+  ProblemManagerBase( keys::ProblemManager, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -1270,6 +1270,16 @@ bool ProblemManager::runSimulation()
   return m_eventManager->run( getDomainPartition() );
 }
 
+ConstitutiveManager & ProblemManager::getConstitutiveManager()
+{
+  return getDomainPartition().getConstitutiveManager();
+}
+
+ConstitutiveManager const & ProblemManager::getConstitutiveManager() const
+{
+  return getDomainPartition().getConstitutiveManager();
+}
+
 DomainPartition & ProblemManager::getDomainPartition()
 {
   return getGroup< DomainPartition >( groupKeys.domain );
@@ -1278,6 +1288,56 @@ DomainPartition & ProblemManager::getDomainPartition()
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
   return getGroup< DomainPartition >( groupKeys.domain );
+}
+
+ExternalDataSourceManager & ProblemManager::getExternalDataSourceManager()
+{
+  return getGroup< ExternalDataSourceManager >( groupKeys.externalDataSourceManager );;
+}
+
+ExternalDataSourceManager const & ProblemManager::getExternalDataSourceManager() const
+{
+  return getGroup< ExternalDataSourceManager >( groupKeys.externalDataSourceManager );;
+}
+
+GeometricObjectManager & ProblemManager::getGeometricObjectManager()
+{
+  return getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+}
+
+GeometricObjectManager const & ProblemManager::getGeometricObjectManager() const
+{
+  return getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+}
+
+MeshManager & ProblemManager::getMeshManager()
+{
+  return getGroup< MeshManager >( groupKeys.meshManager );
+}
+
+MeshManager const & ProblemManager::getMeshManager() const
+{
+  return getGroup< MeshManager >( groupKeys.meshManager );
+}
+
+NumericalMethodsManager & ProblemManager::getNumericalMethodsManager()
+{
+  return getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
+}
+
+NumericalMethodsManager const & ProblemManager::getNumericalMethodsManager() const
+{
+  return getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
+}
+
+OutputManager & ProblemManager::getOutputManager()
+{
+  return getGroup< OutputManager >( groupKeys.outputManager );
+}
+
+OutputManager const & ProblemManager::getOutputManager() const
+{
+  return getGroup< OutputManager >( groupKeys.outputManager );
 }
 
 void ProblemManager::applyInitialConditions()

@@ -50,6 +50,7 @@ namespace geos
 namespace dataRepository
 {
 class Group;
+class ProblemManagerBase;
 }
 
 class ProblemManager;
@@ -182,6 +183,19 @@ public:
    *   include @c ProblemManager.hpp.
    */
   dataRepository::Group & getProblemManagerAsGroup();
+
+  /**
+   * @brief Return the @c ProblemManager as a @c ProblemManagerBase.
+   * @return The @c ProblemManagerBase interface.
+   * @note Prefer this when you only need accessors to common objects and don't want to
+   *   include @c ProblemManager.hpp.
+   */
+  dataRepository::ProblemManagerBase & getProblemManagerBase();
+
+  /**
+   * @copydoc getProblemManagerBase()
+   */
+  dataRepository::ProblemManagerBase const & getProblemManagerBase() const;
 
   /**
    * @brief Return the FieldSpecificationManager.

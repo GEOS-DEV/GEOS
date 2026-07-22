@@ -21,7 +21,8 @@
 #ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
-#include "dataRepository/Group.hpp"
+#include "dataRepository/GlobalViewKeys.hpp"
+#include "dataRepository/ProblemManagerBase.hpp"
 
 namespace geos
 {
@@ -31,6 +32,10 @@ class DomainPartition;
 class GeometricObjectManager;
 class FiniteElementDiscretization;
 class MeshLevel;
+class MeshManager;
+class NumericalMethodsManager;
+class OutputManager;
+class ExternalDataSourceManager;
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -47,7 +52,7 @@ class ParticleBlockManagerABC;
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOS
  */
-class ProblemManager : public dataRepository::Group
+class ProblemManager : public dataRepository::ProblemManagerBase
 {
 public:
 
@@ -176,40 +181,40 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-  DomainPartition & getDomainPartition();
+  DomainPartition & getDomainPartition() override;
 
   /**
    * @brief Returns a pointer to the DomainPartition
    * @return Const pointer to the DomainPartition
    */
-  DomainPartition const & getDomainPartition() const;
+  DomainPartition const & getDomainPartition() const override;
 
   /**
    * @brief Returns the problem name
    * @return The problem name
    */
-  string const & getProblemName() const
+  string const & getProblemName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  string const & getInputFileName() const
+  string const & getInputFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  string const & getRestartFileName() const
+  string const & getRestartFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  string const & getSchemaFileName() const
+  string const & getSchemaFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
 
   /// Command line input viewKeys
@@ -238,27 +243,34 @@ public:
   struct groupKeysStruct
   {
     /// @return Numerical methods string
-    static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
-    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
-    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
-    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
-    dataRepository::GroupKey externalDataSourceManager = { "ExternalDataSource" };        ///< External Data Source key
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
-    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
-    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
-    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
-    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
+    // static constexpr char const * numericalMethodsManagerString()
+    // { return dataRepository::GlobalViewKeys::numericalMethodsManager(); }
+    dataRepository::GroupKey commandLine               = { dataRepository::GlobalViewKeys::commandLine() };               ///< Command line
+                                                                                                                          ///< key
+    dataRepository::GroupKey constitutiveManager       = { dataRepository::GlobalViewKeys::constitutiveManager() };       ///< Constitutive
+                                                                                                                          ///< key
+    dataRepository::GroupKey domain                    = { dataRepository::GlobalViewKeys::domain() };                    ///< Domain key
+    dataRepository::GroupKey eventManager              = { dataRepository::GlobalViewKeys::eventManager() };              ///< Events key
+    dataRepository::GroupKey externalDataSourceManager = { dataRepository::GlobalViewKeys::externalDataSourceManager() }; ///< External Data
+                                                                                                                          ///< Source key
+    dataRepository::GroupKey fieldSpecificationManager = { dataRepository::GlobalViewKeys::fieldSpecificationManager() }; ///< Field
+                                                                                                                          ///< specification
+                                                                                                                          ///< key
+    dataRepository::GroupKey functionManager           = { dataRepository::GlobalViewKeys::functionManager() };           ///< Functions key
+    dataRepository::GroupKey geometricObjectManager    = { dataRepository::GlobalViewKeys::geometricObjectManager() };    ///< Geometry key
+    dataRepository::GroupKey meshManager               = { dataRepository::GlobalViewKeys::meshManager() };               ///< Mesh key
+    dataRepository::GroupKey numericalMethodsManager   = { dataRepository::GlobalViewKeys::numericalMethodsManager() };   ///< Numerical
+                                                                                                                          ///< methods key
+    dataRepository::GroupKey outputManager             = { dataRepository::GlobalViewKeys::outputManager() };             ///< Outputs key
+    dataRepository::GroupKey physicsSolverManager      = { dataRepository::GlobalViewKeys::physicsSolverManager() };      ///< Solvers key
+    dataRepository::GroupKey tasksManager              = { dataRepository::GlobalViewKeys::tasksManager() };              ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
   /**
    * @brief Returns the PhysicsSolverManager
    * @return Reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager & getPhysicsSolverManager()
+  PhysicsSolverManager & getPhysicsSolverManager() override
   {
     return *m_physicsSolverManager;
   }
@@ -267,7 +279,7 @@ public:
    * @brief Returns the PhysicsSolverManager
    * @return Const reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager const & getPhysicsSolverManager() const
+  PhysicsSolverManager const & getPhysicsSolverManager() const override
   {
     return *m_physicsSolverManager;
   }
@@ -276,7 +288,7 @@ public:
    * @brief Returns the FunctionManager.
    * @return The FunctionManager.
    */
-  FunctionManager & getFunctionManager()
+  FunctionManager & getFunctionManager() override
   {
     GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
@@ -286,7 +298,7 @@ public:
    * @brief Returns the const FunctionManager.
    * @return The const FunctionManager.
    */
-  FunctionManager const & getFunctionManager() const
+  FunctionManager const & getFunctionManager() const override
   {
     GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
@@ -296,7 +308,7 @@ public:
    * @brief Returns the FieldSpecificationManager.
    * @return The FieldSpecificationManager.
    */
-  FieldSpecificationManager & getFieldSpecificationManager()
+  FieldSpecificationManager & getFieldSpecificationManager() override
   {
     GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
@@ -306,7 +318,7 @@ public:
    * @brief Returns the const FunctionManager.
    * @return The const FunctionManager.
    */
-  FieldSpecificationManager const & getFieldSpecificationManager() const
+  FieldSpecificationManager const & getFieldSpecificationManager() const override
   {
     GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
@@ -316,15 +328,101 @@ public:
    * @brief Returns the EventManager.
    * @return The EventManager.
    */
-  EventManager & getEventManager()
-  {return *m_eventManager;}
+  EventManager & getEventManager() override
+  { return *m_eventManager; }
+
+  /**
+   * @brief Returns the const EventManager.
+   * @return The const EventManager.
+   */
+  EventManager const & getEventManager() const override
+  { return *m_eventManager; }
+
+  /**
+   * @brief Returns the ExternalDataSourceManager.
+   * @return The ExternalDataSourceManager.
+   */
+  ExternalDataSourceManager & getExternalDataSourceManager() override;
+
+  /**
+   * @brief Returns the const ExternalDataSourceManager.
+   * @return The const ExternalDataSourceManager.
+   */
+  ExternalDataSourceManager const & getExternalDataSourceManager() const override;
 
   /**
    * @brief Returns the TasksManager.
    * @return The TasksManager.
    */
-  TasksManager & getTasksManager()
-  {return *m_tasksManager;}
+  TasksManager & getTasksManager() override
+  { return *m_tasksManager; }
+
+  /**
+   * @brief Returns the const TasksManager.
+   * @return The const TasksManager.
+   */
+  TasksManager const & getTasksManager() const override
+  { return *m_tasksManager; }
+
+  /**
+   * @brief Returns the NumericalMethodsManager.
+   * @return The NumericalMethodsManager.
+   */
+  NumericalMethodsManager & getNumericalMethodsManager() override;
+
+  /**
+   * @brief Returns the const NumericalMethodsManager.
+   * @return The const NumericalMethodsManager.
+   */
+  NumericalMethodsManager const & getNumericalMethodsManager() const override;
+
+  /**
+   * @brief Returns the MeshManager.
+   * @return The MeshManager.
+   */
+  MeshManager & getMeshManager() override;
+
+  /**
+   * @brief Returns the const MeshManager.
+   * @return The const MeshManager.
+   */
+  MeshManager const & getMeshManager() const override;
+
+  /**
+   * @brief Returns the OutputManager.
+   * @return The OutputManager.
+   */
+  OutputManager & getOutputManager() override;
+
+  /**
+   * @brief Returns the const OutputManager.
+   * @return The const OutputManager.
+   */
+  OutputManager const & getOutputManager() const override;
+
+  /**
+   * @brief Returns the GeometricObjectManager.
+   * @return The GeometricObjectManager.
+   */
+  GeometricObjectManager & getGeometricObjectManager() override;
+
+  /**
+   * @brief Returns the const GeometricObjectManager.
+   * @return The const GeometricObjectManager.
+   */
+  GeometricObjectManager const & getGeometricObjectManager() const override;
+
+  /**
+   * @brief Returns the ConstitutiveManager.
+   * @return The ConstitutiveManager.
+   */
+  constitutive::ConstitutiveManager & getConstitutiveManager() override;
+
+  /**
+   * @brief Returns the const ConstitutiveManager.
+   * @return The const ConstitutiveManager.
+   */
+  constitutive::ConstitutiveManager const & getConstitutiveManager() const override;
 
 protected:
   /**
