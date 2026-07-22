@@ -20,6 +20,8 @@
 #ifndef GEOS_DATAREPOSITORY__KEYNAMES_HPP_
 #define GEOS_DATAREPOSITORY__KEYNAMES_HPP_
 
+#include "GlobalViewKeys.hpp"
+
 #include <string>
 
 namespace geos
@@ -31,7 +33,7 @@ namespace keys
 
 /// @cond DO_NOT_DOCUMENT
 
-static constexpr auto ProblemManager = "Problem";
+static constexpr auto ProblemManager = GlobalViewKeys::problem();
 static constexpr auto cellManager = "cellManager";
 static constexpr auto particleManager = "particleManager";
 

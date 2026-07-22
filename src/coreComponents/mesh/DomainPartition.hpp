@@ -22,6 +22,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/GlobalViewKeys.hpp"
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/MeshBody.hpp"
@@ -134,7 +135,8 @@ public:
     /// @return String key to the Group holding the MeshBodies
     static constexpr char const * meshBodiesString() { return "MeshBodies"; }
     /// @return String key to the Group holding the ConstitutiveManager
-    static constexpr char const * constitutiveManagerString() { return "Constitutive"; }
+    static constexpr char const * constitutiveManagerString()
+    { return dataRepository::GlobalViewKeys::constitutiveManager(); }
 
     /// View key to the Group holding the MeshBodies
     dataRepository::GroupKey meshBodies = { meshBodiesString() };
@@ -164,13 +166,13 @@ public:
    * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager const & getNumericalMethodManager() const
-  { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
+  { return this->getParent().getGroup< NumericalMethodsManager >( dataRepository::GlobalViewKeys::numericalMethodsManager()); }
 
   /**
    * @brief @return Return a reference to NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager & getNumericalMethodManager()
-  { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
+  { return this->getParent().getGroup< NumericalMethodsManager >( dataRepository::GlobalViewKeys::numericalMethodsManager()); }
 
   /**
    * @brief Get the mesh bodies, const version.
