@@ -1,7 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
+      <!-- SPHINX_SOLVER_MPWELL -->
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
       flowSolverName="compositionalMultiphaseFlow"
@@ -18,7 +21,9 @@
         krylovTol="1e-6"
         logLevel="1"/>
     </CompositionalMultiphaseReservoir>
+      <!-- SPHINX_SOLVER_MPWELL_END -->
 
+      <!-- SPHINX_SOLVER_MP -->
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
@@ -27,7 +32,8 @@
       maxCompFractionChange="0.2"
       logLevel="1"
       useMass="1"/>
-
+      <!-- SPHINX_SOLVER_MP_END -->
+    <!-- SPHINX_SOLVER_WELL -->
     <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
@@ -91,8 +97,10 @@
           injectionTemperature="353.15"/>
       </CompositionalMultiphaseWell>
     </WellManager>
+     <!-- SPHINX_SOLVER_WELL_END -->
   </Solvers>
 
+    <!-- SPHINX_ER -->
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
@@ -103,6 +111,7 @@
       name="wellRegion"
       materialList="{ fluid }"/>
   </ElementRegions>
+    <!-- SPHINX_ER_END -->
 
   <NumericalMethods>
     <FiniteVolume>
@@ -112,6 +121,7 @@
   </NumericalMethods>
 
   <Constitutive>
+       <!-- SPHINX_FLUID -->
     <CO2BrineEzrokhiFluid
       name="fluid"
       phaseNames="{ gas, water }"
@@ -119,7 +129,9 @@
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ tables/pvtgas.txt, tables/pvtliquid_ez.txt }"
       flashModelParaFile="tables/co2flash.txt"/>
+       <!-- SPHINX_FLUID_END -->
 
+      <!-- SPHINX_ROCK -->
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
@@ -138,19 +150,25 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+      <!-- SPHINX_ROCK_END -->
 
+      <!-- SPHINX_RELPERM -->
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
+   <!-- SPHINX_RELPERM_END -->
 
+   <!-- SPHINX_CAP -->
     <TableCapillaryPressure
       name="cappres"
       phaseNames="{ gas, water }"
       wettingNonWettingCapPressureTableName="waterCapillaryPressureTable"/>
+      <!-- SPHINX_CAP_END -->
   </Constitutive>
 
   <FieldSpecifications>
+      <!-- SPHINX_HYDROSTATIC -->
     <HydrostaticEquilibrium
       name="equil"
       objectPath="ElementRegions"
@@ -160,7 +178,11 @@
       componentNames="{ co2, water }"
       componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
+    <!-- SPHINX_HYDROSTATIC_END -->
 
+<!-- bc ComponentFrac -->
+<!-- bc Pressure +tables -->
+      <!-- SPHINX_BC -->
     <FieldSpecification
       name="bcPressure"
       objectPath="faceManager"
@@ -192,6 +214,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>
+      <!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
   <Functions>

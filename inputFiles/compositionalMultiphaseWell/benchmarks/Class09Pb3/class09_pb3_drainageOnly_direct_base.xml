@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
@@ -119,6 +121,7 @@
       componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
 
+    <!-- SPHINX_BC -->
     <FieldSpecification
       name="bcPressure"
       objectPath="faceManager"
@@ -150,6 +153,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>
+    <!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
   <Functions>

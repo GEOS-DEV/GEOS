@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
@@ -218,7 +219,8 @@
       </CompositionalMultiphaseWell>
     </WellManager>
   </Solvers>
-
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
     <PeriodicEvent
@@ -278,6 +280,8 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -285,6 +289,8 @@
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
@@ -298,6 +304,8 @@
     <WellElementRegion
       name="wellRegion2"
       materialList="{ fluid }"/>
+
+    <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
 
     <WellElementRegion
       name="wellRegion3"
@@ -340,6 +348,7 @@
       materialList="{ fluid }"/>
   </ElementRegions>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   <Constitutive>
     <DeadOilFluid
       name="fluid"
@@ -375,6 +384,8 @@
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
   </Constitutive>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
     <FieldSpecification
       name="initialPressure"
@@ -403,6 +414,8 @@
       scale="0.1"/>
   </FieldSpecifications>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
@@ -431,6 +444,8 @@
       name="restartOutput"/>
   </Outputs>
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   <Tasks>
     <PackCollection
       name="wellRateCollection1"
@@ -452,4 +467,6 @@
       objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
       fieldName="wellElementConnectionRate"/>
   </Tasks>
+
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->
 </Problem>
