@@ -909,7 +909,6 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    bool globalResElemFound = false;
     real64 const location[3] = { perfCoordsGlobal[iperfGlobal][0],
                                  perfCoordsGlobal[iperfGlobal][1],
                                  perfCoordsGlobal[iperfGlobal][2] };
