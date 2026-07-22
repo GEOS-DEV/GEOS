@@ -734,7 +734,7 @@ public:
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
-    /// string key for the esitmate well solution flag
+    /// string key for the estimate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     /// string key for the enable iso thermal estimator flag
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }

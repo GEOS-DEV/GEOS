@@ -464,7 +464,6 @@ void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroup
   // setup fluid model
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
-  std::cout << "Validating fluid model for well " << getName() << "..." << m_useMass << std::endl;
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
 }
