@@ -52,20 +52,6 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::forceSequent
   this->getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling( DomainPartition const & domain,
-                                                                                   DofManager & dofManager ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  Base::setupCoupling( domain, dofManager );
-
-  dofManager.addCoupling( this->getFlowDofKey(),
-                          fields::contact::traction::key(),
-                          DofManager::Connector::Elem );
-
-}
-
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
@@ -140,19 +126,6 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCoup
   {
     GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
   }
-}
-
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState( DomainPartition & domain )
-{
-  GEOS_MARK_FUNCTION;
-
-  Base::updateState( domain );
-  this->solidMechanicsSolver()->updateState( domain );
-
-  this->flowSolver()->prepareStencilWeights( domain );
-  updateHydraulicApertureAndFracturePermeability( domain );
-  this->flowSolver()->updateStencilWeights( domain );
 }
 
 template< typename FLOW_SOLVER >

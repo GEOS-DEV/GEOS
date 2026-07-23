@@ -37,11 +37,11 @@
 namespace geos
 {
 
-template< template< typename, typename > class POROMECHANICS_BASE, typename FLOW_SOLVER >
-class PoromechanicsConformingFractures : public POROMECHANICS_BASE< FLOW_SOLVER, SolidMechanicsLagrangeContact >
+template< template< typename, typename > class POROMECHANICS_BASE, typename FLOW_SOLVER , typename CONTACT_SOLVER = SolidMechanicsLagrangeContact >
+class PoromechanicsConformingFractures : public POROMECHANICS_BASE< FLOW_SOLVER, CONTACT_SOLVER >
 {
 public:
-  using Base = POROMECHANICS_BASE< FLOW_SOLVER, SolidMechanicsLagrangeContact >;
+  using Base = POROMECHANICS_BASE< FLOW_SOLVER, CONTACT_SOLVER >;
 
   PoromechanicsConformingFractures( const string & name,
                                     dataRepository::Group * const parent )
@@ -181,6 +181,11 @@ protected:
 
       NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
       FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+      
+      //TODO (jafranc) - remove once ALM-bubble is frame as a stab method - tmp runtime is fine as it is tmp
+      if(this->solidMechanicsSolver()->hasStabilization())
+      {
+
       FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
 
       stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
@@ -224,6 +229,7 @@ protected:
           }
         }
       } );
+    }
     } );
   }
 
@@ -431,7 +437,7 @@ protected:
       } );
     } );
 
-    this->solidMechanicsSolver()->assembleContact( domain, dofManager, localMatrix, localRhs );
+    this->solidMechanicsSolver()->assembleContact( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
   virtual void assembleCouplingTerms( real64 const time_n,

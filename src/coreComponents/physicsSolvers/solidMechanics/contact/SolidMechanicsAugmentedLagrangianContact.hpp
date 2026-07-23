@@ -114,6 +114,10 @@ public:
                                     integer configurationLoopIter ) override final;
 
 
+  //TODO (jafranc) - bubble should be reframe as a stabilization
+  string getStabilizationName() const { return "TODO:bubble"; }
+  bool hasStabilization() const { return false;}
+
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type

@@ -20,18 +20,21 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "common/logger/Logger.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
 namespace geos
 {
 
 template< typename FLOW_SOLVER = SinglePhaseBase >
-class SinglePhasePoromechanicsConformingFracturesALM : public SinglePhasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
+class SinglePhasePoromechanicsConformingFracturesALM : public PoromechanicsConformingFractures<  SinglePhasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
 {
 public:
 
-  using Base = SinglePhasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
+  using Base = PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER , SolidMechanicsAugmentedLagrangianContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -82,8 +85,8 @@ public:
    */
   /**@{*/
 
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override final;
+  // virtual void setupCoupling( DomainPartition const & domain,
+  //                             DofManager & dofManager ) const override final;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -99,11 +102,12 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override final;
 
-  virtual void updateState( DomainPartition & domain ) override final;
-
-  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
+  // GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   /**@}*/
+
+
+
 
 private:
 
@@ -211,6 +215,16 @@ private:
 protected:
 
   virtual void postInputInitialization() override final;
+
+  //- to be overloaded.
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & GEOS_UNUSED_PARAM(mesh),
+                                                                  string_array const & GEOS_UNUSED_PARAM(regionNames),
+                                                                  DofManager const & GEOS_UNUSED_PARAM(dofManager),
+                                                                  CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM(localMatrix),
+                                                                  arrayView1d< real64 > const & GEOS_UNUSED_PARAM(localRhs) ) override 
+  { GEOS_ERROR("Sequential implementation only."); };
+
+  virtual integer numFluidComponents() const { return 1; }
 
 };
 

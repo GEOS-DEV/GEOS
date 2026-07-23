@@ -49,6 +49,29 @@ public:
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
+  void computeFaceNodalArea( localIndex const kf0,
+                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                                                          arrayView2d< localIndex const > const & edgeToNodeMap,
+                                                          arrayView2d< real64 const > const faceCenters,
+                                                          arrayView2d< real64 const > const faceNormals,
+                                                          arrayView1d< real64 const > const faceAreas,
+                                                          stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals ) const;
+
+  void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                             localIndex const (&faceToNodes)[11],
+                             localIndex const (&faceToEdges)[11],
+                             localIndex const & numFaceVertices,
+                             real64 const & faceArea,
+                             real64 const (&faceCenter)[3],
+                             real64 const (&faceNormal)[3],
+                             arrayView2d< localIndex const > const & edgeToNodes,
+                             real64 const & invCellDiameter,
+                             real64 const (&cellCenter)[3],
+                             stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals,
+                             real64 ( &threeDMonomialIntegrals )[3] ) const;
+
   struct viewKeyStruct : SolidMechanicsLagrangianFEM::viewKeyStruct
   {
     constexpr static char const * fractureStateString() { return "fractureState"; }
@@ -58,6 +81,9 @@ public:
     constexpr static char const * frictionLawNameString() { return "frictionLawName"; }
 
   };
+
+  static constexpr localIndex m_maxFaceNodes = 11; // Maximum number of nodes on a contact face
+
 
 protected:
   virtual void postInputInitialization() override;
