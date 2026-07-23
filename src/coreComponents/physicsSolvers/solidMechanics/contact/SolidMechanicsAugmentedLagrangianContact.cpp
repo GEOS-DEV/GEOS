@@ -37,6 +37,7 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -54,9 +55,9 @@ using namespace dataRepository;
 using namespace fields;
 
 // Workaround for nvcc bug: forDiscretizationOnMeshTargets lambdas receive
-// string_array const & (= std::vector<std::string>) as a parameter.  When the
+// string_array const & (= stdVector<std::string>) as a parameter.  When the
 // lambda body also contains device kernel launches, nvcc erroneously tries to
-// generate a device-compatible destructor for std::vector<std::string> even
+// generate a device-compatible destructor for stdVector<std::string> even
 // though it is a reference parameter whose lifetime is not managed by the lambda.
 GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
 
@@ -783,12 +784,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           PorousSolid< ElasticIsotropic, ConstantPermeability >,
-                           CellElementSubRegion >( mesh,
-                                                   poromechanicsRegionNames,
-                                                   getDiscretizationName(),
-                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsALMContactPorousKernelsDispatchTypeList >( mesh,
+                                                                                    poromechanicsRegionNames,
+                                                                                    getDiscretizationName(),
+                                                                                    FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );
@@ -2092,11 +2092,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
         // Try to get Coulomb parameters if available
-        bool const hasCoulombParams = frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) &&
-                                      frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
+        bool const hasCoulombParams = frictionLaw.hasWrapper( fields::contact::cohesion::key() ) &&
+                                      frictionLaw.hasWrapper( fields::contact::frictionCoefficient::key() );
 
-        real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
-        real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
+        GEOS_ERROR_IF( !hasCoulombParams,
+                       GEOS_FMT( "Friction law '{}' has no per-cell cohesion or frictionCoefficient fields. "
+                                 "These fields are required for initial traction computation.",
+                                 frictionLawName ) );
+
+        arrayView1d< real64 const > const cohesion = frictionLaw.getField< fields::contact::cohesion >().reference().toViewConst();
+        arrayView1d< real64 const > const frictionCoefficient = frictionLaw.getField< fields::contact::frictionCoefficient >().reference().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,
@@ -2214,7 +2219,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
                 // Coulomb criterion: |tau| <= cohesion - mu * sigma_n (sigma_n < 0 for compression)
                 // For open fracture (sigma_n > 0): no traction should be applied
-                real64 const tauLimit = cohesion - frictionCoefficient * normalTraction;
+                real64 const tauLimit = cohesion[kfe] - frictionCoefficient[kfe] * normalTraction;
 
                 bool isInvalid = false;
                 string reason;
@@ -2250,7 +2255,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                            "    t = ({:.6e}, {:.6e}, {:.6e})\n"
                                            "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
                                            kfe, reason,
-                                           cohesion, frictionCoefficient,
+                                           cohesion[kfe], frictionCoefficient[kfe],
                                            n[0], n[1], n[2],
                                            t1[0], t1[1], t1[2],
                                            t2[0], t2[1], t2[2],

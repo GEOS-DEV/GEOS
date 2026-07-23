@@ -305,14 +305,14 @@ This section provides a brief description of the available preconditioners.
 * **ILUK**: incomplete LU factorization with fill level k of the original matrix: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCILU.html>`__,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILU.html>`__.
 
 * **ILUT**: a dual threshold incomplete LU factorization: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - not yet available through PETSc interface,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILUT.html>`__.
 
