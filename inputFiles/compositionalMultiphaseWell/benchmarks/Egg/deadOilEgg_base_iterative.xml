@@ -69,6 +69,7 @@
           targetBHP="3.9e7"
           referenceElevation="28"/>
       </CompositionalMultiphaseWell>
+      <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
       <CompositionalMultiphaseWell
         name="wellControls3"
         type="producer"
@@ -219,7 +220,7 @@
       </CompositionalMultiphaseWell>
     </WellManager>
   </Solvers>
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
