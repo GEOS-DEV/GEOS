@@ -77,17 +77,21 @@ void FieldSpecificationManager::postInputInitialization()
   stdVector< FieldSpecificationABC const * > fieldSpecifications;
   this->forSubGroups< FieldSpecificationABC >( [&] ( FieldSpecificationABC const & fs )
   {
-    fieldSpecifications.push_back( &fs );
+    fieldSpecifications.push_back(&fs);
   } );
 
-  for( FieldSpecificationABC const * fs : fieldSpecifications )
+  for (FieldSpecificationABC const * fs : fieldSpecifications)
   {
+    GEOS_LOG( GEOS_FMT( "----- Processing {}", fs->getName()));
     auto const & processors = ProcessorRegistry::getProcessors();
     auto it = processors.find( fs->getCatalogName());
     if( it != processors.end())
     {
+      GEOS_LOG( GEOS_FMT( "      - Found Processor {}", it->first ));
       ProcessorRegistry::ProcessorBase const & processor = *it->second;
       processor.expandFieldSpecification( *fs, *this );
+    } else {
+      GEOS_LOG( GEOS_FMT( "      - NO PROCESSOR !! {}", it->first ));
     }
   }
 }

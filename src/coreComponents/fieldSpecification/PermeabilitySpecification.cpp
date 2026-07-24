@@ -121,26 +121,28 @@ void PermeabilitySpecification::postInputInitialization()
 }
 
 template<>
-void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecification const & ps,
+void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecification const & permSpec,
                                                             dataRepository::Group & manager )
 {
-  for( string const & regionName : ps.getRegionNames() )
+  for( string const & regionName : permSpec.getRegionNames() )
   {
     string const objectPath = "ElementRegions/" + regionName;
 
-    string const childName = ps.getName() + "_" + regionName;
+    // todo encapsulate in a function 
+    string const childName = permSpec.getName() + "_" + regionName;
 
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
-    fs.setFieldName( ps.getFieldName() );
+    fs.setDataContextReference( permSpec );
+    fs.setFieldName( permSpec.getFieldName() );
     fs.setObjectPath( objectPath );
-    fs.initialCondition( ps.initialCondition() );
-    fs.setScales( ps.getScales() );
-    fs.setFunctionNames( ps.getFunctionNames() );
-    fs.setStartTime( ps.getStartTime() );
-    fs.setEndTime( ps.getEndTime() );
-    fs.setErrorSetMode( ps.getErrorSetMode() );
+    fs.initialCondition( permSpec.initialCondition() );
+    fs.setScales( permSpec.getScales() );
+    fs.setFunctionNames( permSpec.getFunctionNames() );
+    fs.setStartTime( permSpec.getStartTime() );
+    fs.setEndTime( permSpec.getEndTime() );
+    fs.setErrorSetMode( permSpec.getErrorSetMode() );
 
-    for( auto const & setName : ps.getSetNames() )
+    for( auto const & setName : permSpec.getSetNames() )
     {
       fs.addSetName( setName );
     }

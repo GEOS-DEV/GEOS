@@ -140,6 +140,11 @@ string Group::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
+void Group::setDataContextReference( Group const & referencedGroup )
+{
+  m_dataContext = std::make_unique< GroupContext >( referencedGroup, getName() );
+}
+
 string Group::processInputName( xmlWrapper::xmlNode const & targetNode,
                                 xmlWrapper::xmlNodePos const & targetNodePos,
                                 string_view parentNodeName,

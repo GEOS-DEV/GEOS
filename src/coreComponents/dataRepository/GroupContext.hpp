@@ -43,7 +43,14 @@ public:
    * @brief Construct a new GroupContext object
    * @param group The reference to the Group related to this GroupContext.
    */
-  GroupContext( Group & group );
+  GroupContext( Group const & group );
+
+  /**
+   * @brief Construct a new GroupContext object
+   * @param group The reference to the Group related to this GroupContext.
+   * @param objectName Target object name.
+   */
+  GroupContext( Group const & group, string_view objectName );
 
   /**
    * @return the reference to the Group related to this GroupContext.
@@ -52,15 +59,10 @@ public:
 
 protected:
 
-  /**
-   * @brief Construct a new GroupContext object
-   * @param group The reference to the Group related to this GroupContext.
-   * @param objectName Target object name.
-   */
-  GroupContext( Group & group, string_view objectName );
-
   /// The reference to the Group related to this GroupContext.
-  Group & m_group;
+  Group const & m_group;
+
+  // TODO : DataContext const * referencedDataContext
 
 private:
 

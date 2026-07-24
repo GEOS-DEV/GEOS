@@ -1344,6 +1344,12 @@ public:
   { return *m_dataContext; }
 
   /**
+   * @brief Allow to define a different data context for the instance, typically when we want to show another
+   *        group when an error occurs.
+   */
+  void setDataContextReference( Group const & referencedGroup );
+
+  /**
    * @return DataContext object that that stores contextual information on a wrapper contained by
    * this group that can be used in output messages.
    * @tparam KEY The lookup type.

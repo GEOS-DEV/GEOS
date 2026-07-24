@@ -25,11 +25,11 @@ namespace dataRepository
 {
 
 
-GroupContext::GroupContext( Group & group, string_view objectName ):
+GroupContext::GroupContext( Group const & group, string_view objectName ):
   DataContext( objectName ),
   m_group( group )
 {}
-GroupContext::GroupContext( Group & group ):
+GroupContext::GroupContext( Group const & group ):
   GroupContext( group, group.getName() )
 {}
 
