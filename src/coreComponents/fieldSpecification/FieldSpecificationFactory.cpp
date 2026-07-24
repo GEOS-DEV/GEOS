@@ -18,30 +18,12 @@
  */
 
 #include "FieldSpecificationFactory.hpp"
-#include "PermeabilitySpecification.hpp"
 
 namespace geos
 {
 
-namespace
-{
+using Registry = FieldSpecificationProcessorRegistry;
 
-template< typename ... SPEC_TYPES, typename LAMBDA >
-void forExpandableSpecifications( dataRepository::Group & manager,
-                                  types::TypeList< SPEC_TYPES... >,
-                                  LAMBDA && lambda )
-{
-  manager.template forSubGroups< SPEC_TYPES... >( std::forward< LAMBDA >( lambda ) );
-}
-
-}
-
-void expandFieldSpecifications( dataRepository::Group & manager )
-{
-  forExpandableSpecifications( manager, ExpandableSpecTypes{}, [&]( auto const & spec )
-  {
-    generateFieldSpecifications( spec, manager );
-  } );
-}
+stdMap< string, Registry::ProcessorBase const * > Registry::s_processors;
 
 } // namespace geos

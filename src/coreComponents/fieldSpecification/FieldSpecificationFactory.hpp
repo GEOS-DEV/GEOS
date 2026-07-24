@@ -23,16 +23,10 @@
 
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
+#include "FieldSpecificationABC.hpp"
 
 namespace geos
 {
-
-class PermeabilitySpecification;
-
-/**
- * @brief List of high-level field specifications to expand into FieldSpecification objects.
- */
-using ExpandableSpecTypes = types::TypeList< PermeabilitySpecification >;
 
 /**
  * @brief Generate FieldSpecifications based on the given "higher-level" specification
@@ -42,14 +36,76 @@ using ExpandableSpecTypes = types::TypeList< PermeabilitySpecification >;
  * @param manager The parent to store the created FieldSpecifications
  */
 template< typename SPEC_TYPE >
-void generateFieldSpecifications( SPEC_TYPE const & specification, dataRepository::Group & manager ) = delete;
+void expandFieldSpecification( SPEC_TYPE const & fs,
+                               dataRepository::Group & manager ) = delete;
 
-/**
- * @brief Expand high-level field specifications
- * @param manager The manager group
- * Expand all field specificiation listed in ExpandableSpecTypes
- */
-void expandFieldSpecifications( dataRepository::Group & manager );
+class FieldSpecificationProcessorRegistry
+{
+public:
+
+  /**
+   * @brief
+   */
+  class ProcessorBase
+  {
+public:
+    /**
+     * @brief
+     * @param fs
+     * @param manager
+     */
+    virtual void expandFieldSpecification( FieldSpecificationABC const & fs,
+                                           dataRepository::Group & GEOS_UNUSED_PARAM( manager ) ) const
+    { GEOS_ERROR( GEOS_FMT( "Processor not implemented for field specification of type '{}'.", fs.getCatalogName() ), fs.getDataContext() ); }
+protected:
+    ProcessorBase() {}
+  };
+
+  /**
+   * @brief
+   */
+  template< typename SPEC_TYPE >
+  class Processor final : public ProcessorBase
+  {
+public:
+
+    /**
+     * @brief Add the processors to the static list. Called before main() when a
+     *        REGISTER_FIELD_SPECIFICATION_PROCESSOR( SPEC_TYPE ) is in a cpp.
+     */
+    Processor(): ProcessorBase()
+    { s_processors.emplace( SPEC_TYPE::catalogName(), this ); }
+
+    /**
+     * @brief Call the specialized geos::expandFieldSpecification() template function
+     * @param fs
+     * @param manager
+     */
+    void expandFieldSpecification( FieldSpecificationABC const & fs,
+                                   dataRepository::Group & manager ) const override
+    { geos::expandFieldSpecification( dynamic_cast< SPEC_TYPE const & >(fs), manager ); }
+  };
+
+  /**
+   * @return the list of field specification processors.
+   */
+  static stdMap< string, ProcessorBase const * > const & getProcessors()
+  { return s_processors; }
+
+
+private:
+
+  /**
+   * @brief Storage of field specification processors.
+   */
+  static stdMap< string, ProcessorBase const * > s_processors;
+
+};
+
+#define REGISTER_FIELD_SPECIFICATION_PROCESSOR( SPEC_TYPE ) \
+  namespace { \
+  GEOS_MAYBE_UNUSED FieldSpecificationProcessorRegistry::Processor< SPEC_TYPE > g_processorOf ## SPEC_TYPE; \
+  }
 
 } // namespace geos
 

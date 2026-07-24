@@ -208,9 +208,8 @@ private:
 
 /// @copydoc geos::FieldSpecificationFactory::generateFieldSpecifications
 template<>
-void
-generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpecification const & specification,
-                                                          dataRepository::Group & manager );
+void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecification const & fs,
+                                                            dataRepository::Group & manager );
 
 }
 

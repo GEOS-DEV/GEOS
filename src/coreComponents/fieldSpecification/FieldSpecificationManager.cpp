@@ -71,7 +71,25 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::postInputInitialization()
 {
-  expandFieldSpecifications( *this );
+  using ProcessorRegistry = FieldSpecificationProcessorRegistry;
+
+  // as the subgroup list can change during expansion, we need an immutable list
+  stdVector< FieldSpecificationABC const * > fieldSpecifications;
+  this->forSubGroups< FieldSpecificationABC >( [&] ( FieldSpecificationABC const & fs )
+  {
+    fieldSpecifications.push_back( &fs );
+  } );
+
+  for( FieldSpecificationABC const * fs : fieldSpecifications )
+  {
+    auto const & processors = ProcessorRegistry::getProcessors();
+    auto it = processors.find( fs->getCatalogName());
+    if( it != processors.end())
+    {
+      ProcessorRegistry::ProcessorBase const & processor = *it->second;
+      processor.expandFieldSpecification( *fs, *this );
+    }
+  }
 }
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh )

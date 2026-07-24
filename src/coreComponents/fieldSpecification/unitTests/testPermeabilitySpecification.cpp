@@ -14,7 +14,7 @@
  */
 
 #include "fieldSpecification/PermeabilitySpecification.hpp"
-#include "fieldSpecification/FieldSpecification.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -41,20 +41,32 @@ void fillValidInput( PermeabilitySpecification & ps )
 
 TEST( PermeabilitySpecificationTest, ExpansionPropagatesAttributes )
 {
+  using ProcessorRegistry = FieldSpecificationProcessorRegistry;
+
   conduit::Node node;
-  Group rootGroup( "root", node );
-  PermeabilitySpecification ps( "perm", &rootGroup );
+  Group root( "root", node );
 
-  fillValidInput( ps );
+  FieldSpecificationManager manager( "FieldSpecifications", &root );
+  root.registerGroup( manager.getName(), &manager );
+  
+  PermeabilitySpecification permSpec( "permSpec", &manager );
+  manager.registerGroup( permSpec.getName(), &permSpec );
 
-  EXPECT_NO_THROW( ps.postInputInitializationRecursive() );
 
-  Group manager( "FieldSpecifications", &rootGroup );
-  generateFieldSpecifications( ps, manager );
+  fillValidInput( permSpec );
 
-  FieldSpecification const & fs = manager.getGroup< FieldSpecification >( "perm_region2" );
+  // verify that the permeability specification processor exists
+  EXPECT_NE( ProcessorRegistry::getProcessors().find( PermeabilitySpecification::catalogName() ),
+             ProcessorRegistry::getProcessors().end() ) << GEOS_FMT( "Processor of {} does not exist", PermeabilitySpecification::catalogName() );
 
-  EXPECT_DOUBLE_EQ( fs.getScales()[0], 9.869233e-16 );
+  // indirectly call postInputInitialization() -> expandFieldSpecification() on permSpec
+  EXPECT_NO_THROW( root.postInputInitializationRecursive() );
+
+  FieldSpecification const * generatedFS = manager.getGroupPointer< FieldSpecification >( "permSpec_region2" );
+  // verify that  the generated ("expanded") field specification exists
+  EXPECT_NE( generatedFS, nullptr ) << "Field specification has not been generated.";
+  // verify that the scale values have been well applied on the generated ("expanded") field specification
+  EXPECT_DOUBLE_EQ( generatedFS->getScales()[0], 9.869233e-16 );
 }
 
 

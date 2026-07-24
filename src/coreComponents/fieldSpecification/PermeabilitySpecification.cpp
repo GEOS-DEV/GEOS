@@ -120,12 +120,9 @@ void PermeabilitySpecification::postInputInitialization()
                  getDataContext() );
 }
 
-
-REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PermeabilitySpecification, string const &, Group * const )
-
 template<>
-void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpecification const & ps,
-                                                               dataRepository::Group & manager )
+void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecification const & ps,
+                                                            dataRepository::Group & manager )
 {
   for( string const & regionName : ps.getRegionNames() )
   {
@@ -149,5 +146,8 @@ void generateFieldSpecifications< PermeabilitySpecification >( PermeabilitySpeci
     }
   }
 }
+
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PermeabilitySpecification, string const &, Group * const )
+REGISTER_FIELD_SPECIFICATION_PROCESSOR( PermeabilitySpecification )
 
 }
