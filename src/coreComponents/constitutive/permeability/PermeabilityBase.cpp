@@ -33,6 +33,7 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
   registerField< fields::permeability::permeability >( &m_permeability );
+  registerField< fields::permeability::permeability_n >( &m_permeability_n );
   registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );
 }
 
@@ -55,9 +56,32 @@ void PermeabilityBase::allocateConstitutiveData( Group & parent,
 {
   // NOTE: enforcing 1 quadrature point
   m_permeability.resize( 0, 1, 3 );
+  m_permeability_n.resize( 0, 1, 3 );
   m_dPerm_dPressure.resize( 0, 1, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numPts );
+}
+
+void PermeabilityBase::saveConvergedState() const
+{
+  localIndex const numE = m_permeability.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  auto permView_n = m_permeability_n.toView();
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      real64 const permComponents[3] = { m_permeability[ei][q][0],
+                                         m_permeability[ei][q][1],
+                                         m_permeability[ei][q][2] };
+      for( integer dim=0; dim < 3; ++dim )
+      {
+        permView_n[ei][q][dim] = permComponents[dim];
+      }
+    }
+  } );
 }
 
 }

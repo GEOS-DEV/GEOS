@@ -51,9 +51,10 @@ public:
   virtual void updateFromPressureAndPorosity( localIndex const k,
                                               localIndex const q,
                                               real64 const & pressure,
+                                              real64 const & pressure_n,
                                               real64 const & porosity ) const
   {
-    GEOS_UNUSED_VAR( k, q, pressure, porosity );
+    GEOS_UNUSED_VAR( k, q, pressure, pressure_n, porosity );
   }
 
   GEOS_HOST_DEVICE
@@ -136,10 +137,16 @@ public:
   virtual void initializeState() const
   {}
 
+  /// Save state data in preparation for next timestep
+  virtual void saveConvergedState() const override;
+
 protected:
 
   /// Vector of absolute permeability
   array3d< real64 > m_permeability;
+
+  /// Vector of absolute permeability at previous time step
+  array3d< real64 > m_permeability_n;
 
   /// Vector of derivative of permeability wrt pressure
   array3d< real64 > m_dPerm_dPressure;

@@ -67,6 +67,7 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/ThermalAccumulationKernels.hpp
      kernels/singlePhase/ThermalDirichletFluxComputeKernel.hpp
      kernels/singlePhase/ThermalFluxComputeKernel.hpp
+     kernels/singlePhase/ThermalSolutionScalingKernel.hpp
      kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      kernels/singlePhase/proppant/ProppantFluxKernels.hpp
      kernels/singlePhase/reactive/AccumulationKernels.hpp

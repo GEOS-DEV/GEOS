@@ -56,6 +56,7 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
                                                               CellElementSubRegion & subRegion,
                                                               arrayView1d< real64 const > const & pressure,
+                                                              arrayView1d< real64 const > const & pressure_n,
                                                               arrayView1d< real64 const > const & temperature )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
@@ -64,6 +65,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
+                                                           pressure_n[k],
                                                            temperature[k] );
     }
   } );
@@ -167,6 +169,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).       // disabled by default
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsoluteTempChangeString(), &m_maxAbsoluteTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) temperature change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::maxSequentialPresChangeString(), &m_maxSequentialPresChange ).
     setSizedFromParent( 0 ).
@@ -667,7 +675,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
     }
     else
     {
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, temperature );
+      arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature );
     }
   } );
 }

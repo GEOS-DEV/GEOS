@@ -44,17 +44,21 @@ public:
 
   PressurePermeabilityUpdate( PressureModelType const & presModelType,
                               R1Tensor const pressureDependenceConstants,
-                              real64 const & referencePressure,
+                              arrayView1d< real64 const > const & referencePressure,
                               real64 const & maxPermeability,
-                              arrayView3d< real64 > const & referencePermeability,
+                              arrayView3d< real64 const > const & referencePermeability,
                               arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & dPerm_dPressure )
+                              arrayView3d< real64 const > const & permeability_n,
+                              arrayView3d< real64 > const & dPerm_dPressure,
+                              integer const & explicitFlag )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_presModelType( presModelType ),
     m_pressureDependenceConstants( pressureDependenceConstants ),
     m_referencePressure( referencePressure ),
     m_maxPermeability( maxPermeability ),
-    m_referencePermeability( referencePermeability )
+    m_referencePermeability( referencePermeability ),
+    m_permeability_n( permeability_n ),
+    m_explicitFlag( explicitFlag )
   {}
 
   GEOS_HOST_DEVICE
@@ -76,17 +80,24 @@ public:
   virtual void updateFromPressureAndPorosity( localIndex const k,
                                               localIndex const q,
                                               real64 const & pressure,
+                                              real64 const & pressure_n,
                                               real64 const & porosity ) const override
   {
     GEOS_UNUSED_VAR( q, porosity );
 
-    real64 const deltaPressure = pressure - m_referencePressure;
+    real64 deltaPressure = (m_explicitFlag)? (pressure_n - m_referencePressure[k]):(pressure - m_referencePressure[k]);
 
     real64 referencePermeability[3];
 
     referencePermeability[0] = m_referencePermeability[k][0][0];
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
+
+    real64 permeability_n[3];
+
+    permeability_n[0] = m_permeability_n[k][0][0];
+    permeability_n[1] = m_permeability_n[k][0][1];
+    permeability_n[2] = m_permeability_n[k][0][2];
 
     switch( m_presModelType )
     {
@@ -97,6 +108,32 @@ public:
                  referencePermeability,
                  m_permeability[k][0],
                  m_dPerm_dPressure[k][0] );
+
+        if( m_explicitFlag )
+        {
+          for( localIndex i=0; i < m_permeability[k][0].size(); i++ )
+          {
+            m_dPerm_dPressure[k][0][i] = 0.0;
+
+            if( m_maxPermeability < 1.0 )
+            {
+              real64 perm = m_permeability[k][0][i];
+
+              if( perm < referencePermeability[i] )
+              {
+                perm = referencePermeability[i];
+              }
+
+              // Ensure permeability non-decreasing
+              if( perm < permeability_n[i] )
+              {
+                perm = permeability_n[i];
+              }
+
+              m_permeability[k][0][i] = (perm > m_maxPermeability)? m_maxPermeability:perm;
+            }
+          }
+        }
 
         break;
       }
@@ -109,6 +146,20 @@ public:
                  m_permeability[k][0],
                  m_dPerm_dPressure[k][0] );
 
+        if( m_explicitFlag )
+        {
+          for( localIndex i=0; i < m_permeability[k][0].size(); i++ )
+          {
+            m_dPerm_dPressure[k][0][i] = 0.0;
+
+            real64 const perm = m_permeability[k][0][i];
+
+            if( perm < referencePermeability[i] )
+            {
+              m_permeability[k][0][i] = referencePermeability[i];
+            }
+          }
+        }
         break;
       }
       default:
@@ -127,12 +178,16 @@ private:
   R1Tensor m_pressureDependenceConstants;
 
   /// Reference pressure in the model
-  real64 const m_referencePressure;
+  arrayView1d< real64 const >  const m_referencePressure;
 
   /// Maximum permeability
   real64 const m_maxPermeability;
 
-  arrayView3d< real64 > m_referencePermeability;
+  arrayView3d< real64 const > const m_referencePermeability;
+
+  arrayView3d< real64 const > const m_permeability_n;
+
+  integer m_explicitFlag;
 
 };
 
@@ -165,17 +220,21 @@ public:
                           m_maxPermeability,
                           m_referencePermeability,
                           m_permeability,
-                          m_dPerm_dPressure );
+                          m_permeability_n,
+                          m_dPerm_dPressure,
+                          m_explicitFlag );
   }
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * referencePermeabilityComponentsString() { return "referencePermeabilityComponents"; }
     static constexpr char const * pressureDependenceConstantsString() { return "pressureDependenceConstants"; }
+    static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
     static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
     static constexpr char const * pressureModelTypeString() { return "pressureModelType"; }
+    static constexpr char const * explicitUpdateFlagString() { return "explicitUpdateFlag"; }
   };
 
   virtual void initializeState() const override final;
@@ -193,7 +252,8 @@ private:
   R1Tensor m_pressureDependenceConstants;
 
   /// Reference pressure in the model
-  real64 m_referencePressure;
+  real64 m_defaultReferencePressure;
+  array1d< real64 > m_referencePressure;
 
   /// Maximum permeability
   real64 m_maxPermeability;
@@ -202,6 +262,9 @@ private:
 
   /// Pressure dependence model type
   PressureModelType m_presModelType;
+
+  /// Explicit update flag
+  integer m_explicitFlag;
 
 };
 

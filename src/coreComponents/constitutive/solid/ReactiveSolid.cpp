@@ -19,7 +19,7 @@
  */
 
 #include "ReactiveSolid.hpp"
-#include "porosity/ReactivePorosity.hpp"
+#include "porosity/ReactivePorosityBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 #include "constitutive/permeability/PressurePermeability.hpp"
@@ -43,9 +43,9 @@ template< typename PORO_TYPE,
 ReactiveSolid< PORO_TYPE, PERM_TYPE >::~ReactiveSolid() = default;
 
 // Register all ReactiveSolid model types.
-typedef ReactiveSolid< ReactivePorosity, ConstantPermeability > ReactiveRockConstant;
-typedef ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability > ReactiveRockCK;
-typedef ReactiveSolid< ReactivePorosity, PressurePermeability > ReactiveRockPressurePerm;
+typedef ReactiveSolid< ReactivePorosityBase, ConstantPermeability > ReactiveRockConstant;
+typedef ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability > ReactiveRockCK;
+typedef ReactiveSolid< ReactivePorosityBase, PressurePermeability > ReactiveRockPressurePerm;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockCK, string const &, Group * const )

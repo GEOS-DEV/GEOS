@@ -69,6 +69,9 @@ public:
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q ); // this porosity is actually not being used
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
   }
 
   GEOS_HOST_DEVICE
@@ -118,6 +121,9 @@ public:
                      dPorosity_dVolStrain,
                      dPorosity_dPressure,
                      dPorosity_dTemperature );
+
+    // Compute permeability
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
 
     // skip porosity update when doing poromechanics initialization
     if( performStressInitialization )

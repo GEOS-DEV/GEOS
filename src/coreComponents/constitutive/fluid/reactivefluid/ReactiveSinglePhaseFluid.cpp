@@ -81,7 +81,7 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
   switch( m_chemicalSystemType )
   {
     case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9;
+      m_numPrimarySpecies = 4;
       m_numSecondarySpecies = 16;
       m_numKineticReactions = 5;
       break;
@@ -96,6 +96,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
+      break;
+
+    case ChemicalSystemType::forge:
+      m_numPrimarySpecies = 10;
+      m_numSecondarySpecies = 19;
+      m_numKineticReactions = 5;
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:

@@ -185,6 +185,48 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
   flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
+template<>
+void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagrangianFEM >::mapSolutionBetweenSolvers( real64 const & dt,
+                                                                                                                       DomainPartition & domain,
+                                                                                                                       integer const solverType )
+{
+  GEOS_MARK_FUNCTION;
+
+  Base::mapSolutionBetweenSolvers( dt, domain, solverType );
+
+  /// After the solid mechanics solver
+  if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+      && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+  {
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
+    {
+
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // update mass after porosity change due to mechanics solve
+        this->flowSolver()->updateMass( subRegion );
+      } );
+    } );
+  }
+
+  if( solverType == static_cast< integer >( SolverType::Flow ) )
+  {
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                    ElementSubRegionBase & subRegion )
+      {
+        flowSolver()->updateKineticReactionMolarIncrements( dt, subRegion );
+      } );
+    } );
+  }
+}
+
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBasedTerms( real64 const time_n,
                                                                                            real64 const dt,
@@ -355,9 +397,12 @@ template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> >;
 template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangeContact >;
 template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsAugmentedLagrangianContact >;
 //template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsEmbeddedFractures >;
+template class SinglePhasePoromechanics< SinglePhaseReactiveTransport >;
 
 namespace
 {
+typedef SinglePhasePoromechanics< SinglePhaseReactiveTransport > SinglePhaseChemomechanics;
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseChemomechanics, string const &, Group * const )
 typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > SinglePhaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseReservoirPoromechanics, string const &, Group * const )
 typedef SinglePhasePoromechanics<> SinglePhasePoromechanics;

@@ -50,8 +50,9 @@ void PhaseFieldFractureSolver::postInputInitialization()
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType )
 {
+  GEOS_UNUSED_VAR( dt );
 
   GEOS_MARK_FUNCTION;
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
