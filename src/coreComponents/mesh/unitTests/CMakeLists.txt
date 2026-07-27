@@ -38,7 +38,7 @@ if (ENABLE_TRILINOS)
    list( APPEND dependencyList trilinos )
 endif()
 
-set( nranks 8 )
+set( nranks 4 )
 
   foreach( test ${mesh_tests_mpi} )
     get_filename_component( file_we ${test} NAME_WE )

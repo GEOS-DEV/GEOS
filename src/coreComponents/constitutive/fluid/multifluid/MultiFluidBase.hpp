@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a stdVector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a stdVector
+     * @details The template is needed because the blackoil fluid model calls this with real64[]
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -775,9 +775,7 @@ MultiFluidBase::KernelWrapper::
   for( integer ic = 0; ic < numComps; ++ic )
   {
     // component weight can not be zero, checked in MultiFluidBase::postInputInitialization
-    real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
-    compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
-    dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
+    compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
     totalMolality += compMoleFrac[ic];
   }
 
@@ -788,8 +786,9 @@ MultiFluidBase::KernelWrapper::
 
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
-      dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
+      real64 const delta = ic == jc ? 1.0 : 0.0;
+      dCompMoleFrac_dCompMassFrac[ic][jc] =
+        ( delta - compMoleFrac[ic] ) * totalMolalityInv / m_componentMolarWeight[jc];
     }
   }
 }
@@ -1020,27 +1019,16 @@ MultiFluidBase::KernelWrapper::
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+  // Space for dummy derivatives
+  StackArray< real64, 4, 2*maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > derivatives( 2, 1, numPhase, numComp+2 );
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseMassDensAndDeriv { phaseMassDens, dPhaseMassDens[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseEnthalpyAndDeriv { phaseEnthalpy, dPhaseEnthalpy[0][0] };
-
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseInternalEnergyAndDeriv { phaseInternalEnergy, dPhaseInternalEnergy[0][0] };
+  using SliceType = MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >;
 
   computeInternalEnergy( pressure,
-                         phaseFracAndDeriv,
-                         phaseMassDensAndDeriv,
-                         phaseEnthalpyAndDeriv,
-                         phaseInternalEnergyAndDeriv );
+                         SliceType { phaseFrac, derivatives[0][0] },
+                         SliceType { phaseMassDens, derivatives[0][0] },
+                         SliceType { phaseEnthalpy, derivatives[0][0] },
+                         SliceType { phaseInternalEnergy, derivatives[1][0] } );
 }
 
 GEOS_HOST_DEVICE
