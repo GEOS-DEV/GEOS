@@ -46,7 +46,6 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <vector>
 
 using namespace geos;
 using namespace geos::vtk;
@@ -280,7 +279,7 @@ BenchmarkResult runBenchmark( std::string const & name,
   return result;
 }
 
-void printSummary( std::vector< BenchmarkResult > const & results,
+void printSummary( stdVector< BenchmarkResult > const & results,
                    long long totalCells,
                    MPI_Comm comm )
 {
@@ -431,7 +430,7 @@ int main( int argc, char * argv[] )
                              totalBounds[2], totalBounds[3],
                              totalBounds[4], totalBounds[5] ) );
 
-  std::vector< BenchmarkResult > results;
+  stdVector< BenchmarkResult > results;
 
   array1d< int > parts( 3 );
   parts[0] = nx; parts[1] = ny; parts[2] = nz;

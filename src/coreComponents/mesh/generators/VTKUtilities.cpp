@@ -1024,7 +1024,8 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
   }
 
   // Identify which 3D global IDs we need from other ranks
-  SortedArray< int64_t > missingGlobalIds;
+  stdVector< int64_t > missingGlobalIdsVec;
+  missingGlobalIdsVec.reserve( 2 * neighbors2Dto3D.size() );
 
   for( localIndex i = 0; i < neighbors2Dto3D.size(); ++i )
   {
@@ -1032,13 +1033,16 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
     {
       if( localPartitionMap.count( globalId ) == 0 )
       {
-        missingGlobalIds.insert( globalId );
+        missingGlobalIdsVec.push_back( globalId );
       }
     }
   }
 
+  std::sort( missingGlobalIdsVec.begin(), missingGlobalIdsVec.end() );
+  missingGlobalIdsVec.erase( std::unique( missingGlobalIdsVec.begin(), missingGlobalIdsVec.end() ),
+                             missingGlobalIdsVec.end() );
+
   // Gather all requested IDs across ranks
-  stdVector< int64_t > missingGlobalIdsVec( missingGlobalIds.begin(), missingGlobalIds.end() );
   stdVector< int64_t > allRequestedIdsVec = collectUniqueValues( missingGlobalIdsVec );
 
   array1d< int64_t > allRequestedIds( allRequestedIdsVec.size() );
