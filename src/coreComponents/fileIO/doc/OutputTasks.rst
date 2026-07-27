@@ -195,7 +195,7 @@ time history datat.
 
 .. _SILO: https://wci.llnl.gov/simulation/computer-codes/silo
 .. _VTK: https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
-.. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
+.. _HDF5: https://www.hdfgroup.org/solutions/hdf5
 .. _VisIT: https://wci.llnl.gov/simulation/computer-codes/visit/downloads
 .. _Paraview: https://www.paraview.org/
 .. _MatPlotLib: https://matplotlib.org/
