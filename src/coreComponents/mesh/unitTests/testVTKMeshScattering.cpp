@@ -23,7 +23,9 @@
 #include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
 
+#include <vtkCellArray.h>
 #include <vtkCellData.h>
+#include <vtkCellType.h>
 #include <vtkIdTypeArray.h>
 #include <vtkNew.h>
 #include <vtkPointData.h>
@@ -39,13 +41,20 @@ namespace
 {
 
 /**
- * @brief Build a regular 4x4x4 hexahedral grid on rank 0.
+ * @brief Build a regular 4x4x4 grid on rank 0.
  *
- * The mesh occupies [0, 4] x [0, 4] x [0, 4] with 64 hex cells,
+ * The mesh occupies [0, 4] x [0, 4] x [0, 4] with 64 cells,
  * 125 points, a cell data array ("CellId") and a point data array ("PointId").
  * Returns an empty grid on non-zero ranks.
+ *
+ * @param comm the communicator
+ * @param asPolyhedra when true the cells are inserted as VTK_POLYHEDRON with an explicit
+ *   6-face description instead of VTK_HEXAHEDRON. The geometry is identical; only the
+ *   encoding differs. Polyhedra are the only cell type whose definition is not fully
+ *   contained in the connectivity array, so they exercise code paths that all other
+ *   cell types leave untested.
  */
-vtkSmartPointer< vtkUnstructuredGrid > buildTestMesh( MPI_Comm comm )
+vtkSmartPointer< vtkUnstructuredGrid > buildTestMesh( MPI_Comm comm, bool const asPolyhedra = false )
 {
   integer const rank = MpiWrapper::commRank( comm );
   auto mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
@@ -77,7 +86,7 @@ vtkSmartPointer< vtkUnstructuredGrid > buildTestMesh( MPI_Comm comm )
   }
   mesh->SetPoints( points );
 
-  // Hex cells: N^3 = 64 cells
+  // Cells: N^3 = 64 cells
   mesh->Allocate( N * N * N );
   for( integer k = 0; k < N; ++k )
   {
@@ -96,7 +105,30 @@ vtkSmartPointer< vtkUnstructuredGrid > buildTestMesh( MPI_Comm comm )
           base + NP * NP + NP + 1,
           base + NP * NP + NP
         };
-        mesh->InsertNextCell( VTK_HEXAHEDRON, 8, hex );
+
+        if( asPolyhedra )
+        {
+          // The 6 quad faces of the hexahedron, in terms of the 8 cell points above.
+          vtkNew< vtkCellArray > faces;
+          auto const insertFace = [&]( integer const a, integer const b,
+                                       integer const c, integer const d )
+          {
+            vtkIdType const face[4] = { hex[a], hex[b], hex[c], hex[d] };
+            faces->InsertNextCell( 4, face );
+          };
+          insertFace( 0, 1, 2, 3 );  // bottom
+          insertFace( 4, 5, 6, 7 );  // top
+          insertFace( 0, 1, 5, 4 );
+          insertFace( 1, 2, 6, 5 );
+          insertFace( 2, 3, 7, 6 );
+          insertFace( 3, 0, 4, 7 );
+
+          mesh->InsertNextCell( VTK_POLYHEDRON, 8, hex, faces );
+        }
+        else
+        {
+          mesh->InsertNextCell( VTK_HEXAHEDRON, 8, hex );
+        }
       }
     }
   }
@@ -345,6 +377,79 @@ TEST_F( VTKMeshScatteringTest, SuperCellAtomicity )
         << "Super-cell " << s << " ended up on " << totalOwners[s]
         << " ranks (expected exactly 1) for method " << toString( method );
     }
+  }
+}
+
+
+/// A VTK_POLYHEDRON cell is described by its connectivity *and* by a separate pair of face
+/// arrays. Both must survive the scatter: without the faces the receiving rank cannot rebuild
+/// the cells, and VTK either drops them silently or reinterprets the connectivity as a face
+/// stream and reads out of bounds.
+TEST_F( VTKMeshScatteringTest, PolyhedronFacePreservation )
+{
+  auto polyMesh = buildTestMesh( comm, true );
+
+  stdVector< ScatterMethod > const methods = {
+    ScatterMethod::contiguous,
+    ScatterMethod::cartesian,
+    ScatterMethod::rcb
+  };
+
+  for( auto method : methods )
+  {
+    auto result = scatter( method, *polyMesh, parts.toViewConst(), comm );
+    ASSERT_NE( result, nullptr );
+
+    vtkIdType const localCells = result->GetNumberOfCells();
+    vtkIdType const globalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, comm );
+    EXPECT_EQ( globalCells, totalCells )
+      << "Polyhedral cells lost during scatter for method " << toString( method );
+
+    for( vtkIdType c = 0; c < localCells; ++c )
+    {
+      ASSERT_EQ( result->GetCellType( c ), VTK_POLYHEDRON )
+        << "Cell " << c << " changed type for method " << toString( method );
+
+      vtkCell * cell = result->GetCell( c );
+      EXPECT_EQ( cell->GetNumberOfPoints(), 8 )
+        << "Cell " << c << " lost points for method " << toString( method );
+      EXPECT_EQ( cell->GetNumberOfFaces(), 6 )
+        << "Cell " << c << " lost its face description for method " << toString( method );
+    }
+  }
+}
+
+TEST_F( VTKMeshScatteringTest, PolyhedronFacePreservationWithSuperCells )
+{
+  static constexpr vtkIdType cellsPerSuperCell = 2;
+
+  auto polyMesh = buildTestMesh( comm, true );
+
+  if( rank == 0 )
+  {
+    vtkNew< vtkIdTypeArray > scIds;
+    scIds->SetName( "SuperCellId" );
+    scIds->SetNumberOfTuples( totalCells );
+    for( vtkIdType c = 0; c < totalCells; ++c )
+    {
+      scIds->SetValue( c, c / cellsPerSuperCell );
+    }
+    polyMesh->GetCellData()->AddArray( scIds );
+  }
+
+  vtkSmartPointer< vtkDataSet > result =
+    redistributeBySuperCellBlocks( polyMesh, comm, ScatterMethod::rcb, parts.toViewConst() );
+  ASSERT_NE( result, nullptr );
+
+  vtkIdType const localCells = result->GetNumberOfCells();
+  vtkIdType const globalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, comm );
+  EXPECT_EQ( globalCells, totalCells ) << "Polyhedral cells lost during super-cell redistribution";
+
+  for( vtkIdType c = 0; c < localCells; ++c )
+  {
+    ASSERT_EQ( result->GetCellType( c ), VTK_POLYHEDRON ) << "Cell " << c << " changed type";
+    EXPECT_EQ( result->GetCell( c )->GetNumberOfFaces(), 6 )
+      << "Cell " << c << " lost its face description";
   }
 }
 

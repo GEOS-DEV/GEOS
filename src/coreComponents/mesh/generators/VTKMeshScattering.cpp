@@ -23,6 +23,7 @@
 
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
+#include <vtkCellType.h>
 #include <vtkDataArray.h>
 #include <vtkExtractCells.h>
 #include <vtkIdList.h>
@@ -212,9 +213,65 @@ void unpackDataArrays( char const * & ptr, vtkDataSetAttributes * attrs )
 }
 
 // ============================================================================
-// Pack / unpack a full vtkUnstructuredGrid + assignment vector
+// Pack / unpack a vtkCellArray
+//
+// The offsets and connectivity of a vtkCellArray may be stored as either 32 or
+// 64 bit integers depending on how the mesh was built; ConvertToDefaultStorage()
+// normalizes them to vtkIdType so that the raw buffers can be copied as-is.
+// A null array (e.g. the face arrays of a mesh without polyhedra) is encoded
+// with a negative size.
 // ============================================================================
 
+void appendCellArray( stdVector< char > & buf, vtkCellArray * cells )
+{
+  if( cells == nullptr )
+  {
+    appendValue( buf, int64_t( -1 ) );
+    return;
+  }
+
+  cells->ConvertToDefaultStorage();
+
+  vtkDataArray * offsets = cells->GetOffsetsArray();
+  vtkDataArray * conn = cells->GetConnectivityArray();
+
+  int64_t const nOffsets = offsets->GetNumberOfValues();
+  int64_t const connSize = conn->GetNumberOfValues();
+
+  appendValue( buf, nOffsets );
+  appendValue( buf, connSize );
+  appendBytes( buf, offsets->GetVoidPointer( 0 ), nOffsets * sizeof( vtkIdType ) );
+  appendBytes( buf, conn->GetVoidPointer( 0 ), connSize * sizeof( vtkIdType ) );
+}
+
+vtkSmartPointer< vtkCellArray > readCellArray( char const * & ptr )
+{
+  int64_t const nOffsets = readValue< int64_t >( ptr );
+  if( nOffsets < 0 )
+  {
+    return nullptr;
+  }
+
+  int64_t const connSize = readValue< int64_t >( ptr );
+
+  vtkNew< vtkIdTypeArray > offsets;
+  offsets->SetNumberOfValues( nOffsets );
+  std::memcpy( offsets->GetVoidPointer( 0 ), ptr, nOffsets * sizeof( vtkIdType ) );
+  ptr += nOffsets * sizeof( vtkIdType );
+
+  vtkNew< vtkIdTypeArray > conn;
+  conn->SetNumberOfValues( connSize );
+  std::memcpy( conn->GetVoidPointer( 0 ), ptr, connSize * sizeof( vtkIdType ) );
+  ptr += connSize * sizeof( vtkIdType );
+
+  auto cells = vtkSmartPointer< vtkCellArray >::New();
+  cells->SetData( offsets, conn );
+  return cells;
+}
+
+// ============================================================================
+// Pack / unpack a full vtkUnstructuredGrid + assignment vector
+// ============================================================================
 void packGrid( vtkUnstructuredGrid * grid,
                stdVector< integer > const & assignment,
                stdVector< char > & buf )
@@ -251,16 +308,13 @@ void packGrid( vtkUnstructuredGrid * grid,
     vtkUnsignedCharArray * types = grid->GetCellTypesArray();
     appendBytes( buf, types->GetVoidPointer( 0 ), nCells * sizeof( unsigned char ) );
 
-    vtkCellArray * cells = grid->GetCells();
-    vtkDataArray * offsets = cells->GetOffsetsArray();
-    vtkDataArray * conn = cells->GetConnectivityArray();
+    appendCellArray( buf, grid->GetCells() );
 
-    int64_t const nOffsets = offsets->GetNumberOfValues();
-    int64_t const connSize = conn->GetNumberOfValues();
-
-    appendValue( buf, connSize );
-    appendBytes( buf, offsets->GetVoidPointer( 0 ), nOffsets * sizeof( vtkIdType ) );
-    appendBytes( buf, conn->GetVoidPointer( 0 ), connSize * sizeof( vtkIdType ) );
+    // VTK_POLYHEDRON cells are not fully described by the connectivity array: their
+    // face description lives in two separate arrays that must travel with the mesh.
+    // Both are null for meshes without polyhedra.
+    appendCellArray( buf, grid->GetPolyhedronFaceLocations() );
+    appendCellArray( buf, grid->GetPolyhedronFaces() );
   }
 
   // Field data arrays
@@ -306,21 +360,23 @@ unpackGrid( stdVector< char > const & buf )
     std::memcpy( types->GetVoidPointer( 0 ), ptr, nCells * sizeof( unsigned char ) );
     ptr += nCells * sizeof( unsigned char );
 
-    int64_t const connSize = readValue< int64_t >( ptr );
+    vtkSmartPointer< vtkCellArray > cellArray = readCellArray( ptr );
+    vtkSmartPointer< vtkCellArray > faceLocations = readCellArray( ptr );
+    vtkSmartPointer< vtkCellArray > faces = readCellArray( ptr );
 
-    vtkNew< vtkIdTypeArray > offsets;
-    offsets->SetNumberOfValues( nCells + 1 );
-    std::memcpy( offsets->GetVoidPointer( 0 ), ptr, ( nCells + 1 ) * sizeof( vtkIdType ) );
-    ptr += ( nCells + 1 ) * sizeof( vtkIdType );
-
-    vtkNew< vtkIdTypeArray > conn;
-    conn->SetNumberOfValues( connSize );
-    std::memcpy( conn->GetVoidPointer( 0 ), ptr, connSize * sizeof( vtkIdType ) );
-    ptr += connSize * sizeof( vtkIdType );
-
-    vtkNew< vtkCellArray > cellArray;
-    cellArray->SetData( offsets, conn );
-    grid->SetCells( types, cellArray );
+    if( faces == nullptr )
+    {
+      // SetCells() must not be used when polyhedra are present: it would reinterpret
+      // the connectivity of those cells as a face stream and read out of bounds.
+      unsigned char const * const typeBegin = types->GetPointer( 0 );
+      GEOS_ERROR_IF( std::find( typeBegin, typeBegin + nCells, VTK_POLYHEDRON ) != typeBegin + nCells,
+                     "Mesh scattering: polyhedral cells were received without their face description." );
+      grid->SetCells( types, cellArray );
+    }
+    else
+    {
+      grid->SetPolyhedralCells( types, cellArray, faceLocations, faces );
+    }
   }
 
   // Field data
