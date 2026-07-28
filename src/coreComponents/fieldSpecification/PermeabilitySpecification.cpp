@@ -46,6 +46,12 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setDescription( "Name of field that boundary condition is applied to.\n"
                     "A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)" );
 
+  registerWrapper( viewKeyStruct::componentString(), &m_component ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Component of field (if tensor) to apply boundary condition to.\n"
+                    "The component must use the order in which the phaseNames have been defined in the Constitutive Element." );
+
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -111,6 +117,13 @@ void PermeabilitySpecification::postInputInitialization()
                  InputError,
                  getDataContext() );
 
+  GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
+                 GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
+                            viewKeyStruct::componentString(),
+                            viewKeyStruct::scalesString() ),
+                 InputError,
+                 getDataContext() );
+
   GEOS_THROW_IF( m_beginTime > m_endTime,
                  GEOS_FMT( "{} ({}) must be less than {} ({}) in {} '{}'",
                            viewKeyStruct::beginTimeString(), m_beginTime,
@@ -133,6 +146,7 @@ void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecific
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
     fs.setDataContextReference( permSpec );
     fs.setFieldName( permSpec.getFieldName() );
+    fs.setComponent( permSpec.getComponent() );
     fs.setObjectPath( objectPath );
     fs.initialCondition( permSpec.initialCondition() );
     fs.setScales( permSpec.getScales() );

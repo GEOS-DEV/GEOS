@@ -92,6 +92,8 @@ public:
     constexpr static char const * regionNamesString() { return "regionNames"; }
     /// @return The key for fieldName
     constexpr static char const * fieldNameString() { return "fieldName"; }
+    /// @return The key for component
+    constexpr static char const * componentString() { return "component"; }
     /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
     /// @return The key for functionNames
@@ -126,6 +128,13 @@ public:
    */
   virtual const string & getFieldName() const
   { return m_fieldName; }
+
+  /**
+   * Accessing the considered component.
+   * @return The component axis or a special value.
+   */
+  virtual int getComponent() const
+  { return m_component; }
 
   /**
    * Accessor
@@ -185,6 +194,9 @@ private:
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.
   string m_fieldName;
+
+  /// The component the boundary condition acts on. Not used if field is a scalar.
+  int m_component;
 
   /// Whether or not the boundary condition is an initial condition.
   int m_initialCondition;
