@@ -77,13 +77,13 @@ void FieldSpecificationManager::postInputInitialization()
   stdVector< FieldSpecificationABC const * > fieldSpecifications;
   this->forSubGroups< FieldSpecificationABC >( [&] ( FieldSpecificationABC const & fs )
   {
-    fieldSpecifications.push_back(&fs);
+    fieldSpecifications.push_back( &fs );
   } );
 
+  auto const & processors = ProcessorRegistry::getProcessors();
   for (FieldSpecificationABC const * fs : fieldSpecifications)
   {
     GEOS_LOG( GEOS_FMT( "----- Processing {}", fs->getName()));
-    auto const & processors = ProcessorRegistry::getProcessors();
     auto it = processors.find( fs->getCatalogName());
     if( it != processors.end())
     {

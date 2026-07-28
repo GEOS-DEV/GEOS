@@ -128,7 +128,6 @@ void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecific
   {
     string const objectPath = "ElementRegions/" + regionName;
 
-    // todo encapsulate in a function 
     string const childName = permSpec.getName() + "_" + regionName;
 
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );

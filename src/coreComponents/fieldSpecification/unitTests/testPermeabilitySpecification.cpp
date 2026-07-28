@@ -48,7 +48,7 @@ TEST( PermeabilitySpecificationTest, ExpansionPropagatesAttributes )
 
   FieldSpecificationManager manager( "FieldSpecifications", &root );
   root.registerGroup( manager.getName(), &manager );
-  
+
   PermeabilitySpecification permSpec( "permSpec", &manager );
   manager.registerGroup( permSpec.getName(), &permSpec );
 

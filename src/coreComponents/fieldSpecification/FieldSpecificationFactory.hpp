@@ -31,8 +31,7 @@ namespace geos
 /**
  * @brief Generate FieldSpecifications based on the given "higher-level" specification
  * @tparam SPEC_TYPE The type of the high-level specification
- * @param specification The high-level specification used as a blueprint
- *                      to create FieldSpecification
+ * @param fs The high-level specification used as a blueprint to create FieldSpecification
  * @param manager The parent to store the created FieldSpecifications
  */
 template< typename SPEC_TYPE >
@@ -44,15 +43,17 @@ class FieldSpecificationProcessorRegistry
 public:
 
   /**
-   * @brief
+   * @brief Base Processor class for transforming "high-level" specification
+   *        into FieldSpecification(s)
    */
   class ProcessorBase
   {
 public:
     /**
-     * @brief
-     * @param fs
-     * @param manager
+     * @brief Generate FieldSpecifications based on the given "higher-level" specification
+     * @tparam SPEC_TYPE The type of the high-level specification
+     * @param fs The high-level specification used as a blueprint to create FieldSpecification
+     * @param manager The parent to store the created FieldSpecifications
      */
     virtual void expandFieldSpecification( FieldSpecificationABC const & fs,
                                            dataRepository::Group & GEOS_UNUSED_PARAM( manager ) ) const
@@ -62,7 +63,8 @@ protected:
   };
 
   /**
-   * @brief
+   * @brief Class for a specific "high-level" specification type to process its objects
+   *        into one or multiple equivalent FieldSpecification
    */
   template< typename SPEC_TYPE >
   class Processor final : public ProcessorBase
@@ -77,13 +79,11 @@ public:
     { s_processors.emplace( SPEC_TYPE::catalogName(), this ); }
 
     /**
-     * @brief Call the specialized geos::expandFieldSpecification() template function
-     * @param fs
-     * @param manager
+     * @copydoc ProcessorBase::expandFieldSpecification
      */
     void expandFieldSpecification( FieldSpecificationABC const & fs,
                                    dataRepository::Group & manager ) const override
-    { geos::expandFieldSpecification( dynamic_cast< SPEC_TYPE const & >(fs), manager ); }
+    { geos::expandFieldSpecification( dynamic_cast< SPEC_TYPE const & >( fs ), manager ); }
   };
 
   /**
