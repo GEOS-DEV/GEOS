@@ -202,7 +202,7 @@ DECLARE_FIELD( particleFDot,
                0.0,
                NOPLOT,
                WRITE_AND_READ,
-               "Material time derivative of the particle deformation gradient." );
+               "Step-secant deformation-gradient rate (F_{n+1}-F_n)/dt retained for compatibility." );
 
 DECLARE_FIELD( particleVelocityGradient,
                "particleVelocityGradient",

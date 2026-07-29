@@ -1356,10 +1356,12 @@ protected:
   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   int m_enableSurfaceTension;
   int m_eventReporting;
+  // Deprecated compatibility input; endpoint split always advances scalar volume.
   int m_exactJIntegration;
   real64 m_explicitSurfaceNormalInfluence;
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable;
+  // Deprecated compatibility input; the fixed-L exponential uses internal scaling and squaring.
   int m_FSubcycles;
   int m_flagParticlesWithBadMappingArraysForDeletion;
   array2d< real64 > m_fTable;

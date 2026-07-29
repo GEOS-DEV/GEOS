@@ -118,6 +118,173 @@ real64 clampValue( real64 const value,
   return LvArray::math::min( upper, LvArray::math::max( value, lower ) );
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 matrixInfinityNorm3x3( real64 const (& matrix)[3][3] )
+{
+  real64 norm = 0.0;
+  for( int i = 0; i < 3; ++i )
+  {
+    real64 rowSum = 0.0;
+    for( int j = 0; j < 3; ++j )
+    {
+      rowSum += LvArray::math::abs( matrix[i][j] );
+    }
+    norm = LvArray::math::max( norm, rowSum );
+  }
+  return norm;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void multiply3x3( real64 const (& left)[3][3],
+                  real64 const (& right)[3][3],
+                  real64 (& product)[3][3] )
+{
+  real64 temporary[3][3] = {};
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      temporary[i][j] =
+        left[i][0] * right[0][j] +
+        left[i][1] * right[1][j] +
+        left[i][2] * right[2][j];
+    }
+  }
+  LvArray::tensorOps::copy< 3, 3 >( product, temporary );
+}
+
+/**
+ * @brief Computes exp(A) for a 3 x 3 matrix using scaling and squaring.
+ *
+ * The scaled matrix has infinity norm no larger than 0.5 and is evaluated with
+ * a diagonal [6/6] Pade approximant.  The implementation uses only fixed-size
+ * stack storage and LVArray operations, so it is suitable for host or device
+ * execution if the surrounding particle loop is moved to a device policy.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void matrixExponential3x3( real64 const (& input)[3][3],
+                           real64 (& exponential)[3][3] )
+{
+  real64 scaledInput[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( scaledInput, input );
+
+  int squarings = 0;
+  real64 scaledNorm = matrixInfinityNorm3x3( scaledInput );
+  while( scaledNorm > 0.5 && squarings < 60 )
+  {
+    LvArray::tensorOps::scale< 3, 3 >( scaledInput, 0.5 );
+    scaledNorm *= 0.5;
+    ++squarings;
+  }
+
+  real64 inputSquared[3][3] = {};
+  real64 inputFourth[3][3] = {};
+  real64 inputSixth[3][3] = {};
+  multiply3x3( scaledInput, scaledInput, inputSquared );
+  multiply3x3( inputSquared, inputSquared, inputFourth );
+  multiply3x3( inputFourth, inputSquared, inputSixth );
+
+  constexpr real64 c0 = 1.0;
+  constexpr real64 c1 = 1.0 / 2.0;
+  constexpr real64 c2 = 5.0 / 44.0;
+  constexpr real64 c3 = 1.0 / 66.0;
+  constexpr real64 c4 = 1.0 / 792.0;
+  constexpr real64 c5 = 1.0 / 15840.0;
+  constexpr real64 c6 = 1.0 / 665280.0;
+
+  real64 oddPolynomial[3][3] = {};
+  real64 evenPolynomial[3][3] = {};
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      real64 const identity = i == j ? 1.0 : 0.0;
+      oddPolynomial[i][j] =
+        c1 * identity +
+        c3 * inputSquared[i][j] +
+        c5 * inputFourth[i][j];
+      evenPolynomial[i][j] =
+        c0 * identity +
+        c2 * inputSquared[i][j] +
+        c4 * inputFourth[i][j] +
+        c6 * inputSixth[i][j];
+    }
+  }
+
+  real64 oddPart[3][3] = {};
+  multiply3x3( scaledInput, oddPolynomial, oddPart );
+
+  real64 numerator[3][3] = {};
+  real64 denominator[3][3] = {};
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      numerator[i][j] = evenPolynomial[i][j] + oddPart[i][j];
+      denominator[i][j] = evenPolynomial[i][j] - oddPart[i][j];
+    }
+  }
+
+  real64 inverseDenominator[3][3] = {};
+  LvArray::tensorOps::invert< 3 >( inverseDenominator, denominator );
+  multiply3x3( inverseDenominator, numerator, exponential );
+
+  for( int square = 0; square < squarings; ++square )
+  {
+    real64 squared[3][3] = {};
+    multiply3x3( exponential, exponential, squared );
+    LvArray::tensorOps::copy< 3, 3 >( exponential, squared );
+  }
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 activeDeterminant3x3( real64 const (& matrix)[3][3],
+                             int const activeDimensions )
+{
+  if( activeDimensions == 2 )
+  {
+    return matrix[0][0] * matrix[1][1] -
+           matrix[0][1] * matrix[1][0];
+  }
+  return LvArray::tensorOps::determinant< 3 >( matrix );
+}
+
+/**
+ * @brief Removes roundoff drift from an incremental isochoric map.
+ *
+ * The determinant is taken only on the incremental matrix, which is close to
+ * identity, rather than on the accumulated and potentially highly sheared F.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void normalizeActiveDeterminant3x3( real64 (& matrix)[3][3],
+                                    int const activeDimensions )
+{
+  real64 const determinant =
+    activeDeterminant3x3( matrix, activeDimensions );
+
+  if( !( determinant > 0.0 ) )
+  {
+    return;
+  }
+
+  real64 const scale = LvArray::math::pow(
+    determinant,
+    -1.0 / static_cast< real64 >( activeDimensions ) );
+
+  for( int i = 0; i < activeDimensions; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      matrix[i][j] *= scale;
+    }
+  }
+}
+
 
 /**
  * Component priorities used by the staged MPM essential-boundary update.
@@ -1394,7 +1561,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_exactJIntegration ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Will force integration of F to have an exact integral of J." );
+    setDescription( "Deprecated compatibility input. The endpoint exponential update always integrates particle volume exactly from exp(dt*tr(L))." );
 
   registerWrapper( "explicitSurfaceNormalInfluence", &m_explicitSurfaceNormalInfluence ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1420,7 +1587,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_FSubcycles ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Number of sub cycles to more accurately integrate the deformation gradient" );
+    setDescription( "Deprecated compatibility input. The fixed-endpoint matrix exponential uses internal scaling and squaring; external F subcycles are not used." );
 
   registerWrapper( "flagParticlesWithBadMappingArraysForDeletion", &m_flagParticlesWithBadMappingArraysForDeletion ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2425,6 +2592,11 @@ void SolidMechanicsMPM::postInputInitialization()
                  "surfaceQualityThreshold must be in [0,1]." );
   GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
                  "thinFeatureDFGThreshold must be non-negative." );
+
+  GEOS_LOG_RANK_0_IF( m_exactJIntegration != 0,
+                      "exactJIntegration is deprecated and ignored: the volumetric split always advances particle volume with exp(dt*tr(L))." );
+  GEOS_LOG_RANK_0_IF( m_FSubcycles != 1,
+                      "FSubcycles is deprecated and ignored: the endpoint matrix exponential uses internal scaling and squaring." );
 
  // Hang constitutive relations for cohesive zones
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -4288,6 +4460,39 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                              particleManager,
                              nodeManager,
                              partition );
+
+    // The rigid-body update re-references F to identity.  Re-reference the
+    // authoritative scalar volume state at the same time so the later
+    // continuum handoff starts from J = particleVolume / referenceVolume = 1.
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+#ifdef GEOS_USE_DEVICE
+      subRegion.getWrapperBase( fields::mpm::particleReferenceVolume::key() ).move(
+        LvArray::MemorySpace::host, true );
+      subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
+        LvArray::MemorySpace::host, true );
+#endif
+
+      arrayView1d< real64 > const particleReferenceVolume =
+        subRegion.getField< fields::mpm::particleReferenceVolume >();
+      arrayView1d< real64 const > const particleVolume =
+        subRegion.getParticleVolume();
+      SortedArrayView< localIndex const > const activeParticleIndices =
+        subRegion.activeParticleIndices();
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleReferenceVolume[p] = particleVolume[p];
+      } );
+
+#ifdef GEOS_USE_DEVICE
+      subRegion.getWrapperBase( fields::mpm::particleReferenceVolume::key() ).move(
+        parallelDeviceMemorySpace, true );
+      subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
+        parallelDeviceMemorySpace, true );
+#endif
+    } );
   }
   else
   {
@@ -10160,6 +10365,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             if( !crystalHeal.getMarkedParticlesToHeal() )
             {
               arrayView1d< real64 > const particleReferenceVolume = targetSubRegion.getField< fields::mpm::particleReferenceVolume >();
+              arrayView1d< real64 const > const particleVolume = targetSubRegion.getParticleVolume();
               arrayView2d< real64 const > const particleDamageGradient = targetSubRegion.getField< fields::mpm::particleDamageGradient >();
               arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
               arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
@@ -10199,18 +10405,17 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 //   normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradientNormalized, temp );
                 // }
 
-                // Tensor equations:
-                //   temp = sym(particleStress[p]) * particleDamageGradient[p].
-                //   normalStress = dot(particleDamageGradient[p], temp).
-                //   detF = det(particleDeformationGradient[p]).
                 LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, particleStress[p], particleDamageGradient[p] );
                 real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
-                real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
-                if( ( healType == 1 || healType == 3 || ( healType == 0 && ( normalStress < 0.0 || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
+                real64 const referenceVolume = particleReferenceVolume[p];
+                real64 const J = referenceVolume > 0.0
+                               ? particleVolume[p] / referenceVolume
+                               : -1.0;
+                if( ( healType == 1 || healType == 3 || ( healType == 0 && ( normalStress < 0.0 || J < 1.0 ) ) ) && particleDamage[p] > 0.0 )
                 {
                   particleCrystalHealFlag[p] = 1;
 
-                  if( detF > 1.0 && healType == 3 )
+                  if( J > 1.0 && healType == 3 )
                   {
 
                     // If there is a porosity model, healing can modify the material to be
@@ -10218,19 +10423,22 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                     // and a porosity that will allow compaction to the original material density
                     // Since we don't yet have porosity, this shouldn't be used.
 
-                    // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
+                    // particleReferencePorosity[p] = 1.0 - 1.0 / J;
 
-                    // This def grad scaling needs to be modified for plane strain.  and it won't work
-                    // well for anisotropic materials, so instead it will only be active for healType 3
-                    // so we can still use 0,1 for the other cases.
-                    real64 power = planeStrain ? 0.5 : 1.0 / 3.0;
-                    real64 scaling = LvArray::math::pow( detF, power );
+                    int const activeDimensions = planeStrain ? 2 : 3;
+                    real64 const scaling = LvArray::math::pow(
+                      J,
+                      1.0 / static_cast< real64 >( activeDimensions ) );
 
-                    // Tensor equations:
-                    //   particleDeformationGradient[p] = 1 / scaling * (particleDeformationGradient[p]).
-                    //   particleRVectors[p][0] = scaling * (particleRVectors[p][0]).
-                    //   particleRVectors[p][1] = scaling * (particleRVectors[p][1]).
-                    LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], 1 / scaling );
+                    // Remove only the active-dimensional volumetric stretch;
+                    // leave F33=1 for plane strain.
+                    for( int i = 0; i < activeDimensions; ++i )
+                    {
+                      for( int j = 0; j < 3; ++j )
+                      {
+                        particleDeformationGradient[p][i][j] /= scaling;
+                      }
+                    }
                     LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
                     LvArray::tensorOps::scale< 3 >( particleRVectors[p][1], scaling );
 
@@ -10240,7 +10448,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                       LvArray::tensorOps::scale< 3 >( particleRVectors[p][2], scaling );
                     }
 
-                    particleReferenceVolume[p] *= detF;
+                    particleReferenceVolume[p] = particleVolume[p];
                   }
 
                 }
@@ -27912,96 +28120,144 @@ void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt,
 }
 
 /**
- * @brief Updates deformation gradient.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Advances deformation gradient and scalar particle volume with a fixed-endpoint exponential map.
  */
 void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
                                                    ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
-  int const FSubcycles = m_FSubcycles;
-  int const planeStrain = m_planeStrain;
-  int const exactJIntegration = m_exactJIntegration;
-
-  real64 dtSub = dt / m_FSubcycles;
+  int const activeDimensions = m_numDims;
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // Particle fields
-    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
-    arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+#ifdef GEOS_USE_DEVICE
+    // The current F update is host-serial.  Make the endpoint L and all updated
+    // particle fields host-current before forming views; FLIP/PIC may have
+    // produced particleVelocityGradient on the device.
+    subRegion.getWrapperBase( fields::mpm::particleDeformationGradient::key() ).move(
+      LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( fields::mpm::particleFDot::key() ).move(
+      LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( fields::mpm::particleVelocityGradient::key() ).move(
+      LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
+      LvArray::MemorySpace::host, true );
+#endif
 
-    // Update F
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    arrayView1d< real64 > const particleVolume =
+      subRegion.getParticleVolume();
+    arrayView3d< real64 > const particleDeformationGradient =
+      subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleFDot =
+      subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 const > const particleVelocityGradient =
+      subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
+
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
 
-      // UPDATE DEFORMATION GRADIENT L = Fdot * Finv -> F_new = F_old + Fdot*dt = F_old + L*F_old*dt
       real64 oldDeformationGradient[3][3] = {};
-      // Tensor equation: oldDeformationGradient = particleDeformationGradient[p].
-      LvArray::tensorOps::copy< 3, 3 >( oldDeformationGradient, particleDeformationGradient[p] );
+      LvArray::tensorOps::copy< 3, 3 >(
+        oldDeformationGradient,
+        particleDeformationGradient[p] );
 
-      // Integrate F with L
-      real64 previousDeformationGradient[3][3] = {};
-      for( int iter = 0; iter < FSubcycles; ++iter )
+      real64 divergence = 0.0;
+      for( int i = 0; i < activeDimensions; ++i )
       {
-        // Tensor equation: previousDeformationGradient = particleDeformationGradient[p].
-        LvArray::tensorOps::copy< 3, 3 >( previousDeformationGradient, particleDeformationGradient[p] );
-
-        real64 temp[3][3] = {};
-        // Tensor equation: temp = previousDeformationGradient.
-        LvArray::tensorOps::copy< 3, 3 >( temp, previousDeformationGradient );
-
-        real64 tempFDot[3][3] = {};
-        // Tensor equations:
-        //   tempFDot = dtSub * (particleVelocityGradient[p] * temp).
-        //   particleDeformationGradient[p] = particleDeformationGradient[p] + tempFDot.
-        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( tempFDot, particleVelocityGradient[p], temp );
-        LvArray::tensorOps::scale< 3, 3 >( tempFDot, dtSub );
-        LvArray::tensorOps::add< 3, 3 >( particleDeformationGradient[p], tempFDot );
+        divergence += particleVelocityGradient[p][i][i];
       }
 
-      if( exactJIntegration == 1 )
-      { // This will improve accuracy with nearly incompressible materials
-        // Exact integration of J with tr(L)
-        // Tensor equations:
-        //   Jold = det(oldDeformationGradient).
-        //   Jnew = Jold * exp(tr(particleVelocityGradient[p]) * dt).
-        //   detF = det(particleDeformationGradient[p]).
-        real64 Jold = LvArray::tensorOps::determinant< 3 >( oldDeformationGradient );
-        real64 Jnew = Jold * exp( LvArray::tensorOps::trace< 3 >( particleVelocityGradient[p] ) * dt );
-        real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
-        real64 scale = 1.0;
-        if( detF > 0.0 && Jnew >= 0.0 )
+      /*
+       * Multiplicative volumetric/isochoric split for the fixed endpoint L:
+       *
+       *   Ldev = L - tr(L)/d I,
+       *   F_{n+1} = exp(dt tr(L)/d) exp(dt Ldev) F_n,
+       *   V_{n+1} = V_n exp(dt tr(L)).
+       *
+       * Since the spherical part commutes with Ldev, this is exactly
+       * exp(dt L) F_n for a frozen endpoint velocity gradient.  The volume is
+       * advanced independently so pressure does not depend on det(F) after
+       * extreme isochoric distortion.
+       */
+      real64 deviatoricGenerator[3][3] = {};
+      for( int i = 0; i < activeDimensions; ++i )
+      {
+        for( int j = 0; j < activeDimensions; ++j )
         {
-          real64 power = planeStrain ? 0.5 : 1.0/3.0;
-          scale = LvArray::math::pow( Jnew / detF, power );
+          deviatoricGenerator[i][j] =
+            dt * particleVelocityGradient[p][i][j];
         }
-        // Tensor equation: particleDeformationGradient[p] = scale * (particleDeformationGradient[p]).
-        LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], scale );
+        deviatoricGenerator[i][i] -=
+          dt * divergence / static_cast< real64 >( activeDimensions );
       }
 
-      real64 temp[3][3] = {};
-      // Tensor equation: temp = particleDeformationGradient[p].
-      LvArray::tensorOps::copy< 3, 3 >( temp, particleDeformationGradient[p] );
+      real64 isochoricIncrement[3][3] = {};
+      matrixExponential3x3(
+        deviatoricGenerator,
+        isochoricIncrement );
+      normalizeActiveDeterminant3x3(
+        isochoricIncrement,
+        activeDimensions );
 
-      real64 minusOldDeformationGradient[3][3] = {};
-      // Tensor equations:
-      //   minusOldDeformationGradient = -oldDeformationGradient.
-      //   temp = 1 / dt * (temp + minusOldDeformationGradient).
-      //   particleFDot[p] = 1 / dt * (temp + minusOldDeformationGradient).
-      LvArray::tensorOps::scaledCopy< 3, 3 >( minusOldDeformationGradient, oldDeformationGradient, -1.0 );
-      LvArray::tensorOps::add< 3, 3 >( temp, minusOldDeformationGradient );
-      LvArray::tensorOps::scale< 3, 3 >( temp, 1 / dt );
-      LvArray::tensorOps::copy< 3, 3 >( particleFDot[p], temp );
+      real64 newDeformationGradient[3][3] = {};
+      multiply3x3(
+        isochoricIncrement,
+        oldDeformationGradient,
+        newDeformationGradient );
+
+      real64 const deltaLogVolume = dt * divergence;
+      real64 const volumetricStretch =
+        LvArray::math::exp(
+          deltaLogVolume / static_cast< real64 >( activeDimensions ) );
+      real64 const volumeRatio =
+        LvArray::math::exp( deltaLogVolume );
+
+      // Left multiplication by diag(volumetricStretch) on the active block.
+      for( int i = 0; i < activeDimensions; ++i )
+      {
+        for( int j = 0; j < 3; ++j )
+        {
+          newDeformationGradient[i][j] *= volumetricStretch;
+        }
+      }
+
+      if( activeDimensions == 2 )
+      {
+        // Preserve the plane-strain embedding exactly.
+        newDeformationGradient[0][2] = 0.0;
+        newDeformationGradient[1][2] = 0.0;
+        newDeformationGradient[2][0] = 0.0;
+        newDeformationGradient[2][1] = 0.0;
+        newDeformationGradient[2][2] = 1.0;
+      }
+
+      LvArray::tensorOps::copy< 3, 3 >(
+        particleDeformationGradient[p],
+        newDeformationGradient );
+
+      // Existing restartable particle volume is the authoritative volumetric
+      // state; no new old-L or log-J field is required.
+      particleVolume[p] *= volumeRatio;
+
+      for( int i = 0; i < 3; ++i )
+      {
+        for( int j = 0; j < 3; ++j )
+        {
+          particleFDot[p][i][j] =
+            ( newDeformationGradient[i][j] -
+              oldDeformationGradient[i][j] ) / dt;
+        }
+      }
     } );
 
     particleDeformationGradient.move( LvArray::MemorySpace::host );
     particleFDot.move( LvArray::MemorySpace::host );
+    particleVolume.move( LvArray::MemorySpace::host );
   } );
 }
 
@@ -28075,6 +28331,8 @@ void SolidMechanicsMPM::sphOverlapCorrection( real64 const dt,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< real64 const > const particleSPHJacobian = subRegion.getField< fields::mpm::particleSPHJacobian >();
+    arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 > particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 > particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 > particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
@@ -28085,15 +28343,16 @@ void SolidMechanicsMPM::sphOverlapCorrection( real64 const dt,
       localIndex const p = activeParticleIndices[pp];
 
       real64 Fold[3][3] = { };
-      // Tensor equations:
-      //   Fold = particleDeformationGradient[p].
-      //   J = det(Fold).
       LvArray::tensorOps::copy< 3, 3 >( Fold, particleDeformationGradient[p] );
-      real64 J = LvArray::tensorOps::determinant< 3 >( Fold );
 
-      if( J <= 0.0 )
+      real64 const referenceVolume = particleReferenceVolume[p];
+      real64 const J = referenceVolume > 0.0
+                     ? particleVolume[p] / referenceVolume
+                     : -1.0;
+
+      if( !( J > 0.0 ) )
       {
-        return; // CC: For lambda we would return instead of continue?
+        return;
       }
 
       // If there is overdensification, the jacobian as computed from the sph kernel will be much less
@@ -28148,6 +28407,12 @@ void SolidMechanicsMPM::sphOverlapCorrection( real64 const dt,
 
           particleVelocityGradient[p][i][i] += ( scale - 1.0 ) / ( scale * dt );
         }
+
+        // The overlap correction is an additional isotropic active-dimensional
+        // volume change applied after the endpoint exponential.
+        particleVolume[p] *= LvArray::math::pow(
+          scale,
+          static_cast< real64 >( numDims ) );
         // Modify p_L as well, consistent with the change to p_F in case a hypoelastic constitutive model
         // is used, and so the update to the internal energy is consistent with the change in F.
 
@@ -28221,8 +28486,12 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-      // Tensor equation: detF = det(particleDeformationGradient[p]).
-      real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+      real64 const referenceVolume = particleReferenceVolume[p];
+      real64 const J = referenceVolume > 0.0
+                     ? particleVolume[p] / referenceVolume
+                     : -1.0;
+      real64 const geometricDetF =
+        LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
 
       bool flaggedForDeletion = false;
       if( particleConstitutiveUpdateFlag[p][0] < 0 )
@@ -28231,7 +28500,11 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
         flaggedForDeletion = true;
       }
 
-      if( detF <= minParticleJacobian || detF >= maxParticleJacobian )
+      bool const validVolumeJacobian =
+        J > minParticleJacobian && J < maxParticleJacobian;
+      bool const validGeometricDeformationGradient =
+        geometricDetF > 0.0 && geometricDetF < numeric_max;
+      if( !( validVolumeJacobian && validGeometricDeformationGradient ) )
       {
         numParticlesIllConditionedJacobian += 1;
         flaggedForDeletion = true;
@@ -28264,7 +28537,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
 
       if( !flaggedForDeletion )
       {
-        particleVolume[p] = particleReferenceVolume[p] * detF;
+        // particleVolume was advanced independently in updateDeformationGradient()
+        // and may have been adjusted by sphOverlapCorrection().
         particleDensity[p] = particleMass[p] / particleVolume[p];
 
         if( useReferenceVectorsForParticleUpdate == 0 )
@@ -28352,9 +28626,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::add< 3, 3 >( dcofFdt, GT );
 
           real64 out[3][3] = {};
-          // Tensor equation: out = detF * (invFT * dcofFdt).
+          // Tensor equation: out = det(F) * (invFT * dcofFdt).
           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( out, invFT, dcofFdt );
-          LvArray::tensorOps::scale< 3, 3 >( out, detF );
+          LvArray::tensorOps::scale< 3, 3 >( out, geometricDetF );
 
           real64 dcofF[3][3] = {};
           // Tensor equation: dcofF = dt * out.
@@ -28454,8 +28728,10 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
                                   << " particles with negative constitutiveUpdateFlag for deletion!" );
 
   GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0,
-                      "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<
-    ") for deletion!" );
+                      "Flagged " << numParticlesIllConditionedJacobianGlobal
+                                  << " particles with an unreasonable volume Jacobian (J<" << m_minParticleJacobian
+                                  << " or J>" << m_maxParticleJacobian
+                                  << ") or a nonpositive/nonfinite geometric det(F) for deletion!" );
   GEOS_LOG_RANK_0_IF( numParticlesVelocityOverflowedGlobal > 0, "Flagged " << numParticlesVelocityOverflowedGlobal << " particles velocity squared overflow for deletion!" );
   GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0,
                       "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
@@ -28548,6 +28824,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get needed particle fields
+    arrayView1d< real64 const > const particleReferenceVolume =
+      subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
@@ -28709,13 +28987,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if( constitutiveModel.hasWrapper( "jacobian" ) )
     {
       arrayView2d< real64 > const constitutiveJacobian = constitutiveModel.getReference< array2d< real64 > >( "jacobian" );
-      arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        // particleDeformationGradient has already been advanced by updateDeformationGradient().
-        // This copy is therefore the current/end-of-step value J_{n+1}, not the beginning-of-step J_n.
-        constitutiveJacobian[p][0] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+        constitutiveJacobian[p][0] =
+          particleVolume[p] / particleReferenceVolume[p];
       } );
     }
 
@@ -29678,6 +29954,8 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
       arrayView1d< real64 const > const particleMeltFlag = subRegion.getField< fields::mpm::particleMeltFlag >();
+      arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+      arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
 
       arrayView2d< real64 const > particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 const > particleSurfacePosition = subRegion.getParticleSurfacePosition();
@@ -29728,14 +30006,18 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         {
           real64 rotation[3][3] = {};
           real64 deformationGradient[3][3] = {};
-          // Tensor equations:
-          //   deformationGradient = particleDeformationGradient[p].
-          //   rotation = polar_rotation(deformationGradient).
-          //   J = det(particleDeformationGradient[p]).
+          // Use the independently integrated volume ratio for the isotropic
+          // stretch, while retaining det(F) only as a geometric validity check
+          // for the polar decomposition.
           LvArray::tensorOps::copy< 3, 3 >( deformationGradient, particleDeformationGradient[p] );
-          real64 J = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+          real64 const referenceVolume = particleReferenceVolume[p];
+          real64 const J = referenceVolume > 0.0
+                         ? particleVolume[p] / referenceVolume
+                         : -1.0;
+          real64 const geometricDetF =
+            LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
           real64 constexpr minResetJacobian = 1.0e-12;
-          if( !( J > minResetJacobian ) )
+          if( !( J > minResetJacobian && geometricDetF > minResetJacobian ) )
           {
             return; // Add flag to output warning to console
           }

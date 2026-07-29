@@ -105,31 +105,41 @@ Grid Velocity Boundary Conditions
 Particle Kinematics
 --------------------------
 
-The updated grid velocity field is used to compute the updated velocity gradient at the particle, but here we use the half-step velocity
+The updated grid velocity field is used to compute an endpoint particle velocity gradient,
 
 .. math::
-   \textbf{L}_p^{(n+1/2)}=\sum_i ( v_{i}^{(n+1)-\frac{1}{2}a_{i}^{(n+1/2)}}) \tens \bar{\nabla S_{i,p}}
+   \mathbf{L}_p = \sum_i \mathbf{v}_i^{n+1} \otimes \overline{\nabla S}_{i,p}.
 
-It is observed that a boundary instability arises when using the prescribed velocity gradient boundary condition with this half-step update, and the results were more stable when using :math:'\textbf{L}_p^{(n+1)} = \sum_i v_{i}^{(n+1) \tens \bar{\nabla S_{i,p}}'.
-This option is the default when using either the prescribed deformation gradient table (fTable) to drive domain or boundary deformation.
-
-The updated particle velocity gradient is used to update the particle deformation gradient,
+The deformation-gradient update treats this endpoint value as constant over the step.  Let :math:`d=2` for plane strain and :math:`d=3` otherwise, and define
 
 .. math::
-   \textbf{L}_p^{(n+1/2)} = \sum_i (v_{i}^{(n+1)} - \fracs{1}{2} a_{i}^{(n+1/2)} \Delta t) \tens \bar{\nabla S_{i,p}}
+   \ell_p = \operatorname{tr}_d \mathbf{L}_p,
+   \qquad
+   \mathbf{L}_{p,\mathrm{dev}} = \mathbf{L}_p - \frac{\ell_p}{d}\mathbf{I}_d.
 
-This integration is currently done using sub-stepping unless :code-block:'Fsubcycles="1"'. The updated deformation gradient is used to update the Jacobian, volume, and density:
-
-.. math::
-   \textbf{F}_p^{(n+1/2)} = \textbf{F}_p^{(n-1/2)} + (\textbf{L}_p^{(n+1/2)} \cdot \textbf{F}_p^{(n-1/2)}) \Delta t
-
-Here, if using :code-block:'overlapCorrection="2"', we apply overlap correction to scale :math:'\textbf{F}_p^{(n+1/2)}' and :math:'J^{(n+1/2)}'. After that, we compute the updated volume and density:
+The volumetric and isochoric parts are advanced multiplicatively,
 
 .. math::
-   V_{p}^{(n+1/2)} = V_{p}^{(0)} J_{p}^{(n+1/2)}
+   \mathbf{F}_p^{n+1}
+   = \exp\left(\frac{\Delta t\,\ell_p}{d}\right)
+     \exp\left(\Delta t\,\mathbf{L}_{p,\mathrm{dev}}\right)
+     \mathbf{F}_p^n.
+
+Because the spherical part commutes with :math:`\mathbf{L}_{p,\mathrm{dev}}`, this is equal to
+:math:`\exp(\Delta t\,\mathbf{L}_p)\mathbf{F}_p^n` for the frozen endpoint velocity gradient.  The matrix exponential is evaluated by a fixed-size scaling-and-squaring Padé approximation; the legacy ``FSubcycles`` and ``exactJIntegration`` inputs are accepted for compatibility but are not used by this update.
+
+Particle volume is advanced independently from the accumulated deformation-gradient determinant,
 
 .. math::
-   \rho_{p}^{(n+1/2)} = m_{p}/V_{p}^{(n+1/2)}
+   V_p^{n+1} = V_p^n \exp(\Delta t\,\ell_p),
+   \qquad
+   J_p^{n+1} = \frac{V_p^{n+1}}{V_{p,\mathrm{ref}}},
+   \qquad
+   \rho_p^{n+1} = \frac{m_p}{V_p^{n+1}}.
+
+The scalar ratio :math:`V_p/V_{p,\mathrm{ref}}` is the Jacobian supplied to constitutive models and used for pressure-sensitive volume and density calculations.  The determinant of :math:`\mathbf{F}` remains a geometric validity diagnostic and is still used where the full deformation map is required.  The legacy ``particleFDot`` field remains a step-secant quantity, :math:`(\mathbf{F}_p^{n+1}-\mathbf{F}_p^n)/\Delta t`; it is not used as an old velocity-gradient scratch field.
+
+When ``overlapCorrection="2"`` is active, the additional isotropic correction is applied consistently to both :math:`\mathbf{F}_p` and :math:`V_p`.
 
 Internal Energy (Part 1)
 --------------------------
