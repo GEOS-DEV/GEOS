@@ -62,8 +62,6 @@ protected:
   /// The reference to the Group related to this GroupContext.
   Group const & m_group;
 
-  // TODO : DataContext const * referencedDataContext
-
 private:
 
   /**

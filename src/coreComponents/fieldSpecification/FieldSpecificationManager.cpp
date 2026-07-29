@@ -81,17 +81,13 @@ void FieldSpecificationManager::postInputInitialization()
   } );
 
   auto const & processors = ProcessorRegistry::getProcessors();
-  for (FieldSpecificationABC const * fs : fieldSpecifications)
+  for( FieldSpecificationABC const * fs : fieldSpecifications )
   {
-    GEOS_LOG( GEOS_FMT( "----- Processing {}", fs->getName()));
     auto it = processors.find( fs->getCatalogName());
     if( it != processors.end())
     {
-      GEOS_LOG( GEOS_FMT( "      - Found Processor {}", it->first ));
       ProcessorRegistry::ProcessorBase const & processor = *it->second;
       processor.expandFieldSpecification( *fs, *this );
-    } else {
-      GEOS_LOG( GEOS_FMT( "      - NO PROCESSOR !! {}", it->first ));
     }
   }
 }
