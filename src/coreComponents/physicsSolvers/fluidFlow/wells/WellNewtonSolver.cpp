@@ -125,14 +125,6 @@ void WellNewtonSolver::postInputInitialization()
 
 WellNewtonSolver::~WellNewtonSolver() = default;
 
-#if 0
-void WellNewtonSolver::initialize_postMeshGeneration()
-{
-  //ExecutableGroup::initialize_postMeshGeneration();
-  //DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  //generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
-}
-#endif
 void WellNewtonSolver::generateMeshTargetsFromTargetRegions( Group const & meshBodies )
 {
   for( auto const & target : m_targetRegionNames )
@@ -234,19 +226,6 @@ void WellNewtonSolver::logEndOfCycleInformation( integer const cycleNumber,
     getIterationStats().outputStatistics();
 }
 
-#if 0
-// tjb keep this history
-void WellNewtonSolver::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                          real64 const & GEOS_UNUSED_PARAM( dt ),
-                                          DomainPartition & GEOS_UNUSED_PARAM( domain ) )
-{
-  // clean the solution history
-  while( m_solutionHistory.size() > 0 )
-  {
-    m_solutionHistory.eraseArray( 0 );
-  }
-}
-#endif
 void WellNewtonSolver::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                   DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
 {
