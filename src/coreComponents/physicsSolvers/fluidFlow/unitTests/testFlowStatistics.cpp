@@ -51,6 +51,9 @@ struct TestInputs
   array2d< real64 > sourceRates;
   array2d< real64 > sinkRates;
 
+  // Time coordinates matching the rates tables
+  array1d< real64 > timeCoordinates;
+
   // parameters for precomputing results
   real64 dt;
   real64 sourceRateFactor;
@@ -97,8 +100,9 @@ struct TestSet
     inputs( inputParams )
   {
     // tables must provide the same timestep & phase rates
-    EXPECT_EQ( inputs.sourceRates.size( 0 ), inputs.sinkRates.size( 0 ));
-    EXPECT_EQ( inputs.sourceRates.size( 1 ), inputs.sinkRates.size( 1 ));
+    EXPECT_EQ( inputs.sourceRates.size( 0 ), inputs.sinkRates.size( 0 ) );
+    EXPECT_EQ( inputs.sourceRates.size( 1 ), inputs.sinkRates.size( 1 ) );
+    EXPECT_EQ( inputs.timeCoordinates.size( 0 ), inputs.sourceRates.size( 0 ) );
 
     timestepCount = inputs.sourceRates.size( 0 );
     phaseCount = inputs.sourceRates.size( 1 );
@@ -203,6 +207,16 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
       rateTable[timestepId][ip++] = phaseValue;
     }
     ++timestepId;
+  }
+}
+
+void setTimeCoordinates( array1d< real64 > & timeCoordinates, std::initializer_list< real64 > values )
+{
+  timeCoordinates.resize( values.size() );
+  integer i = 0;
+  for( auto const & value : values )
+  {
+    timeCoordinates[ i++ ] = value;
   }
 }
 
@@ -354,9 +368,9 @@ void checkTimeStepStats( TestSet const & testSet,
   EXPECT_LT( timestepId, testSet.timestepCount )
     << GEOS_FMT( "The tested time-step count were higher than expected (t = {} s).", time_n );
 
-  EXPECT_DOUBLE_EQ( time_n, timestepId * testSet.inputs.dt )
+  EXPECT_DOUBLE_EQ( time_n, testSet.inputs.timeCoordinates[ timestepId ] )
     << GEOS_FMT( "Unexpected time for timestep {}: expected {}, got {}",
-                 timestepId, timestepId * testSet.inputs.dt, time_n );
+                 timestepId, testSet.inputs.timeCoordinates[ timestepId ], time_n );
 }
 
 void checkWholeSimTimeStepStats( ProblemManager & problem,
@@ -540,6 +554,9 @@ TestSet getTestSet()
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
   testInputs.sinkElementsCount = 1;
+
+  setTimeCoordinates( testInputs.timeCoordinates,
+                      { 0.0, 500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 } );
 
   // FluxRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
@@ -817,6 +834,9 @@ TestSet getTestSet()
   testInputs.sourceElementsCount = 1;
   testInputs.sinkElementsCount = 1;
 
+  setTimeCoordinates( testInputs.timeCoordinates,
+                      { 0.0, 500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 } );
+
   // FluxInjectionRate & FluxProductionRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
                 { { 0.000, 0.0 },
@@ -1087,6 +1107,9 @@ TestSet getTestSet()
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
   testInputs.sinkElementsCount = 1;
+
+  setTimeCoordinates( testInputs.timeCoordinates,
+                      { 0.0, 500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0 } );
 
   // FluxInjectionRate & FluxProductionRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
