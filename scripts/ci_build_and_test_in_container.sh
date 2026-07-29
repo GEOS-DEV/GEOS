@@ -467,14 +467,7 @@ phase_finish 0
 
 if [[ -n "${SCCACHE_BIN}" ]]; then
   echo "sccache post-build state"
-  SCCACHE_STATS_FILE="${GEOS_SRC_DIR}/.sccache-runtime/stats.txt"
-  or_die mkdir -p "$(dirname "${SCCACHE_STATS_FILE}")"
-  ${SCCACHE_BIN} --show-adv-stats | tee "${SCCACHE_STATS_FILE}"
-  SCCACHE_STATS_STATUS=${PIPESTATUS[0]}
-  if [[ ${SCCACHE_STATS_STATUS} != 0 ]]; then
-    echo ERROR ${SCCACHE_STATS_STATUS} command: ${SCCACHE_BIN} --show-adv-stats
-    exit ${SCCACHE_STATS_STATUS}
-  fi
+  or_die ${SCCACHE_BIN} --show-adv-stats
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
