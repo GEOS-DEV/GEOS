@@ -69,18 +69,6 @@ public:
   virtual ~PermeabilitySpecification() override;
 
 
-  /// Deleted copy constructor
-  PermeabilitySpecification( PermeabilitySpecification const & ) = delete;
-
-  /// Defaulted move constructor
-  PermeabilitySpecification( PermeabilitySpecification && ) = default;
-
-  /// deleted copy assignment
-  PermeabilitySpecification & operator=( PermeabilitySpecification const & ) = delete;
-
-  /// deleted move assignement
-  PermeabilitySpecification & operator=( PermeabilitySpecification && ) = delete;
-
   /**
    * @brief View keys
    */
