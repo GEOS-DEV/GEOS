@@ -1359,7 +1359,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1376,7 +1376,7 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_FieldSpecification_SetErrorMode">
+	<xsd:simpleType name="geos_FieldSpecificationABC_SetErrorMode">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|silent|error|warning" />
 		</xsd:restriction>
@@ -1396,7 +1396,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1430,7 +1430,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1473,7 +1473,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
@@ -1506,7 +1506,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--objectPath => Path to the target field-->
@@ -1537,6 +1537,9 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 	<xsd:complexType name="PermeabilitySpecificationType">
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
+		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when a “set” does not target any region
@@ -1544,18 +1547,18 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
-		<!--functionNames => Name(s) of function(s) that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="1" />
-		<!--regionNames => Names of the regions that boundary condition is applied to.-->
+		<!--regionNames => Names of the cell regions that boundary condition is applied to.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" use="required" />
-		<!--scales => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1578,7 +1581,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--functionName => Name(s) of function(s) that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1606,7 +1609,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
 		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->

@@ -84,7 +84,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct
+  struct viewKeyStruct : public FieldSpecificationABC::viewKeyStruct
   {
     /// @return The key for setName
     constexpr static char const * setNamesString() { return "setNames"; }
@@ -94,26 +94,7 @@ public:
     constexpr static char const * fieldNameString() { return "fieldName"; }
     /// @return The key for component
     constexpr static char const * componentString() { return "component"; }
-    /// @return The key for initialCondition
-    constexpr static char const * initialConditionString() { return "initialCondition"; }
-    /// @return The key for functionNames
-    constexpr static char const * functionNamesString() { return "functionNames"; }
-    /// @return The key for scales
-    constexpr static char const * scalesString() { return "scales"; }
-    /// @return The key for beginTime
-    constexpr static char const * beginTimeString() { return "beginTime"; }
-    /// @return The key for endTime
-    constexpr static char const * endTimeString() { return "endTime"; }
-    /// @return The key errorSetMode
-    constexpr static char const * errorSetModeString() { return "errorSetMode"; }
   };
-
-  /**
-   * Accessor
-   * @return const reference to m_functionNames
-   */
-  string_array const & getFunctionNames() const
-  { return m_functionNames; }
 
   /**
    * Accessor
@@ -143,41 +124,6 @@ public:
   string_array const & getSetNames() const
   { return m_setNames; }
 
-  /**
-   * Accessor
-   * @return const m_scales
-   */
-  array1d< real64 > getScales() const
-  { return m_scales; }
-
-  /**
-   * Accessor
-   * @return const m_initialCondition
-   */
-  int initialCondition() const
-  { return m_initialCondition; }
-
-  /**
-   * Accessor
-   * @return const m_beginTime
-   */
-  real64 getStartTime() const
-  { return m_beginTime; }
-
-  /**
-   * Accessor
-   * @return const m_endTime
-   */
-  real64 getEndTime() const
-  { return m_endTime; }
-
-  /**
-   * Accessor
-   * @return const m_emptySetErrorMode
-   */
-  FieldSpecification::SetErrorMode getErrorSetMode() const
-  { return m_emptySetErrorMode; }
-
 protected:
 
   virtual void postInputInitialization() override;
@@ -197,24 +143,6 @@ private:
 
   /// The component the boundary condition acts on. Not used if field is a scalar.
   int m_component;
-
-  /// Whether or not the boundary condition is an initial condition.
-  int m_initialCondition;
-
-  /// Name(s) of the function used to generate values for application.
-  string_array m_functionNames;
-
-  /// Scale factor(s) to use on the value of the boundary condition.
-  array1d< real64 > m_scales;
-
-  /// Time after which the bc is allowed to be applied
-  real64 m_beginTime;
-
-  /// Time after which the bc will no longer be applied.
-  real64 m_endTime;
-
-  /// Enum containing the possible output modes when an error occur
-  FieldSpecification::SetErrorMode m_emptySetErrorMode;
 
 };
 

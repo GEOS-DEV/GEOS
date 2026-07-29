@@ -96,8 +96,8 @@
       setNames="{ all }"
       regionNames="reservoir/block"
       fieldName="rockPerm_permeability"
-      functionNames="{ permxFunc, permyFunc, permzFunc }"
-      scales="{ 9.869233e-16, 9.869233e-16, 9.869233e-16 }"/>
+      functionName="{ permxFunc, permyFunc, permzFunc }"
+      scale="{ 9.869233e-16, 9.869233e-16, 9.869233e-16 }"/>
 
     <FieldSpecification
       name="referencePorosity"
