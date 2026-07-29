@@ -97,6 +97,7 @@ public:
                  arrayView2d< real64 > const & inputOldDamage,
                  arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputCrackDrivingForce,
+                 arrayView2d< real64 > const & inputOldCrackDrivingForce,
                  arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
@@ -115,6 +116,7 @@ public:
     m_oldDamage( inputOldDamage ),
     m_damageGrad( inputDamageGrad ),
     m_crackDrivingForce( inputCrackDrivingForce ),
+    m_oldCrackDrivingForce( inputOldCrackDrivingForce ),
     m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
@@ -299,6 +301,11 @@ public:
 
     m_volStrain( k, q ) = traceOfStrain;
 
+    // update crack driving force history variable before stress is degraded below
+    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
+
+    m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
+
     if( m_fractureModelType == FractureModelType::Nucleation )
     {
       real64 stressP;
@@ -344,20 +351,10 @@ public:
   }
 
 
-  // TODO: The code below assumes the crack driving force will never be
-  //       evaluated in a non-converged / garbage configuration.
-
   GEOS_HOST_DEVICE
   virtual real64 getCrackDrivingForce( localIndex const k,
                                        localIndex const q ) const
   {
-    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
-
-    if( sed > m_crackDrivingForce( k, q ) )
-    {
-      m_crackDrivingForce( k, q ) = sed;
-    }
-
     return m_crackDrivingForce( k, q );
   }
 
@@ -418,6 +415,7 @@ public:
   {
     ElasticIsotropicUpdates::saveConvergedState( k, q );
     m_oldDamage[k][q] = m_newDamage[k][q];
+    m_oldCrackDrivingForce[k][q] = m_crackDrivingForce[k][q];
   }
 
   /// The new damage value on all quadrature points
@@ -431,6 +429,9 @@ public:
 
   /// The strain energy density to drive fracture at the quadrature point
   arrayView2d< real64 > const m_crackDrivingForce;
+
+  /// The crack driving force at the last converged state
+  arrayView2d< real64 > const m_oldCrackDrivingForce;
 
   /// The volumetric strain at the quadrature point
   arrayView2d< real64 > const m_volStrain;
@@ -509,6 +510,7 @@ public:
                                                                        m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
                                                                        m_crackDrivingForce.toView(),
+                                                                       m_oldCrackDrivingForce.toView(),
                                                                        m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
@@ -559,6 +561,9 @@ protected:
 
   /// The strain energy density to drive fracture at the quadrature point
   array2d< real64 > m_crackDrivingForce;
+
+  /// The crack driving force at the last converged state
+  array2d< real64 > m_oldCrackDrivingForce;
 
   /// The volumetric strain at the quadrature point
   array2d< real64 > m_volStrain;

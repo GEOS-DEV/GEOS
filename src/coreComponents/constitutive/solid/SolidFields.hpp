@@ -162,6 +162,14 @@ DECLARE_FIELD( crackDrivingForce,
                WRITE_AND_READ,
                "Material crack driving force" );
 
+DECLARE_FIELD( oldCrackDrivingForce,
+               "oldCrackDrivingForce",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Material crack driving force at the last converged state" );
+
 DECLARE_FIELD( volStrain,
                "volStrain",
                array2d< real64 >,
