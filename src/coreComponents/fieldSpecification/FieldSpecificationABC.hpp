@@ -34,7 +34,7 @@ class Function;
 /**
  * @class FieldSpecificationABC
  *
- * Abstract Base Class grouping multiple types of field specifications.
+ * Abstract Base Class for concrete field modifiers (`FieldSpecification`) and high-level user-defined field specification.
  */
 class FieldSpecificationABC : public dataRepository::Group
 {
