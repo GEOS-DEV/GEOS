@@ -1073,6 +1073,8 @@ public:
 
   void cpdiDomainScaling( ParticleManager & particleManager );
 
+  void resolveParticleSubdivisionDefault( ParticleManager & particleManager );
+
   void subdivideParticles( ParticleManager & particleManager );
 
   void resizeMappingArrays( ParticleManager & particleManager );
@@ -1329,6 +1331,7 @@ protected:
   real64 m_contactNormalExponent;
   mpm::ContactNormalTypeOption m_contactNormalType;
   int m_cpdiDomainScaling;
+  mpm::CPDIDomainScalingTypeOption m_cpdiDomainScalingType;
   real64 m_crackTipDetectionThreshold;
   int m_damageFieldPartitioning;
   real64 m_damageHessianSurfaceThreshold;
@@ -1342,6 +1345,7 @@ protected:
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
+  mpm::DomainResetTypeOption m_domainResetType;
   array1d< real64 > m_domainStress;
   real64 m_domainTemperature;
   real64 m_domainTemperatureRate;
@@ -1519,7 +1523,8 @@ protected:
   real64 m_stressControlSolverDampingRatio;
   array2d< real64 > m_stressTable;
   mpm::InterpolationOption m_stressTableInterpType;
-  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
+  int m_subdivideParticles; // -1 automatic, 0 disabled, 1 enabled.
+  int m_subdivideParticlesAutomatic; // True after resolving the automatic subdivision default.
   int m_surfaceDetection;
   int m_surfaceHealing;
   real64 m_surfaceNormalAndPositionDamageThreshold;

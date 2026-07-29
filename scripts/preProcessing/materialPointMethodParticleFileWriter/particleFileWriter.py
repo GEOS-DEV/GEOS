@@ -764,11 +764,13 @@ parameters = {
                'contactGapCorrection': ( None, True ),  # MPM: enable contact-gap mitigation.
                'contactNormalExponent': ( None, True ),  # MPM: exponent for weighted contact normals.
                'contactNormalType': ( None, True ),  # MPM: contact-normal construction mode.
-               'cpdiDomainScaling': ( None, True ),  # MPM: CPDI domain-scaling option.
+               'cpdiDomainScaling': ( None, True ),  # MPM: enable CPDI integration-domain scaling.
+               'cpdiDomainScalingType': ( None, True ),  # MPM: CPDI scaling algorithm: homel or vpHencky.
                'crackTipDetectionThreshold': ( None, True ),  # MPM: crack-tip detection threshold.
                'damageFieldPartitioning': ( None, True ),  # MPM: partition velocity fields using damage gradients.
                'dependencies': ( [], False ),  # PFW: files to stage beside generated input.
                'directionalOverlapCorrection': ( None, True ),  # MPM: directional correction for particle pile-up.
+               'domainResetType': ( None, True ),  # MPM: deformation-gradient reset algorithm: isotropicPolar or vpHencky.
                'disableSurfaceNormalsAndPositionsOnCPDIScaling': ( None, True ),  # MPM: drop explicit surfaces after CPDI scaling.
                'disableSurfaceNormalsAndPositionsOnDamage': ( None, True ),  # MPM: drop explicit surfaces after damage.
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
@@ -908,7 +910,7 @@ parameters = {
                'stressTable': ( None, True ),  # MPM: time-dependent stress table.
                'stressTableInterpType': ( None, True ),  # MPM: interpolation type for stressTable.
                'surfaceTensionPairs': (None, True ), # MPM: pair-wise surface tension coefficient.
-               'subdivideParticles': ( None, True ),  # MPM: split particles spanning too much of a cell.
+               'subdivideParticles': ( None, True ),  # MPM: -1 automatic, 0 off, 1 on; automatic is on only for vpHencky linear CPDI scaling.
                'surfaceDetection': ( None, True ),  # MPM: automatic initial surface detection.
                'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
                'surfaceQualityThreshold': ( None, True ),  # MPM: mapping-normal tensor quality threshold for same-group DFG.

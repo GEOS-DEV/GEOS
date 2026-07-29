@@ -878,6 +878,557 @@ bool tracerVariablesNeedInternalEnergy( string_array const & variables )
   return std::find( variables.begin(), variables.end(), string( "internalEnergy" ) ) != variables.end();
 }
 
+/**
+ * @brief Result of the fixed-volume deviatoric-Hencky particle-domain projection.
+ */
+struct VPHenckyDomainProjectionResult
+{
+  int valid;
+  int changed;
+  int volumeFeasible;
+  int volumeRelaxed;
+  real64 retainedDeviatoricFraction;
+  real64 targetHalfMeasure;
+  real64 projectedDiagonal;
+};
+
+/**
+ * @brief Reconstructs unscaled current particle r-vectors from F and the reference r-vectors.
+ *
+ * Particle r-vectors are stored row-wise, so R = R0 F^T.
+ */
+template< typename DEFORMATION_GRADIENT,
+          typename REFERENCE_R_VECTORS,
+          typename CURRENT_R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void reconstructParticleDomainFromDeformationGradient(
+  DEFORMATION_GRADIENT const & deformationGradient,
+  REFERENCE_R_VECTORS const & referenceRVectors,
+  CURRENT_R_VECTORS && currentRVectors )
+{
+  for( int a = 0; a < 3; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      currentRVectors[a][i] =
+        referenceRVectors[a][0] * deformationGradient[i][0] +
+        referenceRVectors[a][1] * deformationGradient[i][1] +
+        referenceRVectors[a][2] * deformationGradient[i][2];
+    }
+  }
+}
+
+/**
+ * @brief Returns the d-dimensional measure of the half-edge parallelepiped.
+ *
+ * The full CPDI domain measure is 2^d times this value. For plane strain this
+ * is the area spanned by r1 and r2; in 3-D it is |det(R)|.
+ */
+template< typename R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 particleDomainHalfMeasure( R_VECTORS const & rVectors,
+                                  int const numDims )
+{
+  if( numDims == 2 )
+  {
+    real64 const g00 = LvArray::tensorOps::l2NormSquared< 3 >( rVectors[0] );
+    real64 const g11 = LvArray::tensorOps::l2NormSquared< 3 >( rVectors[1] );
+    real64 const g01 = rVectors[0][0] * rVectors[1][0] +
+                       rVectors[0][1] * rVectors[1][1] +
+                       rVectors[0][2] * rVectors[1][2];
+    return LvArray::math::sqrt( LvArray::math::max( g00 * g11 - g01 * g01, 0.0 ) );
+  }
+
+  real64 denseR[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( denseR, rVectors );
+  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( denseR ) );
+}
+
+/**
+ * @brief Returns the full corner-to-opposite-corner diagonal of a particle domain.
+ */
+template< typename R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 particleDomainMaximumDiagonal( R_VECTORS const & rVectors,
+                                      int const numDims )
+{
+  real64 maxHalfDiagonalSquared = 0.0;
+  if( numDims == 2 )
+  {
+    for( int sign1 = -1; sign1 <= 1; sign1 += 2 )
+    {
+      real64 corner[3] = {};
+      for( int i = 0; i < 3; ++i )
+      {
+        corner[i] = rVectors[0][i] + sign1 * rVectors[1][i];
+      }
+      maxHalfDiagonalSquared = LvArray::math::max(
+        maxHalfDiagonalSquared,
+        LvArray::tensorOps::l2NormSquared< 3 >( corner ) );
+    }
+  }
+  else
+  {
+    // One vector from each opposite-corner pair.
+    int const signs[4][3] = {
+      { 1, 1, 1 },
+      { 1, -1, 1 },
+      { -1, 1, 1 },
+      { -1, -1, 1 }
+    };
+    for( int c = 0; c < 4; ++c )
+    {
+      real64 corner[3] = {};
+      for( int i = 0; i < 3; ++i )
+      {
+        corner[i] =
+          signs[c][0] * rVectors[0][i] +
+          signs[c][1] * rVectors[1][i] +
+          signs[c][2] * rVectors[2][i];
+      }
+      maxHalfDiagonalSquared = LvArray::math::max(
+        maxHalfDiagonalSquared,
+        LvArray::tensorOps::l2NormSquared< 3 >( corner ) );
+    }
+  }
+  return 2.0 * LvArray::math::sqrt( maxHalfDiagonalSquared );
+}
+
+/**
+ * @brief Returns the maximum half-domain measure compatible with a full diagonal bound.
+ *
+ * For a d-dimensional centered parallelepiped, fixed measure and a full
+ * diagonal D are compatible exactly when
+ *
+ *   halfMeasure <= ( D / ( 2 sqrt(d) ) )^d.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 particleDomainMaximumFeasibleHalfMeasure( int const numDims,
+                                                  real64 const maximumDiagonal )
+{
+  real64 const isotropicHalfEdge = maximumDiagonal /
+                                   ( 2.0 * LvArray::math::sqrt( static_cast< real64 >( numDims ) ) );
+  return LvArray::math::pow( isotropicHalfEdge, static_cast< real64 >( numDims ) );
+}
+
+/**
+ * @brief Builds one member of the volume-preserving deviatoric-Hencky homotopy.
+ *
+ * The eigenvectors are stored by rows, consistent with LVArray. The update
+ * acts in particle-generator coordinates, R(beta) = S(beta) R, and therefore
+ * preserves the left polar rotation and the principal axes of the current
+ * domain.
+ */
+template< typename OUTPUT_R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void buildVPHenckyParticleDomain( real64 const ( &inputRVectors )[3][3],
+                                  int const numDims,
+                                  real64 const ( &principalLogStretch )[3],
+                                  real64 const ( &principalDirections )[3][3],
+                                  real64 const targetMeanLogStretch,
+                                  real64 const beta,
+                                  OUTPUT_R_VECTORS && outputRVectors )
+{
+  LvArray::tensorOps::copy< 3, 3 >( outputRVectors, inputRVectors );
+
+  real64 originalMeanLogStretch = principalLogStretch[0] +
+                                  principalLogStretch[1];
+  if( numDims == 3 )
+  {
+    originalMeanLogStretch += principalLogStretch[2];
+  }
+  originalMeanLogStretch /= static_cast< real64 >( numDims );
+
+  real64 principalScale[3] = { 1.0, 1.0, 1.0 };
+  for( int k = 0; k < numDims; ++k )
+  {
+    real64 const retainedLogStretch =
+      targetMeanLogStretch +
+      beta * ( principalLogStretch[k] - originalMeanLogStretch );
+    principalScale[k] =
+      LvArray::math::exp( retainedLogStretch - principalLogStretch[k] );
+  }
+
+  real64 generatorTransform[3][3] = {};
+  for( int a = 0; a < numDims; ++a )
+  {
+    for( int b = 0; b < numDims; ++b )
+    {
+      for( int k = 0; k < numDims; ++k )
+      {
+        generatorTransform[a][b] +=
+          principalDirections[k][a] * principalScale[k] * principalDirections[k][b];
+      }
+    }
+  }
+
+  for( int a = 0; a < numDims; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      outputRVectors[a][i] = 0.0;
+      for( int b = 0; b < numDims; ++b )
+      {
+        outputRVectors[a][i] += generatorTransform[a][b] * inputRVectors[b][i];
+      }
+    }
+  }
+
+  // Remove the small determinant/area drift introduced by the eigensolve and
+  // matrix products. This correction is isotropic in generator space, so it
+  // does not change beta, the polar rotation, or the principal directions.
+  real64 const targetHalfMeasure =
+    LvArray::math::exp( static_cast< real64 >( numDims ) *
+                        targetMeanLogStretch );
+  real64 const currentHalfMeasure =
+    particleDomainHalfMeasure( outputRVectors, numDims );
+  if( currentHalfMeasure > 0.0 )
+  {
+    real64 const measureCorrection = LvArray::math::pow(
+      targetHalfMeasure / currentHalfMeasure,
+      1.0 / static_cast< real64 >( numDims ) );
+    for( int a = 0; a < numDims; ++a )
+    {
+      LvArray::tensorOps::scale< 3 >( outputRVectors[a], measureCorrection );
+    }
+  }
+}
+
+/**
+ * @brief Projects a particle domain along a deviatoric-Hencky homotopy.
+ *
+ * The largest beta in [0,1] satisfying the diagonal bound is retained. If the
+ * requested measure is infeasible, CPDI integration-domain scaling may relax
+ * the measure to the exact geometric cap. A physical deformation-gradient
+ * reset instead keeps the requested measure, returns beta=0, and reports the
+ * incompatibility so particle subdivision can resolve it on the next step.
+ */
+template< typename INPUT_R_VECTORS,
+          typename OUTPUT_R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+VPHenckyDomainProjectionResult projectVPHenckyParticleDomain(
+  INPUT_R_VECTORS const & input,
+  int const numDims,
+  real64 const maximumDiagonal,
+  real64 const requestedHalfMeasure,
+  bool const preserveRequestedMeasureWhenInfeasible,
+  OUTPUT_R_VECTORS && output )
+{
+  VPHenckyDomainProjectionResult result = {
+    0, 0, 0, 0, 1.0, requestedHalfMeasure, 0.0
+  };
+
+  real64 inputRVectors[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( inputRVectors, input );
+  LvArray::tensorOps::copy< 3, 3 >( output, inputRVectors );
+
+  if( !( numDims == 2 || numDims == 3 ) ||
+      !( maximumDiagonal > 0.0 ) ||
+      !( requestedHalfMeasure > 0.0 ) )
+  {
+    return result;
+  }
+
+  real64 gram[3][3] = {};
+  for( int a = 0; a < numDims; ++a )
+  {
+    for( int b = 0; b < numDims; ++b )
+    {
+      gram[a][b] = inputRVectors[a][0] * inputRVectors[b][0] +
+                   inputRVectors[a][1] * inputRVectors[b][1] +
+                   inputRVectors[a][2] * inputRVectors[b][2];
+    }
+  }
+
+  real64 principalStretchSquared[3] = {};
+  real64 principalDirections[3][3] = {};
+  if( numDims == 2 )
+  {
+    real64 const mean = 0.5 * ( gram[0][0] + gram[1][1] );
+    real64 const difference = 0.5 * ( gram[0][0] - gram[1][1] );
+    real64 const radius = LvArray::math::sqrt( difference * difference + gram[0][1] * gram[0][1] );
+    principalStretchSquared[0] = mean + radius;
+    real64 const determinant = LvArray::math::max(
+      gram[0][0] * gram[1][1] - gram[0][1] * gram[0][1],
+      0.0 );
+    principalStretchSquared[1] = principalStretchSquared[0] > 0.0
+                               ? determinant / principalStretchSquared[0]
+                               : 0.0;
+
+    real64 const theta = 0.5 * LvArray::math::atan2( 2.0 * gram[0][1],
+                                                     gram[0][0] - gram[1][1] );
+    real64 const cosine = LvArray::math::cos( theta );
+    real64 const sine = LvArray::math::sin( theta );
+    principalDirections[0][0] = cosine;
+    principalDirections[0][1] = sine;
+    principalDirections[1][0] = -sine;
+    principalDirections[1][1] = cosine;
+  }
+  else
+  {
+    real64 symmetricGram[6] = {};
+    LvArray::tensorOps::denseToSymmetric< 3 >( symmetricGram, gram );
+    LvArray::tensorOps::symEigenvectors< 3 >( principalStretchSquared,
+                                              principalDirections,
+                                              symmetricGram );
+  }
+
+  real64 largestPrincipalStretchSquared = 0.0;
+  for( int k = 0; k < numDims; ++k )
+  {
+    largestPrincipalStretchSquared = LvArray::math::max(
+      largestPrincipalStretchSquared,
+      principalStretchSquared[k] );
+  }
+  real64 const minimumResolvedStretchSquared =
+    1.0e-24 * largestPrincipalStretchSquared;
+  if( !( largestPrincipalStretchSquared > 0.0 ) )
+  {
+    return result;
+  }
+
+  real64 principalLogStretch[3] = {};
+  for( int k = 0; k < numDims; ++k )
+  {
+    if( !( principalStretchSquared[k] > minimumResolvedStretchSquared ) )
+    {
+      return result;
+    }
+    principalLogStretch[k] = 0.5 * LvArray::math::log( principalStretchSquared[k] );
+  }
+
+  real64 const maximumFeasibleHalfMeasure =
+    particleDomainMaximumFeasibleHalfMeasure( numDims, maximumDiagonal );
+  real64 targetHalfMeasure = requestedHalfMeasure;
+  result.volumeFeasible =
+    requestedHalfMeasure <= maximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 );
+  if( result.volumeFeasible == 0 && !preserveRequestedMeasureWhenInfeasible )
+  {
+    targetHalfMeasure = maximumFeasibleHalfMeasure;
+    result.volumeRelaxed = 1;
+  }
+  result.targetHalfMeasure = targetHalfMeasure;
+
+  real64 const targetMeanLogStretch =
+    LvArray::math::log( targetHalfMeasure ) / static_cast< real64 >( numDims );
+
+  if( result.volumeFeasible == 0 && preserveRequestedMeasureWhenInfeasible )
+  {
+    result.retainedDeviatoricFraction = 0.0;
+    buildVPHenckyParticleDomain( inputRVectors,
+                                 numDims,
+                                 principalLogStretch,
+                                 principalDirections,
+                                 targetMeanLogStretch,
+                                 0.0,
+                                 output );
+  }
+  else
+  {
+    real64 candidate[3][3] = {};
+    buildVPHenckyParticleDomain( inputRVectors,
+                                 numDims,
+                                 principalLogStretch,
+                                 principalDirections,
+                                 targetMeanLogStretch,
+                                 1.0,
+                                 candidate );
+
+    if( particleDomainMaximumDiagonal( candidate, numDims ) <=
+        maximumDiagonal * ( 1.0 + 1.0e-12 ) )
+    {
+      result.retainedDeviatoricFraction = 1.0;
+      LvArray::tensorOps::copy< 3, 3 >( output, candidate );
+    }
+    else
+    {
+      real64 lowerBeta = 0.0;
+      real64 upperBeta = 1.0;
+      // Forty iterations resolve beta to about 1e-12, which is tighter than
+      // the geometric tolerances used below while avoiding unnecessary matrix
+      // exponentials in this per-particle path.
+      for( int iteration = 0; iteration < 40; ++iteration )
+      {
+        real64 const beta = 0.5 * ( lowerBeta + upperBeta );
+        buildVPHenckyParticleDomain( inputRVectors,
+                                     numDims,
+                                     principalLogStretch,
+                                     principalDirections,
+                                     targetMeanLogStretch,
+                                     beta,
+                                     candidate );
+        if( particleDomainMaximumDiagonal( candidate, numDims ) <= maximumDiagonal )
+        {
+          lowerBeta = beta;
+        }
+        else
+        {
+          upperBeta = beta;
+        }
+      }
+      result.retainedDeviatoricFraction = lowerBeta;
+      buildVPHenckyParticleDomain( inputRVectors,
+                                   numDims,
+                                   principalLogStretch,
+                                   principalDirections,
+                                   targetMeanLogStretch,
+                                   lowerBeta,
+                                   output );
+    }
+  }
+
+  real64 const projectedHalfMeasure =
+    particleDomainHalfMeasure( output, numDims );
+  result.projectedDiagonal = particleDomainMaximumDiagonal( output, numDims );
+  if( !( projectedHalfMeasure > 0.0 && projectedHalfMeasure < DBL_MAX ) ||
+      !( result.projectedDiagonal > 0.0 &&
+         result.projectedDiagonal < DBL_MAX ) )
+  {
+    return result;
+  }
+
+  real64 const relativeMeasureError =
+    LvArray::math::abs( projectedHalfMeasure - targetHalfMeasure ) /
+    targetHalfMeasure;
+  if( relativeMeasureError > 1.0e-8 )
+  {
+    return result;
+  }
+
+  bool const diagonalMustBeFeasible =
+    result.volumeFeasible == 1 || !preserveRequestedMeasureWhenInfeasible;
+  if( diagonalMustBeFeasible &&
+      result.projectedDiagonal > maximumDiagonal * ( 1.0 + 1.0e-10 ) )
+  {
+    return result;
+  }
+
+  real64 largestInputComponent = 0.0;
+  real64 largestDifference = 0.0;
+  for( int a = 0; a < 3; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      largestInputComponent = LvArray::math::max(
+        largestInputComponent,
+        LvArray::math::abs( inputRVectors[a][i] ) );
+      largestDifference = LvArray::math::max(
+        largestDifference,
+        LvArray::math::abs( output[a][i] - inputRVectors[a][i] ) );
+    }
+  }
+  result.changed = largestDifference >
+                   1.0e-12 * LvArray::math::max( largestInputComponent, 1.0e-30 );
+  result.valid = 1;
+  return result;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+int countSubdivisionDirections( int const subdivisionMask,
+                                int const numDims )
+{
+  int count = 0;
+  for( int d = 0; d < numDims; ++d )
+  {
+    count += ( subdivisionMask >> d ) & 1;
+  }
+  return count;
+}
+
+/**
+ * @brief Selects the requested number of longest current r-vectors.
+ */
+template< typename R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+int longestParticleDomainDirectionsMask( R_VECTORS const & rVectors,
+                                         int const numDims,
+                                         int const numberOfDirections )
+{
+  int mask = 0;
+  for( int selection = 0; selection < numberOfDirections; ++selection )
+  {
+    int longestDirection = -1;
+    real64 longestLengthSquared = -1.0;
+    for( int d = 0; d < numDims; ++d )
+    {
+      if( ( mask & ( 1 << d ) ) == 0 )
+      {
+        real64 const lengthSquared =
+          LvArray::tensorOps::l2NormSquared< 3 >( rVectors[d] );
+        if( lengthSquared > longestLengthSquared )
+        {
+          longestLengthSquared = lengthSquared;
+          longestDirection = d;
+        }
+      }
+    }
+    if( longestDirection >= 0 )
+    {
+      mask |= 1 << longestDirection;
+    }
+  }
+  return mask;
+}
+
+/**
+ * @brief Recovers F from row-wise reference and current particle-domain matrices.
+ *
+ * Since R = R0 F^T, F = ( R0^{-1} R )^T.
+ */
+template< typename REFERENCE_R_VECTORS,
+          typename CURRENT_R_VECTORS,
+          typename DEFORMATION_GRADIENT >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool deformationGradientFromParticleDomains(
+  REFERENCE_R_VECTORS const & referenceRVectors,
+  CURRENT_R_VECTORS const & currentRVectors,
+  DEFORMATION_GRADIENT && deformationGradient )
+{
+  real64 referenceDomain[3][3] = {};
+  real64 currentDomain[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( referenceDomain, referenceRVectors );
+  LvArray::tensorOps::copy< 3, 3 >( currentDomain, currentRVectors );
+
+  real64 const determinant =
+    LvArray::tensorOps::determinant< 3 >( referenceDomain );
+  real64 referenceScale = 0.0;
+  for( int i = 0; i < 3; ++i )
+  {
+    referenceScale = LvArray::math::max(
+      referenceScale,
+      LvArray::tensorOps::l2Norm< 3 >( referenceDomain[i] ) );
+  }
+  real64 const determinantTolerance =
+    1.0e-18 * referenceScale * referenceScale * referenceScale;
+  if( !( LvArray::math::abs( determinant ) > determinantTolerance ) )
+  {
+    return false;
+  }
+
+  real64 inverseReferenceDomain[3][3] = {};
+  LvArray::tensorOps::invert< 3 >(
+    inverseReferenceDomain,
+    referenceDomain );
+  real64 deformationGradientTranspose[3][3] = {};
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(
+    deformationGradientTranspose,
+    inverseReferenceDomain,
+    currentDomain );
+  LvArray::tensorOps::transpose< 3, 3 >(
+    deformationGradient,
+    deformationGradientTranspose );
+  return true;
+}
+
 void moveTracerSearchDataToHost( ParticleSubRegion & subRegion )
 {
   subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleIDString() ).move( LvArray::MemorySpace::host, true );
@@ -1065,6 +1616,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_contactNormalExponent( 1.0 ),
   m_contactNormalType( mpm::ContactNormalTypeOption::MassWeighted ),
   m_cpdiDomainScaling( 0 ),
+  m_cpdiDomainScalingType( mpm::CPDIDomainScalingTypeOption::Homel ),
   m_crackTipDetectionThreshold( 0.5 ),
   m_damageFieldPartitioning( 0 ),
   m_damageHessianSurfaceThreshold( 1e16 ), // Setting to DBL_MAX may cause floating point error in calculations from overflow
@@ -1078,6 +1630,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_domainExtent(),
   m_domainF(),
   m_domainL(),
+  m_domainResetType( mpm::DomainResetTypeOption::IsotropicPolar ),
   m_domainStress(),
   m_domainTemperature(),
   m_domainTemperatureRate(),
@@ -1243,7 +1796,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlSolverDampingRatio( 5.0e-2 ),
   m_stressTable(),
   m_stressTableInterpType( mpm::InterpolationOption::Linear ),
-  m_subdivideParticles( 0 ),
+  m_subdivideParticles( -1 ),
+  m_subdivideParticlesAutomatic( 0 ),
   m_surfaceDetection( 0 ),
   m_surfaceHealing( false ),
   m_surfaceNormalAndPositionDamageThreshold( 0.9999 ),
@@ -1423,6 +1977,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for CPDI domain scaling" );
 
+  registerWrapper( "cpdiDomainScalingType", &m_cpdiDomainScalingType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_cpdiDomainScalingType ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "CPDI domain-scaling algorithm. Options are:\n* " +
+                    EnumStrings< mpm::CPDIDomainScalingTypeOption >::concat( "\n* " ) );
+
   registerWrapper( "crackTipDetectionThreshold", &m_crackTipDetectionThreshold ).
     setApplyDefaultValue( m_crackTipDetectionThreshold ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1497,6 +2058,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "domain L" );
+
+  registerWrapper( "domainResetType", &m_domainResetType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_domainResetType ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Deformation-gradient reset algorithm for fluid, melted, damaged, and explicitly requested scaled-surface particles. Options are:\n* " +
+                    EnumStrings< mpm::DomainResetTypeOption >::concat( "\n* " ) );
 
   registerWrapper( "domainStress", &m_domainStress ).
     setInputFlag( InputFlags::FALSE ).
@@ -2294,7 +2862,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_subdivideParticles ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Option for splitting particles when they span more than a grid cell (prevents numerical fracture)" );
+    setDescription( "Particle subdivision policy: -1 selects the automatic default, 0 disables subdivision, and 1 enables it. "
+                    "Automatic subdivision is enabled only for vpHencky CPDI domain scaling with linear CPDI shape functions; "
+                    "it remains disabled for B-spline particles and deformation-gradient reset alone." );
 
   registerWrapper( "surfaceDetection", &m_surfaceDetection ).
     setApplyDefaultValue( m_surfaceDetection ).
@@ -2592,6 +3162,8 @@ void SolidMechanicsMPM::postInputInitialization()
                  "surfaceQualityThreshold must be in [0,1]." );
   GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
                  "thinFeatureDFGThreshold must be non-negative." );
+  GEOS_ERROR_IF( m_subdivideParticles < -1 || m_subdivideParticles > 1,
+                 "subdivideParticles must be -1 (automatic), 0 (disabled), or 1 (enabled)." );
 
   GEOS_LOG_RANK_0_IF( m_exactJIntegration != 0,
                       "exactJIntegration is deprecated and ignored: the volumetric split always advances particle volume with exp(dt*tr(L))." );
@@ -3218,7 +3790,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
           subRegion.registerField< particleSPHF >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         }
 
-        if( m_subdivideParticles == 1 )
+        if( m_subdivideParticles != 0 )
         {
           subRegion.registerField< particleSubdivideFlag >( getName() );
           subRegion.registerField< particleCopyFlag >( getName() );
@@ -4648,6 +5220,10 @@ void SolidMechanicsMPM::prepareParticleTopologyForExplicitStep( real64 const dt,
                    particleManager,
                    partition );
   }
+  if( m_subdivideParticles == -1 )
+  {
+    resolveParticleSubdivisionDefault( particleManager );
+  }
   if( m_subdivideParticles == 1 )
   {
     subdivideParticles( particleManager );
@@ -4690,7 +5266,7 @@ void SolidMechanicsMPM::buildNeighborhoodAndContactStateForExplicitStep( real64 
   {
     disableSurfaceDataOnDamagedParticles( particleManager );
   }
-  if( m_cpdiDomainScaling == 1 && cycleNumber == 0 )
+  if( m_cpdiDomainScaling == 1 )
   {
     cpdiDomainScaling( particleManager );
   }
@@ -8410,6 +8986,8 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
     // arrayView2d< real64 const > const particleDamageGradient = subRegion.getField<
     // fields::mpm::particleDamageGradient >();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView1d< int const > const particleCohesiveZoneFlag =
+      subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
     arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
     arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
     arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
@@ -8828,7 +9406,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
 
     arrayView1d< int > particleSubdivideFlag;
     arrayView1d< int > particleCopyFlag;
-    if( subdivideParticles == 1 )
+    if( subdivideParticles != 0 )
     {
       particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
       particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
@@ -8892,7 +9470,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
 
       particleCohesiveZoneFlag[p] = 0;
 
-      if( subdivideParticles == 1 )
+      if( subdivideParticles != 0 )
       {
         particleSubdivideFlag[p] = 0;
         particleCopyFlag[p] = -1;
@@ -11105,345 +11683,626 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
 
 // Should only be an option for CPDI, CPTI, and CPDI2 particles, right?
 /**
- * @brief Subdivides particles.
+ * @brief Resolves the conditional default for particle subdivision.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Automatic subdivision is intentionally narrow: it is enabled only when
+ * VP-Hencky integration-domain scaling is active for linear CPDI particles.
+ * B-spline particles and deformation-gradient reset alone retain the default
+ * of no subdivision. An explicit subdivideParticles=1 applies to both CPDI
+ * scaling and VP-Hencky reset candidates.
+ */
+void SolidMechanicsMPM::resolveParticleSubdivisionDefault( ParticleManager & particleManager )
+{
+  if( m_subdivideParticles != -1 )
+  {
+    return;
+  }
+
+  bool hasLinearCPDIParticles = false;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    hasLinearCPDIParticles |= subRegion.getParticleType() == ParticleType::CPDI;
+  } );
+
+  m_subdivideParticlesAutomatic = 1;
+  m_subdivideParticles =
+    m_cpdiDomainScaling == 1 &&
+    m_cpdiDomainScalingType == mpm::CPDIDomainScalingTypeOption::VPHencky &&
+    hasLinearCPDIParticles
+    ? 1
+    : 0;
+
+  GEOS_LOG_RANK_0( "Resolved subdivideParticles=automatic to " << m_subdivideParticles
+                   << ". Automatic subdivision is enabled only for vpHencky CPDI scaling "
+                   << "with linear CPDI particles." );
+}
+
+/**
+ * @brief Subdivides particles using VP-Hencky feasibility or the legacy length criterion.
  */
 void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
   int const numDims = m_numDims;
+  int const automaticSubdivision = m_subdivideParticlesAutomatic;
+  bool const useVPHenckyCPDIScaling =
+    m_cpdiDomainScaling == 1 &&
+    m_cpdiDomainScalingType == mpm::CPDIDomainScalingTypeOption::VPHencky;
+  bool const useVPHenckyReset =
+    m_domainResetType == mpm::DomainResetTypeOption::VPHencky;
+  real64 const maximumDiagonal = 0.99999 * m_neighborRadius;
+  real64 const maximumFeasibleHalfMeasure =
+    particleDomainMaximumFeasibleHalfMeasure( numDims, maximumDiagonal );
 
-  // Determine critical length for subdividing particles from problem dimensions
-  real64 const lCritSqr = LvArray::math::pow( m_planeStrain == 1 ? 0.49999 * LvArray::math::min( m_hEl[0], m_hEl[1] ) : 0.49999 * LvArray::math::min( m_hEl[0], LvArray::math::min( m_hEl[1], m_hEl[2] ) ), 2 );
+  // Retain the historical length-based criterion for explicit subdivision in
+  // configurations that do not use either VP-Hencky path.
+  real64 const legacyCriticalLengthSquared = LvArray::math::pow(
+    m_planeStrain == 1
+      ? 0.49999 * LvArray::math::min( m_hEl[0], m_hEl[1] )
+      : 0.49999 * LvArray::math::min( m_hEl[0],
+                                     LvArray::math::min( m_hEl[1], m_hEl[2] ) ),
+    2 );
 
-  // Find max particle ID for assigning new particle IDs
-  // Determine number of new particles per region
   RAJA::ReduceMax< parallelDeviceReduce, globalIndex > maxParticleIDRank( 0 );
-  RAJA::ReduceSum< parallelDeviceReduce, int > numDivisibleParticles( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numNewParticles( 0 );
-  array1d< int > numDivisibleParticlesPerSubRegion( m_numberOfSubRegions );
   array1d< int > numNewParticlesPerSubRegion( m_numberOfSubRegions );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< int > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    arrayView1d< int > const particleSubdivideFlag =
+      subRegion.getField< fields::mpm::particleSubdivideFlag >();
     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
-    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView1d< int const > const particleCohesiveZoneFlag =
+      subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
+    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+    arrayView1d< real64 const > const particleMeltFlag =
+      subRegion.getField< fields::mpm::particleMeltFlag >();
+    arrayView1d< real64 const > const particleReferenceVolume =
+      subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    arrayView3d< real64 const > const particleDeformationGradient =
+      subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 const > const particleReferenceRVectors =
+      subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView3d< real64 const > const particleRVectors =
+      subRegion.getParticleRVectors();
 
-    RAJA::ReduceSum< parallelDeviceReduce, int > subRegionNumDivisibleParticles( 0 );
+    arrayView1d< int const > particleDomainScaledFlag;
+    if( m_cpdiDomainScaling == 1 )
+    {
+      particleDomainScaledFlag =
+        subRegion.getField< fields::mpm::particleDomainScaledFlag >();
+    }
+
+    string const & solidMaterialName =
+      subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase const & constitutiveModel =
+      getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    bool const isFluidMaterial =
+      constitutiveModel.getCatalogName() == "Gas" ||
+      constitutiveModel.getCatalogName() == "Liquid";
+    bool const isLinearCPDISubRegion =
+      subRegion.getParticleType() == ParticleType::CPDI;
+    bool const hasParticleDomainVectors = subRegion.hasRVectors();
+
+    int const cpdiDomainScaling = m_cpdiDomainScaling;
+    int const resetDefGradForFullyDamagedParticles =
+      m_resetDefGradForFullyDamagedParticles;
+    int const resetDefGradForMeltedParticles =
+      m_resetDefGradForMeltedParticles;
+    int const resetDefGradForScaledSurfaceParticles =
+      m_resetDefGradForScaledSurfaceParticles;
+
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionNumNewParticles( 0 );
 
-    // Loop over all particles, because there should be no ghost particles yet
+    // There should be no ghost particles at this point in the explicit step.
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       maxParticleIDRank.max( particleID[p] );
+      particleSubdivideFlag[p] = 0;
 
-      // If particle rvector is beyond characteristic grid cell direction, divide along that direction
-      // This prevents us from unnecessarily adding more particles than we need to
-      int numberOfDivisions = 0;
-      for( int i = 0; i < numDims; ++i )
+      real64 rawRVectors[3][3] = {};
+      if( useVPHenckyCPDIScaling || useVPHenckyReset )
       {
-        // Tensor condition: ||particleRVectors[p][i]||^2 > lCritSqr.
-        if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][i] ) > lCritSqr )
+        reconstructParticleDomainFromDeformationGradient(
+          particleDeformationGradient[p],
+          particleReferenceRVectors[p],
+          rawRVectors );
+      }
+      else
+      {
+        // Preserve the historical explicit-splitting behavior for non-VP
+        // configurations, including any current Homel-scaled domain.
+        LvArray::tensorOps::copy< 3, 3 >( rawRVectors, particleRVectors[p] );
+      }
+
+      bool const isCohesiveSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
+      bool const hasActiveCohesiveState =
+        isCohesiveSurfaceParticle || particleCohesiveZoneFlag[p] != 0;
+      bool const isSurfaceLikeParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        isCohesiveSurfaceParticle;
+      bool const isFullyDamagedParticle =
+        resetDefGradForFullyDamagedParticles == 1 &&
+        particleDamage[p] > 0.9999999;
+      bool const isMeltedParticle =
+        resetDefGradForMeltedParticles == 1 &&
+        particleMeltFlag[p] > 0.5;
+      bool const isScaledParticle =
+        cpdiDomainScaling == 1 &&
+        particleDomainScaledFlag[p] == 1;
+      bool const resetForScaledSurfaceParticle =
+        resetDefGradForScaledSurfaceParticles == 1 &&
+        isScaledParticle &&
+        isSurfaceLikeParticle;
+
+      bool const cpdiVPHenckyCandidate =
+        useVPHenckyCPDIScaling && isLinearCPDISubRegion;
+      bool const resetVPHenckyCandidate =
+        useVPHenckyReset &&
+        hasParticleDomainVectors &&
+        ( automaticSubdivision == 0 || cpdiVPHenckyCandidate ) &&
+        ( isFluidMaterial ||
+          isMeltedParticle ||
+          isFullyDamagedParticle ||
+          resetForScaledSurfaceParticle );
+
+      int subdivisionMask = 0;
+      if( hasActiveCohesiveState )
+      {
+        // Cohesive particles retain cached reference-node mappings, shape
+        // functions, and cohesive constitutive history. Those data cannot be
+        // conservatively partitioned by the generic particle splitter, so the
+        // integration-domain projection remains the fallback for this case.
+        subdivisionMask = 0;
+      }
+      else if( cpdiVPHenckyCandidate || resetVPHenckyCandidate )
+      {
+        real64 requiredHalfMeasure = 0.0;
+        if( cpdiVPHenckyCandidate )
         {
-          ++numberOfDivisions;
+          requiredHalfMeasure =
+            particleDomainHalfMeasure( rawRVectors, numDims );
+        }
+
+        if( resetVPHenckyCandidate )
+        {
+          real64 const referenceHalfMeasure =
+            particleDomainHalfMeasure( particleReferenceRVectors[p], numDims );
+          real64 const J = particleReferenceVolume[p] > 0.0
+                         ? particleVolume[p] / particleReferenceVolume[p]
+                         : -1.0;
+          if( J > 0.0 )
+          {
+            requiredHalfMeasure = LvArray::math::max(
+              requiredHalfMeasure,
+              J * referenceHalfMeasure );
+          }
+        }
+
+        if( requiredHalfMeasure >
+            maximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
+        {
+          int numberOfDirections = 0;
+          real64 reducedHalfMeasure = requiredHalfMeasure;
+          while( numberOfDirections < numDims &&
+                 reducedHalfMeasure >
+                 maximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
+          {
+            reducedHalfMeasure *= 0.5;
+            ++numberOfDirections;
+          }
+          subdivisionMask = longestParticleDomainDirectionsMask(
+            rawRVectors,
+            numDims,
+            numberOfDirections );
+        }
+      }
+      else if( automaticSubdivision == 0 &&
+               !useVPHenckyCPDIScaling &&
+               !useVPHenckyReset )
+      {
+        // Backward-compatible explicit subdivision only when neither
+        // VP-Hencky path is selected.
+        for( int d = 0; d < numDims; ++d )
+        {
+          if( LvArray::tensorOps::l2NormSquared< 3 >( rawRVectors[d] ) >
+              legacyCriticalLengthSquared )
+          {
+            subdivisionMask |= 1 << d;
+          }
         }
       }
 
-      if( numberOfDivisions > 0 )
+      particleSubdivideFlag[p] = subdivisionMask;
+      int const numberOfDirections =
+        countSubdivisionDirections( subdivisionMask, numDims );
+      if( numberOfDirections > 0 )
       {
-        particleSubdivideFlag[p] = 1;
-        subRegionNumDivisibleParticles += 1;
-        subRegionNumNewParticles += LvArray::math::pow( 2, numberOfDivisions ) - 1;
-        numDivisibleParticles += 1;
-        numNewParticles += LvArray::math::pow( 2, numberOfDivisions ) - 1;
+        int const numberOfChildren = ( 1 << numberOfDirections ) - 1;
+        subRegionNumNewParticles += numberOfChildren;
+        numNewParticles += numberOfChildren;
       }
     } );
 
-    numDivisibleParticlesPerSubRegion[subRegionIndex] = subRegionNumDivisibleParticles;
-    numNewParticlesPerSubRegion[subRegionIndex] = subRegionNumNewParticles;
-
+    numNewParticlesPerSubRegion[subRegionIndex] =
+      subRegionNumNewParticles.get();
     ++subRegionIndex;
   } );
 
-  // Reduce global ID
-  globalIndex maxParticleID = MpiWrapper::max( maxParticleIDRank.get() );
+  globalIndex const maxParticleID = MpiWrapper::max( maxParticleIDRank.get() );
 
-  // Gather array for number of new particles per rank for assigning global IDs
   array1d< int > numNewParticlesPerRank( MpiWrapper::commSize() );
-  MpiWrapper::allGather( numNewParticles.get(), numNewParticlesPerRank, MPI_COMM_GEOS );
+  MpiWrapper::allGather( numNewParticles.get(),
+                         numNewParticlesPerRank,
+                         MPI_COMM_GEOS );
 
-  int rank = 0;
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-
-  globalIndex currGlobalIndex = maxParticleID+1;
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  globalIndex currGlobalIndex = maxParticleID + 1;
   int totalNewParticles = 0;
   for( int i = 0; i < numNewParticlesPerRank.size(); ++i )
   {
-    if( i < rank-1 )
+    if( i < rank )
     {
       currGlobalIndex += numNewParticlesPerRank[i];
     }
     totalNewParticles += numNewParticlesPerRank[i];
   }
 
-  // Subdivide particles
+  if( totalNewParticles == 0 )
+  {
+    return;
+  }
+
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    localIndex oldSubRegionSize = subRegion.size();
-    localIndex newSubRegionSize = oldSubRegionSize + numNewParticlesPerSubRegion[subRegionIndex];
+    localIndex const oldSubRegionSize = subRegion.size();
+    localIndex const newSubRegionSize =
+      oldSubRegionSize + numNewParticlesPerSubRegion[subRegionIndex];
     subRegion.resize( newSubRegionSize );
 
-    // It looks like there was an issue with getting a copy of the arrayview size before resizing subregion.
-    // Calling after as reference fixed it, but it is not clear if calling an arrayview reference before subregion
-    // resize also works, NEED
-    // TO TEST!!!!!!!
-    arrayView1d< int > const & particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
-    arrayView1d< int > const & particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    arrayView1d< int > const & particleCopyFlag =
+      subRegion.getField< fields::mpm::particleCopyFlag >();
+    arrayView1d< int > const & particleSubdivideFlag =
+      subRegion.getField< fields::mpm::particleSubdivideFlag >();
     arrayView1d< globalIndex > const & particleID = subRegion.getParticleID();
-    arrayView1d< real64 > const & particleMass = subRegion.getField< fields::mpm::particleMass >();
-    arrayView1d< real64 > const & particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView1d< real64 > const & particleMass =
+      subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const & particleReferenceVolume =
+      subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const & particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 > const & particlePosition = subRegion.getParticleCenter();
-    arrayView2d< real64 > const & particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
-    arrayView3d< real64 > const & particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView2d< real64 > const & particleReferencePosition =
+      subRegion.getField< fields::mpm::particleReferencePosition >();
+    arrayView3d< real64 const > const & particleDeformationGradient =
+      subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const & particleReferenceRVectors =
+      subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 > const & particleRVectors = subRegion.getParticleRVectors();
+
+    // Surface-position fields are vectors measured from the particle center.
+    // Store each child's center offsets so those relative vectors can be
+    // translated after the ordinary particle fields have been copied.
+    array2d< real64 > subdivisionCurrentCenterOffset( newSubRegionSize, 3 );
+    array2d< real64 > subdivisionReferenceCenterOffset( newSubRegionSize, 3 );
+    array1d< int > subdivisionMember( newSubRegionSize );
+    arrayView2d< real64 > const subdivisionCurrentCenterOffsetView =
+      subdivisionCurrentCenterOffset.toView();
+    arrayView2d< real64 > const subdivisionReferenceCenterOffsetView =
+      subdivisionReferenceCenterOffset.toView();
+    arrayView1d< int > const subdivisionMemberView =
+      subdivisionMember.toView();
+    forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
+    {
+      subdivisionMemberView[p] = 0;
+      LvArray::tensorOps::fill< 3 >( subdivisionCurrentCenterOffsetView[p], 0.0 );
+      LvArray::tensorOps::fill< 3 >( subdivisionReferenceCenterOffsetView[p], 0.0 );
+    } );
 
     localIndex subRegionNewParticleIndex = oldSubRegionSize;
 
-    // Only iterate over old particles, assumes on resize they are all at the front of the arrays
-    // TODO convert this to RAJA forAll for device parallelization
-    // forAll< serialPolicy >( oldSubRegionSize, [=, &currGlobalIndex, &subRegionNewParticleIndex] GEOS_HOST_DEVICE ( localIndex const p )
+    // Resizing and copying wrappers are host operations, so subdivision remains
+    // a serial topology update even though the feasibility scan is device-safe.
     for( localIndex p = 0; p < oldSubRegionSize; ++p )
     {
-      if( particleSubdivideFlag[p] == 1 )
+      particleCopyFlag[p] = -1;
+      int const subdivisionMask = particleSubdivideFlag[p];
+      if( subdivisionMask == 0 )
       {
-        // Determine which directions to subdivide along
-        int numDivisions = 0;
-        array1d< array1d< int > > rVectorDivisions( numDims );
-        array1d< int > subdivideDirections( numDims );
-        // Tensor equation: subdivideDirections = 0 component-wise.
-        LvArray::tensorOps::fill< 3 >( subdivideDirections, 0 );
-        for( int d = 0; d < numDims; ++d )
-        {
-          // Check if any of the RVectors have lengths beyond the critical (as determined by the grid cell)
-          // Tensor condition: ||particleRVectors[p][d]||^2 > lCritSqr.
-          if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][d] ) > lCritSqr )
-          {
-            subdivideDirections[d] = 1;
-            rVectorDivisions[d].resize( 2 );
-            rVectorDivisions[d][0] = 1;
-            rVectorDivisions[d][1] = -1;
-            ++numDivisions;
-          }
-          else
-          {
-            rVectorDivisions[d].resize( 1 );
-            rVectorDivisions[d][0] = 0;
-          }
-        }
-
-        auto rVectorOffsetCombinations = generateCombinations( rVectorDivisions );
-
-        //Subdivide particle and copy particle field data
-        int subdivideFactor = LvArray::math::pow( 2, numDivisions );
-        real64 newMass = particleMass[p] / subdivideFactor;
-        real64 newVolume = particleVolume[p] / subdivideFactor;
-        real64 newReferenceVolume = particleReferenceVolume[p] / subdivideFactor;
-        for( int np = 1; np < subdivideFactor; ++np )
-        {
-          // Update particle mass, volume, initial volume, centers, reference positions, initial R vectors and Rvectors
-          particleID[subRegionNewParticleIndex] = currGlobalIndex++;
-          particleMass[subRegionNewParticleIndex] = newMass;
-          particleVolume[subRegionNewParticleIndex] = newVolume;
-          particleReferenceVolume[subRegionNewParticleIndex] = newReferenceVolume;
-
-          // Tensor equations:
-          //   particleReferenceRVectors[subRegionNewParticleIndex] = particleReferenceRVectors[p].
-          //   particleRVectors[subRegionNewParticleIndex] = particleRVectors[p].
-          LvArray::tensorOps::copy< 3, 3 >( particleReferenceRVectors[subRegionNewParticleIndex], particleReferenceRVectors[p] );
-          LvArray::tensorOps::copy< 3, 3 >( particleRVectors[subRegionNewParticleIndex], particleRVectors[p] );
-
-          for( int d = 0; d < numDims; ++d )
-          {
-            if( subdivideDirections[d] == 1 )
-            {
-              // Tensor equations:
-              //   particleReferenceRVectors[subRegionNewParticleIndex][d] = 0.5 *
-              //   (particleReferenceRVectors[subRegionNewParticleIndex][d]).
-              //   particleRVectors[subRegionNewParticleIndex][d] = 0.5 *
-              //   (particleRVectors[subRegionNewParticleIndex][d]).
-              LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[subRegionNewParticleIndex][d], 0.5 );
-              LvArray::tensorOps::scale< 3 >( particleRVectors[subRegionNewParticleIndex][d], 0.5 );
-            }
-          }
-
-          // Tensor equations:
-          //   particlePosition[subRegionNewParticleIndex] = particlePosition[p].
-          //   particleReferencePosition[subRegionNewParticleIndex] = particleReferencePosition[p].
-          LvArray::tensorOps::copy< 3 >( particlePosition[subRegionNewParticleIndex], particlePosition[p] );
-          LvArray::tensorOps::copy< 3 >( particleReferencePosition[subRegionNewParticleIndex], particleReferencePosition[p] );
-          for( int di =0; di < numDims; ++di )
-          {
-            for( int dj =0; dj < numDims; ++dj )
-            {
-              particlePosition[subRegionNewParticleIndex][dj] += rVectorOffsetCombinations[np][di] * particleRVectors[subRegionNewParticleIndex][di][dj];
-              particleReferencePosition[subRegionNewParticleIndex][dj] += rVectorOffsetCombinations[np][di] * particleReferenceRVectors[subRegionNewParticleIndex][di][dj];
-            }
-          }
-
-          // Probably need another flag since casting from localIndex (unsigned) to int could potentially overflow
-          // but for now we need -1 to screen particles that should not copy
-          particleCopyFlag[subRegionNewParticleIndex] = static_cast< int >( p );
-
-          ++subRegionNewParticleIndex;
-        }
-
-        // Modifying original particle (globalID does not need updating)
-        particleMass[p] = newMass;
-        particleVolume[p] = newVolume;
-        particleReferenceVolume[p] = newReferenceVolume;
-
-        for( int d = 0; d < numDims; ++d )
-        {
-          if( subdivideDirections[d] == 1 )
-          {
-            // Tensor equations:
-            //   particleReferenceRVectors[p][d] = 0.5 * (particleReferenceRVectors[p][d]).
-            //   particleRVectors[p][d] = 0.5 * (particleRVectors[p][d]).
-            LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[p][d], 0.5 );
-            LvArray::tensorOps::scale< 3 >( particleRVectors[p][d], 0.5 );
-          }
-        }
-
-        for( int di =0; di < numDims; ++di )
-        {
-          for( int dj =0; dj < numDims; ++dj )
-          {
-            particlePosition[p][dj] += rVectorOffsetCombinations[0][di] * particleRVectors[p][di][dj];
-            particleReferencePosition[p][dj] += rVectorOffsetCombinations[0][di] * particleReferenceRVectors[p][di][dj];
-          }
-        }
-
-        // Turn off subdivide flag for particle before copying to new particles
-        particleSubdivideFlag[p] = 0;
+        continue;
       }
-    }
-    // );
 
-    // Copy all other fields that do not need modification
-    std::set< std::string > ignoreFieldCopy( { "particleID",
-                                               "particleMass",
-                                               "particleVolume",
-                                               "particleReferenceVolume",
-                                               "particleCenter",
-                                               "particleReferencePosition",
-                                               "particleRVectors",
-                                               "particleReferenceRVectors",
-                                               "particleCopyFlag" } );
+      int const numberOfDirections =
+        countSubdivisionDirections( subdivisionMask, numDims );
+      array1d< array1d< int > > rVectorDivisions( numDims );
+      for( int d = 0; d < numDims; ++d )
+      {
+        if( ( subdivisionMask & ( 1 << d ) ) != 0 )
+        {
+          rVectorDivisions[d].resize( 2 );
+          rVectorDivisions[d][0] = 1;
+          rVectorDivisions[d][1] = -1;
+        }
+        else
+        {
+          rVectorDivisions[d].resize( 1 );
+          rVectorDivisions[d][0] = 0;
+        }
+      }
+
+      array2d< int > const rVectorOffsetCombinations =
+        generateCombinations( rVectorDivisions );
+      int const subdivisionFactor = 1 << numberOfDirections;
+      real64 const newMass = particleMass[p] / subdivisionFactor;
+      real64 const newVolume = particleVolume[p] / subdivisionFactor;
+      real64 const newReferenceVolume =
+        particleReferenceVolume[p] / subdivisionFactor;
+
+      real64 rawRVectors[3][3] = {};
+      if( useVPHenckyCPDIScaling || useVPHenckyReset )
+      {
+        reconstructParticleDomainFromDeformationGradient(
+          particleDeformationGradient[p],
+          particleReferenceRVectors[p],
+          rawRVectors );
+      }
+      else
+      {
+        LvArray::tensorOps::copy< 3, 3 >( rawRVectors, particleRVectors[p] );
+      }
+
+      for( int np = 1; np < subdivisionFactor; ++np )
+      {
+        particleID[subRegionNewParticleIndex] = currGlobalIndex++;
+        particleMass[subRegionNewParticleIndex] = newMass;
+        particleVolume[subRegionNewParticleIndex] = newVolume;
+        particleReferenceVolume[subRegionNewParticleIndex] = newReferenceVolume;
+
+        LvArray::tensorOps::copy< 3, 3 >(
+          particleReferenceRVectors[subRegionNewParticleIndex],
+          particleReferenceRVectors[p] );
+        LvArray::tensorOps::copy< 3, 3 >(
+          particleRVectors[subRegionNewParticleIndex],
+          rawRVectors );
+
+        for( int d = 0; d < numDims; ++d )
+        {
+          if( ( subdivisionMask & ( 1 << d ) ) != 0 )
+          {
+            LvArray::tensorOps::scale< 3 >(
+              particleReferenceRVectors[subRegionNewParticleIndex][d],
+              0.5 );
+            LvArray::tensorOps::scale< 3 >(
+              particleRVectors[subRegionNewParticleIndex][d],
+              0.5 );
+          }
+        }
+
+        LvArray::tensorOps::copy< 3 >(
+          particlePosition[subRegionNewParticleIndex],
+          particlePosition[p] );
+        LvArray::tensorOps::copy< 3 >(
+          particleReferencePosition[subRegionNewParticleIndex],
+          particleReferencePosition[p] );
+        subdivisionMemberView[subRegionNewParticleIndex] = 1;
+        for( int a = 0; a < numDims; ++a )
+        {
+          for( int i = 0; i < 3; ++i )
+          {
+            subdivisionCurrentCenterOffsetView[subRegionNewParticleIndex][i] +=
+              rVectorOffsetCombinations[np][a] *
+              particleRVectors[subRegionNewParticleIndex][a][i];
+            subdivisionReferenceCenterOffsetView[subRegionNewParticleIndex][i] +=
+              rVectorOffsetCombinations[np][a] *
+              particleReferenceRVectors[subRegionNewParticleIndex][a][i];
+          }
+        }
+        LvArray::tensorOps::add< 3 >(
+          particlePosition[subRegionNewParticleIndex],
+          subdivisionCurrentCenterOffsetView[subRegionNewParticleIndex] );
+        LvArray::tensorOps::add< 3 >(
+          particleReferencePosition[subRegionNewParticleIndex],
+          subdivisionReferenceCenterOffsetView[subRegionNewParticleIndex] );
+
+        particleCopyFlag[subRegionNewParticleIndex] = static_cast< int >( p );
+        ++subRegionNewParticleIndex;
+      }
+
+      particleMass[p] = newMass;
+      particleVolume[p] = newVolume;
+      particleReferenceVolume[p] = newReferenceVolume;
+      LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], rawRVectors );
+
+      for( int d = 0; d < numDims; ++d )
+      {
+        if( ( subdivisionMask & ( 1 << d ) ) != 0 )
+        {
+          LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[p][d], 0.5 );
+          LvArray::tensorOps::scale< 3 >( particleRVectors[p][d], 0.5 );
+        }
+      }
+
+      subdivisionMemberView[p] = 1;
+      for( int a = 0; a < numDims; ++a )
+      {
+        for( int i = 0; i < 3; ++i )
+        {
+          subdivisionCurrentCenterOffsetView[p][i] +=
+            rVectorOffsetCombinations[0][a] * particleRVectors[p][a][i];
+          subdivisionReferenceCenterOffsetView[p][i] +=
+            rVectorOffsetCombinations[0][a] *
+            particleReferenceRVectors[p][a][i];
+        }
+      }
+      LvArray::tensorOps::add< 3 >(
+        particlePosition[p],
+        subdivisionCurrentCenterOffsetView[p] );
+      LvArray::tensorOps::add< 3 >(
+        particleReferencePosition[p],
+        subdivisionReferenceCenterOffsetView[p] );
+
+      // New particles copy this cleared value from the parent below.
+      particleSubdivideFlag[p] = 0;
+    }
+
+    std::set< std::string > ignoreFieldCopy( {
+      "particleID",
+      "particleMass",
+      "particleVolume",
+      "particleReferenceVolume",
+      "particleCenter",
+      "particleReferencePosition",
+      "particleRVectors",
+      "particleReferenceRVectors",
+      "particleCopyFlag"
+    } );
 
     subRegion.forWrappers( [&]( WrapperBase & fieldWrapper )
     {
       string const fieldName = fieldWrapper.getName();
-
-      // Filter out only particle fields for copy by prefix
-      if( fieldName.substr( 0, 8 ) != "particle" || ignoreFieldCopy.count( fieldName ) > 0 )
+      if( fieldName.substr( 0, 8 ) != "particle" ||
+          ignoreFieldCopy.count( fieldName ) > 0 )
       {
         return;
       }
 
-      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{},
+                       [&]( auto tupleOfTypes )
       {
         using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;
-
-        auto sourceArray = Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
+        auto sourceArray =
+          Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
 
         forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const pp )
         {
           if( particleCopyFlag[pp] >= 0 )
           {
-            // For scalar particle fields need to do assignment manually
+            localIndex const sourceParticle =
+              static_cast< localIndex >( particleCopyFlag[pp] );
             if constexpr ( ArrayType::NDIM == 1 )
             {
-              // If wrapper name is among those that should be overriden by new sub region skip (e.g. mass, density,
-              // etc.)
-              // We currently only overwrite scalar quantities, but may need to adjust if we overwrite nonscalar
-              // quantities
-              sourceArray[pp] = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+              sourceArray[pp] = sourceArray[sourceParticle];
             }
             else
             {
               auto destinationSlice = sourceArray[pp];
-              auto sourceSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
-              LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
+              auto sourceSlice = sourceArray[sourceParticle];
+              LvArray::forValuesInSliceWithIndices(
+                destinationSlice,
+                [slice=sourceSlice] ( T & val, auto const ... indices )
               {
                 val = slice( indices ... );
               } );
             }
           }
         } );
-
       }, fieldWrapper );
     } );
 
-    // Copy constitutive model fields (e.g. stresses)
-    string const & modelName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, modelName );
+    arrayView1d< integer const > const particleSurfaceFlag =
+      subRegion.getParticleSurfaceFlag();
+    arrayView2d< real64 > const particleSurfacePosition =
+      subRegion.getParticleSurfacePosition();
+    arrayView2d< real64 > const particleReferenceSurfacePosition =
+      subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+    arrayView2d< real64 > const particleEstimatedSurfacePosition =
+      subRegion.getField< fields::mpm::particleEstimatedSurfacePosition >();
+    forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
+    {
+      if( subdivisionMemberView[p] == 0 )
+      {
+        return;
+      }
+
+      bool const hasCenterRelativeSurfacePosition =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+      if( hasCenterRelativeSurfacePosition )
+      {
+        LvArray::tensorOps::subtract< 3 >(
+          particleSurfacePosition[p],
+          subdivisionCurrentCenterOffsetView[p] );
+        LvArray::tensorOps::subtract< 3 >(
+          particleReferenceSurfacePosition[p],
+          subdivisionReferenceCenterOffsetView[p] );
+      }
+
+      if( LvArray::tensorOps::l2NormSquared< 3 >(
+            particleEstimatedSurfacePosition[p] ) > 0.0 )
+      {
+        LvArray::tensorOps::subtract< 3 >(
+          particleEstimatedSurfacePosition[p],
+          subdivisionCurrentCenterOffsetView[p] );
+      }
+    } );
+
+    string const & modelName =
+      subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase & constitutiveModel =
+      getConstitutiveModel< ContinuumBase >( subRegion, modelName );
 
     constitutiveModel.forWrappers( [&]( WrapperBase & fieldWrapper )
     {
-      // Do not copy default and reference scalar values from constitutive model
       if( fieldWrapper.numArrayDims() == 0 )
       {
         return;
       }
 
-      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{},
+                       [&]( auto tupleOfTypes )
       {
         using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;
+        auto sourceArray =
+          Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
 
-        auto sourceArray = Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
         forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const pp )
         {
           if( particleCopyFlag[pp] >= 0 )
           {
+            localIndex const sourceParticle =
+              static_cast< localIndex >( particleCopyFlag[pp] );
             if constexpr ( ArrayType::NDIM == 1 )
             {
-              sourceArray[pp] = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+              sourceArray[pp] = sourceArray[sourceParticle];
             }
             else
             {
               auto destinationSlice = sourceArray[pp];
-              auto sourceSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
-              LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
+              auto sourceSlice = sourceArray[sourceParticle];
+              LvArray::forValuesInSliceWithIndices(
+                destinationSlice,
+                [slice=sourceSlice] ( T & val, auto const ... indices )
               {
                 val = slice( indices ... );
               } );
             }
           }
         } );
-
       }, fieldWrapper );
     } );
 
-    //Erase copy flags after completing particle subdivision
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       particleCopyFlag[p] = -1;
     } );
 
-    // Rebuild active particle indices to include new particles
     subRegion.setActiveParticleIndices();
     ++subRegionIndex;
   } );
 
-  GEOS_LOG_RANK_IF( totalNewParticles > 0, "Generated " << totalNewParticles << " particles from subdividing overly deformed particles!" );
+  GEOS_LOG_RANK_IF(
+    totalNewParticles > 0,
+    "Generated " << totalNewParticles
+                 << " particles while subdividing domains that could not satisfy "
+                 << "the requested volume and maximum-diagonal constraints." );
 }
 
 /**
@@ -12044,149 +12903,245 @@ void SolidMechanicsMPM::boundaryConditionUpdate( real64 dt, real64 time_n )
 }
 
 /**
- * @brief Implements cpdi domain scaling.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Applies the selected CPDI integration-domain scaling algorithm.
  */
 void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
   int const planeStrain = m_planeStrain;
-  int const disableSurfaceNormalsAndPositionsOnCPDIScaling = m_disableSurfaceNormalsAndPositionsOnCPDIScaling;
+  int const numDims = m_numDims;
+  int const disableSurfaceNormalsAndPositionsOnCPDIScaling =
+    m_disableSurfaceNormalsAndPositionsOnCPDIScaling;
+  mpm::CPDIDomainScalingTypeOption const cpdiDomainScalingType =
+    m_cpdiDomainScalingType;
   real64 hEl[3] = {};
-  // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+  real64 const vpHenckyMaximumDiagonal = 0.99999 * m_neighborRadius;
+
+  RAJA::ReduceSum< parallelDeviceReduce, int > numVolumeRelaxedDomains( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numInvalidDomains( 0 );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    if( subRegion.getParticleType() == ParticleType::CPDI )
+    if( subRegion.getParticleType() != ParticleType::CPDI )
     {
-      real64 const lCrit = planeStrain == 1 ? 0.49999 * LvArray::math::min( hEl[0], hEl[1] ) : 0.49999 * LvArray::math::min( hEl[0], LvArray::math::min( hEl[1], hEl[2] ) );
-      arrayView1d< int > const particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
-      arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
-      arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
-      arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-      arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+      return;
+    }
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+    real64 const homelHalfCornerLimit =
+      planeStrain == 1
+        ? 0.49999 * LvArray::math::min( hEl[0], hEl[1] )
+        : 0.49999 * LvArray::math::min(
+            hEl[0], LvArray::math::min( hEl[1], hEl[2] ) );
+
+    arrayView1d< int > const particleDomainScaledFlag =
+      subRegion.getField< fields::mpm::particleDomainScaledFlag >();
+    arrayView2d< real64 > const particleReferenceSurfaceNormal =
+      subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
+    arrayView2d< real64 > const particleReferenceSurfacePosition =
+      subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+    arrayView2d< real64 > const particleSurfaceNormal =
+      subRegion.getParticleSurfaceNormal();
+    arrayView2d< real64 > const particleSurfacePosition =
+      subRegion.getParticleSurfacePosition();
+    arrayView3d< real64 const > const particleDeformationGradient =
+      subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 const > const particleReferenceRVectors =
+      subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [=] GEOS_HOST_DEVICE ( localIndex const p )
+    {
+      particleDomainScaledFlag[p] = 0;
+
+      real64 rawRVectors[3][3] = {};
+      reconstructParticleDomainFromDeformationGradient(
+        particleDeformationGradient[p],
+        particleReferenceRVectors[p],
+        rawRVectors );
+      LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], rawRVectors );
+
+      real64 maxAxis = 0.0;
+      real64 minAxis = DBL_MAX;
+      if( planeStrain == 1 )
       {
-        // Reset cpdi domain scaled flag
-        particleDomainScaledFlag[p] = 0;
+        for( int sign1 = -1; sign1 <= 1; sign1 += 2 )
+        {
+          real64 corner[3] = {};
+          for( int i = 0; i < 3; ++i )
+          {
+            corner[i] = rawRVectors[0][i] + sign1 * rawRVectors[1][i];
+          }
+          real64 const length = LvArray::tensorOps::l2Norm< 3 >( corner );
+          maxAxis = LvArray::math::max( maxAxis, length );
+          minAxis = LvArray::math::min( minAxis, length );
+        }
+      }
+      else
+      {
+        int const signs[4][3] = {
+          { 1, 1, 1 },
+          { 1, -1, 1 },
+          { -1, 1, 1 },
+          { -1, -1, 1 }
+        };
+        for( int c = 0; c < 4; ++c )
+        {
+          real64 corner[3] = {};
+          for( int i = 0; i < 3; ++i )
+          {
+            corner[i] =
+              signs[c][0] * rawRVectors[0][i] +
+              signs[c][1] * rawRVectors[1][i] +
+              signs[c][2] * rawRVectors[2][i];
+          }
+          real64 const length = LvArray::tensorOps::l2Norm< 3 >( corner );
+          maxAxis = LvArray::math::max( maxAxis, length );
+          minAxis = LvArray::math::min( minAxis, length );
+        }
+      }
 
+      bool scaled = false;
+      if( cpdiDomainScalingType ==
+          mpm::CPDIDomainScalingTypeOption::VPHencky )
+      {
+        real64 const requestedHalfMeasure =
+          particleDomainHalfMeasure( rawRVectors, numDims );
+        VPHenckyDomainProjectionResult const projection =
+          projectVPHenckyParticleDomain(
+            rawRVectors,
+            numDims,
+            vpHenckyMaximumDiagonal,
+            requestedHalfMeasure,
+            false,
+            particleRVectors[p] );
+
+        if( projection.valid == 0 )
+        {
+          LvArray::tensorOps::copy< 3, 3 >(
+            particleRVectors[p], rawRVectors );
+          numInvalidDomains += 1;
+        }
+        else
+        {
+          scaled = projection.changed == 1;
+          if( projection.volumeRelaxed == 1 )
+          {
+            numVolumeRelaxedDomains += 1;
+          }
+        }
+      }
+      else
+      {
         arraySlice1d< real64 > const r1 = particleRVectors[p][0];
         arraySlice1d< real64 > const r2 = particleRVectors[p][1];
         arraySlice1d< real64 > const r3 = particleRVectors[p][2];
 
-        real64 maxAxis = DBL_MIN;
-        real64 minAxis = DBL_MAX;
-
-        bool scale = false;
-        if( planeStrain == 1 ) // 2D cpdi domain scaling
+        if( planeStrain == 1 )
         {
-          // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
           real64 l[2][3] = {};
-          for( int i=0; i<3; ++i )
+          for( int i = 0; i < 3; ++i )
           {
-            l[0][i] = r1[i] + r2[i]; // la
-            l[1][i] = r1[i] - r2[i]; // lb
+            l[0][i] = r1[i] + r2[i];
+            l[1][i] = r1[i] - r2[i];
           }
 
-          // scale l-vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
           for( int i = 0; i < 2; ++i )
           {
-            real64 lLength = LvArray::math::sqrt( l[i][0] * l[i][0] + l[i][1] * l[i][1] + l[i][2] * l[i][2] );
-            if( lLength > lCrit )
+            real64 const length = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+            if( length > homelHalfCornerLimit )
             {
-              l[i][0] *= lCrit / lLength;
-              l[i][1] *= lCrit / lLength;
-              l[i][2] *= lCrit / lLength;
-              scale = true;
+              LvArray::tensorOps::scale< 3 >(
+                l[i], homelHalfCornerLimit / length );
+              scaled = true;
             }
-
-            // Store min and max axis to compute aspect ratio which is used to determine whether explicit normals and
-            // positions should be disabled
-            maxAxis = LvArray::math::max( maxAxis, lLength );
-            minAxis = LvArray::math::min( minAxis, lLength );
           }
 
-          // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
-          if( scale )
+          if( scaled )
           {
-            for( int i=0; i<3; ++i )
+            for( int i = 0; i < 3; ++i )
             {
-              r1[i] = 0.5 * (l[0][i] + l[1][i]);
-              r2[i] = 0.5 * (l[0][i] - l[1][i]);
+              r1[i] = 0.5 * ( l[0][i] + l[1][i] );
+              r2[i] = 0.5 * ( l[0][i] - l[1][i] );
             }
           }
         }
-        else // 3D cpdi domain scaling
+        else
         {
-          // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
           real64 l[4][3] = {};
-          for( int i=0; i<3; ++i )
+          for( int i = 0; i < 3; ++i )
           {
-            l[0][i] = r1[i] + r2[i] + r3[i]; // la
-            l[1][i] = r1[i] - r2[i] + r3[i]; // lb
-            l[2][i] = r2[i] - r1[i] + r3[i]; // lc
-            l[3][i] = r3[i] - r1[i] - r2[i]; // ld
+            l[0][i] = r1[i] + r2[i] + r3[i];
+            l[1][i] = r1[i] - r2[i] + r3[i];
+            l[2][i] = r2[i] - r1[i] + r3[i];
+            l[3][i] = r3[i] - r1[i] - r2[i];
           }
 
-          // scale l vectors if needed.  Eq. 9 in the CPDI domain scaling paper.
           for( int i = 0; i < 4; ++i )
           {
-            real64 lLength = LvArray::math::sqrt( l[i][0] * l[i][0] + l[i][1] * l[i][1] + l[i][2] * l[i][2] );
-            if( lLength > lCrit )
+            real64 const length = LvArray::tensorOps::l2Norm< 3 >( l[i] );
+            if( length > homelHalfCornerLimit )
             {
-              l[i][0] *= lCrit / lLength;
-              l[i][1] *= lCrit / lLength;
-              l[i][2] *= lCrit / lLength;
-              scale = true;
+              LvArray::tensorOps::scale< 3 >(
+                l[i], homelHalfCornerLimit / length );
+              scaled = true;
             }
-
-            // Store min and max axis to compute aspect ratio which is used to determine whether explicit normals and
-            // positions should be disabled
-            maxAxis = LvArray::math::max( maxAxis, lLength );
-            minAxis = LvArray::math::min( minAxis, lLength );
           }
 
-          // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
-          if( scale )
+          if( scaled )
           {
-            for( int i=0; i<3; ++i )
+            for( int i = 0; i < 3; ++i )
             {
-              r1[i] = 0.25 * ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
-              r2[i] = 0.25 * ( l[0][i] - l[1][i] + l[2][i] - l[3][i] );
-              r3[i] = 0.25 * ( l[0][i] + l[1][i] + l[2][i] + l[3][i] );
+              r1[i] = 0.25 *
+                      ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
+              r2[i] = 0.25 *
+                      ( l[0][i] - l[1][i] + l[2][i] - l[3][i] );
+              r3[i] = 0.25 *
+                      ( l[0][i] + l[1][i] + l[2][i] + l[3][i] );
             }
           }
         }
+      }
 
-        if( scale )
-        {
-          particleDomainScaledFlag[p] = 1;
-        }
+      if( scaled )
+      {
+        particleDomainScaledFlag[p] = 1;
+      }
 
-        real64 aspectRatio = maxAxis / minAxis;
-
-        // Turn off particle explicit surface normals and posititons
-        // if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 && particleDomainScaledFlag[p] == 1 )
-        if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 && aspectRatio > 5 ) // Make the aspect Ratio user settable
-        {
-          // Tensor equations:
-          //   particleSurfaceNormal[p] = 0.0 component-wise.
-          //   particleSurfacePosition[p] = 0.0 component-wise.
-          //   particleReferenceSurfaceNormal[p] = 0.0 component-wise.
-          //   particleReferenceSurfacePosition[p] = 0.0 component-wise.
-          LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
-          LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
-          LvArray::tensorOps::fill< 3 >( particleReferenceSurfaceNormal[p], 0.0 );
-          LvArray::tensorOps::fill< 3 >( particleReferenceSurfacePosition[p], 0.0 );
-        }
-      } );
-    }
+      real64 const aspectRatio = minAxis > 0.0
+                               ? maxAxis / minAxis
+                               : DBL_MAX;
+      if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 &&
+          aspectRatio > 5.0 )
+      {
+        LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
+        LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
+        LvArray::tensorOps::fill< 3 >(
+          particleReferenceSurfaceNormal[p], 0.0 );
+        LvArray::tensorOps::fill< 3 >(
+          particleReferenceSurfacePosition[p], 0.0 );
+      }
+    } );
   } );
+
+  int const globalVolumeRelaxedDomains =
+    MpiWrapper::sum( numVolumeRelaxedDomains.get() );
+  int const globalInvalidDomains =
+    MpiWrapper::sum( numInvalidDomains.get() );
+  GEOS_LOG_RANK_0_IF(
+    globalVolumeRelaxedDomains > 0,
+    "VP-Hencky CPDI scaling reduced the integration-domain measure of "
+      << globalVolumeRelaxedDomains
+      << " particles because their unscaled measure exceeded the maximum "
+      << "compatible with neighborRadius. Subdivision is disabled, requires "
+      << "another pass, or is unavailable for active cohesive-zone state; the "
+      << "integration domain therefore uses the exact feasible measure cap." );
+  GEOS_LOG_RANK_0_IF(
+    globalInvalidDomains > 0,
+    "VP-Hencky CPDI scaling left " << globalInvalidDomains
+      << " singular or invalid particle domains unscaled." );
 }
 
 /**
@@ -29909,199 +30864,444 @@ void SolidMechanicsMPM::correctParticleCentersAcrossPeriodicBoundaries( Particle
 }
 
 /**
- * @brief Resets deformation gradient.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Applies the selected deformation-gradient reset and rebases dependent reference data.
  */
 void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleManager )
 {
-  GEOS_MARK_FUNCTION
+  GEOS_MARK_FUNCTION;
 
   int const planeStrain = m_planeStrain;
-  int const resetDefGradForFullyDamagedParticles = m_resetDefGradForFullyDamagedParticles;
-  int const resetDefGradForMeltedParticles = m_resetDefGradForMeltedParticles;
-  int const resetDefGradForScaledSurfaceParticles = m_resetDefGradForScaledSurfaceParticles;
+  int const numDims = m_numDims;
+  int const resetDefGradForFullyDamagedParticles =
+    m_resetDefGradForFullyDamagedParticles;
+  int const resetDefGradForMeltedParticles =
+    m_resetDefGradForMeltedParticles;
+  int const resetDefGradForScaledSurfaceParticles =
+    m_resetDefGradForScaledSurfaceParticles;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
+  int const subdivisionEnabled = m_subdivideParticles == 1;
+  mpm::DomainResetTypeOption const domainResetType = m_domainResetType;
+  real64 const maximumDiagonal = 0.99999 * m_neighborRadius;
 
-  // Reset the deformation gradient to be the spherical part.
-  // This should only be used for cases where the deviatoric part
-  // of the constitutive model is hypoelastic.
-  //
-  // We also keep to rotation to make the plotting look a bit better.
-  //
-  // We also use this for the gas constitutive model.
-  // TODO: Make this a more general option (per material type)
+  RAJA::ReduceSum< parallelDeviceReduce, int > numResetParticles( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numInvalidVPHenckyResets( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numInfeasibleVPHenckyResets( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numInfeasibleCohesiveVPHenckyResets( 0 );
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    const ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    string const & solidMaterialName =
+      subRegion.template getReference< string >(
+        viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase const & constitutiveModel =
+      getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
 
-    bool const isFluidMaterial = constitutiveModel.getCatalogName() == "Gas" || constitutiveModel.getCatalogName() == "Liquid";
+    bool const isFluidMaterial =
+      constitutiveModel.getCatalogName() == "Gas" ||
+      constitutiveModel.getCatalogName() == "Liquid";
+    bool const isFiber = constitutiveModel.hasWrapper( "isFiber" );
     bool const shouldResetDeformationGradientInSubRegion =
       isFluidMaterial ||
       resetDefGradForFullyDamagedParticles == 1 ||
       resetDefGradForMeltedParticles == 1 ||
       resetDefGradForScaledSurfaceParticles == 1;
 
-    if( shouldResetDeformationGradientInSubRegion )
+    if( !shouldResetDeformationGradientInSubRegion )
     {
-      arrayView1d< int const > particleDomainScaledFlag;
-      if( cpdiDomainScaling == 1 )
+      return;
+    }
+
+    arrayView1d< int > particleDomainScaledFlag;
+    if( cpdiDomainScaling == 1 )
+    {
+      particleDomainScaledFlag =
+        subRegion.getField< fields::mpm::particleDomainScaledFlag >();
+    }
+
+    arrayView1d< integer const > const particleSurfaceFlag =
+      subRegion.getParticleSurfaceFlag();
+    arrayView1d< int const > const particleCohesiveZoneFlag =
+      subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
+    arrayView1d< real64 const > const particleDamage =
+      subRegion.getParticleDamage();
+    arrayView1d< real64 const > const particleMeltFlag =
+      subRegion.getField< fields::mpm::particleMeltFlag >();
+    arrayView1d< real64 const > const particleReferenceVolume =
+      subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView1d< real64 const > const particleVolume =
+      subRegion.getParticleVolume();
+
+    arrayView2d< real64 const > const particleSurfaceNormal =
+      subRegion.getParticleSurfaceNormal();
+    arrayView2d< real64 const > const particleSurfacePosition =
+      subRegion.getParticleSurfacePosition();
+    arrayView2d< real64 const > const particleSurfaceTraction =
+      subRegion.getParticleSurfaceTraction();
+    arrayView2d< real64 > const particleReferenceSurfaceNormal =
+      subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
+    arrayView2d< real64 > const particleReferenceSurfacePosition =
+      subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+    arrayView2d< real64 > const particleReferenceSurfaceTraction =
+      subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
+
+    arrayView3d< real64 const > const particleMaterialDirection =
+      subRegion.getParticleMaterialDirection();
+    arrayView3d< real64 > const particleReferenceMaterialDirection =
+      subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
+    arrayView3d< real64 > const particleCohesiveReferenceDeformationGradient =
+      subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
+    arrayView3d< real64 > const particleDeformationGradient =
+      subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleFDot =
+      subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 > const particleVelocityGradient =
+      subRegion.getField< fields::mpm::particleVelocityGradient >();
+    arrayView3d< real64 const > const particleReferenceRVectors =
+      subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView3d< real64 > const particleRVectors =
+      subRegion.getParticleRVectors();
+
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(),
+                            [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+
+      bool const isCohesiveSurfaceParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+        particleSurfaceFlag[p] ==
+          mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
+      bool const hasActiveCohesiveState =
+        isCohesiveSurfaceParticle || particleCohesiveZoneFlag[p] != 0;
+      bool const isSurfaceLikeParticle =
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+        isCohesiveSurfaceParticle;
+      bool const isFullyDamagedParticle =
+        resetDefGradForFullyDamagedParticles == 1 &&
+        particleDamage[p] > 0.9999999;
+      bool const isMeltedParticle =
+        resetDefGradForMeltedParticles == 1 &&
+        particleMeltFlag[p] > 0.5;
+      bool const isScaledParticle =
+        cpdiDomainScaling == 1 &&
+        particleDomainScaledFlag[p] == 1;
+      bool const resetForScaledSurfaceParticle =
+        resetDefGradForScaledSurfaceParticles == 1 &&
+        isScaledParticle &&
+        isSurfaceLikeParticle;
+
+      if( !( isFluidMaterial ||
+             isMeltedParticle ||
+             isFullyDamagedParticle ||
+             resetForScaledSurfaceParticle ) )
       {
-        particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
+        return;
       }
 
-      arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-      arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
-      arrayView1d< real64 const > const particleMeltFlag = subRegion.getField< fields::mpm::particleMeltFlag >();
-      arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
-      arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-
-      arrayView2d< real64 const > particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-      arrayView2d< real64 const > particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      arrayView2d< real64 const > particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
-      arrayView2d< real64 > particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
-      arrayView2d< real64 > particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
-      arrayView2d< real64 > particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
-
-      arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-      arrayView3d< real64 const > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
-      arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      real64 const referenceVolume = particleReferenceVolume[p];
+      real64 const J = referenceVolume > 0.0
+                     ? particleVolume[p] / referenceVolume
+                     : -1.0;
+      real64 oldDeformationGradient[3][3] = {};
+      LvArray::tensorOps::copy< 3, 3 >(
+        oldDeformationGradient,
+        particleDeformationGradient[p] );
+      real64 const oldDeterminant =
+        LvArray::tensorOps::determinant< 3 >( oldDeformationGradient );
+      real64 constexpr minimumResetJacobian = 1.0e-12;
+      if( !( J > minimumResetJacobian &&
+             oldDeterminant > minimumResetJacobian ) )
       {
-        localIndex const p = activeParticleIndices[pp];
+        return;
+      }
 
-        bool const isCohesiveSurfaceParticle =
-          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
+      real64 newDeformationGradient[3][3] = {};
+      bool usedVPHenckyReset = false;
+      bool validVPHenckyReset = false;
+      bool changedByVPHenckyReset = true;
 
-        bool const isSurfaceLikeParticle =
-          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
-          isCohesiveSurfaceParticle;
+      if( domainResetType == mpm::DomainResetTypeOption::VPHencky )
+      {
+        usedVPHenckyReset = true;
+        real64 rawRVectors[3][3] = {};
+        reconstructParticleDomainFromDeformationGradient(
+          oldDeformationGradient,
+          particleReferenceRVectors[p],
+          rawRVectors );
+        real64 const referenceHalfMeasure =
+          particleDomainHalfMeasure( particleReferenceRVectors[p], numDims );
+        real64 const requestedHalfMeasure = J * referenceHalfMeasure;
+        real64 projectedRVectors[3][3] = {};
+        VPHenckyDomainProjectionResult const projection =
+          projectVPHenckyParticleDomain(
+            rawRVectors,
+            numDims,
+            maximumDiagonal,
+            requestedHalfMeasure,
+            true,
+            projectedRVectors );
 
-        bool const isFullyDamagedParticle =
-          resetDefGradForFullyDamagedParticles == 1 &&
-          particleDamage[p] > 0.9999999;
-
-        bool const isMeltedParticle =
-          resetDefGradForMeltedParticles == 1 &&
-          particleMeltFlag[p] > 0.5;
-
-        bool const isScaledParticle =
-          cpdiDomainScaling == 1 &&
-          particleDomainScaledFlag[p] == 1;
-
-        bool const resetForScaledSurfaceParticle =
-          resetDefGradForScaledSurfaceParticles == 1 &&
-          isScaledParticle &&
-          isSurfaceLikeParticle;
-
-        bool const resetForFullyDamagedParticle =
-          isScaledParticle &&
-          isFullyDamagedParticle;
-
-        if( isFluidMaterial || isMeltedParticle || resetForScaledSurfaceParticle || resetForFullyDamagedParticle )
+        if( projection.valid == 1 &&
+            deformationGradientFromParticleDomains(
+              particleReferenceRVectors[p],
+              projectedRVectors,
+              newDeformationGradient ) )
         {
-          real64 rotation[3][3] = {};
-          real64 deformationGradient[3][3] = {};
-          // Use the independently integrated volume ratio for the isotropic
-          // stretch, while retaining det(F) only as a geometric validity check
-          // for the polar decomposition.
-          LvArray::tensorOps::copy< 3, 3 >( deformationGradient, particleDeformationGradient[p] );
-          real64 const referenceVolume = particleReferenceVolume[p];
-          real64 const J = referenceVolume > 0.0
-                         ? particleVolume[p] / referenceVolume
-                         : -1.0;
-          real64 const geometricDetF =
-            LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
-          real64 constexpr minResetJacobian = 1.0e-12;
-          if( !( J > minResetJacobian && geometricDetF > minResetJacobian ) )
+          validVPHenckyReset = true;
+          if( projection.volumeFeasible == 0 )
           {
-            return; // Add flag to output warning to console
+            numInfeasibleVPHenckyResets += 1;
+            if( hasActiveCohesiveState )
+            {
+              numInfeasibleCohesiveVPHenckyResets += 1;
+            }
           }
-          LvArray::tensorOps::polarDecomposition< 3 >( rotation, deformationGradient );
-  
 
-          real64 U[3][3] = {};
-          if( planeStrain == 1 )
+          real64 largestOldComponent = 0.0;
+          real64 largestDifference = 0.0;
+          for( int i = 0; i < 3; ++i )
           {
-            real64 JtoOneHalf = LvArray::math::sqrt( J );
-            U[0][0] = JtoOneHalf;
-            U[1][1] = JtoOneHalf;
-            U[2][2] = 1.0;
+            for( int j = 0; j < 3; ++j )
+            {
+              largestOldComponent = LvArray::math::max(
+                largestOldComponent,
+                LvArray::math::abs( oldDeformationGradient[i][j] ) );
+              largestDifference = LvArray::math::max(
+                largestDifference,
+                LvArray::math::abs(
+                  newDeformationGradient[i][j] -
+                  oldDeformationGradient[i][j] ) );
+            }
+          }
+          changedByVPHenckyReset =
+            largestDifference >
+            1.0e-12 * LvArray::math::max( largestOldComponent, 1.0e-30 );
+        }
+        else
+        {
+          numInvalidVPHenckyResets += 1;
+        }
+      }
+
+      if( !validVPHenckyReset )
+      {
+        // The default and the numerical fallback preserve the historical
+        // isotropic-polar reset behavior.
+        real64 rotation[3][3] = {};
+        real64 deformationGradientForPolar[3][3] = {};
+        LvArray::tensorOps::copy< 3, 3 >(
+          deformationGradientForPolar,
+          oldDeformationGradient );
+        LvArray::tensorOps::polarDecomposition< 3 >(
+          rotation,
+          deformationGradientForPolar );
+
+        real64 isotropicStretch[3][3] = {};
+        if( planeStrain == 1 )
+        {
+          real64 const activeStretch = LvArray::math::sqrt( J );
+          isotropicStretch[0][0] = activeStretch;
+          isotropicStretch[1][1] = activeStretch;
+          isotropicStretch[2][2] = 1.0;
+        }
+        else
+        {
+          real64 const activeStretch =
+            LvArray::math::pow( J, 1.0 / 3.0 );
+          isotropicStretch[0][0] = activeStretch;
+          isotropicStretch[1][1] = activeStretch;
+          isotropicStretch[2][2] = activeStretch;
+        }
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(
+          newDeformationGradient,
+          rotation,
+          isotropicStretch );
+      }
+      else if( usedVPHenckyReset && !changedByVPHenckyReset )
+      {
+        // The current domain already satisfies the constraint and its geometric
+        // volume agrees with the independently integrated particle volume.
+        return;
+      }
+
+      real64 const newDeterminant =
+        LvArray::tensorOps::determinant< 3 >( newDeformationGradient );
+      if( !( newDeterminant > minimumResetJacobian ) )
+      {
+        return;
+      }
+
+      real64 inverseOldDeformationGradient[3][3] = {};
+      real64 inverseNewDeformationGradient[3][3] = {};
+      LvArray::tensorOps::invert< 3 >(
+        inverseOldDeformationGradient,
+        oldDeformationGradient );
+      LvArray::tensorOps::invert< 3 >(
+        inverseNewDeformationGradient,
+        newDeformationGradient );
+
+      real64 newDeformationGradientCofactor[3][3] = {};
+      real64 inverseNewDeformationGradientCofactor[3][3] = {};
+      LvArray::tensorOps::cofactor< 3 >(
+        newDeformationGradientCofactor,
+        newDeformationGradient );
+      LvArray::tensorOps::invert< 3 >(
+        inverseNewDeformationGradientCofactor,
+        newDeformationGradientCofactor );
+
+      if( isCohesiveSurfaceParticle )
+      {
+        // Preserve F F_cz^{-1} across the reset:
+        // F_cz,new = F_cz,old F_old^{-1} F_new.
+        real64 cohesiveReferenceTimesInverseOldF[3][3] = {};
+        real64 updatedCohesiveReferenceDeformationGradient[3][3] = {};
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(
+          cohesiveReferenceTimesInverseOldF,
+          particleCohesiveReferenceDeformationGradient[p],
+          inverseOldDeformationGradient );
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(
+          updatedCohesiveReferenceDeformationGradient,
+          cohesiveReferenceTimesInverseOldF,
+          newDeformationGradient );
+        LvArray::tensorOps::copy< 3, 3 >(
+          particleCohesiveReferenceDeformationGradient[p],
+          updatedCohesiveReferenceDeformationGradient );
+      }
+
+      if( isSurfaceLikeParticle )
+      {
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+          particleReferenceSurfaceNormal[p],
+          inverseNewDeformationGradientCofactor,
+          particleSurfaceNormal[p] );
+        real64 const normalMagnitudeSquared =
+          LvArray::tensorOps::l2NormSquared< 3 >(
+            particleReferenceSurfaceNormal[p] );
+        if( normalMagnitudeSquared > 1.0e-24 )
+        {
+          LvArray::tensorOps::scale< 3 >(
+            particleReferenceSurfaceNormal[p],
+            1.0 / LvArray::math::sqrt( normalMagnitudeSquared ) );
+        }
+        else
+        {
+          LvArray::tensorOps::fill< 3 >(
+            particleReferenceSurfaceNormal[p], 0.0 );
+        }
+
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+          particleReferenceSurfacePosition[p],
+          inverseNewDeformationGradient,
+          particleSurfacePosition[p] );
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+          particleReferenceSurfaceTraction[p],
+          inverseNewDeformationGradientCofactor,
+          particleSurfaceTraction[p] );
+      }
+
+      for( int a = 0; a < 3; ++a )
+      {
+        if( LvArray::tensorOps::l2NormSquared< 3 >(
+              particleMaterialDirection[p][a] ) > 1.0e-24 )
+        {
+          if( isFiber )
+          {
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+              particleReferenceMaterialDirection[p][a],
+              inverseNewDeformationGradient,
+              particleMaterialDirection[p][a] );
           }
           else
           {
-            real64 JtoOneThird = LvArray::math::pow( J, 1.0 / 3.0 );
-            U[0][0] = JtoOneThird;
-            U[1][1] = JtoOneThird;
-            U[2][2] = JtoOneThird;
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+              particleReferenceMaterialDirection[p][a],
+              inverseNewDeformationGradientCofactor,
+              particleMaterialDirection[p][a] );
           }
 
-          if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) || 
-              particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-              particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
+          real64 const directionMagnitudeSquared =
+            LvArray::tensorOps::l2NormSquared< 3 >(
+              particleReferenceMaterialDirection[p][a] );
+          if( directionMagnitudeSquared > 1.0e-24 )
           {
-            // Tensor equation: particleDeformationGradient[p] = rotation * U.
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], rotation, U );
-
-            // Update reference surface normals and positions so kinematic update will be correct based on particle
-            // deformation gradient
-            real64 invF[3][3] = {};
-            // Tensor equation: invF = inv(particleDeformationGradient[p]).
-            LvArray::tensorOps::invert< 3 >( invF, particleDeformationGradient[p] );
-
-            real64 cofF[3][3] = {};
-            // Tensor equation: cofF = cof(particleDeformationGradient[p]).
-            LvArray::tensorOps::cofactor< 3 >( cofF, particleDeformationGradient[p] );
-
-            real64 invCofF[3][3] = {};
-            // Tensor equations:
-            //   invCofF = inv(cofF).
-            //   particleReferenceSurfaceNormal[p] = invCofF * particleSurfaceNormal[p] / ||invCofF *
-            //   particleSurfaceNormal[p]||.
-            //   particleReferenceSurfacePosition[p] = invF * particleSurfacePosition[p].
-            LvArray::tensorOps::invert< 3 >( invCofF, cofF );
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceNormal[p], invCofF, particleSurfaceNormal[p] );
-
-            real64 const normSquared =
-              LvArray::tensorOps::l2NormSquared< 3 >( particleReferenceSurfaceNormal[p] );
-
-            if( normSquared > 1.0e-24 )
-            {
-              LvArray::tensorOps::scale< 3 >(
-                particleReferenceSurfaceNormal[p],
-                1.0 / LvArray::math::sqrt( normSquared ) );
-            }
-            else
-            {
-              LvArray::tensorOps::fill< 3 >( particleReferenceSurfaceNormal[p], 0.0 );
-            }
-            
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfacePosition[p], invF, particleSurfacePosition[p] );
-
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceTraction[p], invCofF, particleSurfaceTraction[p] );
+            LvArray::tensorOps::scale< 3 >(
+              particleReferenceMaterialDirection[p][a],
+              1.0 / LvArray::math::sqrt( directionMagnitudeSquared ) );
           }
-
-          // Tensor equation: particleDeformationGradient[p] = rotation * U.
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], rotation, U );
-
-          if( isMeltedParticle )
+          else
           {
-            // Tensor equations:
-            //   particleRVectors[p][a] = particleDeformationGradient[p] * particleReferenceRVectors[p][a].
-            // This keeps CPDI/Visit domains as rotated boxes after replacing the stretch with its isotropic part.
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][0], particleDeformationGradient[p], particleReferenceRVectors[p][0] );
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][1], particleDeformationGradient[p], particleReferenceRVectors[p][1] );
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleRVectors[p][2], particleDeformationGradient[p], particleReferenceRVectors[p][2] );
+            LvArray::tensorOps::fill< 3 >(
+              particleReferenceMaterialDirection[p][a], 0.0 );
           }
         }
-      } );
-    }
+        else
+        {
+          LvArray::tensorOps::fill< 3 >(
+            particleReferenceMaterialDirection[p][a], 0.0 );
+        }
+      }
+
+      LvArray::tensorOps::copy< 3, 3 >(
+        particleDeformationGradient[p],
+        newDeformationGradient );
+      LvArray::tensorOps::fill< 3, 3 >( particleFDot[p], 0.0 );
+      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
+      reconstructParticleDomainFromDeformationGradient(
+        particleDeformationGradient[p],
+        particleReferenceRVectors[p],
+        particleRVectors[p] );
+      if( cpdiDomainScaling == 1 )
+      {
+        particleDomainScaledFlag[p] = 0;
+      }
+      numResetParticles += 1;
+    } );
   } );
 
+  int const globalResetParticles = MpiWrapper::sum( numResetParticles.get() );
+  int const globalInvalidVPHenckyResets =
+    MpiWrapper::sum( numInvalidVPHenckyResets.get() );
+  int const globalInfeasibleVPHenckyResets =
+    MpiWrapper::sum( numInfeasibleVPHenckyResets.get() );
+  int const globalInfeasibleCohesiveVPHenckyResets =
+    MpiWrapper::sum( numInfeasibleCohesiveVPHenckyResets.get() );
+  int const globalInfeasibleSplittableVPHenckyResets =
+    globalInfeasibleVPHenckyResets -
+    globalInfeasibleCohesiveVPHenckyResets;
+
+  GEOS_LOG_RANK_0_IF(
+    globalInvalidVPHenckyResets > 0,
+    "VP-Hencky deformation-gradient reset fell back to isotropicPolar for "
+      << globalInvalidVPHenckyResets
+      << " particles with singular or invalid particle-domain geometry." );
+  GEOS_LOG_RANK_0_IF(
+    globalInfeasibleSplittableVPHenckyResets > 0 && subdivisionEnabled == 1,
+    "VP-Hencky reset preserved particle volume for "
+      << globalInfeasibleSplittableVPHenckyResets
+      << " domains whose volume and neighbor-radius diagonal constraint were "
+      << "incompatible. They will be subdivided at the beginning of the next "
+      << "explicit step." );
+  GEOS_LOG_RANK_0_IF(
+    globalInfeasibleCohesiveVPHenckyResets > 0 && subdivisionEnabled == 1,
+    "VP-Hencky reset preserved particle volume for "
+      << globalInfeasibleCohesiveVPHenckyResets
+      << " active cohesive-zone domains whose volume and neighbor-radius "
+      << "diagonal constraint were incompatible. Active cohesive particles "
+      << "are not subdivided because their cached nodal mapping and cohesive "
+      << "history cannot be conservatively partitioned." );
+  GEOS_LOG_RANK_0_IF(
+    globalInfeasibleVPHenckyResets > 0 && subdivisionEnabled == 0,
+    "VP-Hencky reset preserved particle volume for "
+      << globalInfeasibleVPHenckyResets
+      << " domains whose volume and neighbor-radius diagonal constraint were "
+      << "incompatible. subdivision is disabled, so the minimum-diagonal "
+      << "equal-volume domain still exceeds neighborRadius." );
+  GEOS_LOG_LEVEL_BY_RANK(
+    logInfo::MPMSubroutines,
+    "Reset deformation gradients for " << globalResetParticles << " particles." );
+
+  // This input is used as a one-step request elsewhere in the solver.
   m_resetDefGradForScaledSurfaceParticles = 0;
 }
 

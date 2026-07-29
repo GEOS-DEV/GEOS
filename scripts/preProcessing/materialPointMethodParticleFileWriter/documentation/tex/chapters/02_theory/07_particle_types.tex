@@ -231,30 +231,38 @@ CPDI remains a background-grid method: nodal equations are still solved on the r
 \label{subsec:cpdi-domain-scaling}
 \index{CPDI!domain scaling}
 \index{domain scaling}
+\index{VP-Hencky domain scaling}
 \index{numerical fracture}
 
-The code includes an optional CPDI domain-scaling procedure.  The intent is to limit excessive growth of convected domains relative to the background grid, which can otherwise delay localization, smear gradients, or contribute to numerical fracture in parallel CPDI calculations.  The relevant literature basis is the CPDI domain-scaling work of Homel, Brannon, and Guilkey \cite{homel2016domaindef}.
+The optional CPDI domain-scaling step regularizes only the particle domain used for CPDI integration and mapping.  It does not replace the constitutive deformation gradient.  Before each map, the solver first reconstructs the unscaled current half-edge vectors from the physical deformation gradient and the reference domain,
+\begin{equation}
+  \boldsymbol{r}_{a}=\mathbf{F}\boldsymbol{r}^{0}_{a},
+  \qquad a=1,\ldots,d,
+  \label{eq:cpdi-raw-domain-from-f}
+\end{equation}
+where $d=2$ for plane strain and $d=3$ otherwise.  The input \texttt{cpdiDomainScalingType} selects either the compatibility method \texttt{homel}, which is the default, or the fixed-measure \texttt{vpHencky} projection.
 
-The reviewed implementation constructs diagonal-like vectors from the current half-edge vectors and caps their lengths by
+\paragraph{Homel compatibility method.}
+The \texttt{homel} option retains the previous GEOS implementation based on the CPDI domain-scaling work of Homel, Brannon, and Guilkey \cite{homel2016domaindef}.  It constructs selected center-to-corner vectors and caps their lengths by
 \begin{equation}
   \ell_{\mathrm{crit}} = 0.49999\min_d h_d,
   \label{eq:cpdi-domain-scale-lcrit}
 \end{equation}
-where $h_d$ are the current grid spacings.  In plane-strain calculations the two controlled vectors are
+where $h_d$ are the active grid spacings.  In plane strain the controlled vectors are
 \begin{equation}
   \boldsymbol{\ell}_0=\boldsymbol{r}_1+\boldsymbol{r}_2,
   \qquad
-  \boldsymbol{\ell}_1=\boldsymbol{r}_1-\boldsymbol{r}_2.
+  \boldsymbol{\ell}_1=\boldsymbol{r}_1-\boldsymbol{r}_2,
   \label{eq:cpdi-scaling-2d-lvectors}
 \end{equation}
-If $\|\boldsymbol{\ell}_i\|>\ell_{\mathrm{crit}}$, the vector is scaled to length $\ell_{\mathrm{crit}}$ and the half-edge vectors are reconstructed as
+and the half-edge vectors are reconstructed as
 \begin{equation}
   \boldsymbol{r}_1=\frac{1}{2}(\boldsymbol{\ell}_0+\boldsymbol{\ell}_1),
   \qquad
   \boldsymbol{r}_2=\frac{1}{2}(\boldsymbol{\ell}_0-\boldsymbol{\ell}_1).
   \label{eq:cpdi-scaling-2d-reconstruct}
 \end{equation}
-In three dimensions the four controlled body diagonals are
+In three dimensions the four controlled vectors are
 \begin{align}
   \boldsymbol{\ell}_0&=\boldsymbol{r}_1+\boldsymbol{r}_2+\boldsymbol{r}_3,
   &
@@ -262,10 +270,10 @@ In three dimensions the four controlled body diagonals are
   \label{eq:cpdi-scaling-3d-lvectors-a}\\
   \boldsymbol{\ell}_2&=\boldsymbol{r}_2-\boldsymbol{r}_1+\boldsymbol{r}_3,
   &
-  \boldsymbol{\ell}_3&=\boldsymbol{r}_3-\boldsymbol{r}_1-\boldsymbol{r}_2.
+  \boldsymbol{\ell}_3&=\boldsymbol{r}_3-\boldsymbol{r}_1-\boldsymbol{r}_2,
   \label{eq:cpdi-scaling-3d-lvectors-b}
 \end{align}
-After applying the same length cap, the half-edge vectors are reconstructed as
+and, after radial clipping, the reconstruction is
 \begin{align}
   \boldsymbol{r}_1&=\frac{1}{4}(\boldsymbol{\ell}_0+\boldsymbol{\ell}_1-\boldsymbol{\ell}_2-\boldsymbol{\ell}_3),
   &
@@ -274,7 +282,48 @@ After applying the same length cap, the half-edge vectors are reconstructed as
   \boldsymbol{r}_3&=\frac{1}{4}(\boldsymbol{\ell}_0+\boldsymbol{\ell}_1+\boldsymbol{\ell}_2+\boldsymbol{\ell}_3).
   \label{eq:cpdi-scaling-3d-reconstruct-b}
 \end{align}
-A particle flag records that scaling occurred.  If requested by input options, the solver can still plot unscaled domains by reconstructing the current vectors from the reference vectors and deformation gradient.  A separate guard disables surface normals and surface positions for highly distorted, scaled particles when the aspect-ratio threshold used by the code is exceeded.  Thus, domain scaling is not a new constitutive model; it is a numerical regularization of the CPDI interpolation domain before subsequent mapping and output operations.
+This option intentionally preserves the existing behavior, including the possibility that clipping changes particle-domain measure.
+
+\paragraph{Volume-preserving Hencky projection.}
+For \texttt{vpHencky}, define the domain matrix
+\begin{equation}
+  \mathbf{B}=\begin{bmatrix}\boldsymbol{r}_1&\cdots&\boldsymbol{r}_d\end{bmatrix}
+\end{equation}
+and let its singular values be $\sigma_i>0$, with logarithmic principal stretches $y_i=\log\sigma_i$ and mean $\bar y=d^{-1}\sum_i y_i$.  The current half-domain measure is
+\begin{equation}
+  M=\prod_{i=1}^{d}\sigma_i,
+\end{equation}
+which is $|\det\mathbf{B}|$ in three dimensions and the parallelogram area in plane strain.  The full corner-to-opposite-corner diagonal is
+\begin{equation}
+  D(\mathbf{B})=2\max_{\boldsymbol{s}\in\{-1,1\}^{d}/\{\pm\}}
+  \left\|\mathbf{B}\boldsymbol{s}\right\|.
+  \label{eq:vp-hencky-domain-diagonal}
+\end{equation}
+The solver sets the strict numerical bound
+\begin{equation}
+  D_{\max}=0.99999\,\texttt{neighborRadius}.
+\end{equation}
+A domain of measure $M^{\star}$ can satisfy this bound if and only if
+\begin{equation}
+  M^{\star}\le M_{\max}
+  =\left(\frac{D_{\max}}{2\sqrt{d}}\right)^d.
+  \label{eq:vp-hencky-feasibility}
+\end{equation}
+Equality is attained by a rotated square or cube.
+
+When the requested measure is feasible, the solver retains the polar rotation and principal directions of $\mathbf{B}$ and follows the one-parameter Hencky path
+\begin{equation}
+  y_i(\beta)=\bar y^{\star}+\beta(y_i-\bar y),
+  \qquad
+  \bar y^{\star}=\frac{1}{d}\log M^{\star},
+  \qquad 0\le\beta\le1.
+  \label{eq:vp-hencky-path}
+\end{equation}
+Here $\beta=1$ retains all deviatoric Hencky stretch, while $\beta=0$ gives the equal-measure rotated square or cube.  Because the maximum diagonal is monotone on this path, a fixed 40-iteration bisection selects the largest $\beta$ satisfying Equation~\eqref{eq:vp-hencky-domain-diagonal}.  A final isotropic correction removes roundoff drift in $M^{\star}$ without changing $\beta$ or the principal directions.
+
+For CPDI mapping, $M^{\star}$ is normally the unscaled domain measure.  If Equation~\eqref{eq:vp-hencky-feasibility} is violated, particle subdivision is the conservative remedy.  If subdivision is disabled, or if more than one subdivision generation is needed, the integration domain alone is temporarily assigned $M^{\star}=M_{\max}$ so that the diagonal bound is still enforced.  The physical particle volume and constitutive deformation gradient are not changed by this temporary CPDI-only relaxation.
+
+A particle flag records that scaling occurred.  The \texttt{plotUnscaledParticles} option reconstructs Equation~\eqref{eq:cpdi-raw-domain-from-f} for output, and the next pre-map scaling pass recreates the integration domain.  The existing surface-data guard can disable explicit surface normals and positions on highly distorted scaled particles.  Thus, both scaling types are numerical regularizations of the CPDI integration domain rather than constitutive models.
 
 \subsection{CPTI and CPDI2 placeholders}
 \label{subsec:cpti-cpdi2-placeholders}

@@ -5,7 +5,7 @@
 \index{solver controls}
 \index{ParticleFileWriter!solver controls}
 \providecommand{\pfwidx}[1]{\index{PFW parameter!#1@\texttt{#1}}}
-\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
+\pfwidx{timeIntegrationOption}\pfwidx{updateMethod}\pfwidx{updateOrder}\pfwidx{cflFactor}\pfwidx{initialDt}\pfwidx{solverProfiling}\pfwidx{logLevel}\pfwidx{cpdiDomainScaling}\pfwidx{cpdiDomainScalingType}\pfwidx{domainResetType}\pfwidx{subdivideParticles}\pfwidx{damageFieldPartitioning}\pfwidx{needsNeighborList}\pfwidx{frictionCoefficient}\pfwidx{frictionCoefficientTable}\pfwidx{frictionCoefficientRuleOfMixtures}\pfwidx{contactGapCorrection}\pfwidx{explicitSurfaceNormalInfluence}\pfwidx{useSurfacePositionForContact}\pfwidx{separabilityMinDamage}\pfwidx{treatFullyDamagedAsSingleField}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{plotUnscaledParticles}\pfwidx{normalAndPositionMethod}\pfwidx{contactNormalType}\pfwidx{contactNormalExponent}\pfwidx{maxLRIterations}\pfwidx{LRtolerance}\pfwidx{useCrackTipDetection}\pfwidx{crackTipDetectionThreshold}\pfwidx{surfaceQualityThreshold}\pfwidx{thinFeatureDFGThreshold}\pfwidx{particleFileFields}\pfwidx{maxParticleVelocity}\pfwidx{minParticleJacobian}\pfwidx{maxParticleJacobian}\pfwidx{cohesiveFieldPartitioning}\pfwidx{enableCohesiveFailure}\pfwidx{cohesiveLaw}\pfwidx{preventCZInterpenetration}\pfwidx{useEvents}\pfwidx{mpmEventsString}\pfwidx{bodyForce}\pfwidx{generalizedVortexMMS}\pfwidx{FSubcycles}
 
 The PFW parameter catalogue in Appendix~\ref{app:pfw} lists all keys discovered in \texttt{particleFileWriter.py}; Appendix~\ref{app:solver-attributes} lists the corresponding solver-side wrappers discovered from \texttt{SolidMechanics\_MPM}.  This section gives copyable solver-control fragments from the verification, validation, and example inputs, but it intentionally avoids re-documenting controls that are treated in detail elsewhere in this chapter.  Geometry construction is described in Sections~\ref{sec:pfw-geometry-objects} and~\ref{sec:pfw-materials}; boundary, F-table, and stress-control inputs are described in Section~\ref{sec:pfw-boundary-controls}; diagnostics are described in Section~\ref{sec:pfw-diagnostics}; and output controls are described in Section~\ref{sec:pfw-output-controls}.  The examples below are therefore fragments to be placed into a complete \texttt{pfw\_input} file after the grid, material, and object definitions have been supplied.
 
@@ -121,6 +121,41 @@ pfw["particleFileFields"] = ["Velocity", "MaterialType", "ContactGroup",
 \end{lstlisting}
 
 If explicit surface normals or positions are requested but the corresponding particle-file columns are absent, PFW adds \texttt{SurfaceNormal} and \texttt{SurfacePosition} automatically and emits a warning.  It is better to list them explicitly in production inputs so that the intent is visible in version control.
+
+\subsection{VP-Hencky domain scaling, reset, and subdivision controls}
+\index{VP-Hencky!PFW controls}
+\index{particle splitting!PFW controls}
+\pfwidx{cpdiDomainScaling}\pfwidx{cpdiDomainScalingType}\pfwidx{domainResetType}\pfwidx{subdivideParticles}\pfwidx{resetDefGradForFullyDamagedParticles}\pfwidx{resetDefGradForMeltedParticles}\pfwidx{plotUnscaledParticles}
+
+The domain-scaling and reset algorithms are selected independently.  The compatibility defaults are \texttt{cpdiDomainScalingType="homel"} and \texttt{domainResetType="isotropicPolar"}.  Select \texttt{vpHencky} to preserve particle-domain measure whenever the neighbor-radius diagonal bound is geometrically feasible.  Section~\ref{subsec:cpdi-domain-scaling} gives the integration-domain algorithm, and Section~\ref{subsec:robust-defgrad-reset} gives the physical deformation-gradient reset.
+
+\begin{lstlisting}[language=Python,caption={Linear CPDI with VP-Hencky integration-domain scaling.}]
+pfw["cpdiDomainScaling"] = 1
+pfw["cpdiDomainScalingType"] = "vpHencky"   # default is "homel"
+
+# Omit this key, or use -1, for the conditional default.  It resolves to 1
+# for vpHencky scaling of linear CPDI particles and to 0 otherwise.
+pfw["subdivideParticles"] = -1
+
+# Optional: write the physical F-based domain rather than the scaled
+# integration domain in plot output.
+pfw["plotUnscaledParticles"] = 1
+\end{lstlisting}
+
+The conditional subdivision default is deliberately tied to linear CPDI integration.  B-spline particles use point quadrature, so their stored domain vectors do not control B-spline support; deformation-gradient reset alone also leaves subdivision off by default.  Explicit values of 0 and 1 always disable or enable the option, respectively.
+
+\begin{lstlisting}[language=Python,caption={VP-Hencky reset for melted or fully damaged material.}]
+pfw["domainResetType"] = "vpHencky"        # default is "isotropicPolar"
+pfw["resetDefGradForMeltedParticles"] = 1
+pfw["resetDefGradForFullyDamagedParticles"] = 1
+
+# Optional for reset-only or B-spline cases.  With the conditional default,
+# splitting remains off; set 1 to split when fixed volume and the maximum
+# diagonal cannot be satisfied simultaneously.
+pfw["subdivideParticles"] = 0               # use 1 to opt in
+\end{lstlisting}
+
+Fluid subregions whose constitutive catalog is \texttt{Gas} or \texttt{Liquid} are automatically eligible for the selected reset type.  The reset keeps the reference particle-domain vectors fixed, regenerates the current domain from the new deformation gradient, and rebases surface, cohesive, and material-direction reference data consistently; it should still be used only where the constitutive formulation does not require the discarded finite deviatoric stretch.
 
 \subsection{Example: CPDI, FLIP, domain scaling, and damage-enabled DFG}
 \index{CPDI!PFW example}

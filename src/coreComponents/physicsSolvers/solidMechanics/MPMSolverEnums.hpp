@@ -122,6 +122,28 @@ namespace mpm
   };
 
   /**
+   * @enum CPDIDomainScalingTypeOption
+   *
+   * The algorithms available for limiting a CPDI particle integration domain.
+   */
+  enum struct CPDIDomainScalingTypeOption : integer
+  {
+    Homel,     //!< Radially clip selected center-to-corner vectors and reconstruct the r-vectors.
+    VPHencky  //!< Preserve as much deviatoric Hencky stretch as possible subject to the domain-diagonal limit.
+  };
+
+  /**
+   * @enum DomainResetTypeOption
+   *
+   * The algorithms available when the physical deformation gradient is reset.
+   */
+  enum struct DomainResetTypeOption : integer
+  {
+    IsotropicPolar, //!< Preserve rotation and volume while replacing the stretch by an isotropic stretch.
+    VPHencky       //!< Preserve volume and the largest feasible fraction of the deviatoric Hencky stretch.
+  };
+
+  /**
    * @enum AreaIntegrationOption
    *
    * The options for nodal area integration
@@ -227,6 +249,14 @@ ENUM_STRINGS( mpm::ContactGapCorrectionOption,
               "Simple",
               "Implicit",
               "Softened" );
+
+ENUM_STRINGS( mpm::CPDIDomainScalingTypeOption,
+              "homel",
+              "vpHencky" );
+
+ENUM_STRINGS( mpm::DomainResetTypeOption,
+              "isotropicPolar",
+              "vpHencky" );
 
 ENUM_STRINGS( mpm::AreaIntegrationOption,
               "BruteForce",
