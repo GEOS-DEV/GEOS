@@ -11,3 +11,8 @@ variants.  Exterior and boundary-adjacent faces are intentionally unflagged.
 Use `./runTest --geometry-only --variant traceContactGroups` to inspect the
 PFW-generated surface flags, normals, and surface-position vectors before
 running GEOS.
+
+For the CZ and weak-trace variants, the case maps prescribed interface normals
+with `explicitSurfaceNormalInfluence=25.0` by default.  Override with
+`WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE=<value>` when comparing normal-mapping
+sensitivity.

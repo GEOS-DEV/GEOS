@@ -35,7 +35,8 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         kernels/ExplicitMPM.hpp )
 
   list( APPEND solidMechanicsSolvers_sources
-        SolidMechanicsMPM.cpp )
+        SolidMechanicsMPM.cpp
+        SolidMechanicsMPMRigidBody.cpp )
 endif()
 
 if( GEOS_ENABLE_SOLIDMECHANICS_FEM )

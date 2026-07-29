@@ -89,7 +89,15 @@ pfw["gridFieldNames"] = [
     "gridActive",
     "gridSurfaceFieldMass",
     "gridSurfaceNormal",
+    "gridExplicitSurfaceNormal",
+    "gridPrincipalExplicitSurfaceNormal",
     "gridSurfacePosition",
+    "gridContactForce",
+    "gridCohesiveNode",
+    "gridCohesiveFieldFlag",
+    "gridCohesiveArea",
+    "gridCohesiveForce",
+    "gridDisplacement",
     "gridWeakInterfaceTraceActive",
     "gridWeakInterfaceTraceContactSuppressed",
     "gridWeakInterfaceTraceSkipReason",
@@ -99,6 +107,13 @@ pfw["gridFieldNames"] = [
     "gridWeakInterfaceTraceVelocityJump",
     "gridWeakInterfaceTraceVelocityJumpPost",
     "gridWeakInterfaceTraceForce",
+    "gridInterfaceMechanism",
+    "gridInterfaceNormalForce",
+    "gridInterfaceTangentialForce",
+    "gridInterfaceNormalVelocityJump",
+    "gridInterfaceTangentialVelocityJump",
+    "gridInterfaceNormalDisplacementJump",
+    "gridInterfaceTangentialDisplacementJump",
 ]
 
 pfw["particleFileFields"] = [
@@ -111,6 +126,8 @@ pfw["particleFileFields"] = [
     "SurfacePosition",
     "PlasticStrainMagnitude",
 ]
+if VARIANT == "falseElasticCZ":
+    pfw["particleFileFields"].insert(pfw["particleFileFields"].index("RVector"), "CZTag")
 
 # Moving F-table faces.  Stretching x and y moves the lower-left and upper-right
 # tabs apart along the coupon axis a=(1,1)/sqrt(2).  z is plane strain.
@@ -124,15 +141,19 @@ pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stop_time, 1.0 + final_strain, 1.0 + fin
 if VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "1"))
-    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "0.25"))
-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
+    pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
+    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "1.0"))
     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
     pfw["weakInterfaceTracePairs"] = [[0, 1]]
 elif VARIANT == "falseElasticCZ":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+    pfw["damageFieldPartitioning"] = 1
+    pfw["useEvents"] = 1
 else:
     pfw["enableContact"] = 0
     pfw["enableWeakInterfaceTraceProjection"] = 0
@@ -178,7 +199,7 @@ def xy(s, t):
 lower_vertices = [xy(s0, -bar_half_width), xy(s_interface, -bar_half_width), xy(s_interface, bar_half_width), xy(s0, bar_half_width)]
 upper_vertices = [xy(s_interface, -bar_half_width), xy(s1, -bar_half_width), xy(s1, bar_half_width), xy(s_interface, bar_half_width)]
 
-def make_objects(surface_flag=None, trace_groups=False):
+def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
     lower_flags = [False, surface_flag is not None, False, False]
     upper_flags = [False, False, False, surface_flag is not None]
     lower_group = 0
@@ -204,12 +225,17 @@ def make_objects(surface_flag=None, trace_groups=False):
     if surface_flag is not None:
         lower = geom.surfaceFlagWrapper("weakTraceLowerInterfaceFlag", lower, int(surface_flag))
         upper = geom.surfaceFlagWrapper("weakTraceUpperInterfaceFlag", upper, int(surface_flag))
+    if cz_tag is not None:
+        lower = geom.czTagWrapper("weakTraceLowerInterfaceCZTag", lower, cz_tag)
+        upper = geom.czTagWrapper("weakTraceUpperInterfaceCZTag", upper, cz_tag)
     return [lower, upper]
 
 if VARIANT == "singleField":
     pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
 elif VARIANT == "falseElasticCZ":
-    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.Cohesive, trace_groups=False)
+    # Match the elastic-tie CZ reference path: one contact group, with the two
+    # cohesive fields split by opposing explicit surface normals.
+    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.Cohesive, trace_groups=False, cz_tag=0)
 elif VARIANT == "traceContactGroups":
     pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=True)
 else:
@@ -261,5 +287,6 @@ pfw_expected = {
     "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
+    "explicit_surface_normal_influence": pfw.get("explicitSurfaceNormalInfluence", 0.0),
     "tracer_labels": tracer_labels,
 }

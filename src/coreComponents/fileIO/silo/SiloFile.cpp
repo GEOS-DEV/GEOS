@@ -398,13 +398,25 @@ bool isKnownScalarGridArray2d( string const & fieldName )
     "gridCohesiveFieldFlag",
     "gridDamage",
     "gridFieldGradientAlignment",
+    "gridInterfaceMechanism",
+    "gridInterfaceNormalDisplacementJump",
+    "gridInterfaceNormalForce",
+    "gridInterfaceNormalVelocityJump",
+    "gridInterfaceTangentialDisplacementJump",
+    "gridInterfaceTangentialForce",
+    "gridInterfaceTangentialVelocityJump",
     "gridMass",
     "gridMaterialVolume",
     "gridMaxDamage",
     "gridSurfaceArea",
     "gridSurfaceFieldMass",
     "gridSurfaceNormalWeightNormalization",
-    "gridSurfaceNormalWeights"
+    "gridSurfaceNormalWeights",
+    "gridWeakInterfaceTraceActive",
+    "gridWeakInterfaceTraceAnchorWeight",
+    "gridWeakInterfaceTraceContactSuppressed",
+    "gridWeakInterfaceTraceSkipReason",
+    "gridWeakInterfaceTraceSupportWeight"
   };
   return scalarGridArray2dNames.count( fieldName ) > 0;
 }

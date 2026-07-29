@@ -21,6 +21,9 @@ namespace geos
  *
  * Activates color-partitioned rigid-body MPM between startTime and endTime.
  * One rigid body is formed from all particles sharing a particleColor value.
+ * ParticleColor is independent of ContactGroup: any number of bodies may share
+ * one catch-all contact group, and maxGridFields limits only the local nodal
+ * color multiplicity rather than the global number of bodies.
  */
 class RigidBodyMPMEvent : public MPMEventBase
 {
@@ -42,6 +45,9 @@ public:
     static constexpr char const * contactCFLString() { return "contactCFL"; }
     static constexpr char const * maxTimeStepString() { return "maxTimeStep"; }
     static constexpr char const * rigidBodyPenetrationPenaltyBetaString() { return "rigidBodyPenetrationPenaltyBeta"; }
+    static constexpr char const * maxJammingStressString() { return "maxJammingStress"; }
+    static constexpr char const * maxContactPenetrationString() { return "maxContactPenetration"; }
+    static constexpr char const * contactPenetrationExceedanceCountString() { return "contactPenetrationExceedanceCount"; }
     static constexpr char const * stopKineticEnergyString() { return "stopKineticEnergy"; }
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * minActiveTimeString() { return "minActiveTime"; }
@@ -55,6 +61,10 @@ public:
   real64 getContactCFL() const { return m_contactCFL; }
   real64 getMaxTimeStep() const { return m_maxTimeStep; }
   real64 getRigidBodyPenetrationPenaltyBeta() const { return m_rigidBodyPenetrationPenaltyBeta; }
+  real64 getMaxJammingStress() const { return m_maxJammingStress; }
+  real64 getMaxContactPenetration() const { return m_maxContactPenetration; }
+  integer getContactPenetrationExceedanceCount() const { return m_contactPenetrationExceedanceCount; }
+  void setContactPenetrationExceedanceCount( integer const count ) { m_contactPenetrationExceedanceCount = count; }
   real64 getStopKineticEnergy() const { return m_stopKineticEnergy; }
   real64 getMaxForce() const { return m_maxForce; }
   real64 getMinActiveTime() const { return m_minActiveTime; }
@@ -70,6 +80,9 @@ protected:
   real64 m_contactCFL;
   real64 m_maxTimeStep;
   real64 m_rigidBodyPenetrationPenaltyBeta;
+  real64 m_maxJammingStress;
+  real64 m_maxContactPenetration;
+  integer m_contactPenetrationExceedanceCount;
   real64 m_stopKineticEnergy;
   real64 m_maxForce;
   real64 m_minActiveTime;

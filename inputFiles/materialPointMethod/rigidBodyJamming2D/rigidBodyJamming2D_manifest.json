@@ -1,14 +1,49 @@
 {
   "particleFile": "mpmParticleFile_rigidBodyJamming2D",
-  "dx": 0.0125,
-  "thickness": 0.1,
-  "particleVolume": 1.5625000000000004e-05,
+  "physicalDomain": {
+    "xmin": -0.5,
+    "xmax": 0.5,
+    "ymin": -0.35,
+    "ymax": 0.35
+  },
+  "mpiPartitions": [
+    2,
+    3,
+    1
+  ],
+  "periodic": [
+    1,
+    0,
+    0
+  ],
+  "gridCells": {
+    "xPhysical": 60,
+    "yPhysical": 28,
+    "yTotalWithBuffers": 30
+  },
+  "gridSpacing": {
+    "dx": 0.016666666666666666,
+    "dy": 0.024999999999999998,
+    "dyOverDx": 1.5
+  },
+  "particlesPerCell": {
+    "x": 2,
+    "y": 3,
+    "z": 1
+  },
+  "particleSpacing": {
+    "dx": 0.008333333333333333,
+    "dy": 0.008333333333333333
+  },
+  "particleType": 1,
+  "thickness": 0.016666666666666666,
+  "particleVolume": 1.1574074074074074e-06,
   "objects": [
     {
       "kind": "disk",
       "color": 0,
       "center": [
-        -0.34,
+        -0.28,
         -0.2
       ],
       "radius": 0.105
@@ -17,7 +52,7 @@
       "kind": "block",
       "color": 1,
       "center": [
-        -0.06,
+        0.02,
         -0.19
       ],
       "width": 0.18,
@@ -27,16 +62,17 @@
       "kind": "disk",
       "color": 2,
       "center": [
-        0.24,
+        0.47,
         -0.18
       ],
-      "radius": 0.09
+      "radius": 0.075,
+      "periodicX": true
     },
     {
       "kind": "block",
       "color": 3,
       "center": [
-        -0.26,
+        -0.28,
         0.14
       ],
       "width": 0.16,
@@ -46,7 +82,7 @@
       "kind": "disk",
       "color": 4,
       "center": [
-        0.05,
+        0.03,
         0.12
       ],
       "radius": 0.115
@@ -63,101 +99,106 @@
     }
   ],
   "particleCountsByColor": {
-    "0": 220,
-    "1": 126,
-    "2": 162,
-    "3": 156,
-    "4": 266,
-    "5": 132
+    "0": 504,
+    "1": 294,
+    "2": 253,
+    "3": 361,
+    "4": 597,
+    "5": 288
   },
   "surfaceParticleCountsByColor": {
-    "0": 36,
-    "1": 22,
-    "2": 31,
-    "3": 35,
-    "4": 44,
-    "5": 42
+    "0": 62,
+    "1": 54,
+    "2": 36,
+    "3": 72,
+    "4": 64,
+    "5": 48
   },
+  "periodicColor2XExtent": [
+    -0.49583333333333335,
+    0.49583333333333335
+  ],
   "nonOverlapDiagnostics": [
     {
       "colorA": 0,
       "colorB": 1,
-      "conservativeCircularMargin": 0.0683784677059689
+      "periodicConservativeCircularMargin": 0.0883665735796036
     },
     {
       "colorA": 0,
       "colorB": 2,
-      "conservativeCircularMargin": 0.38534472514187645
+      "periodicConservativeCircularMargin": 0.07079872407968908
     },
     {
       "colorA": 0,
       "colorB": 3,
-      "conservativeCircularMargin": 0.13290163688173232
+      "periodicConservativeCircularMargin": 0.12361665295027272
     },
     {
       "colorA": 0,
       "colorB": 4,
-      "conservativeCircularMargin": 0.2844799302251776
+      "periodicConservativeCircularMargin": 0.22553338819890933
     },
     {
       "colorA": 0,
       "colorB": 5,
-      "conservativeCircularMargin": 0.5562050485691339
+      "periodicConservativeCircularMargin": 0.3058438875784837
     },
     {
       "colorA": 1,
       "colorB": 2,
-      "conservativeCircularMargin": 0.10336657357960352
+      "periodicConservativeCircularMargin": 0.2683110505806067
     },
     {
       "colorA": 1,
       "colorB": 3,
-      "conservativeCircularMargin": 0.16769223376529832
+      "periodicConservativeCircularMargin": 0.2277986685533587
     },
     {
       "colorA": 1,
       "colorB": 4,
-      "conservativeCircularMargin": 0.10713763725150137
+      "periodicConservativeCircularMargin": 0.08836120156894732
     },
     {
       "colorA": 1,
       "colorB": 5,
-      "conservativeCircularMargin": 0.3126975759013031
+      "periodicConservativeCircularMargin": 0.2538156867851843
     },
     {
       "colorA": 2,
       "colorB": 3,
-      "conservativeCircularMargin": 0.3922495361365059
+      "periodicConservativeCircularMargin": 0.21969546303521173
     },
     {
       "colorA": 2,
       "colorB": 4,
-      "conservativeCircularMargin": 0.15010561809129408
+      "periodicConservativeCircularMargin": 0.34254107822777385
     },
     {
       "colorA": 2,
       "colorB": 5,
-      "conservativeCircularMargin": 0.14620302850400946
+      "periodicConservativeCircularMargin": 0.17134025700261613
     },
     {
       "colorA": 3,
       "colorB": 4,
-      "conservativeCircularMargin": 0.08426114429045402
+      "periodicConservativeCircularMargin": 0.08426114429045407
     },
     {
       "colorA": 3,
       "colorB": 5,
-      "conservativeCircularMargin": 0.38955858916947805
+      "periodicConservativeCircularMargin": 0.16955858916947786
     },
     {
       "colorA": 4,
       "colorB": 5,
-      "conservativeCircularMargin": 0.07663077329417793
+      "periodicConservativeCircularMargin": 0.09658642755938666
     }
   ],
   "notes": [
     "SurfaceFlag=2 marks analytic surface particles; interior particles carry zero normal/position.",
-    "All bodies use ContactGroup=0 and distinct ParticleColor values to exercise color partitioning.",
-    "Copper yield stress in the XML is 70 MPa; the continuum stress-control target is -140 MPa in x and y."
+    "All colors use ContactGroup=0; maxGridFields=2 is independent of the six global colors.",
+    "ParticleColor=2 crosses the x-periodic seam and is solved as one unwrapped rigid body.",
+    "Copper yield stress is 70 MPa; continuum stress control targets Syy=-140 MPa."
   ]
 }

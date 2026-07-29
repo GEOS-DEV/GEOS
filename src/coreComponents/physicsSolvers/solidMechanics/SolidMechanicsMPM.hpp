@@ -142,6 +142,9 @@ public:
 
     // Contact
     static constexpr char const * gridContactForceString() { return "gridContactForce"; }
+    static constexpr char const * gridRigidBodyFieldKeyString() { return "gridRigidBodyFieldKey"; }
+    static constexpr char const * gridRigidBodyFieldColorString() { return "gridRigidBodyFieldColor"; }
+    static constexpr char const * gridRigidBodyFieldContactGroupString() { return "gridRigidBodyFieldContactGroup"; }
     static constexpr char const * gridWeakInterfaceTraceActiveString() { return "gridWeakInterfaceTraceActive"; }
     static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
     static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
@@ -152,6 +155,13 @@ public:
     static constexpr char const * gridWeakInterfaceTraceSurfaceJumpString() { return "gridWeakInterfaceTraceSurfaceJump"; }
     static constexpr char const * gridWeakInterfaceTraceVelocityJumpString() { return "gridWeakInterfaceTraceVelocityJump"; }
     static constexpr char const * gridWeakInterfaceTraceVelocityJumpPostString() { return "gridWeakInterfaceTraceVelocityJumpPost"; }
+    static constexpr char const * gridInterfaceMechanismString() { return "gridInterfaceMechanism"; }
+    static constexpr char const * gridInterfaceNormalForceString() { return "gridInterfaceNormalForce"; }
+    static constexpr char const * gridInterfaceTangentialForceString() { return "gridInterfaceTangentialForce"; }
+    static constexpr char const * gridInterfaceNormalVelocityJumpString() { return "gridInterfaceNormalVelocityJump"; }
+    static constexpr char const * gridInterfaceTangentialVelocityJumpString() { return "gridInterfaceTangentialVelocityJump"; }
+    static constexpr char const * gridInterfaceNormalDisplacementJumpString() { return "gridInterfaceNormalDisplacementJump"; }
+    static constexpr char const * gridInterfaceTangentialDisplacementJumpString() { return "gridInterfaceTangentialDisplacementJump"; }
 
     // Cohesive zone
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
@@ -251,6 +261,10 @@ public:
                                          SetInitialTemperatureAndPressureMPMEvent const & event );
 
   void checkEventCompletion( const real64 time_n );
+
+  real64 computeRigidBodyJammingStress( real64 const dt ) const;
+
+  real64 computeRigidBodyContactLengthScale() const;
 
   void performMaterialSwap( ParticleManager & particleManager,
                             string sourceRegionName,
@@ -418,7 +432,9 @@ public:
 
   void updateContactFlagsFromBoundaryConditions();
 
-  void disableSurfaceNormalsAndPositionsOnDamagedParticles( ParticleManager & particleManager );
+  void disableSurfaceDataOnDamagedParticles( ParticleManager & particleManager );
+
+  void disableSurfaceDataOnMeltedParticles( ParticleManager & particleManager );
 
   void updateNodalNeighborListRequirement();
 
@@ -531,6 +547,8 @@ public:
 
   void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
 
+  void updateInterfaceMechanismDiagnostics( NodeManager & nodeManager );
+
   /**
    * @brief Computes the cumulative material-contact impulse target for FMPM Net contact.
    *
@@ -564,6 +582,7 @@ public:
                                            int const & useSurfacePositionForContact,
                                            int const & useCohesiveTangentialForces,
                                            real64 const rigidBodyPenetrationPenaltyBeta,
+                                           real64 & contactPenetration,
                                            bool & separable,
                                            real64 const & dt,
                                            real64 const & frictionCoefficient,
@@ -602,6 +621,7 @@ public:
                                          int const & useSurfacePositionForContact,
                                          int const & useCohesiveTangentialForces,
                                          real64 const rigidBodyPenetrationPenaltyBeta,
+                                         real64 & contactPenetration,
                                          bool & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
@@ -769,16 +789,39 @@ public:
                                          NodeManager & nodeManager,
                                          MeshLevel & mesh );
 
-  void computeParticleFieldMappings( ParticleManager & particleManager,
-                                     NodeManager & nodeManager );
+  void computeParticleFieldMappings( DomainPartition & domain,
+                                     ParticleManager & particleManager,
+                                     NodeManager & nodeManager,
+                                     MeshLevel & mesh );
 
-  void computeRigidBodyColorFieldMappings( ParticleManager & particleManager,
-                                           NodeManager & nodeManager );
+  void computeRigidBodyColorFieldMappings( DomainPartition & domain,
+                                           ParticleManager & particleManager,
+                                           NodeManager & nodeManager,
+                                           MeshLevel & mesh );
 
   void rigidBodyParticleUpdate( real64 const time_n,
                                 real64 const dt,
                                 ParticleManager & particleManager,
-                                NodeManager & nodeManager );
+                                NodeManager & nodeManager,
+                                SpatialPartition & partition );
+
+  void resetRigidBodyMPIState();
+
+  void initializeRigidBodyMPIState( ParticleManager & particleManager,
+                                    SpatialPartition & partition );
+
+  real64 computeRigidBodyStableTimeStep( real64 localMaximumParticleSpeed,
+                                         real64 localMinimumCellLength ) const;
+
+  static GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  bool isRigidBodySurfaceFlag( integer const surfaceFlag )
+  {
+    return surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
+           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+  }
 
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
@@ -1293,6 +1336,9 @@ protected:
   int m_directionalOverlapCorrection;
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
+  int m_disableSurfaceNormalsAndPositionsOnMelt; // Turns off surface normals and positions for melted particles
+  int m_disableSurfaceTractionsOnDamage; // Turns off surface tractions for highly damaged particles
+  int m_disableSurfaceTractionsOnMelt; // Turns off surface tractions for melted particles
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
@@ -1388,10 +1434,13 @@ protected:
   stdVector< real64 > m_profilingTimes;
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
+  string m_rigidBodyActiveEventName;
+  array1d< globalIndex > m_rigidBodyAnchorParticleIDs;
   real64 m_rigidBodyAngularDamping;
+  array1d< integer > m_rigidBodyColors;
+  array1d< integer > m_rigidBodyContactGroups;
   real64 m_rigidBodyContactCFL;
-  array2d< integer > m_rigidBodyGridFieldColor;
-  array2d< integer > m_rigidBodyGridFieldContactGroup;
+  real64 m_rigidBodyContactLengthScale;
   int m_rigidBodyHistory;
   real64 m_rigidBodyHistoryWriteInterval;
   real64 m_rigidBodyKineticEnergy;
@@ -1400,9 +1449,15 @@ protected:
   real64 m_rigidBodyMaxForce;
   real64 m_rigidBodyMaxTimeStep;
   int m_rigidBodyMode;
+  real64 m_rigidBodyObservedJammingStress;
   real64 m_rigidBodyObservedMaxForce;
+  real64 m_rigidBodyObservedMaxPenetration;
   real64 m_rigidBodyPenetrationPenaltyBeta;
+  array1d< integer > m_rigidBodyPeriodicDirections;
+  int m_rigidBodyRegistryInitialized;
+  int m_rigidBodyRegistrySynchronized;
   real64 m_rigidBodyStopKineticEnergy;
+  array1d< real64 > m_rigidBodyUnwrappedCenters;
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForMeltedParticles;
   int m_resetDefGradForScaledSurfaceParticles;

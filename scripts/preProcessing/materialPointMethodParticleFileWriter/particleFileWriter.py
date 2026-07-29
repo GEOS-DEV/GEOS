@@ -78,6 +78,23 @@ _PFW_SILO_ALL_GRID_FIELDS = [
   "gridSurfaceTensionForce",
   "gridInternalForce",
   "gridContactForce",
+  "gridWeakInterfaceTraceActive",
+  "gridWeakInterfaceTraceContactSuppressed",
+  "gridWeakInterfaceTraceAnchorWeight",
+  "gridWeakInterfaceTraceForce",
+  "gridWeakInterfaceTracePoint",
+  "gridWeakInterfaceTraceSupportWeight",
+  "gridWeakInterfaceTraceSkipReason",
+  "gridWeakInterfaceTraceSurfaceJump",
+  "gridWeakInterfaceTraceVelocityJump",
+  "gridWeakInterfaceTraceVelocityJumpPost",
+  "gridInterfaceMechanism",
+  "gridInterfaceNormalForce",
+  "gridInterfaceTangentialForce",
+  "gridInterfaceNormalVelocityJump",
+  "gridInterfaceTangentialVelocityJump",
+  "gridInterfaceNormalDisplacementJump",
+  "gridInterfaceTangentialDisplacementJump",
   "gridDamage",
   "gridDamageGradient",
   "gridMaxDamage",
@@ -846,6 +863,7 @@ parameters = {
                'reactionHistory': ( None, True ),  # MPM: enable boundary reaction history.
                'reactionWriteInterval': ( None, True ),  # MPM: reaction-history write interval.
                'resetDefGradForFullyDamagedParticles': ( None, True ),  # MPM: reset F for fully damaged particles.
+               'resetDefGradForMeltedParticles': ( None, True ),  # MPM: reset F for melted particles
                'resetDefGradForScaledSurfaceParticles': ( None, True ),  # MPM: reset F for CPDI-scaled surface particles.
                'restartCycleNum': ( 0, False ),  # PFW: restart cycle number.
                'restartInterval': ( None, False ),  # PFW: restart event interval.

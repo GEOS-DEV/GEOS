@@ -1,34 +1,38 @@
 <?xml version="1.0" ?>
 <!--
-  Rigid-body MPM jamming verification.
+  MPI/periodic rigid-body MPM jamming verification.
 
   1. Generate particles:
        python3 generateRigidBodyJamming2DParticles.py
-  2. Run GEOS from this directory:
-       geosx -i mpm_rigidBodyJamming2D.xml
-  3. Check the generated geometry and, after a run, the history files:
+  2. Run six MPI ranks with a 2 x 3 x 1 decomposition:
+       srun -n 6 geosx -i mpm_rigidBodyJamming2D.xml -x 2 -y 3 -z 1
+  3. Check geometry, event input, and any available histories:
        python3 checkRigidBodyJamming2D.py
 -->
 <Problem>
 
   <Mesh>
+    <!-- Physical x is [-0.5,0.5] and periodic. Physical y is [-0.35,0.35];
+         the XML includes one 0.025 buffer cell on each y face. Hence
+         DX=1/60 and DY=0.70/28=1.5*DX. z has one physical plane-strain cell
+         of thickness DX plus one buffer cell on each side. -->
     <InternalMesh
       name="backgroundGrid"
       elementTypes="{ C3D8 }"
-      xCoords="{-0.65,0.65}"
-      yCoords="{-0.50,0.50}"
-      zCoords="{-0.05,0.05}"
-      nx="{52}"
-      ny="{40}"
-      nz="{1}"
-      periodic="{ 0, 0, 0}"
+      xCoords="{-0.5,0.5}"
+      yCoords="{-0.375,0.375}"
+      zCoords="{-0.025,0.025}"
+      nx="{60}"
+      ny="{30}"
+      nz="{3}"
+      periodic="{ 1, 0, 0}"
       cellBlockNames="{ cb1 }"/>
 
     <ParticleMesh
       name="particles"
       particleFile="mpmParticleFile_rigidBodyJamming2D"
       particleBlockNames="{ pb0 }"
-      particleTypes="{ SinglePoint }"/>
+      particleTypes="{ SinglePointBSpline }"/>
   </Mesh>
 
   <ElementRegions>
@@ -53,32 +57,32 @@
       discretization="FE1"
       targetRegions="{ backgroundGrid/CellRegion1, particles/CopperObjects }"
       timeIntegrationOption="ExplicitDynamic"
-      updateMethod="FLIP"
+      updateMethod="PIC"
       cflFactor="0.35"
       initialDt="1.0e-9"
       planeStrain="1"
       useEvents="1"
       eventReporting="1"
-      rigidBodyMaxGridFields="4"
+      rigidBodyMaxGridFields="2"
+      damageFieldPartitioning="1"
       prescribedBoundaryFTable="1"
-      fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 0.78, 0.78, 1.0}}"
+      fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 1.0, 0.20, 1.0}}"
       fTableInterpType="Cosine"
-      boundaryConditionTypes="{2, 2, 2, 2, 1, 1}"
-      frictionCoefficient="0.35"
+      boundaryConditionTypes="{0, 0, 3, 3, 1, 1}"
+      frictionCoefficient="0.05"
       contactGapCorrection="Implicit"
       useSurfacePositionForContact="1"
-      explicitSurfaceNormalInfluence="1.0"
+      explicitSurfaceNormalInfluence="25.0"
       computeParticleSurfaceNormalsAndPositions="0"
       overwriteExistingNormalsAndPositions="0"
+      cpdiDomainScaling="0"
+      disableSurfaceNormalsAndPositionsOnCPDIScaling="0"
       boxAverageHistory="1"
       boxAverageWriteInterval="2.0e-7"
       reactionHistory="1"
       reactionWriteInterval="2.0e-7">
 
       <MPMEvents>
-        <!-- Establish the rigid compaction table at t=0.  This duplicates the
-             solver-level initial table intentionally: the event path verifies
-             that DeformationUpdate and RigidBodyMPM can be used together. -->
         <DeformationUpdate
           name="startRigidCompression"
           startTime="0.0"
@@ -86,36 +90,40 @@
           prescribedFTable="0"
           stressControl="{0, 0, 0}"
           fTableInterpType="Cosine"
-          fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 0.78, 0.78, 1.0}}"/>
+          fTable="{{0.0, 1.0, 1.0, 1.0}, {5.0e-5, 1.0, 0.20, 1.0}}"/>
 
-        <!-- One body per ParticleColor.  The rigid event ends either at its
-             nominal end time or when the resultant force criterion declares a
-             jammed/contact-loaded state. -->
+        <!-- Six ParticleColor bodies share catch-all ContactGroup=0. Only two
+             nodal fields are allocated: one deterministic pure field and the
+             weighted overflow field. -->
         <RigidBodyMPM
           name="rigidJamming"
           startTime="0.0"
-          endTime="5.0e-5"
-          maxGridFields="4"
+          endTime="7.5e-5"
+          minActiveTime="1.25e-5"
+          maxGridFields="2"
           linearDamping="2.0e4"
           angularDamping="2.0e4"
-          maxForce="5.0e5"
+          contactCFL="0.05"
+          maxTimeStep="1.0e-7"
+          rigidBodyPenetrationPenaltyBeta="0.02"
+          maxJammingStress="3.5e6"
+          maxContactPenetration="0.05"
           writeHistory="1"
           historyWriteInterval="2.0e-7"/>
 
-        <!-- After the rigid packing event, switch to continuum MPM and drive
-             an equibiaxial stress target of 2 x yield stress for copper:
-             sigma_x = sigma_y = -140 MPa. -->
+        <!-- The continuum ramp starts at the actual rigid-event completion
+             time. x remains periodic/free; only y is stress controlled. -->
         <DeformationUpdate
           name="continuumCompression"
           dependencies="{ rigidJamming }"
           delay="0.0"
-          duration="0.0"
+          duration="2.5e-5"
           relativeDeformation="1"
           prescribedBoundaryFTable="0"
           prescribedFTable="0"
-          stressControl="{1, 1, 0}"
+          stressControl="{0, 1, 0}"
           stressTableInterpType="Cosine"
-          stressTable="{{0.0, 0.0, 0.0, 0.0}, {2.0e-5, -1.4e8, -1.4e8, 0.0}}"/>
+          stressTable="{{0.0, 0.0, 0.0, 0.0}, {2.5e-5, 0.0, -1.4e8, 0.0}}"/>
       </MPMEvents>
     </SolidMechanics_MPM>
   </Solvers>
@@ -135,7 +143,7 @@
       defaultYieldStress="7.0e7"/>
   </Constitutive>
 
-  <Events maxTime="7.5e-5">
+  <Events maxTime="1.0e-4">
     <PeriodicEvent
       name="solverApplications"
       target="/Solvers/mpmsolve"/>

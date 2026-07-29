@@ -17,6 +17,8 @@ def _call(name, *args):
     if fn is None:
         import __main__
         fn = getattr(__main__, name)
+    if not args:
+        return fn
     return fn(*args)
 
 
@@ -25,6 +27,9 @@ def parse_args():
     p.add_argument("--run-dir", default=".")
     p.add_argument("--output", default="weak_trace_rotated_bar_vm.png")
     p.add_argument("--state", default="final")
+    p.add_argument("--quantity", choices=["vm", "stressXX", "sigmaNN"], default="vm")
+    p.add_argument("--color-min", type=float, default=None)
+    p.add_argument("--color-max", type=float, default=None)
     return p.parse_known_args()[0]
 
 
@@ -52,72 +57,28 @@ def quote_visit_var(name):
     return f"<{name}>"
 
 
-def region_stress_component_candidates(region, component):
-    """Return likely stress-component variable paths for a particle region.
+def region_stress_array(region):
+    return f"{region}_ParticleDomains_ParticleFields/particleStress"
 
-    GEOS/PFW branches have used both flat stressXX-style fields and grouped
-    particleStress/xx-style fields.  The renderer tries both without changing
-    the database output structure.
-    """
-    base = f"{region}_ParticleDomains_ParticleFields"
-    lower = component.lower()
-    upper = component.upper()
-    return [
-        f"{base}/stress{upper}",
-        f"{base}/particleStress/{lower}",
-        f"{base}/particleStress_{component_index(component)}",
-    ]
+
+def stress_component_expression(region, component):
+    return "array_decompose({array},{index})".format(
+        array=quote_visit_var(region_stress_array(region)),
+        index=component_index(component),
+    )
 
 
 def component_index(component):
     return {"XX": 0, "YY": 1, "ZZ": 2, "YZ": 3, "XZ": 4, "XY": 5}[component.upper()]
 
 
-def variable_exists(var):
-    """Best-effort VisIt variable existence check."""
-    try:
-        md = _call("GetMetaData")()
-        names = set()
-        for attr in ("scalars", "vectors", "tensors", "symmTensors"):
-            values = getattr(md, attr, None)
-            if values is None:
-                continue
-            for i in range(len(values)):
-                try:
-                    names.add(values[i].name)
-                except Exception:
-                    pass
-        if names:
-            return var in names
-    except Exception:
-        # Some VisIt builds do not expose metadata cleanly in -cli scripts.
-        # In that case, optimistically let DefineScalarExpression validate.
-        return True
-    return False
-
-
-def first_existing(candidates):
-    for c in candidates:
-        if variable_exists(c):
-            return c
-    return None
-
-
 def add_vm_expression(region):
-    comps = {}
-    for component in ("XX", "YY", "ZZ", "YZ", "XZ", "XY"):
-        comps[component] = first_existing(region_stress_component_candidates(region, component))
-    missing = [k for k, v in comps.items() if not v]
-    if missing:
-        print(f"Could not create VisIt VM expression for {region}; missing stress components {missing}")
-        return None
-
-    sxx = quote_visit_var(comps["XX"])
-    syy = quote_visit_var(comps["YY"])
-    szz = quote_visit_var(comps["ZZ"])
-    syz = quote_visit_var(comps["YZ"])
-    sxz = quote_visit_var(comps["XZ"])
-    sxy = quote_visit_var(comps["XY"])
+    sxx = stress_component_expression(region, "XX")
+    syy = stress_component_expression(region, "YY")
+    szz = stress_component_expression(region, "ZZ")
+    syz = stress_component_expression(region, "YZ")
+    sxz = stress_component_expression(region, "XZ")
+    sxy = stress_component_expression(region, "XY")
 
     expr_name = f"weakTraceVM_{region}"
     expr = (
@@ -125,36 +86,88 @@ def add_vm_expression(region):
         "+3.0*((({sxy})^2)+(({sxz})^2)+(({syz})^2)))"
     ).format(sxx=sxx, syy=syy, szz=szz, syz=syz, sxz=sxz, sxy=sxy)
     _call("DefineScalarExpression", expr_name, expr)
-    print(f"Defined VisIt expression {expr_name} from stress components: {comps}")
+    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
     return expr_name
+
+
+def add_sigma_nn_expression(region):
+    expr_name = f"weakTraceSigmaNN_{region}"
+    expr = "0.5*({sxx})+0.5*({syy})+({sxy})".format(
+        sxx=stress_component_expression(region, "XX"),
+        syy=stress_component_expression(region, "YY"),
+        sxy=stress_component_expression(region, "XY"),
+    )
+    _call("DefineScalarExpression", expr_name, expr)
+    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
+    return expr_name
+
+
+def stress_xx_variable(region):
+    expr_name = f"weakTraceStressXX_{region}"
+    _call("DefineScalarExpression", expr_name, stress_component_expression(region, "XX"))
+    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
+    return expr_name
+
+
+def plot_variable(region, quantity):
+    if quantity == "vm":
+        return add_vm_expression(region)
+    if quantity == "sigmaNN":
+        return add_sigma_nn_expression(region)
+    if quantity == "stressXX":
+        return stress_xx_variable(region)
+    return None
+
+
+def set_time_state(state):
+    try:
+        nstates = _call("TimeSliderGetNStates")()
+        if state == "final":
+            target = max(0, nstates - 1)
+        elif state == "middle":
+            target = max(0, nstates // 2)
+        elif state == "initial":
+            target = 0
+        elif state.startswith("fraction:"):
+            fraction = min(1.0, max(0.0, float(state.split(":", 1)[1])))
+            target = int(round(fraction * max(0, nstates - 1)))
+        else:
+            target = int(state)
+        _call("SetTimeSliderState", target)
+        print(f"Set VisIt time-slider state {target} of {nstates} for requested state {state}")
+    except Exception as exc:
+        print(f"Could not set VisIt time-slider state {state}: {exc}")
 
 
 def main():
     args = parse_args()
     if not open_database(args.run_dir):
         raise SystemExit("could not open database")
-    try:
-        nstates = _call("TimeSliderGetNStates")()
-        if args.state == "final":
-            _call("SetTimeSliderState", max(0, nstates - 1))
-        elif args.state == "middle":
-            _call("SetTimeSliderState", max(0, nstates // 2))
-        else:
-            _call("SetTimeSliderState", int(args.state))
-    except Exception:
-        pass
+    set_time_state(args.state)
 
     _call("DeleteAllPlots")()
     added = 0
     for region in ["ParticleRegion1", "ParticleRegion2"]:
-        var = add_vm_expression(region)
+        var = plot_variable(region, args.quantity)
         if not var:
             var = f"{region}_ParticleDomains_ParticleFields/particleDensity"
         try:
             _call("AddPlot", "Pseudocolor", var)
+            try:
+                _call("SetActivePlots", added)
+            except Exception:
+                pass
             pc = _call("PseudocolorAttributes")()
-            pc.minFlag = 0
-            pc.maxFlag = 0
+            if args.color_min is not None:
+                pc.minFlag = 1
+                pc.min = args.color_min
+            else:
+                pc.minFlag = 0
+            if args.color_max is not None:
+                pc.maxFlag = 1
+                pc.max = args.color_max
+            else:
+                pc.maxFlag = 0
             pc.colorTableName = "hot_desaturated"
             try:
                 pc.pointType = pc.Point
@@ -185,6 +198,10 @@ def main():
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     swa = _call("SaveWindowAttributes")()
+    try:
+        swa.outputToCurrentDirectory = 0
+    except Exception:
+        pass
     swa.outputDirectory = str(out.parent)
     swa.fileName = out.stem
     swa.family = 0

@@ -160,6 +160,86 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
+\subsubsection{\texttt{RigidBodyMPM}}
+\eventidx{RigidBodyMPM}\eventattridx{maxJammingStress}\eventattridx{maxContactPenetration}
+
+\texttt{RigidBodyMPM} treats each \texttt{particleColor} as one rigid body while retaining the ordinary MPM grid contact and moving-boundary machinery.  \texttt{particleColor} is independent of \texttt{ContactGroup}: many colors may share one catch-all contact group, and the number of global colors does not determine grid-field storage.  \texttt{maxGridFields} limits only the local number of color slots at one node; with \texttt{maxGridFields=2}, the deterministic first color uses one pure field and all additional local colors use the weighted overflow field.  The optional \texttt{maxJammingStress} stop uses the opposed-face reaction stress
+\[
+\sigma_{\mathrm{jam}}=
+\max_d\left[
+\min\left(
+\frac{\lvert R_{d-}\rvert}{A_d},
+\frac{\lvert R_{d+}\rvert}{A_d}
+\right)\right],
+\]
+where $A_d$ is the current end-of-step area of either face normal to direction $d$.  Currently compressing directions are used when the background-grid deformation rate is nonzero; all active directions are checked at a table plateau.
+
+The optional \texttt{maxContactPenetration} input is dimensionless.  The solver compares it with
+\[
+\frac{\delta_{\max}}{\ell_h},
+\qquad
+\ell_h=
+\begin{cases}
+\sqrt{h_x^2+h_y^2}, & \text{plane strain},\\
+\sqrt{h_x^2+h_y^2+h_z^2}, & \text{three dimensions},
+\end{cases}
+\]
+where $\delta_{\max}$ includes material--material and material--moving-wall penetration.  The rigid event ends after the normalized limit is exceeded on two consecutive steps.  The grid-cell diagonal is also the default scale used to initialize \texttt{neighborRadius}, but the penetration limit follows the current moving-grid cell dimensions.
+
+A continuum loading event can depend on the rigid event.  Its \texttt{delay} and scheduled start are then relative to the actual rigid-event completion time.  The \texttt{DeformationUpdate} table time columns are event-local and are shifted to that scheduled start when the event triggers, so the continuum compaction duration can be written directly as the final table time and does not require an absolute simulation start time.
+
+\begin{lstlisting}[language=Python,caption={Rigid packing followed by an event-relative continuum F-table compression.}]
+continuum_compaction_time = 2.0e-4
+
+pfw["useEvents"] = 1
+pfw["mpmEventsString"] = f"""
+<RigidBodyMPM
+  name="rigidPacking"
+  startTime="0.0"
+  endTime="1.0e-3"
+  minActiveTime="1.0e-5"
+  maxGridFields="8"
+  contactCFL="0.05"
+  maxTimeStep="1.0e-7"
+  rigidBodyPenetrationPenaltyBeta="0.02"
+  maxJammingStress="5.0e6"
+  maxContactPenetration="0.05"/>
+
+<DeformationUpdate
+  name="continuumCompression"
+  dependencies="{{ rigidPacking }}"
+  delay="0.0"
+  duration="{continuum_compaction_time}"
+  relativeDeformation="1"
+  prescribedBoundaryFTable="1"
+  stressControl="{{0, 0, 0}}"
+  fTable="{{{{0.0, 1.0, 1.0, 1.0}},
+             {{{continuum_compaction_time}, 1.0, 0.95, 1.0}}}}"/>
+"""
+\end{lstlisting}
+
+For a stress-target continuation, use the same dependency, set the desired \texttt{stressControl} entries, and provide a \texttt{stressTable} whose first-column times run from zero to \texttt{continuum\_compaction\_time}.  Both deformation and stress tables are shifted to the scheduled \texttt{DeformationUpdate} start time when the event triggers.
+
+\begin{lstlisting}[language=Python,caption={Rigid packing followed by an event-relative continuum stress target.}]
+continuum_compaction_time = 2.0e-4
+target_y_stress = -140.0e6
+
+pfw["mpmEventsString"] += f"""
+<DeformationUpdate
+  name="continuumStressCompression"
+  dependencies="{{ rigidPacking }}"
+  delay="0.0"
+  duration="{continuum_compaction_time}"
+  relativeDeformation="1"
+  prescribedBoundaryFTable="1"
+  stressControl="{{0, 1, 0}}"
+  fTable="{{{{0.0, 1.0, 1.0, 1.0}},
+             {{{continuum_compaction_time}, 1.0, 1.0, 1.0}}}}"
+  stressTable="{{{{0.0, 0.0, 0.0, 0.0}},
+                  {{{continuum_compaction_time}, 0.0, {target_y_stress}, 0.0}}}}"/>
+"""
+\end{lstlisting}
+
 \subsubsection{\texttt{FrictionCoefficientSwap}}
 \eventidx{FrictionCoefficientSwap}\eventattridx{frictionCoefficient}\eventattridx{frictionCoefficientTable}
 
