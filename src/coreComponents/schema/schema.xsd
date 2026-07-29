@@ -1548,13 +1548,12 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationABC_SetErrorMode" default="error" />
-		<!--fieldName => Name of field that boundary condition is applied to.
-A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
-		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="1" />
+		<!--permeabilityModelName => Name of the constitutive permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--regionNames => Names of the cell regions that boundary condition is applied to.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" use="required" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->

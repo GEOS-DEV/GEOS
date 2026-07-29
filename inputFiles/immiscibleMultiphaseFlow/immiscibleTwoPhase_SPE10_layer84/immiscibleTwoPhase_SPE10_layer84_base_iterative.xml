@@ -95,7 +95,7 @@
       name="perm"
       setNames="{ all }"
       regionNames="reservoir/block"
-      fieldName="rockPerm_permeability"
+      permeabilityModelName="rockPerm"
       functionName="{ permxFunc, permyFunc, permzFunc }"
       scale="{ 9.869233e-16, 9.869233e-16, 9.869233e-16 }"/>
 

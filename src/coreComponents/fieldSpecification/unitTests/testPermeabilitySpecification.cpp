@@ -29,7 +29,7 @@ void fillValidInput( PermeabilitySpecification & ps )
 {
   ps.getReference< string_array >( PermeabilitySpecification::viewKeyStruct::setNamesString() ) = { "all" };
   ps.getReference< string_array >( PermeabilitySpecification::viewKeyStruct::regionNamesString() ) = { "region1", "region2" };
-  ps.getReference< string >( PermeabilitySpecification::viewKeyStruct::fieldNameString() ) = "rockPerm_permeability";
+  ps.getReference< string >( PermeabilitySpecification::viewKeyStruct::permeabilityModelNameString() ) = "rockPerm";
   array1d< real64 > & scales = ps.getReference< array1d< real64 > >( PermeabilitySpecification::viewKeyStruct::scalesString() );
   scales.resize( 3 );
   scales[0] = 9.869233e-16;

@@ -17,11 +17,13 @@
 #include "FieldSpecification.hpp"
 #include "FieldSpecificationFactory.hpp"
 #include "common/logger/Logger.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
 using namespace dataRepository;
+using namespace constitutive;
 
 PermeabilitySpecification::PermeabilitySpecification( string const & name, Group * parent ):
   FieldSpecificationABC( name, parent )
@@ -41,11 +43,10 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Names of the cell regions that boundary condition is applied to." );
 
-  registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
+  registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of field that boundary condition is applied to.\n"
-                    "A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the constitutive permeability model." );
 
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
@@ -136,6 +137,27 @@ void expectValidCellRegion( DomainPartition const & domain,
                  permSpec.getDataContext() );
 }
 
+/**
+ * @brief Validate that a certain permeability model name exists in the domain
+ * @param domain The domain
+ * @param permeabilityModelName The name of the permeability model to validated
+ * @param permSpec Reference to the current object to print its DataContext
+ * @note Throws if the permeability model doesn't exists
+ */
+void expectValidPermeabilityModel( DomainPartition const & domain,
+                                   string const & modelName,
+                                   PermeabilitySpecification const & permSpec )
+{
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
+
+  GEOS_THROW_IF( constitutiveManager.getGroupPointer< PermeabilityBase >( modelName ) == nullptr,
+                 GEOS_FMT( "{} '{}' doesn't name a valid permeability constitutive model",
+                           PermeabilitySpecification::viewKeyStruct::permeabilityModelNameString(),
+                           modelName ),
+                 InputError,
+                 permSpec.getDataContext() );
+}
+
 }
 
 
@@ -146,6 +168,10 @@ void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecific
   Group const & problem = manager.getParent();
   DomainPartition const & domain = problem.getGroup< DomainPartition >( "domain" );
 
+  expectValidPermeabilityModel( domain, permSpec.getPermeabilityModelName(), permSpec );
+  string const fieldName = ConstitutiveBase::makeFieldName( permSpec.getPermeabilityModelName(),
+                                                            permSpec.getFieldName() );
+
   for( string const & regionName : permSpec.getRegionNames() )
   {
     expectValidCellRegion( domain, regionName, permSpec );
@@ -155,7 +181,7 @@ void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecific
 
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
     fs.setDataContextReference( permSpec );
-    fs.setFieldName( permSpec.getFieldName() );
+    fs.setFieldName( fieldName );
     fs.setComponent( permSpec.getComponent() );
     fs.setObjectPath( objectPath );
     fs.initialCondition( permSpec.initialCondition() );

@@ -73,11 +73,11 @@ void FieldSpecification::postInputInitialization()
   FieldSpecificationABC::postInputInitialization();
 
   GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
-                  GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
+                 GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                             viewKeyStruct::componentString(),
                             viewKeyStruct::scalesString() ),
-                  InputError,
-                  getDataContext() );
+                 InputError,
+                 getDataContext() );
 }
 
 void FieldSpecification::validateNumArrayComp( localIndex numComp )

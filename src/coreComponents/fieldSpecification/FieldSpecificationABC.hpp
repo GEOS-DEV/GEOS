@@ -127,6 +127,12 @@ public:
 
   /**
    * Accessor
+   * @return const reference to the field name
+   */
+  virtual const string & getFieldName() const = 0;
+
+  /**
+   * Accessor
    * @return first entry of m_functionNames, or an empty string if empty
    *
    * @note Legacy scalar accessor.

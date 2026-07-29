@@ -134,7 +134,7 @@ public:
    * Accessor
    * @return const reference to m_fieldName
    */
-  virtual const string & getFieldName() const
+  virtual const string & getFieldName() const override
   { return m_fieldName; }
 
   /**

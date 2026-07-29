@@ -22,6 +22,7 @@
 
 
 #include "common/DataTypes.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshObjectPath.hpp"
 #include "FieldSpecification.hpp"
@@ -78,8 +79,8 @@ public:
     constexpr static char const * setNamesString() { return "setNames"; }
     /// @return The key for regionNames
     constexpr static char const * regionNamesString() { return "regionNames"; }
-    /// @return The key for fieldName
-    constexpr static char const * fieldNameString() { return "fieldName"; }
+    /// @return The key for permeabilityModelName
+    constexpr static char const * permeabilityModelNameString() { return "permeabilityModelName"; }
     /// @return The key for component
     constexpr static char const * componentString() { return "component"; }
   };
@@ -93,10 +94,20 @@ public:
 
   /**
    * Accessor
+   * @return const reference to m_permeabilityModelName
+   */
+  string const & getPermeabilityModelName() const
+  { return m_permeabilityModelName; }
+
+  /**
+   * Accessor
    * @return const reference to m_fieldName
    */
-  virtual const string & getFieldName() const
-  { return m_fieldName; }
+  virtual string const & getFieldName() const override
+  {
+    static string const fieldName = fields::permeability::permeability::key();
+    return fieldName;
+  }
 
   /**
    * Accessing the considered component.
@@ -125,9 +136,8 @@ private:
   /// the names of the regions that the boundary condition is applied to
   string_array m_regionNames;
 
-  /// the name of the field the boundary condition is applied to or a key string to use for
-  /// determining whether or not to apply the boundary condition.
-  string m_fieldName;
+  /// the name of the constitutive permeability model
+  string m_permeabilityModelName;
 
   /// The component the boundary condition acts on. Not used if field is a scalar.
   int m_component;

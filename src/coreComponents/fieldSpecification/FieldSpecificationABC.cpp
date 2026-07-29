@@ -74,15 +74,15 @@ FieldSpecificationABC::getCatalog()
 void FieldSpecificationABC::postInputInitialization()
 {
   GEOS_THROW_IF( !m_functionNames.empty() &&
-                  m_functionNames.size() != 1 &&
-                  m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
-                  GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
+                 m_functionNames.size() != 1 &&
+                 m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
+                 GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
                             "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
                             viewKeyStruct::functionNamesString(), m_functionNames.size(),
                             viewKeyStruct::scalesString(), m_scales.size(),
                             viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
-                  InputError,
-                  getDataContext() );
+                 InputError,
+                 getDataContext() );
 
   GEOS_THROW_IF( m_beginTime > m_endTime,
                  GEOS_FMT( "{} ({}) must be less than {} ({}) in {} '{}'",
