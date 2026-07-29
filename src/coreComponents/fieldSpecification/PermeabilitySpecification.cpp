@@ -17,6 +17,7 @@
 #include "FieldSpecification.hpp"
 #include "FieldSpecificationFactory.hpp"
 #include "common/logger/Logger.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -38,7 +39,7 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
   registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Names of the regions that boundary condition is applied to." );
+    setDescription( "Names of the cell regions that boundary condition is applied to." );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -133,14 +134,74 @@ void PermeabilitySpecification::postInputInitialization()
                  getDataContext() );
 }
 
+namespace
+{
+
+/**
+ * @brief @return The element region named @p regionName in the domain if it exists, or a nullptr
+ */
+ElementRegionBase const * findElementRegion( DomainPartition const & domain,
+                                             string const & regionName )
+{
+  ElementRegionBase const * region = nullptr;
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+    {
+      if( region == nullptr && meshLevel.getElemManager().hasRegion( regionName ) )
+      {
+        region = &meshLevel.getElemManager().getRegion( regionName );
+      }
+    } );
+  } );
+  return region;
+}
+
+/**
+ * @brief Validate that a region with the name @p regionName exists and is a valid cell region
+ * @param domain The domain
+ * @param regionName The name of the region to validated
+ * @param permSpec Reference to the current object to print its DataContext
+ * @note Throws if the region doesn't exists or isn't a cell region
+ */
+void expectValidCellRegion( DomainPartition const & domain,
+                            string const & fullRegionName,
+                            PermeabilitySpecification const & permSpec )
+{
+  // get only region from "region/subregion"
+  string const regionName = fullRegionName.substr( 0, fullRegionName.find( '/' ) );
+
+  ElementRegionBase const * const region = findElementRegion( domain, regionName );
+
+  GEOS_THROW_IF( region == nullptr,
+                 GEOS_FMT( "Region '{}' does not exist.", regionName ),
+                 InputError,
+                 permSpec.getDataContext() );
+
+  GEOS_THROW_IF( dynamic_cast< CellElementRegion const * >( region ) == nullptr,
+                 GEOS_FMT( "Region '{}' is a '{}', but must be a '{}'",
+                           regionName,
+                           region->getCatalogName(),
+                           CellElementRegion::catalogName() ),
+                 InputError,
+                 permSpec.getDataContext() );
+}
+
+}
+
+
 template<>
 void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecification const & permSpec,
                                                             dataRepository::Group & manager )
 {
+  Group const & problem = manager.getParent();
+  DomainPartition const & domain = problem.getGroup< DomainPartition >( "domain" );
+
   for( string const & regionName : permSpec.getRegionNames() )
   {
-    string const objectPath = "ElementRegions/" + regionName;
+    expectValidCellRegion( domain, regionName, permSpec );
 
+    string const objectPath = "ElementRegions/" + regionName;
     string const childName = permSpec.getName() + "_" + regionName;
 
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
