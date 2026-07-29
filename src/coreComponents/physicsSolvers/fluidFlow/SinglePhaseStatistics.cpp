@@ -110,10 +110,10 @@ bool SinglePhaseStatistics::execute( real64 const time_n,
 }
 
 void SinglePhaseStatistics::cleanup( real64 const time_n,
-                                      integer const cycleNumber,
-                                      integer const eventCounter,
-                                      real64 const eventProgress,
-                                      DomainPartition & domain )
+                                     integer const cycleNumber,
+                                     integer const eventCounter,
+                                     real64 const eventProgress,
+                                     DomainPartition & domain )
 {
   execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
 }
