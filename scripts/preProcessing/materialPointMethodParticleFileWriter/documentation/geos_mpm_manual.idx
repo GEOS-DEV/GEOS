@@ -90,8 +90,8 @@
 \indexentry{MPMEvents!isComplete|hyperpage}{26}
 \indexentry{events!Anneal|hyperpage}{27}
 \indexentry{annealing|hyperpage}{27}
-\indexentry{events!BodyForceUpdate|hyperpage}{27}
-\indexentry{body force|hyperpage}{27}
+\indexentry{events!BodyForceUpdate|hyperpage}{28}
+\indexentry{body force|hyperpage}{28}
 \indexentry{events!BoreholePressure|hyperpage}{28}
 \indexentry{borehole pressure|hyperpage}{28}
 \indexentry{background stress|hyperpage}{28}
@@ -116,9 +116,9 @@
 \indexentry{events!InitializeStress|hyperpage}{34}
 \indexentry{initial stress|hyperpage}{34}
 \indexentry{hydrostatic stress|hyperpage}{34}
-\indexentry{events!InsertPeriodicContactSurfaces|hyperpage}{34}
-\indexentry{periodic boundaries|hyperpage}{34}
-\indexentry{surface flags|hyperpage}{34}
+\indexentry{events!InsertPeriodicContactSurfaces|hyperpage}{35}
+\indexentry{periodic boundaries|hyperpage}{35}
+\indexentry{surface flags|hyperpage}{35}
 \indexentry{events!MachineSample|hyperpage}{35}
 \indexentry{sample machining|hyperpage}{35}
 \indexentry{particle deletion|hyperpage}{35}
@@ -128,13 +128,13 @@
 \indexentry{events!PolymerHeal|hyperpage}{37}
 \indexentry{healing!polymer|hyperpage}{37}
 \indexentry{StrainHardeningPolymer|hyperpage}{37}
-\indexentry{events!ResetDeformationGradient|hyperpage}{37}
-\indexentry{deformation gradient!reset|hyperpage}{37}
+\indexentry{events!ResetDeformationGradient|hyperpage}{38}
+\indexentry{deformation gradient!reset|hyperpage}{38}
 \indexentry{events!TemperatureProfile|hyperpage}{38}
 \indexentry{temperature table|hyperpage}{38}
 \indexentry{thermal loading|hyperpage}{38}
-\indexentry{events!TemperatureRamp|hyperpage}{38}
-\indexentry{temperature ramp|hyperpage}{38}
+\indexentry{events!TemperatureRamp|hyperpage}{39}
+\indexentry{temperature ramp|hyperpage}{39}
 \indexentry{events!TransformParticles|hyperpage}{39}
 \indexentry{particle transform|hyperpage}{39}
 \indexentry{deformation gradient!transform|hyperpage}{39}
@@ -143,18 +143,18 @@
 \indexentry{Constitutive block|hyperpage}{41}
 \indexentry{MPM constitutive dispatch|hyperpage}{41}
 \indexentry{constitutiveModels!solid models|hyperpage}{41}
-\indexentry{constitutiveModels!ElasticIsotropic|hyperpage}{41}
+\indexentry{constitutiveModels!ElasticIsotropic|hyperpage}{42}
 \indexentry{constitutiveModels!Hyperelastic|hyperpage}{42}
-\indexentry{constitutiveModels!HyperelasticMMS|hyperpage}{42}
-\indexentry{manufactured solution|hyperpage}{42}
+\indexentry{constitutiveModels!HyperelasticMMS|hyperpage}{43}
+\indexentry{manufactured solution|hyperpage}{43}
 \indexentry{constitutiveModels!ElasticTransverseIsotropic|hyperpage}{43}
 \indexentry{MaterialDirection|hyperpage}{43}
-\indexentry{constitutiveModels!VonMisesJ|hyperpage}{43}
-\indexentry{J2 plasticity|hyperpage}{43}
+\indexentry{constitutiveModels!VonMisesJ|hyperpage}{44}
+\indexentry{J2 plasticity|hyperpage}{44}
 \indexentry{constitutiveModels!PerfectlyPlastic|hyperpage}{44}
 \indexentry{perfect plasticity|hyperpage}{44}
-\indexentry{constitutiveModels!StrainHardeningPolymer|hyperpage}{44}
-\indexentry{temperature!polymer model|hyperpage}{44}
+\indexentry{constitutiveModels!StrainHardeningPolymer|hyperpage}{45}
+\indexentry{temperature!polymer model|hyperpage}{45}
 \indexentry{constitutiveModels!SurfaceInformedPolymer|hyperpage}{45}
 \indexentry{polymer model!surface-informed|hyperpage}{45}
 \indexentry{crystallinity!polymer model|hyperpage}{45}
@@ -163,625 +163,645 @@
 \indexentry{damage!ceramic|hyperpage}{47}
 \indexentry{damage!regularization|hyperpage}{47}
 \indexentry{DFG!CeramicDamage|hyperpage}{47}
-\indexentry{constitutiveModels!Chiumenti|hyperpage}{52}
-\indexentry{Rankine damage|hyperpage}{52}
-\indexentry{constitutiveModels!Graphite|hyperpage}{53}
-\indexentry{Graphite model|hyperpage}{53}
-\indexentry{MaterialDirection!Graphite|hyperpage}{53}
-\indexentry{transverse isotropy!Graphite|hyperpage}{53}
-\indexentry{graphite!weak planes|hyperpage}{53}
-\indexentry{graphite!basal planes|hyperpage}{53}
-\indexentry{graphite!point-slope strength|hyperpage}{53}
-\indexentry{constitutiveModels!Geomechanics|hyperpage}{62}
-\indexentry{porosity!geomechanics|hyperpage}{62}
-\indexentry{Geomechanics model|hyperpage}{62}
-\indexentry{Arenisca|hyperpage}{62}
-\indexentry{Kayenta|hyperpage}{62}
-\indexentry{CB-TSCPR|hyperpage}{62}
-\indexentry{constitutiveModels!fluid models|hyperpage}{69}
-\indexentry{constitutiveModels!Gas|hyperpage}{69}
-\indexentry{gas model|hyperpage}{69}
-\indexentry{constitutiveModels!Liquid|hyperpage}{69}
-\indexentry{liquid model|hyperpage}{69}
-\indexentry{constitutive modifiers|hyperpage}{70}
-\indexentry{strengthScale|hyperpage}{70}
-\indexentry{Weibull statistics|hyperpage}{70}
-\indexentry{constitutive modifiers!strengthScale|hyperpage}{70}
-\indexentry{crack-tip stress concentration|hyperpage}{71}
-\indexentry{distanceToCrackTip|hyperpage}{71}
-\indexentry{constitutive modifiers!crack-tip correction|hyperpage}{71}
-\indexentry{porosity|hyperpage}{71}
-\indexentry{constitutive modifiers!porosity|hyperpage}{71}
-\indexentry{temperature|hyperpage}{71}
-\indexentry{constitutive modifiers!temperature|hyperpage}{71}
-\indexentry{TemperatureProfile event|hyperpage}{71}
-\indexentry{TemperatureRamp event|hyperpage}{71}
-\indexentry{constitutiveModels!external material models|hyperpage}{72}
-\indexentry{external material models|hyperpage}{72}
-\indexentry{setupMPM!external material models|hyperpage}{72}
-\indexentry{material-point driver|hyperpage}{73}
-\indexentry{constitutiveModels!material-point driver|hyperpage}{73}
-\indexentry{stress control!material-point driver|hyperpage}{73}
-\indexentry{setupMPM!material-point driver|hyperpage}{73}
-\indexentry{particle types|hyperpage}{76}
-\indexentry{particle mapping|hyperpage}{76}
-\indexentry{CPDI|hyperpage}{76}
-\indexentry{B-spline|hyperpage}{76}
-\indexentry{PIC|hyperpage}{76}
-\indexentry{FLIP|hyperpage}{76}
-\indexentry{XPIC|hyperpage}{76}
-\indexentry{FMPM|hyperpage}{76}
-\indexentry{particle mapping!notation|hyperpage}{76}
-\indexentry{SinglePoint|hyperpage}{77}
-\indexentry{particle mapping!single point|hyperpage}{77}
-\indexentry{SinglePointBSpline|hyperpage}{77}
-\indexentry{B-spline!cubic|hyperpage}{77}
-\indexentry{particle mapping!B-spline|hyperpage}{77}
-\indexentry{CPDI|hyperpage}{79}
-\indexentry{particle domain|hyperpage}{79}
-\indexentry{particle mapping!CPDI|hyperpage}{79}
-\indexentry{CPDI!domain scaling|hyperpage}{80}
-\indexentry{domain scaling|hyperpage}{80}
-\indexentry{numerical fracture|hyperpage}{80}
-\indexentry{CPTI|hyperpage}{81}
-\indexentry{CPDI2|hyperpage}{81}
-\indexentry{particle update|hyperpage}{81}
-\indexentry{grid-to-particle transfer|hyperpage}{81}
-\indexentry{PIC|hyperpage}{81}
-\indexentry{particle update!PIC|hyperpage}{81}
-\indexentry{FLIP|hyperpage}{82}
-\indexentry{particle update!FLIP|hyperpage}{82}
-\indexentry{XPIC|hyperpage}{83}
-\indexentry{particle update!XPIC|hyperpage}{83}
-\indexentry{FMPM|hyperpage}{83}
-\indexentry{full mass matrix|hyperpage}{83}
-\indexentry{particle update!FMPM|hyperpage}{83}
-\indexentry{particle types!implementation status|hyperpage}{84}
-\indexentry{boundary conditions|hyperpage}{85}
-\indexentry{Ftable|hyperpage}{85}
-\indexentry{stress control|hyperpage}{85}
-\indexentry{reactionHistory|hyperpage}{85}
-\indexentry{boundary conditions!face order|hyperpage}{85}
-\indexentry{boundary conditions!bcTable|hyperpage}{86}
-\indexentry{bcTable|hyperpage}{86}
-\indexentry{boundary conditions!Outflow|hyperpage}{87}
-\indexentry{boundary conditions!Symmetry|hyperpage}{87}
-\indexentry{symmetry boundary conditions|hyperpage}{87}
-\indexentry{Ftable!interpolation|hyperpage}{88}
-\indexentry{prescribedBoundaryFTable|hyperpage}{88}
-\indexentry{prescribedFTable|hyperpage}{88}
-\indexentry{boundary conditions!Moving|hyperpage}{88}
-\indexentry{prescribedBoundaryTransverseVelocities|hyperpage}{88}
-\indexentry{boundary conditions!Contact|hyperpage}{90}
-\indexentry{boundary friction|hyperpage}{90}
-\indexentry{stress control!internal algorithm|hyperpage}{91}
-\indexentry{stressTable|hyperpage}{91}
-\indexentry{stress control!adaptive-seek|hyperpage}{92}
-\indexentry{stressControlAdaptiveSeek|hyperpage}{92}
-\indexentry{reactionHistory!internal algorithm|hyperpage}{95}
-\indexentry{FMPM!boundary conditions|hyperpage}{95}
-\indexentry{periodic boundaries|hyperpage}{96}
-\indexentry{cohesive zone|hyperpage}{96}
-\indexentry{cohesive zone!implementation|hyperpage}{96}
-\indexentry{CohesiveZoneRegion|hyperpage}{96}
-\indexentry{CohesiveZone event|hyperpage}{96}
-\indexentry{cohesive zone!reference configuration|hyperpage}{96}
-\indexentry{surface normal!cohesive zone|hyperpage}{96}
-\indexentry{cohesive zone!initialization|hyperpage}{97}
-\indexentry{CZTag|hyperpage}{97}
-\indexentry{SurfaceFlag!Cohesive|hyperpage}{97}
-\indexentry{cohesive zone!force update|hyperpage}{97}
-\indexentry{cohesive traction|hyperpage}{97}
-\indexentry{particle cohesive force|hyperpage}{97}
-\indexentry{cohesive zone!constitutive models|hyperpage}{99}
-\indexentry{UncoupledCohesiveZone|hyperpage}{99}
-\indexentry{CoupledCohesiveZone|hyperpage}{99}
-\indexentry{BicrystalCohesiveZone|hyperpage}{99}
-\indexentry{PolymerCohesiveZone|hyperpage}{99}
-\indexentry{SurfaceInformedPolymerCohesiveZone|hyperpage}{99}
-\indexentry{cohesive zone!inputs|hyperpage}{101}
-\indexentry{cohesive zone!limitations|hyperpage}{101}
-\indexentry{weak trace projection|hyperpage}{101}
-\indexentry{weak discontinuity|hyperpage}{101}
-\indexentry{SurfaceFlag!WeakDiscontinuity|hyperpage}{101}
-\indexentry{mixed cell|hyperpage}{101}
-\indexentry{weak discontinuity!mixed-cell stress error|hyperpage}{101}
-\indexentry{weak trace projection!current scope|hyperpage}{102}
-\indexentry{contact groups!weak trace projection|hyperpage}{102}
-\indexentry{gridSurfacePosition!weak trace projection|hyperpage}{102}
-\indexentry{gridSurfaceFieldMass!weak trace projection|hyperpage}{102}
-\indexentry{weak trace projection!shape-function evaluation|hyperpage}{102}
-\indexentry{weak trace projection!impulse|hyperpage}{103}
-\indexentry{weak trace projection!gap stabilization|hyperpage}{103}
-\indexentry{weak trace projection!solver step|hyperpage}{103}
-\indexentry{contact!weak trace projection|hyperpage}{103}
-\indexentry{weak trace projection!input controls|hyperpage}{104}
-\indexentry{weak trace projection!limitations|hyperpage}{104}
-\indexentry{contact!options|hyperpage}{105}
-\indexentry{contact!multi-field|hyperpage}{105}
-\indexentry{damage-field gradient|hyperpage}{105}
-\indexentry{DFG|hyperpage}{105}
-\indexentry{contact!normal|hyperpage}{105}
-\indexentry{contact!gap closure|hyperpage}{105}
-\indexentry{overdensification|hyperpage}{105}
-\indexentry{contact!activation|hyperpage}{105}
-\indexentry{contact!prescribed groups|hyperpage}{106}
-\indexentry{particleGroup|hyperpage}{106}
-\indexentry{DFG!partitioning|hyperpage}{106}
-\indexentry{damageFieldPartitioning|hyperpage}{106}
-\indexentry{contact!weak trace projection|hyperpage}{108}
-\indexentry{weak trace projection!contact interaction|hyperpage}{108}
-\indexentry{contact!surface normal|hyperpage}{108}
-\indexentry{contact!surface position|hyperpage}{108}
-\indexentry{explicitSurfaceNormalInfluence|hyperpage}{108}
-\indexentry{computeParticleSurfaceNormalsAndPositions|hyperpage}{109}
-\indexentry{normalAndPositionMethod|hyperpage}{109}
-\indexentry{contact!logistic regression|hyperpage}{110}
-\indexentry{LogisticRegression|hyperpage}{110}
-\indexentry{contact!volume position|hyperpage}{111}
-\indexentry{DFGAndVolumeIntegration|hyperpage}{111}
-\indexentry{contactNormalType|hyperpage}{111}
-\indexentry{contact!normal weighting|hyperpage}{111}
-\indexentry{contact!separability|hyperpage}{112}
-\indexentry{separabilityMinDamage|hyperpage}{112}
-\indexentry{surfaceQualityThreshold|hyperpage}{112}
-\indexentry{thinFeatureDFGThreshold|hyperpage}{112}
-\indexentry{contactGapCorrection|hyperpage}{113}
-\indexentry{contact!gap closure|hyperpage}{113}
-\indexentry{contact!friction|hyperpage}{113}
-\indexentry{frictionCoefficient|hyperpage}{114}
-\indexentry{frictionCoefficientTable|hyperpage}{114}
-\indexentry{contact!friction table|hyperpage}{114}
-\indexentry{overlapCorrection|hyperpage}{114}
-\indexentry{overlapThreshold1|hyperpage}{114}
-\indexentry{overlapThreshold2|hyperpage}{114}
-\indexentry{computeSPHJacobian|hyperpage}{114}
-\indexentry{directionalOverlapCorrection|hyperpage}{114}
-\indexentry{contact!examples|hyperpage}{115}
-\indexentry{DFG!large deformation contact|hyperpage}{115}
-\indexentry{cohesive zone!explicit surface contact|hyperpage}{115}
-\indexentry{contact!input summary|hyperpage}{116}
-\indexentry{robustness controls|hyperpage}{117}
-\indexentry{particle deletion|hyperpage}{117}
-\indexentry{deformation gradient!reset|hyperpage}{117}
-\indexentry{particle splitting|hyperpage}{117}
-\indexentry{particleDeleteFlag|hyperpage}{117}
-\indexentry{maxParticleJacobian|hyperpage}{117}
-\indexentry{minParticleJacobian|hyperpage}{117}
-\indexentry{maxParticleVelocity|hyperpage}{117}
-\indexentry{constitutiveUpdateFlag|hyperpage}{117}
-\indexentry{resetDefGradForFullyDamagedParticles|hyperpage}{119}
-\indexentry{resetDefGradForScaledSurfaceParticles|hyperpage}{119}
-\indexentry{ResetDeformationGradient|hyperpage}{119}
-\indexentry{Gas material!deformation-gradient reset|hyperpage}{119}
-\indexentry{subdivideParticles|hyperpage}{120}
-\indexentry{particleSubdivideFlag|hyperpage}{120}
-\indexentry{particleCopyFlag|hyperpage}{120}
-\indexentry{CPDI!particle splitting|hyperpage}{120}
-\indexentry{ParticleFileWriter|hyperpage}{122}
-\indexentry{pfwInput file|hyperpage}{122}
-\indexentry{ParticleFileWriter!purpose|hyperpage}{122}
-\indexentry{particle file|hyperpage}{122}
-\indexentry{pfw input|hyperpage}{122}
-\indexentry{pfw dictionary|hyperpage}{122}
-\indexentry{Python input file|hyperpage}{122}
-\indexentry{pfw dependency|hyperpage}{123}
-\indexentry{dependencies!PFW|hyperpage}{123}
-\indexentry{background grid|hyperpage}{124}
-\indexentry{InternalMesh|hyperpage}{124}
-\indexentry{parallel mesh generation|hyperpage}{124}
-\indexentry{plane strain!PFW|hyperpage}{124}
-\indexentry{refinement!PFW|hyperpage}{124}
-\indexentry{particles per partition|hyperpage}{124}
-\indexentry{periodic boundaries!PFW grid|hyperpage}{124}
-\indexentry{cells per partition|hyperpage}{125}
-\indexentry{cpp|hyperpage}{125}
-\indexentry{ppc|hyperpage}{125}
-\indexentry{plane strain!mesh|hyperpage}{126}
-\indexentry{time step!refinement|hyperpage}{126}
-\indexentry{CFL condition|hyperpage}{126}
-\indexentry{cost scaling|hyperpage}{126}
-\indexentry{Geometry objects|hyperpage}{126}
-\indexentry{ParticleFileWriter!geometry objects|hyperpage}{126}
-\indexentry{objects@\texttt{objects}|hyperpage}{127}
-\indexentry{make\_objects@\texttt{make\_objects}|hyperpage}{127}
-\indexentry{geometry objects!creation|hyperpage}{127}
-\indexentry{sortObjects@\texttt{sortObjects}|hyperpage}{127}
-\indexentry{geometry objects!sorting|hyperpage}{127}
-\indexentry{parallel PFW!object sorting|hyperpage}{127}
-\indexentry{geometry objects!interface|hyperpage}{128}
-\indexentry{surface flags!PFW|hyperpage}{128}
-\indexentry{getMat@\texttt{getMat}|hyperpage}{128}
-\indexentry{getGroup@\texttt{getGroup}|hyperpage}{128}
-\indexentry{isInterior@\texttt{isInterior}|hyperpage}{128}
-\indexentry{geometry objects!analytic primitives|hyperpage}{128}
-\indexentry{geometry objects!box|hyperpage}{128}
-\indexentry{geometry objects!box2|hyperpage}{128}
-\indexentry{geometry objects!notchedBar|hyperpage}{128}
-\indexentry{geometry objects!sphere|hyperpage}{128}
-\indexentry{geometry objects!sphericalInclusion|hyperpage}{130}
-\indexentry{geometry objects!shell|hyperpage}{130}
-\indexentry{geometry objects!ellipsoid|hyperpage}{130}
-\indexentry{geometry objects!cone|hyperpage}{130}
-\indexentry{geometry objects!cylinder|hyperpage}{130}
-\indexentry{geometry objects!toroid|hyperpage}{130}
-\indexentry{geometry objects!polygon|hyperpage}{130}
-\indexentry{geometry objects!porousPolygon|hyperpage}{130}
-\indexentry{geometry objects!fill|hyperpage}{130}
-\indexentry{geometry objects!tooling|hyperpage}{130}
-\indexentry{geometry objects!indentor|hyperpage}{130}
-\indexentry{geometry objects!spherical indenter|hyperpage}{130}
-\indexentry{geometry objects!flat punch indenter|hyperpage}{130}
-\indexentry{geometry objects!simple tensile gripper|hyperpage}{130}
-\indexentry{geometry objects!tensile gripper|hyperpage}{131}
-\indexentry{geometry objects!pillar|hyperpage}{131}
-\indexentry{geometry objects!pillarBase|hyperpage}{131}
-\indexentry{geometry objects!whiskers|hyperpage}{131}
-\indexentry{geometry objects!mesostructures|hyperpage}{131}
-\indexentry{geometry objects!crystal|hyperpage}{131}
-\indexentry{geometry objects!foam|hyperpage}{131}
-\indexentry{geometry objects!poissonDiskFoam|hyperpage}{131}
-\indexentry{geometry objects!packedSphericalBed|hyperpage}{131}
-\indexentry{geometry objects!twoMaterialBox|hyperpage}{131}
-\indexentry{geometry objects!twoFieldBox|hyperpage}{131}
-\indexentry{geometry objects!polygonInclusions|hyperpage}{131}
-\indexentry{geometry objects!cohesive zones|hyperpage}{131}
-\indexentry{geometry objects!prills|hyperpage}{131}
-\indexentry{geometry objects!czSphericalPrill|hyperpage}{131}
-\indexentry{geometry objects!explicitBinderSphericalPrill|hyperpage}{132}
-\indexentry{geometry objects!czCylindricalPrill|hyperpage}{132}
-\indexentry{geometry objects!czPrill|hyperpage}{132}
-\indexentry{geometry objects!voxel imports|hyperpage}{132}
-\indexentry{geometry objects!STL|hyperpage}{132}
-\indexentry{geometry objects!image-based|hyperpage}{132}
-\indexentry{geometry objects!stl|hyperpage}{132}
-\indexentry{geometry objects!VCCTL|hyperpage}{132}
-\indexentry{geometry objects!CT|hyperpage}{132}
-\indexentry{geometry objects!bitmap|hyperpage}{132}
-\indexentry{geometry objects!GrainStack|hyperpage}{132}
-\indexentry{geometry objects!architected structures|hyperpage}{132}
-\indexentry{geometry objects!spinodal|hyperpage}{132}
-\indexentry{geometry objects!tpms|hyperpage}{132}
-\indexentry{geometry objects!Boolean operations|hyperpage}{132}
-\indexentry{union@\texttt{union}|hyperpage}{132}
-\indexentry{intersection@\texttt{intersection}|hyperpage}{132}
-\indexentry{difference@\texttt{difference}|hyperpage}{132}
-\indexentry{geometry objects!wrappers|hyperpage}{133}
-\indexentry{wrappers!geometry|hyperpage}{133}
-\indexentry{materials|hyperpage}{133}
-\indexentry{groups|hyperpage}{133}
-\indexentry{particle types|hyperpage}{133}
-\indexentry{MaterialType@\texttt{MaterialType}|hyperpage}{133}
-\indexentry{ContactGroup@\texttt{ContactGroup}|hyperpage}{133}
-\indexentry{ParticleType@\texttt{ParticleType}|hyperpage}{133}
-\indexentry{geometry objects!material assignment|hyperpage}{134}
-\indexentry{geometry objects!contact group assignment|hyperpage}{134}
-\indexentry{geometry objects!particle type assignment|hyperpage}{134}
-\indexentry{geometry wrappers!material assignment|hyperpage}{135}
-\indexentry{field painters!PFW|hyperpage}{135}
-\indexentry{MaterialDirection@\texttt{MaterialDirection}|hyperpage}{136}
-\indexentry{material direction|hyperpage}{136}
-\indexentry{anisotropy!material direction|hyperpage}{136}
-\indexentry{pfw\_materials.py@\texttt{pfw\_materials.py}|hyperpage}{137}
-\indexentry{materialPropertyString@\texttt{materialPropertyString}|hyperpage}{137}
-\indexentry{materialString@\texttt{materialString}|hyperpage}{137}
-\indexentry{solver controls|hyperpage}{139}
-\indexentry{ParticleFileWriter!solver controls|hyperpage}{139}
-\indexentry{PFW parameter!timeIntegrationOption@\texttt  {timeIntegrationOption}|hyperpage}{139}
-\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{139}
-\indexentry{PFW parameter!updateOrder@\texttt  {updateOrder}|hyperpage}{139}
-\indexentry{PFW parameter!cflFactor@\texttt  {cflFactor}|hyperpage}{139}
-\indexentry{PFW parameter!initialDt@\texttt  {initialDt}|hyperpage}{139}
-\indexentry{PFW parameter!solverProfiling@\texttt  {solverProfiling}|hyperpage}{139}
-\indexentry{PFW parameter!logLevel@\texttt  {logLevel}|hyperpage}{139}
-\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{139}
-\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{139}
-\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{139}
-\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{139}
-\indexentry{PFW parameter!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{139}
-\indexentry{PFW parameter!frictionCoefficientRuleOfMixtures@\texttt  {frictionCoefficientRuleOfMixtures}|hyperpage}{139}
-\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{139}
-\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{139}
-\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{139}
-\indexentry{PFW parameter!separabilityMinDamage@\texttt  {separabilityMinDamage}|hyperpage}{139}
-\indexentry{PFW parameter!treatFullyDamagedAsSingleField@\texttt  {treatFullyDamagedAsSingleField}|hyperpage}{139}
-\indexentry{PFW parameter!resetDefGradForFullyDamagedParticles@\texttt  {resetDefGradForFullyDamagedParticles}|hyperpage}{139}
-\indexentry{PFW parameter!plotUnscaledParticles@\texttt  {plotUnscaledParticles}|hyperpage}{139}
-\indexentry{PFW parameter!normalAndPositionMethod@\texttt  {normalAndPositionMethod}|hyperpage}{139}
-\indexentry{PFW parameter!contactNormalType@\texttt  {contactNormalType}|hyperpage}{139}
-\indexentry{PFW parameter!contactNormalExponent@\texttt  {contactNormalExponent}|hyperpage}{139}
-\indexentry{PFW parameter!maxLRIterations@\texttt  {maxLRIterations}|hyperpage}{139}
-\indexentry{PFW parameter!LRtolerance@\texttt  {LRtolerance}|hyperpage}{139}
-\indexentry{PFW parameter!useCrackTipDetection@\texttt  {useCrackTipDetection}|hyperpage}{139}
-\indexentry{PFW parameter!crackTipDetectionThreshold@\texttt  {crackTipDetectionThreshold}|hyperpage}{139}
-\indexentry{PFW parameter!surfaceQualityThreshold@\texttt  {surfaceQualityThreshold}|hyperpage}{139}
-\indexentry{PFW parameter!thinFeatureDFGThreshold@\texttt  {thinFeatureDFGThreshold}|hyperpage}{139}
-\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{139}
-\indexentry{PFW parameter!maxParticleVelocity@\texttt  {maxParticleVelocity}|hyperpage}{139}
-\indexentry{PFW parameter!minParticleJacobian@\texttt  {minParticleJacobian}|hyperpage}{139}
-\indexentry{PFW parameter!maxParticleJacobian@\texttt  {maxParticleJacobian}|hyperpage}{139}
-\indexentry{PFW parameter!cohesiveFieldPartitioning@\texttt  {cohesiveFieldPartitioning}|hyperpage}{139}
-\indexentry{PFW parameter!enableCohesiveFailure@\texttt  {enableCohesiveFailure}|hyperpage}{139}
-\indexentry{PFW parameter!cohesiveLaw@\texttt  {cohesiveLaw}|hyperpage}{139}
-\indexentry{PFW parameter!preventCZInterpenetration@\texttt  {preventCZInterpenetration}|hyperpage}{139}
-\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{139}
-\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{139}
-\indexentry{PFW parameter!bodyForce@\texttt  {bodyForce}|hyperpage}{139}
-\indexentry{PFW parameter!generalizedVortexMMS@\texttt  {generalizedVortexMMS}|hyperpage}{139}
-\indexentry{PFW parameter!FSubcycles@\texttt  {FSubcycles}|hyperpage}{139}
-\indexentry{solver controls!time integration|hyperpage}{139}
-\indexentry{solver controls!update method|hyperpage}{139}
-\indexentry{PFW parameter!timeIntegrationOption@\texttt  {timeIntegrationOption}|hyperpage}{139}
-\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{139}
-\indexentry{PFW parameter!updateOrder@\texttt  {updateOrder}|hyperpage}{139}
-\indexentry{PFW parameter!cflFactor@\texttt  {cflFactor}|hyperpage}{139}
-\indexentry{PFW parameter!initialDt@\texttt  {initialDt}|hyperpage}{139}
-\indexentry{PFW parameter!endTime@\texttt  {endTime}|hyperpage}{139}
-\indexentry{PFW parameter!plotInterval@\texttt  {plotInterval}|hyperpage}{139}
-\indexentry{PFW parameter!restartInterval@\texttt  {restartInterval}|hyperpage}{139}
-\indexentry{PFW parameter!solverProfiling@\texttt  {solverProfiling}|hyperpage}{139}
-\indexentry{single-field contact!PFW example|hyperpage}{140}
-\indexentry{hyperelasticity!PFW example|hyperpage}{140}
-\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{140}
-\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{140}
-\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{140}
-\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{140}
-\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{140}
-\indexentry{friction!PFW example|hyperpage}{141}
-\indexentry{group-dependent friction table|hyperpage}{141}
-\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{141}
-\indexentry{PFW parameter!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{141}
-\indexentry{PFW parameter!frictionCoefficientRuleOfMixtures@\texttt  {frictionCoefficientRuleOfMixtures}|hyperpage}{141}
-\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{141}
-\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{141}
-\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{141}
-\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{141}
-\indexentry{PFW parameter!contactNormalType@\texttt  {contactNormalType}|hyperpage}{141}
-\indexentry{PFW parameter!contactNormalExponent@\texttt  {contactNormalExponent}|hyperpage}{141}
-\indexentry{CPDI!PFW example|hyperpage}{141}
-\indexentry{DFG!PFW example|hyperpage}{141}
-\indexentry{damage!PFW example|hyperpage}{141}
-\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{141}
-\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{141}
-\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{141}
-\indexentry{PFW parameter!separabilityMinDamage@\texttt  {separabilityMinDamage}|hyperpage}{141}
-\indexentry{PFW parameter!treatFullyDamagedAsSingleField@\texttt  {treatFullyDamagedAsSingleField}|hyperpage}{141}
-\indexentry{PFW parameter!resetDefGradForFullyDamagedParticles@\texttt  {resetDefGradForFullyDamagedParticles}|hyperpage}{141}
-\indexentry{PFW parameter!disableSurfaceNormalsAndPositionsOnCPDIScaling@\texttt  {disableSurfaceNormalsAndPositionsOnCPDIScaling}|hyperpage}{141}
-\indexentry{PFW parameter!plotUnscaledParticles@\texttt  {plotUnscaledParticles}|hyperpage}{141}
-\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{141}
-\indexentry{notched bar!PFW example|hyperpage}{142}
-\indexentry{crack-tip detection!PFW|hyperpage}{142}
+\indexentry{constitutiveModels!Chiumenti|hyperpage}{53}
+\indexentry{Rankine damage|hyperpage}{53}
+\indexentry{constitutiveModels!Graphite|hyperpage}{54}
+\indexentry{Graphite model|hyperpage}{54}
+\indexentry{MaterialDirection!Graphite|hyperpage}{54}
+\indexentry{transverse isotropy!Graphite|hyperpage}{54}
+\indexentry{graphite!weak planes|hyperpage}{54}
+\indexentry{graphite!basal planes|hyperpage}{54}
+\indexentry{graphite!point-slope strength|hyperpage}{54}
+\indexentry{constitutiveModels!Geomechanics|hyperpage}{63}
+\indexentry{porosity!geomechanics|hyperpage}{63}
+\indexentry{Geomechanics model|hyperpage}{63}
+\indexentry{Arenisca|hyperpage}{63}
+\indexentry{Kayenta|hyperpage}{63}
+\indexentry{CB-TSCPR|hyperpage}{63}
+\indexentry{constitutiveModels!fluid models|hyperpage}{70}
+\indexentry{constitutiveModels!Gas|hyperpage}{70}
+\indexentry{gas model|hyperpage}{70}
+\indexentry{constitutiveModels!Liquid|hyperpage}{70}
+\indexentry{liquid model|hyperpage}{70}
+\indexentry{constitutive modifiers|hyperpage}{71}
+\indexentry{strengthScale|hyperpage}{71}
+\indexentry{Weibull statistics|hyperpage}{71}
+\indexentry{constitutive modifiers!strengthScale|hyperpage}{71}
+\indexentry{crack-tip stress concentration|hyperpage}{72}
+\indexentry{distanceToCrackTip|hyperpage}{72}
+\indexentry{constitutive modifiers!crack-tip correction|hyperpage}{72}
+\indexentry{porosity|hyperpage}{72}
+\indexentry{constitutive modifiers!porosity|hyperpage}{72}
+\indexentry{temperature|hyperpage}{72}
+\indexentry{constitutive modifiers!temperature|hyperpage}{72}
+\indexentry{TemperatureProfile event|hyperpage}{72}
+\indexentry{TemperatureRamp event|hyperpage}{72}
+\indexentry{constitutiveModels!external material models|hyperpage}{73}
+\indexentry{external material models|hyperpage}{73}
+\indexentry{setupMPM!external material models|hyperpage}{73}
+\indexentry{material-point driver|hyperpage}{74}
+\indexentry{constitutiveModels!material-point driver|hyperpage}{74}
+\indexentry{stress control!material-point driver|hyperpage}{74}
+\indexentry{setupMPM!material-point driver|hyperpage}{74}
+\indexentry{particle types|hyperpage}{77}
+\indexentry{particle mapping|hyperpage}{77}
+\indexentry{CPDI|hyperpage}{77}
+\indexentry{B-spline|hyperpage}{77}
+\indexentry{PIC|hyperpage}{77}
+\indexentry{FLIP|hyperpage}{77}
+\indexentry{XPIC|hyperpage}{77}
+\indexentry{FMPM|hyperpage}{77}
+\indexentry{particle mapping!notation|hyperpage}{77}
+\indexentry{SinglePoint|hyperpage}{78}
+\indexentry{particle mapping!single point|hyperpage}{78}
+\indexentry{SinglePointBSpline|hyperpage}{78}
+\indexentry{B-spline!cubic|hyperpage}{78}
+\indexentry{particle mapping!B-spline|hyperpage}{78}
+\indexentry{CPDI|hyperpage}{80}
+\indexentry{particle domain|hyperpage}{80}
+\indexentry{particle mapping!CPDI|hyperpage}{80}
+\indexentry{CPDI!domain scaling|hyperpage}{81}
+\indexentry{domain scaling|hyperpage}{81}
+\indexentry{VP-Hencky domain scaling|hyperpage}{81}
+\indexentry{numerical fracture|hyperpage}{81}
+\indexentry{CPTI|hyperpage}{82}
+\indexentry{CPDI2|hyperpage}{82}
+\indexentry{particle update|hyperpage}{83}
+\indexentry{grid-to-particle transfer|hyperpage}{83}
+\indexentry{PIC|hyperpage}{83}
+\indexentry{particle update!PIC|hyperpage}{83}
+\indexentry{FLIP|hyperpage}{84}
+\indexentry{particle update!FLIP|hyperpage}{84}
+\indexentry{XPIC|hyperpage}{85}
+\indexentry{particle update!XPIC|hyperpage}{85}
+\indexentry{FMPM|hyperpage}{85}
+\indexentry{full mass matrix|hyperpage}{85}
+\indexentry{particle update!FMPM|hyperpage}{85}
+\indexentry{particle types!implementation status|hyperpage}{86}
+\indexentry{boundary conditions|hyperpage}{87}
+\indexentry{Ftable|hyperpage}{87}
+\indexentry{stress control|hyperpage}{87}
+\indexentry{reactionHistory|hyperpage}{87}
+\indexentry{boundary conditions!face order|hyperpage}{87}
+\indexentry{boundary conditions!bcTable|hyperpage}{88}
+\indexentry{bcTable|hyperpage}{88}
+\indexentry{boundary conditions!Outflow|hyperpage}{89}
+\indexentry{boundary conditions!Symmetry|hyperpage}{89}
+\indexentry{symmetry boundary conditions|hyperpage}{89}
+\indexentry{Ftable!interpolation|hyperpage}{90}
+\indexentry{prescribedBoundaryFTable|hyperpage}{90}
+\indexentry{prescribedFTable|hyperpage}{90}
+\indexentry{boundary conditions!Moving|hyperpage}{91}
+\indexentry{prescribedBoundaryTransverseVelocities|hyperpage}{91}
+\indexentry{boundary conditions!Contact|hyperpage}{92}
+\indexentry{boundary friction|hyperpage}{92}
+\indexentry{stress control!internal algorithm|hyperpage}{93}
+\indexentry{stressTable|hyperpage}{93}
+\indexentry{stress control!adaptive-seek|hyperpage}{94}
+\indexentry{stressControlAdaptiveSeek|hyperpage}{94}
+\indexentry{reactionHistory!internal algorithm|hyperpage}{97}
+\indexentry{FMPM!boundary conditions|hyperpage}{98}
+\indexentry{periodic boundaries|hyperpage}{98}
+\indexentry{cohesive zone|hyperpage}{98}
+\indexentry{cohesive zone!implementation|hyperpage}{98}
+\indexentry{CohesiveZoneRegion|hyperpage}{98}
+\indexentry{CohesiveZone event|hyperpage}{98}
+\indexentry{cohesive zone!reference configuration|hyperpage}{99}
+\indexentry{surface normal!cohesive zone|hyperpage}{99}
+\indexentry{cohesive zone!initialization|hyperpage}{99}
+\indexentry{CZTag|hyperpage}{99}
+\indexentry{SurfaceFlag!Cohesive|hyperpage}{99}
+\indexentry{cohesive zone!force update|hyperpage}{100}
+\indexentry{cohesive traction|hyperpage}{100}
+\indexentry{particle cohesive force|hyperpage}{100}
+\indexentry{cohesive zone!constitutive models|hyperpage}{101}
+\indexentry{UncoupledCohesiveZone|hyperpage}{101}
+\indexentry{CoupledCohesiveZone|hyperpage}{101}
+\indexentry{BicrystalCohesiveZone|hyperpage}{101}
+\indexentry{PolymerCohesiveZone|hyperpage}{101}
+\indexentry{SurfaceInformedPolymerCohesiveZone|hyperpage}{101}
+\indexentry{cohesive zone!inputs|hyperpage}{103}
+\indexentry{cohesive zone!limitations|hyperpage}{103}
+\indexentry{weak trace projection|hyperpage}{104}
+\indexentry{weak discontinuity|hyperpage}{104}
+\indexentry{SurfaceFlag!WeakDiscontinuity|hyperpage}{104}
+\indexentry{mixed cell|hyperpage}{104}
+\indexentry{weak discontinuity!mixed-cell stress error|hyperpage}{104}
+\indexentry{weak trace projection!current scope|hyperpage}{104}
+\indexentry{contact groups!weak trace projection|hyperpage}{104}
+\indexentry{gridSurfacePosition!weak trace projection|hyperpage}{105}
+\indexentry{gridSurfaceFieldMass!weak trace projection|hyperpage}{105}
+\indexentry{weak trace projection!shape-function evaluation|hyperpage}{105}
+\indexentry{weak trace projection!impulse|hyperpage}{105}
+\indexentry{weak trace projection!gap stabilization|hyperpage}{105}
+\indexentry{weak trace projection!solver step|hyperpage}{106}
+\indexentry{contact!weak trace projection|hyperpage}{106}
+\indexentry{weak trace projection!input controls|hyperpage}{106}
+\indexentry{weak trace projection!limitations|hyperpage}{107}
+\indexentry{contact!options|hyperpage}{107}
+\indexentry{contact!multi-field|hyperpage}{107}
+\indexentry{damage-field gradient|hyperpage}{107}
+\indexentry{DFG|hyperpage}{107}
+\indexentry{contact!normal|hyperpage}{107}
+\indexentry{contact!gap closure|hyperpage}{107}
+\indexentry{overdensification|hyperpage}{107}
+\indexentry{contact!activation|hyperpage}{107}
+\indexentry{contact!prescribed groups|hyperpage}{108}
+\indexentry{particleGroup|hyperpage}{108}
+\indexentry{DFG!partitioning|hyperpage}{110}
+\indexentry{damageFieldPartitioning|hyperpage}{110}
+\indexentry{contact!weak trace projection|hyperpage}{110}
+\indexentry{weak trace projection!contact interaction|hyperpage}{110}
+\indexentry{contact!surface normal|hyperpage}{111}
+\indexentry{contact!surface position|hyperpage}{111}
+\indexentry{explicitSurfaceNormalInfluence|hyperpage}{111}
+\indexentry{computeParticleSurfaceNormalsAndPositions|hyperpage}{112}
+\indexentry{normalAndPositionMethod|hyperpage}{112}
+\indexentry{contact!logistic regression|hyperpage}{113}
+\indexentry{LogisticRegression|hyperpage}{113}
+\indexentry{contact!volume position|hyperpage}{113}
+\indexentry{DFGAndVolumeIntegration|hyperpage}{113}
+\indexentry{contactNormalType|hyperpage}{114}
+\indexentry{contact!normal weighting|hyperpage}{114}
+\indexentry{contact!separability|hyperpage}{114}
+\indexentry{separabilityMinDamage|hyperpage}{114}
+\indexentry{surfaceQualityThreshold|hyperpage}{114}
+\indexentry{thinFeatureDFGThreshold|hyperpage}{114}
+\indexentry{contactGapCorrection|hyperpage}{115}
+\indexentry{contact!gap closure|hyperpage}{115}
+\indexentry{contact!friction|hyperpage}{115}
+\indexentry{frictionCoefficient|hyperpage}{116}
+\indexentry{frictionCoefficientTable|hyperpage}{116}
+\indexentry{contact!friction table|hyperpage}{116}
+\indexentry{overlapCorrection|hyperpage}{117}
+\indexentry{overlapThreshold1|hyperpage}{117}
+\indexentry{overlapThreshold2|hyperpage}{117}
+\indexentry{computeSPHJacobian|hyperpage}{117}
+\indexentry{directionalOverlapCorrection|hyperpage}{117}
+\indexentry{contact!examples|hyperpage}{117}
+\indexentry{DFG!large deformation contact|hyperpage}{117}
+\indexentry{cohesive zone!explicit surface contact|hyperpage}{117}
+\indexentry{contact!input summary|hyperpage}{119}
+\indexentry{robustness controls|hyperpage}{120}
+\indexentry{particle deletion|hyperpage}{120}
+\indexentry{deformation gradient!reset|hyperpage}{120}
+\indexentry{particle splitting|hyperpage}{120}
+\indexentry{particleDeleteFlag|hyperpage}{120}
+\indexentry{maxParticleJacobian|hyperpage}{120}
+\indexentry{minParticleJacobian|hyperpage}{120}
+\indexentry{maxParticleVelocity|hyperpage}{120}
+\indexentry{constitutiveUpdateFlag|hyperpage}{120}
+\indexentry{domainResetType|hyperpage}{121}
+\indexentry{VP-Hencky deformation-gradient reset|hyperpage}{121}
+\indexentry{resetDefGradForFullyDamagedParticles|hyperpage}{121}
+\indexentry{resetDefGradForMeltedParticles|hyperpage}{121}
+\indexentry{resetDefGradForScaledSurfaceParticles|hyperpage}{121}
+\indexentry{ResetDeformationGradient|hyperpage}{121}
+\indexentry{fluid material!deformation-gradient reset|hyperpage}{121}
+\indexentry{subdivideParticles|hyperpage}{123}
+\indexentry{particleSubdivideFlag|hyperpage}{123}
+\indexentry{particleCopyFlag|hyperpage}{123}
+\indexentry{CPDI!particle splitting|hyperpage}{123}
+\indexentry{VP-Hencky feasibility|hyperpage}{123}
+\indexentry{ParticleFileWriter|hyperpage}{125}
+\indexentry{pfwInput file|hyperpage}{125}
+\indexentry{ParticleFileWriter!purpose|hyperpage}{125}
+\indexentry{particle file|hyperpage}{125}
+\indexentry{pfw input|hyperpage}{125}
+\indexentry{pfw dictionary|hyperpage}{125}
+\indexentry{Python input file|hyperpage}{125}
+\indexentry{pfw dependency|hyperpage}{126}
+\indexentry{dependencies!PFW|hyperpage}{126}
+\indexentry{background grid|hyperpage}{127}
+\indexentry{InternalMesh|hyperpage}{127}
+\indexentry{parallel mesh generation|hyperpage}{127}
+\indexentry{plane strain!PFW|hyperpage}{127}
+\indexentry{refinement!PFW|hyperpage}{127}
+\indexentry{particles per partition|hyperpage}{127}
+\indexentry{periodic boundaries!PFW grid|hyperpage}{127}
+\indexentry{cells per partition|hyperpage}{128}
+\indexentry{cpp|hyperpage}{128}
+\indexentry{ppc|hyperpage}{128}
+\indexentry{plane strain!mesh|hyperpage}{129}
+\indexentry{time step!refinement|hyperpage}{129}
+\indexentry{CFL condition|hyperpage}{129}
+\indexentry{cost scaling|hyperpage}{129}
+\indexentry{Geometry objects|hyperpage}{129}
+\indexentry{ParticleFileWriter!geometry objects|hyperpage}{129}
+\indexentry{objects@\texttt{objects}|hyperpage}{130}
+\indexentry{make\_objects@\texttt{make\_objects}|hyperpage}{130}
+\indexentry{geometry objects!creation|hyperpage}{130}
+\indexentry{sortObjects@\texttt{sortObjects}|hyperpage}{130}
+\indexentry{geometry objects!sorting|hyperpage}{130}
+\indexentry{parallel PFW!object sorting|hyperpage}{130}
+\indexentry{geometry objects!interface|hyperpage}{131}
+\indexentry{surface flags!PFW|hyperpage}{131}
+\indexentry{getMat@\texttt{getMat}|hyperpage}{131}
+\indexentry{getGroup@\texttt{getGroup}|hyperpage}{131}
+\indexentry{isInterior@\texttt{isInterior}|hyperpage}{131}
+\indexentry{geometry objects!analytic primitives|hyperpage}{131}
+\indexentry{geometry objects!box|hyperpage}{131}
+\indexentry{geometry objects!box2|hyperpage}{131}
+\indexentry{geometry objects!notchedBar|hyperpage}{131}
+\indexentry{geometry objects!sphere|hyperpage}{131}
+\indexentry{geometry objects!sphericalInclusion|hyperpage}{133}
+\indexentry{geometry objects!shell|hyperpage}{133}
+\indexentry{geometry objects!ellipsoid|hyperpage}{133}
+\indexentry{geometry objects!cone|hyperpage}{133}
+\indexentry{geometry objects!cylinder|hyperpage}{133}
+\indexentry{geometry objects!toroid|hyperpage}{133}
+\indexentry{geometry objects!polygon|hyperpage}{133}
+\indexentry{geometry objects!porousPolygon|hyperpage}{133}
+\indexentry{geometry objects!fill|hyperpage}{133}
+\indexentry{geometry objects!tooling|hyperpage}{133}
+\indexentry{geometry objects!indentor|hyperpage}{133}
+\indexentry{geometry objects!spherical indenter|hyperpage}{133}
+\indexentry{geometry objects!flat punch indenter|hyperpage}{133}
+\indexentry{geometry objects!simple tensile gripper|hyperpage}{133}
+\indexentry{geometry objects!tensile gripper|hyperpage}{134}
+\indexentry{geometry objects!pillar|hyperpage}{134}
+\indexentry{geometry objects!pillarBase|hyperpage}{134}
+\indexentry{geometry objects!whiskers|hyperpage}{134}
+\indexentry{geometry objects!mesostructures|hyperpage}{134}
+\indexentry{geometry objects!crystal|hyperpage}{134}
+\indexentry{geometry objects!foam|hyperpage}{134}
+\indexentry{geometry objects!poissonDiskFoam|hyperpage}{134}
+\indexentry{geometry objects!packedSphericalBed|hyperpage}{134}
+\indexentry{geometry objects!twoMaterialBox|hyperpage}{134}
+\indexentry{geometry objects!twoFieldBox|hyperpage}{134}
+\indexentry{geometry objects!polygonInclusions|hyperpage}{134}
+\indexentry{geometry objects!cohesive zones|hyperpage}{134}
+\indexentry{geometry objects!prills|hyperpage}{134}
+\indexentry{geometry objects!czSphericalPrill|hyperpage}{134}
+\indexentry{geometry objects!explicitBinderSphericalPrill|hyperpage}{135}
+\indexentry{geometry objects!czCylindricalPrill|hyperpage}{135}
+\indexentry{geometry objects!czPrill|hyperpage}{135}
+\indexentry{geometry objects!voxel imports|hyperpage}{135}
+\indexentry{geometry objects!STL|hyperpage}{135}
+\indexentry{geometry objects!image-based|hyperpage}{135}
+\indexentry{geometry objects!stl|hyperpage}{135}
+\indexentry{geometry objects!VCCTL|hyperpage}{135}
+\indexentry{geometry objects!CT|hyperpage}{135}
+\indexentry{geometry objects!bitmap|hyperpage}{135}
+\indexentry{geometry objects!GrainStack|hyperpage}{135}
+\indexentry{geometry objects!architected structures|hyperpage}{135}
+\indexentry{geometry objects!spinodal|hyperpage}{135}
+\indexentry{geometry objects!tpms|hyperpage}{135}
+\indexentry{geometry objects!Boolean operations|hyperpage}{135}
+\indexentry{union@\texttt{union}|hyperpage}{135}
+\indexentry{intersection@\texttt{intersection}|hyperpage}{135}
+\indexentry{difference@\texttt{difference}|hyperpage}{135}
+\indexentry{geometry objects!wrappers|hyperpage}{136}
+\indexentry{wrappers!geometry|hyperpage}{136}
+\indexentry{materials|hyperpage}{136}
+\indexentry{groups|hyperpage}{136}
+\indexentry{particle types|hyperpage}{136}
+\indexentry{MaterialType@\texttt{MaterialType}|hyperpage}{136}
+\indexentry{ContactGroup@\texttt{ContactGroup}|hyperpage}{136}
+\indexentry{ParticleType@\texttt{ParticleType}|hyperpage}{136}
+\indexentry{geometry objects!material assignment|hyperpage}{137}
+\indexentry{geometry objects!contact group assignment|hyperpage}{137}
+\indexentry{geometry objects!particle type assignment|hyperpage}{137}
+\indexentry{geometry wrappers!material assignment|hyperpage}{138}
+\indexentry{field painters!PFW|hyperpage}{138}
+\indexentry{MaterialDirection@\texttt{MaterialDirection}|hyperpage}{139}
+\indexentry{material direction|hyperpage}{139}
+\indexentry{anisotropy!material direction|hyperpage}{139}
+\indexentry{pfw\_materials.py@\texttt{pfw\_materials.py}|hyperpage}{140}
+\indexentry{materialPropertyString@\texttt{materialPropertyString}|hyperpage}{140}
+\indexentry{materialString@\texttt{materialString}|hyperpage}{140}
+\indexentry{solver controls|hyperpage}{142}
+\indexentry{ParticleFileWriter!solver controls|hyperpage}{142}
+\indexentry{PFW parameter!timeIntegrationOption@\texttt  {timeIntegrationOption}|hyperpage}{142}
+\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{142}
+\indexentry{PFW parameter!updateOrder@\texttt  {updateOrder}|hyperpage}{142}
+\indexentry{PFW parameter!cflFactor@\texttt  {cflFactor}|hyperpage}{142}
+\indexentry{PFW parameter!initialDt@\texttt  {initialDt}|hyperpage}{142}
+\indexentry{PFW parameter!solverProfiling@\texttt  {solverProfiling}|hyperpage}{142}
+\indexentry{PFW parameter!logLevel@\texttt  {logLevel}|hyperpage}{142}
+\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{142}
+\indexentry{PFW parameter!cpdiDomainScalingType@\texttt  {cpdiDomainScalingType}|hyperpage}{142}
+\indexentry{PFW parameter!domainResetType@\texttt  {domainResetType}|hyperpage}{142}
+\indexentry{PFW parameter!subdivideParticles@\texttt  {subdivideParticles}|hyperpage}{142}
+\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{142}
+\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{142}
+\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{142}
+\indexentry{PFW parameter!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{142}
+\indexentry{PFW parameter!frictionCoefficientRuleOfMixtures@\texttt  {frictionCoefficientRuleOfMixtures}|hyperpage}{142}
+\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{142}
+\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{142}
+\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{142}
+\indexentry{PFW parameter!separabilityMinDamage@\texttt  {separabilityMinDamage}|hyperpage}{142}
+\indexentry{PFW parameter!treatFullyDamagedAsSingleField@\texttt  {treatFullyDamagedAsSingleField}|hyperpage}{142}
+\indexentry{PFW parameter!resetDefGradForFullyDamagedParticles@\texttt  {resetDefGradForFullyDamagedParticles}|hyperpage}{142}
+\indexentry{PFW parameter!plotUnscaledParticles@\texttt  {plotUnscaledParticles}|hyperpage}{142}
+\indexentry{PFW parameter!normalAndPositionMethod@\texttt  {normalAndPositionMethod}|hyperpage}{142}
+\indexentry{PFW parameter!contactNormalType@\texttt  {contactNormalType}|hyperpage}{142}
+\indexentry{PFW parameter!contactNormalExponent@\texttt  {contactNormalExponent}|hyperpage}{142}
+\indexentry{PFW parameter!maxLRIterations@\texttt  {maxLRIterations}|hyperpage}{142}
+\indexentry{PFW parameter!LRtolerance@\texttt  {LRtolerance}|hyperpage}{142}
 \indexentry{PFW parameter!useCrackTipDetection@\texttt  {useCrackTipDetection}|hyperpage}{142}
 \indexentry{PFW parameter!crackTipDetectionThreshold@\texttt  {crackTipDetectionThreshold}|hyperpage}{142}
 \indexentry{PFW parameter!surfaceQualityThreshold@\texttt  {surfaceQualityThreshold}|hyperpage}{142}
 \indexentry{PFW parameter!thinFeatureDFGThreshold@\texttt  {thinFeatureDFGThreshold}|hyperpage}{142}
-\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{142}
-\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{142}
 \indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{142}
-\indexentry{B-spline MPM!PFW example|hyperpage}{142}
-\indexentry{FMPM!PFW example|hyperpage}{142}
+\indexentry{PFW parameter!maxParticleVelocity@\texttt  {maxParticleVelocity}|hyperpage}{142}
+\indexentry{PFW parameter!minParticleJacobian@\texttt  {minParticleJacobian}|hyperpage}{142}
+\indexentry{PFW parameter!maxParticleJacobian@\texttt  {maxParticleJacobian}|hyperpage}{142}
+\indexentry{PFW parameter!cohesiveFieldPartitioning@\texttt  {cohesiveFieldPartitioning}|hyperpage}{142}
+\indexentry{PFW parameter!enableCohesiveFailure@\texttt  {enableCohesiveFailure}|hyperpage}{142}
+\indexentry{PFW parameter!cohesiveLaw@\texttt  {cohesiveLaw}|hyperpage}{142}
+\indexentry{PFW parameter!preventCZInterpenetration@\texttt  {preventCZInterpenetration}|hyperpage}{142}
+\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{142}
+\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{142}
+\indexentry{PFW parameter!bodyForce@\texttt  {bodyForce}|hyperpage}{142}
+\indexentry{PFW parameter!generalizedVortexMMS@\texttt  {generalizedVortexMMS}|hyperpage}{142}
+\indexentry{PFW parameter!FSubcycles@\texttt  {FSubcycles}|hyperpage}{142}
+\indexentry{solver controls!time integration|hyperpage}{142}
+\indexentry{solver controls!update method|hyperpage}{142}
+\indexentry{PFW parameter!timeIntegrationOption@\texttt  {timeIntegrationOption}|hyperpage}{142}
 \indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{142}
 \indexentry{PFW parameter!updateOrder@\texttt  {updateOrder}|hyperpage}{142}
-\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{142}
-\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{142}
-\indexentry{PFW parameter!normalAndPositionMethod@\texttt  {normalAndPositionMethod}|hyperpage}{142}
-\indexentry{PFW parameter!maxLRIterations@\texttt  {maxLRIterations}|hyperpage}{142}
-\indexentry{PFW parameter!LRtolerance@\texttt  {LRtolerance}|hyperpage}{142}
-\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{142}
-\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{142}
-\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{142}
-\indexentry{cohesive zone!PFW example|hyperpage}{143}
-\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{143}
-\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{143}
-\indexentry{PFW parameter!cohesiveFieldPartitioning@\texttt  {cohesiveFieldPartitioning}|hyperpage}{143}
-\indexentry{PFW parameter!enableCohesiveFailure@\texttt  {enableCohesiveFailure}|hyperpage}{143}
-\indexentry{PFW parameter!cohesiveLaw@\texttt  {cohesiveLaw}|hyperpage}{143}
-\indexentry{PFW parameter!preventCZInterpenetration@\texttt  {preventCZInterpenetration}|hyperpage}{143}
+\indexentry{PFW parameter!cflFactor@\texttt  {cflFactor}|hyperpage}{142}
+\indexentry{PFW parameter!initialDt@\texttt  {initialDt}|hyperpage}{142}
+\indexentry{PFW parameter!endTime@\texttt  {endTime}|hyperpage}{142}
+\indexentry{PFW parameter!plotInterval@\texttt  {plotInterval}|hyperpage}{142}
+\indexentry{PFW parameter!restartInterval@\texttt  {restartInterval}|hyperpage}{142}
+\indexentry{PFW parameter!solverProfiling@\texttt  {solverProfiling}|hyperpage}{142}
+\indexentry{single-field contact!PFW example|hyperpage}{143}
+\indexentry{hyperelasticity!PFW example|hyperpage}{143}
+\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{143}
+\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{143}
+\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{143}
 \indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{143}
-\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{143}
-\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{143}
-\indexentry{body force!PFW example|hyperpage}{144}
-\indexentry{manufactured solution!PFW example|hyperpage}{144}
-\indexentry{PFW parameter!bodyForce@\texttt  {bodyForce}|hyperpage}{144}
-\indexentry{PFW parameter!generalizedVortexMMS@\texttt  {generalizedVortexMMS}|hyperpage}{144}
-\indexentry{PFW parameter!neighborRadius@\texttt  {neighborRadius}|hyperpage}{144}
-\indexentry{PFW parameter!useAPIC@\texttt  {useAPIC}|hyperpage}{144}
-\indexentry{PFW parameter!useReferenceVectorsForParticleUpdate@\texttt  {useReferenceVectorsForParticleUpdate}|hyperpage}{144}
-\indexentry{PFW parameter!FSubcycles@\texttt  {FSubcycles}|hyperpage}{144}
-\indexentry{PFW parameter!plotGridFields@\texttt  {plotGridFields}|hyperpage}{144}
-\indexentry{robustness controls!PFW|hyperpage}{145}
-\indexentry{PFW parameter!maxParticleVelocity@\texttt  {maxParticleVelocity}|hyperpage}{145}
-\indexentry{PFW parameter!minParticleJacobian@\texttt  {minParticleJacobian}|hyperpage}{145}
-\indexentry{PFW parameter!maxParticleJacobian@\texttt  {maxParticleJacobian}|hyperpage}{145}
-\indexentry{PFW parameter!logLevel@\texttt  {logLevel}|hyperpage}{145}
-\indexentry{solver controls!example coverage|hyperpage}{145}
-\indexentry{boundary conditions!PFW|hyperpage}{146}
-\indexentry{Ftable!PFW|hyperpage}{146}
-\indexentry{Stress Control!PFW|hyperpage}{146}
-\indexentry{boundaryConditionTypes|hyperpage}{146}
-\indexentry{bcTable|hyperpage}{146}
-\indexentry{prescribedBcTable|hyperpage}{146}
-\indexentry{prescribedBoundaryFTable|hyperpage}{147}
-\indexentry{fTable|hyperpage}{147}
-\indexentry{fTableInterpType|hyperpage}{147}
-\indexentry{prescribedFTable|hyperpage}{147}
-\indexentry{periodic boundaries!PFW|hyperpage}{147}
-\indexentry{prescribedBoundaryTransverseVelocities|hyperpage}{147}
-\indexentry{enablePrescribedBoundaryTransverseVelocities|hyperpage}{147}
-\indexentry{boundaryFaceFrictionCoefficients|hyperpage}{148}
-\indexentry{boundaryFaceCoefficientsOfRestitution|hyperpage}{148}
-\indexentry{stressControl|hyperpage}{148}
-\indexentry{stressTable|hyperpage}{148}
-\indexentry{diagnostics|hyperpage}{149}
-\indexentry{reactionHistory|hyperpage}{149}
-\indexentry{PFW parameter!reactionHistory@\texttt  {reactionHistory}|hyperpage}{149}
-\indexentry{PFW parameter!reactionWriteInterval@\texttt  {reactionWriteInterval}|hyperpage}{149}
-\indexentry{PFW parameter!useInternalForceAsFaceReaction@\texttt  {useInternalForceAsFaceReaction}|hyperpage}{149}
-\indexentry{boxAverageHistory|hyperpage}{150}
-\indexentry{PFW parameter!boxAverageHistory@\texttt  {boxAverageHistory}|hyperpage}{150}
-\indexentry{PFW parameter!boxAverageWriteInterval@\texttt  {boxAverageWriteInterval}|hyperpage}{150}
-\indexentry{PFW parameter!boxAverageMin@\texttt  {boxAverageMin}|hyperpage}{150}
-\indexentry{PFW parameter!boxAverageMax@\texttt  {boxAverageMax}|hyperpage}{150}
-\indexentry{PFW parameter!boxAverageResizeWithDomain@\texttt  {boxAverageResizeWithDomain}|hyperpage}{150}
-\indexentry{profile output|hyperpage}{150}
-\indexentry{PFW parameter!profileHistory@\texttt  {profileHistory}|hyperpage}{150}
-\indexentry{PFW parameter!profileDirection@\texttt  {profileDirection}|hyperpage}{150}
-\indexentry{PFW parameter!profileVariables@\texttt  {profileVariables}|hyperpage}{150}
-\indexentry{PFW parameter!profileNumSlices@\texttt  {profileNumSlices}|hyperpage}{150}
-\indexentry{PFW parameter!profileWriteInterval@\texttt  {profileWriteInterval}|hyperpage}{150}
-\indexentry{PFW parameter!profileCycleInterval@\texttt  {profileCycleInterval}|hyperpage}{150}
-\indexentry{tracers|hyperpage}{151}
-\indexentry{PFW parameter!tracerHistory@\texttt  {tracerHistory}|hyperpage}{151}
-\indexentry{PFW parameter!tracerCoordinates@\texttt  {tracerCoordinates}|hyperpage}{151}
-\indexentry{PFW parameter!tracerVariables@\texttt  {tracerVariables}|hyperpage}{151}
-\indexentry{PFW parameter!tracerWriteInterval@\texttt  {tracerWriteInterval}|hyperpage}{151}
-\indexentry{PFW parameter!tracerCycleInterval@\texttt  {tracerCycleInterval}|hyperpage}{151}
-\indexentry{PFW parameter!tracerOutputPrefix@\texttt  {tracerOutputPrefix}|hyperpage}{151}
-\indexentry{Silo|hyperpage}{153}
-\indexentry{VTK|hyperpage}{153}
-\indexentry{ParaView|hyperpage}{153}
-\indexentry{VisIt|hyperpage}{153}
-\indexentry{plot output|hyperpage}{153}
-\indexentry{PFW parameter!outputType@\texttt{outputType}|hyperpage}{153}
-\indexentry{PFW parameter!plotInterval@\texttt{plotInterval}|hyperpage}{153}
-\indexentry{PFW parameter!restartInterval@\texttt{restartInterval}|hyperpage}{153}
-\indexentry{PFW parameter!plotGridFields@\texttt{plotGridFields}|hyperpage}{153}
-\indexentry{PFW parameter!plottableFields@\texttt{plottableFields}|hyperpage}{153}
-\indexentry{PFW parameter!gridFieldNames@\texttt{gridFieldNames}|hyperpage}{153}
-\indexentry{PFW parameter!siloGridFieldNames@\texttt{siloGridFieldNames}|hyperpage}{153}
-\indexentry{PFW parameter!siloGridFields@\texttt{siloGridFields}|hyperpage}{153}
-\indexentry{PFW parameter!plotUnscaledParticles@\texttt{plotUnscaledParticles}|hyperpage}{153}
-\indexentry{output controls!PFW|hyperpage}{153}
-\indexentry{grid fields!plotting|hyperpage}{153}
-\indexentry{VTK!PFW controls|hyperpage}{154}
-\indexentry{ParaView!PFW controls|hyperpage}{154}
-\indexentry{Silo!PFW controls|hyperpage}{154}
-\indexentry{VisIt!PFW controls|hyperpage}{154}
-\indexentry{PFW example!minimal VTK output|hyperpage}{155}
-\indexentry{PFW example!minimal Silo output|hyperpage}{155}
-\indexentry{PFW example!diagnostic VTK output|hyperpage}{155}
-\indexentry{PFW example!diagnostic Silo output|hyperpage}{155}
-\indexentry{grid field output|hyperpage}{155}
-\indexentry{PFW!event controls|hyperpage}{157}
-\indexentry{events!PFW input|hyperpage}{157}
-\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{157}
-\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{157}
-\indexentry{MPMEvents attribute!startTime@\texttt  {startTime}|hyperpage}{157}
-\indexentry{MPMEvents attribute!endTime@\texttt  {endTime}|hyperpage}{157}
-\indexentry{PFW example!MPM events|hyperpage}{157}
-\indexentry{MPMEvents!Anneal@\texttt  {Anneal}|hyperpage}{158}
-\indexentry{MPMEvents attribute!targetRegion@\texttt  {targetRegion}|hyperpage}{158}
-\indexentry{MPMEvents!BodyForceUpdate@\texttt  {BodyForceUpdate}|hyperpage}{158}
-\indexentry{MPMEvents attribute!bodyForce@\texttt  {bodyForce}|hyperpage}{158}
-\indexentry{MPMEvents!BoreholePressure@\texttt  {BoreholePressure}|hyperpage}{158}
-\indexentry{MPMEvents attribute!boreholeRadius@\texttt  {boreholeRadius}|hyperpage}{158}
-\indexentry{MPMEvents attribute!startPressure@\texttt  {startPressure}|hyperpage}{158}
-\indexentry{MPMEvents attribute!endPressure@\texttt  {endPressure}|hyperpage}{158}
-\indexentry{MPMEvents attribute!interpType@\texttt  {interpType}|hyperpage}{158}
-\indexentry{MPMEvents!CohesiveZone@\texttt  {CohesiveZone}|hyperpage}{158}
-\indexentry{MPMEvents attribute!regionNames@\texttt  {regionNames}|hyperpage}{158}
-\indexentry{MPMEvents attribute!constitutiveModels@\texttt  {constitutiveModels}|hyperpage}{158}
-\indexentry{MPMEvents attribute!czTags@\texttt  {czTags}|hyperpage}{158}
-\indexentry{MPMEvents attribute!czVolumeNormalization@\texttt  {czVolumeNormalization}|hyperpage}{158}
-\indexentry{MPMEvents attribute!computeNormalsAndPositions@\texttt  {computeNormalsAndPositions}|hyperpage}{158}
-\indexentry{MPMEvents attribute!normalsAndPositionsMethod@\texttt  {normalsAndPositionsMethod}|hyperpage}{158}
-\indexentry{MPMEvents attribute!czSurfaceDisplacementUpdate@\texttt  {czSurfaceDisplacementUpdate}|hyperpage}{158}
-\indexentry{MPMEvents!ConfiningPressure@\texttt  {ConfiningPressure}|hyperpage}{159}
-\indexentry{MPMEvents attribute!confiningPressureBoxMin@\texttt  {confiningPressureBoxMin}|hyperpage}{159}
-\indexentry{MPMEvents attribute!confiningPressureBoxMax@\texttt  {confiningPressureBoxMax}|hyperpage}{159}
-\indexentry{MPMEvents!CrystalHeal@\texttt  {CrystalHeal}|hyperpage}{159}
-\indexentry{MPMEvents attribute!healType@\texttt  {healType}|hyperpage}{159}
-\indexentry{MPMEvents!DeformationUpdate@\texttt  {DeformationUpdate}|hyperpage}{160}
-\indexentry{MPMEvents attribute!prescribedFTable@\texttt  {prescribedFTable}|hyperpage}{160}
-\indexentry{MPMEvents attribute!stressControl@\texttt  {stressControl}|hyperpage}{160}
-\indexentry{F-table!event controls|hyperpage}{160}
-\indexentry{stress control!event controls|hyperpage}{160}
-\indexentry{MPMEvents!FrictionCoefficientSwap@\texttt  {FrictionCoefficientSwap}|hyperpage}{160}
-\indexentry{MPMEvents attribute!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{160}
-\indexentry{MPMEvents attribute!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{160}
-\indexentry{MPMEvents!Heal@\texttt  {Heal}|hyperpage}{160}
-\indexentry{MPMEvents!InitializeStress@\texttt  {InitializeStress}|hyperpage}{161}
-\indexentry{MPMEvents attribute!pressure@\texttt  {pressure}|hyperpage}{161}
-\indexentry{MPMEvents!InsertPeriodicContactSurfaces@\texttt  {InsertPeriodicContactSurfaces}|hyperpage}{161}
-\indexentry{periodic contact surfaces|hyperpage}{161}
-\indexentry{MPMEvents!MachineSample@\texttt  {MachineSample}|hyperpage}{161}
-\indexentry{MPMEvents attribute!sampleType@\texttt  {sampleType}|hyperpage}{161}
-\indexentry{MPMEvents attribute!filletRadius@\texttt  {filletRadius}|hyperpage}{161}
-\indexentry{MPMEvents attribute!gaugeLength@\texttt  {gaugeLength}|hyperpage}{161}
-\indexentry{MPMEvents attribute!gaugeRadius@\texttt  {gaugeRadius}|hyperpage}{161}
-\indexentry{MPMEvents attribute!diskRadius@\texttt  {diskRadius}|hyperpage}{161}
-\indexentry{MPMEvents!MaterialSwap@\texttt  {MaterialSwap}|hyperpage}{162}
-\indexentry{MPMEvents attribute!sourceRegion@\texttt  {sourceRegion}|hyperpage}{162}
-\indexentry{MPMEvents attribute!destinationRegion@\texttt  {destinationRegion}|hyperpage}{162}
-\indexentry{MPMEvents!PolymerHeal@\texttt  {PolymerHeal}|hyperpage}{162}
-\indexentry{MPMEvents!ResetDeformationGradient@\texttt  {ResetDeformationGradient}|hyperpage}{162}
-\indexentry{deformation-gradient reset!event controls|hyperpage}{162}
-\indexentry{MPMEvents!TemperatureProfile@\texttt  {TemperatureProfile}|hyperpage}{162}
-\indexentry{temperature table!event controls|hyperpage}{162}
-\indexentry{MPMEvents!TemperatureRamp@\texttt  {TemperatureRamp}|hyperpage}{163}
-\indexentry{MPMEvents attribute!startTemperature@\texttt  {startTemperature}|hyperpage}{163}
-\indexentry{MPMEvents attribute!endTemperature@\texttt  {endTemperature}|hyperpage}{163}
-\indexentry{MPMEvents!TransformParticles@\texttt  {TransformParticles}|hyperpage}{163}
-\indexentry{particle transformation!event controls|hyperpage}{163}
-\indexentry{PFW example!sequential events|hyperpage}{163}
-\indexentry{annealing!sequential event example|hyperpage}{163}
-\indexentry{healing!sequential event example|hyperpage}{163}
-\indexentry{uniaxial stress!event staging|hyperpage}{163}
-\indexentry{events!checklist|hyperpage}{164}
-\indexentry{restart controls!PFW|hyperpage}{165}
-\indexentry{restart files|hyperpage}{165}
-\indexentry{PFW parameter!restartInterval@\texttt  {restartInterval}|hyperpage}{165}
-\indexentry{PFW parameter!runContinuation@\texttt  {runContinuation}|hyperpage}{165}
-\indexentry{PFW parameter!restartJobDir@\texttt  {restartJobDir}|hyperpage}{165}
-\indexentry{PFW parameter!restartCycleNum@\texttt  {restartCycleNum}|hyperpage}{165}
-\indexentry{PFW parameter!autoRestart@\texttt  {autoRestart}|hyperpage}{165}
-\indexentry{PFW parameter!mSubmitJobs@\texttt  {mSubmitJobs}|hyperpage}{165}
-\indexentry{PFW parameter!runCheckTime@\texttt  {runCheckTime}|hyperpage}{165}
-\indexentry{PFW parameter!mWallTime@\texttt  {mWallTime}|hyperpage}{165}
-\indexentry{PFW parameter!lastRestartBufferInSeconds@\texttt  {lastRestartBufferInSeconds}|hyperpage}{165}
-\indexentry{PFW parameter!generateParticleFile@\texttt  {generateParticleFile}|hyperpage}{165}
-\indexentry{restart interval|hyperpage}{165}
-\indexentry{PFW example!restart interval|hyperpage}{165}
-\indexentry{restart!manual continuation|hyperpage}{166}
-\indexentry{PFW example!manual restart|hyperpage}{166}
-\indexentry{auto restart|hyperpage}{166}
-\indexentry{PFW check script|hyperpage}{166}
-\indexentry{PFW example!automatic restart|hyperpage}{166}
-\indexentry{wall time!restart buffer|hyperpage}{167}
-\indexentry{HaltEvent!PFW restart workflow|hyperpage}{167}
-\indexentry{PFW parameter!lastRestartBufferInSeconds@\texttt  {lastRestartBufferInSeconds}|hyperpage}{167}
-\indexentry{restart!checklist|hyperpage}{168}
-\indexentry{post-processing|hyperpage}{169}
-\indexentry{VisIt|hyperpage}{169}
-\indexentry{ParaView|hyperpage}{169}
-\indexentry{analysis scripts|hyperpage}{169}
-\indexentry{CSV histories|hyperpage}{170}
-\indexentry{linked reports|hyperpage}{171}
-\indexentry{suite reports|hyperpage}{171}
-\indexentry{verification|hyperpage}{171}
-\indexentry{validation|hyperpage}{171}
-\indexentry{examples|hyperpage}{171}
-\indexentry{LLNL-specific material models|hyperpage}{171}
-\indexentry{external material models|hyperpage}{171}
-\indexentry{maintenance|hyperpage}{172}
-\indexentry{Sphinx|hyperpage}{172}
-\indexentry{LaTeX|hyperpage}{172}
-\indexentry{makeindex|hyperpage}{172}
-\indexentry{Sphinx migration|hyperpage}{173}
-\indexentry{references|hyperpage}{174}
-\indexentry{source inventory|hyperpage}{174}
-\indexentry{SolidMechanics MPM!attributes|hyperpage}{180}
-\indexentry{schema-generated documentation|hyperpage}{180}
-\indexentry{MPMEvents!catalogue|hyperpage}{186}
-\indexentry{ParticleFileWriter!parameters|hyperpage}{192}
-\indexentry{Silo grid fields|hyperpage}{192}
-\indexentry{particle file format|hyperpage}{197}
-\indexentry{ParticleMesh|hyperpage}{197}
-\indexentry{geometry catalogue|hyperpage}{199}
-\indexentry{material catalogue|hyperpage}{199}
-\indexentry{suite cases|hyperpage}{202}
-\indexentry{verification cases|hyperpage}{202}
-\indexentry{validation cases|hyperpage}{202}
-\indexentry{example cases|hyperpage}{202}
-\indexentry{post-processing scripts|hyperpage}{209}
+\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{143}
+\indexentry{friction!PFW example|hyperpage}{144}
+\indexentry{group-dependent friction table|hyperpage}{144}
+\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{144}
+\indexentry{PFW parameter!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{144}
+\indexentry{PFW parameter!frictionCoefficientRuleOfMixtures@\texttt  {frictionCoefficientRuleOfMixtures}|hyperpage}{144}
+\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{144}
+\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{144}
+\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{144}
+\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{144}
+\indexentry{PFW parameter!contactNormalType@\texttt  {contactNormalType}|hyperpage}{144}
+\indexentry{PFW parameter!contactNormalExponent@\texttt  {contactNormalExponent}|hyperpage}{144}
+\indexentry{VP-Hencky!PFW controls|hyperpage}{144}
+\indexentry{particle splitting!PFW controls|hyperpage}{144}
+\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{144}
+\indexentry{PFW parameter!cpdiDomainScalingType@\texttt  {cpdiDomainScalingType}|hyperpage}{144}
+\indexentry{PFW parameter!domainResetType@\texttt  {domainResetType}|hyperpage}{144}
+\indexentry{PFW parameter!subdivideParticles@\texttt  {subdivideParticles}|hyperpage}{144}
+\indexentry{PFW parameter!resetDefGradForFullyDamagedParticles@\texttt  {resetDefGradForFullyDamagedParticles}|hyperpage}{144}
+\indexentry{PFW parameter!resetDefGradForMeltedParticles@\texttt  {resetDefGradForMeltedParticles}|hyperpage}{144}
+\indexentry{PFW parameter!plotUnscaledParticles@\texttt  {plotUnscaledParticles}|hyperpage}{144}
+\indexentry{CPDI!PFW example|hyperpage}{145}
+\indexentry{DFG!PFW example|hyperpage}{145}
+\indexentry{damage!PFW example|hyperpage}{145}
+\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{145}
+\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{145}
+\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{145}
+\indexentry{PFW parameter!separabilityMinDamage@\texttt  {separabilityMinDamage}|hyperpage}{145}
+\indexentry{PFW parameter!treatFullyDamagedAsSingleField@\texttt  {treatFullyDamagedAsSingleField}|hyperpage}{145}
+\indexentry{PFW parameter!resetDefGradForFullyDamagedParticles@\texttt  {resetDefGradForFullyDamagedParticles}|hyperpage}{145}
+\indexentry{PFW parameter!disableSurfaceNormalsAndPositionsOnCPDIScaling@\texttt  {disableSurfaceNormalsAndPositionsOnCPDIScaling}|hyperpage}{145}
+\indexentry{PFW parameter!plotUnscaledParticles@\texttt  {plotUnscaledParticles}|hyperpage}{145}
+\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{145}
+\indexentry{notched bar!PFW example|hyperpage}{146}
+\indexentry{crack-tip detection!PFW|hyperpage}{146}
+\indexentry{PFW parameter!useCrackTipDetection@\texttt  {useCrackTipDetection}|hyperpage}{146}
+\indexentry{PFW parameter!crackTipDetectionThreshold@\texttt  {crackTipDetectionThreshold}|hyperpage}{146}
+\indexentry{PFW parameter!surfaceQualityThreshold@\texttt  {surfaceQualityThreshold}|hyperpage}{146}
+\indexentry{PFW parameter!thinFeatureDFGThreshold@\texttt  {thinFeatureDFGThreshold}|hyperpage}{146}
+\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{146}
+\indexentry{PFW parameter!needsNeighborList@\texttt  {needsNeighborList}|hyperpage}{146}
+\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{146}
+\indexentry{B-spline MPM!PFW example|hyperpage}{146}
+\indexentry{FMPM!PFW example|hyperpage}{146}
+\indexentry{PFW parameter!updateMethod@\texttt  {updateMethod}|hyperpage}{146}
+\indexentry{PFW parameter!updateOrder@\texttt  {updateOrder}|hyperpage}{146}
+\indexentry{PFW parameter!cpdiDomainScaling@\texttt  {cpdiDomainScaling}|hyperpage}{146}
+\indexentry{PFW parameter!damageFieldPartitioning@\texttt  {damageFieldPartitioning}|hyperpage}{146}
+\indexentry{PFW parameter!normalAndPositionMethod@\texttt  {normalAndPositionMethod}|hyperpage}{146}
+\indexentry{PFW parameter!maxLRIterations@\texttt  {maxLRIterations}|hyperpage}{146}
+\indexentry{PFW parameter!LRtolerance@\texttt  {LRtolerance}|hyperpage}{146}
+\indexentry{PFW parameter!contactGapCorrection@\texttt  {contactGapCorrection}|hyperpage}{146}
+\indexentry{PFW parameter!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{146}
+\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{146}
+\indexentry{cohesive zone!PFW example|hyperpage}{147}
+\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{147}
+\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{147}
+\indexentry{PFW parameter!cohesiveFieldPartitioning@\texttt  {cohesiveFieldPartitioning}|hyperpage}{147}
+\indexentry{PFW parameter!enableCohesiveFailure@\texttt  {enableCohesiveFailure}|hyperpage}{147}
+\indexentry{PFW parameter!cohesiveLaw@\texttt  {cohesiveLaw}|hyperpage}{147}
+\indexentry{PFW parameter!preventCZInterpenetration@\texttt  {preventCZInterpenetration}|hyperpage}{147}
+\indexentry{PFW parameter!particleFileFields@\texttt  {particleFileFields}|hyperpage}{147}
+\indexentry{PFW parameter!useSurfacePositionForContact@\texttt  {useSurfacePositionForContact}|hyperpage}{147}
+\indexentry{PFW parameter!explicitSurfaceNormalInfluence@\texttt  {explicitSurfaceNormalInfluence}|hyperpage}{147}
+\indexentry{body force!PFW example|hyperpage}{148}
+\indexentry{manufactured solution!PFW example|hyperpage}{148}
+\indexentry{PFW parameter!bodyForce@\texttt  {bodyForce}|hyperpage}{148}
+\indexentry{PFW parameter!generalizedVortexMMS@\texttt  {generalizedVortexMMS}|hyperpage}{148}
+\indexentry{PFW parameter!neighborRadius@\texttt  {neighborRadius}|hyperpage}{148}
+\indexentry{PFW parameter!useAPIC@\texttt  {useAPIC}|hyperpage}{148}
+\indexentry{PFW parameter!useReferenceVectorsForParticleUpdate@\texttt  {useReferenceVectorsForParticleUpdate}|hyperpage}{148}
+\indexentry{PFW parameter!FSubcycles@\texttt  {FSubcycles}|hyperpage}{148}
+\indexentry{PFW parameter!plotGridFields@\texttt  {plotGridFields}|hyperpage}{148}
+\indexentry{robustness controls!PFW|hyperpage}{148}
+\indexentry{PFW parameter!maxParticleVelocity@\texttt  {maxParticleVelocity}|hyperpage}{148}
+\indexentry{PFW parameter!minParticleJacobian@\texttt  {minParticleJacobian}|hyperpage}{148}
+\indexentry{PFW parameter!maxParticleJacobian@\texttt  {maxParticleJacobian}|hyperpage}{148}
+\indexentry{PFW parameter!logLevel@\texttt  {logLevel}|hyperpage}{148}
+\indexentry{solver controls!example coverage|hyperpage}{149}
+\indexentry{boundary conditions!PFW|hyperpage}{150}
+\indexentry{Ftable!PFW|hyperpage}{150}
+\indexentry{Stress Control!PFW|hyperpage}{150}
+\indexentry{boundaryConditionTypes|hyperpage}{150}
+\indexentry{bcTable|hyperpage}{150}
+\indexentry{prescribedBcTable|hyperpage}{150}
+\indexentry{prescribedBoundaryFTable|hyperpage}{151}
+\indexentry{fTable|hyperpage}{151}
+\indexentry{fTableInterpType|hyperpage}{151}
+\indexentry{prescribedFTable|hyperpage}{151}
+\indexentry{periodic boundaries!PFW|hyperpage}{151}
+\indexentry{prescribedBoundaryTransverseVelocities|hyperpage}{151}
+\indexentry{enablePrescribedBoundaryTransverseVelocities|hyperpage}{151}
+\indexentry{boundaryFaceFrictionCoefficients|hyperpage}{152}
+\indexentry{boundaryFaceCoefficientsOfRestitution|hyperpage}{152}
+\indexentry{stressControl|hyperpage}{152}
+\indexentry{stressTable|hyperpage}{152}
+\indexentry{diagnostics|hyperpage}{153}
+\indexentry{reactionHistory|hyperpage}{153}
+\indexentry{PFW parameter!reactionHistory@\texttt  {reactionHistory}|hyperpage}{153}
+\indexentry{PFW parameter!reactionWriteInterval@\texttt  {reactionWriteInterval}|hyperpage}{153}
+\indexentry{PFW parameter!useInternalForceAsFaceReaction@\texttt  {useInternalForceAsFaceReaction}|hyperpage}{153}
+\indexentry{boxAverageHistory|hyperpage}{154}
+\indexentry{PFW parameter!boxAverageHistory@\texttt  {boxAverageHistory}|hyperpage}{154}
+\indexentry{PFW parameter!boxAverageWriteInterval@\texttt  {boxAverageWriteInterval}|hyperpage}{154}
+\indexentry{PFW parameter!boxAverageMin@\texttt  {boxAverageMin}|hyperpage}{154}
+\indexentry{PFW parameter!boxAverageMax@\texttt  {boxAverageMax}|hyperpage}{154}
+\indexentry{PFW parameter!boxAverageResizeWithDomain@\texttt  {boxAverageResizeWithDomain}|hyperpage}{154}
+\indexentry{profile output|hyperpage}{154}
+\indexentry{PFW parameter!profileHistory@\texttt  {profileHistory}|hyperpage}{154}
+\indexentry{PFW parameter!profileDirection@\texttt  {profileDirection}|hyperpage}{154}
+\indexentry{PFW parameter!profileVariables@\texttt  {profileVariables}|hyperpage}{154}
+\indexentry{PFW parameter!profileNumSlices@\texttt  {profileNumSlices}|hyperpage}{154}
+\indexentry{PFW parameter!profileWriteInterval@\texttt  {profileWriteInterval}|hyperpage}{154}
+\indexentry{PFW parameter!profileCycleInterval@\texttt  {profileCycleInterval}|hyperpage}{154}
+\indexentry{tracers|hyperpage}{155}
+\indexentry{PFW parameter!tracerHistory@\texttt  {tracerHistory}|hyperpage}{155}
+\indexentry{PFW parameter!tracerCoordinates@\texttt  {tracerCoordinates}|hyperpage}{155}
+\indexentry{PFW parameter!tracerVariables@\texttt  {tracerVariables}|hyperpage}{155}
+\indexentry{PFW parameter!tracerWriteInterval@\texttt  {tracerWriteInterval}|hyperpage}{155}
+\indexentry{PFW parameter!tracerCycleInterval@\texttt  {tracerCycleInterval}|hyperpage}{155}
+\indexentry{PFW parameter!tracerOutputPrefix@\texttt  {tracerOutputPrefix}|hyperpage}{155}
+\indexentry{Silo|hyperpage}{157}
+\indexentry{VTK|hyperpage}{157}
+\indexentry{ParaView|hyperpage}{157}
+\indexentry{VisIt|hyperpage}{157}
+\indexentry{plot output|hyperpage}{157}
+\indexentry{PFW parameter!outputType@\texttt{outputType}|hyperpage}{157}
+\indexentry{PFW parameter!plotInterval@\texttt{plotInterval}|hyperpage}{157}
+\indexentry{PFW parameter!restartInterval@\texttt{restartInterval}|hyperpage}{157}
+\indexentry{PFW parameter!plotGridFields@\texttt{plotGridFields}|hyperpage}{157}
+\indexentry{PFW parameter!plottableFields@\texttt{plottableFields}|hyperpage}{157}
+\indexentry{PFW parameter!gridFieldNames@\texttt{gridFieldNames}|hyperpage}{157}
+\indexentry{PFW parameter!siloGridFieldNames@\texttt{siloGridFieldNames}|hyperpage}{157}
+\indexentry{PFW parameter!siloGridFields@\texttt{siloGridFields}|hyperpage}{157}
+\indexentry{PFW parameter!plotUnscaledParticles@\texttt{plotUnscaledParticles}|hyperpage}{157}
+\indexentry{output controls!PFW|hyperpage}{157}
+\indexentry{grid fields!plotting|hyperpage}{157}
+\indexentry{VTK!PFW controls|hyperpage}{158}
+\indexentry{ParaView!PFW controls|hyperpage}{158}
+\indexentry{Silo!PFW controls|hyperpage}{158}
+\indexentry{VisIt!PFW controls|hyperpage}{158}
+\indexentry{PFW example!minimal VTK output|hyperpage}{159}
+\indexentry{PFW example!minimal Silo output|hyperpage}{159}
+\indexentry{PFW example!diagnostic VTK output|hyperpage}{159}
+\indexentry{PFW example!diagnostic Silo output|hyperpage}{159}
+\indexentry{grid field output|hyperpage}{159}
+\indexentry{PFW!event controls|hyperpage}{161}
+\indexentry{events!PFW input|hyperpage}{161}
+\indexentry{PFW parameter!useEvents@\texttt  {useEvents}|hyperpage}{161}
+\indexentry{PFW parameter!mpmEventsString@\texttt  {mpmEventsString}|hyperpage}{161}
+\indexentry{MPMEvents attribute!startTime@\texttt  {startTime}|hyperpage}{161}
+\indexentry{MPMEvents attribute!endTime@\texttt  {endTime}|hyperpage}{161}
+\indexentry{PFW example!MPM events|hyperpage}{161}
+\indexentry{MPMEvents!Anneal@\texttt  {Anneal}|hyperpage}{162}
+\indexentry{MPMEvents attribute!targetRegion@\texttt  {targetRegion}|hyperpage}{162}
+\indexentry{MPMEvents!BodyForceUpdate@\texttt  {BodyForceUpdate}|hyperpage}{162}
+\indexentry{MPMEvents attribute!bodyForce@\texttt  {bodyForce}|hyperpage}{162}
+\indexentry{MPMEvents!BoreholePressure@\texttt  {BoreholePressure}|hyperpage}{162}
+\indexentry{MPMEvents attribute!boreholeRadius@\texttt  {boreholeRadius}|hyperpage}{162}
+\indexentry{MPMEvents attribute!startPressure@\texttt  {startPressure}|hyperpage}{162}
+\indexentry{MPMEvents attribute!endPressure@\texttt  {endPressure}|hyperpage}{162}
+\indexentry{MPMEvents attribute!interpType@\texttt  {interpType}|hyperpage}{162}
+\indexentry{MPMEvents!CohesiveZone@\texttt  {CohesiveZone}|hyperpage}{162}
+\indexentry{MPMEvents attribute!regionNames@\texttt  {regionNames}|hyperpage}{162}
+\indexentry{MPMEvents attribute!constitutiveModels@\texttt  {constitutiveModels}|hyperpage}{162}
+\indexentry{MPMEvents attribute!czTags@\texttt  {czTags}|hyperpage}{162}
+\indexentry{MPMEvents attribute!czVolumeNormalization@\texttt  {czVolumeNormalization}|hyperpage}{162}
+\indexentry{MPMEvents attribute!computeNormalsAndPositions@\texttt  {computeNormalsAndPositions}|hyperpage}{162}
+\indexentry{MPMEvents attribute!normalsAndPositionsMethod@\texttt  {normalsAndPositionsMethod}|hyperpage}{162}
+\indexentry{MPMEvents attribute!czSurfaceDisplacementUpdate@\texttt  {czSurfaceDisplacementUpdate}|hyperpage}{162}
+\indexentry{MPMEvents!ConfiningPressure@\texttt  {ConfiningPressure}|hyperpage}{163}
+\indexentry{MPMEvents attribute!confiningPressureBoxMin@\texttt  {confiningPressureBoxMin}|hyperpage}{163}
+\indexentry{MPMEvents attribute!confiningPressureBoxMax@\texttt  {confiningPressureBoxMax}|hyperpage}{163}
+\indexentry{MPMEvents!CrystalHeal@\texttt  {CrystalHeal}|hyperpage}{163}
+\indexentry{MPMEvents attribute!healType@\texttt  {healType}|hyperpage}{163}
+\indexentry{MPMEvents!DeformationUpdate@\texttt  {DeformationUpdate}|hyperpage}{164}
+\indexentry{MPMEvents attribute!prescribedFTable@\texttt  {prescribedFTable}|hyperpage}{164}
+\indexentry{MPMEvents attribute!stressControl@\texttt  {stressControl}|hyperpage}{164}
+\indexentry{F-table!event controls|hyperpage}{164}
+\indexentry{stress control!event controls|hyperpage}{164}
+\indexentry{MPMEvents!RigidBodyMPM@\texttt  {RigidBodyMPM}|hyperpage}{164}
+\indexentry{MPMEvents attribute!maxJammingStress@\texttt  {maxJammingStress}|hyperpage}{164}
+\indexentry{MPMEvents attribute!maxContactPenetration@\texttt  {maxContactPenetration}|hyperpage}{164}
+\indexentry{MPMEvents!FrictionCoefficientSwap@\texttt  {FrictionCoefficientSwap}|hyperpage}{166}
+\indexentry{MPMEvents attribute!frictionCoefficient@\texttt  {frictionCoefficient}|hyperpage}{166}
+\indexentry{MPMEvents attribute!frictionCoefficientTable@\texttt  {frictionCoefficientTable}|hyperpage}{166}
+\indexentry{MPMEvents!Heal@\texttt  {Heal}|hyperpage}{166}
+\indexentry{MPMEvents!InitializeStress@\texttt  {InitializeStress}|hyperpage}{166}
+\indexentry{MPMEvents attribute!pressure@\texttt  {pressure}|hyperpage}{166}
+\indexentry{MPMEvents!InsertPeriodicContactSurfaces@\texttt  {InsertPeriodicContactSurfaces}|hyperpage}{167}
+\indexentry{periodic contact surfaces|hyperpage}{167}
+\indexentry{MPMEvents!MachineSample@\texttt  {MachineSample}|hyperpage}{167}
+\indexentry{MPMEvents attribute!sampleType@\texttt  {sampleType}|hyperpage}{167}
+\indexentry{MPMEvents attribute!filletRadius@\texttt  {filletRadius}|hyperpage}{167}
+\indexentry{MPMEvents attribute!gaugeLength@\texttt  {gaugeLength}|hyperpage}{167}
+\indexentry{MPMEvents attribute!gaugeRadius@\texttt  {gaugeRadius}|hyperpage}{167}
+\indexentry{MPMEvents attribute!diskRadius@\texttt  {diskRadius}|hyperpage}{167}
+\indexentry{MPMEvents!MaterialSwap@\texttt  {MaterialSwap}|hyperpage}{167}
+\indexentry{MPMEvents attribute!sourceRegion@\texttt  {sourceRegion}|hyperpage}{167}
+\indexentry{MPMEvents attribute!destinationRegion@\texttt  {destinationRegion}|hyperpage}{167}
+\indexentry{MPMEvents!PolymerHeal@\texttt  {PolymerHeal}|hyperpage}{168}
+\indexentry{MPMEvents!ResetDeformationGradient@\texttt  {ResetDeformationGradient}|hyperpage}{168}
+\indexentry{deformation-gradient reset!event controls|hyperpage}{168}
+\indexentry{MPMEvents!TemperatureProfile@\texttt  {TemperatureProfile}|hyperpage}{168}
+\indexentry{temperature table!event controls|hyperpage}{168}
+\indexentry{MPMEvents!TemperatureRamp@\texttt  {TemperatureRamp}|hyperpage}{168}
+\indexentry{MPMEvents attribute!startTemperature@\texttt  {startTemperature}|hyperpage}{168}
+\indexentry{MPMEvents attribute!endTemperature@\texttt  {endTemperature}|hyperpage}{168}
+\indexentry{MPMEvents!TransformParticles@\texttt  {TransformParticles}|hyperpage}{169}
+\indexentry{particle transformation!event controls|hyperpage}{169}
+\indexentry{PFW example!sequential events|hyperpage}{169}
+\indexentry{annealing!sequential event example|hyperpage}{169}
+\indexentry{healing!sequential event example|hyperpage}{169}
+\indexentry{uniaxial stress!event staging|hyperpage}{169}
+\indexentry{events!checklist|hyperpage}{170}
+\indexentry{restart controls!PFW|hyperpage}{170}
+\indexentry{restart files|hyperpage}{170}
+\indexentry{PFW parameter!restartInterval@\texttt  {restartInterval}|hyperpage}{170}
+\indexentry{PFW parameter!runContinuation@\texttt  {runContinuation}|hyperpage}{170}
+\indexentry{PFW parameter!restartJobDir@\texttt  {restartJobDir}|hyperpage}{170}
+\indexentry{PFW parameter!restartCycleNum@\texttt  {restartCycleNum}|hyperpage}{170}
+\indexentry{PFW parameter!autoRestart@\texttt  {autoRestart}|hyperpage}{170}
+\indexentry{PFW parameter!mSubmitJobs@\texttt  {mSubmitJobs}|hyperpage}{170}
+\indexentry{PFW parameter!runCheckTime@\texttt  {runCheckTime}|hyperpage}{170}
+\indexentry{PFW parameter!mWallTime@\texttt  {mWallTime}|hyperpage}{170}
+\indexentry{PFW parameter!lastRestartBufferInSeconds@\texttt  {lastRestartBufferInSeconds}|hyperpage}{170}
+\indexentry{PFW parameter!generateParticleFile@\texttt  {generateParticleFile}|hyperpage}{170}
+\indexentry{restart interval|hyperpage}{171}
+\indexentry{PFW example!restart interval|hyperpage}{171}
+\indexentry{restart!manual continuation|hyperpage}{172}
+\indexentry{PFW example!manual restart|hyperpage}{172}
+\indexentry{auto restart|hyperpage}{172}
+\indexentry{PFW check script|hyperpage}{172}
+\indexentry{PFW example!automatic restart|hyperpage}{172}
+\indexentry{wall time!restart buffer|hyperpage}{173}
+\indexentry{HaltEvent!PFW restart workflow|hyperpage}{173}
+\indexentry{PFW parameter!lastRestartBufferInSeconds@\texttt  {lastRestartBufferInSeconds}|hyperpage}{173}
+\indexentry{restart!checklist|hyperpage}{173}
+\indexentry{post-processing|hyperpage}{174}
+\indexentry{VisIt|hyperpage}{174}
+\indexentry{ParaView|hyperpage}{174}
+\indexentry{analysis scripts|hyperpage}{174}
+\indexentry{CSV histories|hyperpage}{175}
+\indexentry{linked reports|hyperpage}{176}
+\indexentry{suite reports|hyperpage}{176}
+\indexentry{verification|hyperpage}{176}
+\indexentry{validation|hyperpage}{176}
+\indexentry{examples|hyperpage}{176}
+\indexentry{LLNL-specific material models|hyperpage}{176}
+\indexentry{external material models|hyperpage}{176}
+\indexentry{maintenance|hyperpage}{177}
+\indexentry{Sphinx|hyperpage}{177}
+\indexentry{LaTeX|hyperpage}{177}
+\indexentry{makeindex|hyperpage}{177}
+\indexentry{Sphinx migration|hyperpage}{178}
+\indexentry{references|hyperpage}{179}
+\indexentry{source inventory|hyperpage}{179}
+\indexentry{SolidMechanics MPM!attributes|hyperpage}{185}
+\indexentry{schema-generated documentation|hyperpage}{185}
+\indexentry{MPMEvents!catalogue|hyperpage}{192}
+\indexentry{ParticleFileWriter!parameters|hyperpage}{198}
+\indexentry{Silo grid fields|hyperpage}{198}
+\indexentry{particle file format|hyperpage}{203}
+\indexentry{ParticleMesh|hyperpage}{203}
+\indexentry{geometry catalogue|hyperpage}{205}
+\indexentry{material catalogue|hyperpage}{205}
+\indexentry{suite cases|hyperpage}{208}
+\indexentry{verification cases|hyperpage}{208}
+\indexentry{validation cases|hyperpage}{208}
+\indexentry{example cases|hyperpage}{208}
+\indexentry{post-processing scripts|hyperpage}{215}
