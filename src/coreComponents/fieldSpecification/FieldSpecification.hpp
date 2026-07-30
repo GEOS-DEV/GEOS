@@ -50,9 +50,6 @@ public:
                                                              string const &,
                                                              dataRepository::Group * const >;
 
-  // @copydoc FieldSpecificationABC::SetErrorMode
-  using SetErrorMode = FieldSpecificationABC::SetErrorMode;
-
   /**
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
