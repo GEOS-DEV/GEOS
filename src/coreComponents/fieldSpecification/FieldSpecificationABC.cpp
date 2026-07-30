@@ -22,6 +22,14 @@ using namespace dataRepository;
 FieldSpecificationABC::FieldSpecificationABC( string const & name, Group * parent ):
   Group( name, parent )
 {
+  registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Names of sets that the boundary condition is applied to.\n"
+                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).\n"
+                    "A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
+
   registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).

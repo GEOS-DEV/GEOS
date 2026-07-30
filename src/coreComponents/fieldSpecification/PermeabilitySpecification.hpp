@@ -78,8 +78,6 @@ public:
    */
   struct viewKeyStruct : public FieldSpecificationABC::viewKeyStruct
   {
-    /// @return The key for setName
-    constexpr static char const * setNamesString() { return "setNames"; }
     /// @return The key for regionNames
     constexpr static char const * regionNamesString() { return "regionNames"; }
     /// @return The key for permeabilityModelName
@@ -110,21 +108,11 @@ public:
     return fieldName;
   }
 
-  /**
-   * Accessor
-   * @return const reference to m_setNames
-   */
-  string_array const & getSetNames() const
-  { return m_setNames; }
-
 protected:
 
   virtual void postInputInitialization() override;
 
 private:
-
-  /// the names of the sets that the boundary condition is applied to
-  string_array m_setNames;
 
   /// the names of the regions that the boundary condition is applied to
   string_array m_regionNames;

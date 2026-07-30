@@ -111,6 +111,8 @@ public:
    */
   struct viewKeyStruct
   {
+    /// @return The key for setName
+    constexpr static char const * setNamesString() { return "setNames"; }
     /// @return The key for scale
     constexpr static char const * scalesString() { return "scale"; }
     /// @return The key for functionName
@@ -130,6 +132,13 @@ public:
    * @return const reference to the field name
    */
   virtual const string & getFieldName() const = 0;
+
+  /**
+   * Accessor
+   * @return const reference to m_setNames
+   */
+  string_array const & getSetNames() const
+  { return m_setNames; }
 
   /**
    * Accessor
@@ -202,6 +211,13 @@ public:
 
   /**
    * Mutator
+   * @param[in] setName The name of the set
+   */
+  void addSetName( string const & setName )
+  { m_setNames.emplace_back( setName ); }
+
+  /**
+   * Mutator
    * @param[in] scale Scaling factor
    */
   void setScale( real64 const & scale )
@@ -258,6 +274,9 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  /// the names of the sets that the boundary condition is applied to
+  string_array m_setNames;
 
   /// Whether or not the boundary condition is an initial condition.
   int m_initialCondition;

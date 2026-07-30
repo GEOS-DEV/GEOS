@@ -107,8 +107,6 @@ public:
    */
   struct viewKeyStruct : public FieldSpecificationABC::viewKeyStruct
   {
-    /// @return The key for setName
-    constexpr static char const * setNamesString() { return "setNames"; }
     /// @return The key for constitutivePath
     constexpr static char const * constitutivePathString() { return "constitutivePath"; }
     /// @return The key for objectPath
@@ -152,13 +150,6 @@ public:
   { return m_direction; }
 
   /**
-   * Accessor
-   * @return const reference to m_setNames
-   */
-  string_array const & getSetNames() const
-  { return m_setNames; }
-
-  /**
    * Mutator
    * @param[in] fieldName The name of the field
    */
@@ -178,13 +169,6 @@ public:
    */
   void setObjectPath( string const & objectPath )
   { m_objectPath = objectPath; }
-
-  /**
-   * Mutator
-   * @param[in] setName The name of the set
-   */
-  void addSetName( string const & setName )
-  { m_setNames.emplace_back( setName ); }
 
   /**
    * @brief Set the Mesh Object Path object
@@ -223,9 +207,6 @@ protected:
 
 private:
 
-
-  /// the names of the sets that the boundary condition is applied to
-  string_array m_setNames;
 
   /// the path to the object which contains the fields that the boundary condition is applied to
   string m_objectPath;

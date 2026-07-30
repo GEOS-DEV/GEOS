@@ -24,14 +24,6 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Names of sets that the boundary condition is applied to.\n"
-                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).\n"
-                    "A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
-
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
