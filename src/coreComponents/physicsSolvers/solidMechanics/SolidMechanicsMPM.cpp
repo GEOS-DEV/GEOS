@@ -1625,6 +1625,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_disableSurfaceNormalsAndPositionsOnCPDIScaling( 0 ),
   m_disableSurfaceNormalsAndPositionsOnDamage( 1 ),
   m_disableSurfaceNormalsAndPositionsOnMelt( 1 ),
+  m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset( 0 ),
   m_disableSurfaceTractionsOnDamage( 1 ),
   m_disableSurfaceTractionsOnMelt( 1 ),
   m_domainExtent(),
@@ -2035,6 +2036,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDefaultValue( m_disableSurfaceNormalsAndPositionsOnMelt ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for disabling explicit surface normals and positions when a particle has melted" );
+
+  registerWrapper( "disableSurfaceNormalsAndPositionsOnOversizedDomainReset", &m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Option for disabling explicit surface normals and positions when an oversized particle domain triggers deformation-gradient reset" );
 
   registerWrapper( "disableSurfaceTractionsOnDamage", &m_disableSurfaceTractionsOnDamage ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -13524,6 +13531,33 @@ void SolidMechanicsMPM::invalidateShapeFunctionRow( localIndex const numberOfMap
   }
 }
 
+GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
+int SolidMechanicsMPM::computeLocalCellIndexWithBoundaryTolerance( real64 const u,
+                                                                   int const minCell,
+                                                                   int const maxCell,
+                                                                   real64 & cellCoordinate ) const
+{
+  int cell = LvArray::math::floor( u );
+  cellCoordinate = u - cell;
+
+  real64 const tolerance =
+    64.0 * DBL_EPSILON * LvArray::math::max( LvArray::math::abs( u ), 1.0 );
+
+  if( cell < minCell && u >= static_cast< real64 >( minCell ) - tolerance )
+  {
+    cell = minCell;
+    cellCoordinate = 0.0;
+  }
+  else if( cell > maxCell && u <= static_cast< real64 >( maxCell + 1 ) + tolerance )
+  {
+    cell = maxCell;
+    cellCoordinate = 1.0;
+  }
+
+  return cell;
+}
+
 bool SolidMechanicsMPM::flagParticlesWithBadMappingArraysAndCompactActiveOrdinalState(
   ParticleManager & particleManager,
   stdVector< array1d< int > > & badMappingRows )
@@ -13794,7 +13828,13 @@ bool SolidMechanicsMPM::computeSinglePointShapeFunctions( arrayView2d< real64 co
   int centerIJK[3] = {};
   for( int i=0; i<3; ++i )
   {
-    centerIJK[i] = LvArray::math::floor( ( particlePosition[i] - xLocalMin[i] ) / hEl[i] );
+    real64 cellCoordinate = 0.0;
+    centerIJK[i] =
+      computeLocalCellIndexWithBoundaryTolerance(
+        ( particlePosition[i] - xLocalMin[i] ) / hEl[i],
+        0,
+        nEl[i] - 1,
+        cellCoordinate );
   }
 
   bool validMapping = true;
@@ -13875,8 +13915,13 @@ bool SolidMechanicsMPM::computeSinglePointBSplineShapeFunctions( arrayView2d< re
   for( int d = 0; d < 3; ++d )
   {
     real64 const u = ( particlePosition[d] - xLocalMin[d] ) / hEl[d];
-    int const cell = LvArray::math::floor( u );
-    real64 const s = u - cell;
+    real64 s = 0.0;
+    int const cell =
+      computeLocalCellIndexWithBoundaryTolerance(
+        u,
+        1,
+        nEl[d] - 2,
+        s );
     real64 const oneMinusS = 1.0 - s;
     real64 const s2 = s * s;
     real64 const s3 = s2 * s;
@@ -14100,10 +14145,16 @@ bool SolidMechanicsMPM::computeCPDIShapeFunctions(
     real64 const cy = xp1 + ( S0 ) * r11 + ( S1 ) * r21 + ( S2 ) * r31;      \
     real64 const cz = xp2 + ( S0 ) * r12 + ( S1 ) * r22 + ( S2 ) * r32;      \
                                                                             \
-    /* Preserve old cell-boundary behavior: use division here. */            \
-    int const ix0 = LvArray::math::floor( ( cx - xMin0 ) / h0 );             \
-    int const iy0 = LvArray::math::floor( ( cy - xMin1 ) / h1 );             \
-    int const iz0 = LvArray::math::floor( ( cz - xMin2 ) / h2 );             \
+    /* Snap only roundoff-level excursions at local stencil boundaries. */   \
+    real64 cellCoordinate0 = 0.0;                                            \
+    real64 cellCoordinate1 = 0.0;                                            \
+    real64 cellCoordinate2 = 0.0;                                            \
+    int const ix0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cx - xMin0 ) / h0, 0, nEl[0] - 1, cellCoordinate0 );                 \
+    int const iy0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cy - xMin1 ) / h1, 0, nEl[1] - 1, cellCoordinate1 );                 \
+    int const iz0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cz - xMin2 ) / h2, 0, nEl[2] - 1, cellCoordinate2 );                 \
                                                                             \
     int const ix1 = ix0 + 1;                                                 \
     int const iy1 = iy0 + 1;                                                 \
@@ -14571,6 +14622,7 @@ GEOS_HOST_DEVICE
 void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( arrayView3d< localIndex const > const ijkMap,
                                                           real64 const (&xLocalMin)[3],
                                                           real64 const (&hEl)[3],
+                                                          localIndex const (&nEl)[3],
                                                           ParticleType particleType,
                                                           arraySlice1d< real64 const > const particlePosition,
                                                           arraySlice2d< real64 const > const particleRVectors,
@@ -14589,6 +14641,7 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
                                                 ijkMap,
                                                 xLocalMin,
                                                 hEl,
+                                                nEl,
                                                 mappedNodes,
                                                 shapeFunctionValues,
                                                 shapeFunctionGradientValues );
@@ -14601,6 +14654,7 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
                                                        ijkMap,
                                                        xLocalMin,
                                                        hEl,
+                                                       nEl,
                                                        mappedNodes,
                                                        shapeFunctionValues,
                                                        shapeFunctionGradientValues );
@@ -14614,6 +14668,7 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
                                          ijkMap,
                                          xLocalMin,
                                          hEl,
+                                         nEl,
                                          mappedNodes,
                                          shapeFunctionValues,
                                          shapeFunctionGradientValues );
@@ -14643,6 +14698,7 @@ void SolidMechanicsMPM::computeSinglePointParticleShapeFunctions( arrayView2d< r
                                                                   arrayView3d< int const > const ijkMap,
                                                                   real64 const (&xLocalMin)[3],
                                                                   real64 const (&hEl)[3],
+                                                                  localIndex const (&nEl)[3],
                                                                   localIndex * const mappedNodes,
                                                                   real64 * const shapeFunctionValues,
                                                                   real64 shapeFunctionGradientValues[][3] )
@@ -14651,7 +14707,13 @@ void SolidMechanicsMPM::computeSinglePointParticleShapeFunctions( arrayView2d< r
   int centerIJK[3] = {};
   for( int i=0; i<3; ++i )
   {
-    centerIJK[i] = LvArray::math::floor( ( particlePosition[i] - xLocalMin[i] ) / hEl[i] );
+    real64 cellCoordinate = 0.0;
+    centerIJK[i] =
+      computeLocalCellIndexWithBoundaryTolerance(
+        ( particlePosition[i] - xLocalMin[i] ) / hEl[i],
+        0,
+        nEl[i] - 1,
+        cellCoordinate );
   }
 
   // get node IDs, weights and grad weights
@@ -14698,6 +14760,7 @@ void SolidMechanicsMPM::computeSinglePointBSplineParticleShapeFunctions( arrayVi
                                                                          arrayView3d< int const > const ijkMap,
                                                                          real64 const (&xLocalMin)[3],
                                                                          real64 const (&hEl)[3],
+                                                                         localIndex const (&nEl)[3],
                                                                          localIndex * const mappedNodes,
                                                                          real64 * const shapeFunctionValues,
                                                                          real64 shapeFunctionGradientValues[][3] )
@@ -14711,8 +14774,13 @@ void SolidMechanicsMPM::computeSinglePointBSplineParticleShapeFunctions( arrayVi
   for( int d = 0; d < 3; ++d )
   {
     real64 const u = ( particlePosition[d] - xLocalMin[d] ) / hEl[d];
-    int const cell = LvArray::math::floor( u );
-    real64 const s = u - cell;
+    real64 s = 0.0;
+    int const cell =
+      computeLocalCellIndexWithBoundaryTolerance(
+        u,
+        1,
+        nEl[d] - 2,
+        s );
     real64 const oneMinusS = 1.0 - s;
     real64 const s2 = s * s;
     real64 const s3 = s2 * s;
@@ -14791,6 +14859,7 @@ void SolidMechanicsMPM::computeCPDIParticleShapeFunctions(
   arrayView3d< int const > const ijkMap,
   real64 const (&xLocalMin)[3],
   real64 const (&hEl)[3],
+  localIndex const (&nEl)[3],
   localIndex * const mappedNodes,
   real64 * const shapeFunctionValues,
   real64 shapeFunctionGradientValues[][3] )
@@ -14917,12 +14986,16 @@ void SolidMechanicsMPM::computeCPDIParticleShapeFunctions(
     real64 const cy = xp1 + ( S0 ) * r11 + ( S1 ) * r21 + ( S2 ) * r31;      \
     real64 const cz = xp2 + ( S0 ) * r12 + ( S1 ) * r22 + ( S2 ) * r32;      \
                                                                             \
-    /*                                                                      \
-     * Preserve old cell-boundary behavior: use division here, not invH.     \
-     */                                                                     \
-    int const ix0 = LvArray::math::floor( ( cx - xMin0 ) / h0 );             \
-    int const iy0 = LvArray::math::floor( ( cy - xMin1 ) / h1 );             \
-    int const iz0 = LvArray::math::floor( ( cz - xMin2 ) / h2 );             \
+    /* Snap only roundoff-level excursions at local stencil boundaries. */   \
+    real64 cellCoordinate0 = 0.0;                                            \
+    real64 cellCoordinate1 = 0.0;                                            \
+    real64 cellCoordinate2 = 0.0;                                            \
+    int const ix0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cx - xMin0 ) / h0, 0, nEl[0] - 1, cellCoordinate0 );                 \
+    int const iy0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cy - xMin1 ) / h1, 0, nEl[1] - 1, cellCoordinate1 );                 \
+    int const iz0 = computeLocalCellIndexWithBoundaryTolerance(              \
+      ( cz - xMin2 ) / h2, 0, nEl[2] - 1, cellCoordinate2 );                 \
                                                                             \
     int const ix1 = ix0 + 1;                                                 \
     int const iy1 = iy0 + 1;                                                 \
@@ -15462,7 +15535,13 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
             localIndex centerIJK[3] = {};
             for( localIndex d = 0; d < 3; ++d )
             {
-              centerIJK[d] = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
+              real64 cellCoordinate = 0.0;
+              centerIJK[d] =
+                computeLocalCellIndexWithBoundaryTolerance(
+                  ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d],
+                  0,
+                  nEl[d] - 1,
+                  cellCoordinate );
             }
 
             for( localIndex i = 0; i < 2; ++i )
@@ -15491,7 +15570,13 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
             localIndex baseIJK[3] = {};
             for( localIndex d = 0; d < 3; ++d )
             {
-              localIndex const cell = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
+              real64 cellCoordinate = 0.0;
+              localIndex const cell =
+                computeLocalCellIndexWithBoundaryTolerance(
+                  ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d],
+                  1,
+                  nEl[d] - 2,
+                  cellCoordinate );
               baseIJK[d] = cell - 1;
             }
 
@@ -15528,7 +15613,13 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
                                                        signs[corner][1] * particleRVectors[p][1][d] +
                                                        signs[corner][2] * particleRVectors[p][2][d];
 
-                cornerIJK[d] = LvArray::math::floor( ( cornerPositionComponent - xLocalMin[d] ) / hEl[d] );
+                real64 cellCoordinate = 0.0;
+                cornerIJK[d] =
+                  computeLocalCellIndexWithBoundaryTolerance(
+                    ( cornerPositionComponent - xLocalMin[d] ) / hEl[d],
+                    0,
+                    nEl[d] - 1,
+                    cellCoordinate );
               }
 
               for(localIndex i = 0; i < 2; ++i )
@@ -27009,6 +27100,10 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 
+  localIndex nEl[3] = {};
+  // Tensor equation: nEl = m_nEl.
+  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
   arrayView3d< localIndex const > const ijkMap =
     m_ijkMap;
 
@@ -27111,6 +27206,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
     GEOS_UNUSED_VAR( ijkMap );
     GEOS_UNUSED_VAR( xLocalMin );
     GEOS_UNUSED_VAR( hEl );
+    GEOS_UNUSED_VAR( nEl );
     GEOS_UNUSED_VAR( gridPosition );
 
 #endif
@@ -27137,6 +27233,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         ijkMap,
         xLocalMin,
         hEl,
+        nEl,
         particleType,
         particlePosition[p],
         particleRVectors[p],
@@ -27758,6 +27855,10 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 
+  localIndex nEl[3] = {};
+  // Tensor equation: nEl = m_nEl.
+  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
@@ -27906,6 +28007,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       GEOS_UNUSED_VAR( particleSurfaceNormal );
       GEOS_UNUSED_VAR( particleType );
       GEOS_UNUSED_VAR( hEl );
+      GEOS_UNUSED_VAR( nEl );
       GEOS_UNUSED_VAR( xLocalMin );
 
 #endif
@@ -27926,6 +28028,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           ijkMap,
           xLocalMin,
           hEl,
+          nEl,
           particleType,
           particlePosition[p],
           particleRVectors[p],
@@ -28165,6 +28268,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         ijkMap,
         xLocalMin,
         hEl,
+        nEl,
         particleType,
         particlePosition[p],
         particleRVectors[p],
@@ -28510,6 +28614,10 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 
+  localIndex nEl[3] = {};
+  // Tensor equation: nEl = m_nEl.
+  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
@@ -28538,6 +28646,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   GEOS_UNUSED_VAR( gridPosition );
   GEOS_UNUSED_VAR( hEl );
   GEOS_UNUSED_VAR( ijkMap );
+  GEOS_UNUSED_VAR( nEl );
   GEOS_UNUSED_VAR( xLocalMin );
 #endif
 
@@ -28702,6 +28811,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
           ijkMap,
           xLocalMin,
           hEl,
+          nEl,
           particleType,
           particlePosition[p],
           particleRVectors[p],
@@ -29024,6 +29134,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
         ijkMap,
         xLocalMin,
         hEl,
+        nEl,
         particleType,
         particlePosition[p],
         particleRVectors[p],
@@ -31011,6 +31122,8 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     m_resetDefGradForScaledSurfaceParticles;
   int const resetDefGradForOversizedParticles =
     m_resetDefGradForOversizedParticles;
+  int const disableSurfaceNormalsAndPositionsOnOversizedDomainReset =
+    m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
   int const subdivisionEnabled = m_subdivideParticles == 1;
   mpm::DomainResetTypeOption const domainResetType = m_domainResetType;
@@ -31076,9 +31189,9 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     arrayView1d< real64 const > const particleVolume =
       subRegion.getParticleVolume();
 
-    arrayView2d< real64 const > const particleSurfaceNormal =
+    arrayView2d< real64 > const particleSurfaceNormal =
       subRegion.getParticleSurfaceNormal();
-    arrayView2d< real64 const > const particleSurfacePosition =
+    arrayView2d< real64 > const particleSurfacePosition =
       subRegion.getParticleSurfacePosition();
     arrayView2d< real64 const > const particleSurfaceTraction =
       subRegion.getParticleSurfaceTraction();
@@ -31164,6 +31277,10 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       }
       real64 const resetMaximumDiagonal =
         isOversizedParticle ? oversizedResetMaximumDiagonal : defaultMaximumDiagonal;
+      bool const disableSurfaceNormalsAndPositionsForOversizedDomainReset =
+        disableSurfaceNormalsAndPositionsOnOversizedDomainReset == 1 &&
+        isOversizedParticle &&
+        isSurfaceLikeParticle;
 
       real64 const referenceVolume = particleReferenceVolume[p];
       real64 const J = referenceVolume > 0.0
@@ -31333,29 +31450,41 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
       if( isSurfaceLikeParticle )
       {
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
-          particleReferenceSurfaceNormal[p],
-          inverseNewDeformationGradientCofactor,
-          particleSurfaceNormal[p] );
-        real64 const normalMagnitudeSquared =
-          LvArray::tensorOps::l2NormSquared< 3 >(
-            particleReferenceSurfaceNormal[p] );
-        if( normalMagnitudeSquared > 1.0e-24 )
+        if( disableSurfaceNormalsAndPositionsForOversizedDomainReset )
         {
-          LvArray::tensorOps::scale< 3 >(
-            particleReferenceSurfaceNormal[p],
-            1.0 / LvArray::math::sqrt( normalMagnitudeSquared ) );
+          LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
+          LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
+          LvArray::tensorOps::fill< 3 >(
+            particleReferenceSurfaceNormal[p], 0.0 );
+          LvArray::tensorOps::fill< 3 >(
+            particleReferenceSurfacePosition[p], 0.0 );
         }
         else
         {
-          LvArray::tensorOps::fill< 3 >(
-            particleReferenceSurfaceNormal[p], 0.0 );
-        }
+          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+            particleReferenceSurfaceNormal[p],
+            inverseNewDeformationGradientCofactor,
+            particleSurfaceNormal[p] );
+          real64 const normalMagnitudeSquared =
+            LvArray::tensorOps::l2NormSquared< 3 >(
+              particleReferenceSurfaceNormal[p] );
+          if( normalMagnitudeSquared > 1.0e-24 )
+          {
+            LvArray::tensorOps::scale< 3 >(
+              particleReferenceSurfaceNormal[p],
+              1.0 / LvArray::math::sqrt( normalMagnitudeSquared ) );
+          }
+          else
+          {
+            LvArray::tensorOps::fill< 3 >(
+              particleReferenceSurfaceNormal[p], 0.0 );
+          }
 
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
-          particleReferenceSurfacePosition[p],
-          inverseNewDeformationGradient,
-          particleSurfacePosition[p] );
+          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+            particleReferenceSurfacePosition[p],
+            inverseNewDeformationGradient,
+            particleSurfacePosition[p] );
+        }
         LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
           particleReferenceSurfaceTraction[p],
           inverseNewDeformationGradientCofactor,

@@ -774,6 +774,7 @@ parameters = {
                'disableSurfaceNormalsAndPositionsOnCPDIScaling': ( None, True ),  # MPM: drop explicit surfaces after CPDI scaling.
                'disableSurfaceNormalsAndPositionsOnDamage': ( None, True ),  # MPM: drop explicit surfaces after damage.
                'disableSurfaceNormalsAndPositionsOnMelt': ( None, True ),  # MPM: drop explicit surfaces after melt.
+               'disableSurfaceNormalsAndPositionsOnOversizedDomainReset': ( None, True ),  # MPM: drop explicit surfaces after oversized-domain F reset.
                'disableSurfaceTractionsOnDamage': ( None, True ),  # MPM: drop explicit surface tractions after damage.
                'disableSurfaceTractionsOnMelt': ( None, True ),  # MPM: drop explicit surface tractions after melt.
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
@@ -785,6 +786,7 @@ parameters = {
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
                'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
                'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.
+               'weakInterfaceTraceMaxGapCorrectionVelocity': ( None, True ),  # MPM: cap for trace accumulated-gap correction velocity.
                'weakInterfaceTraceMinWeight': ( None, True ),  # MPM: minimum active trace interpolation weight.
                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.

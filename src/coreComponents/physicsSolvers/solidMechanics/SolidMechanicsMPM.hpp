@@ -1098,6 +1098,13 @@ public:
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
+  int computeLocalCellIndexWithBoundaryTolerance( real64 const u,
+                                                  int const minCell,
+                                                  int const maxCell,
+                                                  real64 & cellCoordinate ) const;
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   bool computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                          arraySlice1d< real64 const > const particlePosition,
                                          arrayView3d< int const > const ijkMap,
@@ -1138,6 +1145,7 @@ public:
   void mapNodesAndComputeShapeFunctionsForSingleParticle( arrayView3d< localIndex const > const ijkMap,
                                          real64 const (&xLocalMin)[3],
                                          real64 const (&hEl)[3],
+                                         localIndex const (&nEl)[3],
                                          ParticleType particleType,
                                          arraySlice1d< real64 const > const particlePosition,
                                          arraySlice2d< real64 const > const particleRVectors,
@@ -1153,6 +1161,7 @@ public:
                                                  arrayView3d< int const > const ijkMap,
                                                  real64 const (&xLocalMin)[3],
                                                  real64 const (&hEl)[3],
+                                                 localIndex const (&nEl)[3],
                                                  localIndex * const mappedNodes,
                                                  real64 * const shapeFunctionValues,
                                                  real64 shapeFunctionGradientValues[][3] );
@@ -1164,6 +1173,7 @@ public:
                                                         arrayView3d< int const > const ijkMap,
                                                         real64 const (&xLocalMin)[3],
                                                         real64 const (&hEl)[3],
+                                                        localIndex const (&nEl)[3],
                                                         localIndex * const mappedNodes,
                                                         real64 * const shapeFunctionValues,
                                                         real64 shapeFunctionGradientValues[][3] );
@@ -1176,6 +1186,7 @@ public:
                                           arrayView3d< int const > const ijkMap,
                                           real64 const (&xLocalMin)[3],
                                           real64 const (&hEl)[3],
+                                          localIndex const (&nEl)[3],
                                           localIndex * const mappedNodes,
                                           real64 * const shapeFunctionValues,
                                           real64 shapeFunctionGradientValues[][3] );
@@ -1340,6 +1351,7 @@ protected:
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
   int m_disableSurfaceNormalsAndPositionsOnMelt; // Turns off surface normals and positions for melted particles
+  int m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset; // Turns off surface normals and positions after oversized-domain F reset
   int m_disableSurfaceTractionsOnDamage; // Turns off surface tractions for highly damaged particles
   int m_disableSurfaceTractionsOnMelt; // Turns off surface tractions for melted particles
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
