@@ -1537,9 +1537,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 	<xsd:complexType name="PermeabilitySpecificationType">
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.
-The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
-		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when a “set” does not target any region

@@ -48,12 +48,6 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the constitutive permeability model." );
 
-  registerWrapper( viewKeyStruct::componentString(), &m_component ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component of field (if tensor) to apply boundary condition to.\n"
-                    "The component must use the order in which the phaseNames have been defined in the Constitutive Element." );
-
   getWrapper< int >( viewKeyStruct::initialConditionString() ).
     setApplyDefaultValue( 1 );
 }
@@ -75,13 +69,6 @@ void PermeabilitySpecification::postInputInitialization()
                    InputError,
                    getDataContext() );
   }
-
-  GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
-                 GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
-                            viewKeyStruct::componentString(),
-                            viewKeyStruct::scalesString() ),
-                 InputError,
-                 getDataContext() );
 }
 
 namespace
@@ -182,7 +169,6 @@ void expandFieldSpecification< PermeabilitySpecification >( PermeabilitySpecific
     FieldSpecification & fs = manager.registerGroup< FieldSpecification >( childName );
     fs.setDataContextReference( permSpec );
     fs.setFieldName( fieldName );
-    fs.setComponent( permSpec.getComponent() );
     fs.setObjectPath( objectPath );
     fs.initialCondition( permSpec.initialCondition() );
     fs.setScales( permSpec.getScales() );

@@ -81,8 +81,6 @@ public:
     constexpr static char const * regionNamesString() { return "regionNames"; }
     /// @return The key for permeabilityModelName
     constexpr static char const * permeabilityModelNameString() { return "permeabilityModelName"; }
-    /// @return The key for component
-    constexpr static char const * componentString() { return "component"; }
   };
 
   /**
@@ -110,13 +108,6 @@ public:
   }
 
   /**
-   * Accessing the considered component.
-   * @return The component axis or a special value.
-   */
-  virtual int getComponent() const
-  { return m_component; }
-
-  /**
    * Accessor
    * @return const reference to m_setNames
    */
@@ -129,18 +120,17 @@ protected:
 
 private:
 
-
   /// the names of the sets that the boundary condition is applied to
   string_array m_setNames;
 
   /// the names of the regions that the boundary condition is applied to
   string_array m_regionNames;
 
+  // Currently only supports cell regions
+  // TODO: support faces
+
   /// the name of the constitutive permeability model
   string m_permeabilityModelName;
-
-  /// The component the boundary condition acts on. Not used if field is a scalar.
-  int m_component;
 
 };
 
