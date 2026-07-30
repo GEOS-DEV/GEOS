@@ -68,6 +68,9 @@
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #cmakedefine GEOS_USE_HIP
 
+/// Enables synchronized HIP diagnostics in the MPM solver (CMake option GEOS_ENABLE_MPM_GPU_DEBUG)
+#cmakedefine GEOS_USE_MPM_GPU_DEBUG
+
 /// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
 #cmakedefine GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
 

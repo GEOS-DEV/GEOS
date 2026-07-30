@@ -118,6 +118,20 @@ if( GEOS_ENABLE_SOLIDMECHANICS_FEM )
   endforeach()
 endif()
 
+option(
+  GEOS_MPM_FORCE_O0
+  "Compile SolidMechanicsMPM.cpp with -O0 for GPU diagnosis"
+  OFF
+)
+
+if( GEOS_MPM_FORCE_O0 AND GEOS_ENABLE_SOLIDMECHANICS_MPM )
+  set_property(
+    SOURCE SolidMechanicsMPM.cpp
+    APPEND
+    PROPERTY COMPILE_OPTIONS "-O0"
+  )
+endif()
+
 blt_add_library( NAME       solidMechanicsSolvers
                  SOURCES    ${solidMechanicsSolvers_sources}
                  HEADERS    ${solidMechanicsSolvers_headers}
@@ -127,6 +141,15 @@ blt_add_library( NAME       solidMechanicsSolvers
                )
 
 target_include_directories( solidMechanicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+if( GEOS_ENABLE_MPM_GPU_DEBUG )
+  # SolidMechanicsMPM.cpp instantiates the RAJA/HIP kernels defined in its
+  # included headers.  Preserve source-level device information and avoid
+  # optimization reordering while diagnosing a fault.
+  target_compile_options( solidMechanicsSolvers PRIVATE
+                          "$<$<COMPILE_LANGUAGE:CXX>:-O0;-ggdb;-fno-omit-frame-pointer>"
+                          "$<$<COMPILE_LANGUAGE:HIP>:-O0;-ggdb;-fno-omit-frame-pointer>" )
+endif()
 
 install( TARGETS solidMechanicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

@@ -163,7 +163,7 @@ pfw["updateOrder"] = 2
 
 # Enable GEOS profiling output and the neighbor-list infrastructure used by the
 # contact/damage feature set in this example.
-pfw["solverProfiling"] = 1
+pfw["solverProfiling"] = 0
 pfw["needsNeighborList"] = 1
 
 # Write history files for the post-processing script. reactionHistory.csv is used

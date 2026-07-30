@@ -47,6 +47,7 @@
 #include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
 
 #include <chrono>
+#include <cstdlib>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -94,6 +95,32 @@ string normalizeProfileInput( string const & input )
   }
   return normalized;
 }
+
+#if defined( GEOS_USE_HIP ) && defined( GEOS_USE_MPM_GPU_DEBUG )
+bool mpmGpuDebugEnvironmentFlag( char const * const name,
+                                 bool const defaultValue )
+{
+  char const * const rawValue = std::getenv( name );
+  if( rawValue == nullptr || rawValue[0] == '\0' )
+  {
+    return defaultValue;
+  }
+
+  string const value = normalizeProfileInput( rawValue );
+  if( value == "0" || value == "false" || value == "no" ||
+      value == "off" || value == "disable" || value == "disabled" )
+  {
+    return false;
+  }
+  if( value == "1" || value == "true" || value == "yes" ||
+      value == "on" || value == "enable" || value == "enabled" )
+  {
+    return true;
+  }
+
+  return defaultValue;
+}
+#endif
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -918,6 +945,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_fTableInterpType( mpm::InterpolationOption::Linear ),
   m_generalizedVortexMMS( 0 ),
   m_globalFaceReactions(),
+  m_gpuDebugCheckpoints( true ),
+  m_gpuDebugInitialized( false ),
+  m_gpuDebugPreviousLabel( "solver entry" ),
+  m_gpuDebugVerbose( false ),
   m_gpuScheme( mpm::GPUSchemeOption::Atomics ),
   m_hasContact( 0 ),
   m_hEl(),
@@ -3717,7 +3748,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   localIndex maxGlobalGroupNumber = MpiWrapper::max( maxLocalGroupNumber.get() ); // Maximum contact group number on global domain.
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines, "Found " << maxGlobalGroupNumber << " contact groups" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines, "Found " << maxGlobalGroupNumber+1 << " contact groups" );
 
   // contact group validation - if user accidentally gave group = 1000 or something,
   // memory would be use. This will show why so they can diagnose OOM
@@ -4061,6 +4092,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   synchronizePostBoundaryKinematicFieldsForG2P( domain,
                                                 nodeManager,
                                                 mesh );
+
+
+  // CC Debug
+  // Mark all grid and particle memory for GPU
+  moveAllToDevice( nodeManager,
+                   particleManager );
+
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 15. Map grid state back to particles.
@@ -4146,6 +4184,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     printProfilingResults();
   }
+  gpuDebugCheckpoint( "explicit step return" );
   return dtReturn;
 }
 
@@ -5163,6 +5202,74 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
 }
 
 /**
+ * @brief Synchronizes HIP work at an explicit MPM phase boundary and reports the first failing phase.
+ *
+ * The checkpoint is compiled only for GEOS_ENABLE_MPM_GPU_DEBUG builds.  Runtime checks can be disabled with
+ * GEOS_MPM_GPU_DEBUG_CHECKPOINTS=0, and successful checkpoints can be logged with
+ * GEOS_MPM_GPU_DEBUG_VERBOSE=1.
+ */
+void SolidMechanicsMPM::gpuDebugCheckpoint( std::string const & nextLabel )
+{
+#if defined( GEOS_USE_HIP ) && defined( GEOS_USE_MPM_GPU_DEBUG )
+  if( !m_gpuDebugInitialized )
+  {
+    m_gpuDebugCheckpoints = mpmGpuDebugEnvironmentFlag( "GEOS_MPM_GPU_DEBUG_CHECKPOINTS", true );
+    m_gpuDebugVerbose = mpmGpuDebugEnvironmentFlag( "GEOS_MPM_GPU_DEBUG_VERBOSE", false );
+    m_gpuDebugInitialized = true;
+
+    GEOS_LOG_RANK_0( "MPM HIP phase checkpoints are "
+                     << (m_gpuDebugCheckpoints ? "enabled" : "disabled")
+                     << ". Set GEOS_MPM_GPU_DEBUG_VERBOSE=1 to log every successful checkpoint." );
+  }
+
+  if( !m_gpuDebugCheckpoints )
+  {
+    m_gpuDebugPreviousLabel = nextLabel;
+    return;
+  }
+
+  hipError_t const launchError = hipPeekAtLastError();
+  hipError_t const executionError = hipDeviceSynchronize();
+
+  if( launchError != hipSuccess || executionError != hipSuccess )
+  {
+    std::ostringstream message;
+    message << "MPM HIP checkpoint detected a GPU failure after phase '"
+            << m_gpuDebugPreviousLabel << "' while entering '" << nextLabel << "'. "
+            << "cycle=" << m_currentMomentumLogCycle
+            << ", time=" << m_currentMomentumLogTime
+            << ", dt=" << m_currentMomentumLogDt << ".";
+
+    if( launchError != hipSuccess )
+    {
+      message << " Kernel-launch error: " << hipGetErrorName( launchError )
+              << " (" << hipGetErrorString( launchError ) << ").";
+    }
+    if( executionError != hipSuccess )
+    {
+      message << " Synchronized-execution error: " << hipGetErrorName( executionError )
+              << " (" << hipGetErrorString( executionError ) << ").";
+    }
+
+    message << " The previous phase is the narrowest solver-level location. "
+            << "Run the generated geosx-mpm-gpu-debug launcher in agent mode for the GPU stop reason, "
+            << "program counter, source correlation, workgroup, and wavefront state.";
+    GEOS_ERROR( message.str() );
+  }
+
+  if( m_gpuDebugVerbose )
+  {
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines,
+                            "MPM HIP checkpoint passed after '" << m_gpuDebugPreviousLabel
+                            << "' before '" << nextLabel << "'" );
+  }
+  m_gpuDebugPreviousLabel = nextLabel;
+#else
+  GEOS_UNUSED_VAR( nextLabel );
+#endif
+}
+
+/**
  * @brief Logs an MPM subroutine boundary and records a profiling timestamp when profiling is active.
  *
  * The GEOS log message is emitted regardless of whether solver profiling is active. Profiling still records only when
@@ -5170,6 +5277,7 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
  */
 void SolidMechanicsMPM::logAndProfile( std::string const & label )
 {
+  gpuDebugCheckpoint( label );
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, label );
   if( m_solverProfiling == 1 )
   {
@@ -5192,6 +5300,7 @@ void SolidMechanicsMPM::logAndProfile( std::string const & label,
 {
   GEOS_UNUSED_VAR( particleManager );
   GEOS_UNUSED_VAR( nodeManager );
+  gpuDebugCheckpoint( label );
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, label );
   if( m_solverProfiling == 1 )
   {
@@ -14381,7 +14490,7 @@ void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particle
 
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
 
@@ -24347,6 +24456,33 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
   } );
 }
 
+void SolidMechanicsMPM::moveAllToDevice( NodeManager & nodeManager,
+                                         ParticleManager & particleManager )
+{
+  for(int subRegionIndex = 0; subRegionIndex < m_numberOfSubRegions; ++subRegionIndex)
+  {
+    m_mappedNodes[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_shapeFunctionValues[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_shapeFunctionGradientValues[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_mappedFields[subRegionIndex].move( parallelDeviceMemorySpace, true );
+  }
+
+  nodeManager.forWrappers( [&]( WrapperBase & wrapper )
+  {
+    wrapper.move( parallelDeviceMemorySpace, true );
+  });
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( parallelDeviceMemorySpace, true );
+    } );
+  } );
+
+  parallelDeviceSync();
+}
+
 // PERFORMANCE OPTIMIZED VERSION ********************************************************
 /**
  * @brief Implements grid to particle.
@@ -24964,8 +25100,258 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
   } );
 }
 
+// New PIC update
 /**
- * @brief Performs pic update.
+ * @brief Performs PIC update.
+ *
+ * Executable statements are unchanged; comments document intent where practical.
+ */
+void SolidMechanicsMPM::performPICUpdate( real64 dt,
+                                           ParticleManager & particleManager,
+                                           NodeManager & nodeManager )
+{
+
+
+  int const numDims =
+    m_numDims;
+
+  int const numContactGroups =
+    m_numContactGroups;
+
+  int const damageFieldPartitioning =
+    m_damageFieldPartitioning;
+#ifndef GEOS_USE_DEVICE
+  GEOS_UNUSED_VAR( numContactGroups );
+  GEOS_UNUSED_VAR( damageFieldPartitioning );
+#endif
+
+  real64 const halfDt =
+    0.5 * dt;
+
+  // ---------------------------------------------------------------------------
+  // Data needed for on-the-fly shape-function computation in device builds.
+  // ---------------------------------------------------------------------------
+
+  real64 xLocalMin[3] = {};
+  // Tensor equation: xLocalMin = m_xLocalMin.
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  arrayView3d< localIndex const > const ijkMap =
+    m_ijkMap;
+
+  // ---------------------------------------------------------------------------
+  // Grid fields used by the gather.
+  // ---------------------------------------------------------------------------
+
+  arrayView2d< real64 const > const & gridDamageGradient =
+    nodeManager.getReference< array2d< real64 > >
+      ( viewKeyStruct::gridDamageGradientString() );
+#ifndef GEOS_USE_DEVICE
+  GEOS_UNUSED_VAR( gridDamageGradient );
+#endif
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+
+  arrayView3d< real64 const > const & gridAcceleration =
+    nodeManager.getReference< array3d< real64 > >
+      ( viewKeyStruct::gridAccelerationString() );
+
+  arrayView3d< real64 const > const & gridVelocity =
+    nodeManager.getReference< array3d< real64 > >
+      ( viewKeyStruct::gridVelocityString() );
+
+  localIndex subRegionIndex = 0;
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // -------------------------------------------------------------------------
+    // Particle fields registered by the subregion.
+    // -------------------------------------------------------------------------
+
+    arrayView1d< int const > const particleGroup =
+      subRegion.getParticleGroup();
+
+    arrayView2d< real64 > const particlePosition =
+      subRegion.getParticleCenter();
+
+    arrayView2d< real64 > const particleVelocity =
+      subRegion.getParticleVelocity();
+
+    arrayView3d< real64 const > const particleRVectors =
+      subRegion.getParticleRVectors();
+
+    // -------------------------------------------------------------------------
+    // Particle fields registered by the MPM solver.
+    // -------------------------------------------------------------------------
+
+    arrayView2d< real64 const > const particleDamageGradient =
+      subRegion.getField< fields::mpm::particleDamageGradient >();
+
+    arrayView2d< real64 const > const particleSurfaceNormal =
+      subRegion.getParticleSurfaceNormal();
+
+    arrayView3d< real64 > const particleVelocityGradient =
+      subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    localIndex const numberOfVerticesPerParticle =
+      subRegion.numberOfVerticesPerParticle();
+
+    localIndex const numberOfMappedNodesPerParticle =
+      8 * numberOfVerticesPerParticle;
+
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
+
+    ParticleType const particleType =
+      subRegion.getParticleType();
+
+#ifndef GEOS_USE_DEVICE
+
+    // -------------------------------------------------------------------------
+    // CPU path:
+    //
+    // Use precomputed effective/coalesced particle-to-grid mapping arrays.
+    // -------------------------------------------------------------------------
+
+    arrayView1d< localIndex const > const numEffectiveMappedNodes =
+      m_numEffectiveMappedNodes[subRegionIndex];
+
+    arrayView2d< integer const > const effectiveMappedFields =
+      m_effectiveMappedFields[subRegionIndex];
+
+    arrayView2d< localIndex const > const effectiveMappedNodes =
+      m_effectiveMappedNodes[subRegionIndex];
+
+    arrayView2d< real64 const > const effectiveShapeFunctionValues =
+      m_effectiveShapeFunctionValues[subRegionIndex];
+
+    arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
+      m_effectiveShapeFunctionGradientValues[subRegionIndex];
+
+    // These are only needed by the device/on-the-fly shape-function path.
+    GEOS_UNUSED_VAR( numberOfMappedNodesPerParticle );
+    GEOS_UNUSED_VAR( particleDamageGradient );
+    GEOS_UNUSED_VAR( particleRVectors );
+    GEOS_UNUSED_VAR( particleSurfaceNormal );
+    GEOS_UNUSED_VAR( particleType );
+    GEOS_UNUSED_VAR( ijkMap );
+    GEOS_UNUSED_VAR( xLocalMin );
+    GEOS_UNUSED_VAR( hEl );
+    GEOS_UNUSED_VAR( gridPosition );
+
+#endif
+
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+      [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    {
+      localIndex const p =
+        activeParticleIndices[pp];
+
+#ifdef GEOS_USE_DEVICE
+
+      // -----------------------------------------------------------------------
+      // Device path:
+      //
+      // Compute mapped nodes and shape functions on the fly for this particle.
+      // -----------------------------------------------------------------------
+
+      localIndex mappedNodesForParticle[64] = {};
+      real64 shapeFunctionValuesForParticle[64] = {};
+      real64 shapeFunctionGradientValuesForParticle[64][3] = {};
+
+      mapNodesAndComputeShapeFunctionsForSingleParticle(
+        ijkMap,
+        xLocalMin,
+        hEl,
+        particleType,
+        particlePosition[p],
+        particleRVectors[p],
+        gridPosition,
+        mappedNodesForParticle,
+        shapeFunctionValuesForParticle,
+        shapeFunctionGradientValuesForParticle );
+
+      localIndex const numberOfEffectiveMappedNodesPerParticle =
+        numberOfMappedNodesPerParticle;
+
+#else
+
+      localIndex const numberOfEffectiveMappedNodesPerParticle =
+        numEffectiveMappedNodes[pp];
+
+#endif
+
+      // -----------------------------------------------------------------------
+      // Initialize velocity gradient for this particle.
+      //
+      // The FLIP update is incremental for velocity, but the velocity gradient
+      // is recomputed from grid velocity each update.
+      // -----------------------------------------------------------------------
+
+      // Tensor equation: particleVelocityGradient[p] = 0.0 component-wise.
+      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
+
+      int const pGroup =
+        particleGroup[p];
+#ifndef GEOS_USE_DEVICE
+      GEOS_UNUSED_VAR( pGroup );
+#endif
+
+        for( localIndex g = 0; g < numberOfEffectiveMappedNodesPerParticle; ++g )
+        {
+#ifdef GEOS_USE_DEVICE
+          localIndex const mappedNode = mappedNodesForParticle[g];
+          real64 const shapeFunctionValue = shapeFunctionValuesForParticle[g];
+
+          real64 grad[3] = {};
+          LvArray::tensorOps::copy< 3 >(grad, shapeFunctionGradientValuesForParticle[g]);
+#else
+          localIndex const mappedNode = effectiveMappedNodes[pp][g];
+          real64 const shapeFunctionValue = effectiveShapeFunctionValues[pp][g];
+
+          real64 grad[3] = {};
+          LvArray::tensorOps::copy< 3 >(grad, shapeFunctionGradientValues[pp][g]);
+#endif
+
+#ifdef GEOS_USE_DEVICE
+          localIndex const fieldIndex =
+            partitionField( numContactGroups,
+                            damageFieldPartitioning,
+                            pGroup,
+                            particleDamageGradient[p],
+                            particleSurfaceNormal[p],
+                            gridDamageGradient[mappedNode] );
+#else
+          localIndex const fieldIndex = effectiveMappedFields[pp][g];
+#endif
+
+          real64 const shapeDt = shapeFunctionValue * dt;
+
+          for(int i = 0; i < numDims; ++i)
+          {
+            particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeDt;
+            particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue;
+            
+            for( int j=0; j<numDims; ++j )
+            { 
+              particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * grad[j];
+            }
+          }
+      }
+    } );
+
+    ++subRegionIndex;
+  } );
+}
+
+// Old PIC update
+/**
+ * @brief Performs PIC update.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
@@ -25051,7 +25437,6 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
       // Tensor equations:
       //   particleVelocityGradient[p] = 0.0 component-wise.
       //   particleVelocity[p] = 0.0 component-wise.
-      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
       LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
       LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
 
@@ -25077,23 +25462,7 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
           // shapeFunctionGradientValue[j];
           // }
 
-          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValue * dt; // CC:
-                                                                                                                                                                    // position
-                                                                                                                                                                    // update
-                                                                                                                                                                    // doesn't
-                                                                                                                                                                    // seem
-                                                                                                                                                                    // consistent
-                                                                                                                                                                    // with
-                                                                                                                                                                    // old
-                                                                                                                                                                    // GEOS
-                                                                                                                                                                    // for
-                                                                                                                                                                    // FLIP
-                                                                                                                                                                    // and
-                                                                                                                                                                    // PIC,
-                                                                                                                                                                    // need
-                                                                                                                                                                    // to
-                                                                                                                                                                    // double
-                                                                                                                                                                    // check
+          particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValue * dt;
           particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue;
 
           if( overlapCorrection == mpm::OverlapCorrectionOption::Volume )
@@ -25141,8 +25510,174 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
     } );
     ++subRegionIndex;
   } );
+}
+
+// Debugging PIC update
+/**
+ * @brief Performs PIC update.
+ *
+ * Executable statements are unchanged; comments document intent where practical.
+ */
+void SolidMechanicsMPM::performPICUpdateDebug( real64 dt,
+                                          ParticleManager & particleManager,
+                                          NodeManager & nodeManager )
+{
 
 
+  // On-the-fly grid shape function computations
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  // Tuolumne/HIP v55: do not read SolidMechanicsMPM data members through
+  // `this` inside the PIC G2P device kernel. In particular, the velocity-
+  // gradient overlap-correction branch must use captured scalar values.
+  mpm::OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
+  integer const planeStrain = m_planeStrain;
+  real64 const overlapThreshold1 = m_overlapThreshold1;
+  real64 const gridCellVolume = hEl[0] * hEl[1] * hEl[2];
+  real64 const gridNodeSupportVolume = planeStrain == 1 ? 0.5 * gridCellVolume : gridCellVolume;
+
+  real64 xLocalMin[3] = {};
+  // Tensor equation: xLocalMin = m_xLocalMin.
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
+
+  // Grid fields
+  arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+  arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView3d< real64 const > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
+  arrayView3d< real64 const > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Registered by subregion
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+
+    // Registered by MPM solver
+    arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    // Get views to mapping arrays
+    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+
+    // Map to particles
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    int const numDims = m_numDims;
+    int const damageFieldPartitioning = m_damageFieldPartitioning;
+    int const numContactGroups = m_numContactGroups;
+    ParticleType const particleType = subRegion.getParticleType();
+
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
+    arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+    arrayView2d< integer const > const mappedFields = m_mappedFields[subRegionIndex];
+
+    GEOS_UNUSED_VAR( particleType );
+    GEOS_UNUSED_VAR( particleRVectors );
+    GEOS_UNUSED_VAR( gridPosition );
+    GEOS_UNUSED_VAR( ijkMap );
+    GEOS_UNUSED_VAR( xLocalMin );
+    GEOS_UNUSED_VAR( hEl );
+    GEOS_UNUSED_VAR( numContactGroups );
+    GEOS_UNUSED_VAR( damageFieldPartitioning );
+    GEOS_UNUSED_VAR( gridDamageGradient );
+    GEOS_UNUSED_VAR( particleGroup );
+    GEOS_UNUSED_VAR( particleDamageGradient );
+    GEOS_UNUSED_VAR( particleSurfaceNormal );
+
+    for(int pp = 0; pp < activeParticleIndices.size(); ++pp)
+    {
+      GEOS_LOG_RANK("PIC - pp: " << pp);
+      forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const ppp )
+      {
+        GEOS_UNUSED_VAR(ppp);
+
+        localIndex const p = activeParticleIndices[pp];
+        // Zero this out before additive sum
+        // Tensor equations:
+        //   particleVelocityGradient[p] = 0.0 component-wise.
+        //   particleVelocity[p] = 0.0 component-wise.
+        LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
+        LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
+
+        for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+        {
+          localIndex const mappedNode = mappedNodes[pp][g];
+          real64 const shapeFunctionValue = shapeFunctionValues[pp][g];
+          real64 shapeFunctionGradientValue[3] = {};
+          // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[pp][g].
+          LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
+          localIndex const fieldIndex = mappedFields[pp][g];
+          for( localIndex i = 0; i < numDims; ++i )
+          {
+            // particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 *
+            // gridAcceleration[mappedNode][fieldIndex][i] * dt )
+            // * shapeFunctionValue[g] * dt; // CC: position update doesn't seem consistent with old GEOS for FLIP and
+            // PIC, need to double
+            // check
+            // particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue[g];
+            // for( int j=0; j<numDims; ++j )
+            // {
+            //   particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] *
+            // shapeFunctionGradientValue[j];
+            // }
+
+            particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValue * dt;
+            particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue;
+
+            if( overlapCorrection == mpm::OverlapCorrectionOption::Volume )
+            { // If mapped volume exceeds grid volume, there is possible overlap.  In that case, modify the velocity
+              // gradient of any fully-damaged cells to reduce volume. Only do this if the material is in compression.
+
+              // Compute total material volume (all fields) at the node, and divide by grid cell size to get overlap
+              // volume:
+              // Overlap = ( sumMaterialVolumeAtNode / Grid Node support volume ).
+              //
+              // Overlap = 1: compatible particle domains
+              //         < 1: under-dense (free surface)
+              //         > 1: over-dense.
+              //
+              // For plane strain, the support volume is half the grid cell volume:
+
+              real64 nodalMaterialVolume = 0.0;
+              for( int index = 0; index < numContactGroups; ++index )
+              {
+                  nodalMaterialVolume += gridMaterialVolume[mappedNode][index];
+              }
+
+              real64 const gridNodeOverlap = nodalMaterialVolume / gridNodeSupportVolume;
+
+              if( gridNodeOverlap > overlapThreshold1 ) //&& ( particleDamage[p] > 0.99999 ) )
+              {
+                // Set compressive strain rate modification to correct overlap in 100 steps:
+                particleVelocityGradient[p][i][i] -= ( 0.01 / 3. )*( gridNodeOverlap - 1.0 )  / dt;
+              }
+
+              // We could use the mapped overlapFieldGradient at the grid to determine a direction for the compression
+              // and then figure out directional velocity gradient the compresses material in that direction only.
+              // This is similar to the normalForce option, but doesn't require that we insert a contact surface.
+              //
+              // Note: a overlap-field gradient partitioning was attempted and adding all those additional contact
+              // surfaces didn't really help.
+
+            }
+            for( int j=0; j<numDims; ++j )
+            {
+              particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValue[j];
+            }
+          }
+        }
+      } );
+    }
+    ++subRegionIndex;
+  } );
 }
 
 /**
@@ -25899,7 +26434,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   {
     if( nodeManager.hasWrapper( fieldName ) )
     {
-      nodeManager.getWrapperBase( fieldName ).move( LvArray::MemorySpace::host, true );
+      nodeManager.getWrapperBase( fieldName ).move( parallelDeviceMemorySpace, true );
     }
   };
 
@@ -25909,13 +26444,13 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   moveFMPMNodeFieldToHost( viewKeyStruct::gridVelocityString() );
   moveFMPMNodeFieldToHost( viewKeyStruct::gridVPlusString() );
   moveFMPMNodeFieldToHost( viewKeyStruct::gridContactForceString() );
-  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     subRegion.forWrappers( []( WrapperBase & wrapper )
     {
-      wrapper.move( LvArray::MemorySpace::host, true );
+      wrapper.move( parallelDeviceMemorySpace, true );
     } );
   } );
 #endif

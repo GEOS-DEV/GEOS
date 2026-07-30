@@ -38,6 +38,12 @@
 # This default-off option forwards GEOS_ENABLE_MPM_MATERIAL_POINT_DRIVER=ON
 # and builds geos_mpm_material_point_driver in addition to the normal target.
 #
+# HIP/RAJA crash-diagnostic build on Tuolumne:
+#   ./setupMPM --tuolumne --gpu-debug
+# This selects Debug unless --build-type is explicit, enables MPM phase-level
+# HIP synchronization/error checks and LvArray bounds checks, compiles the MPM
+# kernels with -O0 -ggdb, and writes bin/geosx-mpm-gpu-debug.
+#
 # Fast rebuild after source/header edits:
 #   ./setupMPM --dane --rebuild
 #   ./setupMPM --tuolumne --rebuild
@@ -111,7 +117,18 @@ Options:
                             Default: /p/lustre1/$USER/geosxInstalls on Dane,
                             /p/lustre5/$USER/geosxInstalls on Tuolumne,
                             /p/lustre1/$USER/geosxInstalls on RZHound.
-  --build-type TYPE         CMake build type. Default: Release
+  --build-type TYPE         CMake build type. Default: Release. With --gpu-debug,
+                            the default becomes Debug unless this option is explicit.
+  --gpu-debug, --hip-debug, --mpm-gpu-debug
+                            Configure an instrumented Tuolumne HIP build. Enables
+                            phase-level HIP synchronization/error checks, LvArray
+                            bounds checks, and -O0 -ggdb for MPM RAJA kernels.
+                            Also writes BUILD_DIR/bin/geosx-mpm-gpu-debug.
+                            Default: disabled; environment: GEOS_MPM_GPU_DEBUG
+                            or GEOS_ENABLE_MPM_GPU_DEBUG.
+  --disable-gpu-debug, --no-gpu-debug
+                            Explicitly disable the MPM HIP diagnostic build option.
+                            Guide: scripts/MPM_GPU_DEBUGGING.md
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
   --enable-vtk, --with-vtk, --build-vtk
                             Configure GEOS-MPM with VTK output support. This
@@ -1380,6 +1397,26 @@ prepare_build_environment() {
   esac
 }
 
+write_gpu_debug_launcher()
+{
+  local launcher="$BUILD_DIR/bin/geosx-mpm-gpu-debug"
+  local runner="$REPO_ROOT_PHYSICAL/scripts/run_mpm_gpu_debug.sh"
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "would write MPM GPU debug launcher: $launcher"
+    return 0
+  fi
+
+  [ -x "$runner" ] || fail "Missing executable MPM GPU debug runner: $runner"
+  mkdir -p "$(dirname -- "$launcher")"
+  {
+    printf '%s\n' '#!/usr/bin/env bash'
+    printf 'exec %q --geosx %q "$@"\n' "$runner" "$GEOS_EXECUTABLE"
+  } > "$launcher"
+  chmod +x "$launcher"
+  log "MPM GPU debug launcher: $launcher"
+}
+
 configure_and_build() {
   build_tpls_if_requested
 
@@ -1408,6 +1445,32 @@ configure_and_build() {
 
     if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
       log "rebuild-only mode does not change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR; rerun setupMPM without --rebuild to reconfigure a different external folder"
+    fi
+
+    local cached_gpu_debug
+    cached_gpu_debug=$(cmake_cache_value GEOS_ENABLE_MPM_GPU_DEBUG || true)
+    if [ -n "$cached_gpu_debug" ]; then
+      log "cached MPM GPU debug option: $cached_gpu_debug"
+    elif [ "$DRY_RUN" -eq 0 ]; then
+      log "no cached MPM GPU debug option was found in $BUILD_DIR/CMakeCache.txt"
+    fi
+
+    if truthy "${GEOS_MPM_FORCE_O0:-}"; then
+      config_cmd+=(
+        "-DGEOS_MPM_FORCE_O0=ON"
+        "-DGEOS_ENABLE_BOUNDS_CHECK=OFF"
+      )
+    else
+      config_cmd+=("-DGEOS_MPM_FORCE_O0=OFF")
+    fi
+
+    if [ "$ENABLE_MPM_GPU_DEBUG" -eq 1 ] && ! truthy "$cached_gpu_debug"; then
+      if [ "$DRY_RUN" -eq 0 ]; then
+        fail "Cannot enable MPM GPU diagnostics in rebuild-only mode because this build was not configured" \
+             "with GEOS_ENABLE_MPM_GPU_DEBUG=ON. Re-run setupMPM --tuolumne --gpu-debug without --rebuild first."
+      fi
+    elif [ "$MPM_GPU_DEBUG_DISABLED_EXPLICITLY" -eq 1 ] && truthy "$cached_gpu_debug"; then
+      log "cached MPM GPU diagnostics remain enabled in rebuild-only mode; reconfigure to disable them"
     fi
 
     local cached_material_point_driver
@@ -1489,6 +1552,13 @@ configure_and_build() {
   fi
   if [ -n "$TPL_DIR" ]; then
     config_cmd+=("-DGEOS_TPL_DIR=$TPL_DIR")
+  fi
+  if [ "$ENABLE_MPM_GPU_DEBUG" -eq 1 ]; then
+    config_cmd+=("-DGEOS_ENABLE_MPM_GPU_DEBUG=ON" "-DGEOS_ENABLE_BOUNDS_CHECK=ON")
+  else
+    # Write OFF explicitly so a reused build directory does not retain an old
+    # instrumented configuration after --disable-gpu-debug.
+    config_cmd+=("-DGEOS_ENABLE_MPM_GPU_DEBUG=OFF")
   fi
   if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
     # Preserve the MPM minimal build, but enable the VTK-backed output code.
@@ -1606,6 +1676,12 @@ SLURM_TIME="00:30:00"
 FLUX_TIME="30m"
 INSTALL_ROOT_OVERRIDE=""
 BUILD_TYPE="Release"
+BUILD_TYPE_EXPLICIT=0
+ENABLE_MPM_GPU_DEBUG=0
+if truthy "${GEOS_ENABLE_MPM_GPU_DEBUG:-${GEOS_MPM_GPU_DEBUG:-}}"; then
+  ENABLE_MPM_GPU_DEBUG=1
+fi
+MPM_GPU_DEBUG_DISABLED_EXPLICITLY=0
 JOBS="${GEOS_BUILD_JOBS:-32}"
 BUILD_TARGET="geosx"
 HOST_CONFIG=""
@@ -1813,7 +1889,18 @@ while [ "$#" -gt 0 ]; do
     --build-type)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       BUILD_TYPE="$2"
+      BUILD_TYPE_EXPLICIT=1
       shift 2
+      ;;
+    --gpu-debug|--hip-debug|--mpm-gpu-debug|--enable-gpu-debug|--enable-hip-debug)
+      ENABLE_MPM_GPU_DEBUG=1
+      MPM_GPU_DEBUG_DISABLED_EXPLICITLY=0
+      shift
+      ;;
+    --disable-gpu-debug|--no-gpu-debug|--disable-hip-debug|--no-hip-debug)
+      ENABLE_MPM_GPU_DEBUG=0
+      MPM_GPU_DEBUG_DISABLED_EXPLICITLY=1
+      shift
       ;;
     --jobs)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
@@ -1983,6 +2070,10 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+if [ "$ENABLE_MPM_GPU_DEBUG" -eq 1 ] && [ "$BUILD_TYPE_EXPLICIT" -eq 0 ]; then
+  BUILD_TYPE="Debug"
+fi
+
 if [ "$REBUILD_ONLY" -eq 1 ] && [ "$CONFIGURE_ONLY" -eq 1 ]; then
   fail "--rebuild cannot be combined with --configure-only"
 fi
@@ -2012,6 +2103,10 @@ PFW_LINK="$REPO_ROOT_CMD/mpm"
 PFW_USER_PATH="$REPO_ROOT_USER/$PFW_REL"
 CONFIG_SCRIPT="$REPO_ROOT_PHYSICAL/scripts/config-build.py"
 SETUP_MACHINE=$(detect_setup_machine "$REQUESTED_SETUP_MACHINE")
+if [ "$ENABLE_MPM_GPU_DEBUG" -eq 1 ] && [ "$SETUP_MACHINE" != "tuolumne" ]; then
+  fail "--gpu-debug requires the Tuolumne HIP environment. Select --tuolumne" \
+       "(or configure an equivalent HIP build outside setupMPM)."
+fi
 case "$SETUP_MACHINE" in
   dane)
     [ -z "$RUN_ROOT_OVERRIDE" ] && RUN_ROOT_OVERRIDE="$DANE_RUN_ROOT_OVERRIDE"
@@ -2314,6 +2409,13 @@ log "active build root: $(shell_to_display_path "$BUILD_ROOT")"
 log "active build dir: $BUILD_DIR_USER"
 log "active geosx path: $ACTIVE_GEOS_USER_PATH"
 log "active material-point driver path: $ACTIVE_MATERIAL_POINT_DRIVER_USER_PATH"
+log "CMake build type: $BUILD_TYPE"
+if [ "$ENABLE_MPM_GPU_DEBUG" -eq 1 ]; then
+  log "MPM GPU diagnostics: enabled"
+  log "planned MPM GPU debug launcher: $BUILD_DIR/bin/geosx-mpm-gpu-debug"
+else
+  log "MPM GPU diagnostics: disabled"
+fi
 if [ "$REBUILD_ONLY" -eq 1 ]; then
   log "rebuild-only mode: skipping generated PFW files and CMake configure"
 fi
@@ -2401,6 +2503,19 @@ if [ "$REBUILD_ONLY" -eq 0 ]; then
   write_runclean
 fi
 configure_and_build
+
+if [ "$SKIP_BUILD" -eq 0 ]; then
+  ACTIVE_MPM_GPU_DEBUG=$ENABLE_MPM_GPU_DEBUG
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    CACHED_MPM_GPU_DEBUG=$(cmake_cache_value GEOS_ENABLE_MPM_GPU_DEBUG || true)
+    if truthy "$CACHED_MPM_GPU_DEBUG"; then
+      ACTIVE_MPM_GPU_DEBUG=1
+    fi
+  fi
+  if [ "$ACTIVE_MPM_GPU_DEBUG" -eq 1 ]; then
+    write_gpu_debug_launcher
+  fi
+fi
 
 if [ "$REBUILD_ONLY" -eq 1 ]; then
   log "rebuild complete"

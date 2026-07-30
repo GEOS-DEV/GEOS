@@ -12,6 +12,9 @@ option( ENABLE_ADIAK "Enables Adiak metadata support" OFF )
 # GEOS build profiles
 option( GEOS_ENABLE_MPM_MINIMAL_TPL "Build an MPM-only profile with non-MPM TPLs disabled" OFF )
 option( GEOS_ENABLE_MPM_VTK "Keep VTK output support enabled in the MPM minimal-TPL profile" OFF )
+option( GEOS_ENABLE_MPM_GPU_DEBUG
+        "Enable HIP synchronization checkpoints and device debug symbols for the MPM solver"
+        OFF )
 
 # Core packages that can be removed for an explicit MPM-only build.
 option( GEOS_ENABLE_LINEARALGEBRA "Enable GEOS implicit linear algebra package" ON )
@@ -34,6 +37,11 @@ option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
 option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
+if( GEOS_ENABLE_MPM_GPU_DEBUG )
+  # MPM GPU diagnostics should fail at the first invalid LvArray access rather
+  # than allowing an out-of-range value to propagate to a later HIP launch.
+  set( GEOS_ENABLE_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+endif()
 if( NOT CMAKE_CONFIGURATION_TYPES )
     ######################################################
     # Add define we can use when debug builds are enabled
@@ -210,6 +218,16 @@ if( GEOS_ENABLE_MPM_MINIMAL_TPL )
   set( ENABLE_SPHINX OFF CACHE BOOL "" FORCE )
   set( ENABLE_UNCRUSTIFY OFF CACHE BOOL "" FORCE )
   set( ENABLE_XML_UPDATES OFF CACHE BOOL "" FORCE )
+endif()
+
+if( GEOS_ENABLE_MPM_GPU_DEBUG )
+  if( NOT ENABLE_HIP )
+    message( FATAL_ERROR "GEOS_ENABLE_MPM_GPU_DEBUG requires ENABLE_HIP=ON" )
+  endif()
+  if( NOT GEOS_ENABLE_SOLIDMECHANICS_MPM )
+    message( FATAL_ERROR "GEOS_ENABLE_MPM_GPU_DEBUG requires GEOS_ENABLE_SOLIDMECHANICS_MPM=ON" )
+  endif()
+  message( STATUS "MPM HIP debugging: enabled (phase checkpoints, LvArray bounds checks, -O0 -ggdb)" )
 endif()
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)

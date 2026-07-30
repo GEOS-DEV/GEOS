@@ -392,6 +392,8 @@ public:
                                                    SpatialPartition & partition,
                                                    arrayView1d< int const > const periodic );
 
+  void gpuDebugCheckpoint( std::string const & nextLabel );
+
   void logAndProfile( std::string const & label );
 
   void logAndProfile( std::string const & label,
@@ -933,6 +935,9 @@ public:
 
   void interpolateStressTable( real64 dt, real64 time_n );
 
+  void moveAllToDevice( NodeManager & nodeManager,
+                        ParticleManager & particleManager );
+
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager,
@@ -944,6 +949,10 @@ public:
                           NodeManager & nodeManager );
 
   void performPICUpdate( real64 dt,
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+
+  void performPICUpdateDebug( real64 dt,
                          ParticleManager & particleManager,
                          NodeManager & nodeManager );
 
@@ -1238,11 +1247,11 @@ public:
 
 protected:
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                  xmlWrapper::xmlNode & targetNode );
+                                  xmlWrapper::xmlNode & targetNode ) override;
 
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & targetNodePos );
+                                  xmlWrapper::xmlNodePos const & targetNodePos ) override;
 
   virtual void postInputInitialization() override final;
 
@@ -1310,6 +1319,10 @@ protected:
   mpm::InterpolationOption m_fTableInterpType;
   int m_generalizedVortexMMS;
   array1d< real64 > m_globalFaceReactions;
+  bool m_gpuDebugCheckpoints;
+  bool m_gpuDebugInitialized;
+  string m_gpuDebugPreviousLabel;
+  bool m_gpuDebugVerbose;
   mpm::GPUSchemeOption m_gpuScheme;
   int m_hasContact;
   array1d< real64 > m_hEl;                // Grid spacing in x-y-z

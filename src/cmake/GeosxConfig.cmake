@@ -14,6 +14,7 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           CONSTITUTIVE_DRIVERS
                           CONSTITUTIVE_MPM_ONLY
                           MATHPRESSO
+                          MPM_GPU_DEBUG
                           METIS
                           MKL
                           MPI
