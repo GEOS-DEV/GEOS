@@ -236,7 +236,7 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
 
-  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=, this] ( localIndex const k )
   {
     calculateSingleElementGeometricQuantities( k, faceArea );
   } );

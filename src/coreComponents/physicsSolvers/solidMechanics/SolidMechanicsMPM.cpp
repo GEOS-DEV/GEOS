@@ -2459,8 +2459,9 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
-                                                                                                // method which uses class variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, this] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a
+                                                                                                      // 'this' method which uses class
+                                                                                                      // variables
     {
       localIndex const p = activeParticleIndices[pp];
 
@@ -2819,7 +2820,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   arrayView3d< real64 > const gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
-  forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const g ) // Switch to .zero()?
+  forAll< serialPolicy >( numNodes, [=, this] GEOS_HOST ( localIndex const g ) // Switch to .zero()?
   {
     for( int i = 0; i < 3; i++ )
     {
@@ -2903,10 +2904,12 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     int const numDims = m_numDims;
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
     int const damageFieldPartitioning = m_damageFieldPartitioning;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
-                                                                                                // remember to pass copies of class
-                                                                                                // variables
-    {                                                                                            // Grid max damage will require reduction
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, this] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
+                                                                                                      // remember to pass copies of class
+                                                                                                      // variables
+                                                                                                      // Grid max damage will require
+                                                                                                      // reduction
+    {
       localIndex const p = activeParticleIndices[pp];
 
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
@@ -3376,8 +3379,9 @@ void SolidMechanicsMPM::computeSurfaceFlags( ParticleManager & particleManager )
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
-                                                                                                // method which uses class variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, this] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a
+                                                                                                      // 'this' method which uses class
+                                                                                                      // variables
     {
       localIndex const p = activeParticleIndices[pp];
 
@@ -3452,9 +3456,9 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // I think this must be on host since we
-                                                                                                // call a 'this' method which uses class
-                                                                                                // variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, this] GEOS_HOST ( localIndex const pp ) // I think this must be on host since
+                                                                                                      // we call a 'this' method which uses
+                                                                                                      // class variables
     {
       localIndex const p = activeParticleIndices[pp];
 

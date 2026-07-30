@@ -1223,7 +1223,7 @@ real64 EpetraMatrix::normMax( arrayView1d< globalIndex const > const & rowIndice
   GEOS_LAI_ASSERT( ready() );
   globalIndex const firstLocalRow = ilower();
   RAJA::ReduceMax< parallelHostReduce, real64 > maxAbsValue( 0.0 );
-  forAll< parallelHostPolicy >( rowIndices.size(), [=]( int const i )
+  forAll< parallelHostPolicy >( rowIndices.size(), [=, this]( int const i )
   {
     int const localRow = LvArray::integerConversion< int >( rowIndices[i] - firstLocalRow );
     GEOS_ASSERT( 0 <= localRow && localRow < numLocalRows() );

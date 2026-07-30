@@ -654,7 +654,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, this, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
     if( m_isFixedStressPoromechanicsUpdate )

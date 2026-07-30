@@ -263,7 +263,7 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    Base::quadraturePointKernel( k, q, stack, [ =, &stack ] ( real64 const detJ )
+    Base::quadraturePointKernel( k, q, stack, [=, this, &stack ] ( real64 const detJ )
     {
       stack.localRt[0] -= detJ * ( m_dispJump[k][0] - m_targetIncrementalJump[k][0] );
       stack.localRt[1] -= detJ * ( ( m_dispJump[k][1] - m_oldDispJump[k][1] ) - m_targetIncrementalJump[k][1] );
