@@ -36,6 +36,9 @@ namespace geos
  * @class PermeabilitySpecification
  *
  * Data class representing a permeability field specification
+ *
+ * @todo Currently the PermeabilitySpecification only supports cells.
+ *       A future goal is to support faces too.
  */
 class PermeabilitySpecification : public FieldSpecificationABC
 {
@@ -125,9 +128,6 @@ private:
 
   /// the names of the regions that the boundary condition is applied to
   string_array m_regionNames;
-
-  // Currently only supports cell regions
-  // TODO: support faces
 
   /// the name of the constitutive permeability model
   string m_permeabilityModelName;
