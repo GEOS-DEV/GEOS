@@ -37,7 +37,7 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
 
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the constitutive permeability model." );
 
   getWrapper< int >( viewKeyStruct::initialConditionString() ).
