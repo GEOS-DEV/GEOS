@@ -1629,6 +1629,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_disableSurfaceTractionsOnMelt( 1 ),
   m_domainExtent(),
   m_domainF(),
+  m_domainIncrementalStretch(),
   m_domainL(),
   m_domainResetType( mpm::DomainResetTypeOption::IsotropicPolar ),
   m_domainStress(),
@@ -1747,6 +1748,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_resetDefGradForMeltedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
+  m_resetDefGradForOversizedParticles( 0 ),
+  m_defGradResetMaxParticleDomainToGridCellRatio( -1.0 ),
   m_separabilityMinDamage( 0.5 ),
   m_setDomainTemperature(),
   m_setDomainTemperatureRate(),
@@ -1825,6 +1828,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_useReferenceVectorsForParticleUpdate( 0 ),
   m_useSurfacePositionForContact( 0 ),
   m_weakInterfaceTraceGapStabilization( 0.0 ),
+  m_weakInterfaceTraceMaxGapCorrectionVelocity( 0.0 ),
   m_weakInterfaceTraceMinWeight( 1.0e-12 ),
   m_weakInterfaceTracePairs(),
   m_weakInterfaceTraceProjectionIterations( 1 ),
@@ -1905,7 +1909,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_boxAverageResizeWithDomain ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Flag for whether to output box average integration domain updates with domainL" );
+    setDescription( "Flag for whether the box-average integration domain follows the current diagonal domain stretch." );
 
   registerWrapper( "boxAverageWriteInterval", &m_boxAverageWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2057,7 +2061,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "domainL", &m_domainL ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "domain L" );
+    setDescription( "End-of-step diagonal domain velocity gradient used for prescribed boundary velocities and stress control." );
 
   registerWrapper( "domainResetType", &m_domainResetType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2166,7 +2170,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
+    setDescription( "Array of time-dependent grid-aligned diagonal stretches interpreted as the prescribed domain F." );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2490,7 +2494,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
+    setDescription( "Enable moving-boundary deformation from fTable. Boundary velocities use the end-of-step Fdot*Finv rate, while grid geometry uses the exact finite ratio F(t_{n+1})/F(t_n)." );
 
   registerWrapper( "prescribedBoundaryTransverseVelocities", &m_prescribedBoundaryTransverseVelocities ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2580,6 +2584,22 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for resetting deformation gradient of CPDI scaled surface particles" );
+
+  registerWrapper( "resetDefGradForOversizedParticles", &m_resetDefGradForOversizedParticles ).
+    setApplyDefaultValue( m_resetDefGradForOversizedParticles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for resetting deformation gradient of particles whose current domain diagonal exceeds the configured grid-cell ratio. "
+                    "Use only for materials where the stored deviatoric deformation gradient is not constitutive state, such as fluids, melted material, "
+                    "fully damaged material, or hypo-elastic deviatoric models; do not enable for finite-strain hyperelastic, crystal-plasticity, "
+                    "fiber, or other orientation/stretch-history-dependent solids unless the material model explicitly supports this reset." );
+
+  registerWrapper( "defGradResetMaxParticleDomainToGridCellRatio", &m_defGradResetMaxParticleDomainToGridCellRatio ).
+    setApplyDefaultValue( m_defGradResetMaxParticleDomainToGridCellRatio ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum full particle-domain diagonal divided by active grid-cell diagonal before optional deformation-gradient reset. "
+                    "This threshold is intended for the same fluid, melted, damaged, or hypo-elastic material classes as resetDefGradForOversizedParticles." );
 
   registerWrapper( "separabilityMinDamage", &m_separabilityMinDamage ).
     setApplyDefaultValue( m_separabilityMinDamage ).
@@ -2978,6 +2998,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Optional beta stabilization on the prescribed weak-interface trace gap." );
 
+  registerWrapper( "weakInterfaceTraceMaxGapCorrectionVelocity", &m_weakInterfaceTraceMaxGapCorrectionVelocity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMaxGapCorrectionVelocity ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum magnitude of the weak-interface trace accumulated-gap correction velocity. A zero value disables the cap." );
+
   registerWrapper( "weakInterfaceTraceMinWeight", &m_weakInterfaceTraceMinWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceMinWeight ).
@@ -3073,6 +3099,11 @@ void SolidMechanicsMPM::postRestartInitialization()
 {
   PhysicsSolverBase::postRestartInitialization();
 
+  // This is a step-local derived quantity and is intentionally not restart state.
+  // It is recomputed from the restored domainF at the beginning of the next step.
+  m_domainIncrementalStretch.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_domainIncrementalStretch, 1.0 );
+
   // Initialize friction coefficient table
   if( m_numContactGroups > 0 )
   {
@@ -3164,6 +3195,9 @@ void SolidMechanicsMPM::postInputInitialization()
                  "thinFeatureDFGThreshold must be non-negative." );
   GEOS_ERROR_IF( m_subdivideParticles < -1 || m_subdivideParticles > 1,
                  "subdivideParticles must be -1 (automatic), 0 (disabled), or 1 (enabled)." );
+  GEOS_ERROR_IF( m_resetDefGradForOversizedParticles == 1 &&
+                 m_defGradResetMaxParticleDomainToGridCellRatio <= 0.0,
+                 "defGradResetMaxParticleDomainToGridCellRatio must be positive when resetDefGradForOversizedParticles is enabled." );
 
   GEOS_LOG_RANK_0_IF( m_exactJIntegration != 0,
                       "exactJIntegration is deprecated and ignored: the volumetric split always advances particle volume with exp(dt*tr(L))." );
@@ -3230,6 +3264,8 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfaceTraceMinWeight must be positive." );
     GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization < 0.0,
                    "weakInterfaceTraceGapStabilization must be non-negative." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMaxGapCorrectionVelocity < 0.0,
+                   "weakInterfaceTraceMaxGapCorrectionVelocity must be non-negative." );
     GEOS_ERROR_IF( m_weakInterfaceTracePairs.size( 0 ) > 0 && m_weakInterfaceTracePairs.size( 1 ) != 2,
                    "weakInterfaceTracePairs must have two columns: groupA, groupB." );
     GEOS_ERROR_IF( m_updateMethod == mpm::UpdateMethodOption::FMPM && m_updateOrder > 1,
@@ -3347,6 +3383,12 @@ void SolidMechanicsMPM::postInputInitialization()
     LvArray::tensorOps::fill< 3 >( m_domainL, 0.0 );
   }
 
+  // Derived, step-local finite map used by prescribedBoundaryFTable.
+  // Do not restart this array; updatePrescribedKinematicsForExplicitStep()
+  // recomputes it before any boundary position or grid resize uses it.
+  m_domainIncrementalStretch.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_domainIncrementalStretch, 1.0 );
+
   if( m_prescribedBoundaryTransverseVelocities.size( 0 ) == 0 )
   {
     m_prescribedBoundaryTransverseVelocities.resize( 6, 2 );
@@ -3439,14 +3481,14 @@ void SolidMechanicsMPM::postInputInitialization()
 
       if( i == 0 )
       {
-        GEOS_ERROR_IF( m_fTable[0][0] > 0.0, "F table times must be positive." );
+        GEOS_ERROR_IF( m_fTable[0][0] > 0.0,
+                       "The first F-table time must be zero or earlier." );
       }
       else
       {
-        GEOS_ERROR_IF( ( m_fTable[i][0] - m_fTable[i-1][0] ) < 0.0, "F table time entries must be monotonically increasing." );
+        GEOS_ERROR_IF( m_fTable[i][0] <= m_fTable[i-1][0],
+                       "F table time entries must be strictly increasing." );
       }
-
-      // TODO: Add check that FTable times are monotonic
 
       for( int k=0; k<3; ++k )
       { // Stress-control = 1 overrides FTable control, so if we aren't doing stress control in a direction,
@@ -3459,7 +3501,7 @@ void SolidMechanicsMPM::postInputInitialization()
             continue;
           }
 
-          GEOS_ERROR_IF( m_fTable[i][k+1] < 0, "F table entries must be positive." );
+          GEOS_ERROR_IF( m_fTable[i][k+1] <= 0.0, "F table entries must be strictly positive." );
         }
       }
     }
@@ -6676,11 +6718,8 @@ void SolidMechanicsMPM::updatePrescribedKinematicsForExplicitStep( real64 const 
                                                                   ParticleManager & particleManager,
                                                                   SpatialPartition & partition )
 {
-  real64 oldDomainF[3] = { 1 };
-  for( int i = 0; i < m_numDims; ++i )
-  {
-    oldDomainF[i] = m_domainF[i];
-  }
+  real64 oldDomainF[3] = {};
+  LvArray::tensorOps::copy< 3 >( oldDomainF, m_domainF );
   if( !( m_stressControl[0] == 1 && m_stressControl[1] == 1 && m_stressControl[2] == 1 ) &&
       ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) )
   {
@@ -6707,6 +6746,30 @@ void SolidMechanicsMPM::updatePrescribedKinematicsForExplicitStep( real64 const 
         m_domainF[i] = oldDomainF[i] + m_domainL[i] * oldDomainF[i] * dt;
       }
     }
+  }
+
+  for( int i = 0; i < 3; ++i )
+  {
+    real64 incrementalStretch = 1.0 + m_domainL[i] * dt;
+
+    if( m_prescribedBoundaryFTable == 1 )
+    {
+      GEOS_ERROR_IF( !( oldDomainF[i] > 0.0 ) ||
+                     !( oldDomainF[i] < LvArray::NumericLimits< real64 >::max ) ||
+                     !( m_domainF[i] > 0.0 ) ||
+                     !( m_domainF[i] < LvArray::NumericLimits< real64 >::max ),
+                     "prescribedBoundaryFTable requires finite, strictly positive old and new domain stretches." );
+
+      // Use the exact finite map supplied by the table for grid geometry.
+      // In stress-controlled directions domainF is updated from domainL above,
+      // so this ratio reduces to the previous 1 + domainL * dt update.
+      incrementalStretch = m_domainF[i] / oldDomainF[i];
+    }
+
+    GEOS_ERROR_IF( !( incrementalStretch > 0.0 ) ||
+                   !( incrementalStretch < LvArray::NumericLimits< real64 >::max ),
+                   "Domain incremental stretches must remain finite and strictly positive." );
+    m_domainIncrementalStretch[i] = incrementalStretch;
   }
 }
 
@@ -9108,9 +9171,11 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
 }
 
 /**
- * @brief Interpolates table.
+ * @brief Evaluates a time table and its derivative at the end of the current step.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * The interval is selected from the actual evaluation time rather than the
+ * step midpoint, so steps that cross a table knot do not extrapolate from the
+ * wrong segment.
  */
 void SolidMechanicsMPM::interpolateTable( real64 x,
                                           real64 dx,
@@ -9119,65 +9184,89 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
                                           arrayView1d< real64 > outputRate,
                                           mpm::InterpolationOption const & interpolationType )
 {
-  int numRows = table.size( 0 );
-  int numColumns = table.size( 1 );
-  int numDims = numColumns - 1;
+  int const numRows = table.size( 0 );
+  int const numColumns = table.size( 1 );
+  int const numDims = numColumns - 1;
 
-  real64 xNext = x + dx;
+  GEOS_ERROR_IF( numRows < 1, "Interpolation table must contain at least one row." );
 
-  // If we preceed table use first row
-  if( xNext <= table[0][0] )
+  real64 const xNext = x + dx;
+
+  // Rates are zero outside the tabulated interval and for a single-row table.
+  for( int i = 0; i < numDims; ++i )
   {
-    for( int i = 0; i < numDims; i++ )
+    outputRate[i] = 0.0;
+  }
+
+  if( numRows == 1 || xNext < table[0][0] )
+  {
+    for( int i = 0; i < numDims; ++i )
     {
       output[i] = table[0][i + 1];
     }
     return;
   }
 
-  // If we exceed table use last row
-  if( xNext >= table[numRows - 1][0] )
+  if( xNext > table[numRows - 1][0] )
   {
-    for( int i = 0; i < numDims; i++ )
+    for( int i = 0; i < numDims; ++i )
     {
       output[i] = table[numRows - 1][i + 1];
     }
     return;
   }
 
+  // Select the interval containing the actual evaluation time t_{n+1}.
+  // A strict comparison makes the derivative left-continuous at an internal
+  // knot, while the first and final table times use the adjacent interval.
   int tableInterval = 0;
-  for( localIndex i = 0; i < numRows; i++ )
+  for( int i = 1; i < numRows - 1; ++i )
   {
-    if( x + dx / 2 > table[i][0] )
+    if( xNext > table[i][0] )
     {
       tableInterval = i;
     }
+    else
+    {
+      break;
+    }
   }
 
-  real64 timeInterval = table[tableInterval + 1][0] - table[tableInterval][0]; // Time fInterval for current part of F table we're in
-  real64 timePast = xNext - table[tableInterval][0]; // Time elapsed since switching intervals in F table
-  real64 timeFrac = timePast / timeInterval;
+  real64 const timeInterval = table[tableInterval + 1][0] - table[tableInterval][0];
+  GEOS_ERROR_IF( !( timeInterval > 0.0 ),
+                 "Interpolation-table times must be strictly increasing." );
 
-  for( int i = 0; i < numDims; i++ )
+  real64 const timePast = xNext - table[tableInterval][0];
+  real64 const timeFrac = timePast / timeInterval;
+
+  for( int i = 0; i < numDims; ++i )
   {
     switch( interpolationType )
     {
       case mpm::InterpolationOption::Linear:
-        // default linear interpolation
-        output[i] = table[tableInterval][i + 1] * ( 1.0 - timeFrac ) + table[tableInterval + 1][i + 1] * timeFrac;
-        outputRate[i] = ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) / timeInterval;
+        output[i] = table[tableInterval][i + 1] * ( 1.0 - timeFrac ) +
+                    table[tableInterval + 1][i + 1] * timeFrac;
+        outputRate[i] = ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) /
+                        timeInterval;
         break;
       case mpm::InterpolationOption::Cosine:
-        // smooth-step interpolation with cosine, zero endpoint velocity
-        output[i] = table[tableInterval][i + 1] - 0.5 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
-        outputRate[i] = 0.5 * 3.141592653589793 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) * sin( 3.141592653589793 * timeFrac ) / timeInterval;
+        output[i] = table[tableInterval][i + 1] -
+                    0.5 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) *
+                    ( LvArray::math::cos( 3.141592653589793 * timeFrac ) - 1.0 );
+        outputRate[i] = 0.5 * 3.141592653589793 *
+                        ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) *
+                        LvArray::math::sin( 3.141592653589793 * timeFrac ) / timeInterval;
         break;
       case mpm::InterpolationOption::Smoothstep:
-        // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
-        output[i] = table[tableInterval][i+1] + ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
-                    ( 10.0 * LvArray::math::pow( timeFrac, 3 ) - 15.0 * LvArray::math::pow( timeFrac, 4 ) + 6.0 * LvArray::math::pow( timeFrac, 5 ) );
-        outputRate[i] = ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
-                        ( 30.0 * LvArray::math::pow( timeFrac, 2 ) - 60.0 * LvArray::math::pow( timeFrac, 3 ) + 30.0 * LvArray::math::pow( timeFrac, 4 ) ) / timeInterval;
+        output[i] = table[tableInterval][i + 1] +
+                    ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) *
+                    ( 10.0 * LvArray::math::pow( timeFrac, 3 ) -
+                      15.0 * LvArray::math::pow( timeFrac, 4 ) +
+                      6.0 * LvArray::math::pow( timeFrac, 5 ) );
+        outputRate[i] = ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) *
+                        ( 30.0 * LvArray::math::pow( timeFrac, 2 ) -
+                          60.0 * LvArray::math::pow( timeFrac, 3 ) +
+                          30.0 * LvArray::math::pow( timeFrac, 4 ) ) / timeInterval;
         break;
       default:
         GEOS_ERROR( "No interpolation option of that type!" );
@@ -11322,13 +11411,13 @@ real64 SolidMechanicsMPM::computeRigidBodyContactLengthScale() const
 }
 
 
-real64 SolidMechanicsMPM::computeRigidBodyJammingStress( real64 const dt ) const
+real64 SolidMechanicsMPM::computeRigidBodyJammingStress() const
 {
   real64 endOfStepExtent[3] = {};
   for( int direction = 0; direction < 3; ++direction )
   {
     endOfStepExtent[direction] =
-      LvArray::math::max( 0.0, m_domainExtent[direction] * ( 1.0 + m_domainL[direction] * dt ) );
+      LvArray::math::max( 0.0, m_domainExtent[direction] * m_domainIncrementalStretch[direction] );
   }
 
   auto const opposedFaceStress = [&]( int const direction )
@@ -11734,6 +11823,20 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
   real64 const maximumDiagonal = 0.99999 * m_neighborRadius;
   real64 const maximumFeasibleHalfMeasure =
     particleDomainMaximumFeasibleHalfMeasure( numDims, maximumDiagonal );
+  real64 const gridCellDiagonal = m_planeStrain == 1
+                                ? LvArray::math::sqrt( m_hEl[0] * m_hEl[0] +
+                                                        m_hEl[1] * m_hEl[1] )
+                                : LvArray::math::sqrt( m_hEl[0] * m_hEl[0] +
+                                                        m_hEl[1] * m_hEl[1] +
+                                                        m_hEl[2] * m_hEl[2] );
+  real64 const oversizedResetMaximumDiagonal =
+    m_defGradResetMaxParticleDomainToGridCellRatio > 0.0
+      ? m_defGradResetMaxParticleDomainToGridCellRatio * gridCellDiagonal
+      : -1.0;
+  real64 const oversizedMaximumFeasibleHalfMeasure =
+    oversizedResetMaximumDiagonal > 0.0
+      ? particleDomainMaximumFeasibleHalfMeasure( numDims, oversizedResetMaximumDiagonal )
+      : 0.0;
 
   // Retain the historical length-based criterion for explicit subdivision in
   // configurations that do not use either VP-Hencky path.
@@ -11795,6 +11898,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       m_resetDefGradForMeltedParticles;
     int const resetDefGradForScaledSurfaceParticles =
       m_resetDefGradForScaledSurfaceParticles;
+    int const resetDefGradForOversizedParticles =
+      m_resetDefGradForOversizedParticles;
 
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionNumNewParticles( 0 );
 
@@ -11840,6 +11945,11 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         resetDefGradForScaledSurfaceParticles == 1 &&
         isScaledParticle &&
         isSurfaceLikeParticle;
+      bool const isOversizedParticle =
+        resetDefGradForOversizedParticles == 1 &&
+        oversizedResetMaximumDiagonal > 0.0 &&
+        particleDomainMaximumDiagonal( rawRVectors, numDims ) >
+          oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 );
 
       bool const cpdiVPHenckyCandidate =
         useVPHenckyCPDIScaling && isLinearCPDISubRegion;
@@ -11850,7 +11960,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         ( isFluidMaterial ||
           isMeltedParticle ||
           isFullyDamagedParticle ||
-          resetForScaledSurfaceParticle );
+          resetForScaledSurfaceParticle ||
+          isOversizedParticle );
 
       int subdivisionMask = 0;
       if( hasActiveCohesiveState )
@@ -11863,6 +11974,10 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       }
       else if( cpdiVPHenckyCandidate || resetVPHenckyCandidate )
       {
+        real64 const activeMaximumFeasibleHalfMeasure =
+          resetVPHenckyCandidate && isOversizedParticle
+            ? oversizedMaximumFeasibleHalfMeasure
+            : maximumFeasibleHalfMeasure;
         real64 requiredHalfMeasure = 0.0;
         if( cpdiVPHenckyCandidate )
         {
@@ -11886,13 +12001,13 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         }
 
         if( requiredHalfMeasure >
-            maximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
+            activeMaximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
         {
           int numberOfDirections = 0;
           real64 reducedHalfMeasure = requiredHalfMeasure;
           while( numberOfDirections < numDims &&
                  reducedHalfMeasure >
-                 maximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
+                 activeMaximumFeasibleHalfMeasure * ( 1.0 + 1.0e-12 ) )
           {
             reducedHalfMeasure *= 0.5;
             ++numberOfDirections;
@@ -21267,6 +21382,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
   real64 const projectionScale = m_weakInterfaceTraceProjectionScale;
   real64 const gapStabilization = m_weakInterfaceTraceGapStabilization;
+  real64 const maxGapCorrectionVelocity = m_weakInterfaceTraceMaxGapCorrectionVelocity;
 
   real64 hEl[3] = {};
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
@@ -21505,9 +21621,19 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
 
         real64 residual[3] = {};
         real64 impulse[3] = {};
+        real64 gapCorrection[3] = {};
         for( int i = 0; i < numDims; ++i )
         {
-          residual[i] = vA[i] - vB[i] + gapStabilization * jump[i] / dt;
+          gapCorrection[i] = gapStabilization * jump[i] / dt;
+        }
+        real64 const gapCorrectionNorm = LvArray::tensorOps::l2Norm< 3 >( gapCorrection );
+        if( maxGapCorrectionVelocity > 0.0 && gapCorrectionNorm > maxGapCorrectionVelocity )
+        {
+          LvArray::tensorOps::scale< 3 >( gapCorrection, maxGapCorrectionVelocity / gapCorrectionNorm );
+        }
+        for( int i = 0; i < numDims; ++i )
+        {
+          residual[i] = vA[i] - vB[i] + gapCorrection[i];
           impulse[i] = -projectionScale * anchorWeight * residual[i] / inverseEffectiveMass;
           gridWeakInterfaceTraceVelocityJump[g][A][i] = residual[i];
           gridWeakInterfaceTraceVelocityJump[g][B][i] = -residual[i];
@@ -23985,19 +24111,16 @@ void SolidMechanicsMPM::interpolateStressTable( real64 dt,
 }
 
 /**
- * @brief Interpolates ftable.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Evaluates the prescribed diagonal deformation table at the end of the step.
  */
 void SolidMechanicsMPM::interpolateFTable( real64 dt,
                                            real64 time_n )
 {
   GEOS_MARK_FUNCTION;
 
-  // The time step can be changed from the stable time step if there is a plot
-  // or restart event, so we can't assume that m_fTable actually happened
-  // at t-dt.  So we compute two values of F and use that to compute Fdot
-  // using the current time step.
+  // Evaluate both the prescribed stretch and its instantaneous derivative at
+  // the actual end-of-step time. The finite grid map is formed later from the
+  // stored old domainF and this newly interpolated domainF.
 
   array1d< real64 > Fii_new( 3 );
   array1d< real64 > Fii_dot( 3 );
@@ -24013,8 +24136,11 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt,
   {
     if( m_stressControl[i] != 1 )
     {
-      m_domainL[i] = Fii_dot[i] / Fii_new[i]; // L = Fdot.Finv
-      m_domainF[i] = Fii_new[i]; // L = Fdot.Finv
+      GEOS_ERROR_IF( !( Fii_new[i] > 0.0 ) ||
+                     !( Fii_new[i] < LvArray::NumericLimits< real64 >::max ),
+                     "Interpolated F-table stretches must remain finite and strictly positive." );
+      m_domainL[i] = Fii_dot[i] / Fii_new[i]; // Instantaneous endpoint L = Fdot * Finv.
+      m_domainF[i] = Fii_new[i];
     }
   }
 }
@@ -24852,6 +24978,9 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   real64 domainL[3] = {};
   // Tensor equation: domainL = m_domainL.
   LvArray::tensorOps::copy< 3 >( domainL, m_domainL );
+  real64 domainIncrementalStretch[3] = {};
+  // Tensor equation: domainIncrementalStretch = m_domainIncrementalStretch.
+  LvArray::tensorOps::copy< 3 >( domainIncrementalStretch, m_domainIncrementalStretch );
   int boundaryConditionTypes[6] = {};
   // Tensor equation: boundaryConditionTypes = m_boundaryConditionTypes.
   LvArray::tensorOps::copy< 6 >( boundaryConditionTypes, m_boundaryConditionTypes );
@@ -25022,7 +25151,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             }
 
             real64 const outwardSign = -1.0 + 2.0 * positiveNormal;
-            real64 const endOfStepGridPosition = ( 1.0 + domainL[dir0] * dt ) * gridPosition[g][dir0];
+            real64 const endOfStepGridPosition = domainIncrementalStretch[dir0] * gridPosition[g][dir0];
             real64 const wallVelocity = domainL[dir0] * endOfStepGridPosition;
             real64 const relativeNormalVelocity = gridVelocity[g][fieldIndex][dir0] - wallVelocity;
             real64 const currentOutwardSurfacePosition = outwardSign * surfacePosition;
@@ -25128,7 +25257,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
           }
           else
           {
-            real64 const endOfStepGridPosition = ( 1.0 + domainL[dir0] * dt ) * gridPosition[g][dir0];
+            real64 const endOfStepGridPosition = domainIncrementalStretch[dir0] * gridPosition[g][dir0];
             prescribedVelocity = domainL[dir0] * endOfStepGridPosition;
 
             if( enablePrescribedBoundaryTransverseVelocities[face] == 1 )
@@ -25477,14 +25606,14 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   LvArray::tensorOps::copy< 6 >( m_globalFaceReactions, globalFaceReactions );
   if( rigidBodyMode == 1 )
   {
-    m_rigidBodyObservedJammingStress = computeRigidBodyJammingStress( dt );
+    m_rigidBodyObservedJammingStress = computeRigidBodyJammingStress();
   }
 
   // Get end-of-step domain dimensions - note that m_domainExtent is updated later
   real64 length, width, height;
-  length = m_domainExtent[0] * (1.0 + m_domainL[0] * dt);
-  width  = m_domainExtent[1] * (1.0 + m_domainL[1] * dt);
-  height = m_domainExtent[2] * (1.0 + m_domainL[2] * dt);
+  length = m_domainExtent[0] * m_domainIncrementalStretch[0];
+  width  = m_domainExtent[1] * m_domainIncrementalStretch[1];
+  height = m_domainExtent[2] * m_domainIncrementalStretch[2];
 
   // Write global reactions to file
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 && m_reactionHistory == 1 )
@@ -30556,27 +30685,31 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 }
 
 /**
- * @brief Resizes grid.
- *
- * Executable statements are unchanged; comments document intent where practical.
+ * @brief Resizes the grid and domain state with the current finite step map.
  */
 void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
                                     NodeManager & nodeManager,
                                     real64 const dt )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_ERROR_IF( !( dt > 0.0 ), "Grid resize requires a positive time step." );
 
-  // Modify SpatialPartition class members
-  partition.updateSizes( m_domainL, dt );
+  real64 ratio[3] = {};
+  LvArray::tensorOps::copy< 3 >( ratio, m_domainIncrementalStretch );
 
-  // Modify SolidMechanicsMPM class members
-  real64 ratio[3] = { };
+  // SpatialPartition currently accepts a rate and reconstructs 1 + rate * dt.
+  // Supply the rate equivalent to the already-computed finite stretch so its
+  // geometry update uses the same map as the MPM grid, to roundoff.
+  array1d< real64 > partitionResizeRate( 3 );
   for( int i = 0; i < 3; ++i )
   {
-    // Incremental stretch
-    ratio[i] = 1.0 + m_domainL[i] * dt;
+    partitionResizeRate[i] = ( ratio[i] - 1.0 ) / dt;
+  }
+  partition.updateSizes( partitionResizeRate, dt );
 
-    // Modify SolidMechanicsMPM class members
+  // Modify SolidMechanicsMPM class members.
+  for( int i = 0; i < 3; ++i )
+  {
     m_hEl[i] *= ratio[i];
     m_xLocalMin[i] *= ratio[i];
     m_xLocalMax[i] *= ratio[i];
@@ -30589,15 +30722,13 @@ void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
 
     if( m_boxAverageResizeWithDomain == 1 )
     {
-      // update the limits for box average integration.
-      // TODO: make this an option so we can have a fixed Eulerian box or one that scales with
-      // The whole domain for BC F-table driven problems.
+      // Update the limits for box-average integration.
       m_boxAverageMin[i] *= ratio[i];
       m_boxAverageMax[i] *= ratio[i];
     }
   }
 
-  // Update nodal positions
+  // Update nodal positions with the same finite map used for extents.
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   forAll< serialPolicy >( gridPosition.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
@@ -30878,10 +31009,22 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     m_resetDefGradForMeltedParticles;
   int const resetDefGradForScaledSurfaceParticles =
     m_resetDefGradForScaledSurfaceParticles;
+  int const resetDefGradForOversizedParticles =
+    m_resetDefGradForOversizedParticles;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
   int const subdivisionEnabled = m_subdivideParticles == 1;
   mpm::DomainResetTypeOption const domainResetType = m_domainResetType;
-  real64 const maximumDiagonal = 0.99999 * m_neighborRadius;
+  real64 const defaultMaximumDiagonal = 0.99999 * m_neighborRadius;
+  real64 const gridCellDiagonal = m_planeStrain == 1
+                                ? LvArray::math::sqrt( m_hEl[0] * m_hEl[0] +
+                                                        m_hEl[1] * m_hEl[1] )
+                                : LvArray::math::sqrt( m_hEl[0] * m_hEl[0] +
+                                                        m_hEl[1] * m_hEl[1] +
+                                                        m_hEl[2] * m_hEl[2] );
+  real64 const oversizedResetMaximumDiagonal =
+    m_defGradResetMaxParticleDomainToGridCellRatio > 0.0
+      ? m_defGradResetMaxParticleDomainToGridCellRatio * gridCellDiagonal
+      : -1.0;
 
   RAJA::ReduceSum< parallelDeviceReduce, int > numResetParticles( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numInvalidVPHenckyResets( 0 );
@@ -30904,7 +31047,9 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       isFluidMaterial ||
       resetDefGradForFullyDamagedParticles == 1 ||
       resetDefGradForMeltedParticles == 1 ||
-      resetDefGradForScaledSurfaceParticles == 1;
+      resetDefGradForScaledSurfaceParticles == 1 ||
+      ( resetDefGradForOversizedParticles == 1 &&
+        oversizedResetMaximumDiagonal > 0.0 );
 
     if( !shouldResetDeformationGradientInSubRegion )
     {
@@ -30991,22 +31136,39 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         isScaledParticle &&
         isSurfaceLikeParticle;
 
+      real64 oldDeformationGradient[3][3] = {};
+      LvArray::tensorOps::copy< 3, 3 >(
+        oldDeformationGradient,
+        particleDeformationGradient[p] );
+      bool isOversizedParticle = false;
+      if( resetDefGradForOversizedParticles == 1 &&
+          oversizedResetMaximumDiagonal > 0.0 )
+      {
+        real64 rawRVectors[3][3] = {};
+        reconstructParticleDomainFromDeformationGradient(
+          oldDeformationGradient,
+          particleReferenceRVectors[p],
+          rawRVectors );
+        isOversizedParticle =
+          particleDomainMaximumDiagonal( rawRVectors, numDims ) >
+          oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 );
+      }
+
       if( !( isFluidMaterial ||
              isMeltedParticle ||
              isFullyDamagedParticle ||
-             resetForScaledSurfaceParticle ) )
+             resetForScaledSurfaceParticle ||
+             isOversizedParticle ) )
       {
         return;
       }
+      real64 const resetMaximumDiagonal =
+        isOversizedParticle ? oversizedResetMaximumDiagonal : defaultMaximumDiagonal;
 
       real64 const referenceVolume = particleReferenceVolume[p];
       real64 const J = referenceVolume > 0.0
                      ? particleVolume[p] / referenceVolume
                      : -1.0;
-      real64 oldDeformationGradient[3][3] = {};
-      LvArray::tensorOps::copy< 3, 3 >(
-        oldDeformationGradient,
-        particleDeformationGradient[p] );
       real64 const oldDeterminant =
         LvArray::tensorOps::determinant< 3 >( oldDeformationGradient );
       real64 constexpr minimumResetJacobian = 1.0e-12;
@@ -31037,7 +31199,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
           projectVPHenckyParticleDomain(
             rawRVectors,
             numDims,
-            maximumDiagonal,
+            resetMaximumDiagonal,
             requestedHalfMeasure,
             true,
             projectedRVectors );

@@ -773,6 +773,9 @@ parameters = {
                'domainResetType': ( None, True ),  # MPM: deformation-gradient reset algorithm: isotropicPolar or vpHencky.
                'disableSurfaceNormalsAndPositionsOnCPDIScaling': ( None, True ),  # MPM: drop explicit surfaces after CPDI scaling.
                'disableSurfaceNormalsAndPositionsOnDamage': ( None, True ),  # MPM: drop explicit surfaces after damage.
+               'disableSurfaceNormalsAndPositionsOnMelt': ( None, True ),  # MPM: drop explicit surfaces after melt.
+               'disableSurfaceTractionsOnDamage': ( None, True ),  # MPM: drop explicit surface tractions after damage.
+               'disableSurfaceTractionsOnMelt': ( None, True ),  # MPM: drop explicit surface tractions after melt.
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
@@ -867,6 +870,8 @@ parameters = {
                'resetDefGradForFullyDamagedParticles': ( None, True ),  # MPM: reset F for fully damaged particles.
                'resetDefGradForMeltedParticles': ( None, True ),  # MPM: reset F for melted particles
                'resetDefGradForScaledSurfaceParticles': ( None, True ),  # MPM: reset F for CPDI-scaled surface particles.
+               'resetDefGradForOversizedParticles': ( None, True ),  # MPM: reset F for oversized particle domains; use only for fluids, melted/damaged material, or hypo-elastic deviatoric models where deviatoric F is not constitutive state.
+               'defGradResetMaxParticleDomainToGridCellRatio': ( None, True ),  # MPM: oversized-domain reset threshold, as full particle-domain diagonal divided by active grid-cell diagonal.
                'restartCycleNum': ( 0, False ),  # PFW: restart cycle number.
                'restartInterval': ( None, False ),  # PFW: restart event interval.
                'restartJobDir': ( '.', False ),  # PFW: restart source directory.

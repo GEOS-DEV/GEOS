@@ -50,7 +50,7 @@ pfw["fTable"] = [
   [1.0e-3, 1.00, 0.90, 1.00],
 ]
 \end{lstlisting}
-PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
+PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  The solver evaluates the table at the actual end-of-step time.  On a \texttt{prescribedBoundaryFTable} step, wall velocity uses the endpoint rate $\dot F_i/F_i$, while grid coordinates and extents use the finite ratio $F_i(t^{n+1})/F_i(t^n)$.  Therefore the resized grid follows the specified table independently of the time-step size, up to floating-point roundoff.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
 
 \subsection{Periodic homogeneous deformation}
 \index{prescribedFTable}

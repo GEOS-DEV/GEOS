@@ -147,13 +147,20 @@ for field alpha:
 \index{prescribedBoundaryFTable}
 \index{prescribedFTable}
 
-The F-table machinery produces a diagonal macroscopic deformation history and its associated diagonal velocity-gradient components.  The table has one time column and three deformation columns.  At the end of the step, $t^{n+1}=t^n+\Delta t$, \texttt{interpolateTable} evaluates the active interval and returns $F_i(t^{n+1})$ and $\dot F_i(t^{n+1})$.  For directions not completely overridden by stress control, the code sets
+The F-table machinery produces a diagonal macroscopic deformation history and its associated diagonal velocity-gradient components.  The table has one time column and three deformation columns.  At the end of the step, $t^{n+1}=t^n+\Delta t$, \texttt{interpolateTable} selects the interval containing the actual evaluation time $t^{n+1}$ and returns $F_i(t^{n+1})$ and $\dot F_i(t^{n+1})$.  This endpoint selection avoids extrapolating from the interval containing the time-step midpoint when a step crosses a table knot.  At an internal knot the derivative is taken from the interval on the left; before the first time and after the final time the value is clamped and the rate is zero.  For directions not completely overridden by stress control, the code sets
 \begin{equation}
   \bar L_i(t^{n+1}) = \frac{\dot F_i(t^{n+1})}{F_i(t^{n+1})},
   \qquad
   \bar F_i(t^{n+1}) = F_i(t^{n+1}).
   \label{eq:bc-ftable-l}
 \end{equation}
+For \texttt{prescribedBoundaryFTable}, the solver separately forms the finite grid map
+\begin{equation}
+  \lambda_i^{n\rightarrow n+1}
+  = \frac{\bar F_i(t^{n+1})}{\bar F_i(t^n)}.
+  \label{eq:bc-ftable-incremental-stretch}
+\end{equation}
+The distinction is intentional: $\bar L_i(t^{n+1})$ is the instantaneous endpoint rate used for wall velocity, whereas $\lambda_i^{n\rightarrow n+1}$ is the exact finite stretch used for grid coordinates and domain geometry.
 The current implementation supports three scalar interpolation kernels.  Let $y_0,y_1$ be consecutive table values, $\tau=(t^{n+1}-t_0)/(t_1-t_0)$, and $\Delta T=t_1-t_0$.  Linear interpolation uses
 \begin{equation}
   y(\tau)=(1-\tau)y_0+\tau y_1,
@@ -174,7 +181,7 @@ and \texttt{Smoothstep} uses the quintic polynomial
 \end{equation}
 Values before the first table time are clamped to the first row, and values after the final table time are clamped to the last row.
 
-The two F-table flags route this macroscopic kinematics into different parts of the MPM update.  With \texttt{prescribedBoundaryFTable}, the diagonal velocity-gradient components become boundary velocities on \texttt{Moving} faces during \texttt{applyEssentialBCs}.  With \texttt{prescribedFTable}, the same components are superposed on particle velocity gradients and positions only in directions marked periodic by the spatial partition.  The latter path is intended for triply periodic or partially periodic homogeneous-deformation calculations.  In both cases, Step~19 later resizes the grid/domain measures using the current \texttt{domainL} values.
+The two F-table flags route this macroscopic kinematics into different parts of the MPM update.  With \texttt{prescribedBoundaryFTable}, the diagonal endpoint velocity-gradient components become boundary velocities on \texttt{Moving} faces during \texttt{applyEssentialBCs}, while Eq.~\eqref{eq:bc-ftable-incremental-stretch} updates wall positions, grid nodes, partition/domain extents, reaction-history dimensions, and rigid-body jamming areas.  With \texttt{prescribedFTable}, the rate components are superposed on particle velocity gradients and positions only in directions marked periodic by the spatial partition.  The latter path is intended for triply periodic or partially periodic homogeneous-deformation calculations and retains its existing rate-based update.
 
 \subsection{Moving faces}
 \label{subsec:bc-moving}
@@ -185,11 +192,12 @@ A \texttt{Moving} face is an essential velocity boundary driven by the current d
 
 For a moving face $f$ normal to direction $d$, the code forms an end-of-step grid coordinate
 \begin{equation}
-  X_{I,d}^{n+1,*}=\left(1+\bar L_d\Delta t\right)X_{I,d}^{n},
+  X_{I,d}^{n+1,*}=\lambda_d^{n\rightarrow n+1}X_{I,d}^{n}.
+  \label{eq:bc-moving-exact-position}
 \end{equation}
-and imposes the normal velocity
+For \texttt{prescribedBoundaryFTable}, this is the exact tabulated position because $\lambda_d^{n\rightarrow n+1}=\bar F_d^{n+1}/\bar F_d^n$.  For stress-control-only and periodic-deformation paths, the stored factor retains the existing $1+\bar L_d\Delta t$ form.  The normal velocity is
 \begin{equation}
-  v_{I\alpha,d}^{\mathrm{bc}} = \bar L_d X_{I,d}^{n+1,*},
+  v_{I\alpha,d}^{\mathrm{bc}} = \bar L_d(t^{n+1}) X_{I,d}^{n+1,*},
   \qquad I\in\mathcal{B}_f.
   \label{eq:bc-moving-normal-velocity}
 \end{equation}
@@ -230,7 +238,7 @@ This construction constrains only the physical Dirichlet components.  Free tange
 
 \begin{lstlisting}[caption={Moving-face enforcement.}]
 for field alpha and boundary node I:
-  x_end = (1 + domainL[d]*dt) * gridPosition[I,d]
+  x_end = domainIncrementalStretch[d] * gridPosition[I,d]
   v_bc = domainL[d] * x_end
 
   if transverse velocities enabled on this face:
@@ -256,18 +264,18 @@ for buffer node G:
 \index{boundary conditions!Contact}
 \index{boundary friction}
 
-A face marked \texttt{Contact} is handled in the same \texttt{Moving}/\texttt{Contact} branch, but with wall-contact detection replacing unconditional prescribed motion.  The branch is always entered for a contact face, even if no F-table or stress-control flag is active.  For each boundary node and velocity field, the code first estimates a scalar surface position in the face-normal direction.  If a particle-mapped surface position is available at the node, it uses \texttt{gridSurfacePosition}; otherwise it falls back to \texttt{gridCenterOfVolume}.  With the sign $\alpha_f$ from Eq.~\eqref{eq:bc-face-normal}, the code's contact condition is
+A face marked \texttt{Contact} is handled in the same \texttt{Moving}/\texttt{Contact} branch, but with wall-contact detection replacing unconditional prescribed motion.  The branch is always entered for a contact face, even if no F-table or stress-control flag is active.  For each boundary node and velocity field, the code first estimates a scalar surface position in the face-normal direction.  If a particle-mapped surface position is available at the node, it uses \texttt{gridSurfacePosition}; otherwise it falls back to \texttt{gridCenterOfVolume}.  The predicted wall velocity is
 \begin{equation}
-  \alpha_f v_{I\alpha,d} > 0
-  \quad\text{and}\quad
-  \alpha_f x^{\mathrm{surf}}_{I\alpha,d} > 0.
-  \label{eq:bc-wall-contact-condition}
-\end{equation}
-When this condition is false, the face does not overwrite the normal velocity.  When it is true, the normal boundary target is
-\begin{equation}
-  v_{I\alpha,d}^{\mathrm{bc}} = \bar L_d X_{I,d},
+  v_{I,d}^{\mathrm{wall}} = \bar L_d(t^{n+1})\lambda_d^{n\rightarrow n+1}X_{I,d}^{n},
   \label{eq:bc-wall-normal-target}
 \end{equation}
+and the relative normal velocity is $v_{I\alpha,d}^{\mathrm{rel}}=v_{I\alpha,d}-v_{I,d}^{\mathrm{wall}}$.  With the sign $\alpha_f$ from Eq.~\eqref{eq:bc-face-normal}, the current and predicted outward surface coordinates are
+\begin{equation}
+  s^n=\alpha_f x^{\mathrm{surf}}_{I\alpha,d},
+  \qquad
+  s^{n+1,*}=\alpha_f\left(x^{\mathrm{surf}}_{I\alpha,d}+\Delta t\,v_{I\alpha,d}^{\mathrm{rel}}\right).
+\end{equation}
+The normal constraint activates when the surface intersects the wall, $\max(s^n,s^{n+1,*})>0$, and the material moves into it, $\alpha_f v_{I\alpha,d}^{\mathrm{rel}}>0$; the rigid-body penetration penalty can also activate an intersecting wall.  When contact is inactive, the face does not overwrite the normal velocity.  When it is active, the normal boundary target is $v_{I\alpha,d}^{\mathrm{bc}}=v_{I,d}^{\mathrm{wall}}$.
 followed by the same normal velocity-increment, acceleration-correction, reaction-accumulation, and buffer-reflection operations used by a moving face.  The registered \texttt{boundaryFaceCoefficientsOfRestitution} array is initialized and checked, but the active code path in the reviewed source does not use it in the normal target; a restitution-based line is present only as commented legacy code.  Thus boundary contact should currently be interpreted as a sticking/non-penetration style normal constraint with optional tangential friction, not as a coefficient-of-restitution bounce law.
 
 Tangential friction is controlled by \texttt{boundaryFaceFrictionCoefficients}.  Let
@@ -353,7 +361,7 @@ For \texttt{stressControl[i] == 1}, the clipped value replaces \texttt{domainL[i
 \begin{equation}
   \bar F_i^{n+1}=\bar F_i^n+\bar L_i\bar F_i^n\Delta t.
 \end{equation}
-Moving faces normal to controlled directions then use Eq.~\eqref{eq:bc-moving-normal-velocity} when the moving-face branch is active; in practice, stress-controlled boundary-motion cases should use \texttt{stressControl[i] == 1} for controlled directions and commonly retain \texttt{prescribedBoundaryFTable} with a neutral F-table for robust activation.  In this sense, stress control is internally a feedback generator for prescribed kinematics rather than a separate traction-boundary algorithm.
+Moving faces normal to controlled directions then use Eq.~\eqref{eq:bc-moving-normal-velocity} when the moving-face branch is active; in practice, stress-controlled boundary-motion cases should use \texttt{stressControl[i] == 1} for controlled directions and commonly retain \texttt{prescribedBoundaryFTable} with a neutral F-table for robust activation.  In a stress-controlled direction, the explicit update above gives $\bar F_i^{n+1}/\bar F_i^n=1+\bar L_i\Delta t$, so the finite-ratio geometry path reproduces the previous controller motion while table-controlled directions obtain the exact prescribed ratio.  In this sense, stress control is internally a feedback generator for prescribed kinematics rather than a separate traction-boundary algorithm.
 
 \begin{lstlisting}[caption={Stress-control path to boundary motion.}]
 interpolateStressTable(time_n, dt) -> domainStress
@@ -604,7 +612,7 @@ If \texttt{useInternalForceAsFaceReaction} is enabled, the contribution is inste
   R_f^{\mathrm{local}} \mathrel{-}= f_{I\alpha,d}^{\mathrm{int}}.
   \label{eq:bc-reaction-internal-force}
 \end{equation}
-The six local face sums are reduced across MPI ranks with a sum reduction and stored in \texttt{m\_globalFaceReactions}.  If \texttt{reactionHistory} is enabled and the write schedule is satisfied, the solver appends a row to \path{reactionHistory.csv} containing time, domain deformation components, box lengths, the six face reactions, and the current diagonal \texttt{domainL} values.  This output is therefore a diagnostic of the constraints actually applied by \texttt{applyEssentialBCs}; it is not produced for pure outflow or inactive moving faces that do not change normal nodal velocities.
+The six local face sums are reduced across MPI ranks with a sum reduction and stored in \texttt{m\_globalFaceReactions}.  If \texttt{reactionHistory} is enabled and the write schedule is satisfied, the solver appends a row to \path{reactionHistory.csv} containing time, domain deformation components, end-of-step box lengths, the six face reactions, and the current diagonal \texttt{domainL} values.  For \texttt{prescribedBoundaryFTable}, the reported lengths use the same exact finite ratios as the grid resize, so the reported $\bar F$ and domain dimensions remain mutually consistent.  This output is therefore a diagnostic of the constraints actually applied by \texttt{applyEssentialBCs}; it is not produced for pure outflow or inactive moving faces that do not change normal nodal velocities.
 
 \subsection{FMPM-specific boundary consistency}
 \label{subsec:bc-fmpm-internals}

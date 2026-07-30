@@ -229,9 +229,11 @@ Boundary conditions for each face of the domain must be specified. The boundary 
 | 1 = symmetry
 | 2 = boundary driven deformation (equivalent to a frictional rigid piston)
 
-For type 2 boundary conditions, a deformation table (fTable) corresponding to the deformation of the background grid must be specified by a :math:'N"x4 matrix where :math:'N' is the number of rows. Each row begins with the time followed by the fractional deformation of the grid in x, y, and z directions.
-The boundary velocity enforced is relative to the position with respect to the origin (:math:'x') given by :math:'v = L \cdot x' where :math:'L' is the velocity gradient calculated from the deformation table at a given timestep. Therefore, boundary velocities will be different for domains positioned differently with respect to the origin.
-Note the solver variable prescribedBoundaryFTable must be set to 1 for the deformation table to take effect and the first row of the deformation table must always have deformations of 1 for each direction.
+For type 2 boundary conditions, a deformation table (``fTable``) corresponding to the diagonal deformation of the background grid must be specified by an :math:`N\times4` matrix. Each row begins with time followed by the grid stretches in the x, y, and z directions. The table is evaluated at the actual end-of-step time.
+
+For ``prescribedBoundaryFTable``, the end-of-step velocity gradient is :math:`L_i=\dot F_i/F_i` and the prescribed wall velocity is evaluated at the end-of-step wall position. Grid coordinates and domain extents are not recovered by integrating that instantaneous rate. Instead they are updated with the exact finite ratio :math:`F_i(t^{n+1})/F_i(t^n)`, so the resized grid follows the tabulated deformation to floating-point roundoff. Because the affine motion is measured from the coordinate origin, equivalent domains placed at different offsets have different absolute boundary velocities.
+
+The solver variable ``prescribedBoundaryFTable`` must be set to 1 for this boundary-driven deformation to take effect, and the first row of the table must contain unit stretches in each table-controlled direction. The separate ``prescribedFTable`` periodic-deformation path retains its own rate-based particle update.
 
 Prescribed transverse velocities can be ascribed to each boundary face, such as to rigidly affix the end of a cantilever, by specifiying :code-block:'enablePrescribedBoundaryTransverseVelocities=1' in the input file.
 
@@ -609,7 +611,7 @@ This solver has many solver specific variables. The following list describes eac
    * - bool
      - prescribedBoundaryFTable
      - 0
-     - Enables boundary driven deformation using interpolated fTable for faces with boundary condition type 2
+     - Enables boundary-driven deformation using interpolated fTable for faces with boundary condition type 2. Boundary velocities use the endpoint rate and grid geometry uses the exact finite stretch ratio.
    * - bool
      - prescribedFtable
      - 0

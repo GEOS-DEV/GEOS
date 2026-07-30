@@ -16,3 +16,10 @@ For the CZ and weak-trace variants, the case maps prescribed interface normals
 with `explicitSurfaceNormalInfluence=25.0` by default.  Override with
 `WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE=<value>` when comparing normal-mapping
 sensitivity.
+
+The weak-trace variant defaults to a small gap-feedback test,
+`weakInterfaceTraceGapStabilization=0.01`, with the accumulated-gap correction
+velocity capped by `weakInterfaceTraceMaxGapCorrectionVelocity=1.0e-5`.
+Override `WEAK_TRACE_GAP_STABILIZATION=0.0` for the stable velocity-only
+projection baseline or `0.1` to reproduce the overcorrected failed case.
+Override `WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY=<value>` to test the cap.

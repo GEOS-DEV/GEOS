@@ -560,6 +560,7 @@ def solver_attributes(run_dir: Path | None) -> dict:
             "weakInterfaceTraceProjectionScale",
             "weakInterfaceTraceProjectionIterations",
             "weakInterfaceTraceGapStabilization",
+            "weakInterfaceTraceMaxGapCorrectionVelocity",
             "weakInterfaceTraceSuppressNodalContact",
         ]
         return {f"solver_{key}": solver.attrib.get(key, "") for key in keys if key in solver.attrib}
@@ -991,6 +992,7 @@ def main() -> int:
         gap_change = trace_summary.get("interfaceMeanAbsNormalGapChange")
         slip_change = trace_summary.get("interfaceMeanAbsTangentialSlipChange")
         normal_influence = trace_summary.get("solver_explicitSurfaceNormalInfluence", "--")
+        max_gap_correction = trace_summary.get("solver_weakInterfaceTraceMaxGapCorrectionVelocity", "--")
         if gap_change is not None:
             if abs(float(gap_change)) > 1.0e-4:
                 cz_summary = next((s for s in summaries if s.get("variant") == "falseElasticCZ"), None)
@@ -1016,6 +1018,8 @@ def main() -> int:
                     + latex_escape(normal_influence)
                     + r" and gap stabilization "
                     + latex_escape(trace_summary.get("solver_weakInterfaceTraceGapStabilization", "--"))
+                    + r" with max gap-correction velocity "
+                    + latex_escape(max_gap_correction)
                     + r"; with zero gap stabilization, the projection damps velocity mismatch but does not drive accumulated surface-position opening back to zero.  The final near-interface stiff $\sigma_{nn}$ is "
                     + (compact_float(measured_ratio) if measured_ratio is not None else "--")
                     + r" of the bonded-series target.  This points to weak-trace normal separation/opening in the present run, not merely a residual stress artifact at an otherwise tied interface."
@@ -1024,6 +1028,8 @@ def main() -> int:
                 tex.append(
                     r"\paragraph{Current trace-run interpretation.} The restart-based weak-interface surface points remain nearly coincident.  The trace run used explicit surface-normal influence "
                     + latex_escape(normal_influence)
+                    + r" and max gap-correction velocity "
+                    + latex_escape(max_gap_correction)
                     + r", so remaining error is more consistent with a stress reconstruction or mixed-cell artifact than with macroscopic trace separation."
                 )
     for name in [

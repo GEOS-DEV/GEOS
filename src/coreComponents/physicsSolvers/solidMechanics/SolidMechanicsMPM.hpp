@@ -262,7 +262,7 @@ public:
 
   void checkEventCompletion( const real64 time_n );
 
-  real64 computeRigidBodyJammingStress( real64 const dt ) const;
+  real64 computeRigidBodyJammingStress() const;
 
   real64 computeRigidBodyContactLengthScale() const;
 
@@ -1344,6 +1344,8 @@ protected:
   int m_disableSurfaceTractionsOnMelt; // Turns off surface tractions for melted particles
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< real64 > m_domainF;
+  // Step-local finite grid map; derived from domainF and not written to restart.
+  array1d< real64 > m_domainIncrementalStretch;
   array1d< real64 > m_domainL;
   mpm::DomainResetTypeOption m_domainResetType;
   array1d< real64 > m_domainStress;
@@ -1467,6 +1469,8 @@ protected:
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForMeltedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
+  int m_resetDefGradForOversizedParticles;
+  real64 m_defGradResetMaxParticleDomainToGridCellRatio;
   real64 m_separabilityMinDamage;
   int m_setDomainTemperature;
   int m_setDomainTemperatureRate;
@@ -1552,6 +1556,7 @@ protected:
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
   real64 m_weakInterfaceTraceGapStabilization;
+  real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
   real64 m_weakInterfaceTraceMinWeight;
   array2d< int > m_weakInterfaceTracePairs;
   int m_weakInterfaceTraceProjectionIterations;

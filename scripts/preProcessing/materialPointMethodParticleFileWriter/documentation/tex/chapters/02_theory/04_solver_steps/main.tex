@@ -582,7 +582,7 @@ for each node I and each active field pair (alpha, beta):
 \index{solverSteps!boundary conditions}
 \index{Ftable}
 \index{stress control}
-After the unconstrained grid/contact update, prescribed kinematics and essential boundary conditions are imposed.  The solver interpolates F-table and prescribed-F-table data unless all active directions are under stress control.  A prescribed macroscopic deformation gradient $\bar{\mathbf{F}}(t)$ or velocity gradient $\bar{\mathbf{L}}(t)$ induces affine boundary velocities of the form
+After the unconstrained grid/contact update, prescribed kinematics and essential boundary conditions are imposed.  The solver interpolates F-table and prescribed-F-table data unless all active directions are under stress control.  For \texttt{prescribedBoundaryFTable}, it stores both the instantaneous endpoint rate $\dot F_i/F_i$ and the finite geometry increment $F_i(t^{n+1})/F_i(t^n)$.  A prescribed macroscopic deformation gradient $\bar{\mathbf{F}}(t)$ or velocity gradient $\bar{\mathbf{L}}(t)$ induces affine boundary velocities of the form
 \begin{equation}
   \mathbf{v}^{\mathrm{bc}}(\mathbf{X},t) = \bar{\mathbf{L}}(t)\left(\mathbf{x}-\mathbf{x}_0\right) + \mathbf{v}_0(t),
 \end{equation}
@@ -594,6 +594,7 @@ The timing of boundary-condition imposition is significant: it occurs after tria
 if F_table_or_stress_control_enabled:
   interpolate_prescribed_F_or_stress_table(t_n, dt)
   update_prescribed_domain_deformation_measures()
+  compute_boundary_grid_increment(F_new/F_old for FTableBC)
 apply_essential_boundary_conditions(dt, t_n)
 if FMPM_update_is_enabled:
   apply_FMPM_uncontacted_velocity_boundary_conditions()
@@ -743,11 +744,11 @@ else:
 \label{subsec:solver-step-19}
 \index{solverSteps!grid resize}
 \index{solverSteps!particle deletion}
-This cleanup step performs post-update domain management.  If prescribed boundary deformation, prescribed domain deformation, or stress control is active, the background grid/domain measures are resized.  In affine form, a nodal reference position may be updated by a domain velocity-gradient increment such as
+This cleanup step performs post-update domain management.  If prescribed boundary deformation, prescribed domain deformation, or stress control is active, the background grid/domain measures are resized.  For \texttt{prescribedBoundaryFTable}, the diagonal nodal map is the exact finite table increment
 \begin{equation}
-  \mathbf{x}_{I}^{\mathrm{ref},n+1}\approx\left(\mathbf{I}+\Delta t\,\bar{\mathbf{L}}\right)\mathbf{x}_{I}^{\mathrm{ref},n},
+  x_{I,i}^{\mathrm{ref},n+1}=\frac{\bar F_i(t^{n+1})}{\bar F_i(t^n)}x_{I,i}^{\mathrm{ref},n}.
 \end{equation}
-with corresponding updates to element spacing, local/global extents, and diagnostic box-average bounds.  CPDI domain vectors are scaled or unscaled around this resize depending on plotting and domain-scaling options.
+The same ratio updates element spacing, local/global extents, partition dimensions, rigid-wall geometry, and optional box-average bounds.  Other moving-domain paths retain the existing rate-based factor $1+\Delta t\,\bar L_i$.  CPDI domain vectors are scaled or unscaled around this resize depending on plotting and domain-scaling options.
 
 Particles flagged as failed, out of range, or otherwise invalid are deleted or compacted.  In parallel runs, the partition is updated, particles are redistributed, and periodic corrections are reapplied.  If reset-deformation-gradient events are active, the relevant particle deformation measures are reset after output and before the next step begins.  This cleanup ensures that the next cycle starts from a consistent particle set, updated domain geometry, and zeroed transient grid state.
 

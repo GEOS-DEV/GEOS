@@ -144,7 +144,8 @@ if VARIANT == "traceContactGroups":
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
     pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "1.0"))
+    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
     pfw["weakInterfaceTracePairs"] = [[0, 1]]
@@ -286,6 +287,7 @@ pfw_expected = {
     "interface_normal": [float(a[0]), float(a[1]), 0.0],
     "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
+    "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
     "explicit_surface_normal_influence": pfw.get("explicitSurfaceNormalInfluence", 0.0),
     "tracer_labels": tracer_labels,
