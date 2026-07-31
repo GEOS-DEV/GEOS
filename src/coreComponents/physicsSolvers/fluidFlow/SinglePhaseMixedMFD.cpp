@@ -137,7 +137,7 @@ void SinglePhaseMixedMFD::initializePostInitialConditionsPreSubGroups()
     fsManager.apply< FaceManager >( 0.0,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const &,
+                                    [&] ( FieldSpecification const &,
                                           string const &,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager &,
@@ -170,7 +170,7 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
   MixedMimeticDiscretizationManager const & mmManager = numericalMethodManager.getMixedMimeticDiscretizationManager();
   MixedMimeticDiscretization const & discretization = mmManager.getMixedMimeticDiscretization( m_discretizationName );
 
-  if( discretization.getAdaptationType() == MixedMimeticDiscretization::AdaptationType::None )
+  if( !discretization.isAdaptive() )
   {
     // no adaptation: activate the selected inner product in every cell
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -344,7 +344,7 @@ void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
     fsManager.apply< FaceManager >( time,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecification const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager & targetGroup,

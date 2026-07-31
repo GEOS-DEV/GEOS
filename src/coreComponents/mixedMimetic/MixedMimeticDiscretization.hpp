@@ -21,7 +21,6 @@
 #define GEOS_MIXEDMIMETIC_MIXEDMIMETICDISCRETIZATION_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "common/format/EnumStrings.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
 namespace geos
@@ -32,17 +31,13 @@ namespace geos
  *
  * Provides management of the cell-wise inner products and of the residual-based
  * Global Adaptation (GA) parameters used by the mixed mimetic finite difference solvers.
+ * Global Adaptation is the only supported cell classification paradigm: when adaptation
+ * is enabled, the residual tolerance controls the TPFA/MFD partition; when disabled, the
+ * selected inner product is used in every cell.
  */
 class MixedMimeticDiscretization : public dataRepository::Group
 {
 public:
-
-  /// Adaptation paradigm: no adaptation (single inner product everywhere) or Global Adaptation
-  enum class AdaptationType : integer
-  {
-    None,   ///< the inner product selected by innerProductType is used in every cell
-    Global  ///< face-assembled residual indicators select TPFA or MFD cell-wise
-  };
 
   /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
   using CatalogInterface = dataRepository::CatalogInterface< MixedMimeticDiscretization, string const &, Group * const >;
@@ -79,8 +74,8 @@ public:
     /// @return The key for the inner product
     static constexpr char const * innerProductString() { return "innerProduct"; }
 
-    /// @return The key for the adaptation type
-    static constexpr char const * adaptationTypeString() { return "adaptationType"; }
+    /// @return The key for the adaptive flag
+    static constexpr char const * adaptiveString() { return "adaptive"; }
 
     /// @return The key for the residual tolerance
     static constexpr char const * residualToleranceString() { return "residualTolerance"; }
@@ -90,9 +85,9 @@ public:
   };
 
   /**
-   * @brief @return The adaptation type
+   * @brief @return Whether the residual-based Global Adaptation is enabled
    */
-  AdaptationType getAdaptationType() const { return m_adaptationType; }
+  bool isAdaptive() const { return m_isAdaptive == 1; }
 
   /**
    * @brief @return The residual tolerance used in the marking criterion
@@ -115,8 +110,8 @@ private:
   /// type of inner product used in the mixed mimetic solver
   string m_innerProductType;
 
-  /// adaptation paradigm (none or global)
-  AdaptationType m_adaptationType;
+  /// flag enabling the residual-based Global Adaptation (1 = adaptive, 0 = selected inner product everywhere)
+  integer m_isAdaptive;
 
   /// user-prescribed tolerance for the marking criterion
   real64 m_residualTolerance;
@@ -131,10 +126,6 @@ private:
   std::unique_ptr< mimeticInnerProduct::MimeticInnerProductBase > factory( string const & mimeticInnerProductType ) const;
 
 };
-
-ENUM_STRINGS( MixedMimeticDiscretization::AdaptationType,
-              "none",
-              "global" );
 
 }
 

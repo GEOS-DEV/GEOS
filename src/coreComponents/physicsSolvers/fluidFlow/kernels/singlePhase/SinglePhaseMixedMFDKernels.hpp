@@ -24,6 +24,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "finiteVolume/mimeticInnerProducts/AdaptiveInnerProduct.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mixedMimetic/MixedMimeticDispatch.hpp"
@@ -112,17 +113,11 @@ public:
   {
     GEOS_HOST_DEVICE
     StackVariables()
-      : massMatrix( NUM_FACE, NUM_FACE ),
-      mfdMassMatrix( NUM_FACE, NUM_FACE ),
-      tpfaMassMatrix( NUM_FACE, NUM_FACE )
+      : massMatrix( NUM_FACE, NUM_FACE )
     {}
 
-    /// blended local mass matrix: chi * M_mfd + (1 - chi) * M_tpfa
+    /// adaptive local mass matrix: chi * M_mfd + (1 - chi) * M_tpfa
     stackArray2d< real64, NUM_FACE *NUM_FACE > massMatrix;
-
-    /// scratch for the two candidate mass matrices
-    stackArray2d< real64, NUM_FACE *NUM_FACE > mfdMassMatrix;
-    stackArray2d< real64, NUM_FACE *NUM_FACE > tpfaMassMatrix;
 
     /// sign relating the cell-outward normal to the fixed global face normal
     real64 orientation[NUM_FACE]{};
@@ -171,33 +166,17 @@ public:
   {
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
-    // step 1: branch-free adaptive operator blend, M = chi * M_mfd + (1 - chi) * M_tpfa
-    IP::template computeM< NUM_FACE >( m_nodePosition,
-                                       m_faceToNodes,
-                                       m_elemToFaces[ei],
-                                       m_elemCenter[ei],
-                                       m_elemVolume[ei],
-                                       perm,
-                                       m_lengthTolerance,
-                                       stack.mfdMassMatrix );
-
-    mimeticInnerProduct::TPFAInnerProduct::computeM< NUM_FACE >( m_nodePosition,
-                                                                 m_faceToNodes,
-                                                                 m_elemToFaces[ei],
-                                                                 m_elemCenter[ei],
-                                                                 m_elemVolume[ei],
-                                                                 perm,
-                                                                 m_lengthTolerance,
-                                                                 stack.tpfaMassMatrix );
-
+    // step 1: adaptive inner product, M = chi * M_mfd + (1 - chi) * M_tpfa
     real64 const chi = static_cast< real64 >( m_stencilFlag[ei] );
-    for( integer i = 0; i < NUM_FACE; ++i )
-    {
-      for( integer j = 0; j < NUM_FACE; ++j )
-      {
-        stack.massMatrix( i, j ) = chi * stack.mfdMassMatrix( i, j ) + ( 1.0 - chi ) * stack.tpfaMassMatrix( i, j );
-      }
-    }
+    mimeticInnerProduct::AdaptiveInnerProduct< IP >::template computeM< NUM_FACE >( m_nodePosition,
+                                                                                    m_faceToNodes,
+                                                                                    m_elemToFaces[ei],
+                                                                                    m_elemCenter[ei],
+                                                                                    m_elemVolume[ei],
+                                                                                    perm,
+                                                                                    m_lengthTolerance,
+                                                                                    chi,
+                                                                                    stack.massMatrix );
 
     // step 2: cell mobility scaling of the inverse Darcy coefficient
     real64 const mob = m_mob[ei];

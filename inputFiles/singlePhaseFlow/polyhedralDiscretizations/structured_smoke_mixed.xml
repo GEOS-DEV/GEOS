@@ -57,7 +57,7 @@
       <MixedMimeticDiscretization
         name="singlePhaseMixedMFD"
         innerProductType="quasiTPFA"
-        adaptationType="global"
+        adaptive="1"
         residualTolerance="1.0e-3"
         nominalGradient="{ 1.0, 1.0, 1.0 }"/>
     </MixedMimetic>
@@ -73,7 +73,7 @@
       referencePressure="0.0"
       compressibility="0.0"
       viscosibility="0.0"
-      densityModelType="linear"/>
+      densityModelType="exponential"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
@@ -121,12 +121,20 @@
     minTime="0.0"
     maxTime="86400">
     <PeriodicEvent
+      name="outputs"
+      timeFrequency="86400"
+      target="/Outputs/vtkSmokeMixedMFD"/>
+    <PeriodicEvent
       name="solverApplications"
       endTime="86400"
       maxEventDt="86400"
       target="/Solvers/SinglePhaseFlow"/>
   </Events>
 
-  <Outputs/>
+  <Outputs>
+    <VTK
+      name="vtkSmokeMixedMFD"
+      format="ascii"/>
+  </Outputs>
 
 </Problem>

@@ -34,7 +34,7 @@ using namespace mimeticInnerProduct;
 MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
                                                         Group * const parent )
   : Group( name, parent ),
-  m_adaptationType( AdaptationType::None ),
+  m_isAdaptive( 1 ),
   m_residualTolerance( 1e-3 ),
   m_nominalGradient( { 1.0, 1.0, 1.0 } )
 {
@@ -42,14 +42,14 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
 
   registerWrapper( viewKeyStruct::innerProductTypeString(), &m_innerProductType ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Type of inner product used in the mixed mimetic solver" );
+    setDescription( "Type of inner product used in the MFD-compatible cells of the mixed mimetic solver" );
 
-  registerWrapper( viewKeyStruct::adaptationTypeString(), &m_adaptationType ).
+  registerWrapper( viewKeyStruct::adaptiveString(), &m_isAdaptive ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( AdaptationType::None ).
-    setDescription( "Adaptation paradigm used to select the cell-wise inner product. "
-                    "Valid options:\n* none - the inner product selected by innerProductType is used in every cell\n"
-                    "* global - residual-based Global Adaptation selects TPFA or MFD cell-wise" );
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag enabling the residual-based Global Adaptation: when enabled (1, default), the "
+                    "cell-wise inner product is selected between TPFA and innerProductType according to the "
+                    "consistency indicator; when disabled (0), innerProductType is used in every cell" );
 
   registerWrapper( viewKeyStruct::residualToleranceString(), &m_residualTolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -66,8 +66,8 @@ void MixedMimeticDiscretization::postInputInitialization()
 {
   Group::postInputInitialization();
 
-  GEOS_THROW_IF_LE_MSG( m_residualTolerance, 0.0,
-                        GEOS_FMT( "{}: the residual tolerance must be strictly positive",
+  GEOS_THROW_IF_LT_MSG( m_residualTolerance, 0.0,
+                        GEOS_FMT( "{}: the residual tolerance cannot be negative",
                                   getWrapperDataContext( viewKeyStruct::residualToleranceString() ) ),
                         InputError );
 
@@ -75,6 +75,18 @@ void MixedMimeticDiscretization::postInputInitialization()
                         GEOS_FMT( "{}: the nominal gradient cannot be the zero vector",
                                   getWrapperDataContext( viewKeyStruct::nominalGradientString() ) ),
                         InputError );
+
+  // degenerate combination: with a TPFA inner product, the adaptive blend mixes TPFA with TPFA
+  // and the operator is TPFA everywhere regardless of the marking; the consistency indicator
+  // fields are still computed and output, which makes this combination a useful diagnostic mode
+  if( isAdaptive() && m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: 'adaptive' is enabled but 'innerProductType' is TPFA: the adaptation has no "
+                            "effect on the discretization (both operators of the adaptive blend coincide), and "
+                            "the scheme reduces to full TPFA. The consistency indicators are still computed and "
+                            "output. Select an MFD inner product (e.g. quasiTPFA) to activate the adaptation.",
+                            getDataContext() ) );
+  }
 }
 
 void MixedMimeticDiscretization::initializePostInitialConditionsPreSubGroups()
