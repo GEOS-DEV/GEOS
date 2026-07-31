@@ -266,7 +266,7 @@ Advanced XML Features
 =================================
 
 The `geosx_xml_tools` python package adds a set of advanced features to the GEOS xml format: units, parameters, and symbolic expressions.
-See`Python Tools Setup <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/>`_ for details on setup instructions, and `XML Parser Documentation <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/geosx_xml_tools.html>`_ for package API details.
+See `Python Tools Setup <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest>`_ for details on setup instructions, and `XML Parser Documentation <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/geos-xml-tools.html>`_ for package API details.
 
 
 Usage
