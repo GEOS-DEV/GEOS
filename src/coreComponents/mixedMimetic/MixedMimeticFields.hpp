@@ -61,7 +61,7 @@ DECLARE_FIELD( consistencyIndicator,
                "consistencyIndicator",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Residual-based consistency indicator per cell (Global Adaptation)" );
 
