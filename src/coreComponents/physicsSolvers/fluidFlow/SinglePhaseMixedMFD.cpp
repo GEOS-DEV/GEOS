@@ -269,12 +269,13 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
         numMfdCells += mixedMimeticKernels::MarkingKernel< NUM_FACES >::
                          template launch< parallelDevicePolicy<> >( subRegion.size(),
                                                                     subRegion.faceList().toViewConst(),
+                                                                    subRegion.ghostRank(),
                                                                     faceResidual.toViewConst(),
                                                                     tolerance,
                                                                     consistencyIndicator,
                                                                     stencilFlag );
       } );
-      numCells += subRegion.size();
+      numCells += subRegion.size() - subRegion.getNumberOfGhosts();
     } );
 
     // make the marking consistent on ghost cells
@@ -282,8 +283,10 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
     fieldsToBeSync.addElementFields( { mixedMimetic::stencilFlag::key(), mixedMimetic::consistencyIndicator::key() }, regionNames );
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
+    globalIndex const globalNumMfdCells = MpiWrapper::sum< globalIndex >( numMfdCells );
+    globalIndex const globalNumCells = MpiWrapper::sum< globalIndex >( numCells );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: Global Adaptation marked {} / {} cells as MFD-compatible (tolerance = {})",
-                               getName(), numMfdCells, numCells, tolerance ) );
+                               getName(), globalNumMfdCells, globalNumCells, tolerance ) );
   } );
 }
 

@@ -276,10 +276,16 @@ struct LocalResidualKernel
 template< integer NF >
 struct MarkingKernel
 {
+  /**
+   * @brief Launch the marking loop.
+   * @return the number of locally-owned cells marked as MFD-compatible (ghost cells are
+   *         marked too, but excluded from the count so that an MPI sum yields the global count)
+   */
   template< typename POLICY >
   static localIndex
   launch( localIndex const numElems,
           arrayView2d< localIndex const > const & elemToFaces,
+          arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & faceResidual,
           real64 const tolerance,
           arrayView1d< real64 > const & consistencyIndicator,
@@ -297,7 +303,7 @@ struct MarkingKernel
       consistencyIndicator[ei] = indicator;
       integer const flag = ( indicator > tolerance ) ? 1 : 0;
       stencilFlag[ei] = flag;
-      numMfdCells += flag;
+      numMfdCells += ( elemGhostRank[ei] < 0 ) ? flag : 0;
     } );
 
     return numMfdCells.get();

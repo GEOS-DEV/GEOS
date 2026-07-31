@@ -1,0 +1,150 @@
+<?xml version="1.0" ?>
+
+<!-- SPE11B-based validation benchmark (adaptive-mfd manuscript, Section 4.2 / Figure 5).
+
+     NOTE: the mesh file spe11b_mesh.vtu (~75 MB) is not distributed with GEOS. Copy or
+     symlink it into this directory before running (reference copy:
+     adaptive-mfd/meshes/spe11b/spe11b_mesh.vtu in the adaptive-mfd repository).
+
+     Extruded SPE11B mesh: 99031 cells, 212326 faces.
+     Classification probe: linear field p_lin = 1 - x/Lx, i.e. nominalGradient = { -1/8400, 0, 0 },
+     isotropic K = I, harmonic face projection, Global Adaptation.
+
+     Flow problem: p = 1 at x = 0 (west), p = 0 at x = 8400 (east), and the DEFAULT
+     homogeneous Neumann condition m.n = 0 on all remaining boundary faces
+     (faces not covered by a pressure boundary condition are assigned the essential
+     no-flow condition on the face mass-flux unknown).
+
+     To reproduce the classification evolution of Figure 5 / Table 3, vary
+     residualTolerance in { 1e0, 1e-1, 1e-2, 1e-4, 1e-6 } and color the cells by
+     the "stencilFlag" (chi) or "consistencyIndicator" (eta) arrays in the VTK output.
+     Expected TPFA cell counts (Table 3): 98945, 74781, 57081, 55296, 55271.  -->
+
+<Problem>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      logLevel="1"
+      partitionRefinement="0"
+      useGlobalIds="0"
+      file="spe11b_mesh.vtu"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="westBC"
+      xMin="{ -0.1, -1.0, -1.0 }"
+      xMax="{ 0.1, 1201.0, 101.0 }"/>
+    <Box
+      name="eastBC"
+      xMin="{ 8399.9, -1.0, -1.0 }"
+      xMax="{ 8400.1, 1201.0, 101.0 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rock, fluid }"/>
+  </ElementRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseMixedMFD
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseMixedMFD"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="singlePhaseMixedMFD"
+        innerProductType="quasiTPFA"
+        adaptive="1"
+        residualTolerance="1.0e-2"
+        nominalGradient="{ -1.19047619047619e-04, 0.0, 0.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1.0"
+      referenceDensity="1.0"
+      defaultViscosity="1.0"
+      referenceViscosity="1.0"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      densityModelType="exponential"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.3"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="0.5"/>
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0"/>
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="0.0"/>
+  </FieldSpecifications>
+
+  <Events
+    minTime="0.0"
+    maxTime="1.0">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkSpe11bMixedMFD"/>
+    <PeriodicEvent
+      name="solverApplications"
+      endTime="1.0"
+      maxEventDt="1.0"
+      target="/Solvers/SinglePhaseFlow"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkSpe11bMixedMFD"/>
+  </Outputs>
+
+</Problem>
