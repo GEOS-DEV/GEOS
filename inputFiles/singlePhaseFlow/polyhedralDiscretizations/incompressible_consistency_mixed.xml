@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="incompressible_consistency_base.xml"/>
+  </Included>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="singlePhaseMixedMFD"
+        innerProductType="quasiTPFA"
+        adaptationType="global"
+        residualTolerance="1.0e-3"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <Solvers>
+    <SinglePhaseMixedMFD
+      name="SinglePhaseFlow"
+      discretization="singlePhaseMixedMFD"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="2"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="2.0e7" />
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7" />
+  </FieldSpecifications>
+
+  <Events
+    minTime="0.0"
+    maxTime="86400">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="86400"
+      target="/Outputs/vtkConsistencyMixedMFD"/>
+    <PeriodicEvent
+      name="solverApplications"
+      endTime="86400"
+      maxEventDt="86400"
+      target="/Solvers/SinglePhaseFlow"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkConsistencyMixedMFD"/>
+  </Outputs>
+
+</Problem>

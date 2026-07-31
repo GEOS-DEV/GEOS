@@ -1,0 +1,132 @@
+<?xml version="1.0" ?>
+
+<!-- Smoke test for SinglePhaseMixedMFD on a K-orthogonal structured grid:
+     the Global Adaptation indicator should mark 0 cells as MFD-compatible,
+     and the solution should coincide with the TPFA solution (linear pressure
+     profile between the west and east boundary pressures). -->
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="westBC"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ +0.001, 1.001, 1.001 }"/>
+    <Box
+      name="eastBC"
+      xMin="{ 9.999, -0.001, -0.001 }"
+      xMax="{ 10.001, 1.001, 1.001 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rock, fluid }"/>
+  </ElementRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseMixedMFD
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseMixedMFD"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="singlePhaseMixedMFD"
+        innerProductType="quasiTPFA"
+        adaptationType="global"
+        residualTolerance="1.0e-3"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000.0"
+      referenceDensity="1000.0"
+      defaultViscosity="0.001"
+      referenceViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      densityModelType="linear"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="1.5e7"/>
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="2.0e7"/>
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7"/>
+  </FieldSpecifications>
+
+  <Events
+    minTime="0.0"
+    maxTime="86400">
+    <PeriodicEvent
+      name="solverApplications"
+      endTime="86400"
+      maxEventDt="86400"
+      target="/Solvers/SinglePhaseFlow"/>
+  </Events>
+
+  <Outputs/>
+
+</Problem>
