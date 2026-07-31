@@ -33,21 +33,6 @@ namespace fields
 namespace well
 {
 
-DECLARE_FIELD( connectionRate,
-               "connectionRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Connection rate" );
-
-DECLARE_FIELD( connectionRate_n,
-               "connectionRate_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Connection rate at the previous converged time step" );
 
 DECLARE_FIELD( density_n,
                "density_n",
