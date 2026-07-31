@@ -51,6 +51,7 @@ SinglePhaseMixedMFD::SinglePhaseMixedMFD( const string & name,
 {
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD;
 }
 
 void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
@@ -451,6 +452,7 @@ void SinglePhaseMixedMFD::assembleFluxTerms( real64 const dt,
                                                    faceDofKey,
                                                    nodeManager,
                                                    faceManager,
+                                                   mesh.getElemManager(),
                                                    subRegion,
                                                    mimeticInnerProductBase,
                                                    fluid,

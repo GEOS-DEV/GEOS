@@ -160,6 +160,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/SinglePhaseMixedMFD.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
           interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
