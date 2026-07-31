@@ -245,7 +245,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
   }
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecification, EquilibriumInitialCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, EquilibriumInitialCondition, string const &, Group * const )
 
 
 } /* namespace geos */

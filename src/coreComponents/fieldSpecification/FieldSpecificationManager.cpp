@@ -14,6 +14,8 @@
  */
 
 #include "FieldSpecificationManager.hpp"
+#include "FieldSpecificationABC.hpp"
+#include "FieldSpecificationFactory.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshObjectPath.hpp"
@@ -33,7 +35,6 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 
   GEOS_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
   m_instance = this;
-
 }
 
 FieldSpecificationManager::~FieldSpecificationManager()
@@ -53,8 +54,8 @@ FieldSpecificationManager & FieldSpecificationManager::getInstance()
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< FieldSpecification > bc =
-    FieldSpecification::CatalogInterface::factory( childKey, getDataContext(), childName, this );
+  std::unique_ptr< FieldSpecificationABC > bc =
+    FieldSpecificationABC::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup( childName, std::move( bc ) );
 }
 
@@ -62,9 +63,32 @@ Group * FieldSpecificationManager::createChild( string const & childKey, string 
 void FieldSpecificationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for( auto & catalogIter: FieldSpecification::getCatalog())
+  for( auto & catalogIter: FieldSpecificationABC::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+void FieldSpecificationManager::postInputInitialization()
+{
+  using ProcessorRegistry = FieldSpecificationProcessorRegistry;
+
+  // as the subgroup list can change during expansion, we need an immutable list
+  stdVector< FieldSpecificationABC const * > fieldSpecifications;
+  this->forSubGroups< FieldSpecificationABC >( [&] ( FieldSpecificationABC const & fs )
+  {
+    fieldSpecifications.push_back( &fs );
+  } );
+
+  auto const & processors = ProcessorRegistry::getProcessors();
+  for( FieldSpecificationABC const * fs : fieldSpecifications )
+  {
+    auto it = processors.find( fs->getCatalogName());
+    if( it != processors.end())
+    {
+      ProcessorRegistry::ProcessorBase const & processor = *it->second;
+      processor.expandFieldSpecification( *fs, *this );
+    }
   }
 }
 

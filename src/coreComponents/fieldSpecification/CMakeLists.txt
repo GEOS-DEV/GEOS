@@ -26,12 +26,15 @@ set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
      EquilibriumInitialCondition.hpp
      FieldSpecification.hpp
+     FieldSpecificationABC.hpp
+     FieldSpecificationFactory.hpp
      FieldSpecificationManager.hpp
      FieldSpecificationImpl.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
+     PermeabilitySpecification.hpp
    )
 
 #
@@ -41,11 +44,14 @@ set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
      EquilibriumInitialCondition.cpp
      FieldSpecification.cpp
+     FieldSpecificationABC.cpp
+     FieldSpecificationFactory.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
      TractionBoundaryCondition.cpp
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
+     PermeabilitySpecification.cpp
    )
 
 set( dependencyList ${parallelDeps} mesh )

@@ -297,6 +297,7 @@
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="HydrostaticEquilibrium" type="HydrostaticEquilibriumType" />
 			<xsd:element name="PML" type="PMLType" />
+			<xsd:element name="PermeabilitySpecification" type="PermeabilitySpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
@@ -336,6 +337,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
+	<xsd:complexType name="PermeabilitySpecificationType" />
 	<xsd:complexType name="SourceFluxType">
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->

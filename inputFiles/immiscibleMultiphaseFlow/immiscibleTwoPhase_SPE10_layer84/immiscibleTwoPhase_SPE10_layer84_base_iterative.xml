@@ -91,33 +91,13 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
+    <PermeabilitySpecification
+      name="perm"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
-      functionName="permxFunc"
-      scale="9.869233e-16"/>
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
-      functionName="permyFunc"
-      scale="9.869233e-16"/>
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
-      functionName="permzFunc"
-      scale="9.869233e-16"/>
+      regionNames="reservoir/block"
+      permeabilityModelName="rockPerm"
+      functionName="{ permxFunc, permyFunc, permzFunc }"
+      scale="{ 9.869233e-16, 9.869233e-16, 9.869233e-16 }"/>
 
     <FieldSpecification
       name="referencePorosity"

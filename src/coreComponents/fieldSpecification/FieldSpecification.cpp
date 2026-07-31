@@ -20,17 +20,9 @@ namespace geos
 using namespace dataRepository;
 
 FieldSpecification::FieldSpecification( string const & name, Group * parent ):
-  Group( name, parent )
+  FieldSpecificationABC( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Names of sets that the boundary condition is applied to.\n"
-                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).\n"
-                    "A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
 
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -54,42 +46,6 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Direction to apply boundary condition to." );
 
-  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
-
-  registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." );
-
-  registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Boundary condition is applied as an initial condition." );
-
-  registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
-    setApplyDefaultValue( -1.0e99 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Time at which the boundary condition will start being applied." );
-
-  registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
-    setApplyDefaultValue( 1.0e99 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Time at which the boundary condition will stop being applied." );
-
-  registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( SetErrorMode::error ).
-    setDescription( GEOS_FMT( "Set the log state when a “set” does not target any region\n"
-                              "When set to \"{}\", no output.\n"
-                              "When set to \"{}\", output a warning.\n"
-                              "When set to \"{}\", output a throw.\n",
-                              EnumStrings< SetErrorMode >::toString( SetErrorMode::silent ),
-                              EnumStrings< SetErrorMode >::toString( SetErrorMode::warning ),
-                              EnumStrings< SetErrorMode >::toString( SetErrorMode::error )  ));
 }
 
 
@@ -106,25 +62,14 @@ FieldSpecification::getCatalog()
 
 void FieldSpecification::postInputInitialization()
 {
-  { // both conditions work together
-    GEOS_THROW_IF( !m_functionNames.empty() &&
-                   m_functionNames.size() != 1 &&
-                   m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
-                   GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
-                              "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
-                              viewKeyStruct::functionNamesString(), m_functionNames.size(),
-                              viewKeyStruct::scalesString(), m_scales.size(),
-                              viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
-                   InputError,
-                   getDataContext() );
+  FieldSpecificationABC::postInputInitialization();
 
-    GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
-                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
-                              viewKeyStruct::componentString(),
-                              viewKeyStruct::scalesString() ),
-                   InputError,
-                   getDataContext() );
-  }
+  GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
+                 GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
+                            viewKeyStruct::componentString(),
+                            viewKeyStruct::scalesString() ),
+                 InputError,
+                 getDataContext() );
 }
 
 void FieldSpecification::validateNumArrayComp( localIndex numComp )
@@ -184,6 +129,6 @@ void FieldSpecification::setMeshObjectPath( Group const & meshBodies )
 
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecification, FieldSpecification, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, FieldSpecification, string const &, Group * const )
 
 }

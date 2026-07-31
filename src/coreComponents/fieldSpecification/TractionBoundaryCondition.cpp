@@ -440,7 +440,7 @@ void TractionBoundaryCondition::reinitScaleSet( FaceManager const & faceManager,
   } );
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecification, TractionBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, TractionBoundaryCondition, string const &, Group * const )
 
 
 } /* namespace geos */

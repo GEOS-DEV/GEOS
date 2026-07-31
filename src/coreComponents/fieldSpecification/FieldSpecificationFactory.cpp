@@ -14,29 +14,16 @@
  */
 
 /**
- * @file DirichletBoundaryCondition.cpp
+ * @file FieldSpecificationFactory.cpp
  */
 
-#include "DirichletBoundaryCondition.hpp"
+#include "FieldSpecificationFactory.hpp"
 
 namespace geos
 {
-using namespace dataRepository;
 
-DirichletBoundaryCondition::DirichletBoundaryCondition( string const & name, Group * const parent ):
-  FieldSpecification( name, parent )
-{
-  // TODO Auto-generated constructor stub
+using Registry = FieldSpecificationProcessorRegistry;
 
-}
+stdMap< string, Registry::ProcessorBase const * > Registry::s_processors;
 
-DirichletBoundaryCondition::~DirichletBoundaryCondition()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
-REGISTER_CATALOG_ENTRY( FieldSpecificationABC, DirichletBoundaryCondition, string const &, Group * const )
-
-} /* namespace geos */
+} // namespace geos

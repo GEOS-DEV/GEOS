@@ -30,6 +30,7 @@
 #include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "FieldSpecificationABC.hpp"
 
 namespace geos
 {

@@ -43,6 +43,6 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
                               FieldSpecification::viewKeyStruct::functionNamesString() ) );
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecification, SourceFluxBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, SourceFluxBoundaryCondition, string const &, Group * const )
 
 } /* namespace geos */
