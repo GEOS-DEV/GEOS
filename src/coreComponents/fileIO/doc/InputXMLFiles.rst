@@ -479,12 +479,13 @@ Input files can be archived using the ``-a`` or ``--archive`` command-line optio
 Using this option, input files will be copied and flattened into a single file located in the output directory.
 
 .. code-block:: bash
-    geosx -i input.xml -a 1 -o output_directory
+
+  geosx -i input.xml -a 1 -o output_directory
 
 
 A copy of the XML schema can also be added to the archive with the ``-a 2`` option.
 
 .. code-block:: bash
 
-    # The -a 2 option also copies the XML schema
-    geosx -i input.xml -a 2 -o output_directory
+  # The -a 2 option also copies the XML schema
+  geosx -i input.xml -a 2 -o output_directory
