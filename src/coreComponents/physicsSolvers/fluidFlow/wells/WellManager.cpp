@@ -182,7 +182,9 @@ void WellManager::implicitStepSetup( real64 const & time_n,
                                                         [&]( localIndex const,
                                                              WellElementRegion & region )
     {
-      WellControls & well = getWell( region.getWellControlsName() );
+      // TODO expose a getWellControlsName() on WellElementRegion because Wrapper look-up is not useful here.
+      WellControls & well = getWell(
+        region.getReference< string >( WellElementRegion::viewKeyStruct::wellControlsString() ) );
       if( well.estimateSolution() )
       {
         well.setupWellDofs( domain, region, meshBodyName, mesh );

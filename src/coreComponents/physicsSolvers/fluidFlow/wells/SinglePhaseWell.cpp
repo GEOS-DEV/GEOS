@@ -526,11 +526,13 @@ real64 SinglePhaseWell::updateSubRegionState( real64 const time_n,
     updateBHPForConstraint( subRegion );
 
     // Broad case the updated well state to other ranks
+    // TODO: add the missing getters on SinglePhaseWell & WellElementSubRegion because look-up is not useful here.
     real64 & currentBHP =
       getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
     real64 & currentTotalVolRate =
       getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
-    integer topRank = subRegion.getTopRank();
+    integer topRank =
+      subRegion.getReference< integer >( WellElementSubRegion::viewKeyStruct::topRankString() );
     MpiWrapper::broadcast( currentBHP, topRank );
     MpiWrapper::broadcast( currentTotalVolRate, topRank );
     WellConstraintBase * constraint = getCurrentConstraint();

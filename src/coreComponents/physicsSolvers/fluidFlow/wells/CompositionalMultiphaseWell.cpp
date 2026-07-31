@@ -1062,7 +1062,8 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( real64 const time_n,
       getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
     real64 & currentMassRate =
       getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
-    integer topRank = subRegion.getTopRank();
+    integer topRank =
+      subRegion.getReference< integer >( WellElementSubRegion::viewKeyStruct::topRankString() );
     MpiWrapper::broadcast( currentBHP, topRank );
     MpiWrapper::bcast( currentPhaseVolRate.data(), LvArray::integerConversion< int >( currentPhaseVolRate.size() ), topRank );
     MpiWrapper::broadcast( currentTotalVolRate, topRank );
