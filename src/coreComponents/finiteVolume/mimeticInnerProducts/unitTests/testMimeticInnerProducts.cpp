@@ -1690,7 +1690,7 @@ TEST( MimeticIP_Linear, UnitCube_LinearPressure_BdVLM )
 TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
 {
   int neps = 3;
-  std::vector< double > eps_values( 3 );
+  stdVector< double > eps_values( 3 );
   eps_values[0] = 0.0;   // no distortion
   eps_values[1] = 0.2;   // moderate distortion
   eps_values[2] = 0.9;   // severe distortion
@@ -1731,7 +1731,7 @@ TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
 TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPressure )
 {
   int neps = 2;
-  std::vector< double > eps_values( 2 );
+  stdVector< double > eps_values( 2 );
   eps_values[0] = 0.2;   // moderate distortion
   eps_values[1] = 0.9;   // severe distortion
 
@@ -2036,7 +2036,7 @@ TEST( Hydrostatic, GravityConsistency_NoDistortion_BdVLM )
 TEST( Hydrostatic, GravityConsistency_Distortion_Planar )
 {
   int neps = 2;
-  std::vector< double > eps_values( 2 );
+  stdVector< double > eps_values( 2 );
   eps_values[0] = 0.2;   // moderate distortion
   eps_values[1] = 0.9;   // severe distortion
 
@@ -2063,7 +2063,7 @@ TEST( Hydrostatic, GravityConsistency_Distortion_Planar )
 TEST( Hydrostatic, GravityConsistency_Distortion_NonPlanar )
 {
   int neps = 2;
-  std::vector< double > eps_values( 2 );
+  stdVector< double > eps_values( 2 );
   eps_values[0] = 0.2;   // moderate distortion
   eps_values[1] = 0.9;   // severe distortion
 

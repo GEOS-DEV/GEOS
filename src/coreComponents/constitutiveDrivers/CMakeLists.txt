@@ -61,13 +61,6 @@ set( constitutiveDrivers_sources
 
 set( dependencyList ${parallelDeps} constitutive events )
 
-if( ENABLE_PVTPackage )
-    set( constitutiveDrivers_sources
-         ${constitutiveDrivers_sources}
-          fluid/multiFluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
-          )
-endif()
-
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
