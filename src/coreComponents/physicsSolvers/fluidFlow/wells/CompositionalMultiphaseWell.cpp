@@ -1502,7 +1502,7 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
   {
     for( integer i = 0; i < numNorm; ++i )
     {
-      localResidualNormalizer[i] = m_nonlinearSolverParameters.m_minNormalizer;
+      localResidualNormalizer[i] =  nonlinearSolverParameters.m_minNormalizer;
     }
   }
   else if( isThermal() )
