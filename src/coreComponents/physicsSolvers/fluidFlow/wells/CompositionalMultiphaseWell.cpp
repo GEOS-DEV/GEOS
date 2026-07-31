@@ -1498,16 +1498,16 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
 
   // step 1: compute the norm in the subRegion
 
-      if( !isWellOpen() )
-      {
-        for( integer i = 0; i < numNorm; ++i )
-        {
-          localResidualNormalizer[i] = m_nonlinearSolverParameters.m_minNormalizer;
-        }
-      }
-      else if( isThermal() )
-      {
-        real64 subRegionResidualNorm[2]{};
+  if( !isWellOpen() )
+  {
+    for( integer i = 0; i < numNorm; ++i )
+    {
+      localResidualNormalizer[i] = m_nonlinearSolverParameters.m_minNormalizer;
+    }
+  }
+  else if( isThermal() )
+  {
+    real64 subRegionResidualNorm[2]{};
 
     thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
