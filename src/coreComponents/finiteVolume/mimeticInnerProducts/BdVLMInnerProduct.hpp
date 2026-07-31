@@ -40,7 +40,7 @@ public:
 
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using the inner product of Beirao da Veiga, Lipnikov,
-   * Manzini
+   * Manzini (page 113)
    * @param[in] nodePosition the position of the nodes
    * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
@@ -65,6 +65,32 @@ public:
            real64 const (&elemPerm)[ 3 ],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
+
+  /**
+   * @brief Compute the mimetic inner product matrix M in a given element using the inner product of Beirao da Veiga, Lipnikov, Manzini
+   *(page 89)
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] lengthTolerance the tolerance used in the trans calculations
+   * @param[inout] M the output inner product matrix
+   *
+   * @details Reference: Beirao da Veiga, Lipnikov, Manzini, "The mimetic finite-difference method for elliptic problems"
+   */
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static void
+  computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+            ArrayOfArraysView< localIndex const > const & faceToNodes,
+            arraySlice1d< localIndex const > const & elemToFaces,
+            arraySlice1d< real64 const > const & elemCenter,
+            real64 const & elemVolume,
+            real64 const (&elemPerm)[ 3 ],
+            real64 const & lengthTolerance,
+            arraySlice2d< real64 > const & M );
 
 };
 
@@ -112,17 +138,12 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                  faceNormal,
                                                  areaTolerance );
 
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     cellToFaceMat[ ifaceLoc ][0] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 0 ];
     cellToFaceMat[ ifaceLoc ][1] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 1 ];
     cellToFaceMat[ ifaceLoc ][2] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 2 ];
-
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-    }
 
     // the two-point transmissibility is computed to computed here because it is needed
     // in the implementation of the transmissibility multiplier (see below)
@@ -205,6 +226,128 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                                          transMatrix );
   }
 
+}
+
+template< localIndex NF >
+GEOS_HOST_DEVICE
+void
+BdVLMInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodes,
+                             arraySlice1d< localIndex const > const & elemToFaces,
+                             arraySlice1d< real64 const > const & elemCenter,
+                             real64 const & elemVolume,
+                             real64 const (&elemPerm)[ 3 ],
+                             real64 const & lengthTolerance,
+                             arraySlice2d< real64 > const & M )
+{
+  GEOS_UNUSED_VAR( elemVolume );
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+
+  real64 cellToFaceMat[ NF ][ 3 ] = {{ 0 }};
+  real64 normalsMat[ NF ][ 3 ] = {{ 0 }};
+  real64 permMat[ 3 ][ 3 ] = {{ 0 }};
+  real64 faceAreaMat[ NF ][ NF ] = {{ 0 }};
+  real64 faceArea[ NF ] = { 0.0 };   // store diag(A)
+
+  real64 work_dimByDim[ 3 ][ 3 ] = {{ 0 }};
+  real64 work_numFacesByDim[ NF ][ 3 ] = {{ 0 }};
+  real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
+  real64 work_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+  // real64 tmp_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+
+  // 0) assemble full coefficient tensor from principal axis/components
+  MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
+
+  // 1) fill R (= cellToFaceMat) and normalsMat
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+  {
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
+
+    faceAreaMat[ ifaceLoc ][ ifaceLoc ] =
+      computationalGeometry::centroid_3DPolygon( faceToNodes[ elemToFaces[ ifaceLoc ] ],
+                                                 nodePosition,
+                                                 faceCenter,
+                                                 faceNormal,
+                                                 areaTolerance );
+
+    faceArea[ ifaceLoc ] = faceAreaMat[ ifaceLoc ][ ifaceLoc ];
+
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
+
+    // R row: A_f * (x_f - x_c)
+    cellToFaceMat[ ifaceLoc ][ 0 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 0 ];
+    cellToFaceMat[ ifaceLoc ][ 1 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 1 ];
+    cellToFaceMat[ ifaceLoc ][ 2 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 2 ];
+
+    // normalsMat row
+    normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
+    normalsMat[ ifaceLoc ][ 1 ] = faceNormal[ 1 ];
+    normalsMat[ ifaceLoc ][ 2 ] = faceNormal[ 2 ];
+  }
+
+  // 2) compute N
+  LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, 3 >( work_numFacesByDim,
+                                                 normalsMat,
+                                                 permMat );
+
+  // BdVLM inner product matrix M = M0 + M1 by Beirao da Veiga, Lipnikov, Manzini (pg.89)
+  // M0 = R (R^T N)^(-1) R^T
+
+  // 3) compute (R^T N)^-1 -> (3 X 3), work_dimByDim = R^T N
+  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, NF >( work_dimByDim,
+                                                 cellToFaceMat,
+                                                 work_numFacesByDim );
+  LvArray::tensorOps::invert< 3 >( work_dimByDim );
+
+  // 4) compute R (R^T N)^(-1) R^T into M
+  // work_dimByNumFaces = (R^T N)^-1 R^T -> (3 X NF)
+  LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work_dimByNumFaces,
+                                                 work_dimByDim,
+                                                 cellToFaceMat );
+
+  // M = R * work_dimByNumFaces  (NF x NF)
+  LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( M,
+                                                  cellToFaceMat,
+                                                  work_dimByNumFaces );
+
+  // P_N = I - N (N^T N)^(-1) N^T
+  // 5) compute (N^T N)^-1
+  LvArray::tensorOps::Rij_eq_AkiAkj< 3, NF >( work_dimByDim,
+                                              work_numFacesByDim );   // N
+  LvArray::tensorOps::invert< 3 >( work_dimByDim );
+
+  // 6) tmp = (N^T N)^-1 N^T
+  LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work_dimByNumFaces,
+                                                 work_dimByDim,
+                                                 work_numFacesByDim );
+
+  // 7) work_numFacesByNumFaces = -I + N * tmp
+  LvArray::tensorOps::addIdentity< NF >( work_numFacesByNumFaces, -1.0 );
+  LvArray::tensorOps::Rij_add_AikBkj< NF, NF, 3 >( work_numFacesByNumFaces,
+                                                   work_numFacesByDim,   // N
+                                                   work_dimByNumFaces    // tmp
+                                                   );
+
+  // 8) M = M0 + gamma * P_N
+  real64 const gamma = 1.0 / static_cast< real64 >( NF );
+  LvArray::tensorOps::scaledAdd< NF, NF >( M, work_numFacesByNumFaces, -gamma );
+
+  // convert to flux-based inner product: M_flux = A^{-1} M_vel A^{-1}
+  // here, A is diag(faceArea)
+  real64 invA[ NF ];
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    invA[ i ] = 1.0 / faceArea[ i ];
+  }
+
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    for( localIndex j = 0; j < NF; ++j )
+    {
+      M[ i ][ j ] *= invA[ i ] * invA[ j ];
+    }
+  }
 }
 
 } // end namespace mimeticInnerProduct
