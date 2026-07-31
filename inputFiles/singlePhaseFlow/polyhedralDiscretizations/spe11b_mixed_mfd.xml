@@ -58,8 +58,12 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="5"/>
-      <LinearSolverParameters
-        directParallel="0"/>
+<!--       <LinearSolverParameters
+        directParallel="0"/> -->
+    <LinearSolverParameters
+      solverType="fgmres"
+      preconditionerType="mgr"
+      krylovTol="1.0e-10"/>        
     </SinglePhaseMixedMFD>
   </Solvers>
 
