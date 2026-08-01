@@ -528,6 +528,115 @@ TEST( HypredriveSolverSelection, HonorsLegacyOverride )
   EXPECT_NE( dynamic_cast< HypreSolver * >( solver.get() ), nullptr );
 }
 
+void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params )
+{
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 100, matrix );
+
+  HypreVector rhs;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+
+  HypreVector solHypredrive;
+  HypreVector solLegacy;
+  solHypredrive.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  solLegacy.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  solHypredrive.zero();
+  solLegacy.zero();
+
+  HypredriveSolver hypredriveSolver( params );
+  hypredriveSolver.setup( matrix );
+  hypredriveSolver.solve( rhs, solHypredrive );
+  ASSERT_TRUE( hypredriveSolver.result().success() );
+  hypredriveSolver.clear();
+
+  HypreSolver legacySolver( params );
+  legacySolver.setup( matrix );
+  legacySolver.solve( rhs, solLegacy );
+  ASSERT_TRUE( legacySolver.result().success() );
+  legacySolver.clear();
+
+  // Same algorithm on both paths: iteration counts must agree up to one iteration.
+  EXPECT_LE( std::abs( hypredriveSolver.result().numIterations - legacySolver.result().numIterations ), 1 );
+
+  // Both solutions satisfy the same tolerance; their difference is bounded by
+  // the solve tolerance amplified by the operator conditioning.
+  HypreVector difference( solHypredrive );
+  difference.axpy( -1.0, solLegacy );
+  EXPECT_LE( difference.norm2() / solLegacy.norm2(), 1e-9 );
+
+  // Both must satisfy the requested tolerance against the true residual.
+  HypreVector residual( rhs );
+  matrix.residual( solHypredrive, rhs, residual );
+  EXPECT_LE( residual.norm2() / rhs.norm2(), 2.0 * params.krylov.relTolerance );
+}
+
+TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmg )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.relTolerance = 1e-12;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  compareHypredriveAndLegacySolutions( params );
+}
+
+TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceBicgstabIlu )
+{
+  // Second solver/preconditioner combination supported by the generated-YAML path.
+  // (The 2D elasticity test operator is assembled without Dirichlet conditions and is
+  // singular, so equivalence is exercised on the Laplace operator only.)
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::bicgstab;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.krylov.relTolerance = 1e-12;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  compareHypredriveAndLegacySolutions( params );
+}
+
+TEST( HypredriveLogging, WarnsOnceWhenGeneratedYamlFallsBackToLegacy )
+{
+  // AMG with rigid-body-mode near null space is not representable in generated
+  // hypredrive YAML, so the adapter must warn once and fall back to the legacy
+  // solver, which treats an absent null space benignly.
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+  params.krylov.relTolerance = 1e-10;
+  params.logLevel = 0;
+
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 20, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  HypredriveSolver solver( params );
+
+  ScopedCoutCapture capture;
+  solver.setup( matrix );
+  solver.setup( matrix );
+  std::string const output = capture.str();
+
+  std::string const warning = "falling back to the legacy hypre solver";
+  std::string::size_type const first = output.find( warning );
+  EXPECT_NE( first, std::string::npos );
+  EXPECT_EQ( output.find( warning, first + warning.size() ), std::string::npos );
+
+  solver.solve( rhs, sol );
+  EXPECT_TRUE( solver.result().success() );
+  solver.clear();
+}
+
 TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
 {
   HypreMatrix matrix1;

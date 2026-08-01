@@ -51,13 +51,29 @@ decks = [
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="staircase_single_phase_wells_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
+    TestDeck(
         name="staircase_single_phase_wells_hybrid_3d",
         description=
         'Single phase flow test (3D staircase, hybrid FVM, compressible, 2 wells)',
         partitions=((1, 1, 1), (2, 2, 2)),
         restart_step=5,
         check_step=10,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="staircase_single_phase_wells_hybrid_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5))
 ]
 
 generate_geos_tests(decks)

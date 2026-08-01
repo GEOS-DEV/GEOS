@@ -94,7 +94,7 @@ public:
   {
     // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
     // in that case, we just use Jacobi
-    if( !mgrParams.areWellsShut )
+    if( mgrParams.areWellsShut )
     {
       m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
     }

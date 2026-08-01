@@ -9,8 +9,10 @@
       logLevel="1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
+        logLevel="1"
         solverType="gmres"
-        preconditionerType="mgr"/>
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianFEM

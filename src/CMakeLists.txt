@@ -336,6 +336,18 @@ if ( ENABLE_ATS )
                        DEPENDS ats_environment
                      )
 
+    if( ENABLE_HYPREDRV )
+        # Re-run the suite through the legacy hypre path on a hypredrive-enabled build.
+        # Together with a regular ats_run this verifies that the hypredrive and legacy
+        # paths produce the same results against the shared baselines.
+        add_custom_target( ats_run_force_legacy
+                           COMMAND ${CMAKE_COMMAND} -E env GEOS_HYPREDRV_FORCE_LEGACY=1
+                                   ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh
+                           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                           DEPENDS ats_environment
+                         )
+    endif()
+
     add_custom_target( ats_clean
                        COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a veryclean
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

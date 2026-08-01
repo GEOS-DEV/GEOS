@@ -183,6 +183,16 @@ def _build_Terzaghi_cases():
                                              description, restartcheck_params)
 
 
+def _build_Terzaghi_mgr_cases():
+    description = Description(
+        "Terzaghi's 1D Consolidation with hypre MGR (exercises the hypredrive path when available)",
+        "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_Terzaghi_mgr_smoke.xml", (50, 91),
+        ((1, 1, 1), (2, 1, 1), (7, 1, 1)), description, restartcheck_params)
+
+
 def _build_Mandel_fim_cases():
     description = Description("Mandel's 2D Consolidation on ranks", "auto",
                               "Nicola Castelletto, Jian Huang", True)
@@ -208,6 +218,36 @@ def _build_Mandel_prism6_cases():
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
     return _build_poro_elastic_coupling_case(
         "PoroElastic_Mandel_prism6_smoke.xml", (2, 4), ((1, 1, 1), ),
+        description, restartcheck_params)
+
+
+def _build_Deadoil_fim_mgr_cases():
+    description = Description(
+        "Deadoil 3 phase poroelastic case with hypre MGR "
+        "(exercises the hypredrive path when available)", "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_deadoil_3ph_baker_2d_fim_mgr.xml", (0, 15),
+        ((1, 1, 1), (2, 1, 2)), description, restartcheck_params)
+
+
+def _build_PoroStaircaseSinglePhasePeacemanWell_fim_mgr_cases():
+    description = Description(
+        "Staircase single-phase poroelastic problem with Peaceman wells and hypre MGR "
+        "(exercises the hypredrive path when available)", "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 1.0e-6}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_staircase_singlephase_3d_fim_mgr.xml", (6, 11),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+
+
+def _build_Mandel_prism6_mgr_cases():
+    description = Description(
+        "Mandel's 2D Consolidation using VEM-MFD (hybrid FVM) with hypre MGR "
+        "(exercises the hypredrive path when available)", "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-4, "rtol": 1.0e-5}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_Mandel_prism6_mgr_smoke.xml", (2, 4), ((1, 1, 1), ),
         description, restartcheck_params)
 
 
@@ -310,6 +350,16 @@ def _build_PoroStaircaseCO2PeacemanWell_fim_cases():
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
         "PoroElastic_staircase_co2_3d_fim.xml", (22, 33),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+
+
+def _build_PoroStaircaseCO2PeacemanWell_fim_mgr_cases():
+    description = Description(
+        "Staircase CO2 poroelastic problem with Peaceman wells and hypre MGR "
+        "(exercises the hypredrive path when available)", "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_staircase_co2_3d_fim_mgr.xml", (22, 33),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
@@ -418,10 +468,13 @@ def _build_PoroElasticCarmanKozenySequential_cases():
 def test_poro_elastic_coupling_cases():
     deck_instances = [
         _build_Terzaghi_cases(),
+        _build_Terzaghi_mgr_cases(),
         _build_Mandel_fim_cases(),
         _build_Mandel_sequential_cases(),
         _build_Mandel_prism6_cases(),
+        _build_Mandel_prism6_mgr_cases(),
         _build_Deadoil_fim_cases(),
+        _build_Deadoil_fim_mgr_cases(),
         _build_Deadoil_sequential_cases(),
         _build_PoroElasticWell_cases(),
         _build_PoroDruckerPragerWell_cases(),
@@ -430,8 +483,10 @@ def test_poro_elastic_coupling_cases():
         _build_PoroImpermeableFault_cases(),
         _build_PoroPermeableFault_cases(),
         _build_PoroStaircaseSinglePhasePeacemanWell_fim_cases(),
+        _build_PoroStaircaseSinglePhasePeacemanWell_fim_mgr_cases(),
         _build_PoroStaircaseSinglePhasePeacemanWell_sequential_cases(),
         _build_PoroStaircaseCO2PeacemanWell_fim_cases(),
+        _build_PoroStaircaseCO2PeacemanWell_fim_mgr_cases(),
         _build_PoroStaircaseCO2PeacemanWell_sequential_cases(),
         _build_PoroElasticPEBICO2FIM_cases(),
         _build_PoroElasticPEBICO2Sequential_cases(),

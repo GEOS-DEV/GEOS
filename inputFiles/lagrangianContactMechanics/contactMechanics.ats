@@ -47,6 +47,14 @@ decks = [
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="ContactMechanics_TFrac_mgr_smoke",
+        description=
+        "Two intersecting fractures with hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="ContactMechanics_SingleFracCompression_smoke",
         description=
         "Single tilted fracture subjected to remote compression (unstructured grid)",
@@ -105,6 +113,14 @@ decks = [
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="ALM_TFrac_mgr_smoke",
+        description=
+        "ALM contact with hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(atol=1e-3, rtol=1e-4)),
+    TestDeck(
         name="ALM_SingleFracCompression_smoke",
         description=
         "Single tilted fracture subjected to remote compression (unstructured grid)",
@@ -128,6 +144,14 @@ decks = [
                     # (1, 1, 1),
                     (2, 2, 1),
                     ),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="LagrangeContactBubbleStab_FixedSlip_mgr_smoke",
+        description=
+        "Bubble-stabilized Lagrange contact with hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))

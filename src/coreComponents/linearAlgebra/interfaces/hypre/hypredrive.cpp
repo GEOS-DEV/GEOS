@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cfenv>
 #include <cstdlib>
 #include <fstream>
 #include <numeric>
@@ -290,6 +291,8 @@ char const * getGeneratedMGRFRelaxationName( hypre::MGRFRelaxationType const rel
       return "jacobi";
     case RelaxationType::l1jacobi:
       return "l1-jacobi";
+    case RelaxationType::ilu:
+      return "ilu";
     case RelaxationType::gsElim:
       return "ge";
     case RelaxationType::gsElimWPivoting:
@@ -855,10 +858,10 @@ bool buildILUPreconditionerYaml( LinearSolverParameters const & params,
   {
     appendLine( stream, 2, GEOS_FMT( "droptol: {}", params.ifact.threshold ) );
   }
-  if( params.dofsPerNode > 1 )
-  {
-    appendLine( stream, 2, "reordering: 0" );
-  }
+  // Match the legacy hypre path: local RCM reordering (hypre's default) for scalar
+  // systems, reordering disabled for multi-component systems to avoid problems with
+  // mechanics. hypredrive defaults to no reordering, so the value must always be emitted.
+  appendLine( stream, 2, GEOS_FMT( "reordering: {}", params.dofsPerNode > 1 ? 0 : 1 ) );
 
   yaml = stream.str();
   return true;
@@ -1687,6 +1690,14 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
                                                      numComponentsPerField,
                                                      parseTarget ) )
   {
+    if( !m_reportedGeneratedYamlFailure )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: hypredrive input generation failed for the current "
+                                 "linear-solver configuration; falling back to the legacy hypre solver",
+                                 ( m_hasExecutionContext && !m_executionContext.solverName.empty() )
+                                   ? m_executionContext.solverName : "linear solver" ) );
+      m_reportedGeneratedYamlFailure = true;
+    }
     return false;
   }
 
@@ -1724,6 +1735,10 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
   }
 
   syncExecutionAnnotations();
+
+  // As on the legacy hypre path, floating point exceptions must be disabled while
+  // hypre builds the preconditioner (benign FPEs occur, e.g. in MGR interpolation setup).
+  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
   checkHypredriveCall( HYPREDRV_AnnotateBegin( m_hypredrive, "system", -1 ),
                        "HYPREDRV_AnnotateBegin" );

@@ -165,7 +165,8 @@ Usage: $0
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypredrv
-      One of ON or OFF (default is OFF). Build geos with hypredrive.
+      One of ON or OFF (default is OFF). Build geos with hypredrive support
+      (requires hypre and a TPL image providing a hypredrive install).
       Overrides the TPL image host-config, which may set ENABLE_HYPREDRV ON.
   --enable-hypre-device
       One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
@@ -208,7 +209,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-hypredrv:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -331,6 +332,15 @@ fi
 
 configure_openssl_for_non_fips_ubuntu_container
 print_crypto_diagnostics
+
+# Hypredrive support. GEOS_REQUIRE_HYPREDRV turns the silent
+# "ENABLE_HYPREDRV forced OFF because HYPREDRV_DIR is missing" downgrade into a
+# configuration error, so a CI job cannot silently test the legacy path instead.
+HYPREDRV_CMAKE_ARGS=()
+if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
+  HYPREDRV_CMAKE_ARGS=(-DHYPREDRV_DIR=${GEOSX_TPL_DIR}/hypredrive
+                       -DGEOS_REQUIRE_HYPREDRV=ON)
+fi
 
 if [[ "${USE_SCCACHE}" == true ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
@@ -471,6 +481,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_HYPREDRV=${ENABLE_HYPREDRV} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
+               "${HYPREDRV_CMAKE_ARGS[@]}" \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
@@ -568,6 +579,35 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
   ATS_RUN_STATUS=$?
 
+  if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
+    # On a hypredrive-enabled build the previous pass exercised the hypredrive
+    # solver path. Verify it actually ran (guards against silent fallback), then
+    # re-run the suite through the legacy hypre path against the same baselines,
+    # so hypredrive-vs-legacy equivalence is checked within a single job.
+    HYPREDRV_BANNER_STATUS=0
+    grep -rl "hypredrive input" integratedTests/workingDir > /dev/null 2>&1 || HYPREDRV_BANNER_STATUS=$?
+    if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
+      echo "ERROR: no 'hypredrive input' banner found in any integrated-test log; the hypredrive path was not exercised."
+    fi
+
+    echo "Re-running integrated tests through the legacy hypre path..."
+    # Keep the hypredrive pass results; the second pass overwrites TestResults.
+    cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
+    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
+            integratedTests/workingDir -o $tempdir/iterations_hypredrive.json
+    integratedTests/geos_ats.sh -a veryclean
+    GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
+    ATS_LEGACY_RUN_STATUS=$?
+
+    # Restart checks compare solution fields only; additionally require iteration-count
+    # parity between the two passes so solver-quality regressions cannot pass silently.
+    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
+            integratedTests/workingDir -o $tempdir/iterations_legacy.json
+    ITER_PARITY_STATUS=0
+    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
+            $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json || ITER_PARITY_STATUS=$?
+  fi
+
   PROCESS_LOGS_STATUS=0
   echo "Processing logs..."
   bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt || PROCESS_LOGS_STATUS=$?
@@ -580,6 +620,18 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   LOG_CHECK_STATUS=$?
   cat $tempdir/log_check.txt
+  if [[ -f $tempdir/test_results_hypredrive.ini ]]; then
+    # Also gate on the hypredrive pass saved before the forced-legacy re-run.
+    bin/geos_ats_log_check $tempdir/test_results_hypredrive.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check_hypredrive.txt
+    cat $tempdir/log_check_hypredrive.txt
+    if ! grep -q "Overall status: PASSED" "$tempdir/log_check_hypredrive.txt"; then
+      echo "Hypredrive-path integrated tests did not pass."
+      LOG_CHECK_STATUS=1
+      # Force the rebaseline branch below to report failure.
+      echo "Overall status: FAILED (hypredrive pass)" >> $tempdir/log_check.txt
+      sed -i 's/Overall status: PASSED//' $tempdir/log_check.txt
+    fi
+  fi
 
   if [[ "${ATS_RUN_STATUS}" -eq 0 && "${LOG_CHECK_STATUS}" -eq 0 ]] && grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."

@@ -11,6 +11,14 @@ decks = [
         check_step=683,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="ThermoPoroElastic_consolidation_mgr_smoke_fim",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (1, 2, 1)),
+        restart_step=633,
+        check_step=683,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-6)),
+    TestDeck(
         name="ThermoPoroElastic_consolidation_smoke_sequential",
         description=
         '1D thermo poro elastic case consolidation problem (sequential)',
@@ -25,6 +33,14 @@ decks = [
         restart_step=22,
         check_step=33,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoPoroElastic_staircase_co2_mgr_smoke",
+        description=
+        "Thermal multiphase poromechanics staircase with hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=22,
+        check_step=33,
+        restartcheck_params=RestartcheckParameters(atol=1e-5, rtol=2e-7)),
     TestDeck(
         name="ThermoPoroDruckerPrager_consolidation_smoke",
         description=
