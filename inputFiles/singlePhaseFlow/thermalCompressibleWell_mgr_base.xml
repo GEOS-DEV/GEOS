@@ -8,7 +8,7 @@
       wellSolverName="singlePhaseWell"
       logLevel="1"
       initialDt="1e3"
-      targetRegions="{region , wellRegion2 }">
+      targetRegions="{ region , wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         maxTimeStepCuts="10"
@@ -31,28 +31,32 @@
       discretization="tpfaFlow"
       temperature="353.0"
       isThermal="1"
-      targetRegions="{ region }">
-    </SinglePhaseFVM>
+      targetRegions="{ region }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWell"
       logLevel="1"
       isThermal="1"
       targetRegions="{ wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
         control="BHP"
-        referenceElevation="-0.01"
-        targetBHP="1.45e7"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15"
-        targetTotalRate="15"
-        injectionTemperature="323"
-        injectionStream="{1.0,0.0}"/>
-    </SinglePhaseWell>
+        surfaceTemperature="300.15">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1.45e7"
+          referenceElevation="-0.01"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="15"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="323"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Geometry>
@@ -79,13 +83,13 @@
       name="region"
       cellBlocks="{ * }"
       materialList="{ fluid, rock, thermalCond }"/>
+
     <WellElementRegion
       name="wellRegion2"
       materialList="{ fluid }"/>
   </ElementRegions>
 
   <Constitutive>
-
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
@@ -127,11 +131,9 @@
     <SinglePhaseThermalConductivity
       name="thermalCond"
       defaultThermalConductivityComponents="{ 3.5, 3.5, 3.5 }"/>
-    
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -150,18 +152,17 @@
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"       
+      setNames="{ sink }"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
       scale="7e6"/>
 
     <FieldSpecification
       name="sinkTemperature"
-      setNames="{ sink }"       
+      setNames="{ sink }"
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
       scale="473.0"/>
-
   </FieldSpecifications>
 
   <Outputs>
