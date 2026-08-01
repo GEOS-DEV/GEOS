@@ -174,6 +174,54 @@ struct FaceFluxProjectionKernel
   }
 };
 
+/******************************** FaceLabelKernel ********************************/
+
+/**
+ * @class FaceLabelKernel
+ * @brief Classify the faces from the cell-wise stencil activation flags: a face whose
+ *        adjacent target cells are all TPFA-compatible gets label 0 (its constitutive row
+ *        is exactly diagonal and the flux can be condensed into a two-point expression);
+ *        a face adjacent to at least one MFD-compatible cell gets label 1 (live unknown).
+ *        When the selected inner product is itself TPFA, the effective operator is diagonal
+ *        everywhere and all faces get label 0.
+ */
+struct FaceLabelKernel
+{
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  template< typename POLICY >
+  static void
+  launch( localIndex const numFaces,
+          arrayView2d< localIndex const > const & elemRegionList,
+          arrayView2d< localIndex const > const & elemSubRegionList,
+          arrayView2d< localIndex const > const & elemList,
+          SortedArrayView< localIndex const > const & regionFilter,
+          ElementViewConst< arrayView1d< integer const > > const & stencilFlag,
+          bool const effectiveTpfa,
+          arrayView1d< integer > const & faceStencilLabel )
+  {
+    forAll< POLICY >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    {
+      integer label = 0;
+      if( !effectiveTpfa )
+      {
+        for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
+        {
+          localIndex const er  = elemRegionList[kf][k];
+          localIndex const esr = elemSubRegionList[kf][k];
+          localIndex const ei  = elemList[kf][k];
+          if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
+          {
+            label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
+          }
+        }
+      }
+      faceStencilLabel[kf] = label;
+    } );
+  }
+};
+
 /******************************** LocalResidualKernel ********************************/
 
 /**

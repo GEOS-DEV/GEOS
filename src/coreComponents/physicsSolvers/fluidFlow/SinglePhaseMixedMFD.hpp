@@ -183,6 +183,12 @@ private:
   void computeGlobalAdaptationIndicators( DomainPartition & domain );
 
   /**
+   * @brief Classify the faces from the cell marking (0 = condensable TPFA face, 1 = live MFD face).
+   * @param[in] domain the domain
+   */
+  void computeFaceStencilLabels( DomainPartition & domain );
+
+  /**
    * @brief Build the per-dof labels used by the stencilFlag-guided three-level MGR strategy:
    *        0 = face flux with exactly-diagonal row (all adjacent cells TPFA-compatible),
    *        1 = face flux adjacent to at least one MFD-compatible cell,

@@ -65,6 +65,15 @@ DECLARE_FIELD( consistencyIndicator,
                WRITE_AND_READ,
                "Residual-based consistency indicator per cell (Global Adaptation)" );
 
+DECLARE_FIELD( faceStencilLabel,
+               "faceStencilLabel",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Face classification for the adaptive solver (0 = all adjacent cells TPFA-compatible: the flux is condensed "
+               "into a two-point expression; 1 = adjacent to at least one MFD-compatible cell: the flux stays a live unknown)" );
+
 DECLARE_FIELD( faceResidual,
                "faceResidual",
                array1d< real64 >,

@@ -99,6 +99,11 @@ void MixedMimeticDiscretization::initializePostInitialConditionsPreSubGroups()
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
+bool MixedMimeticDiscretization::isTpfaInnerProduct() const
+{
+  return m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA;
+}
+
 MixedMimeticDiscretization::CatalogInterface::CatalogType &
 MixedMimeticDiscretization::getCatalog()
 {

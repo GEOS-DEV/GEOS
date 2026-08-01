@@ -90,6 +90,11 @@ public:
   bool isAdaptive() const { return m_isAdaptive == 1; }
 
   /**
+   * @brief @return Whether the selected inner product is the (diagonal) TPFA inner product
+   */
+  bool isTpfaInnerProduct() const;
+
+  /**
    * @brief @return The residual tolerance used in the marking criterion
    */
   real64 getResidualTolerance() const { return m_residualTolerance; }
