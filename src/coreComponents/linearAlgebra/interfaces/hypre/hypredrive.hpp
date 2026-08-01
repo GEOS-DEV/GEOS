@@ -164,6 +164,7 @@ private:
   bool m_hasExecutionContext = false;
   bool m_timestepScopeActive = false;
   bool m_newtonScopeActive = false;
+  bool m_reportedGeneratedYamlFailure = false;
   size_t m_hypredriveGeneration = 0;
   HYPREDRV_t m_hypredrive{};
   mutable HypreVector m_dummyRhs;

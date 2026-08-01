@@ -41,6 +41,14 @@ decks = [
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="PoroElastic_efem-edfm_inclinedFrac_mgr_smoke",
+        description=
+        "Single-phase poromechanics with EDFM and hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-3, rtol=1e-4)),
+    TestDeck(
         name="ExponentialDecayPermeability_edfm_smoke",
         description='Exponential Decay Permeability model with EDFM',
         partitions=((1, 1, 1), (2, 2, 1)),

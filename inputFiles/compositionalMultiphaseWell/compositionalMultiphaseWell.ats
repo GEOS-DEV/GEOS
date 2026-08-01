@@ -78,6 +78,14 @@ decks = [
         check_step=17,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="staircase_co2_wells_hybrid_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=[(1, 1, 1), (2, 2, 2)],
+        restart_step=0,
+        check_step=17,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
+    TestDeck(
         name="black_oil_wells_saturated_3d_stone2",
         description=
         "Black oil well test using stone2 interp (3D displacement, hybrid FVM, 3-phase black-oil, 2 wells)",
@@ -146,7 +154,24 @@ decks = [
         partitions=[(1, 1, 1), (2, 2, 1)],
         restart_step=100,
         check_step=150,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))         
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="staircase_co2_wells_thermal_3d_mgr",
+        description=
+        "Thermal CO2 well test (3D staircase, thermal, 2-phase 2-component, 2 wells) with hypre MGR "
+        "(exercises the hypredrive path when available)",
+        partitions=[(1, 1, 1), (2, 2, 2)],
+        restart_step=3,
+        check_step=5,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="simpleCo2InjTutorial_mgr_smoke",
+        description=
+        "CO2 injection tutorial with hypre MGR (exercises the hypredrive path when available)",
+        partitions=[(1, 1, 1), (2, 1, 2)],
+        restart_step=41,
+        check_step=72,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)

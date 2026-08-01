@@ -78,6 +78,14 @@ decks = [
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="deadoil_3ph_staircase_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=28,
+        check_step=38,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
+    TestDeck(
         name="deadoil_3ph_staircase_hybrid_3d",
         description=
         "Compositional multiphase flow test (3D staircase, hybrid FVM, 3-phase dead-oil, Brooks-Corey-Baker 3-phase relperm curves)",
@@ -86,6 +94,14 @@ decks = [
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="deadoil_3ph_staircase_hybrid_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=28,
+        check_step=38,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
+    TestDeck(
         name="deadoil_3ph_staircase_obl_3d",
         description=
         "Smoke test for a staircase deadoil test (3D displacement, 3-phase dead-oil, OBL)",
@@ -93,6 +109,14 @@ decks = [
         restart_step=28,
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="deadoil_3ph_staircase_obl_3d_mgr",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=28,
+        check_step=38,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
     TestDeck(
         name="deadoil_2ph_staircase_gravity_segregation_3d",
         description=

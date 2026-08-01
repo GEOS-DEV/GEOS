@@ -20,6 +20,13 @@ decks = [
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="Sneddon_embeddedFrac_mgr_smoke",
+        description="Sneddon's problem with hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="Sneddon_embeddedFrac_benchmark",
         description="Sneddon's problem with horizontal fracture (uses MGR)",
         partitions=((1, 1, 1), ),
