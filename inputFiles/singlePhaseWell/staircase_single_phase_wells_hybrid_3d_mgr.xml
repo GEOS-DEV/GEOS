@@ -24,27 +24,37 @@
       discretization="singlePhaseHybridMimetic"
       targetRegions="{ Channel }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="SinglePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         type="producer"
-        control="BHP"
-        referenceElevation="12"
-        targetBHP="5e5"
-        targetTotalRate="1e-4"/>
-      <WellControls
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e5"
+          referenceElevation="12"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-4"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
         control="totalVolRate"
         useSurfaceConditions="1"
-        surfacePressure="101325"
-        referenceElevation="12"
-        targetBHP="1e7"
-        targetTotalRate="1e-6"/>
-    </SinglePhaseWell>
+        surfacePressure="101325">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e7"
+          referenceElevation="12"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-6"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
@@ -57,11 +67,7 @@
       nx="{ 5, 5 }"
       ny="{ 5, 5 }"
       nz="{ 3, 3, 3, 3 }"
-      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0,
-                        cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1,
-                        cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2,
-                        cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
-
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0, cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1, cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2, cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -75,7 +81,6 @@
           name="producer1_perf1"
           distanceFromHead="11.95"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion2"

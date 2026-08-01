@@ -546,7 +546,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     # so hypredrive-vs-legacy equivalence is checked within a single job.
     phase_start "Check hypredrive path was exercised"
     HYPREDRV_BANNER_STATUS=0
-    grep -rl "hypredrive input" integratedTests/workingDir > /dev/null 2>&1 || HYPREDRV_BANNER_STATUS=$?
+    grep -rl "hypredrive input" integratedTests/TestResults > /dev/null 2>&1 || HYPREDRV_BANNER_STATUS=$?
     if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
       echo "ERROR: no 'hypredrive input' banner found in any integrated-test log; the hypredrive path was not exercised."
     fi
@@ -557,7 +557,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     # Keep the hypredrive pass results; the second pass overwrites TestResults.
     cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/workingDir -o $tempdir/iterations_hypredrive.json
+            integratedTests/TestResults/test_data -o $tempdir/iterations_hypredrive.json
     integratedTests/geos_ats.sh -a veryclean
     GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
     ATS_LEGACY_RUN_STATUS=$?
@@ -567,7 +567,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     # parity between the two passes so solver-quality regressions cannot pass silently.
     phase_start "Check hypredrive/legacy iteration parity"
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/workingDir -o $tempdir/iterations_legacy.json
+            integratedTests/TestResults/test_data -o $tempdir/iterations_legacy.json
     ITER_PARITY_STATUS=0
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
             $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json || ITER_PARITY_STATUS=$?
