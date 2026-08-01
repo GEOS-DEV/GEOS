@@ -78,6 +78,18 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
+  // solver-provided per-dof labels override the field-component labels (e.g. to distinguish
+  // sub-blocks of a field, as in the adaptive mixed MFD TPFA/MFD face-flux splitting)
+  if( !params.mgr.customPointMarkers.empty() )
+  {
+    GEOS_ERROR_IF_NE_MSG( params.mgr.customPointMarkers.size(), mgrData.pointMarkers.size(),
+                          "MGR preconditioner: customPointMarkers size does not match the number of local dofs" );
+    for( localIndex i = 0; i < mgrData.pointMarkers.size(); ++i )
+    {
+      mgrData.pointMarkers[i] = LvArray::integerConversion< HYPRE_Int >( params.mgr.customPointMarkers[i] );
+    }
+  }
+
   if( params.logLevel >= 1 )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
@@ -176,6 +188,9 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD:
     {
+      GEOS_ERROR_IF( params.mgr.customPointMarkers.empty(),
+                     "The singlePhaseMixedMFD MGR strategy requires solver-provided point markers "
+                     "splitting the face-flux dofs by the TPFA/MFD classification" );
       setStrategy< SinglePhaseMixedMFD >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }

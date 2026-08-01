@@ -84,6 +84,14 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  setupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               bool const setSparsity = true ) override;
+
+  virtual void
   applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
@@ -173,6 +181,17 @@ private:
    * @param[in] domain the domain
    */
   void computeGlobalAdaptationIndicators( DomainPartition & domain );
+
+  /**
+   * @brief Build the per-dof labels used by the stencilFlag-guided three-level MGR strategy:
+   *        0 = face flux with exactly-diagonal row (all adjacent cells TPFA-compatible),
+   *        1 = face flux adjacent to at least one MFD-compatible cell,
+   *        2 = cell pressure.
+   * @param[in] domain the domain
+   * @param[in] dofManager the dof manager (dof numbers must be finalized)
+   */
+  void computeMgrPointMarkers( DomainPartition const & domain,
+                               DofManager const & dofManager );
 
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;

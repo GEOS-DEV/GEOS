@@ -376,6 +376,108 @@ void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
   } );
 }
 
+void SinglePhaseMixedMFD::setupSystem( DomainPartition & domain,
+                                       DofManager & dofManager,
+                                       CRSMatrix< real64, globalIndex > & localMatrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
+{
+  SinglePhaseBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+
+  // with the dof numbering finalized, build the per-dof labels driving the
+  // stencilFlag-guided three-level MGR reduction
+  computeMgrPointMarkers( domain, dofManager );
+}
+
+void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain,
+                                                  DofManager const & dofManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // when the selected inner product is itself TPFA, the effective operator is diagonal in
+  // every cell regardless of the stencil activation flag, and all face-flux rows belong to
+  // the exactly-eliminable class
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  MixedMimeticDiscretizationManager const & mmManager = numericalMethodManager.getMixedMimeticDiscretizationManager();
+  MixedMimeticDiscretization const & discretization = mmManager.getMixedMimeticDiscretization( m_discretizationName );
+  MimeticInnerProductBase const & mimeticInnerProductBase =
+    discretization.getReference< MimeticInnerProductBase >( MixedMimeticDiscretization::viewKeyStruct::innerProductString() );
+  bool const effectiveTpfa = dynamic_cast< TPFAInnerProduct const * >( &mimeticInnerProductBase ) != nullptr;
+
+  array1d< integer > & pointMarkers = m_linearSolverParameters.get().mgr.customPointMarkers;
+  pointMarkers.resize( dofManager.numLocalDofs() );
+  arrayView1d< integer > const markers = pointMarkers.toView();
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & regionNames )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const stencilFlagAccessor =
+      elemManager.constructArrayViewAccessor< integer, 1 >( mixedMimetic::stencilFlag::key() );
+    ElementRegionManager::ElementViewConst< arrayView1d< integer const > > const stencilFlag =
+      stencilFlagAccessor.toNestedViewConst();
+
+    arrayView1d< globalIndex const > const faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+    arrayView2d< localIndex const > const elemRegionList = faceManager.elementRegionList();
+    arrayView2d< localIndex const > const elemSubRegionList = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const elemList = faceManager.elementList();
+    SortedArrayView< localIndex const > const regionFilter = m_regionFilter.toViewConst();
+
+    // face-flux dofs: label 0 if every adjacent target cell is TPFA-compatible (the
+    // assembled flux row is exactly diagonal), label 1 otherwise
+    forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const kf )
+    {
+      if( faceGhostRank[kf] >= 0 || faceDofNumber[kf] < 0 )
+      {
+        return;
+      }
+      integer label = 0;
+      if( !effectiveTpfa )
+      {
+        for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
+        {
+          localIndex const er  = elemRegionList[kf][k];
+          localIndex const esr = elemSubRegionList[kf][k];
+          localIndex const ei  = elemList[kf][k];
+          if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
+          {
+            label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
+          }
+        }
+      }
+      markers[faceDofNumber[kf] - rankOffset] = label;
+    } );
+
+    // cell-pressure dofs: label 2
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > const elemDofNumber =
+        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const ei )
+      {
+        if( elemGhostRank[ei] < 0 )
+        {
+          markers[elemDofNumber[ei] - rankOffset] = 2;
+        }
+      } );
+    } );
+  } );
+}
+
 void SinglePhaseMixedMFD::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                      DofManager & dofManager ) const
 {

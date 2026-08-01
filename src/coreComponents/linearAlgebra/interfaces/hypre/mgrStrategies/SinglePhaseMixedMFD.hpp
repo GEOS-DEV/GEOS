@@ -32,51 +32,65 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhaseMixedMFD strategy.
+ * @brief SinglePhaseMixedMFD strategy: stencilFlag-guided three-level MGR reduction of the
+ *        mixed mimetic finite difference saddle-point system
+ *          [ M  -B^T ]
+ *          [ B    0  ]
+ *        with face mass-flux and cell pressure unknowns.
  *
- * Two-level MGR reduction for the mixed mimetic finite difference saddle-point system
- *   [ M  -B^T ]
- *   [ B    0  ]
- * with face mass-flux and cell pressure unknowns.
- *
- * Labels description stored in point_marker_array
- *  dofLabel: 0 = face-centered mass flux
- *  dofLabel: 1 = cell-centered pressure
+ * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers)
+ * splitting the face-flux dofs by the Global Adaptation classification:
+ *  dofLabel: 0 = face flux whose adjacent cells are all TPFA-compatible (the assembled
+ *               flux row is exactly diagonal: TPFA/TPFA interfaces, boundary faces of
+ *               TPFA cells and no-flow identity rows)
+ *  dofLabel: 1 = face flux adjacent to at least one MFD-compatible cell
+ *  dofLabel: 2 = cell-centered pressure
  *
  * Ingredients:
- * 1. F-points face-centered mass flux (the SPD adaptive inner-product block M),
- *    C-points cell-centered pressure
- * 2. F-points smoother: single BoomerAMG V-cycle on the flux block
- * 3. Restriction: injection; prolongation: Jacobi; coarse grid: Galerkin (RAP),
- *    yielding an approximate pressure Schur complement
- * 4. C-points coarse-grid/Schur complement solver: BoomerAMG
- * 5. Global smoother: none
- *
- * The corresponding Krylov solver is (F)GMRES. This mirrors the hypredrive recipe used
- * in the adaptive-MFD reference implementation (two-level MGR with f_dofs = flux labels,
- * AMG F-relaxation and an AMG-solved RAP coarse operator).
+ * 1. Level 0: F-points = TPFA-diagonal face fluxes (label 0). The F-block is exactly
+ *    diagonal, so a single Jacobi sweep and Jacobi (diagonal) prolongation perform the
+ *    elimination exactly, and the Galerkin (RAP) coarse grid is the exact Schur complement.
+ *    The cost of this level is proportional to the TPFA fraction selected by the
+ *    residual tolerance, mirroring the sparsity-reduction metric of the adaptive scheme.
+ * 2. Level 1: F-points = MFD face fluxes (label 1), relaxed with a single BoomerAMG
+ *    V-cycle on the (SPD) MFD flux block; Jacobi prolongation, injection restriction,
+ *    Galerkin (RAP) coarse grid approximating the pressure Schur complement.
+ * 3. Coarsest level: cell-pressure system solved with BoomerAMG.
+ * 4. Global smoother: none. The Krylov solver is (F)GMRES.
  */
-class SinglePhaseMixedMFD : public MGRStrategyBase< 1 >
+class SinglePhaseMixedMFD : public MGRStrategyBase< 2 >
 {
 public:
   /**
    * @brief Constructor.
    */
   explicit SinglePhaseMixedMFD( arrayView1d< int const > const & )
-    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 2 ) )
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 3 ) )
   {
-    // Level 0: eliminate the face-centered mass fluxes, keep the cell-centered pressure
+    // Level 0: eliminate the TPFA-diagonal face fluxes, keep the MFD fluxes and the pressure
     m_labels[0].push_back( 1 );
+    m_labels[0].push_back( 2 );
+
+    // Level 1: eliminate the MFD face fluxes, keep the pressure
+    m_labels[1].push_back( 2 );
 
     setupLabels();
 
-    // Level 0
-    m_levelFRelaxType[0]         = MGRFRelaxationType::amgVCycle;
+    // Level 0: the F-block is exactly diagonal - one Jacobi sweep is an exact solve
+    m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
+
+    // Level 1: genuine multilevel relaxation on the MFD flux block
+    m_levelFRelaxType[1]         = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[1]        = 1;
+    m_levelInterpType[1]         = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
   }
 
   /**

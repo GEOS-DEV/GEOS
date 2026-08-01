@@ -330,6 +330,9 @@ struct LinearSolverParameters
     integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
     integer areWellsShut = false;                  ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the well
                                                    ///< block
+    array1d< integer > customPointMarkers;         ///< Optional solver-provided per-local-dof labels overriding the field-component
+                                                   ///< labels (empty = use the DofManager field labels); used by strategies whose
+                                                   ///< reduction is finer-grained than the dof fields (e.g. adaptive mixed MFD)
   }
   mgr;                                             ///< Multigrid reduction (MGR) parameters
 
