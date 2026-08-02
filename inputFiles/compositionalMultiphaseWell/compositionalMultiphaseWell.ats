@@ -165,9 +165,7 @@ decks = [
         description=
         "Thermal CO2 well test (3D staircase, thermal, 2-phase 2-component, 2 wells) with hypre MGR "
         "(exercises the hypredrive path when available)",
-        # Capped at 4 ranks: with 8 ranks some ranks own no well elements and
-        # hypredrive fails in HYPREDRV_LinearSolverCreate for this MGR strategy.
-        partitions=[(1, 1, 1), (2, 2, 1)],
+        partitions=[(1, 1, 1), (2, 2, 2)],
         restart_step=3,
         check_step=5,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
