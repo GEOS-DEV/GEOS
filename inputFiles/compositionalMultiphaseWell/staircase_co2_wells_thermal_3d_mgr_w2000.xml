@@ -2,6 +2,9 @@
 
 <Problem>
 
+  <!-- Well-refinement variant: 2000 well elements (800 producer + 1200 injector), reservoir refined 2x per direction.
+       well DOF 10000, reservoir DOF 19200, total 29200. -->
+
   <Included>
     <File name="./staircase_co2_wells_thermal_3d_mgr_base.xml"/>
   </Included>
@@ -13,9 +16,9 @@
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 5, 10 }"
       zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-      nx="{ 5, 5 }"
-      ny="{ 5, 5 }"
-      nz="{ 3, 3, 3, 3 }"
+      nx="{ 10, 10 }"
+      ny="{ 10, 10 }"
+      nz="{ 6, 6, 6, 6 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0, cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1, cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2, cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
       <InternalWell
         name="well_producer1"
@@ -25,10 +28,10 @@
                               { 9.5, 0.5, 0.05 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
-        numElementsPerSegment="20">
+        numElementsPerSegment="800">
         <Perforation
           name="producer1_perf1"
-          distanceFromHead="11.95"/>
+          distanceFromHead="11.942531"/>
       </InternalWell>
       <InternalWell
         name="well_injector1"
@@ -39,10 +42,10 @@
                               { 9.5, 0.2, 9.5 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
-        numElementsPerSegment="30">
+        numElementsPerSegment="1200">
         <Perforation
           name="injector1_perf1"
-          distanceFromHead="2.45"/>
+          distanceFromHead="2.498958"/>
       </InternalWell>
     </InternalMesh>
   </Mesh>

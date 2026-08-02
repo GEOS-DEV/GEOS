@@ -2,6 +2,9 @@
 
 <Problem>
 
+  <!-- Well-refinement variant: 200 well elements (80 producer + 120 injector), reservoir refined 1x per direction.
+       well DOF 1000, reservoir DOF 2400, total 3400. -->
+
   <Included>
     <File name="./staircase_co2_wells_thermal_3d_mgr_base.xml"/>
   </Included>
@@ -25,10 +28,10 @@
                               { 9.5, 0.5, 0.05 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
-        numElementsPerSegment="20">
+        numElementsPerSegment="80">
         <Perforation
           name="producer1_perf1"
-          distanceFromHead="11.95"/>
+          distanceFromHead="11.875312"/>
       </InternalWell>
       <InternalWell
         name="well_injector1"
@@ -39,10 +42,10 @@
                               { 9.5, 0.2, 9.5 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
-        numElementsPerSegment="30">
+        numElementsPerSegment="120">
         <Perforation
           name="injector1_perf1"
-          distanceFromHead="2.45"/>
+          distanceFromHead="2.489583"/>
       </InternalWell>
     </InternalMesh>
   </Mesh>
