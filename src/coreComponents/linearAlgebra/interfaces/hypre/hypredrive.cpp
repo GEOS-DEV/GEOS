@@ -1,6 +1,7 @@
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 
 #include "common/GeosxConfig.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "linearAlgebra/DofManager.hpp"
@@ -1587,7 +1588,16 @@ void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
 
-  if( !configureHypredrive( mat ) )
+  bool const configured = configureHypredrive( mat );
+
+  // Falling back to the legacy solver must be an all-or-nothing decision: the two paths
+  // execute different sequences of collective operations, so if some ranks kept hypredrive
+  // while others fell back, the next solve would deadlock. Configuration can legitimately
+  // fail on a subset of ranks (e.g. a rank that owns no rows of the target region has no
+  // dof components to describe), so agree on the outcome across the communicator.
+  int const allRanksConfigured = MpiWrapper::min( configured ? 1 : 0, mat.comm() );
+
+  if( !allRanksConfigured )
   {
     resetHypredriveState();
     setupLegacy( mat );
@@ -1631,12 +1641,20 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                                        toHypreMatrix( mat.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetMatrix" );
 
-  if( !m_dummyRhs.ready() || m_dummyRhs.localSize() != mat.numLocalRows() )
+  // HypreVector::create is collective, so the decision to recreate the bound vectors
+  // must be made globally: a repartitioning can leave some ranks with an unchanged
+  // local size while others change, and letting each rank decide on its own would
+  // have only a subset of them enter the collective.
+  int const rankNeedsRecreate =
+    ( !m_dummyRhs.ready() || m_dummyRhs.localSize() != mat.numLocalRows() ) ? 1 : 0;
+  if( MpiWrapper::max( rankNeedsRecreate, mat.comm() ) )
   {
     m_dummyRhs.reset();
     m_dummySol.reset();
+    m_residual.reset();
     m_dummyRhs.create( mat.numLocalRows(), mat.comm() );
     m_dummySol.create( mat.numLocalRows(), mat.comm() );
+    m_residual.create( mat.numLocalRows(), mat.comm() );
   }
 
   checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
@@ -1646,13 +1664,14 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                                          reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
 
-  if( pointMarkers.size() > 0 )
-  {
-    checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
-                                                         LvArray::integerConversion< int >( pointMarkers.size() ),
-                                                         pointMarkers.data() ),
-                         "HYPREDRV_LinearSystemSetDofmap" );
-  }
+  // This must be called on every rank, including ranks that own no local rows:
+  // hypredrive builds the global dof-label set collectively inside this call, so
+  // skipping it where the local dofmap is empty leaves those ranks out of the
+  // collective and the subsequent solver creation fails there.
+  checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
+                                                       LvArray::integerConversion< int >( pointMarkers.size() ),
+                                                       pointMarkers.data() ),
+                       "HYPREDRV_LinearSystemSetDofmap" );
 }
 
 void HypredriveSolver::setupLegacy( HypreMatrix const & mat )
@@ -1783,7 +1802,14 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
                        "HYPREDRV_LinearSystemSetSolution" );
   checkHypredriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypredrive ),
                        "HYPREDRV_LinearSystemResetInitialGuess" );
-  checkHypredriveCall( HYPREDRV_LinearSolverApply( m_hypredrive ), "HYPREDRV_LinearSolverApply" );
+
+  {
+    // As during setup, hypre's Krylov and MGR kernels can raise benign floating point
+    // exceptions while solving (e.g. norms of empty local blocks on ranks that own no
+    // rows), so they must be masked here as well.
+    LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+    checkHypredriveCall( HYPREDRV_LinearSolverApply( m_hypredrive ), "HYPREDRV_LinearSolverApply" );
+  }
 
   sol.touch();
 }
@@ -1818,11 +1844,12 @@ void HypredriveSolver::solve( HypreVector const & rhs,
   checkHypredriveCall( HYPREDRV_LinearSolverGetSolveTime( m_hypredrive, &m_result.solveTime ),
                        "HYPREDRV_LinearSolverGetSolveTime" );
 
-  HypreVector residual( rhs );
-  matrix().residual( sol, rhs, residual );
+  // Reuse the residual vector bound during setup: HypreVector::create is collective,
+  // so allocating one per solve puts a collective in the solve path.
+  matrix().residual( sol, rhs, m_residual );
   real64 const rhsNorm = rhs.norm2();
   real64 const denominator = rhsNorm > 0.0 ? rhsNorm : 1.0;
-  m_result.residualReduction = residual.norm2() / denominator;
+  m_result.residualReduction = m_residual.norm2() / denominator;
   m_result.status = ( m_result.residualReduction <= m_params.krylov.relTolerance )
                     ? LinearSolverResult::Status::Success
                     : LinearSolverResult::Status::NotConverged;
