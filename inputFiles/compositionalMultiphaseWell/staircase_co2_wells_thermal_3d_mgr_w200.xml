@@ -2,7 +2,9 @@
 
 <Problem>
 
-  <!-- Well-refinement variant: 200 well elements (80 producer + 120 injector), reservoir refined 1x per direction.
+  <!-- Well-refinement variant: 200 well elements (80 producer + 120 injector).
+       Reservoir refined 1x in z only (nz = 3 per block): refining x/y would
+       drop the Peaceman equivalent radius below the 0.1 m wellbore radius.
        well DOF 1000, reservoir DOF 2400, total 3400. -->
 
   <Included>

@@ -2,8 +2,10 @@
 
 <Problem>
 
-  <!-- Well-refinement variant: 1000 well elements (400 producer + 600 injector), reservoir refined 2x per direction.
-       well DOF 5000, reservoir DOF 19200, total 24200. -->
+  <!-- Well-refinement variant: 1000 well elements (400 producer + 600 injector).
+       Reservoir refined 3x in z only (nz = 9 per block): refining x/y would
+       drop the Peaceman equivalent radius below the 0.1 m wellbore radius.
+       well DOF 5000, reservoir DOF 7200, total 12200. -->
 
   <Included>
     <File name="./staircase_co2_wells_thermal_3d_mgr_base.xml"/>
@@ -16,9 +18,9 @@
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 5, 10 }"
       zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-      nx="{ 10, 10 }"
-      ny="{ 10, 10 }"
-      nz="{ 6, 6, 6, 6 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 9, 9, 9, 9 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0, cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1, cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2, cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
       <InternalWell
         name="well_producer1"
