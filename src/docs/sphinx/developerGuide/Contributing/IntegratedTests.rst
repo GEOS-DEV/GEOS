@@ -559,12 +559,29 @@ The rules that make this work:
   worst-solve iteration counts differ by more than 5, or the number of non-converged
   solves differs. The hypredrive CI job runs this automatically between its two passes.
 
+Because an ``_mgr`` deck differs from its parent only in ``LinearSolverParameters``, the two
+must share a single base file rather than being copies of each other:
+
+.. code-block:: none
+
+   X_base.xml   everything except <Solvers>  (mesh, regions, constitutive, events, outputs, ...)
+   X.xml        <Included> X_base.xml + <Solvers> with the original solver settings
+   X_mgr.xml    <Included> X_base.xml + <Solvers> with the MGR settings
+
+.. warning::
+   A variant file must contain **only** the block it specializes. Including a deck and then
+   redeclaring a block that the included file also defines does *not* override it: included
+   nodes are appended after the including file's own nodes and are therefore processed last,
+   so the **included** values win. No error is reported. In practice a deck that includes its
+   parent and redeclares ``<Solvers>`` to switch on MGR silently runs the parent's solver
+   instead. This is why ``<Solvers>`` lives in the variants and never in the shared base.
+
 To add coverage for a new MGR strategy:
 
-#. pick an existing deck that drives the target physics solver and derive an ``_mgr`` variant
-   (replace the ``LinearSolverParameters`` with ``solverType="gmres"``,
-   ``preconditionerType="mgr"``, ``krylovTol="1e-8"``, ``logLevel="1"``;
-   avoid ``krylovAdaptiveTol``, which disables the hypredrive routing);
+#. pick an existing deck that drives the target physics solver; if it is still a monolith,
+   first split it into ``X_base.xml`` + ``X.xml`` as above, then add ``X_mgr.xml`` alongside
+   (set ``solverType="gmres"``, ``preconditionerType="mgr"``, ``krylovTol="1e-8"``,
+   ``logLevel="1"``; avoid ``krylovAdaptiveTol``, which disables the hypredrive routing);
 #. verify the deck converges with MGR on a build without hypredrive;
 #. on a hypredrive-enabled build, run both paths and calibrate the restartcheck tolerance
    from the measured cross-path drift (a ~10x safety factor is recommended);
