@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
 #include "common/MpiWrapper.hpp"
 
 #include <gtest/gtest.h>
