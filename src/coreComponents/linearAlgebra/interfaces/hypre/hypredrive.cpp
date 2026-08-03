@@ -859,10 +859,10 @@ bool buildILUPreconditionerYaml( LinearSolverParameters const & params,
   {
     appendLine( stream, 2, GEOS_FMT( "droptol: {}", params.ifact.threshold ) );
   }
-  // Match the legacy hypre path: local RCM reordering (hypre's default) for scalar
-  // systems, reordering disabled for multi-component systems to avoid problems with
-  // mechanics. hypredrive defaults to no reordering, so the value must always be emitted.
-  appendLine( stream, 2, GEOS_FMT( "reordering: {}", params.dofsPerNode > 1 ? 0 : 1 ) );
+  // GEOS always applies ILU without hypre's internal RCM reordering: every explicit
+  // HYPRE_ILUSetLocalReordering call on the legacy path passes 0. hypre itself defaults
+  // to RCM, and so would hypredrive if the key were left out, so emit it unconditionally.
+  appendLine( stream, 2, "reordering: 0" );
 
   yaml = stream.str();
   return true;
