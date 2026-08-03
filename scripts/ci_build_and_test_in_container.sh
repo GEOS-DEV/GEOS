@@ -333,13 +333,14 @@ fi
 configure_openssl_for_non_fips_ubuntu_container
 print_crypto_diagnostics
 
-# Hypredrive support. GEOS_REQUIRE_HYPREDRV turns the silent
+# Always pass the requested state so a host-config cannot silently enable
+# hypredrive when the CI job requested OFF. GEOS_REQUIRE_HYPREDRV turns the silent
 # "ENABLE_HYPREDRV forced OFF because HYPREDRV_DIR is missing" downgrade into a
 # configuration error, so a CI job cannot silently test the legacy path instead.
-HYPREDRV_CMAKE_ARGS=()
+HYPREDRV_CMAKE_ARGS=(-DENABLE_HYPREDRV=${ENABLE_HYPREDRV})
 if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
-  HYPREDRV_CMAKE_ARGS=(-DHYPREDRV_DIR=${GEOSX_TPL_DIR}/hypredrive
-                       -DGEOS_REQUIRE_HYPREDRV=ON)
+  HYPREDRV_CMAKE_ARGS+=(-DHYPREDRV_DIR=${GEOSX_TPL_DIR}/hypredrive
+                        -DGEOS_REQUIRE_HYPREDRV=ON)
 fi
 
 if [[ "${USE_SCCACHE}" == true ]]; then
@@ -478,7 +479,6 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
-               -DENABLE_HYPREDRV=${ENABLE_HYPREDRV} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                "${HYPREDRV_CMAKE_ARGS[@]}" \
