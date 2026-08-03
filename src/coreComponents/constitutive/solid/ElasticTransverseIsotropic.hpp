@@ -50,9 +50,11 @@ public:
    * @param[in] c44 The 44 component of the Voigt stiffness tensor.
    * @param[in] c66 The 66 component of the Voigt stiffness tensor.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] anelasticStrainMagnitude The ArrayView holding the anelastic strain magnitude data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each point.
    * @param[in] oldStress The ArrayView holding the old stress data for each point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models.
+   * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   ElasticTransverseIsotropicUpdates( arrayView1d< real64 const > const & c11,
                                      arrayView1d< real64 const > const & c13,
@@ -60,10 +62,15 @@ public:
                                      arrayView1d< real64 const > const & c44,
                                      arrayView1d< real64 const > const & c66,
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                                     arrayView1d< real64 const > const & anelasticStrainIncrement,
+                                     arrayView1d< real64 > const & newAnelasticStrainMagnitude,
+                                     arrayView1d< real64 > const & oldAnelasticStrainMagnitude,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                                     bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+                                     bool const & disableInelasticity,
+                                     const integer & enableAnelasticStrain ):
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity, anelasticStrainIncrement, newAnelasticStrainMagnitude, oldAnelasticStrainMagnitude,
+                      enableAnelasticStrain ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -593,9 +600,13 @@ public:
                                               m_c44,
                                               m_c66,
                                               m_thermalExpansionCoefficient,
+                                              m_anelasticStrainIncrement,
+                                              m_newAnelasticStrainMagnitude,
+                                              m_oldAnelasticStrainMagnitude,
                                               m_newStress,
                                               m_oldStress,
-                                              m_disableInelasticity );
+                                              m_disableInelasticity,
+                                              m_enableAnelasticStrain );
   }
 
   /**
@@ -616,9 +627,13 @@ public:
                           m_c44,
                           m_c66,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainIncrement,
+                          m_newAnelasticStrainMagnitude,
+                          m_oldAnelasticStrainMagnitude,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 protected:

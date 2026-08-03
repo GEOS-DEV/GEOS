@@ -122,14 +122,16 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   real64 strainInc[6] = {0};
   real64 stress[6] = {0};
+  real64 stressModifierAnelasticStrain[6] = {0};
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
   finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
+  m_constitutiveUpdate.stressModificationByAnelasticStain( k, q, stressModifierAnelasticStrain );
 
-  stressModifier( stress );
+  stressModifier( stress, stressModifierAnelasticStrain );
   // #pragma unroll
   for( localIndex i=0; i<6; ++i )
   {
