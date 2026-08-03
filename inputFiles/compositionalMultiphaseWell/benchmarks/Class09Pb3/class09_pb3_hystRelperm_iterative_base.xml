@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
@@ -101,12 +103,15 @@
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
+    <!-- Problem 3.2 is hysteretical only --> 
+     <!-- SPHINX_RELPERM -->
     <TableRelativePermeabilityHysteresis
       name="relperm"
       phaseNames="{ gas, water }"
       drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable, drainageGasRelativePermeabilityTable }"
       imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"
       imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
+       <!-- SPHINX_RELPERM_END -->
 
     <TableCapillaryPressure
       name="cappres"
@@ -125,6 +130,7 @@
       componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
 
+    <!-- SPHINX_BC -->
     <FieldSpecification
       name="bcPressure"
       objectPath="faceManager"
@@ -156,6 +162,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>
+    <!-- SPHINX_BC_END -->
   </FieldSpecifications>
 
   <Functions>
@@ -210,6 +217,7 @@
       values="{ 8.02849025, 0, 0 }"
       interpolation="lower"/>
 
+  <!-- Problem 3.2 is hysteresis -->
     <TableFunction
       name="drainageWaterRelativePermeabilityTable"
       coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"

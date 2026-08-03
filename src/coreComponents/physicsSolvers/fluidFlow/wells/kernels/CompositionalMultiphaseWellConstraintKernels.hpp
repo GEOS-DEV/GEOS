@@ -31,7 +31,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 namespace geos
 {
 

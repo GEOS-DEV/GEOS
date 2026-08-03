@@ -20,8 +20,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
+#include "mesh/MeshLevel.hpp"
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -34,6 +36,11 @@ namespace constitutive
 {
 class ConstitutiveManager;
 class MultiFluidBase;
+}
+
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
 }
 
 /**
@@ -71,7 +78,10 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~CompositionalMultiphaseWell() override = default;
+  virtual ~CompositionalMultiphaseWell() override;
+
+  compositionalMultiphaseStatistics::StatsAggregator * getStatsAggregator() { return m_reservoirStatsAggregator.get(); }
+  void setReservoirStatsAggregator( std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > aggregator );
 
 
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
@@ -88,7 +98,7 @@ public:
    *   @param mesh the mesh level
    *   @param subRegion the well subRegion
    */
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+  virtual void initializeWell( DomainPartition & domain, Group & meshBodies, string const & meshBodyName, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
 
   virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) override;
 
@@ -224,10 +234,13 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix ) override;
 
 
-  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain,
+                                            string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
+                                  DomainPartition & domain,
+                                  string const & meshBodyName,
                                   ElementRegionManager & elemManager,
                                   WellElementSubRegion & subRegion ) override;
 
@@ -239,8 +252,6 @@ public:
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) override;
-
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   /**@}*/
 
@@ -276,7 +287,10 @@ public:
    * @param elemManager the element region manager
 
    */
-  void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
+  void updateSeparator( real64 time_n,
+                        MeshBody const & meshBody,
+                        ElementRegionManager const & elemManager,
+                        WellElementSubRegion & subRegion );
 
   /**
    * @brief  Calculate well rates at reference element
@@ -303,8 +317,14 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) override;
 
+  virtual real64 updateSubRegionState( real64 time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -357,6 +377,17 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                       arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override;
 
+  /**
+   * @brief Checks fluild model compatibility and validity
+   * @param[in] fluid the fluid to check
+   * @param[in] referenceFluid the reference fluid model
+   * @detail
+   * This function will produce an error if one of the well constitutive models
+   * is incompatible with the corresponding models in reservoir
+   * regions connected to that particular well.
+   */
+  void validateFluidModel( constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid )const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -368,16 +399,7 @@ protected:
   void saveState( WellElementSubRegion & subRegion );
   virtual void postRestartInitialization( ) override;
 
-  /**
-   * @brief Checks fluild model compatibility and validity
-   * @param[in] fluid the fluid to check
-   * @param[in] referenceFluid the reference fluid model
-   * @detail
-   * This function will produce an error if one of the well constitutive models
-   * is incompatible with the corresponding models in reservoir
-   * regions connected to that particular well.
-   */
-  void validateFluidModel( constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid )const;
+
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step
@@ -393,7 +415,8 @@ protected:
    * @brief Create well separator
    */
   virtual void createSeparator( WellElementSubRegion & subRegion ) override;
-
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
   virtual bool solveMinWHPConstraint( real64 const & time_n,
@@ -415,7 +438,22 @@ protected:
                                       WellElementSubRegion & subRegion )override;
 private:
 
+  struct ReferenceConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
+  void precomputeReferenceConditions( real64 time_n,
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
+
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
+
 
   /// flag indicating whether total mass equation should be used
   integer m_useTotalMassEquation;
@@ -440,6 +478,8 @@ private:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+
 
 };
 

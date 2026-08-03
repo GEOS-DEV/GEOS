@@ -283,7 +283,9 @@ public:
    * @param elemManager the element region manager
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) = 0;
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
@@ -303,7 +305,7 @@ public:
    * @param elemManager the element region manager
    * fields
    */
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
 
   /**

@@ -281,6 +281,7 @@ struct PresTempCompFracInitializationKernel
           integer const numComponents,
           integer const numPhases,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
@@ -519,15 +520,15 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( time ) ),  // tjb
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
   {
-    //  tjbNote this assumes that there is only one     rate constraint
+    // Note this assumes that there is only one rate constraint
     // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
     // This is one of the reasons for restricting  constraint type for a production well
-    // another pr will remove fix this (so the cause for difference results is isolated to one change)
+    // Another pr will remove fix this (so the cause for difference results is isolated to one change)
     auto const * rateConstraint = wellControls.getRateConstraints().front();
     if( rateConstraint != nullptr )
     {

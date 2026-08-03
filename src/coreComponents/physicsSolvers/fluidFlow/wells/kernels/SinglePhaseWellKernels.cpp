@@ -403,6 +403,7 @@ PresTempInitializationKernel::
           localIndex const subRegionSize,
           localIndex const numPerforations,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
@@ -416,7 +417,6 @@ PresTempInitializationKernel::
           arrayView1d< real64 > const & wellElemTemperature )
 {
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
-  real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   real64 const initialPressureCoef = wellControls.getInitialPressureCoefficient();
   ConstraintTypeId const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
@@ -550,7 +550,7 @@ RateInitializationKernel::
 
   ConstraintTypeId const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  auto const * rateConstraint = wellControls.getRateConstraints().front(); // tjb
+  auto const * rateConstraint = wellControls.getRateConstraints().front();
   real64 const constraintVal = rateConstraint->getConstraintValue( currentTime );
 
   // Estimate the connection rates

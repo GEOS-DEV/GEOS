@@ -517,6 +517,7 @@ struct PresTempInitializationKernel
           localIndex const subRegionSize,
           localIndex const numPerforations,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & resTemperature,

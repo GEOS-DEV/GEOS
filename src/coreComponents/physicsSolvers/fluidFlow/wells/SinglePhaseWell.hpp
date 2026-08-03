@@ -36,6 +36,12 @@ namespace constitutive
 {
 class SingleFluidBase;
 }
+
+namespace singlePhaseStatistics
+{
+class StatsAggregator;
+}
+
 class WellElementSubRegion;
 
 /**
@@ -74,7 +80,7 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseWell() override = default;
+  virtual ~SinglePhaseWell() override;
 
   void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
 
@@ -92,7 +98,7 @@ public:
    *   @param subRegion the well subRegion
    *  @param time_n the current time
    */
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )override;
+  virtual void initializeWell( DomainPartition & domain, Group & meshBodies, string const & meshBodyName, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )override;
 
   virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )override;
 
@@ -209,10 +215,13 @@ public:
                                              arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
                                              CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ) )override {};
 
-  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain,
+                                            string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
+                                  DomainPartition & domain,
+                                  string const & meshBodyName,
                                   ElementRegionManager & elemManager,
                                   WellElementSubRegion & subRegion )override;
 
@@ -225,7 +234,10 @@ public:
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) override;
 
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( real64 const time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) override;
 
   /**@}*/
 
@@ -236,13 +248,6 @@ public:
   virtual localIndex numFluidComponents() const override { return 0; }
 
   virtual localIndex numFluidPhases() const override { return 1; }
-
-  /**
-   * @brief Recompute the volumetric rate that are used in the well constraints
-   * @param elemManager the well region manager
-   * @param subRegion the well subregion containing all the primary and dependent fields
-   */
-  virtual void calculateReferenceElementRates( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
@@ -263,21 +268,23 @@ public:
   void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
 
   /**
+   * @brief Calculate well rates at the reference element
+   * @param subRegion the well subRegion containing the well elements and their associated fields
+   */
+  void calculateReferenceElementRates( WellElementSubRegion & subRegion );
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
 
    * @param
    * @param subRegion the well subRegion containing the well elements and their associated
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) override;
 
 
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive
-   * models)
-   * @param elemManager the element region manager
-   * @param subRegion the well subRegion containing the well elements and their associated fields
-   */
   /*
    * @brief apply a special treatment to the wells that are shut
 
@@ -289,6 +296,12 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs );
+
+  void assembleVolumeBalanceTerms( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
+
   struct viewKeyStruct : WellControls::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "wellVars"; }
@@ -333,8 +346,29 @@ protected:
 
 private:
 
+  struct ReferenceConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< singlePhaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  void initializeWells( DomainPartition & domain, real64 const & time_n );
+
+  void precomputeReferenceConditions( real64 time_n,
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
+
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Make sure that the well constraints are compatible

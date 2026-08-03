@@ -156,11 +156,12 @@ public:
   /**
    * @brief Initialize well for the beginning of a simulation or restart
    * @param domain the domain
+   * @param meshBodies
    * @param mesh the mesh level
    * @param subRegion the well subRegion
    * @param time_n the current time
    */
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
+  virtual void initializeWell( DomainPartition & domain, Group & meshBodies, string const & meshBodyName, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time
@@ -176,6 +177,8 @@ public:
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
+                                  DomainPartition & domain,
+                                  string const & meshBodyName,
                                   ElementRegionManager & elemManager,
                                   WellElementSubRegion & subRegion ) = 0;
 
@@ -183,7 +186,10 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         WellElementSubRegion const & subRegion ) = 0;
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( real64 const time_n,
+                                       MeshBody const & meshBody,
+                                       ElementRegionManager const & elemManager,
+                                       WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Function to evaluate well constraints after applying the solution update
@@ -355,13 +361,16 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Reset the well state to the beginning of the time step
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain,
+                                            string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
   virtual void postInputInitialization() override;
 
@@ -416,6 +425,17 @@ public:
   void setFlowSolverName( const std::string & flowSolverName )   { m_flowSolverName = flowSolverName;    }
 
   /**
+   * @brief return the name of the discretization object
+   * @return the name of the discretization object
+   */
+  std::string getDiscretizationName() const { return m_discretizationName; }
+
+  /**
+   * @brief set the name of the discretization object
+   * @param[in] discretizationName name
+   */
+  void setDiscretizationName( const std::string & discretizationName )   { m_discretizationName = discretizationName;    }
+  /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
@@ -439,16 +459,6 @@ public:
    */
   integer estimateSolution() const { return m_estimateSolution; }
 
-  /**
-   * @brief Getter for the reference gravity coefficient
-   * @return the reference gravity coefficient
-   */
-  real64 getReferenceGravityCoef() const { return m_refGravCoef; }
-
-  /**
-   * @brief Setter for the reference gravity
-   */
-  void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
 
   /**
    * @brief Returns the target bottom hole pressure value.
@@ -491,7 +501,7 @@ public:
    * @brief Getter for the reservoir region associated with reservoir volume constraint
    * @return name of reservoir region
    */
-  string getReferenceReservoirRegion() const { return m_referenceReservoirRegion; }
+  string const & referenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
@@ -536,6 +546,13 @@ public:
    */
 
   void setUseMass( integer useMass )   {  m_useMass=useMass; }
+
+  /**
+   * @brief is useMass option active
+   * @return a boolean
+   */
+
+  integer useMass( )   {  return m_useMass;}
 
   /**
    * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
@@ -618,12 +635,14 @@ public:
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @return the pressure
    */
   real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
 
   /**
    * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
+   * @note When not available, value is less or equal to 0.0.
    * @param[in] regionAveragePressure value for pressure
    */
   void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
@@ -735,14 +754,9 @@ public:
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
     /// string key for the minimum BHP presssure for a producer
-    static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
-    /// string key for the maximum BHP presssure for a injection
-    static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
-
-    /// string key for the minimum BHP presssure for a producer
     static constexpr char const * wellNewtonSolverString() { return "WellNewtonSolver"; }
 
-    /// string key for the esitmate well solution flag
+    /// string key for the estimate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     /// string key for the enable iso thermal estimator flag
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
@@ -866,6 +880,7 @@ public:
                              integer const cycleNumber,
                              integer const coupledIterationNumber,
                              DomainPartition & domain,
+                             string const & meshBodyName,
                              MeshLevel & mesh,
                              ElementRegionManager & elemManager,
                              WellElementSubRegion & subRegion,
@@ -946,10 +961,10 @@ protected:
    * @param[out] averageTemperature Reference to a real64 variable where the retrieved average temperature is stored.
    * @return Boolean value, always returning true upon successful validation.
    */
-  template< typename STATISTICS >
-  bool validateReferenceRegionStatistics( ElementRegionManager const & elementManager,
-                                          real64 & averagePressure,
-                                          real64 & averageTemperature ) const;
+  //template< typename STATISTICS >
+  //bool validateReferenceRegionStatistics( ElementRegionManager const & elementManager,
+  //                                        real64 & averagePressure,
+  //                                        real64 & averageTemperature ) const;
 
 private:
   /// List of names of regions the solver will be applied to
@@ -962,6 +977,9 @@ protected:
 
   /// Name of the flow solver managing this well
   std::string m_flowSolverName;
+
+  /// Name of the discretization for the region
+  std::string m_discretizationName;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

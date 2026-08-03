@@ -26,11 +26,11 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsTask.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
 
 #include "LogLevelsInfo.hpp"
 #include "WellConstants.hpp"
@@ -38,6 +38,7 @@
 #include "InjPipeFlowTableFunction.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
@@ -454,17 +455,25 @@ void WellControls::postInputInitialization()
 
   // 13) Validate constraints
   bool const isProducerWell = isProducer();
+
+  forSubGroups< InjectionConstraint< MassRateConstraint >,
+                ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
+  {
+    GEOS_THROW_IF( useMass(),
+                   GEOS_FMT( "Constraint {} of type {} only allowed for {} if useMass is set to 1",
+                             constraint.getName(), getName() ),
+                   InputError, constraint.getDataContext() );
+  } );
+
   stdVector< std::tuple< string, string, WellConstraintBase const * > > constraints;
   forSubGroups< MaximumBHPConstraint,
                 InjectionConstraint< MassRateConstraint >,
                 InjectionConstraint< VolumeRateConstraint >,
                 InjectionConstraint< PhaseVolumeRateConstraint >,
-                InjectionConstraint< LiquidRateConstraint >,
                 MinimumBHPConstraint,
                 ProductionConstraint< MassRateConstraint >,
                 ProductionConstraint< VolumeRateConstraint >,
-                ProductionConstraint< PhaseVolumeRateConstraint >,
-                ProductionConstraint< LiquidRateConstraint > >( [&]( auto const & constraint )
+                ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto const & constraint )
   {
     using ConstraintType = std::decay_t< decltype(constraint) >;
     constraints.emplace_back( constraint.getName(), ConstraintType::catalogName(), &constraint );
@@ -478,16 +487,14 @@ void WellControls::postInputInitialization()
       return { MaximumBHPConstraint::catalogName(),
                InjectionConstraint< MassRateConstraint >::catalogName(),
                InjectionConstraint< VolumeRateConstraint >::catalogName(),
-               InjectionConstraint< PhaseVolumeRateConstraint >::catalogName(),
-               InjectionConstraint< LiquidRateConstraint >::catalogName() };
+               InjectionConstraint< PhaseVolumeRateConstraint >::catalogName()};
     }
     else
     {
       return { MinimumBHPConstraint::catalogName(),
                ProductionConstraint< MassRateConstraint >::catalogName(),
                ProductionConstraint< VolumeRateConstraint >::catalogName(),
-               ProductionConstraint< PhaseVolumeRateConstraint >::catalogName(),
-               ProductionConstraint< LiquidRateConstraint >::catalogName() };
+               ProductionConstraint< PhaseVolumeRateConstraint >::catalogName() };
     }
   }();
   for( const auto & [name, type, constraint] : constraints )
@@ -686,8 +693,7 @@ void populateConstraints( GROUP & group, bool isProducer, stdVector< CONSTRAINT 
   {
     group.template forSubGroups< ProductionConstraint< MassRateConstraint >,
                                  ProductionConstraint< VolumeRateConstraint >,
-                                 ProductionConstraint< PhaseVolumeRateConstraint >,
-                                 ProductionConstraint< LiquidRateConstraint > >( [&]( CONSTRAINT & constraint )
+                                 ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( CONSTRAINT & constraint )
     {
       if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
       {
@@ -699,8 +705,7 @@ void populateConstraints( GROUP & group, bool isProducer, stdVector< CONSTRAINT 
   {
     group.template forSubGroups< InjectionConstraint< MassRateConstraint >,
                                  InjectionConstraint< VolumeRateConstraint >,
-                                 InjectionConstraint< PhaseVolumeRateConstraint >,
-                                 InjectionConstraint< LiquidRateConstraint > >( [&]( CONSTRAINT & constraint )
+                                 InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( CONSTRAINT & constraint )
     {
       if( constraint.isConstraintActive() && constraint.getConstraintSource() == source )
       {
@@ -937,8 +942,7 @@ real64 WellControls::getInjectionTemperature() const
   localIndex firstIndex = -1;  // Used to "capture" the first one
   forSubGroupsIndex< InjectionConstraint< MassRateConstraint >,
                      InjectionConstraint< VolumeRateConstraint >,
-                     InjectionConstraint< PhaseVolumeRateConstraint >,
-                     InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
+                     InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
     if( firstIndex < 0 && constraint.isConstraintActive() )
     {
@@ -955,8 +959,7 @@ arrayView1d< real64 const > WellControls::getInjectionStream() const
   localIndex firstIndex = -1;  // Used to "capture" the first one
   forSubGroupsIndex< InjectionConstraint< MassRateConstraint >,
                      InjectionConstraint< VolumeRateConstraint >,
-                     InjectionConstraint< PhaseVolumeRateConstraint >,
-                     InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
+                     InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
     if( firstIndex < 0 && constraint.isConstraintActive() )
     {
@@ -998,6 +1001,8 @@ real64 WellControls::getReferenceElevation() const
 
 void WellControls::implicitStepSetup( real64 const & time_n,
                                       real64 const & GEOS_UNUSED_PARAM( dt ),
+                                      DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                      string const & GEOS_UNUSED_PARAM( meshBodyName ),
                                       ElementRegionManager & elemManager,
                                       WellElementSubRegion & subRegion )
 {
@@ -1074,8 +1079,6 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
 {
   PerforationData & perforationData = *subRegion.getPerforationData();
 
-  real64 const refElev =  getReferenceElevation();
-
   arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
   arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
@@ -1097,11 +1100,9 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
   forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
   {
     // set the reference well element where the BHP control is applied
-    real64 const refElev1 = constraint.getReferenceElevation();
-    constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
+    real64 const refElev = constraint.getReferenceElevation();
+    constraint.setReferenceGravityCoef( refElev * gravVector[2] );
   } );
-  // set the reference well element where the BHP control is applied
-  setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
 }
 
 void WellControls::selectWellConstraint( real64 const & time_n,
@@ -1109,6 +1110,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
                                          integer const cycleNumber,
                                          integer const coupledIterationNumber,
                                          DomainPartition & domain,
+                                         string const & meshBodyName,
                                          MeshLevel & meshLevel,
                                          ElementRegionManager & elemManager,
                                          WellElementSubRegion & subRegion,
@@ -1123,7 +1125,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     {
       setWellState( 1 );
 
-      initializeWell( domain, meshLevel, subRegion, time_n );
+      initializeWell( domain, domain.getMeshBodies(), meshBodyName, meshLevel, subRegion, time_n );
     }
   }
   else
@@ -1582,7 +1584,7 @@ bool WellControls::validateReferenceRegion() const
     return true;
   }
   bool const isRoot = MpiWrapper::commRank() == 0;
-  string const regionName = getReferenceReservoirRegion();
+  string const regionName = referenceReservoirRegion();
   if( regionName.empty() )
   {
     GEOS_WARNING_IF( isRoot,
@@ -1610,6 +1612,7 @@ bool WellControls::validateReferenceRegion() const
   return true;
 }
 
+#if 0
 template< typename STATISTICS >
 bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const & elemManager,
                                                       real64 & averagePressure,
@@ -1617,7 +1620,7 @@ bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const
 {
   averagePressure = 0.0;
   averageTemperature = 0.0;
-  string const regionName = getReferenceReservoirRegion();
+  string const regionName = referenceReservoirRegion();
   if( !regionName.empty())
   {
     ElementRegionBase const & region = elemManager.getRegion( regionName );
@@ -1638,7 +1641,7 @@ bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const
   return true;
 }
 
-template bool WellControls::validateReferenceRegionStatistics< SinglePhaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
-template bool WellControls::validateReferenceRegionStatistics< CompositionalMultiphaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
-
+template bool WellControls::validateReferenceRegionStatistics< singlePhaseStatistics::StatsTask >( ElementRegionManager const &, real64 &, real64 & ) const;
+template bool WellControls::validateReferenceRegionStatistics< compositionalMultiphaseStatistics::StatsTask >( ElementRegionManager const &, real64 &, real64 & ) const;
+#endif
 } //namespace geos

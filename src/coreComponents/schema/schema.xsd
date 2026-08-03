@@ -6166,10 +6166,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 					<xsd:selector xpath="MinimumWHPConstraint" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="SolversWellManagerCompositionalMultiphaseWellProductionLiquidRateConstraintUniqueName">
-					<xsd:selector xpath="ProductionLiquidRateConstraint" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="SolversWellManagerCompositionalMultiphaseWellProductionMassRateConstraintUniqueName">
 					<xsd:selector xpath="ProductionMassRateConstraint" />
 					<xsd:field xpath="@name" />
@@ -6216,10 +6212,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 				</xsd:unique>
 				<xsd:unique name="SolversWellManagerSinglePhaseWellMinimumWHPConstraintUniqueName">
 					<xsd:selector xpath="MinimumWHPConstraint" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="SolversWellManagerSinglePhaseWellProductionLiquidRateConstraintUniqueName">
-					<xsd:selector xpath="ProductionLiquidRateConstraint" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversWellManagerSinglePhaseWellProductionMassRateConstraintUniqueName">
@@ -6290,7 +6282,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="MaximumWHPConstraint" type="MaximumWHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
 			<xsd:element name="MinimumWHPConstraint" type="MinimumWHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
@@ -6377,9 +6368,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--massRate => Maximum mass rate (kg/s)-->
 		<xsd:attribute name="massRate" type="real64" default="0" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6399,9 +6387,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
 		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
 		<xsd:attribute name="phaseRate" type="real64" default="0" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6417,9 +6402,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="volumeRate" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6531,9 +6513,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
 		<!--massRate => Maximum mass rate (kg/s)-->
 		<xsd:attribute name="massRate" type="real64" default="0" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6549,9 +6528,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
 		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
 		<xsd:attribute name="phaseRate" type="real64" default="0" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6563,9 +6539,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
-		<!--value => Constraint value. 
--->
-		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="volumeRate" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6631,7 +6604,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="MaximumWHPConstraint" type="MaximumWHPConstraintType" />
 			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
 			<xsd:element name="MinimumWHPConstraint" type="MinimumWHPConstraintType" />
-			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
 			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />

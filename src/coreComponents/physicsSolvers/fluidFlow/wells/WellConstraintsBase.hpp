@@ -42,8 +42,6 @@ enum class ConstraintTypeId : integer
   PHASEVOLRATE,   /**< The well operates at a specified phase volumetric flow rate */
   TOTALVOLRATE,   /**< The well operates at a specified total volumetric flow rate */
   MASSRATE,   /**<The well operates at a specified mass rate */
-  WHP,  /**< The well operates at a specified wellhead   pressure (WHP) */
-  LIQUIDRATE,  /**< The well operates at a specified liquid rate */
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
@@ -185,9 +183,6 @@ public:
   {
     /// string key for schedule table name
     static constexpr char const * constraintScheduleTableNameString() { return "constraintScheduleTableName"; }
-
-    /// String key for the well constraint value
-    static constexpr char const * constraintValueString() { return "value"; }
 
     /// String key for the well constraint active flag
     static constexpr char const * constraintActiveString() { return "constraintActive"; }

@@ -614,7 +614,7 @@ protected:
         WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                              .getGroup< WellElementSubRegion >( region.getSubRegionName() );
         WellControls & wellControls = wellSolver.getWellControls( subRegion );
-        wellControls.initializeWell( domain, meshLevel, subRegion, TIME );
+        wellControls.initializeWell( domain, domain.getMeshBodies(), meshBodyName, meshLevel, subRegion, TIME );
       } );
     } );
   }

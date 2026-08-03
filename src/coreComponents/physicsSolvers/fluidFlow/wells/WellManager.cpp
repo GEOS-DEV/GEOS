@@ -182,7 +182,9 @@ void WellManager::implicitStepSetup( real64 const & time_n,
                                                         [&]( localIndex const,
                                                              WellElementRegion & region )
     {
-      WellControls & well = getWell( region.getWellControlsName() );
+      // TODO expose a getWellControlsName() on WellElementRegion because Wrapper look-up is not useful here.
+      WellControls & well = getWell(
+        region.getReference< string >( WellElementRegion::viewKeyStruct::wellControlsString() ) );
       if( well.estimateSolution() )
       {
         well.setupWellDofs( domain, region, meshBodyName, mesh );
@@ -192,7 +194,7 @@ void WellManager::implicitStepSetup( real64 const & time_n,
     ;
   } );
 
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
   {
@@ -204,9 +206,8 @@ void WellManager::implicitStepSetup( real64 const & time_n,
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls & well = getWell( subRegion );
-      well.implicitStepSetup( time_n, dt, elemManager, subRegion );
-    } )
-    ;
+      well.implicitStepSetup( time_n, dt, domain, meshBodyName, elemManager, subRegion );
+    } );
   } );
 }
 real64
@@ -300,7 +301,6 @@ CompositionalMultiphaseWell const & WellManager::getCompositionalMultiphaseWell(
 }
 void WellManager::initializePostSubGroups()
 {
-#if 0
   GEOS_MARK_FUNCTION;
   // Validate constitutive models
   if( isCompositional() )
@@ -309,7 +309,7 @@ void WellManager::initializePostSubGroups()
     constitutive::ConstitutiveManager const & cm = domain.getConstitutiveManager();
     CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
     string const referenceFluidName = flowSolver.referenceFluidModelName();
-    constitutive::MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< constitutive::MultiFluidBase >( m_referenceFluidModelName );
+    constitutive::MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< constitutive::MultiFluidBase >( referenceFluidName );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel const & mesh,
@@ -319,10 +319,10 @@ void WellManager::initializePostSubGroups()
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             WellElementSubRegion const & subRegion )
       {
-        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseWell::viewKeyStruct::fluidNamesString() );
         constitutive::MultiFluidBase const & fluid = getConstitutiveModel< constitutive::MultiFluidBase >( subRegion, fluidName );
-        WellControls const & wellControls = getWellControls( subRegion );
-        wellControls.validateFluidModel( fluid, referenceFluid );
+        CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
+        wellControls->validateFluidModel( fluid, referenceFluid );
       } );
 
     } );
@@ -331,7 +331,7 @@ void WellManager::initializePostSubGroups()
   {
     // Single phase validation can be added here in the future
   }
-#endif
+
 }
 
 void WellManager::setupDofs( DomainPartition const & domain,
@@ -400,6 +400,7 @@ void WellManager::assembleSystem( real64 const time,
                                          iterationsStatistics.getNumTimeSteps(),
                                          nonlinearParams.m_numNewtonIterations,
                                          domain,
+                                         meshBodyName,
                                          meshLevel,
                                          elementRegionManager,
                                          subRegion,
@@ -426,7 +427,7 @@ void WellManager::assembleSystem( real64 const time,
 
 void WellManager::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
@@ -438,7 +439,7 @@ void WellManager::resetStateToBeginningOfStep( DomainPartition & domain )
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
-      wellControls.resetStateToBeginningOfStep( elemManager, subRegion );
+      wellControls.resetStateToBeginningOfStep( domain, meshBodyName, elemManager, subRegion );
 
 
     } );
@@ -467,25 +468,7 @@ void WellManager::implicitStepComplete( real64 const & time,
 }
 
 void WellManager::postRestartInitialization()
-{
-#if 0
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-  {
-    // loop over the wells
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-
-    {
-      WellControls & wellControls = getWell( subRegion );
-      wellControls.postRestartInitialization(   );
-
-    } );
-  } );
-#endif
-}
+{}
 void WellManager::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -531,7 +514,7 @@ void WellManager::updateState( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
   real64 maxPhaseVolFrac = 0.0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
@@ -543,7 +526,7 @@ void WellManager::updateState( DomainPartition & domain )
       if( wellControls.getWellState())
       {
 
-        real64 const maxRegionPhaseVolFrac = wellControls.updateWellState( elemManager, subRegion );
+        real64 const maxRegionPhaseVolFrac = wellControls.updateWellState( domain.getMeshBody( meshBodyName ), elemManager, subRegion );
 
         maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
       }
@@ -567,7 +550,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
   integer numNorm = 1;       // mass balance
-  array1d< real64 > localResidualNorm, wellResidalNorm;
+  array1d< real64 > localResidualNorm, wellResidualNorm;
   array1d< real64 > localResidualNormalizer;
 
   if( isThermal() )
@@ -598,17 +581,17 @@ WellManager::calculateResidualNorm( real64 const & time_n,
       // step 1: compute the norm in the subRegion
       if( wellControls.isWellOpen( ) )
       {
-        wellResidalNorm = wellControls.calculateLocalWellResidualNorm( time_n,
-                                                                       dt,
-                                                                       m_nonlinearSolverParameters,
-                                                                       subRegion,
-                                                                       dofManager,
-                                                                       localRhs );
+        wellResidualNorm = wellControls.calculateLocalWellResidualNorm( time_n,
+                                                                        dt,
+                                                                        m_nonlinearSolverParameters,
+                                                                        subRegion,
+                                                                        dofManager,
+                                                                        localRhs );
         for( integer i=0; i<numNorm; i++ )
         {
-          if( wellResidalNorm[i] > localResidualNorm[i] )
+          if( wellResidualNorm[i] > localResidualNorm[i] )
           {
-            localResidualNorm[i] = wellResidalNorm[i];
+            localResidualNorm[i] = wellResidualNorm[i];
           }
         }
       }
@@ -788,10 +771,10 @@ WellManager::checkSystemSolution( DomainPartition & domain,
                                                                  rankNegPressureIds,
                                                                  rankNegDensityIds,
                                                                  rankTotalNegDensityIds );
-      globalCheck = MpiWrapper::min( localCheck );
+      globalCheck = std::min( localCheck, globalCheck );
     } );
   } );
-
+  globalCheck  = MpiWrapper::min( globalCheck );
   minPressure  = MpiWrapper::min( minPressure );
   minDensity = MpiWrapper::min( minDensity );
   minTotalDensity = MpiWrapper::min( minTotalDensity );

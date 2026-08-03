@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="coupledFlowAndWells"
@@ -55,7 +57,9 @@
       </CompositionalMultiphaseWell>
     </WellManager>
   </Solvers>
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->  
 
+  <!-- SPHINX_FIELD_CASE_Co2_REGION -->
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
@@ -66,14 +70,18 @@
       name="wellRegion"
       materialList="{ fluid }"/>
   </ElementRegions>
+  <!-- SPHINX_FIELD_CASE_Co2_REGION_END --> 
 
+  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
+  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
     <CO2BrinePhillipsFluid
       name="fluid"
@@ -109,7 +117,9 @@
       name="rockPerm"
       permeabilityComponents="{ 1.0e-17, 1.0e-17, 3.0e-17 }"/>
   </Constitutive>
+  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_FIELD -->
   <FieldSpecifications>
     <FieldSpecification
       name="permx"
@@ -167,7 +177,9 @@
       component="1"
       scale="1.0"/>
   </FieldSpecifications>
+  <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
   <Outputs>
     <VTK
       name="simpleReservoirViz"/>
@@ -180,14 +192,16 @@
       sources="{ /Tasks/wellPressureCollection }"
       filename="wellPressureHistory"/>
   </Outputs>
+  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS -->  
   <Tasks>
     <PackCollection
       name="wellPressureCollection"
       objectPath="ElementRegions/wellRegion/wellRegionUniqueSubRegion"
       fieldName="pressure"/>
   </Tasks>
-
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
   <Functions>
     <TableFunction
       name="permxFunc"

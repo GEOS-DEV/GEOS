@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
@@ -683,8 +684,6 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                              WellElementSubRegion & subRegion )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
-  integer configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
@@ -765,12 +764,8 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
     //auto iterInfo = currentIter( time_n, dt );
     //outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
     //                       mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
-// if the residual norm is less than the Newton tolerance we denote that we have
-// converged and break from the Newton loop immediately.
-    std::cout << " Well: " << subRegion.getName() << "   Est Attempt: " << dtAttempt
-              << ", ConfigurationIter: " << configurationLoopIter
-              << ", NewtonIter: " << newtonIter
-              << ", Residual Norm: " << residualNorm << std::endl;
+    // if the residual norm is less than the Newton tolerance we denote that we have
+    // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
@@ -857,7 +852,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
-      well.updateWellState( elemManager, subRegion );
+      well.updateWellState( domain.getMeshBody( mesh.getParent().getParent().getName() ), elemManager, subRegion );
     }
 
   }

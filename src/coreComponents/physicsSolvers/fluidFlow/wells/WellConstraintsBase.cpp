@@ -39,32 +39,6 @@ WellConstraintBase::CatalogInterface::CatalogType & WellConstraintBase::getCatal
   return catalog;
 }
 
-namespace
-{
-
-
-#if 0
-/// Utility function to create a one-value table internally when not provided by the user
-TableFunction * createConstraintScheduleTable( string const & tableName,
-                                               real64 const & constantValue )
-{
-  array1d< array1d< real64 > > timeCoord;
-  timeCoord.resize( 1 );
-  timeCoord[0].emplace_back( 0 );
-  array1d< real64 > constantValueArray;
-  constantValueArray.emplace_back( constantValue );
-
-  FunctionManager & functionManager = FunctionManager::getInstance();
-  TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ));
-  table->setTableCoordinates( timeCoord, { units::Time } );
-  table->setTableValues( constantValueArray );
-  table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
-  return table;
-}
-#endif
-
-
-}
 
 WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
@@ -89,11 +63,6 @@ WellConstraintBase::WellConstraintBase( string const & name, Group * const paren
     setDescription( "Flag to enable constraint. Currently only supported for injectors: \n"
                     " - If the flag is set to 1, constraint included in boundary condition selection. \n"
                     " - If the flag is set to 0, constraint excluded from boundary condition selection." );
-
-  registerWrapper( viewKeyStruct::constraintValueString(), &m_constraintValue ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Constraint value. \n" );
 
 }
 
