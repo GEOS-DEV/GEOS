@@ -285,11 +285,11 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate( localIndex 
   {
     for( int j = 0; j < 3; ++j )
     {
-      real64 deltaFe[3][3] = {0};
+      real64 deltaFe[3][3] = {};
       deltaFe[i][j] = 1.0;
 
       // delCe = delFe^T * Fe + Fe^T * delFe
-      real64 dCe[3][3] = {0};
+      real64 dCe[3][3] = {};
       for( int l = 0; l < 3; ++l )
       {
         dCe[j][l] += deltaFe[i][j] * elasticDeformGrad[i][l];
@@ -305,7 +305,7 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate( localIndex 
 
       // geometric tangent
       real64 deltaP_geo[3][3] = {};
-      real64 deltaFeT_FeInvT[3][3] = {0};
+      real64 deltaFeT_FeInvT[3][3] = {};
       for( int l = 0; l < 3; ++l )
       {
         deltaFeT_FeInvT[j][l] += deltaFe[i][j] * fInvT[i][l];

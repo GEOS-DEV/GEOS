@@ -1,7 +1,8 @@
 # Unit tests for constitutive solid models (DamageSpectral etc.)
 
 set( gtest_geosx_tests
-     testDamage.cpp )
+     testDamage.cpp 
+     testFiniteDifferenceElasticFiniteStrain.cpp )
 
 set( dependencyList gtest mainInterface blas lapack constitutive ${parallelDeps} )
 
