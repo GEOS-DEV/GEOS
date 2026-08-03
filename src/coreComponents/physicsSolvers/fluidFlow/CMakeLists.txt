@@ -194,6 +194,7 @@ set( fluidFlowSolvers_sources
      wells/WellProductionConstraint.cpp
      wells/WellBHPConstraints.cpp
      wells/WellWHPConstraint.cpp
+     wells/WellLiquidRateConstraint.cpp
      wells/WellVolumeRateConstraint.cpp
      wells/WellMassRateConstraint.cpp
      wells/WellPhaseVolumeRateConstraint.cpp

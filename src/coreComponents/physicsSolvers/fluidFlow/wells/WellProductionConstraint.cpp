@@ -24,6 +24,7 @@
 #include "functions/FunctionManager.hpp"
 
 #include "WellMassRateConstraint.hpp"
+#include "WellLiquidRateConstraint.hpp"
 #include "WellPhaseVolumeRateConstraint.hpp"
 #include "WellVolumeRateConstraint.hpp"
 
@@ -50,9 +51,9 @@ void ProductionConstraint< ConstraintRateType >::postInputInitialization()
 }
 // Register concrete wrapper constraint types and instantiate templates.
 
-//template class ProductionConstraint< LiquidRateConstraint >;
-//using ProductionLiquidRateConstraint = ProductionConstraint< LiquidRateConstraint >;
-//REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionLiquidRateConstraint, string const &, Group * const )
+template class ProductionConstraint< LiquidRateConstraint >;
+using ProductionLiquidRateConstraint = ProductionConstraint< LiquidRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionLiquidRateConstraint, string const &, Group * const )
 
 template class ProductionConstraint< MassRateConstraint >;
 using ProductionMassRateConstraint = ProductionConstraint< MassRateConstraint >;

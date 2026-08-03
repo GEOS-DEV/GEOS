@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellWHPConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"

@@ -1111,6 +1111,8 @@ ENUM_STRINGS( WellControls_Control,
               "phaseVolRate",
               "totalVolRate",
               "massRate",
+              "liquidRate",
+              "WHP",
               "uninitialized" );
 
 

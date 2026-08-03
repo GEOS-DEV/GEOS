@@ -42,6 +42,8 @@ enum class ConstraintTypeId : integer
   PHASEVOLRATE,   /**< The well operates at a specified phase volumetric flow rate */
   TOTALVOLRATE,   /**< The well operates at a specified total volumetric flow rate */
   MASSRATE,   /**<The well operates at a specified mass rate */
+  LIQUIDRATE,   /**< The well operates at a specified liquid rate */
+  WHP,    /**< The well operates at a specified wellhead pressure (WHP) */
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
