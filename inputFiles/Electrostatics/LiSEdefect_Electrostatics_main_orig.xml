@@ -4,7 +4,7 @@
 
   <Mesh>
       <VTKMesh name="mesh"
-                file="./LiSEDefect2D_butterfly_COARSER.vtu" 
+                file="./LiSEDefect2D_butterfly.vtu" 
                 regionAttribute="COPPER-DEFECT-SE"
                 nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, CUSEInterface, LISEInterface }"/>
   </Mesh>

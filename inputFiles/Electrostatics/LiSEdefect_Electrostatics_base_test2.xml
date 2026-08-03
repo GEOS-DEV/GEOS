@@ -1,0 +1,95 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events
+    maxTime="3.0">
+
+    <PeriodicEvent
+      name="solverApplication"
+      forceDt="1.0"
+      target="/Solvers/halfcell"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="void"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ void_material }"/>
+
+    <CellElementRegion
+      name="matrix"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ SE }"/>
+
+    <CellElementRegion
+      name="crack"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ air }"/>
+
+  </ElementRegions>
+
+  <Constitutive>
+    <ElectroChemistryBase
+      name="void_material"
+      defaultConductivity="1E-14"/>
+
+    <ElectroChemistryBase
+      name="SE"
+      defaultConductivity="1E-4"/>
+
+    <ElectroChemistryBase
+      name="air"
+      defaultConductivity="1E-14"/>
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="topSurface"
+      xMin="{ -0.2, -0.2, 1.2 }"
+      xMax="{ 8.6, 8.6, 1.2 }"/>
+
+    <Box
+      name="bottomSurface"
+      xMin="{ -0.2, -0.2, -0.2 }"
+      xMax="{ 8.6, 8.6, -0.2 }"/>
+
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="groundPotential"
+      fieldName="potential"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{bottomSurface}"/>
+
+    <FieldSpecification
+      name="upperPotential"
+      fieldName="potential"
+      objectPath="nodeManager"
+      scale="1.0"
+      setNames="{topSurface}"/>
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="LiSEdefect_Electrostatics_2D2a"/>
+  </Outputs>
+
+  <!-- <Functions>
+    <TableFunction
+      name="timefuncion"
+      inputVarNames="{time}"
+      coordinates="{ 0.0, 10.0}"
+      values="{ 0.0, 0.1}"/>
+  </Functions> -->
+
+</Problem>

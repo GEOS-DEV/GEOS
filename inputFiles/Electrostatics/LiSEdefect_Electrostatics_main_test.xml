@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+      <VTKMesh name="mesh"
+                file="/p/lustre1/moncadalopez1/Input_Mesh/box_materials_coarsef16.vtk" 
+                regionAttribute="material"/>
+  </Mesh>
+
+  <Included>
+    <File name="./LiSEdefect_Electrostatics_base_test.xml"/>
+  </Included>
+
+  <Solvers>
+    <Electrostatics
+      name="halfcell"
+      discretization="FE1"
+      fieldName="potential"
+      targetRegions="{Void, Matrix, Cracks}">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </Electrostatics>
+
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  
+</Problem>

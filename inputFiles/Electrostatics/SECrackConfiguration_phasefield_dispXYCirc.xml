@@ -1,0 +1,362 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+      <VTKMesh name="mesh"
+               file="/p/lustre1/moncadalopez1/Input_Mesh/box_materials_coarsef16_nodesetTB.vtk" 
+                regionAttribute="material"
+                nodesetNames="{ crack_nodeset, topCircleSurface, bottomCircleSurface }"
+                />
+  </Mesh>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="2"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"  
+        newtonMaxIter="100"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      logLevel="1"
+      >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"/> 
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Linear"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        maxTimeStepCuts="5"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  
+  <Events
+    maxTime="8.0">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="8.0"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ 0_hexahedra, 1_hexahedra, 2_hexahedra }"
+      materialList="{ battery }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="battery"
+      defaultDensity="533.4"
+      defaultBulkModulus="1.35416667e5"
+      defaultShearModulus="4.85074627e5"
+      defaultCriticalFractureEnergy="2e-2"
+      criticalStrainEnergy="0.0"
+      lengthScale="0.1"/>
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="topSurface"
+      xMin="{ -0.2, -0.2, 1.08 }"
+      xMax="{ 8.6, 8.6, 1.2 }"/>
+
+    <Box
+      name="bottomSurface"
+      xMin="{ -0.2, -0.2, -0.2 }"
+      xMax="{8.6, 8.6, 0.02 }"/>
+
+
+    <Box
+      name="topSurfaceC"
+      xMin="{ 0.98, 0.98, 1.08 }"
+      xMax="{ 7.5, 7.5, 1.2 }"/>
+
+    <Box
+      name="bottomSurfaceC"
+      xMin="{ 0.98, 0.98, -0.2 }"
+      xMax="{ 7.5, 7.5, 0.02 }"/>
+
+    <Box
+      name="leftFace"
+      xMin="{ -0.2, -0.2, -0.2 }"
+      xMax="{ 0.01, 8.6, 1.2 }"/>
+
+    <Box
+      name="rightFace"
+      xMin="{ 8.47, -0.2, -0.2 }"
+      xMax="{ 8.6, 8.6, 1.2 }"/>
+
+    <Box
+      name="backFace"
+      xMin="{ -0.2, -0.2, -0.2 }"
+      xMax="{ 8.6, 0.01, 1.2 }"/>
+
+    <Box
+      name="frontFace"
+      xMin="{ -0.2, 8.47, -0.2 }"
+      xMax="{ 8.6, 8.6, 1.2 }"/>
+
+
+  </Geometry>
+
+
+
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="battery_criticalFractureEnergy"
+       scale="2e-2"/>
+
+    <FieldSpecification
+      name="tensileStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="battery_tensileStrength"
+      scale="27e1"/>
+
+    <FieldSpecification
+      name="compressiveStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="battery_compressiveStrength"
+      scale="77e2"/>
+
+
+    <!-- <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ all }"/> -->
+
+    <!-- <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ all }"/> -->
+
+    <FieldSpecification
+      name="initialCrack"
+      objectPath="nodeManager"
+      fieldName="Damage"
+      setNames="{ crack_nodeset }"
+      scale="1.0"/>
+
+    <!-- <FieldSpecification
+      name="zPosDisp"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="1.0e-3"
+      functionName="disp"
+      setNames="{ topSurface }"/>
+
+    <FieldSpecification
+      name="zNegDisp"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="-1.0e-3"
+      functionName="disp"
+      setNames="{ bottomSurface }"/> -->
+
+
+<!-- Biaxial Loading -->
+    <!-- <FieldSpecification
+      name="xPosDisp"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="1.0e-2"
+      functionName="disp"
+      setNames="{ rightFace }"/>
+
+    <FieldSpecification
+      name="xNegDisp"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="-1.0e-2"
+      functionName="disp"
+      setNames="{ leftFace }"/>
+
+    <FieldSpecification
+      name="yPosDisp"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="1.0e-2"
+      functionName="disp"
+      setNames="{ frontFace }"/>
+
+    <FieldSpecification
+      name="yNegDisp"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="-1.0e-2"
+      functionName="disp"
+      setNames="{ backFace }"/> -->
+
+  <!-- Circular displacement -->
+    <FieldSpecification
+      name="xCircDisp"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.4"
+      functionName="dispCircX"
+      setNames="{ topCircleSurface }"/>
+
+    <FieldSpecification
+      name="yCircDisp"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.4"
+      functionName="dispCircY"
+      setNames="{ topCircleSurface }"/>
+
+  <!-- <FieldSpecification
+      name="xFixFaces"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0"
+      setNames="{ leftFace, rightFace }"/> -->
+
+  <!-- <FieldSpecification
+      name="yFixFaces"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0"
+      setNames="{ topSurface, bottomSurface }"/> -->
+
+
+<!-- Fix displacements at interface of electrolyte -->
+  <FieldSpecification
+      name="zFixFaces"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0"
+      setNames="{ bottomCircleSurface }"/>
+
+  <FieldSpecification
+      name="zTopDisp"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="-1e-3"
+      functionName="disp"
+      setNames="{ topCircleSurface }"/>
+      
+
+  </FieldSpecifications>
+
+
+
+  <Functions>
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
+    symbolic math function should expect the variables to be given, and an expression that it will compile.
+    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
+    <TableFunction
+      name="f_b"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 4 }"
+      values="{ 0, 129.5 }"/>
+
+    <TableFunction
+      name="disp"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 8 }"
+      values="{ 0, 0.1 }"/>
+
+    <TableFunction
+      name="dispCircX"
+      inputVarNames="{ ReferencePosition, time }"
+      coordinateFiles="{ tables/tablef2/xd.geos, tables/tablef2/yd.geos, tables/tablef2/zd.geos, tables/tablef2/td.geos}"
+      voxelFile="tables/tablef2/displacement_x.geos"/>
+
+    <TableFunction
+      name="dispCircY"
+      inputVarNames="{ ReferencePosition, time }"
+      coordinateFiles="{ tables/tablef2/xd.geos, tables/tablef2/yd.geos, tables/tablef2/zd.geos, tables/tablef2/td.geos}"
+      voxelFile="tables/tablef2/displacement_y.geos"/>
+
+      
+  </Functions>
+
+
+
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="LiSEdefect_interface_LiGrowthPFLdxyCirTest3"/>
+  </Outputs>
+</Problem>

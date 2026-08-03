@@ -4,13 +4,13 @@
 
   <Mesh>
       <VTKMesh name="mesh"
-                file="./LiSEDefect2D_butterfly_COARSER.vtu" 
+                file="./LiSEDefect2D_butterfly.vtu" 
                 regionAttribute="COPPER-DEFECT-SE"
-                nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, CUSEInterface, LISEInterface }"/>
+                nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, LISEInterface }"/>
   </Mesh>
 
   <Included>
-    <File name="./LiSEdefect_Electrostatics_base.xml"/>
+    <File name="./LiSEdefect_Electrostatics_baseZ.xml"/>
   </Included>
 
   <Solvers>
@@ -40,7 +40,7 @@
     </FiniteElements>
   </NumericalMethods>
   
-  <FieldSpecifications>
+  <!-- <FieldSpecifications>
     <FieldSpecification
       name="LiReactivityCoef"
       initialCondition="1"
@@ -48,6 +48,6 @@
       objectPath="ElementRegions/SEIRegion"
       fieldName="metalSE_reactivityCoefficient"
       scale="1.0E-4"/>
-  </FieldSpecifications>
+  </FieldSpecifications> -->
 
 </Problem>

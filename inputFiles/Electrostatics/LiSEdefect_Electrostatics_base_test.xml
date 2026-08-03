@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events
+    maxTime="1.0">
+
+    <PeriodicEvent
+      name="solverApplication"
+      forceDt="1.0"
+      target="/Solvers/halfcell"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Void"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ void_material }"/>
+
+    <CellElementRegion
+      name="Matrix"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ SE }"/>
+
+    <CellElementRegion
+      name="Cracks"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ air }"/>
+
+    <!-- <CellElementRegion
+      name="Silicon"
+      cellBlocks="{ 3_hexahedra }"
+      materialList="{ Si }"/> -->
+
+  </ElementRegions>
+
+  <Constitutive>
+    <ElectroChemistryBase
+      name="void_material"
+      defaultConductivity="1E-14"/>
+
+    <ElectroChemistryBase
+      name="SE"
+      defaultConductivity="1E-4"/>
+
+    <ElectroChemistryBase
+      name="air"
+      defaultConductivity="1E-14"/>
+
+    <!-- <ElectroChemistryBase
+      name="Si"
+      defaultConductivity="1E-4"/> -->
+
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="topSurface"
+      xMin="{ -0.1, -0.1, 1.09 }"
+      xMax="{ 8.5, 8.5, 1.11 }"/>
+
+    <Box
+      name="bottomSurface"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 8.5, 8.5, 0.01 }"/>
+
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="groundPotential"
+      fieldName="potential"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{bottomSurface}"/>
+
+    <FieldSpecification
+      name="upperPotential"
+      fieldName="potential"
+      objectPath="nodeManager"
+      scale="1.0"
+      setNames="{topSurface}"/>
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="LiSEdefect_Electrostatics_2D_uniform"/>
+  </Outputs>
+
+  <!-- <Functions>
+    <TableFunction
+      name="timefuncion"
+      inputVarNames="{time}"
+      coordinates="{ 0.0, 10.0}"
+      values="{ 0.0, 0.1}"/>
+  </Functions>
+  functionName="timefuncion" -->
+
+</Problem>

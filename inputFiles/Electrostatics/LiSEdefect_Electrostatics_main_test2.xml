@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+      <VTKMesh name="mesh"
+                file="/p/lustre1/moncadalopez1/Input_Mesh/cylinder_only_material_coarsef16.vtk" 
+                regionAttribute="material"/>
+  </Mesh>
+
+  <Included>
+    <File name="./LiSEdefect_Electrostatics_base_test2.xml"/>
+  </Included>
+
+  <Solvers>
+    <Electrostatics
+      name="halfcell"
+      discretization="FE1"
+      fieldName="potential"
+      targetRegions="{void, matrix, crack}">
+      <LinearSolverParameters
+        directParallel="1"/>
+    </Electrostatics>
+
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  
+</Problem>
+
+<!-- targetRegions="{Void, matrix, crack}"> -->
+<!-- timeIntegrationOption="QuasiStatic" removed from solver -->
