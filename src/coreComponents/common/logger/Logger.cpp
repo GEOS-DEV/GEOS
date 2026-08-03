@@ -20,48 +20,9 @@
 // Source includes
 #include "Logger.hpp"
 #include "common/Path.hpp"
-#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
-
-/**
- * @brief Insert an exception message in another one.
- * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOS_THROW)
- * @param msgToInsert message to insert at the top of the originalMsg
- */
-std::string insertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
-{
-  std::string newMsg( originalMsg );
-  size_t insertPos = 0;
-  // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static string_view constexpr rankLogStart =  "***** Rank ";
-  static string_view constexpr rankLogEnd =  ": ";
-  static string_view constexpr simpleLogStart =  "***** ";
-  if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
-  {
-    insertPos = newMsg.find( rankLogEnd, insertPos + rankLogStart.size() )
-                + rankLogEnd.size();
-  }
-  else if( ( insertPos = newMsg.rfind( simpleLogStart ) ) != std::string::npos )
-  {
-    insertPos += simpleLogStart.size();
-  }
-  else
-  {
-    insertPos = 0;
-  }
-  newMsg.insert( insertPos, msgToInsert );
-  return newMsg;
-}
-
-InputError::InputError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
-{}
-
-SimulationError::SimulationError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
-{}
 
 namespace logger
 {
@@ -69,16 +30,10 @@ namespace logger
 namespace internal
 {
 
-int rank = 0;
-std::string rankString = "0";
-
-int n_ranks = 1;
-
-std::ostream * rankStream = nullptr;
-
-#ifdef GEOS_USE_MPI
-MPI_Comm comm;
-#endif
+int g_rank = 0;
+int g_n_ranks = 1;
+std::string g_rankString = "?";
+std::ostream * g_rankStream = nullptr;
 
 } // namespace internal
 
@@ -86,26 +41,25 @@ MPI_Comm comm;
 
 void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 {
-  internal::comm = mpi_comm;
-  MPI_Comm_rank( mpi_comm, &internal::rank );
-  MPI_Comm_size( mpi_comm, &internal::n_ranks );
+  MPI_Comm_rank( mpi_comm, &internal::g_rank );
+  MPI_Comm_size( mpi_comm, &internal::g_n_ranks );
 
-  internal::rankString = std::to_string( internal::rank );
+  internal::g_rankString = std::to_string( internal::g_rank );
 
   if( rankOutputDir != "" )
   {
-    if( internal::rank == 0 )
+    if( internal::g_rank == 0 )
     {
       makeDirsForPath( rankOutputDir );
     }
 
     MPI_Barrier( mpi_comm );
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::g_rankString + ".out";
+    internal::g_rankStream = new std::ofstream( outputFilePath );
   }
   else
   {
-    internal::rankStream = &std::cout;
+    internal::g_rankStream = &std::cout;
   }
 }
 
@@ -117,23 +71,23 @@ void InitializeLogger( const std::string & rankOutputDir )
   {
     makeDirsForPath( rankOutputDir );
 
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::g_rankString + ".out";
+    internal::g_rankStream = new std::ofstream( outputFilePath );
   }
   else
   {
-    internal::rankStream = &std::cout;
+    internal::g_rankStream = &std::cout;
   }
 }
 
 void FinalizeLogger()
 {
-  if( internal::rankStream != &std::cout )
+  if( internal::g_rankStream != &std::cout )
   {
-    delete internal::rankStream;
+    delete internal::g_rankStream;
   }
 
-  internal::rankStream = nullptr;
+  internal::g_rankStream = nullptr;
 }
 
 } // namespace logger

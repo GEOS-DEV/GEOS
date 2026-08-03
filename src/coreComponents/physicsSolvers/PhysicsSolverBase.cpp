@@ -16,6 +16,10 @@
 #include "PhysicsSolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
 
+#include "common/MpiWrapper.hpp"
+#include "codingUtilities/RTTypes.hpp"
+#include "common/format/EnumStrings.hpp"
+#include "dataRepository/Group.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
@@ -24,6 +28,9 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -103,10 +110,15 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
   registerWrapper( viewKeyStruct::writeStatisticsCSVString(), &m_writeStatisticsCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( StatsOutputType::none ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 also output convergence information to a csv" );
+    setDescription( GEOS_FMT( "When set to `{}`, output iterations information to a csv\n"
+                              "When set to `{}`, output convergence information to a csv\n"
+                              "When set to `{}` output both convergence & iteration information to a csv.",
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ),
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence ),
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::all ) ));
 
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
@@ -126,13 +138,22 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
+  if( m_linearSolverParameters.getLogLevel() < getLogLevel() )
+  {
+    m_linearSolverParameters.setLogLevel( getLogLevel() );
+    m_linearSolverParameters.get().logLevel = m_linearSolverParameters.getLogLevel();
+  }
+
   m_solverStatistics.setOutputFilesName( getName() );
-  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 1 );
+
+  m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutputState( true );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 1 );
-  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getIterationStats().setLogOutputRequest( true );
+  getIterationStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::iteration ||
+                                           m_writeStatisticsCSV == StatsOutputType::all );
+  getConvergenceStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::convergence ||
+                                             m_writeStatisticsCSV == StatsOutputType::all );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -154,8 +175,9 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                     getDataContext() << ": No MeshBody information is specified in" <<
-                     " PhysicsSolverBase::meshTargets, but there are multiple MeshBody objects" );
+                     "No MeshBody information is specified in PhysicsSolverBase::meshTargets, "
+                     "but there are multiple MeshBody objects",
+                     getDataContext() );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
@@ -169,8 +191,8 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     getWrapperDataContext( viewKeyStruct::targetRegionsString() ) << ": MeshBody (" <<
-                     meshBodyName << ") is specified in targetRegions, but does not exist." );
+                     GEOS_FMT( "MeshBody ({}) is specified in targetRegions, but does not exist.", meshBodyName ),
+                     getWrapperDataContext( viewKeyStruct::targetRegionsString() ) );
 
       string const meshLevelName = m_discretizationName;
 
@@ -182,7 +204,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Invalid specification of targetRegions" );
+      GEOS_ERROR( "Invalid specification of targetRegions", getDataContext()  );
     }
   }
 }
@@ -227,8 +249,8 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
   GEOS_ERROR_IF( pos == m_targetRegionNames.end(),
-                 GEOS_FMT( "{}: Region {} is not a target of the solver.",
-                           getDataContext(), regionName ) );
+                 GEOS_FMT( "Region {} is not a target of the solver.",
+                           regionName ), getDataContext() );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -257,9 +279,8 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     setSystemSetupTimestamp( meshModificationTimestamp );
   }
-
   {
-    Timer timer( m_timers["step setup"] );
+    Timer timer( m_timers.get_inserted( "step setup" ) );
     implicitStepSetup( time_n, dt, domain );
   }
 
@@ -268,7 +289,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   {
-    Timer timer( m_timers["step complete"] );
+    Timer timer( m_timers.get_inserted( "step complete" ) );
     implicitStepComplete( time_n, dt_return, domain );
   }
 
@@ -346,8 +367,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-  GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
-                                                        " reached. Consider increasing maxSubSteps." );
+  GEOS_ERROR_IF( dtRemaining > 0.0,
+                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
+                 getDataContext() );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
@@ -521,7 +543,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   {
-    Timer timer( m_timers["assemble"] );
+    Timer timer( m_timers.get_inserted( "assemble" ) );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -557,10 +579,10 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   {
-    Timer timer( m_timers["linear solver total"] );
+    Timer timer( m_timers.get_inserted( "linear solver total" ) );
 
     {
-      Timer timer_create( m_timers["linear solver create"] );
+      Timer timer_create( m_timers.get_inserted( "linear solver create" ) );
 
       // Compose parallel LA matrix out of local matrix
       m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
@@ -568,7 +590,8 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
-    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                       cycleNumber, 0 );
   }
 
   getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -576,14 +599,14 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   {
-    Timer timer( m_timers["apply solution"] );
+    Timer timer( m_timers.get_inserted( "apply solution" ) );
 
     // apply the system solution to the fields/variables
     applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
   }
 
   {
-    Timer timer( m_timers["update state"] );
+    Timer timer( m_timers.get_inserted( "update state" ) );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -609,7 +632,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
                                     real64 const scaleFactor,
                                     real64 & lastResidual )
 {
-  Timer timer( m_timers["line search"] );
+  Timer timer( m_timers.get_inserted( "line search" ) );
 
   integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
   real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
@@ -690,7 +713,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
                                                               real64 & lastResidual,
                                                               real64 & residualNormT )
 {
-  Timer timer( m_timers["line search"] );
+  Timer timer( m_timers.get_inserted( "line search" ) );
 
   bool lineSearchSuccess = true;
 
@@ -754,7 +777,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( logger::internal::rank==0 )
+    if( MpiWrapper::commRank()==0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
@@ -834,7 +857,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
-      Timer timer( m_timers["reset state"] );
+      Timer timer( m_timers.get_inserted( "reset state" ) );
 
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
@@ -922,7 +945,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext()  );
     }
   }
 
@@ -956,7 +979,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
                                      dtAttempt, configurationLoopIter, newtonIter ));
 
     {
-      Timer timer( m_timers["assemble"] );
+      Timer timer( m_timers.get_inserted( "assemble" ) );
 
       // We sync the nonlinear convergence history. The coupled solver parameters are the one being
       // used. We want to propagate the info to subsolvers. It can be important for solvers that
@@ -998,7 +1021,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     real64 residualNorm = 0;
     {
-      Timer timer( m_timers["convergence check"] );
+      Timer timer( m_timers.get_inserted( "convergence check" ) );
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
@@ -1085,7 +1108,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["linear solver total"] );
+      Timer timer( m_timers.get_inserted( "linear solver total" ) );
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
       LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
@@ -1095,7 +1118,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       {
-        Timer timer_setup( m_timers["linear solver create"] );
+        Timer timer_setup( m_timers.get_inserted( "linear solver create" ) );
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         //
@@ -1106,7 +1129,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
       // Solve the linear system
-      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                         cycleNumber, newtonIter );
 
       // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -1122,7 +1146,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["apply solution"] );
+      Timer timer( m_timers.get_inserted( "apply solution" ) );
 
       // Compute the scaling factor for the Newton update
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
@@ -1142,7 +1166,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["update state"] );
+      Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update non-primary variables (constitutive models)
       updateState( domain );
@@ -1159,7 +1183,7 @@ real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOS_THROW( "PhysicsSolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
+  GEOS_THROW( "PhysicsSolverBase::ExplicitStep called!. Should be overridden.", geos::RuntimeError );
   return 0;
 }
 
@@ -1224,6 +1248,15 @@ void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
   std::ostringstream oss;
   m_dofManager.printFieldInfo( oss );
   GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
+}
+
+bool PhysicsSolverBase::deferLinearSolverParametersPrint() const
+{
+#ifdef GEOS_USE_HYPREDRV
+  return hypre::hypredrive::shouldUse( getLinearSolverParameters() );
+#else
+  return false;
+#endif
 }
 
 std::unique_ptr< PreconditionerBase< LAInterface > >
@@ -1365,7 +1398,9 @@ PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           ParallelVector & solution,
+                                           integer const cycleNumber,
+                                           integer const nonlinearIteration )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1378,10 +1413,15 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   matrix.setDofManager( &dofManager );
 
+  GEOS_WARNING_IF( isDirectSolver && dofManager.numGlobalDofs() > 100000,
+                   "Direct solver used for large system ( > 100,000 DOFs ). "
+                   "This may lead to high memory consumption and long computation times. "
+                   "Consider using an iterative solver for better performance." );
+
   // Apply physics-based scaling to the linear system if enabled
   if( m_usePhysicsScaling )
   {
-    Timer timer_setup( m_timers["linear solver scaling"] );
+    Timer timer_setup( m_timers.get_inserted( "linear solver scaling" ) );
 
     matrix.computeScalingVector( m_scaling );
     matrix.leftRightScale( m_scaling, m_scaling );
@@ -1396,14 +1436,23 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
       m_linearSolver = LAInterface::createSolver( params );
     }
 
+    LinearSolverExecutionContext executionContext;
+    executionContext.solverName = getName();
+    executionContext.cycleNumber = cycleNumber;
+    executionContext.timeStepAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
+    executionContext.configurationAttempt = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+    executionContext.nonlinearIteration = nonlinearIteration;
+    executionContext.systemSetupTimestamp = getSystemSetupTimestamp();
+    m_linearSolver->setExecutionContext( executionContext );
+
     if( isSetupNeeded )
     {
-      Timer timer_setup( m_timers["linear solver setup"] );
+      Timer timer_setup( m_timers.get_inserted( "linear solver setup" ) );
       m_linearSolver->setup( matrix );
     }
 
     {
-      Timer timer_setup( m_timers["linear solver solve"] );
+      Timer timer_setup( m_timers.get_inserted( "linear solver solve" ) );
       m_linearSolver->solve( rhs, solution );
     }
 
@@ -1412,12 +1461,12 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   else
   {
     {
-      Timer timer_setup( m_timers["linear solver setup"] );
+      Timer timer_setup( m_timers.get_inserted( "linear solver setup" ) );
       m_precond->setup( matrix );
     }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     {
-      Timer timer_setup( m_timers["linear solver solve"] );
+      Timer timer_setup( m_timers.get_inserted( "linear solver solve" ) );
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
@@ -1432,17 +1481,19 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   if( params.stopIfError )
   {
-    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), getDataContext() << ": Linear solution breakdown -> simulation STOP" );
+    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP",
+                   getDataContext() );
   }
   else
   {
-    GEOS_WARNING_IF( !m_linearSolverResult.success(), getDataContext() << ": Linear solution failed" );
+    GEOS_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed",
+                     getDataContext() );
   }
 
   // Unscale the solution vector if physics-based scaling was applied
   if( m_usePhysicsScaling )
   {
-    Timer timer_setup( m_timers["linear solver scaling"] );
+    Timer timer_setup( m_timers.get_inserted( "linear solver scaling" ) );
 
     solution.pointwiseProduct( m_scaling );
   }
@@ -1545,6 +1596,26 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     getIterationStats().outputStatistics();
   }
+
+  bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
+                                        !getIterationStats().getCSVOutputOpened();
+  bool wrongConvergenceCSVOutputRequest = getConvergenceStats().getCSVOutputRequest() &&
+                                          !getConvergenceStats().getCSVOutputOpened();
+
+  GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV iteration but nothing was written\n"
+                             "You can set {} to `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence )));
+
+  GEOS_WARNING_IF( wrongConvergenceCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV convergence but nothing was written\n"
+                             "You can set {} to `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ) ));
+
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
@@ -1580,16 +1651,17 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
 
 R1Tensor const PhysicsSolverBase::gravityVector() const
 {
-  R1Tensor rval;
-  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
+  // Avoid dynamic_cast< PhysicsSolverManager const * > here: it would force the
+  // base library (physicsSolversBase) to link against PhysicsSolverManager's
+  // typeinfo, which lives in the dependent physicsSolvers library — circular
+  // on macOS dylibs. Probe by wrapper presence; the gravityVector wrapper is
+  // only ever registered by PhysicsSolverManager.
+  auto const key = PhysicsSolverManager::viewKeyStruct::gravityVectorString();
+  if( getParent().hasWrapper( key ) )
   {
-    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
+    return getParent().getReference< R1Tensor >( key );
   }
-  else
-  {
-    rval = {0.0, 0.0, -9.81};
-  }
-  return rval;
+  return { 0.0, 0.0, -9.81 };
 }
 
 bool PhysicsSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const

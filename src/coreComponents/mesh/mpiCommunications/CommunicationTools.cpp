@@ -271,6 +271,8 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
 void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
                                                  std::set< localIndex > const & indexList )
 {
+  GEOS_MARK_FUNCTION;
+
   globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( indexList.size(), MPI_COMM_GEOS );
 
   arrayView1d< globalIndex > const & localToGlobal = manager.localToGlobalMap();
@@ -279,8 +281,9 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
   for( localIndex const newLocalIndex : indexList )
   {
     GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                   "Local object " << newLocalIndex << " should be new but already has a global index "
-                                   << localToGlobal[newLocalIndex] );
+                   GEOS_FMT( "Local object {} should be new but already has a global index {}",
+                             newLocalIndex,
+                             localToGlobal[newLocalIndex] ) );
 
     localToGlobal[newLocalIndex] = manager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
     manager.updateGlobalToLocalMap( newLocalIndex );
@@ -293,8 +296,9 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
 
 void
 CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManager,
-                                            std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
+                                            stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
+  GEOS_MARK_FUNCTION;
   localIndex numberOfNewObjectsHere = 0;
   for( auto const & iter : newElems )
   {
@@ -316,8 +320,9 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
     for( localIndex const newLocalIndex : indexList )
     {
       GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                     "Local object " << newLocalIndex << " should be new but already has a global index "
-                                     << localToGlobal[newLocalIndex] );
+                     GEOS_FMT( "Local object {} should be new but already has a global index {}",
+                               newLocalIndex,
+                               localToGlobal[newLocalIndex] ) );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
       subRegion.updateGlobalToLocalMap( newLocalIndex );
@@ -446,7 +451,7 @@ CommunicationTools::
  * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.
  * @return The sanitized mapping: only the ranks with the minimal MPI rank will be in charged of sending the proper nodes.
  */
-std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & mpiRankToNodes )
+stdMap< int, array1d< globalIndex > > reorganizeRequestedNodes( stdMap< int, array1d< globalIndex > > const & mpiRankToNodes )
 {
   class MinInt
   {
@@ -466,21 +471,22 @@ private:
     int m_value = std::numeric_limits< int >::max();
   };
 
-  std::map< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
+  stdMap< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
 
-  std::map< globalIndex, MinInt > nodeToMpiRank;
+  stdMap< globalIndex, MinInt > nodeToMpiRank;
   for( auto const & [mpiRank, nodes]: mpiRankToNodes )
   {
     for( globalIndex const & gi: nodes )
     {
-      nodeToMpiRank[gi] = mpiRank;
+      nodeToMpiRank.get_inserted( gi ) = mpiRank;
     }
-    minMpiRankToNodes[mpiRank];  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will not be defined.
+    minMpiRankToNodes.insert( { mpiRank, {} } );  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will
+                                                  // not be defined.
   }
 
   for( auto const & [node, mpiRank]: nodeToMpiRank )
   {
-    minMpiRankToNodes[mpiRank].emplace_back( node );
+    minMpiRankToNodes.get_inserted( mpiRank ).emplace_back( node );
   }
 
   return minMpiRankToNodes;
@@ -496,7 +502,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
   auto const & g2l = nodeManager.globalToLocalMap();
   integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
 
-  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
+  stdMap< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
 
   {
     array1d< array1d< globalIndex > > const neighborBoundaryNodes = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
@@ -547,7 +553,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       // Some ranks may also have some nodes that the current rank requires.
       // In that case, we store the information.
       // Later in this function, we'll send this request to the rank and it will send those to us.
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap.get_inserted( allNeighbors[i].neighborRank());
       {
         stdVector< globalIndex > intersection;
         std::set_intersection( requestedNodes.cbegin(), requestedNodes.cend(),
@@ -586,7 +592,9 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       }
     }
     GEOS_ERROR_IF( !nodesNotFound.empty(),
-                   "Global nodes {" << stringutilities::join( nodesNotFound, ", " ) << "} requested by rank " << allNeighbors[i].neighborRank() << " were not found on this rank." );
+                   GEOS_FMT( "Global nodes {{{}}} requested by rank {} were not found on this rank.",
+                             stringutilities::join( nodesNotFound, ", " ),
+                             allNeighbors[i].neighborRank() ) );
   }
 }
 
@@ -640,7 +648,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     }
   }
 
-  GEOS_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
+  GEOS_ERROR_IF( error, GEOS_FMT( "Encountered a ghosting inconsistency in {}", objectManager.getName() ) );
 }
 
 /**
@@ -700,7 +708,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     stdVector< localIndex > ghostsToFix;
 
     /// Map from owning MPI rank to an array of local objects we need to fix.
-    std::unordered_map< int, stdVector< localIndex > > ghostsBySecondNeighbor;
+    stdUnorderedMap< int, stdVector< localIndex > > ghostsBySecondNeighbor;
 
     arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 
@@ -708,7 +716,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsBySecondNeighbor.get_inserted( pair.second ).emplace_back( lid );
       ghostsToFix.emplace_back( lid );
       ghostRank[ lid ] = pair.second;
     }
@@ -1014,11 +1022,15 @@ void CommunicationTools::asyncSendRecv( stdVector< NeighborCommunicator > & neig
                                         parallelDeviceEvents & events )
 {
   GEOS_MARK_FUNCTION;
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
-
+#else
+  GEOS_UNUSED_VAR( onDevice );
+  GEOS_UNUSED_VAR( events );
+#endif
 
   // could swap this to test and make this function call async as well, only launch the sends/recvs for
   // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then
@@ -1157,10 +1169,14 @@ void CommunicationTools::finalizeUnpack( ObjectManagerBase & manager,
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( manager, neighbors, icomm, onDevice, events ) );
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
+#else
+  GEOS_UNUSED_VAR( onDevice );
+#endif
 
   MpiWrapper::waitAll( icomm.size(),
                        icomm.mpiSendBufferSizeRequest(),
@@ -1182,10 +1198,14 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op ) );
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
+#else
+  GEOS_UNUSED_VAR( onDevice );
+#endif
 
   MpiWrapper::waitAll( icomm.size(),
                        icomm.mpiSendBufferSizeRequest(),

@@ -24,125 +24,6 @@
                    "generation call). Duplicate entries are unified internally" ]
   },
 
-  "SinglePhaseHybridFVMKernels": {
-    "vars": [
-      "NAME",
-      "NFACES",
-      "IP"
-    ],
-    "constants": [
-      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
-    ],
-    "combinations": {
-      "NAME": [
-        "ElementBasedAssemblyKernel"
-      ],
-      "NFACES": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13
-      ],
-      "IP": [
-        "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::QuasiTPFAInnerProduct",
-        "mimeticInnerProduct::QuasiRTInnerProduct",
-        "mimeticInnerProduct::SimpleInnerProduct",
-        "mimeticInnerProduct::BdVLMInnerProduct"
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_upwinding": {
-    "vars": [
-      "NCOMPS",
-      "NPHASES"
-    ],
-    "constants": [],
-    "combinations": {
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_assembly": {
-    "vars": [
-      "NFACES",
-      "NCOMPS",
-      "NPHASES"
-    ],
-    "constants": [],
-    "combinations": {
-      "NFACES": [
-        4,
-        5,
-        6
-      ],
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_flux": {
-    "vars": [
-      "NFACES",
-      "NCOMPS",
-      "NPHASES",
-      "IP_TYPE"
-    ],
-    "constants": [],
-    "combinations": {
-      "NFACES": [
-        4,
-        5,
-        6
-      ],
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ],
-      "IP_TYPE": [
-        "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::BdVLMInnerProduct"
-      ]
-    },
-    "explicit": []
-  },
-
   "ReactiveCompositionalMultiphaseOBLKernels": {
     "vars": [
       "NAME",
@@ -184,66 +65,161 @@
     "explicit": []
   },
 
-  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_IsothermalDirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NCOMP",
+      "FLUID_TYPE"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxPolicy", "geos::parallelDevicePolicy<>" ]
+    ],
+    "combinations": {
+      "NAME": [
+        "DirichletFluxComputeKernel",
+        "DirichletFluxComputeZFormulationKernel"
+      ],
+      "NCOMP": [ 2, 3, 4, 5 ],
+      "FLUID_TYPE": [
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": [
+    ]
+  },
+
+  "CompositionalMultiphaseFVM_ThermalDirichletFluxComputeKernels": {
+    "vars": [
+      "NAME",
+      "NCOMP",
+      "FLUID_TYPE"
+    ],
+    "constants": [
+      [ "DirichletFluxPolicy", "geos::parallelDevicePolicy<>" ]
     ],
     "combinations": {
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
-      "KERNEL_TYPE": [
-        "constitutive::InvariantImmiscibleFluid",
-        "constitutive::DeadOilFluid",
-        "constitutive::BlackOilFluid",
-        "constitutive::CO2BrinePhillipsFluid",
-        "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+      "NCOMP": [ 2, 3, 4, 5 ],
+      "FLUID_TYPE": [
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid"
       ]
     },
     "explicit": []
   },
 
-  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseHybridFVMKernels_flux_grouped": {
     "vars": [
-      "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NFACES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped": {
+    "vars": [
+      "NFACES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_bcprops": {
+    "vars": [
+      "BCPROPS_STUB"
+    ],
+    "constants": [],
+    "combinations": {},
+    "explicit": [ "single" ]
+  },
+
+  "SinglePhaseHybridFVMKernels_grouped": {
+    "vars": [
+      "NFACES"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
-      "NAME": [
-        "DirichletFluxComputeKernel"
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseBase_FluidUpdateKernel" : {
+    "vars": [
+      "POLICY_TYPE",
+      "FLUID_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "POLICY_TYPE": [
+        "geos::parallelDevicePolicy<>",
+        "geos::serialPolicy"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
-      "KERNEL_TYPE": [
-        "constitutive::DeadOilFluid",
+      "FLUID_TYPE": [
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
         "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
       ]
     },
-    "explicit": []
+    "explicit": [
+    ]
+  },
+
+  "CompositionalMultiphaseBase_HydrostaticPressureKernel" : {
+    "vars": [
+      "FLUID_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "FLUID_TYPE": [
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": [
+    ]
   }
 }

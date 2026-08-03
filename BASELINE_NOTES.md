@@ -1,10 +1,166 @@
-
 Notes
 ==========
 
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
+
+PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
+Well model refactor .  Integrated test update due to schema changes 
+
+PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
+Added statistics `Group` objects for each statistics `Task` instance
+
+PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
+Move relperm driver to use new constitutive driver framework
+
+PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
+Implement compositional enthalpy model
+
+PR #4074 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4074-16937-bf66240.tar.gz>
+Change triaxial driver to use restart for checks
+
+PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
+Add Coulomb friction/cohesion input from vtk mesh
+
+PR #4068 (2026-06-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
+Add MPI runs for smoke tests with surfaceGenerator
+
+PR #4062 (2026-05-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4062-16784-6d8782e.tar.gz>
+=====================
+Add Porous Solid other than PorousElasticity for ALM solver
+
+PR #4057 (2026-05-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4057-16739-5dde641.tar.gz>
+=====================
+Remove dependency on PVT package
+
+PR #3814 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3814-16717-d17ea59.tar.gz>
+=====================
+Fix RLF coloring
+
+PR #4008 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4008-16688-17c55fe.tar.gz>
+=====================
+Fix Fracture/3D cell co-location in parallel mesh redistribution
+
+PR #4055 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4055-16683-0251bb6.tar.gz>
+=====================
+Trim some fluid model tests
+
+PR #4041 (2026-05-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4041-16664-9a29348.tar.gz>
+=====================
+Fix wellbore nonlinear thermal diffusion
+
+PR #3977 (2026-05-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3977-16644-9fc03e7.tar.gz>
+=====================
+Change face normal, centers and area for local Newell's formula
+
+PR #3999 (2026-05-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3999-16602-542583d.tar.gz>
+=====================
+Fault Perm Update for Contact solvers
+
+PR #4029 (2026-05-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4029-16507-7e3d8b5.tar.gz>
+=====================
+Add single phase viscosity dependency on temperature
+
+PR #3959 (2026-05-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3959-16478-faf1698.tar.gz>
+=====================
+Add reference thermal conductivity
+
+PR #4021 (2026-04-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4021-16339-bb862da.tar.gz>
+=====================
+Add Young Modulus & Poisson import from VTK mesh
+
+PR #3883 (2026-04-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3883-16299-3037085.tar.gz>
+=====================
+Move PVT Driver tests from unit tests to integrated tests
+
+PR #4007 (2026-04-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16213-67a3002.tar.gz>
+=====================
+Add XML input parameter: "hypredriveInputFile"
+
+PR #3957 (2026-03-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3957-16171-da51804.tar.gz>
+=====================
+Add checkEulerCharacteristic option, rebaseline due to new input.
+
+PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3967-16106-c0f34de.tar.gz>
+=====================
+Fix 2D/3D cell co-location in parallel mesh redistribution
+
+PR #3986 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
+=====================
+Corrected traction boundary conditions
+
+PR #3970 (2026-02-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3970-15479-074f42a.tar.gz>
+=====================
+Bypass well residual calculation for closed wells
+
+PR #3964 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
+=====================
+Fix fracture state update for ALM solver
+
+PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
+=====================
+Fix the transimissibility calculated between a cell and a surface element
+
+PR #3926 (2026-01-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3926-15289-1f676c0.tar.gz>
+=====================
+MultiPhase Poromechanics ALM solver and a test with curved fractures
+
+PR #3634 (2025-12-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3634-15105-6ab70ef.tar.gz>
+=====================
+Add singlephase reactive transport solver integrated with HPCReact
+
+PR #3795 (2025-12-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3795-15047-606f4ac.tar.gz>
+=====================
+Addition of multiphase initialisation
+
+PR #3925 (2025-12-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3925-15032-d307303.tar.gz>
+=====================
+Add traction update for ALM solver and a test with curved fractures
+
+PR #3829 (2025-11-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3829-14878-fdcd94e.tar.gz>
+=====================
+Fix validation of average region stat needed by option
+
+PR #3522 (2025-11-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3522-14736-f07298f.tar.gz>
+=====================
+Single Phase Poromechanics Conforming Fractures
+
+PR #3765 (2025-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3765-14543-498692f.tar.gz>
+=====================
+Adding boundary fields to handle Dirichlet conditions in compositional MFD.
+
+PR #3849 (2025-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3849-14514-aaaf0f9.tar.gz>
+=====================
+Add multiphase contact with wells
+
+PR #3880 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3880-14441-1132122.tar.gz>
+=====================
+Fix a bug introduced in #3485: mass that is used in accumulation term was not updated with porosity change after mechanics leading to always converged sequential outer loop.
+
+PR #3299 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3299-14426-6c93a0d.tar.gz>
+=====================
+Add co2 injection into gas with SW EoS and k-value flash.
+
+PR #3279 (2025-10-24) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3279-14414-db55426.tar.gz>
+=====================
+Output cell-wise average of each stress and strain component.
+
+PR #3851 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3851-14171-9d950d6.tar.gz>
+=====================
+Enable `FullyImplicit` for `SinglePhaseReservoirPoromechanicsConformingFractures`.
+
+PR #3808 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-14160-03c20b2.tar.gz>
+=====================
+Add errorSetMode for the FiedSpecification.
+
+PR #3193 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-14118-8ee1c34.tar.gz>
+=====================
+Enable geothermal gradient in HydrostaticEquilibrium for single-phase flow.
+
+PR #3359 (2025-10-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3359-14024-3c9ebb4.tar.gz>
+=====================
+Add functions to connect well perforation to surface elements.
 
 PR #3843 (2025-10-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3843-13975-76d125d.tar.gz>
 =====================
@@ -73,7 +229,6 @@ Add hydrofrac verification cases for leak-off.
 PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
 =====================
 Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
-
 PR #3788 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3788-13372-e0a1d67.tar.gz>
 =====================
 Updating txt files for class09_pb3_hystRelperm.

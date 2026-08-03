@@ -31,6 +31,7 @@ namespace geos
 
 HypreVector::HypreVector()
   : VectorBase(),
+  m_ij_vec{},
   m_vec{}
 {}
 
@@ -66,8 +67,9 @@ HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 {
   if( &src != this )
   {
-    m_vec = src.m_vec;
-    src.m_vec = nullptr;
+    reset();
+    std::swap( m_ij_vec, src.m_ij_vec );
+    std::swap( m_vec, src.m_vec );
     VectorBase::operator=( std::move( src ) );
   }
   return *this;
@@ -76,7 +78,13 @@ HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 void HypreVector::reset()
 {
   VectorBase::reset();
-  if( m_vec )
+  if( m_ij_vec )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorDestroy( m_ij_vec ) );
+    m_ij_vec = nullptr;
+    m_vec = nullptr;
+  }
+  else if( m_vec )
   {
     hypre_ParVectorDestroy( m_vec );
     m_vec = nullptr;
@@ -113,6 +121,7 @@ void HypreVector::create( localIndex const localSize,
   // Complete the initialization (vector will not allocate if data is already set)
   GEOS_LAI_CHECK_ERROR( hypre_ParVectorInitialize_v2( m_vec, hypre::memoryLocation ) );
   GEOS_LAI_CHECK_ERROR( hypre_ParVectorSetConstantValues( m_vec, 0.0 ) );
+  parVectorToIJ( m_vec );
 }
 
 bool HypreVector::created() const
@@ -161,7 +170,7 @@ void HypreVector::reciprocal()
 {
   GEOS_LAI_ASSERT( ready() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseInverse( m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseInverse( m_vec, &m_vec ) );
   touch();
 }
 
@@ -228,7 +237,7 @@ void HypreVector::pointwiseProduct( HypreVector const & x )
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
   touch();
 }
 
@@ -238,7 +247,7 @@ void HypreVector::pointwiseDivide( HypreVector const & x )
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
   touch();
 }
 
@@ -401,10 +410,37 @@ HYPRE_ParVector const & HypreVector::unwrapped() const
   return m_vec;
 }
 
+HypreVector::HYPRE_IJVector const & HypreVector::unwrappedIJ() const
+{
+  return m_ij_vec;
+}
+
 MPI_Comm HypreVector::comm() const
 {
   GEOS_LAI_ASSERT( created() );
   return hypre_ParVectorComm( m_vec );
+}
+
+void HypreVector::parVectorToIJ( HYPRE_ParVector const & parVector )
+{
+  GEOS_LAI_ASSERT( parVector != nullptr );
+
+  hypre_IJVector * const ijVector = hypre_CTAlloc( hypre_IJVector, 1, HYPRE_MEMORY_HOST );
+
+  hypre_IJVectorComm( ijVector ) = hypre_ParVectorComm( parVector );
+  hypre_IJVectorObject( ijVector ) = parVector;
+  hypre_IJVectorTranslator( ijVector ) = nullptr;
+  hypre_IJVectorAssumedPart( ijVector ) = hypre_ParVectorAssumedPartition( parVector );
+  hypre_ParVectorAssumedPartition( parVector ) = nullptr;
+  hypre_IJVectorNumComponents( ijVector ) = hypre_ParVectorNumVectors( parVector );
+  hypre_IJVectorObjectType( ijVector ) = HYPRE_PARCSR;
+  hypre_IJVectorPrintLevel( ijVector ) = 0;
+  hypre_IJVectorGlobalFirstRow( ijVector ) = hypre_ParVectorFirstIndex( parVector );
+  hypre_IJVectorGlobalNumRows( ijVector ) = hypre_ParVectorGlobalSize( parVector );
+  hypre_IJVectorPartitioning( ijVector )[0] = hypre_ParVectorPartitioning( parVector )[0];
+  hypre_IJVectorPartitioning( ijVector )[1] = hypre_ParVectorPartitioning( parVector )[1];
+
+  m_ij_vec = static_cast< HYPRE_IJVector >( ijVector );
 }
 
 } // end namespace geos

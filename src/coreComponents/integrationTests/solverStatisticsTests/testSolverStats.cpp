@@ -54,8 +54,8 @@ class ConvergenceTest : public ConvergenceStatistics
 
 public:
 
-  void AssertConvergenceValuesEquals( std::vector< std::string > const & actualValues,
-                                      std::vector< std::string > const & expectedValues )
+  void AssertConvergenceValuesEquals( stdVector< std::string > const & actualValues,
+                                      stdVector< std::string > const & expectedValues )
   {
     EXPECT_EQ( actualValues[0], expectedValues[0] );
     EXPECT_EQ( actualValues[1], expectedValues[1] );
@@ -81,7 +81,7 @@ static const string solverLogOutput =
         name="SinglePhaseFlow"
         discretization="singlePhaseTPFA"
         targetRegions="{ Channel }"
-        writeStatistics="1" >
+        writeStatistics="iteration" >
         <NonlinearSolverParameters
             newtonTol="1.0e-6"
             newtonMaxIter="8"/>
@@ -102,7 +102,7 @@ static const string solverCSVOutput =
             name="SinglePhaseFlow"
             discretization="singlePhaseTPFA"
             targetRegions="{ Channel }"
-            writeStatistics="2" >
+            writeStatistics="convergence" >
             <NonlinearSolverParameters
                 newtonTol="1.0e-6"
                 newtonMaxIter="8"/>
@@ -238,12 +238,12 @@ TEST( testSolverStats, testOutputFiles )
   ConvergenceTest & convergenceStat = static_cast< ConvergenceTest & >(solver.getConvergenceStats());
   IterationTest & iterationStat = static_cast< IterationTest & >(solver.getIterationStats());
 
-  auto loadCsvLines = []( string const & filename, std::vector< string > & lines ) {
+  auto loadCsvLines = []( string const & filename, stdVector< string > & lines ) {
 
     if( !std::filesystem::exists( filename ))
     {
-      GEOS_ERROR( "Error: File '" << filename << "' does not exist!" );
-      GEOS_ERROR( "Current directory: " << std::filesystem::current_path());
+      GEOS_ERROR( GEOS_FMT( "Error: File '{}' does not exist!", filename ) );
+      GEOS_ERROR( GEOS_FMT( "Current directory: {}", std::filesystem::current_path().string() ) );
       return false;
     }
 
@@ -251,7 +251,7 @@ TEST( testSolverStats, testOutputFiles )
 
     if( !is.is_open())
     {
-      GEOS_ERROR( "Error: Cannot open file '" << filename << "'" );
+      GEOS_ERROR( GEOS_FMT( "Error: Cannot open file '{}'", filename ) );
 
       if( is.fail())
       {
@@ -293,7 +293,7 @@ TEST( testSolverStats, testOutputFiles )
     return true;
   };
 
-  std::vector< string > csvLines;
+  stdVector< string > csvLines;
   loadCsvLines( iterationStat.getFilename(), csvLines );
 
   EXPECT_EQ( csvLines[0],
@@ -304,7 +304,7 @@ TEST( testSolverStats, testOutputFiles )
 
   iterationStat.AssertIterationValuesEquals();
 
-  std::vector< string > csvLines2;
+  stdVector< string > csvLines2;
   loadCsvLines( convergenceStat.getFilename(), csvLines2 );
 
   EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),iteration,R,Rflow" );

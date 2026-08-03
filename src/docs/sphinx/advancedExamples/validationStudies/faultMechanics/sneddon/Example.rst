@@ -71,17 +71,8 @@ Mechanics solver
 -----------------------------------------------------------
 
 To define a mechanics solver capable of including embedded fractures, we will
-define two solvers:
-
- - a ``SolidMechanicsEmbeddedFractures`` solver, called ``mechSolve``
- - a small-strain Lagrangian mechanics solver, of type ``SolidMechanicsLagrangianFEM`` called here ``matrixSolver`` (see: :ref:`SolidMechanicsLagrangianFEM`)
-
-Note that the ``name`` attribute of these solvers is chosen by the user and is not imposed by GEOS. 
-It is important to make sure that the ``solidSolverName`` specified in the embedded fractures solver corresponds to the
-small-strain Lagrangian solver used in the matrix.
-
-The two single-physics solvers are parameterized as explained in their respective documentation, each with their own tolerances,
-verbosity levels, target regions, and other solver-specific attributes.
+define a ``SolidMechanicsEmbeddedFractures`` solver, called ``mechSolve``.
+Note that the ``name`` attribute of the solver is chosen by the user and is not imposed by GEOS. 
 
 Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``, which is used to discretize the fracture planes.
 
@@ -91,11 +82,9 @@ Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenera
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
 
 
-To setup a coupling between rock and fracture deformations in LagrangianContact solver, we define three different solvers:
+To setup a coupling between rock and fracture deformations in LagrangianContact solver, we define two different solvers:
 
-- For solving the frictional contact, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that include both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformations. The contact constitutive law used for the fracture elements is named ``fractureMaterial``,  and is defined later in the ``Constitutive`` section. 
-
-- Rock deformations are handled by a solid mechanics solver ``SolidMechanicsLagrangianFEM``. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
+- For solving the frictional contact and rock deformations, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that include both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformations. The contact constitutive law used for the fracture elements is named ``frictionLaw``,  and is defined later in the ``Constitutive`` section. 
 
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
@@ -108,7 +97,7 @@ To setup a coupling between rock and fracture deformations in LagrangianContact 
 
 Three elementary solvers are combined in the solver ``Hydrofracture`` to model the coupling between fluid flow within the fracture, rock deformation, fracture opening/closure and propagation:
 
-- Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianFEM``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is also specified in this solver by the ``contactRelationName``, besides the ``solidMaterialNames``.
+- Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianFEM``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is also specified in this solver by the ``contactRelationName``.
 
 - The single phase fluid flow inside the fracture is solved by the finite volume method in the solver ``SinglePhaseFVM``.
 

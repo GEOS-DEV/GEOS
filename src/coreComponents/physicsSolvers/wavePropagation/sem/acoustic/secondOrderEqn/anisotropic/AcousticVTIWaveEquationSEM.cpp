@@ -359,7 +359,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 real64 AcousticVTIWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
-  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the second order acoustic vti wave propagator not yet implemented" );
+  GEOS_ERROR( "Time-Step computation for the second order acoustic vti wave propagator not yet implemented", getDataContext() );
   return dtOut;
 }
 
@@ -389,7 +389,7 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   viewKeyStruct::lateralSurfaceString(),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,
@@ -422,7 +422,7 @@ void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartitio
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   viewKeyStruct::bottomSurfaceString(),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,
@@ -479,7 +479,7 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,

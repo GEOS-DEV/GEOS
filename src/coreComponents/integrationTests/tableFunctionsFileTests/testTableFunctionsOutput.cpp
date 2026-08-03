@@ -84,26 +84,31 @@ char const * xmlInput =
       targetRegions="{ region }">
     </CompositionalMultiphaseFVM>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
       logLevel="1"
       useMass="1">
-      <WellControls
-        name="WC_CO2_INJ"
-        logLevel="2"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="-0.01"
+    <CompositionalMultiphaseWell
+      name="WC_CO2_INJ"
+      logLevel="2"
+      type="injector"
+      enableCrossflow="0"
+      useSurfaceConditions="1"
+      control="totalVolRate"
+      surfacePressure="1.45e7"
+      surfaceTemperature="300.15">
+      <MaximumBHPConstraint
+        name="maxbhp"
         targetBHP="1.45e7"
-        enableCrossflow="0"
-        useSurfaceConditions="1"
-        surfacePressure="1.45e7"
-        surfaceTemperature="300.15"
-        targetTotalRate="0.001"
-        injectionTemperature="300.15"
-        injectionStream="{ 1.0, 0.0 }"/>
-     </CompositionalMultiphaseWell>
+        referenceElevation="-0.01"/>
+      <InjectionVolumeRateConstraint
+        name="maxvolrateinj"
+        volumeRate="0.001"
+        injectionStream="{ 1.0, 0.0 }"
+        injectionTemperature="300.15"/>
+    </CompositionalMultiphaseWell>
+     </WellManager>
   </Solvers>
 
   <Mesh>
@@ -130,7 +135,6 @@ char const * xmlInput =
         <Perforation
           name="injector1_perf1"
           distanceFromHead="0.75"/>
-
       </InternalWell>
     </InternalMesh>
 
@@ -139,10 +143,8 @@ char const * xmlInput =
   <Geometry>
     <Box
       name="sink"
-      xMin="{ 89.99, 89.99, -0.01 }"
+      xMin="{ 49.99, 49.99, -0.01 }"
       xMax="{ 101.01, 101.01, 1.01 }"/>
-
-    
   </Geometry>
 
   <Events

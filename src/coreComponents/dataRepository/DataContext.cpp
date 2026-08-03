@@ -108,10 +108,18 @@ string DataFileContext::toString() const
   }
 }
 
+ErrorContext DataFileContext::getContextInfo() const
+{
+  ErrorContext ctxInfo{
+    toString(),
+    { { ErrorContext::Attribute::InputFile, m_filePath },
+      { ErrorContext::Attribute::InputLine, std::to_string( m_line )} }
+  };
+  return ctxInfo;
+}
+
 DataContext::ToStringInfo DataFileContext::getToStringInfo() const
 { return ToStringInfo( m_targetName, m_filePath, m_line ); }
-
-
 
 } /* namespace dataRepository */
 } /* namespace geos */

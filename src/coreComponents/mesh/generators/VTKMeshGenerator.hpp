@@ -105,7 +105,7 @@ protected:
 private:
 
   ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
+  struct viewKeyStruct : public ExternalMeshGeneratorBase::viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
     constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
@@ -114,9 +114,9 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
-    constexpr static char const * meshPathString() { return "meshPath"; }
   };
 
   struct groupKeyStruct
@@ -154,13 +154,16 @@ private:
   string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Additional weight to fracture-connected super-cells during partitioning
+  integer m_partitionFractureWeight = 0;
 
   /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;
@@ -173,9 +176,6 @@ private:
 
   /// Repository name
   string m_dataSourceName;
-
-  /// path to the mesh in the repository
-  string m_meshPath;
 
   /// Repository of VTK objects
   VTKHierarchicalDataSource * m_dataSource;

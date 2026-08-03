@@ -23,7 +23,7 @@
 
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
@@ -31,12 +31,12 @@ namespace geos
 /// @tparam RESERVOIR_SOLVER single-phase flow or single-phase poromechanics solver
 template< typename RESERVOIR_SOLVER = SinglePhaseBase >
 class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                                                          SinglePhaseWell >
+                                                                          WellManager >
 {
 public:
 
   using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                             SinglePhaseWell >;
+                                             WellManager >;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
 
@@ -106,6 +106,9 @@ public:
   { flowSolver()->prepareStencilWeights( domain ); }
   void updateStencilWeights( DomainPartition & domain ) const
   { flowSolver()->updateStencilWeights( domain ); }
+
+  void updateMass( CellElementSubRegion & subRegion ) const
+  { flowSolver()->updateMass( subRegion ); }
 
 protected:
 

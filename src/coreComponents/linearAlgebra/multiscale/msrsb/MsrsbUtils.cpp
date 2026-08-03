@@ -234,7 +234,7 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
   // Attempt to fix unassigned front nodes, if any
   if( supports.size() > 0 )
   {
-    GEOS_WARNING_IF( !front.empty(), "[MsRSB]: nodes not assigned to initial partition: " << front );
+    GEOS_WARNING_IF( !front.empty(), GEOS_FMT( "[MsRSB]: nodes not assigned to initial partition: {}", front ) );
     forAll< parallelHostPolicy >( front.size(), [=, front = front.toViewConst(),
                                                  part = part.toView()]( localIndex const i )
     {
@@ -244,7 +244,8 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
   }
   else
   {
-    GEOS_ERROR_IF( !front.empty(), "[MsRSB]: nodes not assigned to initial partition: " << front );
+    GEOS_ERROR_IF( !front.empty(),
+                   GEOS_FMT( "[MsRSB]: nodes not assigned to initial partition: {}", front ) );
   }
 
   return part;
@@ -609,17 +610,17 @@ void writeProlongation( CRSMatrixView< real64 const, globalIndex const > const &
                         string const & prefix,
                         multiscale::MeshLevel & mesh,
                         multiscale::MeshObjectManager & fineManager,
-                        std::function< void ( multiscale::MeshLevel &, std::vector< string > const & ) > const & writeFunc )
+                        std::function< void ( multiscale::MeshLevel &, stdVector< string > const & ) > const & writeFunc )
 {
-  std::vector< string > bNames{ "X ", "Y ", "Z " };
-  std::vector< string > cNames{ " x", " y", " z" };
+  stdVector< string > bNames{ "X ", "Y ", "Z " };
+  stdVector< string > cNames{ " x", " y", " z" };
 
   integer const numComp = dofManager.numComponents( fieldName );
   globalIndex const numBfuncs = prolongation.numColumns() / numComp;
   int const labelWidth = static_cast< int >( std::log10( numBfuncs ) ) + 1;
 
-  std::vector< arrayView3d< real64 > > views;
-  std::vector< string > names;
+  stdVector< arrayView3d< real64 > > views;
+  stdVector< string > names;
 
   for( globalIndex bfIndex = 0; bfIndex < numBfuncs; ++bfIndex )
   {

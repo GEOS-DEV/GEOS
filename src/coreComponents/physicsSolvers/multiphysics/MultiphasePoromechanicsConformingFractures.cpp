@@ -41,14 +41,44 @@ MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechani
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::postInputInitialization()
+void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::initializePreSubGroups()
 {
-  Base::postInputInitialization();
-
+  Base::initializePreSubGroups();
   if( this->flowSolver()->isThermal() )
   {
     GEOS_ERROR( "Thermal flow is not yet supported for multiphase poromechanics conforming fractures" );
   }
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::
+assembleSystem( real64 const time_n,
+                real64 const dt,
+                DomainPartition & domain,
+                DofManager const & dofManager,
+                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+}
+
+template<>
+void MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> >::
+assembleSystem( real64 const time_n,
+                real64 const dt,
+                DomainPartition & domain,
+                DofManager const & dofManager,
+                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
+  flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 template< typename FLOW_SOLVER >
@@ -236,15 +266,13 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
   } );
 }
 
-
 template class MultiphasePoromechanicsConformingFractures<>;
-//template class MultiphasePoromechanicsConformingFractures< MultiphaseReservoirAndWells<> >;
+template class MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> >;
 
 namespace
 {
-//typedef MultiphasePoromechanicsConformingFractures< MultiphaseReservoirAndWells<> >
-// MultiphasePoromechanicsConformingFractures;
-//REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphasePoromechanicsConformingFractures, string const &, Group * const )
+typedef MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> > MultiphaseReservoirPoromechanicsConformingFractures;
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
 typedef MultiphasePoromechanicsConformingFractures<> MultiphasePoromechanicsConformingFractures;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphasePoromechanicsConformingFractures, string const &, Group * const )
 }

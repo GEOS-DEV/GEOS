@@ -1,0 +1,401 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="DOME"
+      flowSolverName="FLOW.SOLVER"
+      wellSolverName="WELL.SOLVER"
+      targetRegions="{ SAND, CLAY, WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
+      logLevel="1"
+      initialDt="86400">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        lineSearchAction="None"
+        timeStepIncreaseIterLimit="0.4"
+        timeStepDecreaseIterLimit="0.9"
+        maxTimeStepCuts="100"
+        maxSubSteps="1000"
+        newtonMaxIter="12"
+        logLevel="0"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovMaxIter="200"
+        krylovTol="1e-4"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="1e-2"
+        logLevel="1"/>
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseFVM
+      name="FLOW.SOLVER"
+      logLevel="0"
+      initialDt="8640"
+      discretization="FLUID.TPFA"
+      targetRegions="{ SAND, CLAY }"
+      temperature="344.15"
+      targetPhaseVolFractionChangeInTimeStep="1.0"
+      solutionChangeScalingFactor="1"
+      useMass="0"/>
+
+    <WellManager
+      name="WELL.SOLVER"
+      targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
+      logLevel="1"
+      useMass="0">
+      <CompositionalMultiphaseWell
+        name="WATER.INJECTOR.CONTROL"
+        type="injector"
+        useSurfaceConditions="1"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        control="totalVolRate"
+        enableCrossflow="0"
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="5.0e+07"
+          referenceElevation="-4505.0"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="WATER.INJECTOR.RATE"
+          injectionStream="{ 0.00, 0.00, 0.00, 1.00 }"
+          injectionTemperature="344.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="GAS.INJECTOR.CONTROL"
+        control="totalVolRate"
+        type="injector"
+        useSurfaceConditions="1"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        enableCrossflow="0"
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="5.0e+07"
+          referenceElevation="-4505.0"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="GAS.INJECTOR.RATE"
+          injectionStream="{ 0.15, 0.85, 0.00, 0.00 }"
+          injectionTemperature="344.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="PRODUCER.CONTROL"
+        type="producer"
+        useSurfaceConditions="1"
+        surfacePressure="1.013250e+05"
+        surfaceTemperature="288.71"
+        control="phaseVolRate"
+        enableCrossflow="1"
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        writeCSV="1">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxgasprod"
+          phaseName="gas"
+          constraintScheduleTableName="PRODUCER.RATE"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="1.0e+06"
+          referenceElevation="-4235.0"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="FLUID.TPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="SAND"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ ROCK, FLUID, RELPERM.SAND, CAPPRES.SAND }"/>
+
+    <CellElementRegion
+      name="CLAY"
+      cellBlocks="{ 2_hexahedra }"
+      materialList="{ ROCK, FLUID, RELPERM.CLAY, CAPPRES.CLAY }"/>
+
+    <CellElementRegion
+      name="CAPROCK"
+      cellBlocks="{ 3_hexahedra }"
+      materialList="{ ROCK }"/>
+
+    <WellElementRegion
+      name="WATER.INJECTOR"
+      materialList="{ FLUID, RELPERM.SAND }"/>
+
+    <WellElementRegion
+      name="GAS.INJECTOR"
+      materialList="{ FLUID, RELPERM.SAND }"/>
+
+    <WellElementRegion
+      name="PRODUCER"
+      materialList="{ FLUID, RELPERM.SAND }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="NULL.SOLID"/>
+
+    <PressurePorosity
+      name="ROCK.POROSITY"
+      defaultReferencePorosity="0.2"
+      referencePressure="3.0e+07"
+      compressibility="3.4E-10"/>
+
+    <ConstantPermeability
+      name="ROCK.PERMEABILITY"
+      permeabilityComponents="{ 100e-15, 100e-15, 10e-15 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="ROCK"
+      solidModelName="NULL.SOLID"
+      porosityModelName="ROCK.POROSITY"
+      permeabilityModelName="ROCK.PERMEABILITY"/>
+
+    <CompositionalTwoPhaseKValueFluidPhillipsBrine
+      name="FLUID"
+      phaseNames="{ gas, water }"
+      equationsOfState="{ PengRobinson, SoreideWhitson }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 3.40809e-02, 1.80153e-02 }"
+      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 9.00000e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 3.73100e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 9.81354e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 1.00500e-01, 3.44300e-01 }"
+      componentBinaryCoeff="{ { 0.0000, 0.0000, 0.0000, 0.4850 },
+                              { 0.0000, 0.0000, 0.0000, 0.1896 },
+                              { 0.0000, 0.0000, 0.0000, 0.1353 },
+                              { 0.4850, 0.1896, 0.1353, 0.0000 } }"
+      kValueTables="{ KV_CH4, KV_CO2, KV_H2S, KV_H2O }"
+      waterCompressibility="4.1483E-10"
+      salinity="2.3"/>
+
+    <TableRelativePermeability
+      name="RELPERM.SAND"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ KRW.SAND, KRG.SAND }"/>
+
+    <TableRelativePermeability
+      name="RELPERM.CLAY"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ KRW.CLAY, KRG.CLAY }"/>
+
+    <TableCapillaryPressure
+      name="CAPPRES.SAND"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="PCGW.SAND"/>
+
+    <JFunctionCapillaryPressure
+      name="CAPPRES.CLAY"
+      phaseNames="{ gas, water }"
+      wettingNonWettingJFunctionTableName="PCGW.CLAY"
+      wettingNonWettingSurfaceTension="13.86955e-3"
+      permeabilityDirection="X"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <HydrostaticEquilibrium
+      name="EQUILIBRIUM"
+      objectPath="ElementRegions"
+      datumElevation="-4453.75"
+      datumPressure="2.7e7"
+      elevationIncrementInHydrostaticPressureTable="1.0"
+      phaseContacts="{ -4400.0 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="TEMP.VD"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="VTK.OUTPUT"/>
+
+    <Restart
+      name="RESTART.OUTPUT"/>
+  </Outputs>
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="FLOW.STATISTICS"
+      flowSolverName="FLOW.SOLVER"
+      logLevel="1"
+      writeCSV="1"
+      computeCFLNumbers="0"
+      computeRegionStatistics="1"/>
+  </Tasks>
+
+  <Functions>
+    <TableFunction
+      name="KRW.SAND"
+      interpolation="linear"
+      coordinates="{ 0.04000, 0.20000, 0.24938, 0.29875, 0.34813, 0.39750, 0.44688, 0.49625, 0.54563, 0.59500, 0.64438, 0.69375, 0.74313, 0.79250, 0.84187, 0.89125, 0.92000, 0.94063, 0.99000 }"
+      values="{ 0.00000, 0.00000, 0.00680, 0.02368, 0.04914, 0.08247, 0.12323, 0.17110, 0.22582, 0.28717, 0.35499, 0.42913, 0.50944, 0.59581, 0.68815, 0.78635, 0.84619, 0.89032, 1.00000 }"/>
+
+    <TableFunction
+      name="KRG.SAND"
+      interpolation="linear"
+      coordinates="{ 0.01000, 0.08000, 0.12875, 0.17750, 0.22625, 0.27500, 0.32375, 0.37250, 0.42125, 0.47000, 0.51875, 0.56750, 0.61625, 0.66500, 0.71375, 0.76250, 0.80000, 0.81125, 0.86000 }"
+      values="{ 0.00000, 0.00000, 0.01250, 0.03536, 0.06495, 0.10000, 0.13975, 0.18371, 0.23150, 0.28284, 0.33750, 0.39528, 0.45604, 0.51962, 0.58590, 0.65479, 0.70949, 0.72618, 0.80000 }"/>
+
+    <TableFunction
+      name="PCGW.SAND"
+      interpolation="linear"
+      coordinates="{ 0.04000, 0.20000, 0.24938, 0.29875, 0.34813, 0.39750, 0.44688, 0.49625, 0.54563, 0.59500, 0.64438, 0.69375, 0.74313, 0.79250, 0.84187, 0.89125, 0.92000, 0.94063, 0.98000 }"
+      values="{ 1.22628e+06, 1.18131e+06, 1.13877e+06, 1.09118e+06, 1.03875e+06, 9.82212e+05, 9.21985e+05, 8.58471e+05, 7.92077e+05, 7.23208e+05, 6.52271e+05, 5.77796e+05, 4.96916e+05, 4.08363e+05, 3.13267e+05, 2.12756e+05, 1.51885e+05, 1.07957e+05, 0.00000e+00 }"/>
+
+    <TableFunction
+      name="KRW.CLAY"
+      interpolation="linear"
+      coordinates="{ 0.04000, 0.28000, 0.32312, 0.36625, 0.40938, 0.45250, 0.49562, 0.53875, 0.58188, 0.62500, 0.66812, 0.71125, 0.75438, 0.79750, 0.84062, 0.88000, 0.92688, 0.97000 }"
+      values="{ 0.00000, 0.00000, 0.00170, 0.00837, 0.02128, 0.04123, 0.06889, 0.10478, 0.14937, 0.20306, 0.26625, 0.33925, 0.42240, 0.51599, 0.62029, 0.72510, 0.86205, 1.00000 }"/>
+
+    <TableFunction
+      name="KRG.CLAY"
+      interpolation="linear"
+      coordinates="{ 0.03000, 0.12000, 0.16062, 0.20125, 0.24188, 0.28250, 0.32312, 0.36375, 0.40437, 0.44500, 0.48563, 0.52625, 0.56688, 0.60750, 0.64813, 0.68875, 0.72000, 0.77000 }"
+      values="{ 0.00000, 0.00000, 0.00049, 0.00276, 0.00761, 0.01562, 0.02730, 0.04306, 0.06330, 0.08839, 0.11865, 0.15441, 0.19595, 0.24357, 0.29753, 0.35809, 0.40932, 0.50000 }"/>
+
+    <TableFunction
+      name="PCGW.CLAY"
+      interpolation="linear"
+      coordinates="{ 0.04000, 0.28000, 0.32312, 0.36625, 0.40938, 0.45250, 0.49562, 0.53875, 0.58188, 0.62500, 0.66812, 0.71125, 0.75438, 0.79750, 0.84062, 0.88000, 0.92688, 0.95000 }"
+      values="{ 6.13141e+01, 5.91753e+01, 5.70544e+01, 5.46673e+01, 5.20482e+01, 4.92216e+01, 4.62081e+01, 4.30281e+01, 3.97023e+01, 3.62512e+01, 3.26953e+01, 2.89654e+01, 2.49159e+01, 2.04791e+01, 1.57120e+01, 1.11278e+01, 5.41541e+00, 0.00000e+00 }"/>
+
+    <TableFunction
+      name="KV_CH4"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+      voxelFile="tables/kv_CH4.txt"/>
+
+    <TableFunction
+      name="KV_CO2"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+      voxelFile="tables/kv_CO2.txt"/>
+
+    <TableFunction
+      name="KV_H2S"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+      voxelFile="tables/kv_H2S.txt"/>
+
+    <TableFunction
+      name="KV_H2O"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+      voxelFile="tables/kv_H2O.txt"/>
+
+    <TableFunction
+      name="TEMP.VD"
+      coordinates="{ -5000.0, -4000.0 }"
+      values="{ 344.15, 344.15 }"/>
+
+    <TableFunction
+      name="CH4.VD"
+      coordinates="{ -5000.0, -4000.0 }"
+      values="{ 0.1, 0.80 }"/>
+
+    <TableFunction
+      name="CO2.VD"
+      coordinates="{ -5000.0, -4000.0 }"
+      values="{ 0.0, 0.0 }"/>
+
+    <TableFunction
+      name="H2S.VD"
+      coordinates="{ -5000.0, -4000.0 }"
+      values="{ 0.0, 0.05 }"/>
+
+    <TableFunction
+      name="H2O.VD"
+      coordinates="{ -5000.0, -4000.0 }"
+      values="{ 0.9, 0.15 }"/>
+
+    <TableFunction
+      name="GAS.INJECTOR.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 410248800, 568036800 }"
+      values="{ 0, 20, 0 }"/>
+
+    <TableFunction
+      name="PRODUCER.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 0, 157788000, 252460800 }"
+      values="{ 0, 15, 15, 0 }"/>
+
+    <TableFunction
+      name="WATER.INJECTOR.RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ -31557600, 157788000, 252460800, 3155760000 }"
+      values="{ 0, 0.2, 0, 0 }"/>
+  </Functions>
+
+  <Events
+    minTime="0"
+    maxTime="632016000">
+    <PeriodicEvent
+      name="VTK"
+      target="/Outputs/VTK.OUTPUT"
+      targetExactTimestep="1"
+      timeFrequency="15778800"/>
+
+    <PeriodicEvent
+      name="RESTARTS"
+      cycleFrequency="50"
+      targetExactTimestep="0"
+      target="/Outputs/RESTART.OUTPUT"/>
+
+    <PeriodicEvent
+      name="STATISTICS"
+      timeFrequency="31557600"
+      targetExactTimestep="1"
+      target="/Tasks/FLOW.STATISTICS"/>
+
+    <PeriodicEvent
+      name="SOLVER.01"
+      target="/Solvers/DOME"
+      maxEventDt="8640000"
+      beginTime="0"
+      endTime="157788000"/>
+
+    <PeriodicEvent
+      name="SOLVER.02"
+      target="/Solvers/DOME"
+      maxEventDt="86400"
+      beginTime="157788000"
+      endTime="158652000"/>
+
+    <PeriodicEvent
+      name="SOLVER.03"
+      target="/Solvers/DOME"
+      maxEventDt="8640000"
+      beginTime="158652000"/>
+  </Events>
+
+  <Included>
+    <File
+      name="dome_properties.xml"/>
+  </Included>
+</Problem>

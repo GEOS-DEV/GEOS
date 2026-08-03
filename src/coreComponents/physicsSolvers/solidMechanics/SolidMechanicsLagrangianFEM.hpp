@@ -23,7 +23,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "kernels/StrainHelper.hpp"
+#include "kernels/StressStrainAverageKernels.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -133,7 +133,9 @@ public:
   virtual void solveLinearSystem( DofManager const & dofManager,
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs,
-                                  ParallelVector & solution ) override;
+                                  ParallelVector & solution,
+                                  integer const cycleNumber,
+                                  integer const nonlinearIteration ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -288,6 +290,8 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
+
+  void initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 

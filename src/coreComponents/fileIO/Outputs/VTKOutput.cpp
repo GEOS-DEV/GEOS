@@ -109,36 +109,36 @@ void VTKOutput::postInputInitialization()
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
 
   GEOS_ERROR_IF_LT_MSG( m_numberOfTargetProcesses, 1,
-                        GEOS_FMT( "{}: processes count cannot be less than 1.",
-                                  getWrapperDataContext( viewKeysStruct::numberOfTargetProcesses ) ) );
+                        "processes count cannot be less than 1.",
+                        getWrapperDataContext( viewKeysStruct::numberOfTargetProcesses ));
   GEOS_ERROR_IF_GT_MSG( m_numberOfTargetProcesses, MpiWrapper::commSize(),
-                        GEOS_FMT( "{}: processes count cannot exceed the launched ranks count.",
-                                  getWrapperDataContext( viewKeysStruct::numberOfTargetProcesses ) ) );
+                        "processes count cannot exceed the launched ranks count.",
+                        getWrapperDataContext( viewKeysStruct::numberOfTargetProcesses ));
   m_writer.setNumberOfTargetProcesses( m_numberOfTargetProcesses );
 
   string const fieldNamesString = viewKeysStruct::fieldNames;
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                 GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getDataContext(),
+                 GEOS_FMT( "The flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getDataContext(),
+                        "`{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                        catalogName(), getDataContext(),
+                        "`{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 
-  GEOS_ERROR_IF( m_writeFaceElementsAs3D, GEOS_FMT( "{} `{}`: 3D vtk plot of faceElements is not yet supported.",
-                                                    catalogName(), getDataContext() ) );
+  GEOS_ERROR_IF( m_writeFaceElementsAs3D,
+                 "3D vtk plot of faceElements is not yet supported.",
+                 getDataContext() );
 }
 
 
@@ -161,6 +161,7 @@ bool VTKOutput::execute( real64 const time_n,
                          DomainPartition & domain )
 {
   {
+    GEOS_UNUSED_VAR( dt );
     GEOS_LOG_LEVEL( logInfo::OutputEvents,
                     GEOS_FMT( "{}: writing {} at time {} s (cycle number {})",
                               getName(), m_fieldNames, time_n + dt, cycleNumber ));

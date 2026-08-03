@@ -38,7 +38,7 @@ DECLARE_FIELD( stress,
                "stress",
                array3dLayoutStress,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Current material stress" );
 
@@ -73,6 +73,22 @@ DECLARE_FIELD( shearModulus,
                NOPLOT,
                WRITE_AND_READ,
                "Shear modulus" );
+
+DECLARE_FIELD( youngModulus,
+               "youngModulus",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)" );
+
+DECLARE_FIELD( poissonRatio,
+               "poissonRatio",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)" );
 
 DECLARE_FIELD( biotCoefficient,
                "biotCoefficient",

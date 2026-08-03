@@ -69,7 +69,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
+  registerWrapper( viewKeyStruct::maxOilRelPermString(), &m_maxOilRelPerm ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setApplyDefaultValue( 0.0 ).
     setSizedFromParent( 0 );
@@ -91,49 +91,43 @@ void TableRelativePermeability::postInputInitialization()
 
   integer const numPhases = m_phaseNames.size();
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
-                 GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
-                           getFullName() ),
-                 InputError );
+                 "the expected number of fluid phases is either two, or three",
+                 InputError, getDataContext() );
 
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_wettingNonWettingRelPermTableNames.empty(),
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, non-wetting phase)",
-                             getFullName(),
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, non-wetting phase)",
                              viewKeyStruct::wettingNonWettingRelPermTableNamesString() ),
-                   InputError );
+                   InputError, getDataContext() );
 
     GEOS_THROW_IF( m_wettingNonWettingRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a two-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the non-wetting phase relperm table",
-                     getFullName(),
+                     "for a two-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the non-wetting phase relperm table",
                      viewKeyStruct::wettingNonWettingRelPermTableNamesString() ),
-                   InputError );
+                   InputError, getDataContext() );
 
   }
   else if( numPhases == 3 )
   {
     GEOS_THROW_IF( m_wettingIntermediateRelPermTableNames.empty() || m_nonWettingIntermediateRelPermTableNames.empty(),
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, intermediate phase), and {} to specify the relative permeability tables for the pair (non-wetting phase, intermediate phase)",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, intermediate phase), and {} to specify the relative permeability tables for the pair (non-wetting phase, intermediate phase)",
                      viewKeyStruct::wettingIntermediateRelPermTableNamesString(),
                      viewKeyStruct::nonWettingIntermediateRelPermTableNamesString()  ),
-                   InputError );
+                   InputError, getDataContext() );
 
     GEOS_THROW_IF( m_wettingIntermediateRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the intermediate phase relperm table",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the intermediate phase relperm table",
                      viewKeyStruct::wettingIntermediateRelPermTableNamesString() ),
-                   InputError );
+                   InputError, getDataContext() );
 
     GEOS_THROW_IF( m_nonWettingIntermediateRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the non-wetting phase relperm table, second the name on the intermediate phase relperm table",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the non-wetting phase relperm table, second the name on the intermediate phase relperm table",
                      viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 
@@ -152,7 +146,7 @@ void TableRelativePermeability::initializePreSubGroups()
   real64 phaseRelPermMaxEndPoint = 0.0;
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
-  m_waterOilMaxRelPerm = 1.0;
+  m_maxOilRelPerm = 1.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -161,10 +155,9 @@ void TableRelativePermeability::initializePreSubGroups()
     for( size_t ip = 0; ip < m_wettingNonWettingRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_wettingNonWettingRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_wettingNonWettingRelPermTableNames[ip] ),
-                     InputError );
+                     InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingRelPermTableNames[ip] );
       TableRelativePermeabilityHelpers::
         validateRelativePermeabilityTable( relPermTable, // input
@@ -190,10 +183,9 @@ void TableRelativePermeability::initializePreSubGroups()
     for( size_t ip = 0; ip < m_wettingIntermediateRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_wettingIntermediateRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_wettingIntermediateRelPermTableNames[ip] ),
-                     InputError );
+                     InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingIntermediateRelPermTableNames[ip] );
       TableRelativePermeabilityHelpers::
         validateRelativePermeabilityTable( relPermTable, // input
@@ -212,16 +204,15 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-        m_waterOilMaxRelPerm = phaseRelPermMaxEndPoint;
+        m_maxOilRelPerm = phaseRelPermMaxEndPoint;
       }
     }
     for( size_t ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_nonWettingIntermediateRelPermTableNames[ip] ),
-                     InputError );
+                     InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateRelPermTableNames[ip] );
       TableRelativePermeabilityHelpers::
         validateRelativePermeabilityTable( relPermTable, // input
@@ -278,7 +269,8 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                  arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                 real64 const & waterPhaseMaxVolumeFraction,
+                 real64 const & connateWaterSaturation,
+                 real64 const & maxOilRelPerm,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
                  ThreePhaseInterpolator const & threePhaseInterpolator,
@@ -292,7 +284,8 @@ TableRelativePermeability::KernelWrapper::
                                     phaseTrappedVolFrac ),
   m_relPermKernelWrappers( relPermKernelWrappers ),
   m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
-  m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
+  m_connateWaterSaturation( connateWaterSaturation ),
+  m_maxOilRelPerm( maxOilRelPerm ),
   m_threePhaseInterpolator( threePhaseInterpolator ) {}
 
 TableRelativePermeability::KernelWrapper
@@ -302,16 +295,44 @@ TableRelativePermeability::createKernelWrapper()
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
   createAllTableKernelWrappers();
 
+  // Extract the connate water saturation
+  real64 const connateWaterSaturation = getConnateWaterSaturation();
+
   // then we create the actual TableRelativePermeability::KernelWrapper
   return KernelWrapper( m_relPermKernelWrappers,
                         m_phaseMinVolumeFraction,
-                        m_waterOilMaxRelPerm,
+                        connateWaterSaturation,
+                        m_maxOilRelPerm,
                         m_phaseTypes,
                         m_phaseOrder,
                         m_threePhaseInterpolator,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrappedVolFrac );
+}
+
+real64 TableRelativePermeability::getConnateWaterSaturation() const
+{
+  real64 connateWaterSaturation = 0.0;
+
+  if( 0 <= m_phaseOrder[PhaseType::WATER] )
+  {
+    string const tableName = [&]( integer const phaseCount )
+    {
+      if( phaseCount == 3 )
+      {
+        return m_wettingIntermediateRelPermTableNames[0];
+      }
+      else
+      {
+        return m_wettingNonWettingRelPermTableNames[0];
+      }
+    }( m_phaseNames.size());
+    TableFunction const & relPermTable = FunctionManager::getInstance().getGroup< TableFunction >( tableName );
+    ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
+    connateWaterSaturation = coords[0][0];
+  }
+  return connateWaterSaturation;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )

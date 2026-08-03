@@ -57,18 +57,24 @@ char const * PreXmlInput =
                                   temperature="297.15"
                                   useMass="0">
       </CompositionalMultiphaseFVM>
-      <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
+      <WellManager name="compositionalMultiphaseWell"
                                    logLevel="1"
                                    targetRegions="{wellRegion1}"
                                    useMass="0">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="1.25"
-                        control="BHP"
-                        targetBHP="2e6"
-                        targetPhaseRate="1"
-                        targetPhaseName="oil"/>
-      </CompositionalMultiphaseWell>
+    <CompositionalMultiphaseWell
+      name="wellControls1"
+      control="BHP"
+      type="producer">
+      <ProductionPhaseVolumeRateConstraint
+        name="maxoilprod"
+        phaseName="oil"
+        phaseRate="1"/>
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="2e6"
+        referenceElevation="1.25"/>
+    </CompositionalMultiphaseWell>
+      </WellManager>
     </Solvers>
     <Mesh>
       <InternalMesh name="mesh1"
@@ -98,19 +104,16 @@ char const * PostXmlInput =
                          materialList="{fluid1, relperm}"/>
     </ElementRegions>
     <Constitutive>
-      <CompositionalMultiphaseFluid name="fluid1"
+      <CompositionalTwoPhaseFluid name="fluid1"
                                     phaseNames="{oil, gas}"
-                                    equationsOfState="{PR, PR}"
+                                    equationsOfState="{PengRobinson, PengRobinson}"
                                     componentNames="{N2, C10, C20, H2O}"
                                     componentCriticalPressure="{34e5, 25.3e5, 14.6e5, 220.5e5}"
                                     componentCriticalTemperature="{126.2, 622.0, 782.0, 647.0}"
                                     componentAcentricFactor="{0.04, 0.443, 0.816, 0.344}"
                                     componentMolarWeight="{28e-3, 134e-3, 275e-3, 18e-3}"
                                     componentVolumeShift="{0, 0, 0, 0}"
-                                    componentBinaryCoeff="{ {0, 0, 0, 0},
-                                                            {0, 0, 0, 0},
-                                                            {0, 0, 0, 0},
-                                                            {0, 0, 0, 0} }"/>
+                                    constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
       <CompressibleSolidConstantPermeability name="rock"
           solidModelName="nullSolid"
           porosityModelName="rockPorosity"
@@ -175,21 +178,21 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 
                                LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
-  refVal[29800.0] = { 1, 1, 1, 1, 1};
-  refVal[32400.0] = { 1, 1, 1, 1, 0};
-  refVal[32500.0] = { 0, 0, 0, 0, 0};
-  refVal[33000.0] = { 1, 1, 1, 1, 1};
+  refVal.insert( {29800.0, { 1, 1, 1, 1, 1}} );
+  refVal.insert( {32400.0, { 1, 1, 1, 1, 0}} );
+  refVal.insert( {32500.0, { 0, 0, 0, 0, 0}} );
+  refVal.insert( {33000.0, { 1, 1, 1, 1, 1}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -217,22 +220,22 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 
                                 LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
-  refVal[4800.0] =  { 1, 1, 1, 1, 1};
-  refVal[14800.0] = { 1, 1, 1, 1, 0};
-  refVal[19600.0] = { 1, 1, 1, 0, 0};
-  refVal[32400.0] = { 1, 1, 0, 0, 0};
-  refVal[39800.0] = { 0, 0, 0, 0, 0};
+  refVal.insert( {4800.0, { 1, 1, 1, 1, 1}} );
+  refVal.insert( {14800.0, { 1, 1, 1, 1, 0}} );
+  refVal.insert( {19600.0, { 1, 1, 1, 0, 0}} );
+  refVal.insert( {32400.0, { 1, 1, 0, 0, 0}} );
+  refVal.insert( {39800.0, { 0, 0, 0, 0, 0}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -260,21 +263,21 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 
                                LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refPerfTable;
-  refPerfTable[4800.0] = { 0, 0, 0, 0, 0};
-  refPerfTable[14800.0] = { 1, 0, 0, 0, 0};
-  refPerfTable[19800.0] = { 1, 1, 0, 0, 0};
-  refPerfTable[29800.0] = { 1, 1, 1, 0, 0};
-  refPerfTable[39800.0] = { 1, 1, 1, 1, 1};
+  refPerfTable.insert( {4800.0, { 0, 0, 0, 0, 0}} );
+  refPerfTable.insert( {14800.0, { 1, 0, 0, 0, 0}} );
+  refPerfTable.insert( {19800.0, { 1, 1, 0, 0, 0}} );
+  refPerfTable.insert( {29800.0, { 1, 1, 1, 0, 0}} );
+  refPerfTable.insert( {39800.0, { 1, 1, 1, 1, 1}} );
   map_type::iterator it = refPerfTable.begin();
   while( it != refPerfTable.end() )
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -302,19 +305,19 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 
                                 LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
-  refVal[4800.0] = { 0, 0, 0, 0, 0};
-  refVal[33000.0] = { 1, 1, 1, 1, 1};
+  refVal.insert( {4800.0, { 0, 0, 0, 0, 0}} );
+  refVal.insert( {33000.0, { 1, 1, 1, 1, 1}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -516,8 +519,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, plugTopDownPerfCheck )
   testPlugTopDownPerfCheck( *solver, domain,
                             [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 
@@ -530,8 +548,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, plugBottomUpPerfCheck )
   testPlugBottomUpPerfCheck( *solver, domain,
                              [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 TEST_F( CompositionalMultiphaseReservoirSolverTest, openTopDownPerfCheck )
@@ -543,8 +576,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openTopDownPerfCheck )
   testOpenTopDownPerfCheck( *solver, domain,
                             [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 
@@ -557,8 +605,24 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openBottomUpPerfCheck )
   testOpenBottomUpPerfCheck( *solver, domain,
                              [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 

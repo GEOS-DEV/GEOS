@@ -1,6 +1,6 @@
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3843-13975-76d125d
+  baseline: integratedTests/baseline_integratedTests-pr3972-17154-316e6d8
 
 allow_fail:
   all: ''

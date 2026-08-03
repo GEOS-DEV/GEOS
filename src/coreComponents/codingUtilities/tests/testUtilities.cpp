@@ -23,7 +23,7 @@ using namespace geos;
 
 TEST( Utilities, MapExtraction )
 {
-  std::map< string, int > const m{
+  stdMap< string, int > const m{
     { "k0", 0 },
     { "k1", 1 },
     { "k2", 2 }

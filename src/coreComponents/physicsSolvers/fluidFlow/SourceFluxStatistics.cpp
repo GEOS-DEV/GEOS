@@ -58,18 +58,19 @@ void SourceFluxStatsAggregator::postInputInitialization()
       m_fluxNames.emplace_back( string( sourceFlux.getName() ) );
     } );
     GEOS_WARNING_IF( m_fluxNames.empty(),
-                     GEOS_FMT( "{}: No {} was found in {}.",
-                               getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                               fsManager.getDataContext() ) );
+                     GEOS_FMT( "No {} was found in {}.",
+                               SourceFluxBoundaryCondition::catalogName(), fsManager.getName() ),
+                     getDataContext(), fsManager.getDataContext(), getDataContext() );
   }
   else
   {
     for( string const & fluxName : m_fluxNames )
     {
       GEOS_ERROR_IF( !fsManager.hasGroup< SourceFluxBoundaryCondition >( fluxName ),
-                     GEOS_FMT( "{}: No {} named {} was found in {}.",
-                               getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                               fluxName, fsManager.getDataContext() ) );
+                     GEOS_FMT( "No {} named {} was found in {}.",
+                               SourceFluxBoundaryCondition::catalogName(),
+                               fluxName, fsManager.getName() ),
+                     getDataContext(), fsManager.getDataContext(), getDataContext()  );
     }
   }
 
@@ -146,7 +147,7 @@ void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
                                                    TableData & tableData,
                                                    WrappedStats const & wrappedStats )
 {
-  if( logLevelActive && logger::internal::rank == 0 )
+  if( logLevelActive && MpiWrapper::commRank()  == 0 )
   {
     if( wrappedStats.stats().m_producedMass.size() == 1 )
     {
@@ -199,7 +200,8 @@ void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive,
                                                   string_view fluxesStr,
                                                   TableData const & statsData )
 {
-  if( logLevelActive && logger::internal::rank == 0 )
+  GEOS_UNUSED_VAR( statsData );
+  if( logLevelActive && MpiWrapper::commRank() == 0 )
   {
     string const title = GEOS_FMT( "{}, flux statistics for: {}",
                                    getName(), fluxesStr );
@@ -211,7 +213,7 @@ void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive,
 }
 void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
 {
-  if( m_writeCSV > 0 && logger::internal::rank == 0 )
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
     std::ofstream outputFile( m_csvFilename );
     TableCSVFormatter const tableStatFormatter( m_csvLayout );

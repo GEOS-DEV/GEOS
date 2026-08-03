@@ -84,7 +84,14 @@ setMGRStrategy()
   }
   else
   {
-    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+    if( isThermal() )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseReservoirFVM;
+    }
+    else
+    {
+      linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+    }
   }
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
@@ -106,12 +113,16 @@ setMGRStrategy()
 
   if( dynamic_cast< SinglePhaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for poromechanics {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for poromechanics {}/{}",
+                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()),
+                getDataContext() );
   }
   else
   {
-    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+    linearSolverParameters.mgr.strategy =
+      wellSolver()->isThermal()
+      ? LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM
+      : LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
@@ -126,6 +137,29 @@ initializePreSubGroups()
   Base::initializePreSubGroups();
   SinglePhaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
+
+  bool const isThermalFlow = flowSolver->getReference< integer >( SinglePhaseBase::viewKeyStruct::isThermalString() );
+  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::isThermalString() );
+  GEOS_THROW_IF( isThermalFlow != isThermalWell,
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), SinglePhaseBase::viewKeyStruct::isThermalString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
+  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion const & subRegion )
+    {
+      WellControls & wellControls = Base::wellSolver()->getWellControls( subRegion );
+      wellControls.setFlowSolverName( flowSolver->getName() );
+
+    } );
+  } );
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -247,9 +281,8 @@ assembleCouplingTerms( real64 const time_n,
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
-                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
-                           this->getCatalogName(), this->getName() ),
-                 std::runtime_error );
+                 "The well transmissibility has not been computed yet",
+                 geos::RuntimeError, Base::getDataContext() );
 
   this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel const & mesh,

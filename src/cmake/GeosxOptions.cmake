@@ -21,6 +21,8 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( GEOS_USE_GIT_VERSION_INFO "Enables querying git for version metadata" ON )
+
 option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
 if( NOT CMAKE_CONFIGURATION_TYPES )
     ######################################################
@@ -34,7 +36,7 @@ if( GEOS_ENABLE_BOUNDS_CHECK )
   set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
 endif()
 
-option( ENABLE_PVTPackage "" ON )
+option( ENABLE_HPCREACT "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 
@@ -54,8 +56,11 @@ option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_HYPREDRV "Enables HYPREDRV" OFF )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
+
+set( HYPREDRV_DIR "" CACHE PATH "Path to a HYPREDRV installation prefix or package config directory" )
 
 option( ENABLE_HYPRE_MIXINT "Enables mixed int32/int64 local/global" ON )
 
@@ -168,6 +173,15 @@ if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
                                 FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
                                 )
+endif()
+
+if( GEOS_ENABLE_FPE )
+  check_cxx_compiler_flag( "-ffp-exception-behavior=strict" GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT)
+  if( GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT )
+    blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS CLANG "-ffp-exception-behavior=strict" )
+  else()
+    message( WARNING "GEOS_ENABLE_FPE is ON, but ${CMAKE_CXX_COMPILER_ID} does not support -ffp-exception-behavior=strict." )
+  endif()
 endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )

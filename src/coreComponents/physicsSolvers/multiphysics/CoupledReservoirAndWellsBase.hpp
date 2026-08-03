@@ -29,7 +29,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
@@ -65,7 +65,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
  * @param domain the physical domain object
  */
 bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               WellManager const * const wellSolver,
                                DomainPartition const & domain );
 
 }
@@ -181,6 +181,9 @@ public:
   {
     Base::postInputInitialization();
 
+    // assume that reservoir solver discretization is the primary one
+    this->m_discretizationName = reservoirSolver()->getDiscretizationName();
+
     setMGRStrategy();
   }
 
@@ -222,8 +225,11 @@ public:
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return reservoirSolver()->updateFluidState( subRegion ); }
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+
+  template< typename ELEMENT_SUB_REGION >
+  void updatePorosityAndPermeability( ELEMENT_SUB_REGION & subRegion ) const
   { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 

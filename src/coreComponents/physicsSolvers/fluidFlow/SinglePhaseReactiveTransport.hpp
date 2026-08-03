@@ -1,0 +1,322 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file SinglePhaseReactiveTransport.hpp
+ */
+
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
+
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransportFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/AccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ReactionUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
+
+
+namespace geos
+{
+
+/**
+ * @class SinglePhaseReactiveTransport
+ *
+ * A solver for single phase reactive transport
+ */
+class SinglePhaseReactiveTransport : public SinglePhaseBase
+{
+
+public:
+
+  /**
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
+   */
+  SinglePhaseReactiveTransport( const string & name,
+                                dataRepository::Group * const parent );
+
+  SinglePhaseReactiveTransport() = delete;
+
+  /// deleted copy constructor
+  SinglePhaseReactiveTransport( SinglePhaseReactiveTransport const & ) = delete;
+
+  /// default move constructor
+  SinglePhaseReactiveTransport( SinglePhaseReactiveTransport && ) = default;
+
+  /// deleted assignment operator
+  SinglePhaseReactiveTransport & operator=( SinglePhaseReactiveTransport const & ) = delete;
+
+  /// deleted move operator
+  SinglePhaseReactiveTransport & operator=( SinglePhaseReactiveTransport && ) = delete;
+
+  /**
+   * @brief default destructor
+   */
+  virtual ~SinglePhaseReactiveTransport() override = default;
+
+  using SinglePhaseBase::updatePorosityAndPermeability;
+
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   */
+  static string catalogName()
+  {
+    return "SinglePhaseReactiveTransport";
+  }
+
+  /**
+   * @copydoc PhysicsSolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
+
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
+
+  virtual void
+  setupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const override;
+
+  virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override final;
+
+  virtual void
+  assembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void
+  applyBoundaryConditions( real64 const time_n,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
+
+  virtual real64
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         arrayView1d< real64 const > const & localRhs ) override;
+
+  virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       real64 const dt,
+                       DomainPartition & domain ) override;
+
+  virtual void
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override final;
+
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
+
+  virtual void
+  updateState ( DomainPartition & domain ) override final;
+
+  void updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const;
+
+  void updateSurfaceArea( ElementSubRegionBase & subRegion ) const;
+
+  void updateSpeciesAmount( ElementSubRegionBase & subRegion ) const;
+
+  void updateKineticReactionMolarIncrements( real64 const dt,
+                                             ElementSubRegionBase & subRegion ) const;
+
+  virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
+
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
+
+  void initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param[in] domain the domain partition
+   */
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const override final;
+
+  /**
+   * @brief Getter for the number of fluid components (species)
+   * @return the number of components
+   */
+  integer numPrimarySpecies() const { return m_numPrimarySpecies; }
+
+  /**
+   * @brief assembles the accumulation terms in total mass balance and primary species amount equation for all cells
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   */
+  void assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( real64 const dt,
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  arrayView1d< real64 > const & localRhs ) const;
+
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void
+  assembleFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void
+  applySourceFluxBC( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const override;
+
+  /**
+   * @brief Function to perform the Application of Dirichlet type BC's
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void
+  applyDirichletBC( real64 const time_n,
+                    real64 const dt,
+                    DomainPartition & domain,
+                    DofManager const & dofManager,
+                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                    arrayView1d< real64 > const & localRhs ) const override;
+
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override;
+
+  virtual void
+  assembleEDFMFluxTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         string const & jumpDofKey ) override final;
+
+  virtual void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
+
+  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
+  {
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
+    static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
+    static constexpr char const * immobilePrimarySpeciesIndicesString() { return "immobilePrimarySpeciesIndices"; }
+  };
+
+protected:
+
+  /// the number of primary species in the fluid
+  integer m_numPrimarySpecies;
+
+  /// the number of kinetic reactions
+  integer m_numKineticReactions;
+
+  /// name of the reactive fluid constitutive model
+  string m_reactiveFluidModelName;
+
+  /// flag to determine whether or not to apply diffusion
+  integer m_hasDiffusion;
+
+  /// flag to determine whether or not to use the reactive porosity
+  integer m_isUpdateReactivePorosity;
+
+  /// flag to determine whether or not to update the surface area
+  integer m_isUpdateSurfaceArea;
+
+  /// array to store the indices of immobile primary species
+  array1d< integer > m_immobilePrimarySpeciesIndices;
+
+private:
+
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param time_n current time
+   * @param dt time step
+   * @param faceSet degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void applyFaceDirichletBC( real64 const time_n,
+                             real64 const dt,
+                             DofManager const & faceSet,
+                             DomainPartition & domain,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs );
+
+};
+
+
+} /* namespace geos */
+
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_

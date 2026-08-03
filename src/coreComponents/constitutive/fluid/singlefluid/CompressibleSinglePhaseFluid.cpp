@@ -43,7 +43,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid compressibility" );
+    setDescription( "Fluid compressibility [Pa^-1]" );
 
   registerWrapper( viewKeyStruct::viscosibilityString(), &m_viscosibility ).
     setApplyDefaultValue( 0.0 ).
@@ -53,7 +53,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
+    setDescription( "Reference pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).
@@ -66,7 +66,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setDescription( "Reference fluid viscosity" );
 
   registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( ExponentApproximationType::Linear ).
+    setApplyDefaultValue( ExponentApproximationType::Full ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
@@ -92,8 +92,8 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
@@ -101,21 +101,22 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LE_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
-  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
-    GEOS_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                          GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                          InputError );
+    GEOS_THROW_IF( value != expectedValue,
+                   GEOS_FMT( "invalid model type in attribute '{}' (only {} currently supported)",
+                             attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
+                   InputError, getDataContext() );
   };
-  checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
-  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+  checkModelType( m_densityModelType, ExponentApproximationType::Full, viewKeyStruct::densityModelTypeString() );
+  checkModelType( m_viscosityModelType, ExponentApproximationType::Linear, viewKeyStruct::viscosityModelTypeString() );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this

@@ -126,17 +126,17 @@ void MsrsbLevelBuilderCoupled< LAI >::initializeFineLevel( DomainPartition & dom
   createSmoothers();
 }
 
-std::unordered_map< globalIndex, globalIndex >
+stdUnorderedMap< globalIndex, globalIndex >
 makeGhostDofMap( MeshObjectManager const & manager,
                  string const & oldDofKey,
                  string const & newDofKey )
 {
-  std::unordered_map< globalIndex, globalIndex > ghostDofMap;
+  stdUnorderedMap< globalIndex, globalIndex > ghostDofMap;
   arrayView1d< globalIndex const > const oldDofNumber = manager.getReference< array1d< globalIndex > >( oldDofKey );
   arrayView1d< globalIndex const > const newDofNumber = manager.getReference< array1d< globalIndex > >( newDofKey );
   for( localIndex i = manager.numOwnedObjects(); i < manager.size(); ++i )
   {
-    ghostDofMap[oldDofNumber[i]] = newDofNumber[i];
+    ghostDofMap.get_inserted( oldDofNumber[i] ) = newDofNumber[i];
   }
   return ghostDofMap;
 }
@@ -147,11 +147,11 @@ void MsrsbLevelBuilderCoupled< LAI >::buildProlongationStructure( DofManager con
   GEOS_ASSERT_EQ( m_prolongationBlocks.size(), m_dofManager.numFields() );
 
   array1d< localIndex > rowLength( fineDofManager.numLocalDofs() );
-  for( std::size_t blockIdx = 0; blockIdx < m_prolongationBlocks.size(); ++blockIdx )
+  for( std::size_t blockId = 0; blockId < m_prolongationBlocks.size(); ++blockId )
   {
-    localIndex const rowOffset = fineDofManager.localOffset( m_fields[blockIdx] );
-    forAll< parallelHostPolicy >( m_prolongationBlocks[blockIdx].numRows(),
-                                  [block = m_prolongationBlocks[blockIdx].toViewConst(),
+    localIndex const rowOffset = fineDofManager.localOffset( m_fields[blockId] );
+    forAll< parallelHostPolicy >( m_prolongationBlocks[blockId].numRows(),
+                                  [block = m_prolongationBlocks[blockId].toViewConst(),
                                    rowLength = rowLength.toView(),
                                    rowOffset]( localIndex const localRow )
     {
@@ -163,10 +163,10 @@ void MsrsbLevelBuilderCoupled< LAI >::buildProlongationStructure( DofManager con
                                                                      m_dofManager.numGlobalDofs(),
                                                                      rowLength.data() );
 
-  for( std::size_t blockIdx = 0; blockIdx < m_prolongationBlocks.size(); ++blockIdx )
+  for( std::size_t blockId = 0; blockId < m_prolongationBlocks.size(); ++blockId )
   {
-    DofManager const & dofManager = m_builders[blockIdx]->dofManager();
-    string const & fieldName = m_fields[blockIdx];
+    DofManager const & dofManager = m_builders[blockId]->dofManager();
+    string const & fieldName = m_fields[blockId];
 
     globalIndex const minLocalDof = dofManager.rankOffset();
     globalIndex const maxLocalDof = minLocalDof + dofManager.numLocalDofs();
@@ -176,8 +176,8 @@ void MsrsbLevelBuilderCoupled< LAI >::buildProlongationStructure( DofManager con
 
     integer const numComp = m_dofManager.numComponents( fieldName );
 
-    std::unordered_map< globalIndex, globalIndex > const ghostDofMap =
-      makeGhostDofMap( m_builders[blockIdx]->manager(), dofManager.key( fieldName ), m_dofManager.key( fieldName ) );
+    stdUnorderedMap< globalIndex, globalIndex > const ghostDofMap =
+      makeGhostDofMap( m_builders[blockId]->manager(), dofManager.key( fieldName ), m_dofManager.key( fieldName ) );
 
     auto const mapGhostCol = [numComp, &ghostDofMap]( globalIndex const col )
     {
@@ -194,8 +194,8 @@ void MsrsbLevelBuilderCoupled< LAI >::buildProlongationStructure( DofManager con
       return ( minLocalDof <= col && col < maxLocalDof ) ? colOffset + col : mapGhostCol( col );
     };
 
-    forAll< parallelHostPolicy >( m_prolongationBlocks[blockIdx].numRows(),
-                                  [block = m_prolongationBlocks[blockIdx].toViewConst(),
+    forAll< parallelHostPolicy >( m_prolongationBlocks[blockId].numRows(),
+                                  [block = m_prolongationBlocks[blockId].toViewConst(),
                                    prolongation = m_localProlongation.toView(),
                                    rowOffset, mapColumn]( localIndex const localRow )
     {
@@ -217,12 +217,12 @@ void MsrsbLevelBuilderCoupled< LAI >::initializeCoarseLevel( LevelBuilderBase< L
   GEOS_ASSERT( fine.m_builders.size() == m_builders.size() );
   m_fineLevel = &fine;
 
-  for( size_t blockIdx = 0; blockIdx < m_builders.size(); ++blockIdx )
+  for( size_t blockId = 0; blockId < m_builders.size(); ++blockId )
   {
     Matrix fineBlock;
-    fineMatrix.multiplyPtAP( fine.m_selectors[blockIdx], fineBlock );
-    m_builders[blockIdx]->initializeCoarseLevel( *fine.m_builders[blockIdx], fineBlock );
-    m_prolongationBlocks[blockIdx] = m_builders[blockIdx]->prolongation().extract();
+    fineMatrix.multiplyPtAP( fine.m_selectors[blockId], fineBlock );
+    m_builders[blockId]->initializeCoarseLevel( *fine.m_builders[blockId], fineBlock );
+    m_prolongationBlocks[blockId] = m_builders[blockId]->prolongation().extract();
   }
 
   initializeCommon( fine.dofManager().domain(), fineMatrix.comm() );
@@ -240,22 +240,22 @@ bool MsrsbLevelBuilderCoupled< LAI >::updateProlongation( Matrix const & fineMat
   // Extract diagonal blocks, update and extract sub-block prolongations
   bool update = false;
   localIndex rowOffset = 0;
-  for( size_t blockIdx = 0; blockIdx < m_builders.size(); ++blockIdx )
+  for( size_t blockId = 0; blockId < m_builders.size(); ++blockId )
   {
     Matrix fineBlock;
     {
       GEOS_MARK_SCOPE( extract blocks );
       auto const & fine = dynamicCast< MsrsbLevelBuilderCoupled< LAI > const & >( *m_fineLevel );
-      fineMatrix.multiplyPtAP( fine.m_selectors[blockIdx], fineBlock );
+      fineMatrix.multiplyPtAP( fine.m_selectors[blockId], fineBlock );
     }
 
-    bool const updateBlock = m_builders[blockIdx]->updateProlongation( fineBlock );
-    CRSMatrixView< real64, globalIndex const > const block = m_prolongationBlocks[blockIdx].toViewConstSizes();
+    bool const updateBlock = m_builders[blockId]->updateProlongation( fineBlock );
+    CRSMatrixView< real64, globalIndex const > const block = m_prolongationBlocks[blockId].toViewConstSizes();
 
     if( updateBlock )
     {
       GEOS_MARK_SCOPE( merge blocks );
-      m_builders[blockIdx]->prolongation().extract( block );
+      m_builders[blockId]->prolongation().extract( block );
       forAll< parallelHostPolicy >( block.numRows(),
                                     [block = block.toViewConst(),
                                      prolongation = m_localProlongation.toViewConstSizes(),

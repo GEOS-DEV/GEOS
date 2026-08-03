@@ -112,16 +112,6 @@ public:
   { m_errors->clear(); }
 
   /**
-   * @return The const rows of the table
-   */
-  stdVector< stdVector< CellData > > const & getTableDataRows() const;
-
-  /**
-   * @return The rows of the table
-   */
-  stdVector< stdVector< CellData > > & getTableDataRows();
-
-  /**
    * @brief Get all error messages
    * @return The vector of error messages
    */
@@ -134,15 +124,18 @@ public:
   { return m_rows; }
 
   /**
+   * @return The const table data rows
+   */
+  DataRows & getCellsData()
+  { return m_rows; }
+
+  /**
    * @brief Comparison operator for data rows
    * @param comparingTable The tableData values to compare
    * @return The comparison result
    */
   inline bool operator==( TableData const & comparingTable ) const
-  {
-
-    return getCellsData() == comparingTable.getCellsData();
-  }
+  { return getCellsData() == comparingTable.getCellsData(); }
 
   /**
    * @brief Get all error messages
@@ -193,9 +186,9 @@ public:
   /**
    * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
    * @tparam T The value passed to addCell (can be any type).
-   * @param value CellData value to be added.
    * @param rowValue The value of the row containing the cell.
    * @param columnValue The value of the column containing the cell.
+   * @param value CellData value to be added.
    */
   template< typename T >
   void addCell( RowType rowValue, ColumnType columnValue, T const & value );
@@ -254,7 +247,8 @@ public:
 
 private:
   /// @brief all cell values by their [ row ][ column ]
-  std::map< RowType, std::map< ColumnType, string > > m_data;
+  stdMap< RowType, stdMap< ColumnType, string > > m_data;
+
   /// @brief Store all column values when adding cell
   std::set< real64 > m_columnValues;
   /// @brief Store all errors that can be found during the generation of the TableData
@@ -292,12 +286,20 @@ void TableData::addRow( Args const &... args )
   addRow( cells );
 }
 
+/**
+ * @brief Add a cell to the table.
+ *
+ * @tparam T The value type to insert.
+ * @param rowValue The row key.
+ * @param columnValue The column key.
+ * @param value The value to store in the cell.
+ */
 template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter_v< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   m_columnValues.insert( columnValue );
-  m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
+  m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
 }

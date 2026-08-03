@@ -23,20 +23,25 @@
 
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
 
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
+}
+
 /// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
 template< typename RESERVOIR_SOLVER = CompositionalMultiphaseBase >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                                                                      CompositionalMultiphaseWell >
+                                                                                      WellManager >
 {
 public:
 
   using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                             CompositionalMultiphaseWell >;
+                                             WellManager >;
   using Base::getLogLevel;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
@@ -91,6 +96,27 @@ public:
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
 
+  void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper );
+
+  template< typename SUBREGION_TYPE >
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE const & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
+  {
+    flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+  }
+
+  void prepareStencilWeights( DomainPartition & domain ) const;
+  void updateStencilWeights( DomainPartition & domain ) const;
+
 protected:
 
   virtual void initializePreSubGroups() override;
@@ -100,7 +126,6 @@ protected:
 private:
 
   CompositionalMultiphaseBase * flowSolver() const;
-
 };
 
 } /* namespace geos */

@@ -51,8 +51,8 @@ public:
   using Base::m_dMass;
 
   /// Note: Derivative lineup only supports dP & dT, not component terms
-  static constexpr integer isThermal = NUM_DOF-1;
-  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< isThermal >;
+  // static constexpr integer isThermal = NUM_DOF-1;
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
   /**
    * @brief Constructor
    * @param[in] rankOffset the offset of my MPI rank
@@ -225,7 +225,7 @@ public:
     else
     {
       GEOS_UNUSED_VAR( rankOffset, dofKey, subRegion, localMatrix, localRhs );
-      GEOS_ERROR( "Unsupported subregion type: " << typeid(SUBREGION_TYPE).name() );
+      GEOS_ERROR( GEOS_FMT( "Unsupported subregion type: {}", typeid( SUBREGION_TYPE ).name() ) );
     }
   }
 

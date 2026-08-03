@@ -212,8 +212,8 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
                                                                                                 CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -349,7 +349,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
 real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
-  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( " Time-Step computation for the first order acoustic wave propagator not yet implemented", getDataContext() );
   return dtOut;
 }
 
@@ -379,7 +379,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,
@@ -432,7 +432,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & t
                                                                 DomainPartition & domain,
                                                                 integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( getDataContext() << ": Backward propagation for the first-order wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented", getDataContext() );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -590,12 +590,12 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
 
 void AcousticFirstOrderWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( getDataContext() << ": PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented", getDataContext() );
 }
 
 void AcousticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( getDataContext() << ": PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented", getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, AcousticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
