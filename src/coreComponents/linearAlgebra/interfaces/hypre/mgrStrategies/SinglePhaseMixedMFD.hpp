@@ -52,9 +52,10 @@ namespace mgr
  *    elimination exactly, and the Galerkin (RAP) coarse grid is the exact Schur complement.
  *    The cost of this level is proportional to the TPFA fraction selected by the
  *    residual tolerance, mirroring the sparsity-reduction metric of the adaptive scheme.
- * 2. Level 1: F-points = MFD face fluxes (label 1), relaxed with a single BoomerAMG
- *    V-cycle on the (SPD) MFD flux block; Jacobi prolongation, injection restriction,
- *    Galerkin (RAP) coarse grid approximating the pressure Schur complement.
+ * 2. Level 1: F-points = MFD face fluxes (label 1), relaxed with symmetric Gauss-Seidel
+ *    sweeps on the (SPD, well-conditioned) MFD flux block; Jacobi prolongation,
+ *    injection restriction, Galerkin (RAP) coarse grid approximating the pressure
+ *    Schur complement.
  * 3. Coarsest level: cell-pressure system solved with BoomerAMG.
  * 4. Global smoother: none. The Krylov solver is (F)GMRES.
  */
@@ -84,9 +85,10 @@ public:
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
 
-    // Level 1: genuine multilevel relaxation on the MFD flux block
-    m_levelFRelaxType[1]         = MGRFRelaxationType::amgVCycle;
-    m_levelFRelaxIters[1]        = 1;
+    // Level 1: SGS sweeps on the well-conditioned SPD flux block outperform an AMG
+    // V-cycle; Jacobi prolongation avoids the setup cost of approximateInverse
+    m_levelFRelaxType[1]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
+    m_levelFRelaxIters[1]        = 3;
     m_levelInterpType[1]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
@@ -104,8 +106,11 @@ public:
   {
     setReduction( precond, mgrData );
 
-    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur complement
+    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur
+    // complement. Two V-cycles per MGR application: the coarse solve accuracy governs the
+    // outer FGMRES iteration count (a single cycle leaves the reduction quality unused)
     setPressureAMG( mgrData.coarseSolver );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 2 ) );
   }
 };
 
