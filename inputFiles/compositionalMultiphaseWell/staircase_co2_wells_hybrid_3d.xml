@@ -28,35 +28,46 @@
       maxRelativePressureChange="0.2"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      maxCompFractionChange="0.2"
-      maxRelativePressureChange="0.2"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
         control="BHP"
-        referenceElevation="12"
-        targetBHP="2e6"
-        targetPhaseRate="1e-7"
-        targetPhaseName="water"/>
-      <WellControls
+        maxRelativePressureChange="0.2"
+        maxCompFractionChange="0.2">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxwaterprod"
+          phaseName="water"
+          phaseRate="1e-7"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="2e6"
+          referenceElevation="12"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="2e7"
-        targetTotalRateTableName="totalRateTable"
-        injectionTemperature="368.15"
-        injectionStream="{ 0.995, 0.005 }"/>
-    </CompositionalMultiphaseWell>
+        maxRelativePressureChange="0.2"
+        maxCompFractionChange="0.2">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="2e7"
+          referenceElevation="12"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="totalRateTable"
+          injectionStream="{ 0.995, 0.005 }"
+          injectionTemperature="368.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
-
     <VTKMesh
       name="mesh1"
       file="staircase3d_tet_with_properties.vtu"
@@ -64,7 +75,6 @@
       fieldNamesInGEOS="{ globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity }"
       partitionRefinement="1"
       logLevel="2">
-
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -78,7 +88,6 @@
           name="producer1_perf1"
           distanceFromHead="11.95"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion2"
@@ -212,12 +221,12 @@
   <Functions>
     <TableFunction
       name="totalRateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 1.001e3, 3.5001e3, 5.001e3, 2.041e5, 1e6}"
-      values="{5e-7, 1e-7, 2e-7, 5e-7, 0, 0}" 
+      inputVarNames="{ time }"
+      coordinates="{ 0, 1.001e3, 3.5001e3, 5.001e3, 2.041e5, 1e6 }"
+      values="{ 5e-7, 1e-7, 2e-7, 5e-7, 0, 0 }"
       interpolation="lower"/>
   </Functions>
-  
+
   <Outputs>
     <VTK
       name="vtkOutput"/>
