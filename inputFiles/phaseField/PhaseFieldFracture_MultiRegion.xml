@@ -1,0 +1,191 @@
+<?xml version="1.0" ?>
+
+<!-- Mode-I notched plate split in y into ElasticBottom | DamageRegion | ElasticTop.
+     Mechanics is solved on all three regions, phase-field damage only on the
+     middle strip, which contains the expected crack path. The coupled solver
+     must target the damage region only. -->
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ DamageRegion }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ ElasticBottom, DamageRegion, ElasticTop }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      logLevel="1"
+      targetRegions="{ DamageRegion }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 0.25, 0.75, 1 }"
+      zCoords="{ 0, 0.05 }"
+      nx="{ 40 }"
+      ny="{ 5, 20, 5 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cbBottom, cbMid, cbTop }"/>
+  </Mesh>
+
+  <Geometry>
+    <!-- pre-notch, must lie strictly inside DamageRegion -->
+    <Box
+      name="notch"
+      xMin="{ -0.01, 0.49, -0.01 }"
+      xMax="{ 0.51, 0.51, 0.06 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="20.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="2.0"
+      target="/Outputs/MultiRegion_VTKOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="ElasticBottom"
+      cellBlocks="{ cbBottom }"
+      materialList="{ elasticRock }"/>
+
+    <CellElementRegion
+      name="DamageRegion"
+      cellBlocks="{ cbMid }"
+      materialList="{ damageRock }"/>
+
+    <CellElementRegion
+      name="ElasticTop"
+      cellBlocks="{ cbTop }"
+      materialList="{ elasticRock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageSpectralElasticIsotropic
+      name="damageRock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"
+      lengthScale="0.05"
+      defaultCriticalFractureEnergy="2.7"
+      criticalStrainEnergy="0"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"/>
+
+    <ElasticIsotropic
+      name="elasticRock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="ytraction"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="1.0"
+      functionName="f_b"
+      setNames="{ ypos }"/>
+
+    <FieldSpecification
+      name="yfix"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="xfix"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="zfix"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="initialNotch"
+      fieldName="Damage"
+      objectPath="nodeManager"
+      scale="1"
+      setNames="{ notch }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="f_b"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 20 }"
+      values="{ 0, 1.5e-2 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="MultiRegion_VTKOutput"
+      plotFileRoot="plot"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

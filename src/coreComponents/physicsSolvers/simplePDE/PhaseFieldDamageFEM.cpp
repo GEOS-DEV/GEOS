@@ -291,7 +291,8 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
     forAll< parallelDevicePolicy<> >( nodeManager.size(),
                                       [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      if( ghostRank[k] < 0 )
+      // nodes outside the target regions carry no damage dof
+      if( ghostRank[k] < 0 && dofNumber[k] >= 0 )
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
         localSum += localRhs[localRow] * localRhs[localRow];
