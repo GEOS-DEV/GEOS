@@ -46,7 +46,7 @@ public:
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
-   * @param[in] anelasticStrainMagnitude The ArrayView holding the anelastic strain magnitude data for each element.
+   * @param[in] anelasticStrainRate The ArrayView holding the anelastic strain rate data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
@@ -60,14 +60,14 @@ public:
                                 arrayView1d< real64 const > const & bulkModulus,
                                 arrayView1d< real64 const > const & shearModulus,
                                 arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                                arrayView1d< real64 const > const & anelasticStrainIncrement,
-                                arrayView1d< real64 > const & newAnelasticStrainMagnitude,
-                                arrayView1d< real64 > const & oldAnelasticStrainMagnitude,
+                                arrayView2d< real64 const > const & anelasticStrainRate,
+                                arrayView2d< real64 > const & newAnelasticStrain,
+                                arrayView2d< real64 > const & oldAnelasticStrain,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                 bool const & disableInelasticity,
                                 const integer & enableAnelasticStrain ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, anelasticStrainIncrement, newAnelasticStrainMagnitude, oldAnelasticStrainMagnitude, newStress, oldStress,
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, anelasticStrainRate, newAnelasticStrain, oldAnelasticStrain, newStress, oldStress,
                              disableInelasticity, enableAnelasticStrain ),
     m_initialFriction( initialFriction ),
     m_residualFriction( residualFriction ),
@@ -448,9 +448,9 @@ public:
                                          m_bulkModulus,
                                          m_shearModulus,
                                          m_thermalExpansionCoefficient,
-                                         m_anelasticStrainIncrement,
-                                         m_newAnelasticStrainMagnitude,
-                                         m_oldAnelasticStrainMagnitude,
+                                         m_anelasticStrainRate,
+                                         m_newAnelasticStrain,
+                                         m_oldAnelasticStrain,
                                          m_newStress,
                                          m_oldStress,
                                          m_disableInelasticity,
@@ -478,9 +478,9 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
-                          m_anelasticStrainIncrement,
-                          m_newAnelasticStrainMagnitude,
-                          m_oldAnelasticStrainMagnitude,
+                          m_anelasticStrainRate,
+                          m_newAnelasticStrain,
+                          m_oldAnelasticStrain,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity,

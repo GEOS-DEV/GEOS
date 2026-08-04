@@ -40,10 +40,10 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame" );
 
-  registerWrapper( viewKeyStruct::defaultAnelasticStrainIncrementString(), &m_defaultAnelasticStrainIncrement ).
-    setApplyDefaultValue( 0.0 ).
+  registerWrapper( viewKeyStruct::defaultAnelasticStrainRateString(), &m_defaultAnelasticStrainRate ).
+    setApplyDefaultValue( R1Tensor{} ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default anelastic strain magnitude" );
+    setDescription( "Default anelastic strain rate components" );
 
   registerWrapper( viewKeyStruct::enableAnelasticStrainString(), &m_enableAnelasticStrain ).
     setApplyDefaultValue( 0 ).
@@ -53,6 +53,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   // register fields
 
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+  string const normalStrainLabels[3] = { "XX", "YY", "ZZ" };
 
   registerField< fields::solid::stress >( &m_newStress ).
     setDimLabels( 2, voightLabels );
@@ -64,9 +65,12 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 
   registerField< fields::solid::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
 
-  registerField< fields::solid::anelasticStrainIncrement >( &m_anelasticStrainIncrement );
-  registerField< fields::solid::newAnelasticStrainMagnitude >( &m_newAnelasticStrainMagnitude );
-  registerField< fields::solid::oldAnelasticStrainMagnitude >( &m_oldAnelasticStrainMagnitude );
+  registerField< fields::solid::anelasticStrainRate >( &m_anelasticStrainRate ).
+    setDimLabels( 1, normalStrainLabels );
+  registerField< fields::solid::newAnelasticStrain >( &m_newAnelasticStrain ).
+    setDimLabels( 1, normalStrainLabels );
+  registerField< fields::solid::oldAnelasticStrain >( &m_oldAnelasticStrain ).
+    setDimLabels( 1, normalStrainLabels );
 }
 
 
@@ -78,12 +82,13 @@ void SolidBase::postInputInitialization()
   getField< fields::solid::thermalExpansionCoefficient >().
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 
-  getField< fields::solid::anelasticStrainIncrement >().
-    setApplyDefaultValue( m_defaultAnelasticStrainIncrement );
+  getField< fields::solid::anelasticStrainRate >().
+    setApplyDefaultValue( 0.0 );
 
-  GEOS_ERROR_IF( m_enableAnelasticStrain == 0 && m_defaultAnelasticStrainIncrement > 0.0,
+  GEOS_ERROR_IF( m_enableAnelasticStrain == 0 &&
+                 LvArray::tensorOps::l2NormSquared< 3 >( m_defaultAnelasticStrainRate ) > 0.0,
                  getDataContext() << ": enableAnelasticStrain flag must be 1 if a nonzero"
-                                     " AnelasticStrainMagnitude is used" );
+                                     " AnelasticStrainRate is used" );
 }
 
 
@@ -93,8 +98,19 @@ void SolidBase::allocateConstitutiveData( Group & parent, localIndex const numPt
   m_density.resize( 0, numPts );
   m_newStress.resize( 0, numPts, 6 );
   m_oldStress.resize( 0, numPts, 6 );
+  m_anelasticStrainRate.resize( 0, 3 );
+  m_newAnelasticStrain.resize( 0, 3 );
+  m_oldAnelasticStrain.resize( 0, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numPts );
+
+  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  {
+    for( integer dim = 0; dim < 3; ++dim )
+    {
+      m_anelasticStrainRate[ei][dim] = m_defaultAnelasticStrainRate[dim];
+    }
+  }
 }
 
 
@@ -106,12 +122,12 @@ void SolidBase::saveConvergedState() const
   arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
   arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
-  arrayView1d< real64 const > newAnelasticStrainMagnitude = m_newAnelasticStrainMagnitude;
-  arrayView1d< real64 > oldAnelasticStrainMagnitude = m_oldAnelasticStrainMagnitude;
+  arrayView2d< real64 const > newAnelasticStrain = m_newAnelasticStrain;
+  arrayView2d< real64 > oldAnelasticStrain = m_oldAnelasticStrain;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    oldAnelasticStrainMagnitude[k] = newAnelasticStrainMagnitude[k];
+    LvArray::tensorOps::copy< 3 >( oldAnelasticStrain[k], newAnelasticStrain[k] );
 
     for( localIndex q = 0; q < numQ; ++q )
     {
