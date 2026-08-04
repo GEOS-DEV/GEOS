@@ -2400,6 +2400,118 @@ TEST( MimeticIP_MixedDuality, BdVLM )
   EXPECT_LT( computeHybridMixedDuality_error< 6 >( InnerProductType::BDVLM, 0.2 ), duality_tol );
 }
 
+//======================== TPFA Reduction Test =============================
+// On K-orthogonal grids: T = diag( 2 k_d ), M = T^{-1} on the unit cube.
+// BdVLM reduces iff gamma = 2/NF * trace (isotropic K only); Eq. (3.67) gamma =
+// trace/NF and SIMPLE do not reduce. This test fixes the adopted convention.
+
+template< int NF >
+static double computeTpfaReduction_error( int ipKind, bool mixedForm,
+                                          real64 kx = 1.0, real64 ky = 1.0, real64 kz = 1.0 )
+{
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > node;
+  FaceManager::NodeMapType faceTonode;
+  array1d< localIndex > elemToface;
+  real64 center[3], vol = 0;
+
+  makeUnitCube( 0.0, node, faceTonode, elemToface, center, vol );
+  computeDistortedVolumeAndCenter( node, center, vol );
+
+  constexpr real64 ltol = 1e-12;
+  real64 Kvec[3] = {kx, ky, kz};
+
+  // makeUnitCube face order: z=0, y=0, x=0, x=1, y=1, z=1
+  int const dirOfFace[6] = {2, 1, 0, 0, 1, 2};
+
+  stackArray1d< real64, 3 > cc( 3 );
+  for( int d = 0; d < 3; ++d )
+  {
+    cc[d] = center[d];
+  }
+
+  array1d< real64 > mult( NF );
+  mult.setValues< parallelHostPolicy >( 1.0 );
+
+  stackArray2d< real64, NF * NF > A( NF, NF );
+  A.template setValues< parallelHostPolicy >( 0.0 );
+
+  bool refIsM = false;
+  if( mixedForm )
+  {
+    computeM_dispatch< NF >( ipKind, node, faceTonode, elemToface, cc.toSliceConst(), vol, Kvec, ltol, A.toSlice() );
+    refIsM = true;   // M_tpfa(f) = 1 / (2 k_dir)
+  }
+  else
+  {
+    if( ipKind == InnerProductType::TPFA )
+    {
+      TPFAInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
+                                       elemToface.toSliceConst(), cc, vol, Kvec, ltol, A.toSlice() );
+    }
+    else if( ipKind == InnerProductType::QUASI_TPFA )
+    {
+      QuasiTPFAInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
+                                            elemToface.toSliceConst(), cc, vol, Kvec, ltol, A.toSlice() );
+    }
+    else if( ipKind == InnerProductType::SIMPLE )
+    {
+      SimpleInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
+                                         elemToface.toSliceConst(), cc, vol, Kvec, ltol, A.toSlice() );
+    }
+    else if( ipKind == InnerProductType::BDVLM )
+    {
+      BdVLMInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
+                                        elemToface.toSliceConst(), cc, vol, Kvec, ltol, A.toSlice() );
+    }
+  }
+
+  double err = 0.0;
+  for( int i = 0; i < NF; ++i )
+  {
+    // T_tpfa(f) = k_dir A / d = 2 k_dir per face
+    real64 const refDiag = refIsM ? 1.0 / ( 2.0 * Kvec[ dirOfFace[i] ] ) : 2.0 * Kvec[ dirOfFace[i] ];
+    for( int j = 0; j < NF; ++j )
+    {
+      err = std::max( err, std::abs( A( i, j ) - ( i == j ? refDiag : 0.0 ) ) );
+    }
+  }
+  return err;
+}
+
+TEST( MimeticIP_TpfaReduction, Hybrid )
+{
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::TPFA, false ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::QUASI_TPFA, false ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::BDVLM, false ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::SIMPLE, false ), mixed_consistency_tol );
+}
+
+TEST( MimeticIP_TpfaReduction, Mixed )
+{
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::TPFA, true ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::QUASI_TPFA, true ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::BDVLM, true ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::SIMPLE, true ), mixed_consistency_tol );
+}
+
+// with anisotropic (diagonal) K the grid is still K-orthogonal: TPFA and quasi-TPFA
+// reduce per direction, but BdVLM's scalar trace-based stabilization cannot
+TEST( MimeticIP_TpfaReduction, Hybrid_AnisotropicK )
+{
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::TPFA, false, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::QUASI_TPFA, false, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::BDVLM, false, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::SIMPLE, false, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+}
+
+TEST( MimeticIP_TpfaReduction, Mixed_AnisotropicK )
+{
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::TPFA, true, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_LT( computeTpfaReduction_error< 6 >( InnerProductType::QUASI_TPFA, true, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::BDVLM, true, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+  EXPECT_GT( computeTpfaReduction_error< 6 >( InnerProductType::SIMPLE, true, 4.0, 1.0, 0.5 ), mixed_consistency_tol );
+}
+
 //======================== Hydrostatic Equilibrium Consistency Test =============================
 static inline void makeDistortedPlanar_gravity( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
                                                 array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeU,
