@@ -11,25 +11,36 @@ Stop dumping linear systems from ATS decks (`writeLinearSystem` no longer set). 
 PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
 Fluid reset after convergence failure
 
+PR #3972 (2026-08-DD) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4108-17194-fec5349.tar.gz>
+=====================
+Add MGR tests to ATS
+
 PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
-Well model refactor .  Integrated test update due to schema changes 
+=====================
+Well model refactor .  Integrated test update due to schema changes
 
 PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
+=====================
 Added statistics `Group` objects for each statistics `Task` instance
 
 PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
+=====================
 Move relperm driver to use new constitutive driver framework
 
 PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
+=====================
 Implement compositional enthalpy model
 
 PR #4074 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4074-16937-bf66240.tar.gz>
+=====================
 Change triaxial driver to use restart for checks
 
 PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
+=====================
 Add Coulomb friction/cohesion input from vtk mesh
 
 PR #4068 (2026-06-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
+=====================
 Add MPI runs for smoke tests with surfaceGenerator
 
 PR #4062 (2026-05-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4062-16784-6d8782e.tar.gz>
