@@ -1403,10 +1403,10 @@ static inline void makeDistortedPlanar( array2d< real64, nodes::REFERENCE_POSITI
 
 // shrink the shared face toward its center: two funnel-shaped cells, all faces planar
 static inline void makeDistortedPlanarFunnel( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
-                                               array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
-                                               FaceManager::NodeMapType const & faceL,
-                                               FaceManager::NodeMapType const & faceR,
-                                               real64 eps )
+                                              array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
+                                              FaceManager::NodeMapType const & faceL,
+                                              FaceManager::NodeMapType const & faceR,
+                                              real64 eps )
 {
   localIndex const fL = 3, fR = 2;
   for( int a = 0; a < 4; ++a )
