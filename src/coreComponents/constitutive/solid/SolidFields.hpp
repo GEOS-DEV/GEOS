@@ -436,29 +436,29 @@ DECLARE_FIELD( dInternalEnergy_dTemperature,
                WRITE_AND_READ,
                "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
 
-DECLARE_FIELD( anelasticStrainIncrement,
-               "anelasticStrainIncrement",
-               array1d< real64 >,
+DECLARE_FIELD( anelasticStrainRate,
+               "anelasticStrainRate",
+               array2d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Anelastic strain increment (i.e. chemistry, electrochemistry, etc.)" );
+               "Anelastic strain rate (i.e. chemistry, electrochemistry, etc.)" );
 
-DECLARE_FIELD( newAnelasticStrainMagnitude,
-               "newAnelasticStrainMagnitude",
-               array1d< real64 >,
+DECLARE_FIELD( newAnelasticStrain,
+               "newAnelasticStrain",
+               array2d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "New anelastic strain magnitude" );
+               "New anelastic strain components" );
 
-DECLARE_FIELD( oldAnelasticStrainMagnitude,
-               "oldAnelasticStrainMagnitude",
-               array1d< real64 >,
+DECLARE_FIELD( oldAnelasticStrain,
+               "oldAnelasticStrain",
+               array2d< real64 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Old anelastic strain magnitude" );
+               "Old anelastic strain components" );
 
 }
 

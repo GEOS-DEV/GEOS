@@ -129,7 +129,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
-  m_constitutiveUpdate.stressModificationByAnelasticStain( k, q, stressModifierAnelasticStrain );
+  m_constitutiveUpdate.stressModificationByAnelasticStain( k, q, m_dt, stressModifierAnelasticStrain );
 
   stressModifier( stress, stressModifierAnelasticStrain );
   // #pragma unroll

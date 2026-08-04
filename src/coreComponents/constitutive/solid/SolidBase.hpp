@@ -55,24 +55,24 @@ protected:
    * @param[in] oldStress The old stress data from the constitutive model class.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] disableInelasticity Flag to disable inelastic response
-   * @param[in] anelasticStrainMagnitude The ArrayView holding the anelastic strain magnitude data for each element.
+   * @param[in] anelasticStrainRate The ArrayView holding the anelastic strain rate data for each element.
    * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     const bool & disableInelasticity,
-                    arrayView1d< real64 const > const & anelasticStrainIncrement,
-                    arrayView1d< real64 > const & newAnelasticStrainMagnitude,
-                    arrayView1d< real64 > const & oldAnelasticStrainMagnitude,
+                    arrayView2d< real64 const > const & anelasticStrainRate,
+                    arrayView2d< real64 > const & newAnelasticStrain,
+                    arrayView2d< real64 > const & oldAnelasticStrain,
                     const integer enableAnelasticStrain ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_disableInelasticity ( disableInelasticity ),
-    m_anelasticStrainIncrement( anelasticStrainIncrement ),
-    m_newAnelasticStrainMagnitude( newAnelasticStrainMagnitude ),
-    m_oldAnelasticStrainMagnitude( oldAnelasticStrainMagnitude ),
+    m_anelasticStrainRate( anelasticStrainRate ),
+    m_newAnelasticStrain( newAnelasticStrain ),
+    m_oldAnelasticStrain( oldAnelasticStrain ),
     m_enableAnelasticStrain( enableAnelasticStrain )
   {}
 
@@ -111,11 +111,14 @@ public:
   /// Flag to disable inelasticity
   const bool m_disableInelasticity;
 
-  /// The anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)
-  arrayView1d< real64 const > const m_anelasticStrainIncrement;
+  /// The anelastic strain rate (i.e. chemistry, electrochemistry, etc.)
+  arrayView2d< real64 const > const m_anelasticStrainRate;
 
-  arrayView1d< real64 > const m_newAnelasticStrainMagnitude;
-  arrayView1d< real64 > const m_oldAnelasticStrainMagnitude;
+  /// The current accumulated anelastic strain components.
+  arrayView2d< real64 > const m_newAnelasticStrain;
+
+  /// The previous accumulated anelastic strain components.
+  arrayView2d< real64 > const m_oldAnelasticStrain;
 
   /// Flag to enable stress modification due to anelastic strain
   const integer m_enableAnelasticStrain;
@@ -146,14 +149,14 @@ public:
   }
 
   /**
-   * @brief Get anelasticStrainIncrement
+   * @brief Get anelasticStrainRate
    * @param[in] k Element index.
-   * @return the anelasticStrainIncrement of element k
+   * @return the anelasticStrainRate of element k
    */
   GEOS_HOST_DEVICE
-  real64 getAnelasticStrainIncrement( localIndex const k ) const
+  arraySlice1d< real64 const > getAnelasticStrainRate( localIndex const k ) const
   {
-    return m_anelasticStrainIncrement[k];
+    return m_anelasticStrainRate[k];
   }
 
   /**
@@ -404,15 +407,18 @@ public:
   /**
    * @brief Calculate the stress modifier due to anelastic strain
    *
+   * @param[in] timeIncrement time increment used to integrate the anelastic strain rate
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOS_HOST_DEVICE
   virtual void stressModificationByAnelasticStain( localIndex const k,
                                                    localIndex const q,
+                                                   real64 const & timeIncrement,
                                                    real64 ( & stressModifier )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
     GEOS_UNUSED_VAR( stressModifier );
     GEOS_ERROR( "stressModificationByAnelasticStain() not implemented for this model" );
   }
@@ -617,8 +623,8 @@ public:
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }
     // Default drained linear thermal expansion coefficient key
     static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
-    // Default anelastic strain magnitude key
-    static constexpr char const * defaultAnelasticStrainIncrementString() { return "defaultAnelasticStrainIncrement"; }
+    // Default anelastic strain rate key
+    static constexpr char const * defaultAnelasticStrainRateString() { return "defaultAnelasticStrainRate"; }
     // Enable stress modification due to anelastic strain key
     static constexpr char const * enableAnelasticStrainString() { return "enableAnelasticStrain"; }
   };
@@ -749,14 +755,17 @@ protected:
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
 
-  /// The anelastic strain rate magnitude (i.e. chemistry, electrochemistry, etc.)
-  array1d< real64 > m_anelasticStrainIncrement;
+  /// The anelastic strain rate (i.e. chemistry, electrochemistry, etc.)
+  array2d< real64 > m_anelasticStrainRate;
 
-  array1d< real64 > m_newAnelasticStrainMagnitude;
-  array1d< real64 > m_oldAnelasticStrainMagnitude;
+  /// The current accumulated anelastic strain components.
+  array2d< real64 > m_newAnelasticStrain;
 
-  /// The default value of the anelastic strain rate magnitude
-  real64 m_defaultAnelasticStrainIncrement;
+  /// The previous accumulated anelastic strain components.
+  array2d< real64 > m_oldAnelasticStrain;
+
+  /// The default value of the anelastic strain rate
+  R1Tensor m_defaultAnelasticStrainRate = { 0.0, 0.0, 0.0 };
 
   /// Flag to enable stress modification due to anelastic strain
   integer m_enableAnelasticStrain;
