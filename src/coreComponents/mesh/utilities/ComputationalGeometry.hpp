@@ -271,6 +271,24 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   {
     LvArray::tensorOps::normalize< 3 >( normal );
     area *= 0.5;
+
+    // replace the vertex average by the area centroid (exact for planar polygons)
+    real64 areaCentroid[ 3 ] = { 0.0 };
+    for( localIndex a=0; a<numberOfPoints; )
+    {
+      LvArray::tensorOps::copy< 3 >( current, points[ pointsIndices[ a++ ]] );
+      LvArray::tensorOps::scaledAdd< 3 >( current, origin, -1. );
+      LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a % numberOfPoints ] ] );
+      LvArray::tensorOps::scaledAdd< 3 >( next, origin, -1. );
+
+      LvArray::tensorOps::crossProduct( crossProduct, current, next );
+      real64 const signedTriArea = 0.5 * LvArray::tensorOps::AiBi< 3 >( crossProduct, normal );
+
+      LvArray::tensorOps::scaledAdd< 3 >( areaCentroid, current, signedTriArea / 3.0 );
+      LvArray::tensorOps::scaledAdd< 3 >( areaCentroid, next, signedTriArea / 3.0 );
+    }
+    LvArray::tensorOps::copy< 3 >( center, origin );
+    LvArray::tensorOps::scaledAdd< 3 >( center, areaCentroid, 1.0 / area );
   }
   else if( area < -areaTolerance )
   {

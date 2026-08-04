@@ -1313,7 +1313,7 @@ TEST( testMimeticInnerProducts, BdVLMM_cube )
 
 //======================== Linear Pressure Recovery Test =============================
 // Three cases: without distortion (unit cube cell), with distortion: (1) planar (2) nonplanar
-enum class DistortionMode { None, Planar, NonPlanar };
+enum class DistortionMode { None, Planar, PlanarFunnel, NonPlanar };
 
 static inline void makeUnitCube( double x_start,
                                  array2d< real64, nodes::REFERENCE_POSITION_PERM > & node,
@@ -1401,6 +1401,25 @@ static inline void makeDistortedPlanar( array2d< real64, nodes::REFERENCE_POSITI
   nodeL( Lvert2, 0 ) += eps;  nodeR( Rvert2, 0 ) += eps;
 }
 
+// shrink the shared face toward its center: two funnel-shaped cells, all faces planar
+static inline void makeDistortedPlanarFunnel( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
+                                               array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
+                                               FaceManager::NodeMapType const & faceL,
+                                               FaceManager::NodeMapType const & faceR,
+                                               real64 eps )
+{
+  localIndex const fL = 3, fR = 2;
+  for( int a = 0; a < 4; ++a )
+  {
+    localIndex const vL = faceL( fL, a );
+    localIndex const vR = faceR( fR, a );
+    nodeL( vL, 1 ) += eps * ( 0.5 - nodeL( vL, 1 ) );
+    nodeL( vL, 2 ) += eps * ( 0.5 - nodeL( vL, 2 ) );
+    nodeR( vR, 1 ) += eps * ( 0.5 - nodeR( vR, 1 ) );
+    nodeR( vR, 2 ) += eps * ( 0.5 - nodeR( vR, 2 ) );
+  }
+}
+
 // create nonplanar case for distortion test
 static inline void makeDistortedNonplanar( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
                                            array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
@@ -1462,19 +1481,6 @@ static inline void computeDistortedVolumeAndCenter( array2d< real64, nodes::REFE
   center[0] /= 8.0; center[1] /= 8.0; center[2] /= 8.0;
 }
 
-static inline bool isBoundaryFace( FaceManager::NodeMapType const & faceTonode,
-                                   array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                                   localIndex f )
-{
-  real64 fc[3], fn[3];
-  centroid_3DPolygon( faceTonode[f], node.toViewConst(), fc, fn );
-  constexpr real64 tol = 1e-12;
-
-  return (std::abs( fc[0] - 0.0 ) < tol) || (std::abs( fc[0] - 2.0 ) < tol) ||
-         (std::abs( fc[1] - 0.0 ) < tol) || (std::abs( fc[1] - 1.0 ) < tol) ||
-         (std::abs( fc[2] - 0.0 ) < tol) || (std::abs( fc[2] - 1.0 ) < tol);
-}
-
 // calculate pressures on cell boundary (for Dirichlet boundary condition)
 static inline real64 computeBoundaryPressure( FaceManager::NodeMapType const & faceTonode,
                                               array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
@@ -1507,6 +1513,10 @@ static double computeLinearPressure_error( int ipKind,
   {
     makeDistortedPlanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
   }
+  else if( mode == DistortionMode::PlanarFunnel )
+  {
+    makeDistortedPlanarFunnel( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
   else if( mode == DistortionMode::NonPlanar )
   {
     makeDistortedNonplanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
@@ -1520,8 +1530,9 @@ static double computeLinearPressure_error( int ipKind,
   localIndex const fR_int = 2;
 
   real64 alpha_lin = 0.3; // pressure = x * alpha_lin * y
-  auto isDirL = [&]( localIndex f ){ return isBoundaryFace( faceTonode_L, node_L, f ); };
-  auto isDirR = [&]( localIndex f ){ return isBoundaryFace( faceTonode_R, node_R, f ); };
+  // in this two-cell mesh, every face except the shared one is a Dirichlet boundary face
+  auto isDirL = [&]( localIndex f ){ return f != fL_int; };
+  auto isDirR = [&]( localIndex f ){ return f != fR_int; };
 
   // compute the transmissibility matrix T
   constexpr real64 ltol = 1e-12;
@@ -1726,6 +1737,23 @@ TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
   }
 }
 
+// =================== case 1b: with distortion (funnel) ===========================
+TEST( MimeticIP_Linear, Distortion_PlanarFunnel_LinearPressure )
+{
+  for( double eps : { 0.2, 0.4 } )
+  {
+    EXPECT_LT( computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::PlanarFunnel, eps ),
+               consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::PlanarFunnel, eps ),
+               consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::PlanarFunnel, eps ),
+               consistency_tol ) << "eps = " << eps;
+
+    EXPECT_GT( computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::PlanarFunnel, eps ),
+               consistency_tol ) << "eps = " << eps;
+  }
+}
+
 // =================== case 2: with distortion (nonplanar) ===========================
 TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPressure )
 {
@@ -1848,6 +1876,10 @@ static double computeLinearPressureMixed_error( int ipKind,
   if( mode == DistortionMode::Planar )
   {
     makeDistortedPlanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
+  else if( mode == DistortionMode::PlanarFunnel )
+  {
+    makeDistortedPlanarFunnel( node_L, node_R, faceTonode_L, faceTonode_R, eps );
   }
   else if( mode == DistortionMode::NonPlanar )
   {
@@ -1998,6 +2030,23 @@ TEST( MimeticIP_MixedLinear, Distortion_Planar_LinearPressure )
   }
 }
 
+// =================== mixed form: with distortion (funnel) ===========================
+TEST( MimeticIP_MixedLinear, Distortion_PlanarFunnel_LinearPressure )
+{
+  for( double eps : { 0.2, 0.4 } )
+  {
+    EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::SIMPLE, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::BDVLM, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+
+    EXPECT_GT( computeLinearPressureMixed_error< 6 >( InnerProductType::TPFA, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+  }
+}
+
 // =================== mixed form, case 2: with distortion (nonplanar) ===========================
 TEST( MimeticIP_MixedLinear, Distortion_NonPlanar_LinearPressure )
 {
@@ -2049,6 +2098,10 @@ static double computeMixedIPConsistency_error( int ipKind,
   if( mode == DistortionMode::Planar )
   {
     makeDistortedPlanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
+  else if( mode == DistortionMode::PlanarFunnel )
+  {
+    makeDistortedPlanarFunnel( node_L, node_R, faceTonode_L, faceTonode_R, eps );
   }
   else if( mode == DistortionMode::NonPlanar )
   {
@@ -2132,6 +2185,114 @@ TEST( MimeticIP_MixedConsistency, Distortion_Planar )
     EXPECT_GT( computeMixedIPConsistency_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
   }
+}
+
+TEST( MimeticIP_MixedConsistency, Distortion_PlanarFunnel )
+{
+  for( double eps : { 0.2, 0.4 } )
+  {
+    EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::SIMPLE, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::BDVLM, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+
+    EXPECT_GT( computeMixedIPConsistency_error< 6 >( InnerProductType::TPFA, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+  }
+}
+
+//======================== Geometric Identity Test =============================
+// C^T N = vol * I, with N_f = |f| n_f and C_f = x_f - x_c (any reference point x_c);
+// holds iff faces are planar and x_f is the area centroid. This identity is what the
+// consistency term of every mimetic inner product relies on.
+
+template< int NF >
+static double computeGeometricIdentity_error( DistortionMode mode = DistortionMode::None,
+                                              real64 eps = 0.0 )
+{
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > node_L;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > node_R;
+  FaceManager::NodeMapType faceTonode_L;
+  FaceManager::NodeMapType faceTonode_R;
+  array1d< localIndex > elemToface_L;
+  array1d< localIndex > elemToface_R;
+  real64 center_L[3], center_R[3], vol_L = 0, vol_R = 0;
+
+  makeUnitCube( 0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L );
+  makeUnitCube( 1.0, node_R, faceTonode_R, elemToface_R, center_R, vol_R );
+
+  if( mode == DistortionMode::Planar )
+  {
+    makeDistortedPlanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
+  else if( mode == DistortionMode::PlanarFunnel )
+  {
+    makeDistortedPlanarFunnel( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
+  else if( mode == DistortionMode::NonPlanar )
+  {
+    makeDistortedNonplanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
+  }
+
+  computeDistortedVolumeAndCenter( node_L, center_L, vol_L );
+
+  real64 E[3][3] = {{ 0 }};
+  for( int d = 0; d < 3; ++d )
+  {
+    E[d][d] = -vol_L;
+  }
+
+  for( int f = 0; f < NF; ++f )
+  {
+    real64 fc[3], fn[3];
+    real64 const area = centroid_3DPolygon( faceTonode_L[f], node_L.toViewConst(), fc, fn );
+    real64 c2f[3] = { fc[0] - center_L[0], fc[1] - center_L[1], fc[2] - center_L[2] };
+    if( LvArray::tensorOps::AiBi< 3 >( c2f, fn ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( fn, -1.0 );
+    }
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        E[i][j] += c2f[i] * area * fn[j];
+      }
+    }
+  }
+
+  double err = 0.0;
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      err = std::max( err, std::abs( E[i][j] ) / vol_L );
+    }
+  }
+  return err;
+}
+
+TEST( MimeticIP_GeometricIdentity, PlanarFaceCells )
+{
+  EXPECT_LT( computeGeometricIdentity_error< 6 >(), mixed_consistency_tol );
+  for( double eps : { 0.2, 0.9 } )
+  {
+    EXPECT_LT( computeGeometricIdentity_error< 6 >( DistortionMode::Planar, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+  }
+  for( double eps : { 0.2, 0.4 } )
+  {
+    EXPECT_LT( computeGeometricIdentity_error< 6 >( DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+  }
+}
+
+TEST( MimeticIP_GeometricIdentity, NonPlanarCells )
+{
+  // non-planar faces break the identity
+  EXPECT_GT( computeGeometricIdentity_error< 6 >( DistortionMode::NonPlanar, 0.2 ),
+             mixed_consistency_tol );
 }
 
 //======================== Hybrid/Mixed Duality Test =============================
