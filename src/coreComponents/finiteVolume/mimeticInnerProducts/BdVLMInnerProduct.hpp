@@ -253,7 +253,6 @@ BdVLMInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   real64 work_numFacesByDim[ NF ][ 3 ] = {{ 0 }};
   real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
   real64 work_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  // real64 tmp_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
 
   // 0) assemble full coefficient tensor from principal axis/components
   MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
@@ -329,8 +328,8 @@ BdVLMInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
                                                    work_dimByNumFaces    // tmp
                                                    );
 
-  // 8) M = M0 + gamma * P_N
-  real64 const gamma = 1.0 / static_cast< real64 >( NF );
+  // 8) M = M0 + gamma * P_N, gamma = 2/NF * trace(M0) (mirrors stabCoef in compute())
+  real64 const gamma = 2.0 / NF * LvArray::tensorOps::trace< NF >( M );
   LvArray::tensorOps::scaledAdd< NF, NF >( M, work_numFacesByNumFaces, -gamma );
 
   // convert to flux-based inner product: M_flux = A^{-1} M_vel A^{-1}

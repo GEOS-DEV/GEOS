@@ -184,15 +184,15 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
   LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( workNK, K, N );
   LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( W, N, workNK );
 
-  // 5) build Q from C (orthonormal basis of consistency space)
+  // 5) build Q from N so the stabilization annihilates range(N) (=> M N K = C)
   real64 q0[ NF ], q1[ NF ], q2[ NF ];
   real64 Qmat[ NF ][ 3 ];
 
   for( localIndex i = 0; i < NF; ++i )
   {
-    q0[i] = C[i][0];
-    q1[i] = C[i][1];
-    q2[i] = C[i][2];
+    q0[i] = N[i][0];
+    q1[i] = N[i][1];
+    q2[i] = N[i][2];
   }
 
   MimeticInnerProductHelpers::orthonormalize< NF >( q0, q1, q2, Qmat );
