@@ -184,8 +184,7 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
   LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( workNK, K, N );
   LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( W, N, workNK );
 
-  // 5) build Q from N (orthonormal basis of the exact-flux consistency space):
-  //    the stabilization must annihilate range(N) so that M N K = C holds exactly
+  // 5) build Q from N so the stabilization annihilates range(N) (=> M N K = C)
   real64 q0[ NF ], q1[ NF ], q2[ NF ];
   real64 Qmat[ NF ][ 3 ];
 

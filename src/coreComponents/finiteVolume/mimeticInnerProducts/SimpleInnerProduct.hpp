@@ -23,9 +23,6 @@
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include <iostream>
-#include <iomanip>
-
 
 namespace geos
 {
