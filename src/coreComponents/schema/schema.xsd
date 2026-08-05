@@ -775,6 +775,10 @@
 					<xsd:selector xpath="ConstantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveConstantSurfaceAreaUniqueName">
+					<xsd:selector xpath="ConstantSurfaceArea" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCoulombUniqueName">
 					<xsd:selector xpath="Coulomb" />
 					<xsd:field xpath="@name" />
@@ -971,6 +975,14 @@
 					<xsd:selector xpath="PorousViscoModifiedCamClayCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePowerLawPermeabilityUniqueName">
+					<xsd:selector xpath="PowerLawPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePowerLawSurfaceAreaUniqueName">
+					<xsd:selector xpath="PowerLawSurfaceArea" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePressurePermeabilityUniqueName">
 					<xsd:selector xpath="PressurePermeability" />
 					<xsd:field xpath="@name" />
@@ -1015,12 +1027,32 @@
 					<xsd:selector xpath="ReactiveSolidCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaUniqueName">
+					<xsd:selector xpath="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceArea" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveReactiveSolidConstantPermeabilityUniqueName">
 					<xsd:selector xpath="ReactiveSolidConstantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveReactiveSolidConstantPermeabilityPowerLawSurfaceAreaUniqueName">
+					<xsd:selector xpath="ReactiveSolidConstantPermeabilityPowerLawSurfaceArea" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveReactiveSolidPowerLawPermeabilityUniqueName">
+					<xsd:selector xpath="ReactiveSolidPowerLawPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaUniqueName">
+					<xsd:selector xpath="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceArea" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveReactiveSolidPressurePermeabilityUniqueName">
 					<xsd:selector xpath="ReactiveSolidPressurePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveReactiveSolidPressurePermeabilityPowerLawSurfaceAreaUniqueName">
+					<xsd:selector xpath="ReactiveSolidPressurePermeabilityPowerLawSurfaceArea" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveReactiveThermalCompressibleSinglePhaseFluidUniqueName">
@@ -5345,10 +5377,6 @@ SourceFluxes application if isThermal is enabled :
 - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
 For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
-		<!--isUpdateReactivePorosity => Flag indicating whether use the reactive porosity or not-->
-		<xsd:attribute name="isUpdateReactivePorosity" type="integer" default="0" />
-		<!--isUpdateSurfaceArea => Flag indicating whether to update the surface area or not-->
-		<xsd:attribute name="isUpdateSurfaceArea" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
@@ -7042,6 +7070,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ConstantSurfaceArea" type="ConstantSurfaceAreaType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
@@ -7091,6 +7120,8 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PowerLawPermeability" type="PowerLawPermeabilityType" />
+			<xsd:element name="PowerLawSurfaceArea" type="PowerLawSurfaceAreaType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -7102,8 +7133,13 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ReactiveCompressibleSinglePhaseFluid" type="ReactiveCompressibleSinglePhaseFluidType" />
 			<xsd:element name="ReactivePorosity" type="ReactivePorosityType" />
 			<xsd:element name="ReactiveSolidCarmanKozenyPermeability" type="ReactiveSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceArea" type="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidConstantPermeability" type="ReactiveSolidConstantPermeabilityType" />
+			<xsd:element name="ReactiveSolidConstantPermeabilityPowerLawSurfaceArea" type="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeability" type="ReactiveSolidPowerLawPermeabilityType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceArea" type="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidPressurePermeability" type="ReactiveSolidPressurePermeabilityType" />
+			<xsd:element name="ReactiveSolidPressurePermeabilityPowerLawSurfaceArea" type="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveThermalCompressibleSinglePhaseFluid" type="ReactiveThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
@@ -7717,6 +7753,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7729,6 +7767,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7741,6 +7781,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7753,6 +7795,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7765,6 +7809,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7777,6 +7823,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7789,6 +7837,8 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7805,6 +7855,12 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--permeabilityComponents => xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="permeabilityComponents" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstantSurfaceAreaType">
+		<!--defaultInitialSurfaceArea => Default initial reactive surface area of each mineral. Its size defines the number of kinetic reactions handled by this model.-->
+		<xsd:attribute name="defaultInitialSurfaceArea" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8341,6 +8397,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8353,6 +8411,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8365,6 +8425,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8377,6 +8439,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8389,6 +8453,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8401,6 +8467,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8413,6 +8481,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8425,6 +8495,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8437,6 +8509,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8449,6 +8523,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8461,6 +8537,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8473,6 +8551,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8485,6 +8565,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8497,6 +8579,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8509,6 +8593,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8521,6 +8607,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8533,6 +8621,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8545,6 +8635,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8557,6 +8649,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8569,6 +8663,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8581,6 +8677,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8593,6 +8691,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8605,6 +8705,32 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PowerLawPermeabilityType">
+		<!--criticalPorosity => Critical porosity below which the pore space no longer percolates.-->
+		<xsd:attribute name="criticalPorosity" type="real64" default="0" />
+		<!--exponent => Exponent of the power law.-->
+		<xsd:attribute name="exponent" type="real64" use="required" />
+		<!--minPermeability => Residual permeability reached when the pore space stops percolating.-->
+		<xsd:attribute name="minPermeability" type="real64" default="0" />
+		<!--referencePermeabilityComponents => Reference xx, yy and zz components of a diagonal permeability tensor, reached at the reference porosity.-->
+		<xsd:attribute name="referencePermeabilityComponents" type="R1Tensor" use="required" />
+		<!--referencePorosity => Reference porosity at which the permeability is the reference permeability.-->
+		<xsd:attribute name="referencePorosity" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PowerLawSurfaceAreaType">
+		<!--defaultInitialSurfaceArea => Default initial reactive surface area of each mineral. Its size defines the number of kinetic reactions handled by this model.-->
+		<xsd:attribute name="defaultInitialSurfaceArea" type="real64_array" use="required" />
+		<!--mineralExponent => Exponent applied to the ratio of the current to the initial mineral volume fraction-->
+		<xsd:attribute name="mineralExponent" type="real64" use="required" />
+		<!--porosityExponent => Exponent applied to the ratio of the current to the initial porosity-->
+		<xsd:attribute name="porosityExponent" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8690,6 +8816,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8765,6 +8893,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="defaultInitialVolumeFractions" type="real64_array" use="required" />
 		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--fixedPorosity => Flag to update volume fractions without changing porosity (0 = update porosity, 1 = fixed porosity)-->
+		<xsd:attribute name="fixedPorosity" type="integer" default="0" />
 		<!--mineralDensities => Mineral densities-->
 		<xsd:attribute name="mineralDensities" type="real64_array" use="required" />
 		<!--molarWeights => Mineral molar weights-->
@@ -8781,6 +8911,22 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8793,6 +8939,50 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8805,6 +8995,22 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaModelName => Name of the reactive surface area model.-->
+		<xsd:attribute name="surfaceAreaModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

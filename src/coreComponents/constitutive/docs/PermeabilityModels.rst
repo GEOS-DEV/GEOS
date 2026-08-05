@@ -14,6 +14,8 @@ Permeability models
 
    ParallelPlatesPermeability
 
+   PowerLawPermeability
+
    SlipDependentPermeability
 
    WillisRichardsPermeability

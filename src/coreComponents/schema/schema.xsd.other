@@ -1673,6 +1673,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ConstantSurfaceArea" type="ConstantSurfaceAreaType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
@@ -1722,6 +1723,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PowerLawPermeability" type="PowerLawPermeabilityType" />
+			<xsd:element name="PowerLawSurfaceArea" type="PowerLawSurfaceAreaType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -1733,8 +1736,13 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="ReactiveCompressibleSinglePhaseFluid" type="ReactiveCompressibleSinglePhaseFluidType" />
 			<xsd:element name="ReactivePorosity" type="ReactivePorosityType" />
 			<xsd:element name="ReactiveSolidCarmanKozenyPermeability" type="ReactiveSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceArea" type="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidConstantPermeability" type="ReactiveSolidConstantPermeabilityType" />
+			<xsd:element name="ReactiveSolidConstantPermeabilityPowerLawSurfaceArea" type="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeability" type="ReactiveSolidPowerLawPermeabilityType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceArea" type="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidPressurePermeability" type="ReactiveSolidPressurePermeabilityType" />
+			<xsd:element name="ReactiveSolidPressurePermeabilityPowerLawSurfaceArea" type="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType" />
 			<xsd:element name="ReactiveThermalCompressibleSinglePhaseFluid" type="ReactiveThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
@@ -2471,6 +2479,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="ConstantSurfaceAreaType">
+		<!--initialSurfaceArea => Initial reactive surface area of each mineral-->
+		<xsd:attribute name="initialSurfaceArea" type="real64_array3d" />
+		<!--surfaceArea => Reactive surface area of each mineral-->
+		<xsd:attribute name="surfaceArea" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--cohesion => Cohesion for each element-->
 		<xsd:attribute name="cohesion" type="real64_array" />
@@ -3019,6 +3033,22 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PowerLawPermeabilityType">
+		<!--dPerm_dPorosity => (no description available)-->
+		<xsd:attribute name="dPerm_dPorosity" type="real64_array3d" />
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
+		<!--referencePermeability => Reference permeability field-->
+		<xsd:attribute name="referencePermeability" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PowerLawSurfaceAreaType">
+		<!--initialSurfaceArea => Initial reactive surface area of each mineral-->
+		<xsd:attribute name="initialSurfaceArea" type="real64_array3d" />
+		<!--surfaceArea => Reactive surface area of each mineral-->
+		<xsd:attribute name="surfaceArea" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="PressurePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -3207,8 +3237,13 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="volumeFractions_n" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
 	<xsd:complexType name="ReactiveSolidConstantPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType" />
 	<xsd:complexType name="ReactiveSolidPressurePermeabilityType" />
+	<xsd:complexType name="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType" />
 	<xsd:complexType name="ReactiveThermalCompressibleSinglePhaseFluidType">
 		<!--aggregateSpeciesRates => aggregateSpeciesRates-->
 		<xsd:attribute name="aggregateSpeciesRates" type="real64_array3d" />
