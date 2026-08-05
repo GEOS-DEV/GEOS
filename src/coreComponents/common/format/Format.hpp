@@ -18,6 +18,7 @@
 
 #include <type_traits>
 #include <optional>
+#include <utility>
 
 #if __cplusplus < 202002L
 #define GEOS_USE_FMT
@@ -140,16 +141,22 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
 /**
  * Evaluates at compile time if a fmt::formatter exists for a given type
  */
-#if __cplusplus < 202002L
 template< class T >
-static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
-#else
-template< typename T >
-concept has_formatter_v = requires ( T& v, std::format_context ctx )
-{
-  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
-};
-#endif
+using remove_cvref_t = std::remove_cv_t< std::remove_reference_t< T > >;
+
+template< class T, class = void >
+struct HasFormatter : std::false_type
+{};
+
+template< class T >
+struct HasFormatter< T,
+                     std::void_t< decltype( GEOS_FMT_NS::format( "{}",
+                                                                 std::declval< remove_cvref_t< T > const & >() ) ) > >
+  : std::true_type
+{};
+
+template< class T >
+inline constexpr bool has_formatter_v = HasFormatter< T >::value;
 
 namespace geos::format
 {
