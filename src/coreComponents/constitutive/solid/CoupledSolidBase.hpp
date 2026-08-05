@@ -26,6 +26,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
+#include "constitutive/surfaceArea/SurfaceAreaBase.hpp"
 
 namespace geos
 {
@@ -50,6 +51,7 @@ public:
     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
+    static constexpr char const * surfaceAreaModelNameString() { return "surfaceAreaModelName"; }
   };
 
   virtual stdVector< string > getSubRelationNames() const override final
@@ -63,8 +65,19 @@ public:
       subRelationNames.push_back( m_solidInternalEnergyModelName );
     }
 
+    if( !m_surfaceAreaModelName.empty() )
+    {
+      subRelationNames.push_back( m_surfaceAreaModelName );
+    }
+
     return subRelationNames;
   }
+
+  /**
+   * @brief check whether a reactive surface area model is attached to this solid
+   * @return true if a surface area model name was provided
+   */
+  bool hasSurfaceAreaModel() const { return !m_surfaceAreaModelName.empty(); }
 
   /**
    * @brief get the old porosity.
@@ -212,6 +225,10 @@ public:
   {
     getBasePorosityModel().initializeState();
     getBasePermModel().initializeState();
+    if( hasSurfaceAreaModel() )
+    {
+      getBaseSurfaceAreaModel().initializeState();
+    }
   }
 
   virtual void saveConvergedState() const override final
@@ -253,6 +270,20 @@ public:
   PorosityBase & getBasePorosityModel()
   { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
 
+  /**
+   * @brief get a SurfaceAreaBase constant reference to the reactive surface area model
+   * return a constant SurfaceAreaBase reference to the reactive surface area model
+   */
+  SurfaceAreaBase const & getBaseSurfaceAreaModel() const
+  { return this->getParent().template getGroup< SurfaceAreaBase >( m_surfaceAreaModelName ); }
+
+  /**
+   * @brief get the reactive surface area of each mineral
+   * return a constant arrayView3d to the reactive surface areas
+   */
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > const getSurfaceArea() const
+  { return getBaseSurfaceAreaModel().getSurfaceArea(); }
+
 protected:
 
   /// the name of the solid model
@@ -266,6 +297,9 @@ protected:
 
   /// the name of the solid internal energy model
   string m_solidInternalEnergyModelName;
+
+  /// the name of the reactive surface area model
+  string m_surfaceAreaModelName;
 
 private:
 

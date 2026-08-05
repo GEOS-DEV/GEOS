@@ -75,7 +75,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceAreaA_initialSurfaceArea"
       component="0"
       scale="1.0"/>
 
@@ -84,7 +84,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceAreaB_initialSurfaceArea"
       component="0"
       scale="1.0"/>
   </FieldSpecifications>

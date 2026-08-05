@@ -50,6 +50,11 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Name of the solid internal energy model." );
+
+  registerWrapper( viewKeyStruct::surfaceAreaModelNameString(), &m_surfaceAreaModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Name of the reactive surface area model." );
 }
 
 } /* namespace constitutive */

@@ -8,8 +8,6 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"
       writeLinearSystem="0"
-      isUpdateReactivePorosity="1"
-      isUpdateSurfaceArea="1"
       logLevel="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -46,11 +44,12 @@
       viscosibility="0.0"
       chemicalSystemType="carbonate"/>
 
-    <ReactiveSolidConstantPermeability
+    <ReactiveSolidConstantPermeabilityPowerLawSurfaceArea
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <NullModel
       name="nullSolid"/>
@@ -61,6 +60,12 @@
       defaultInitialVolumeFractions="{ 0.1 }"
       molarWeights="{ 0.100087 }"
       mineralDensities="{ 2710 }"/>
+
+    <PowerLawSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 2.4573e+06 }"
+      mineralExponent="0.666666666666667"
+      porosityExponent="0.666666666666667"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -103,15 +108,6 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
-
-    <FieldSpecification
-      name="surfaceArea"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="initialSurfaceArea"
-      component="0"
-      scale="2.4573e+06"/>
   </FieldSpecifications>
 
   <Tasks>

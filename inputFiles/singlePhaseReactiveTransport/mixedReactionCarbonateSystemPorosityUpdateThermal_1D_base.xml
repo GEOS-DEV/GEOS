@@ -8,8 +8,6 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"
       writeLinearSystem="0"
-      isUpdateReactivePorosity="1"
-      isUpdateSurfaceArea="1"
       isThermal="1"
       logLevel="2">
       <NonlinearSolverParameters
@@ -50,12 +48,13 @@
       referenceInternalEnergy="0.99"
       chemicalSystemType="carbonate"/>
 
-    <ReactiveSolidConstantPermeability
+    <ReactiveSolidConstantPermeabilityPowerLawSurfaceArea
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <NullModel
       name="nullSolid"/>
@@ -72,6 +71,12 @@
       referenceVolumetricHeatCapacity="1.0e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
+
+    <PowerLawSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 2.4573e+06 }"
+      mineralExponent="0.666666666666667"
+      porosityExponent="0.666666666666667"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -142,15 +147,6 @@
       objectPath="ElementRegions/Region1/block1"
       fieldName="temperature"
       scale="-20.0"/>
-
-    <FieldSpecification
-      name="surfaceArea"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="initialSurfaceArea"
-      component="0"
-      scale="2.4573e+06"/>
   </FieldSpecifications>
 
   <Tasks>

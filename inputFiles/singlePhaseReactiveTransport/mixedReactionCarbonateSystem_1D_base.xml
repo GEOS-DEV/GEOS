@@ -48,7 +48,8 @@
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <NullModel
       name="nullSolid"/>
@@ -62,6 +63,10 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 3.0e-16, 3.0e-16, 3.0e-16 }"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 2.4573e+06 }"/>
 
     <ConstantDiffusion
       name="diffusion"
@@ -100,15 +105,6 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
-
-    <FieldSpecification
-      name="surfaceArea"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="initialSurfaceArea"
-      component="0"
-      scale="2.4573e+06"/>
   </FieldSpecifications>
 
   <Tasks>
