@@ -317,7 +317,7 @@ void WellControls::postInputInitialization()
                 ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
   {
     GEOS_THROW_IF( useMass(),
-                   GEOS_FMT( "Constraint {} of type {} only allowed for {} if useMass is set to 1",
+                   GEOS_FMT( "Constraint {} only allowed for {} if useMass is set to 1",
                              constraint.getName(), getName() ),
                    InputError, constraint.getDataContext() );
   } );
