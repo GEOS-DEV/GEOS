@@ -148,6 +148,14 @@ DECLARE_FIELD( particleMeltFlag,
                WRITE_AND_READ,
                "Melt diagnostic copied from constitutive models that expose a meltFlag wrapper." );
 
+DECLARE_FIELD( particleDomainResetFlag,
+               "particleDomainResetFlag",
+               array1d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Flag indicating that the particle deformation-gradient/domain representation was reset in the most recent reset pass." );
+
 DECLARE_FIELD( particleSPHJacobian,
                "particleSPHJacobian",
                array1d< real64 >,

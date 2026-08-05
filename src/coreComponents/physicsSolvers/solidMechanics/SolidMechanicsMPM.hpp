@@ -177,6 +177,7 @@ public:
     static constexpr char const * gridDamageString() { return "gridDamage"; }
     static constexpr char const * gridMappingNormalTensorString() { return "gridMappingNormalTensor"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
+    static constexpr char const * gridSingleFieldStateFractionString() { return "gridSingleFieldStateFraction"; }
 
     // Integration / update
     static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
@@ -1047,24 +1048,22 @@ public:
 
   static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  bool evaluateSeparabilityCriterion( int const & planeStrain,
-                                     int const & numContactGroups,
-                                     int const & treatFullyDamagedAsSingleField,
+  bool evaluateSeparabilityCriterion( int const & numContactGroups,
+                                     real64 const & maxSingleFieldStateFractionForSeparability,
                                      real64 const & separabilityMinDamage,
                                      real64 const & thinFeatureDFGThreshold,
                                      real64 const & neighborRadius,
                                      real64 const & surfaceQualityThreshold,
-                                     real64 const (&hEl)[3],
                                      localIndex const & A,
                                      localIndex const & B,
                                      real64 const & damageA,
                                      real64 const & damageB,
                                      real64 const & maxDamageA,
                                      real64 const & maxDamageB,
-                                     arraySlice1d< real64 const > const damageGradient,
                                      arraySlice1d< real64 const > const xA,
                                      arraySlice1d< real64 const > const xB,
-                                     real64 const & surfaceQuality );
+                                     real64 const & surfaceQuality,
+                                     real64 const & singleFieldStateFraction );
 
   void flagOutOfRangeParticles( ParticleManager & particleManager,
                                 SpatialPartition & partition );
@@ -1484,6 +1483,7 @@ protected:
   int m_resetDefGradForOversizedParticles;
   real64 m_defGradResetMaxParticleDomainToGridCellRatio;
   real64 m_separabilityMinDamage;
+  real64 m_maxSingleFieldStateFractionForSeparability;
   int m_setDomainTemperature;
   int m_setDomainTemperatureRate;
   int m_shapeFunctionDiagnostics;
@@ -1558,7 +1558,6 @@ protected:
   string_array m_tracerVariables;
   real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
-  int m_treatFullyDamagedAsSingleField;
   mpm::UpdateMethodOption m_updateMethod;
   int m_updateOrder;
   int m_useCrackTipDetection;

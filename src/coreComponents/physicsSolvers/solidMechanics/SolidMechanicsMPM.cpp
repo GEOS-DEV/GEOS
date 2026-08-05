@@ -1752,6 +1752,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_resetDefGradForOversizedParticles( 0 ),
   m_defGradResetMaxParticleDomainToGridCellRatio( -1.0 ),
   m_separabilityMinDamage( 0.5 ),
+  m_maxSingleFieldStateFractionForSeparability( -1.0 ),
   m_setDomainTemperature(),
   m_setDomainTemperatureRate(),
   m_shapeFunctionDiagnostics( 0 ),
@@ -1819,7 +1820,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_tracerVariables(),
   m_tracerWriteInterval( 0.0 ),
   m_totalBinderVolume( 0.0 ),
-  m_treatFullyDamagedAsSingleField( 0 ),
   m_updateMethod( mpm::UpdateMethodOption::FLIP ),
   m_updateOrder( 2 ),
   m_useCrackTipDetection( 0 ),
@@ -2614,6 +2614,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Damage threshold for field separability" );
 
+  registerWrapper( "maxSingleFieldStateFractionForSeparability", &m_maxSingleFieldStateFractionForSeparability ).
+    setApplyDefaultValue( m_maxSingleFieldStateFractionForSeparability ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum volume-weighted mapped fraction of fully damaged, melted, or domain-reset particles allowed for separability. "
+                    "A negative value disables this restriction; active values are in [0,1]." );
+
   registerWrapper( "setDomainTemperature", &m_setDomainTemperature ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -2945,12 +2952,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Total volume of binder" );
 
-  registerWrapper( "treatFullyDamagedAsSingleField", &m_treatFullyDamagedAsSingleField ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_treatFullyDamagedAsSingleField ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush." );
-
   registerWrapper( "updateMethod", &m_updateMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_updateMethod ).
@@ -3198,6 +3199,8 @@ void SolidMechanicsMPM::postInputInitialization()
 
   GEOS_ERROR_IF( m_surfaceQualityThreshold < 0.0 || m_surfaceQualityThreshold > 1.0,
                  "surfaceQualityThreshold must be in [0,1]." );
+  GEOS_ERROR_IF( m_maxSingleFieldStateFractionForSeparability > 1.0,
+                 "maxSingleFieldStateFractionForSeparability must be <= 1. Use a negative value to disable it." );
   GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
                  "thinFeatureDFGThreshold must be non-negative." );
   GEOS_ERROR_IF( m_subdivideParticles < -1 || m_subdivideParticles > 1,
@@ -3779,6 +3782,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleSupplementalPressure >( getName() );
         subRegion.registerField< particleMeltFlag >( getName() );
+        subRegion.registerField< particleDomainResetFlag >( getName() );
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
         if( !subRegion.hasWrapper( particleColor::key() ) )
         {
@@ -4131,6 +4135,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the maximum damage of any particle mapping to a given node." );
+
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Volume-weighted mapped fraction of particles that are fully damaged, melted, or domain-reset on each grid field." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -4746,6 +4755,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).resize( numNodes, 3 );
 
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() ).resize( numNodes, m_numVelocityFields, 6 );
@@ -6592,6 +6602,7 @@ void SolidMechanicsMPM::syncGridFieldsForExplicitStep( DomainPartition & domain,
   stdVector< std::string > fieldNames1 = { viewKeyStruct::gridMassString(),
                                            viewKeyStruct::gridDamageString(),
                                            viewKeyStruct::gridMaterialVolumeString(),
+                                           viewKeyStruct::gridSingleFieldStateFractionString(),
                                            viewKeyStruct::gridMappingNormalTensorString(),
                                            viewKeyStruct::gridMomentumString(),
                                            viewKeyStruct::gridCenterOfMassString(),
@@ -9522,6 +9533,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       subRegion.getField< fields::mpm::particleSupplementalPressure >();
     arrayView1d< real64 > const particleMeltFlag =
       subRegion.getField< fields::mpm::particleMeltFlag >();
+    arrayView1d< int > const particleDomainResetFlag =
+      subRegion.getField< fields::mpm::particleDomainResetFlag >();
 
     ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
     localIndex regionIndexOfSubRegion = region.getIndexInParent();
@@ -9558,6 +9571,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       particleInternalEnergy[p] = 0.0;
       particleSupplementalPressure[p] = 0.0;
       particleMeltFlag[p] = 0.0;
+      particleDomainResetFlag[p] = 0;
 
       if( computeSPHJacobian > 1 )
       {
@@ -9692,11 +9706,12 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   string const axesLabels[] = { "X", "Y", "Z" };
 
   // Apply labels to scalar multi-fields
-  stdVector< std::string > keys2d = {
+ stdVector< std::string > keys2d = {
     viewKeyStruct::gridMassString(),
     viewKeyStruct::gridDamageString(),
     viewKeyStruct::gridMaxDamageString(),
     viewKeyStruct::gridMaterialVolumeString(),
+    viewKeyStruct::gridSingleFieldStateFractionString(),
     viewKeyStruct::gridSurfaceFieldMassString(),
     viewKeyStruct::gridInterfaceNormalForceString(),
     viewKeyStruct::gridInterfaceTangentialForceString(),
@@ -9808,6 +9823,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridActiveString(),
       viewKeyStruct::gridMaterialVolumeString(),
       viewKeyStruct::gridMaxDamageString(),
+      viewKeyStruct::gridSingleFieldStateFractionString(),
       viewKeyStruct::gridSurfaceAreaString(),
       viewKeyStruct::gridSurfaceFieldMassString(),
       viewKeyStruct::gridSurfaceNormalWeightNormalizationString(),
@@ -9909,6 +9925,10 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView2d< real64 > const gridMaxDamage =
     nodeManager.getReference< array2d< real64 > >(
       viewKeyStruct::gridMaxDamageString() );
+
+  arrayView2d< real64 > const gridSingleFieldStateFraction =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridSingleFieldStateFractionString() );
 
   arrayView2d< real64 > const gridSurfaceArea =
     nodeManager.getReference< array2d< real64 > >(
@@ -10122,6 +10142,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridMaterialVolume[g][fieldIndex] = 0.0;
       gridDamage[g][fieldIndex] = 0.0;
       gridMaxDamage[g][fieldIndex] = 0.0;
+      gridSingleFieldStateFraction[g][fieldIndex] = 0.0;
       LvArray::tensorOps::fill< 6 >( gridMappingNormalTensor[g][fieldIndex], 0.0 );
 
       gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0.0;
@@ -19928,6 +19949,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
    *
    *   gridMaxDamage[I,alpha] = max( gridMaxDamage[I,alpha], d_p )
    *
+   *   gridSingleFieldStateFraction[I,alpha] +=
+   *     V_p N_Ip I(d_p == 1 || melt_p == 1 || domainReset_p == 1)
+   *
    *   gridMomentum[I,alpha,i] += m_p v_p[i] N_Ip
    *
    *   gridExternalForce[I,alpha,i] +=
@@ -20094,6 +20118,10 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     nodeManager.getReference< array2d< real64 > >
       ( viewKeyStruct::gridMaxDamageString() );
 
+  arrayView2d< real64 > const & gridSingleFieldStateFraction =
+    nodeManager.getReference< array2d< real64 > >
+      ( viewKeyStruct::gridSingleFieldStateFractionString() );
+
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
     nodeManager.referencePosition();
 
@@ -20147,6 +20175,12 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
     arrayView1d< real64 const > const particleDamage =
       subRegion.getParticleDamage();
+
+    arrayView1d< real64 const > const particleMeltFlag =
+      subRegion.getField< fields::mpm::particleMeltFlag >();
+
+    arrayView1d< int const > const particleDomainResetFlag =
+      subRegion.getField< fields::mpm::particleDomainResetFlag >();
 
     arrayView1d< real64 const > const particleMass =
       subRegion.getField< fields::mpm::particleMass >();
@@ -20266,6 +20300,12 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
       real64 const pDamage =
         particleDamage[p];
 
+      real64 const pMeltFlag =
+        particleMeltFlag[p];
+
+      int const pDomainResetFlag =
+        particleDomainResetFlag[p];
+
       int const pGroup =
         particleGroup[p];
 #ifndef GEOS_USE_DEVICE
@@ -20288,6 +20328,14 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
 
       real64 const pMassTimesMappedDamage =
         pMass * mappedDamageValue;
+
+      real64 const singleFieldStateValue =
+        ( pDamage >= 0.9999999 ||
+          pMeltFlag > 0.5 ||
+          pDomainResetFlag != 0 ) ? 1.0 : 0.0;
+
+      real64 const pVolumeTimesSingleFieldState =
+        pVolume * singleFieldStateValue;
 
       bool const hasExplicitSurfaceNormal =
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
@@ -20553,6 +20601,15 @@ localIndex const mappedNode =
         RAJA::atomicMax( parallelDeviceAtomic{},
                          &gridMaxDamage[mappedNode][fieldIndex],
                          mappedDamageValue );
+
+        // Single-field state fraction numerator:
+        //
+        //   S_I += V_p N_Ip I(d_p == 1 || melt_p == 1 || domainReset_p == 1)
+        //
+        // gridTrialUpdate() normalizes this by gridMaterialVolume.
+        RAJA::atomicAdd( parallelDeviceAtomic{},
+                         &gridSingleFieldStateFraction[mappedNode][fieldIndex],
+                         pVolumeTimesSingleFieldState * shapeFunctionValue );
 
         // Mapping-normal orientation tensor:
         //
@@ -21315,6 +21372,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const & gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+  arrayView2d< real64 > const gridSingleFieldStateFraction = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() );
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
   arrayView3d< real64 > const & gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
   arrayView3d< real64 > const & gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
@@ -21337,6 +21395,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       if( gridActive[g][fieldIndex] > 0.5 ) // active grid-field mask
       {
         gridDamage[g][fieldIndex] /= gridMass[g][fieldIndex];
+        gridSingleFieldStateFraction[g][fieldIndex] /= gridMaterialVolume[g][fieldIndex];
         for( localIndex i=0; i < numDims; ++i )
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i] + gridSurfaceTensionForce[g][fieldIndex][i];
@@ -21351,6 +21410,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       else
       {
         gridDamage[g][fieldIndex] = 0.0;
+        gridSingleFieldStateFraction[g][fieldIndex] = 0.0;
         for( localIndex i = 0; i < numDims; ++i )
         {
           gridAcceleration[g][fieldIndex][i] = 0.0;
@@ -22358,7 +22418,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   int const maxLRIterations = m_maxLRIterations;
   real64 const LRtolerance = m_LRtolerance;
   int const preventCZInterpenetration = m_preventCZInterpenetration;
-  int const treatFullyDamagedAsSingleField = m_treatFullyDamagedAsSingleField;
   int const useSurfacePositionForContact = m_useSurfacePositionForContact;
   int const enableWeakInterfaceTraceProjection = m_enableWeakInterfaceTraceProjection;
   int const weakInterfaceTraceSuppressNodalContact = m_weakInterfaceTraceSuppressNodalContact;
@@ -22382,6 +22441,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   real64 const overlapThreshold2 = m_overlapThreshold2;
   real64 const maxParticleVelocitySquared = m_maxParticleVelocitySquared;
   real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
+  real64 const maxSingleFieldStateFractionForSeparability =
+    m_maxSingleFieldStateFractionForSeparability;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   real64 maxFrictionCoefficient = 0.0;
@@ -22404,6 +22465,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView2d< real64 const > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
+  arrayView2d< real64 const > const gridSingleFieldStateFraction = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() );
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView2d< real64 const > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
@@ -22561,24 +22623,31 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                                             gridMaterialVolume[g][A],
                                                             gridMaterialVolume[g][B] );
 
-            separable = evaluateSeparabilityCriterion( planeStrain,
-                                                       numContactGroups,
-                                                       treatFullyDamagedAsSingleField,
+            real64 const pairMaterialVolume =
+              gridMaterialVolume[g][A] + gridMaterialVolume[g][B];
+            real64 const singleFieldStateFraction =
+              pairMaterialVolume > 1.0e-30
+              ? ( gridSingleFieldStateFraction[g][A] * gridMaterialVolume[g][A] +
+                  gridSingleFieldStateFraction[g][B] * gridMaterialVolume[g][B] ) /
+                pairMaterialVolume
+              : 0.0;
+
+            separable = evaluateSeparabilityCriterion( numContactGroups,
+                                                       maxSingleFieldStateFractionForSeparability,
                                                        separabilityMinDamage,
                                                        thinFeatureDFGThreshold,
                                                        neighborRadius,
                                                        surfaceQualityThreshold,
-                                                       hEl,
                                                        A,
                                                        B,
                                                        gridDamage[g][A],
                                                        gridDamage[g][B],
                                                        gridMaxDamage[g][A],
                                                        gridMaxDamage[g][B],
-                                                       gridDamageGradient[g],
                                                        gridCenterOfMass[g][A],
                                                        gridCenterOfMass[g][B],
-                                                       surfaceQuality );
+                                                       surfaceQuality,
+                                                       singleFieldStateFraction );
           }
 
           // Compute shared normal for contact pair
@@ -22839,7 +22908,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   int const maxLRIterations = m_maxLRIterations;
   real64 const LRtolerance = m_LRtolerance;
   int const preventCZInterpenetration = m_preventCZInterpenetration;
-  int const treatFullyDamagedAsSingleField = m_treatFullyDamagedAsSingleField;
   int const useSurfacePositionForContact = m_useSurfacePositionForContact;
 
   int const numContactGroups = m_numContactGroups;
@@ -22860,6 +22928,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   real64 const overlapThreshold2 = m_overlapThreshold2;
   real64 const maxParticleVelocitySquared = m_maxParticleVelocitySquared;
   real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
+  real64 const maxSingleFieldStateFractionForSeparability =
+    m_maxSingleFieldStateFractionForSeparability;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   real64 maxFrictionCoefficient = 0.0;
@@ -22881,6 +22951,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView2d< real64 const > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
+  arrayView2d< real64 const > const gridSingleFieldStateFraction = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() );
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView2d< real64 const > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
@@ -23010,24 +23081,31 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                                             gridMaterialVolume[g][A],
                                                             gridMaterialVolume[g][B] );
 
-            separable = evaluateSeparabilityCriterion( planeStrain,
-                                                       numContactGroups,
-                                                       treatFullyDamagedAsSingleField,
+            real64 const pairMaterialVolume =
+              gridMaterialVolume[g][A] + gridMaterialVolume[g][B];
+            real64 const singleFieldStateFraction =
+              pairMaterialVolume > 1.0e-30
+              ? ( gridSingleFieldStateFraction[g][A] * gridMaterialVolume[g][A] +
+                  gridSingleFieldStateFraction[g][B] * gridMaterialVolume[g][B] ) /
+                pairMaterialVolume
+              : 0.0;
+
+            separable = evaluateSeparabilityCriterion( numContactGroups,
+                                                       maxSingleFieldStateFractionForSeparability,
                                                        separabilityMinDamage,
                                                        thinFeatureDFGThreshold,
                                                        neighborRadius,
                                                        surfaceQualityThreshold,
-                                                       hEl,
                                                        A,
                                                        B,
                                                        gridDamage[g][A],
                                                        gridDamage[g][B],
                                                        gridMaxDamage[g][A],
                                                        gridMaxDamage[g][B],
-                                                       gridDamageGradient[g],
                                                        gridCenterOfMass[g][A],
                                                        gridCenterOfMass[g][B],
-                                                       surfaceQuality );
+                                                       surfaceQuality,
+                                                       singleFieldStateFraction );
           }
 
           // Compute shared normal for contact pair
@@ -23375,24 +23453,22 @@ real64 SolidMechanicsMPM::computeSurfaceQualityFromMappingNormalTensor( int cons
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
-                                                      int const & numContactGroups,
-                                                      int const & treatFullyDamagedAsSingleField,
+bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & numContactGroups,
+                                                      real64 const & maxSingleFieldStateFractionForSeparability,
                                                       real64 const & separabilityMinDamage,
                                                       real64 const & thinFeatureDFGThreshold,
                                                       real64 const & neighborRadius,
                                                       real64 const & surfaceQualityThreshold,
-                                                      real64 const (&hEl)[3],
                                                       localIndex const & A,
                                                       localIndex const & B,
                                                       real64 const & damageA,
                                                       real64 const & damageB,
                                                       real64 const & maxDamageA,
                                                       real64 const & maxDamageB,
-                                                      arraySlice1d< real64 const > const dmgGrad,
                                                       arraySlice1d< real64 const > const xA,
                                                       arraySlice1d< real64 const > const xB,
-                                                      real64 const & surfaceQuality )
+                                                      real64 const & surfaceQuality,
+                                                      real64 const & singleFieldStateFraction )
 {
   bool separable = false;
 
@@ -23403,32 +23479,16 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
         ( surfaceQuality >= surfaceQualityThreshold ) ) ||
       ( A % numContactGroups != B % numContactGroups ) )
   {
-    // A sharp crack has damage-gradient magnitude on the order of 1/h.  A
-    // much smaller nodal gradient indicates a fully damaged or undamaged
-    // region where the crack normal is not well defined.
-    real64 xi = 1e-3;
-    if( planeStrain == 1 )
-    {
-      xi /= hEl[0] * hEl[0] + hEl[1] * hEl[1];
-    }
-    else
-    {
-      // Tensor equation: m_hEl: l2NormSquared(m_hEl).
-      xi /= LvArray::tensorOps::l2NormSquared< 3 >( hEl );
-    }
+    separable = true;
+  }
 
-    // With treatFullyDamagedAsSingleField enabled, suppress separation where
-    // the grid damage gradient is too small to identify a meaningful local
-    // crack-normal direction.
-    // Tensor condition: (treatFullyDamagedAsSingleField == 1) && ||dmgGrad||^2 < xi.
-    if( ( treatFullyDamagedAsSingleField == 1 ) && LvArray::tensorOps::l2NormSquared< 3 >( dmgGrad ) < xi )
-    {
-      separable = false;
-    }
-    else
-    {
-      separable = true;
-    }
+  // Suppress separation in regions dominated by particles whose kinematics are
+  // better treated as a single field: fully damaged, melted, or domain-reset.
+  if( separable &&
+      maxSingleFieldStateFractionForSeparability >= 0.0 &&
+      singleFieldStateFraction > maxSingleFieldStateFractionForSeparability )
+  {
+    separable = false;
   }
 
   // When two DFG field centers are closer than the configured fraction of
@@ -31164,6 +31224,22 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       ( resetDefGradForOversizedParticles == 1 &&
         oversizedResetMaximumDiagonal > 0.0 );
 
+#ifdef GEOS_USE_DEVICE
+    subRegion.getWrapperBase( fields::mpm::particleDomainResetFlag::key() ).move(
+      LvArray::MemorySpace::host, true );
+#endif
+    arrayView1d< int > const particleDomainResetFlag =
+      subRegion.getField< fields::mpm::particleDomainResetFlag >();
+
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
+
+    forAll< serialPolicy >( activeParticleIndices.size(),
+                            [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    {
+      particleDomainResetFlag[activeParticleIndices[pp]] = 0;
+    } );
+
     if( !shouldResetDeformationGradientInSubRegion )
     {
       return;
@@ -31219,8 +31295,6 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     arrayView3d< real64 > const particleRVectors =
       subRegion.getParticleRVectors();
 
-    SortedArrayView< localIndex const > const activeParticleIndices =
-      subRegion.activeParticleIndices();
     forAll< serialPolicy >( activeParticleIndices.size(),
                             [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
@@ -31546,6 +31620,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       {
         particleDomainScaledFlag[p] = 0;
       }
+      particleDomainResetFlag[p] = 1;
       numResetParticles += 1;
     } );
   } );

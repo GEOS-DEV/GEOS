@@ -1577,13 +1577,13 @@
       "line": 2065
     },
     {
-      "name": "treatFullyDamagedAsSingleField",
+      "name": "maxSingleFieldStateFractionForSeparability",
       "flag": "OPTIONAL",
-      "default": "m_treatFullyDamagedAsSingleField",
+      "default": "m_maxSingleFieldStateFractionForSeparability",
       "restart": "NO_WRITE",
-      "description": "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.",
+      "description": "Maximum volume-weighted mapped fraction of fully damaged, melted, or domain-reset particles allowed for separability. A negative value disables this restriction; active values are in [0,1].",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
-      "line": 2071
+      "line": 2617
     },
     {
       "name": "updateMethod",
@@ -4669,7 +4669,7 @@
       "emitsSolverAttribute": true
     },
     {
-      "name": "treatFullyDamagedAsSingleField",
+      "name": "maxSingleFieldStateFractionForSeparability",
       "default": "None",
       "emitsSolverAttribute": true
     },
@@ -6263,10 +6263,10 @@
         "description": "Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager."
       },
       {
-        "name": "treatFullyDamagedAsSingleField integer",
-        "type": "1",
-        "default": "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.",
-        "description": ""
+        "name": "maxSingleFieldStateFractionForSeparability",
+        "type": "real64",
+        "default": "-1",
+        "description": "Maximum volume-weighted mapped fraction of fully damaged, melted, or domain-reset particles allowed for separability; negative disables this restriction"
       },
       {
         "name": "writeLinearSystem",

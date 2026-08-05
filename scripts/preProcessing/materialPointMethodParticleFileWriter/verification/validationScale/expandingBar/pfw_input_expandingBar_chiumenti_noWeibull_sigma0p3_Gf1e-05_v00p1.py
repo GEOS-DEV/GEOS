@@ -74,7 +74,7 @@ pfw["initialDt"]=1e-16
 pfw["cpdiDomainScaling"]=1
 pfw["damageFieldPartitioning"]=1
 pfw["separabilityMinDamage"]=0.5
-pfw["treatFullyDamagedAsSingleField"]=1
+pfw["maxSingleFieldStateFractionForSeparability"]=0.999
 
 pfw["solverProfiling"]=0
 pfw["needsNeighborList"]=1

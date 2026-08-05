@@ -315,7 +315,7 @@ with components stored as \texttt{gridMappingNormalTensor}.  For a pair of field
 \end{equation}
 It is one when the mapped material volume is fully covered by one coherent normal axis, including anti-parallel crack-face normals, and it is zero when the valid mapping normals do not define a preferred axis or no valid mapping normal contributes.
 
-Two additional guards can suppress separability.  If \texttt{treatFullyDamagedAsSingleField=1} and the grid damage-gradient magnitude is very small, the code treats the fields as inseparable to avoid arbitrary internal separation planes in fully damaged or undamaged material.  If \texttt{thinFeatureDFGThreshold} is set below its large default value, a DFG pair with very small field-center spacing relative to the neighbor radius is also forced to be inseparable.  The thin-feature guard uses
+Two additional guards can suppress separability.  If \texttt{maxSingleFieldStateFractionForSeparability} is nonnegative, the code maps the volume-weighted fraction of particles that are fully damaged, melted, or domain-reset to each grid field and treats a field pair as inseparable when the pair-average fraction exceeds the configured value.  A value of 0.999 preserves the legacy intent of suppressing separability only in essentially fully single-field regions.  If \texttt{thinFeatureDFGThreshold} is set below its large default value, a DFG pair with very small field-center spacing relative to the neighbor radius is also forced to be inseparable.  The thin-feature guard uses
 \begin{equation}
   \|\mathbf{x}_A-\mathbf{x}_B\|^2 <
   \big(\texttt{thinFeatureDFGThreshold}\,r_n\big)^2,
@@ -490,7 +490,7 @@ Attribute & Internal effect \\
 \texttt{LRtolerance}, \texttt{maxLRIterations} & Control convergence and iteration limit of the logistic-regression fit. \\
 \texttt{surfaceQualityThreshold}, \texttt{separabilityMinDamage} & Control same-group DFG separability; the surface-quality threshold is applied to the mapping-normal orientation tensor. \\
 \texttt{thinFeatureDFGThreshold} & Suppresses separability for DFG pairs whose field centers are closer than the configured fraction of the neighbor radius. \\
-\texttt{treatFullyDamagedAsSingleField} & Suppresses arbitrary splitting in fully damaged regions with small damage-gradient magnitude. \\
+\texttt{maxSingleFieldStateFractionForSeparability} & Suppresses separability when the mapped fully damaged, melted, or domain-reset particle fraction exceeds the configured value. \\
 \texttt{overlapCorrection} & Selects \texttt{Off}, \texttt{NormalForce}, \texttt{SPH}, or \texttt{Volume}. \\
 \texttt{overlapThreshold1}, \texttt{overlapThreshold2} & Define ramp thresholds for overlap-correction branches. \\
 \texttt{computeSPHJacobian} & Computes nonlocal SPH Jacobian data; automatically enabled by \texttt{overlapCorrection=SPH}. \\

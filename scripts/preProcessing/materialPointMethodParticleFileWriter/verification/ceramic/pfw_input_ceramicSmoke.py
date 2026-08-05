@@ -127,7 +127,7 @@ cpdiDomainScaling="1"
 
 surfaceDetection="0"
 damageFieldPartitioning="1"
-treatFullyDamagedAsSingleField="1"
+maxSingleFieldStateFractionForSeparability="0.999"
 separabilityMinDamage="0.5"
 contactGapCorrection="Implicit"
 frictionCoefficient="0.0"
@@ -176,7 +176,7 @@ pfw = {
     "needsNeighborList": 1,
     "cpdiDomainScaling": 1,
     "damageFieldPartitioning": 1,
-    "treatFullyDamagedAsSingleField": 1,
+    "maxSingleFieldStateFractionForSeparability": 0.999,
     "separabilityMinDamage": 0.5,
     "contactGapCorrection": "Implicit",
     "frictionCoefficient": 0.0,

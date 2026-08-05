@@ -1696,6 +1696,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxParticleJacobian" type="real64" default="10" />
 		<!--maxParticleVelocity => Velocity above which particles are deleted-->
 		<xsd:attribute name="maxParticleVelocity" type="real64" default="1e+06" />
+		<!--maxSingleFieldStateFractionForSeparability => Maximum volume-weighted mapped fraction of fully damaged, melted, or domain-reset particles allowed for separability; negative disables this restriction-->
+		<xsd:attribute name="maxSingleFieldStateFractionForSeparability" type="real64" default="-1" />
 		<!--minParticleJacobian => Jacobian value below which particles are deleted-->
 		<xsd:attribute name="minParticleJacobian" type="real64" default="0.1" />
 		<!--needsNeighborList => Flag for whether to construct neighbor list-->
@@ -1817,8 +1819,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="tracerVariables" type="string_array" default="{}" />
 		<!--tracerWriteInterval => Time interval for MPM lagrangian tracer CSV output. Use either tracerWriteInterval or tracerCycleInterval. A value of 0 means no time-based interval.-->
 		<xsd:attribute name="tracerWriteInterval" type="real64" default="0" />
-		<!--treatFullyDamagedAsSingleField => Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush.-->
-		<xsd:attribute name="treatFullyDamagedAsSingleField" type="integer" default="0" />
 		<!--updateMethod => Update method. Options are:
 * FLIP
 * PIC

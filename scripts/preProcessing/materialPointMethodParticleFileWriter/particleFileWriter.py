@@ -819,6 +819,7 @@ parameters = {
                'maxLRIterations': ( None, True ),  # MPM: max logistic-regression iterations.
                'maxParticleJacobian': ( None, True ),  # MPM: delete particles above this Jacobian.
                'maxParticleVelocity': ( 10.0, True ),  # MPM: delete particles above this velocity.
+               'maxSingleFieldStateFractionForSeparability': ( None, True ),  # MPM: suppress separability when mapped fully damaged/melted/reset particle fraction exceeds this value.
                'mBank': ( None, False ),  # PFW: batch-account/bank name.
                'mBatch': ( True, False ),  # PFW: generate a batch script.
                'mCores': ( 1, False ),  # PFW: requested cores/ranks.
@@ -931,7 +932,6 @@ parameters = {
                'tracerOutputPrefix': ( None, True ),  # MPM: tracer-history filename prefix.
                'tracerVariables': ( None, True ),  # MPM: tracer-history variables.
                'tracerWriteInterval': ( None, True ),  # MPM: tracer-history time interval.
-               'treatFullyDamagedAsSingleField': ( None, True ),  # MPM: merge fully damaged fields.
                'updateMethod': ( None, True ),  # MPM: particle/grid update method.
                'updateOrder': ( None, True ),  # MPM: update order for XPIC/FMPM.
                'useCrackTipDetection': ( None, True ),  # MPM: enable crack-tip detection.

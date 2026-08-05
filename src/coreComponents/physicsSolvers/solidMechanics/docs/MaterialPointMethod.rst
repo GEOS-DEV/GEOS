@@ -583,10 +583,10 @@ This solver has many solver specific variables. The following list describes eac
      - separabilityMinDamage
      - 0.5
      - mininum average damage for separability
-   * - bool
-     - treatFullyDamagedAsSingleField
-     - 0
-     - will treat regions of full damage as a single field (recommended)
+   * - real
+     - maxSingleFieldStateFractionForSeparability
+     - -1
+     - suppress separability when the mapped fully damaged, melted, or domain-reset particle fraction exceeds this value
 
 
 
