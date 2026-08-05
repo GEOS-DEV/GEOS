@@ -74,6 +74,7 @@ public:
     m_elemGhostRank( elemGhostRank ),
     m_rhsContributionArrayView( rhsContributionArrayView ),
     m_sizeScalingFactor( sizeScalingFactor ),
+    m_solventDensity( fluid.solventDensity() ),
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
     m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations( fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations() ),
     m_density( fluid.density() ),
@@ -151,12 +152,12 @@ public:
 
     for( integer i = 0; i < numSpecies; ++i )
     {
-      stack.localSpeciesRhs[i] += m_primarySpeciesAggregateConcentration[ei][0][i] / m_density[ei][0] * scaledInflowMass;
-      stack.localSpeciesJacobian[i][0] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_dDensity[ei][0][DerivOffset::dP] / (m_density[ei][0] * m_density[ei][0]) * scaledInflowMass;
+      stack.localSpeciesRhs[i] += m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity / m_density[ei][0] * scaledInflowMass;
+      stack.localSpeciesJacobian[i][0] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity * m_dDensity[ei][0][DerivOffset::dP] / (m_density[ei][0] * m_density[ei][0]) * scaledInflowMass;
 
       for( integer j = 0; j < numSpecies; ++j )
       {
-        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] / m_density[ei][0] * scaledInflowMass;
+        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] * m_solventDensity / m_density[ei][0] * scaledInflowMass;
       }
     }
   }
@@ -236,6 +237,9 @@ protected:
   arrayView1d< real64 const > const m_rhsContributionArrayView;
   /// size scaling factor
   real64 const m_sizeScalingFactor;
+
+  /// Solvent density [kg/m³] used to convert molality [mol/kg] to molarity [mol/m³]
+  real64 const m_solventDensity;
 
   // View on the total concentration of ions that contain the primary species
   arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > const m_primarySpeciesAggregateConcentration;

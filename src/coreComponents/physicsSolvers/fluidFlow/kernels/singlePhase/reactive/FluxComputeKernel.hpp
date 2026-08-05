@@ -122,6 +122,7 @@ public:
    * @param[in] porosityAccessors
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
+   * @param[in] solventDensity the density of the solvent (e.g., water) [kg/m3]
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -138,6 +139,7 @@ public:
                      PorosityAccessors const & porosityAccessors,
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
+                     real64 const & solventDensity,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -159,7 +161,8 @@ public:
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_hasDiffusion( hasDiffusion ),
-    m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags )
+    m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
+    m_solventDensity( solventDensity )
   {}
 
   /**
@@ -249,20 +252,22 @@ public:
       // compute species fluxes and derivatives using upstream cell concentration
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is];
-        speciesFlux[is] = aggregateConc_i / fluidDens_up * fluxVal;
+        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is]
+                                               * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
+        speciesFlux[is] = aggregateConcMolarity_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          dSpeciesFlux_dP[ke][is] += aggregateConc_i / fluidDens_up * dFlux_dP[ke];
+          dSpeciesFlux_dP[ke][is] += aggregateConcMolarity_i / fluidDens_up * dFlux_dP[ke];
         }
 
-        dSpeciesFlux_dP[k_up][is] += -aggregateConc_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
+        dSpeciesFlux_dP[k_up][is] += -aggregateConcMolarity_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js];
-          dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConc_i_dLogConc_j / fluidDens_up * fluxVal;
+          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js] 
+                                                             * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
+          dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConcMolarity_i_dLogConc_j / fluidDens_up * fluxVal;
         }
       }
 
@@ -354,15 +359,16 @@ public:
               localIndex const esr = sesri[ke];
               localIndex const ei  = sei[ke];
 
-              real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is];
+              real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is]
+                                                     * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
 
-              speciesGrad[is] += diffusionTrans[ke] * aggregateConc_i;
+              speciesGrad[is] += diffusionTrans[ke] * aggregateConcMolarity_i;
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js];
+                real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js] * m_solventDensity;
 
-                dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConc_i_dLogConc_j;
+                dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConcMolarity_i_dLogConc_j;
               }
             }
 
@@ -500,6 +506,9 @@ protected:
 
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
+
+  /// Density of the solvent (e.g., water) [kg/m3]
+  real64 const m_solventDensity;
 };
 
 /**
@@ -516,6 +525,7 @@ public:
    * @param[in] numSpecies the number of primary species
    * @param[in] hasDiffusion the flag of adding diffusion term
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
+   * @param[in] solventDensity the density of the solvent (e.g., water) [kg/m3]
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -530,6 +540,7 @@ public:
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,
+                   real64 const solventDensity,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -561,7 +572,7 @@ public:
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, fluidAccessors, reactiveFluidAccessors,
                          permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion, mobilePrimarySpeciesFlags,
-                         dt, localMatrix, localRhs );
+                         solventDensity, dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

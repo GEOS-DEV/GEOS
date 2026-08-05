@@ -29,6 +29,7 @@
     "constants": [
       [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
       [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitChemoMechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
       [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
       [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
       [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -140,6 +141,48 @@
       "CONSTITUTIVE_TYPE": [
         "PorousSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": []
+  },
+
+  "SolidMechanicsExplicitChemoMechanicsKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitChemoMechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >",
+        "EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >",
+        "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
+        "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >",
+        "PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability >",
+        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >",
+        "PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >",
+        "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
