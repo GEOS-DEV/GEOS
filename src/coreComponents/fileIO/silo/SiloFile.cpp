@@ -28,6 +28,7 @@
 #include "common/logger/Logger.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #if !defined(GEOS_USE_CONSTITUTIVE_MPM_ONLY)
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
@@ -2133,6 +2134,14 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
         {
           nonParticleFieldNames.erase( wrapperIter.first );
         }
+
+        subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
+        {
+          material.forWrappers( [&]( WrapperBase const & wrapper )
+          {
+            nonParticleFieldNames.erase( constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
+          } );
+        } );
       } );
     } );
 
@@ -2642,43 +2651,81 @@ void SiloFile::writeParticleRegionSilo( ParticleRegionBase const & particleRegio
   // zone-centered variables on the particle-domain UCD mesh.
   conduit::Node conduitNode;
   Group fakeGroup( particleRegion.getName(), conduitNode );
+  Group averagedMaterialData( particleRegion.getName() + "_averagedMaterialData", conduitNode );
 
   localIndex numParticles = 0;
+  std::set< string > materialFields;
   stdVector< stdMap< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( particleRegion.numSubRegions() );
+
+  auto addParticleField = [&]( localIndex const psr,
+                               string const & fieldName,
+                               WrapperBase const & sourceWrapper )
+  {
+    viewPointers[psr].get_inserted( fieldName ) = &sourceWrapper;
+
+    if( fakeGroup.hasWrapper( fieldName ) )
+    {
+      return;
+    }
+
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+    {
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+      Wrapper< ArrayType > const & sourceWrapperT = Wrapper< ArrayType >::cast( sourceWrapper );
+      Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
+
+      newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
+      for( integer dim = 0; dim < ArrayType::NDIM; ++dim )
+      {
+        Span< string const > const labels = sourceWrapperT.getDimLabels( dim );
+        if( !labels.empty() )
+        {
+          newWrapper.setDimLabels( dim, labels );
+        }
+      }
+      newWrapper.reference().resize( ArrayType::NDIM, sourceWrapperT.reference().dims() );
+    }, sourceWrapper );
+  };
+
   particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >( [&]( localIndex const psr,
                                                                            ParticleSubRegionBase const & subRegion )
   {
     numParticles += subRegion.size();
 
+    Group & subReg = averagedMaterialData.registerGroup( subRegion.getName() );
+    subReg.resize( subRegion.size() );
+
+    subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
+    {
+      material.forWrappers( [&]( WrapperBase const & wrapper )
+      {
+        string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+        if( outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(), m_plotLevel, fieldName, m_fieldNames, m_onlyPlotSpecifiedFieldNames ) )
+        {
+          WrapperBase & averagedWrapper = subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
+          materialFields.insert( fieldName );
+          addParticleField( psr, fieldName, averagedWrapper );
+        }
+      } );
+    } );
+  } );
+
+  particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >( [&]( localIndex const psr,
+                                                                           ParticleSubRegionBase const & subRegion )
+  {
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
       string const & fieldName = wrapper.getName();
 
-      if( isFieldPlotEnabled( wrapper ) && !isParticleMappingAuxiliaryField( fieldName ) )
+      if( isFieldPlotEnabled( wrapper ) &&
+          !isParticleMappingAuxiliaryField( fieldName ) &&
+          materialFields.count( fieldName ) == 0 )
       {
-        viewPointers[psr].get_inserted( fieldName ) = &wrapper;
-
-        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
-        {
-          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
-          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
-          Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
-
-          newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
-          for( integer dim = 0; dim < ArrayType::NDIM; ++dim )
-          {
-            Span< string const > const labels = sourceWrapper.getDimLabels( dim );
-            if( !labels.empty() )
-            {
-              newWrapper.setDimLabels( dim, labels );
-            }
-          }
-          newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
-        }, wrapper );
+        addParticleField( psr, fieldName, wrapper );
       }
     }
   } );
@@ -2732,6 +2779,7 @@ void SiloFile::writeParticleRegionSilo( ParticleRegionBase const & particleRegio
                   isRestart,
                   localIndex_array() );
 
+  averagedMaterialData.getConduitNode().parent()->remove( averagedMaterialData.getName() );
   fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
 }
 
@@ -2825,6 +2873,14 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
       {
         nonParticleFieldNames.erase( wrapperIter.first );
       }
+
+      subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
+      {
+        material.forWrappers( [&]( WrapperBase const & wrapper )
+        {
+          nonParticleFieldNames.erase( constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
+        } );
+      } );
     } );
 
     if( !nonParticleFieldNames.empty() )
