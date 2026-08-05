@@ -26,6 +26,7 @@
 #include "constitutive/permeability/PressurePermeability.hpp"
 #include "constitutive/surfaceArea/ConstantSurfaceArea.hpp"
 #include "constitutive/surfaceArea/PowerLawSurfaceArea.hpp"
+#include "constitutive/surfaceArea/SubstrateCoverageSurfaceArea.hpp"
 
 namespace geos
 {
@@ -86,6 +87,10 @@ typedef ReactiveSolid< ReactivePorosity, ConstantPermeability, PowerLawSurfaceAr
 typedef ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability, PowerLawSurfaceArea > ReactiveRockCKPowerLawSurfaceArea;
 typedef ReactiveSolid< ReactivePorosity, PressurePermeability, PowerLawSurfaceArea > ReactiveRockPressurePermPowerLawSurfaceArea;
 typedef ReactiveSolid< ReactivePorosity, PowerLawPermeability, PowerLawSurfaceArea > ReactiveRockPowerLawPermPowerLawSurfaceArea;
+typedef ReactiveSolid< ReactivePorosity, ConstantPermeability, SubstrateCoverageSurfaceArea > ReactiveRockConstantSubstrateCoverageSurfaceArea;
+typedef ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability, SubstrateCoverageSurfaceArea > ReactiveRockCKSubstrateCoverageSurfaceArea;
+typedef ReactiveSolid< ReactivePorosity, PressurePermeability, SubstrateCoverageSurfaceArea > ReactiveRockPressurePermSubstrateCoverageSurfaceArea;
+typedef ReactiveSolid< ReactivePorosity, PowerLawPermeability, SubstrateCoverageSurfaceArea > ReactiveRockPowerLawPermSubstrateCoverageSurfaceArea;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockCK, string const &, Group * const )
@@ -95,6 +100,10 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockConstantPowerLawSurfaceAre
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockCKPowerLawSurfaceArea, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockPressurePermPowerLawSurfaceArea, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockPowerLawPermPowerLawSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockConstantSubstrateCoverageSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockCKSubstrateCoverageSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockPressurePermSubstrateCoverageSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveRockPowerLawPermSubstrateCoverageSurfaceArea, string const &, Group * const )
 
 }
 } /* namespace geos */

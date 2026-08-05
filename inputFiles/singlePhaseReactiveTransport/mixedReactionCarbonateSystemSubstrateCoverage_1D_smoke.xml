@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./mixedReactionCarbonateSystemSubstrateCoverage_1D_base.xml" />
+    <File name="./mixedReactionCarbonateSystemSubstrateCoverage_chemistry.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 0.1, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1, 99 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ sourceBlock, block1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="20">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/logPrimarySpeciesCollection"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/logPrimarySpeciesHistoryOutput"/>
+
+    <PeriodicEvent
+      name="pressureHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/pressureCollection"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/pressureHistoryOutput"/>
+
+    <PeriodicEvent
+      name="kineticRateHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/kineticRateCollection"/>
+    <PeriodicEvent
+      name="kineticRateTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/kineticReactionHistoryOutput"/>
+
+    <PeriodicEvent
+      name="porosityCollection"
+      cycleFrequency="1"
+      target="/Tasks/porosityCollection"/>
+    <PeriodicEvent
+      name="porosityTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/porosityHistoryOutput"/>
+
+    <PeriodicEvent
+      name="surfaceAreaCollection"
+      cycleFrequency="1"
+      target="/Tasks/surfaceAreaCollection"/>
+    <PeriodicEvent
+      name="surfaceAreaTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/surfaceAreaHistoryOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/SinglePhaseReactiveFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="10"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

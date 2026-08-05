@@ -214,6 +214,7 @@ set( constitutive_headers
      solid/porosity/ReactivePorosity.hpp
      surfaceArea/ConstantSurfaceArea.hpp
      surfaceArea/PowerLawSurfaceArea.hpp
+     surfaceArea/SubstrateCoverageSurfaceArea.hpp
      surfaceArea/SurfaceAreaBase.hpp
      surfaceArea/SurfaceAreaFields.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
@@ -356,6 +357,7 @@ set( constitutive_sources
      solid/porosity/ReactivePorosity.cpp
      surfaceArea/ConstantSurfaceArea.cpp
      surfaceArea/PowerLawSurfaceArea.cpp
+     surfaceArea/SubstrateCoverageSurfaceArea.cpp
      surfaceArea/SurfaceAreaBase.cpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp

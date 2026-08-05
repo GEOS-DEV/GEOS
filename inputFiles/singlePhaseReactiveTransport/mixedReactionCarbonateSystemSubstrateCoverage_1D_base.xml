@@ -1,0 +1,230 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Source, Region1 }"
+      writeLinearSystem="0"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="5"
+        newtonMaxIter="40"
+        logLevel="2"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ sourceBlock }"
+      materialList="{ water, rockSource, diffusion }"/>
+
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ block1 }"
+      materialList="{ water, rock, diffusion }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0"
+      viscosibility="0.0"
+      chemicalSystemType="carbonate"/>
+
+    <!-- Reservoir: the surface area and the porosity both respond to the reactions. -->
+    <ReactiveSolidPowerLawPermeabilitySubstrateCoverageSurfaceArea
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <ReactivePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      defaultInitialVolumeFractions="{ 0.1 }"
+      molarWeights="{ 0.100087 }"
+      mineralDensities="{ 2710 }"/>
+
+    <!-- On dissolution the calcite area only shrinks with the grains. On precipitation it also
+         grows on the substrate, here a 1 micron aperture (A_tot = 2/b), until the precipitate
+         coats it. characteristicVolumeFraction is set above the calcite volume fraction of 0.1 so
+         that the substrate is only partly coated and the substrate term stays active. -->
+    <SubstrateCoverageSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 2.4573e+06 }"
+      characteristicVolumeFraction="{ 0.2 }"
+      substrateSpecificSurfaceArea="2.0e+06"
+      criticalPorosity="1.0e-4"
+      mineralExponent="0.666666666666667"/>
+
+    <PowerLawPermeability
+      name="rockPerm"
+      referencePermeabilityComponents="{ 3.0e-16, 3.0e-16, 3.0e-16 }"
+      referencePorosity="0.1"
+      criticalPorosity="1.0e-4"
+      exponent="3.0"
+      minPermeability="1.0e-20"/>
+
+    <!-- Source cell: the injected composition is imposed there, so its rock is frozen. The
+         constant surface area and the fixed porosity keep the area, the porosity and the
+         permeability at their initial values whatever the reactions do. -->
+    <ReactiveSolidConstantPermeability
+      name="rockSource"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorositySource"
+      permeabilityModelName="rockPermSource"
+      surfaceAreaModelName="rockSurfaceAreaSource"/>
+
+    <ReactivePorosity
+      name="rockPorositySource"
+      defaultReferencePorosity="0.1"
+      defaultInitialVolumeFractions="{ 0.1 }"
+      molarWeights="{ 0.100087 }"
+      mineralDensities="{ 2710 }"
+      fixedPorosity="1"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceAreaSource"
+      defaultInitialSurfaceArea="{ 2.4573e+06 }"/>
+
+    <ConstantPermeability
+      name="rockPermSource"
+      permeabilityComponents="{ 3.0e-16, 3.0e-16, 3.0e-16 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source/sourceBlock"
+      fieldName="rockPorositySource_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source/sourceBlock"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="sourcePressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source/sourceBlock"
+      fieldName="pressure"
+      scale="4e6"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="logPrimarySpeciesCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="kineticRateCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_kineticReactionRates"/>
+
+    <PackCollection
+      name="porosityCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_porosity"/>
+
+    <PackCollection
+      name="surfaceAreaCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockSurfaceArea_surfaceArea"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesCollection }"
+      filename="logPrimarySpeciesHistory"/>
+
+    <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{ /Tasks/pressureCollection }"
+      filename="pressureHistory"/>
+
+    <TimeHistory
+      name="kineticReactionHistoryOutput"
+      sources="{ /Tasks/kineticRateCollection }"
+      filename="kineticReactionHistory"/>
+
+    <TimeHistory
+      name="porosityHistoryOutput"
+      sources="{ /Tasks/porosityCollection }"
+      filename="porosityHistory"/>
+
+    <TimeHistory
+      name="surfaceAreaHistoryOutput"
+      sources="{ /Tasks/surfaceAreaCollection }"
+      filename="surfaceAreaHistory"/>
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
