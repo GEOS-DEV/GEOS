@@ -86,20 +86,9 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   m_numPrimarySpecies( 0 ),
   m_numKineticReactions( 0 ),
   m_hasDiffusion( 0 ),
-  m_isUpdateReactivePorosity( 0 ),
-  m_isUpdateSurfaceArea( 0 )
+  m_hasReactivePorosity( 0 )
 {
   // To add modeling parameters we want to add here
-
-  this->registerWrapper( viewKeyStruct::isUpdateReactivePorosityString(), &m_isUpdateReactivePorosity ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether use the reactive porosity or not" );
-
-  this->registerWrapper( viewKeyStruct::isUpdateSurfaceAreaString(), &m_isUpdateSurfaceArea ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether to update the surface area or not" );
 
   this->registerWrapper( viewKeyStruct::immobilePrimarySpeciesIndicesString(), &m_immobilePrimarySpeciesIndices ).
     setApplyDefaultValue( { } ).
@@ -138,6 +127,13 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       if( !diffusionName.empty() )
       {
         m_hasDiffusion = true;
+      }
+
+      // The porosity is driven by the reactions as soon as a reactive porosity model is used
+      string const reactivePorosityName = getConstitutiveName< ReactivePorosity >( subRegion );
+      if( !reactivePorosityName.empty() )
+      {
+        m_hasReactivePorosity = true;
       }
     } );
   } );
@@ -232,14 +228,7 @@ void SinglePhaseReactiveTransport::validateConstitutiveModels( DomainPartition &
     {
       string const & porosityModelName = getConstitutiveName< PorosityBase >( subRegion );
 
-      PorosityBase const & porosity = getConstitutiveModel< PorosityBase >( subRegion, porosityModelName );
-
-      GEOS_THROW_IF( m_isUpdateReactivePorosity && (porosity.getCatalogName() != "ReactivePorosity"),
-                     GEOS_FMT( "SinglePhaseReactiveTransport {}: the reaction porosity update option is enabled in the solver, but the porosity model {} is not for reactive porosity",
-                               getDataContext(), porosity.getDataContext() ),
-                     InputError );
-
-      if( m_isUpdateReactivePorosity )
+      if( m_hasReactivePorosity )
       {
         ReactivePorosity const & reactivePorosity = getConstitutiveModel< ReactivePorosity >( subRegion, porosityModelName );
 
@@ -659,7 +648,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
 {
   GEOS_MARK_FUNCTION;
 
-  if( m_isUpdateReactivePorosity )
+  if( m_hasReactivePorosity )
   {
     arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const kineticReactionMolarIncrements = subRegion.getField< fields::flow::kineticReactionMolarIncrements >();
@@ -719,7 +708,7 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
   arrayView2d< real64 const, compflow::USD_COMP > const initialSurfaceArea = subRegion.getField< fields::flow::initialSurfaceArea >();
   arrayView2d< real64, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
 
-  if( m_isUpdateReactivePorosity && m_isUpdateSurfaceArea )
+  if( m_hasReactivePorosity )
   {
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );

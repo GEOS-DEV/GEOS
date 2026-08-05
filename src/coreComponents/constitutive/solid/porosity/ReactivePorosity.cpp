@@ -56,6 +56,11 @@ ReactivePorosity::ReactivePorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::mineralDensitiesString(), &m_mineralDensities ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Mineral densities" );
+
+  registerWrapper( viewKeyStruct::fixedPorosityString(), &m_fixedPorosity ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to update volume fractions without changing porosity (0 = update porosity, 1 = fixed porosity)" );
 }
 
 std::unique_ptr< ConstitutiveBase > ReactivePorosity::deliverClone( string const & name, Group * const parent ) const

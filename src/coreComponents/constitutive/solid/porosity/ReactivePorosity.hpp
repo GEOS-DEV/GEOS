@@ -44,7 +44,8 @@ public:
                            arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & volumeFractions_n,
                            integer const numKineticReactions,
                            arrayView1d< real64 const > const & molarWeights,
-                           arrayView1d< real64 const > const & mineralDensities ):
+                           arrayView1d< real64 const > const & mineralDensities,
+                           integer const fixedPorosity ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
                          dPorosity_dPressure,
@@ -56,40 +57,26 @@ public:
     m_volumeFractions_n( volumeFractions_n ),
     m_numKineticReactions( numKineticReactions ),
     m_molarWeights( molarWeights ),
-    m_mineralDensities( mineralDensities )
+    m_mineralDensities( mineralDensities ),
+    m_fixedPorosity( fixedPorosity )
   {}
 
   GEOS_HOST_DEVICE
-  void computePorosity( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements,
-                        arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & volumeFractions,
-                        arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & volumeFractions_n,
-                        real64 & porosity,
-                        real64 const & porosity_n,
-                        integer const & numKineticReactions,
-                        arrayView1d< real64 const > const & molarWeights,
-                        arrayView1d< real64 const > const & mineralDensities ) const
+  void computePorosityFromReaction( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements,
+                                    arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & volumeFractions,
+                                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & volumeFractions_n,
+                                    real64 & reactionPorosityIncrement,
+                                    integer const & numKineticReactions,
+                                    arrayView1d< real64 const > const & molarWeights,
+                                    arrayView1d< real64 const > const & mineralDensities ) const
   {
-    real64 porosityIncrement = 0.0;
-
     for( integer r=0; r < numKineticReactions; ++r )
     {
       real64 const volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
       volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
 
-      porosityIncrement -= volumeFractionIncrement;
+      reactionPorosityIncrement -= volumeFractionIncrement;
     }
-
-    porosity = porosity_n + porosityIncrement;
-
-    if( porosity < 0 )
-    {
-      porosity = 0;
-    }
-    else if( porosity > 1.0 )
-    {
-      porosity = 1.0;
-    }
-
   }
 
   GEOS_HOST_DEVICE
@@ -97,14 +84,29 @@ public:
                             localIndex const q,
                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
   {
-    computePorosity( kineticReactionMolarIncrements,
-                     m_volumeFractions[k][q],
-                     m_volumeFractions_n[k][q],
-                     m_newPorosity[k][q],
-                     m_porosity_n[k][q],
-                     m_numKineticReactions,
-                     m_molarWeights,
-                     m_mineralDensities );
+    real64 reactionPorosityIncrement = 0.0;
+
+    computePorosityFromReaction( kineticReactionMolarIncrements,
+                                 m_volumeFractions[k][q],
+                                 m_volumeFractions_n[k][q],
+                                 reactionPorosityIncrement,
+                                 m_numKineticReactions,
+                                 m_molarWeights,
+                                 m_mineralDensities );
+
+    if( !m_fixedPorosity )
+    {
+      m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
+
+      if( m_newPorosity[k][q] < 0 )
+      {
+        m_newPorosity[k][q] = 0;
+      }
+      else if( m_newPorosity[k][q] > 1.0 )
+      {
+        m_newPorosity[k][q] = 1.0;
+      }
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -125,6 +127,24 @@ public:
     return m_initialVolumeFractions[k][q][r];
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 >
+  getVolumeFractions( localIndex const k,
+                      localIndex const q ) const
+  {
+    return m_volumeFractions[k][q];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 >
+  getInitialVolumeFractions( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_initialVolumeFractions[k][q];
+  }
+
 protected:
 
   arrayView3d< real64, reactivefluid::USD_SPECIES > m_volumeFractions;
@@ -134,6 +154,9 @@ protected:
   integer const m_numKineticReactions;
   arrayView1d< real64 const > const m_molarWeights;
   arrayView1d< real64 const > const m_mineralDensities;
+
+  /// flag to keep the porosity unchanged while still tracking the mineral volume fractions
+  integer const m_fixedPorosity;
 };
 
 
@@ -167,6 +190,7 @@ public:
     static constexpr char const * volumeFractions_nString() { return "volumeFractions_n"; }
     static constexpr char const * molarWeightsString() { return "molarWeights"; }
     static constexpr char const * mineralDensitiesString() { return "mineralDensities"; }
+    static constexpr char const * fixedPorosityString() { return "fixedPorosity"; }
   } viewKeys;
 
 
@@ -189,7 +213,8 @@ public:
                           m_volumeFractions_n,
                           m_numKineticReactions,
                           m_molarWeights,
-                          m_mineralDensities );
+                          m_mineralDensities,
+                          m_fixedPorosity );
   }
 
 
@@ -207,6 +232,9 @@ private:
   integer m_numKineticReactions;
   array1d< real64 > m_molarWeights;
   array1d< real64 > m_mineralDensities;
+
+  /// flag to keep the porosity unchanged while still tracking the mineral volume fractions
+  integer m_fixedPorosity;
 
 };
 
