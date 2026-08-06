@@ -205,5 +205,100 @@ partitionWeighted( ArrayOfArraysView< idx_t const, idx_t > const & graph,
   return part;
 }
 
+array1d< idx_t >
+partitionWeighted( ArrayOfArraysView< idx_t const, idx_t > const & graph,
+                   arrayView1d< idx_t const > const & edgeWeights,
+                   arrayView2d< idx_t const > const & vertexWeights,
+                   arrayView1d< idx_t const > const & vertDist,
+                   idx_t const numParts,
+                   arrayView1d< real64 const > const & imbalance,
+                   MPI_Comm comm,
+                   int const numRefinements,
+                   idx_t const seed )
+{
+  GEOS_ERROR_IF( numParts <= 0, "Number of partitions must be strictly positive" );
+
+  idx_t const numVertices = graph.size();
+  idx_t const numConstraints = vertexWeights.size( 1 );
+  idx_t const numAdjacencies = numVertices > 0 ? graph.getOffsets()[numVertices] : 0;
+  GEOS_ERROR_IF_NE_MSG( vertexWeights.size( 0 ), numVertices,
+                        "ParMETIS vertex-weight row count must match the local graph size" );
+  GEOS_ERROR_IF( numConstraints <= 0, "ParMETIS requires at least one balance constraint" );
+  GEOS_ERROR_IF_NE_MSG( imbalance.size(), numConstraints,
+                        "ParMETIS requires one imbalance tolerance per constraint" );
+  GEOS_ERROR_IF_NE_MSG( edgeWeights.size(), numAdjacencies,
+                        "ParMETIS edge weights must match the CSR adjacency array" );
+  for( idx_t i = 0; i < numAdjacencies; ++i )
+  {
+    GEOS_ERROR_IF( edgeWeights[i] <= 0, "ParMETIS edge weights must be positive" );
+  }
+  for( idx_t i = 0; i < numVertices; ++i )
+  {
+    for( idx_t k = 0; k < numConstraints; ++k )
+    {
+      GEOS_ERROR_IF( vertexWeights( i, k ) < 0, "ParMETIS vertex weights must be nonnegative" );
+    }
+  }
+
+  array1d< idx_t > part( numVertices );
+  if( numParts == 1 )
+  {
+    return part;
+  }
+
+  array1d< real_t > targetWeights( numParts * numConstraints );
+  targetWeights.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
+
+  array1d< real_t > imbalanceVector( numConstraints );
+  for( idx_t k = 0; k < numConstraints; ++k )
+  {
+    GEOS_ERROR_IF( imbalance[k] < 0.0,
+                   GEOS_FMT( "ParMETIS imbalance tolerance {} is negative", imbalance[k] ) );
+    imbalanceVector[k] = static_cast< real_t >( 1.0 + imbalance[k] );
+  }
+
+  idx_t wgtflag = 3;
+  idx_t numflag = 0;
+  idx_t ncon = numConstraints;
+  idx_t npart = numParts;
+  idx_t options[4] = { 1, 0, seed, PARMETIS_PSR_UNCOUPLED };
+  idx_t edgecut = 0;
+
+  idx_t dummyOffset = 0;
+  idx_t dummyAdjacency = 0;
+  idx_t dummyWeight = 0;
+  idx_t dummyPart = 0;
+  idx_t * xadj = numVertices > 0 ? const_cast< idx_t * >( graph.getOffsets() ) : &dummyOffset;
+  idx_t * adjncy = numAdjacencies > 0 ? const_cast< idx_t * >( graph.getValues() ) : &dummyAdjacency;
+  idx_t * adjacencyWeights = numAdjacencies > 0 ? const_cast< idx_t * >( edgeWeights.data() ) : &dummyWeight;
+  idx_t * vertexWeightData = numVertices > 0 ? const_cast< idx_t * >( vertexWeights.data() ) : &dummyWeight;
+  idx_t * partData = numVertices > 0 ? part.data() : &dummyPart;
+
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway(
+                         const_cast< idx_t * >( vertDist.data() ),
+                         xadj,
+                         adjncy,
+                         vertexWeightData,
+                         adjacencyWeights,
+                         &wgtflag,
+                         &numflag, &ncon, &npart, targetWeights.data(),
+                         imbalanceVector.data(), options, &edgecut, partData, &comm ) );
+
+  for( int iter = 0; iter < numRefinements; ++iter )
+  {
+    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway(
+                           const_cast< idx_t * >( vertDist.data() ),
+                           xadj,
+                           adjncy,
+                           vertexWeightData,
+                           adjacencyWeights,
+                           &wgtflag,
+                           &numflag, &ncon, &npart, targetWeights.data(),
+                           imbalanceVector.data(), options, &edgecut, partData, &comm ) );
+  }
+
+  return part;
+}
+
 } // namespace parmetis
 } // namespace geos

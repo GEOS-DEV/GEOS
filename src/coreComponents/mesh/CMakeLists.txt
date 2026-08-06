@@ -242,6 +242,12 @@ if( ENABLE_PARMETIS )
     list( APPEND tplDependencyList parmetis metis )
 endif()
 
+if( ENABLE_METIS )
+    set( mesh_headers ${mesh_headers} generators/METISInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/METISInterface.cpp )
+    list( APPEND tplDependencyList metis )
+endif()
+
 if( ENABLE_SCOTCH )
     set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
     set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )

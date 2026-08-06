@@ -82,6 +82,30 @@ partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & gra
                    pmet_idx_t const numParts,
                    MPI_Comm comm,
                    int const numRefinements );
+
+/**
+ * @brief Partition a graph with edge weights and multiple balance constraints.
+ * @param graph The adjacency graph.
+ * @param edgeWeights Positive edge weights in CSR order.
+ * @param vertexWeights Vertex weights with shape [numVertices][numConstraints].
+ * @param vertDist The distributed vertex offsets.
+ * @param numParts Number of target partitions.
+ * @param imbalance Relative imbalance tolerance for every constraint.
+ * @param comm MPI communicator.
+ * @param numRefinements Number of refinement passes.
+ * @param seed Deterministic ParMETIS seed.
+ * @return Partition assignment for every locally owned vertex.
+ */
+array1d< pmet_idx_t >
+partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                   arrayView1d< pmet_idx_t const > const & edgeWeights,
+                   arrayView2d< pmet_idx_t const > const & vertexWeights,
+                   arrayView1d< pmet_idx_t const > const & vertDist,
+                   pmet_idx_t numParts,
+                   arrayView1d< real64 const > const & imbalance,
+                   MPI_Comm comm,
+                   int numRefinements,
+                   pmet_idx_t seed = 2022 );
 } // namespace parmetis
 } // namespace geos
 

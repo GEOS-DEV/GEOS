@@ -5,7 +5,10 @@ set( mesh_tests
      testGeometricObjects.cpp
      testGraphColoring.cpp
      testMeshEnums.cpp )
-     
+
+if( ENABLE_METIS )
+  list( APPEND mesh_tests testMETISInterface.cpp )
+endif()
 
 set( mesh_tests_mpi
      testGraphColoringMPI.cpp )
