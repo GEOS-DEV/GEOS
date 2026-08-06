@@ -28,6 +28,7 @@
 #include <vtkPointData.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkVersionMacros.h>
 
 #include <algorithm>
 #include <array>
@@ -160,7 +161,12 @@ MeshArrays getMeshArrays( vtkUnstructuredGrid const & mesh )
 
   vtkIdTypeArray * const offsets = vtkIdTypeArray::FastDownCast( cells->GetOffsetsArray() );
   vtkIdTypeArray * const connectivity = vtkIdTypeArray::FastDownCast( cells->GetConnectivityArray() );
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+  vtkUnsignedCharArray * const cellTypes =
+    vtkUnsignedCharArray::FastDownCast( mutableMesh.GetCellTypes() );
+#else
   vtkUnsignedCharArray * const cellTypes = mutableMesh.GetCellTypesArray();
+#endif
   vtkIdTypeArray * const pointIds = vtkIdTypeArray::FastDownCast(
     mutableMesh.GetPointData()->GetGlobalIds() );
   vtkIdTypeArray * const cellIds = vtkIdTypeArray::FastDownCast(

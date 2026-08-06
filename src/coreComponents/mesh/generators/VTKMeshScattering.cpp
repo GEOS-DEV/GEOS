@@ -43,6 +43,7 @@
 #endif
 #include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkVersionMacros.h>
 
 #include <algorithm>
 #include <cstring>
@@ -335,7 +336,11 @@ void packGrid( vtkUnstructuredGrid * grid,
   // Cell types, offsets, connectivity
   if( nCells > 0 )
   {
-    vtkUnsignedCharArray * types = grid->GetCellTypesArray();
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+    vtkDataArray * const types = grid->GetCellTypes();
+#else
+    vtkUnsignedCharArray * const types = grid->GetCellTypesArray();
+#endif
     appendBytes( buf, types->GetVoidPointer( 0 ), nCells * sizeof( unsigned char ) );
 
     appendCellArray( buf, grid->GetCells() );

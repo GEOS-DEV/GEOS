@@ -308,7 +308,6 @@ getWell( WellElementSubRegion const & subRegion,
   localIndex const numPoints = subRegion.size() > 0 ? subRegion.size() + 1 : 0;
   points->SetNumberOfPoints( numPoints );
   auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
-  cellsArray->SetNumberOfCells( subRegion.size() );
   localIndex const numberOfNodesPerElement = subRegion.numNodesPerElement();
   GEOS_ERROR_IF_NE( numberOfNodesPerElement, 2 );
   stdVector< vtkIdType > connectivity( numberOfNodesPerElement );
@@ -358,7 +357,6 @@ getSurface( FaceElementSubRegion const & subRegion,
   auto & faceToNodes = faceManager.nodeList();
 
   auto cellArray = vtkSmartPointer< vtkCellArray >::New();
-  cellArray->SetNumberOfCells( subRegion.size() );
   stdVector< int > cellTypes;
   cellTypes.reserve( subRegion.size() );
 
@@ -599,7 +597,6 @@ static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
-  cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
   stdVector< int > cellType;
   cellType.reserve( region.getNumberOfParticles< ParticleRegion >() );
 
