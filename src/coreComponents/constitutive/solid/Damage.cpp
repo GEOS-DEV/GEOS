@@ -168,6 +168,8 @@ void Damage< BASE >::saveConvergedState() const
   } );
 }
 
+template class Damage< ElasticIsotropic >;
+
 typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageElasticIsotropic, string const &, Group * const )

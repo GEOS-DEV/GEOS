@@ -191,6 +191,14 @@ if( ENABLE_HYPRE )
 
     list( APPEND tplDependencyList hypre umpire )
 
+    if( ENABLE_HYPREDRV )
+        list( APPEND linearAlgebra_headers
+              interfaces/hypre/hypredrive.hpp )
+        list( APPEND linearAlgebra_sources
+              interfaces/hypre/hypredrive.cpp )
+        list( APPEND tplDependencyList HYPREDRV::HYPREDRV )
+    endif()
+
 endif()
 
 if( ENABLE_PETSC )

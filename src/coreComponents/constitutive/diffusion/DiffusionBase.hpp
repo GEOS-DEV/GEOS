@@ -140,8 +140,7 @@ public:
    *
    * Note: this is needed because for now, the temperature is treated **explicitly** in the diffusion tensor
    */
-  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
-  { GEOS_UNUSED_VAR( initialTemperature ); }
+  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const;
 
   /**
    * @brief Save the temperature state (needed when diffusion depends on temperature)

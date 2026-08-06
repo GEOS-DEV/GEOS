@@ -136,12 +136,14 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
 
@@ -910,8 +912,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     {
       blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
-      // Using GEOSX implementation of Jacobi preconditioner
-      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
       // Using LAI implementation of Jacobi preconditioner
       LinearSolverParameters tracParams;
@@ -943,11 +943,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
                          std::move( mechPrecond ) );
 
     return precond;
-  }
-  else
-  {
-    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
-    //return SolverBase::createPreconditioner( domain );
   }
   return {};
 }
@@ -1592,7 +1587,8 @@ void SolidMechanicsLagrangeContact::
                 }
 
                 real64 dLimitTau_dNormalTraction = 0;
-                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( kfe,
+                                                                                            traction[kfe][0],
                                                                                             dLimitTau_dNormalTraction );
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
@@ -2299,7 +2295,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                frictionWrapper.computeLimitTangentialTractionNorm( kfe,
+                                                                    traction[kfe][0],
                                                                     dLimitTangentialTractionNorm_dTraction );
 
               // store to use in acceleration when enabled

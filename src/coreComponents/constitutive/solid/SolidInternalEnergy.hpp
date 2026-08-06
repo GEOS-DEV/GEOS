@@ -62,10 +62,11 @@ public:
                 real64 & internalEnergy,
                 real64 & dInternalEnergy_dTemperature ) const
   {
-    real64 volumetricHeatCapacity = m_referenceVolumetricHeatCapacity + m_dVolumetricHeatCapacity_dTemperature * ( temperature - m_referenceTemperature );
+    real64 const deltaT = temperature - m_referenceTemperature;
+    real64 const volumetricHeatCapacity = m_referenceVolumetricHeatCapacity + m_dVolumetricHeatCapacity_dTemperature * deltaT;
 
-    internalEnergy = m_referenceInternalEnergy + volumetricHeatCapacity * ( temperature - m_referenceTemperature );
-    dInternalEnergy_dTemperature =  volumetricHeatCapacity + m_dVolumetricHeatCapacity_dTemperature * ( temperature - m_referenceTemperature );
+    internalEnergy = m_referenceInternalEnergy + m_referenceVolumetricHeatCapacity * deltaT + 0.5 * m_dVolumetricHeatCapacity_dTemperature * deltaT * deltaT;
+    dInternalEnergy_dTemperature = volumetricHeatCapacity;
   }
 
 private:

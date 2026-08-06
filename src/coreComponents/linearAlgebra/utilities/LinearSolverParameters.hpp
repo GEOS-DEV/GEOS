@@ -79,6 +79,7 @@ struct LinearSolverParameters
 
   SolverType solverType = SolverType::direct;          ///< Solver type
   PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
+  Path hypredriveInputFile;                            ///< Optional authoritative hypredrive YAML file
 
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct
@@ -294,42 +295,43 @@ struct LinearSolverParameters
      */
     enum class StrategyType : integer
     {
-      invalid,                                   ///< default value, to ensure solver sets something
-      singlePhaseReservoirFVM,                   ///< finite volume single-phase flow with wells
-      thermalSinglePhaseReservoirFVM,            ///< finite volume thermal single-phase flow with wells
-      singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
-      singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
-      singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
-      thermalSinglePhasePoromechanics,           ///< thermal single phase poromechanics with finite volume single phase flow
-      hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
-      singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with FV embedded fractures
-      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with conforming fractures
+      invalid,                                        ///< default value, to ensure solver sets something
+      singlePhaseReservoirFVM,                        ///< finite volume single-phase flow with wells
+      thermalSinglePhaseReservoirFVM,                 ///< finite volume thermal single-phase flow with wells
+      singlePhaseHybridFVM,                           ///< hybrid finite volume single-phase flow
+      singlePhaseReservoirHybridFVM,                  ///< hybrid finite volume single-phase flow with wells
+      singlePhasePoromechanics,                       ///< single phase poromechanics with finite volume single phase flow
+      thermalSinglePhasePoromechanics,                ///< thermal single phase poromechanics with finite volume single phase flow
+      hybridSinglePhasePoromechanics,                 ///< single phase poromechanics with hybrid finite volume single phase flow
+      singlePhasePoromechanicsEmbeddedFractures,      ///< single phase poromechanics with FV embedded fractures
+      singlePhasePoromechanicsConformingFractures,    ///< single phase poromechanics with conforming fractures
       singlePhasePoromechanicsConformingFracturesALM, ///< single phase poromechanics with conforming fractures for ALM
-      singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
-      compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
-      compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
-      compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
-      compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
-      immiscibleMultiphaseFVM,                   ///< finite volume immiscible multiphase flow
-      reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
-      thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
-      thermalCompositionalMultiphaseReservoirFVM,///< finite volume thermal compositional multiphase flow
-      multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
-      multiphasePoromechanicsReservoirFVM,       ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
-      thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
-      hydrofracture,                             ///< hydrofracture
-      lagrangianContactMechanics,                ///< Lagrangian contact mechanics
-      augmentedLagrangianContactMechanics,       ///< Augmented Lagrangian contact mechanics
-      lagrangianContactMechanicsBubbleStab,      ///< Lagrangian contact mechanics with bubble stabilization
-      solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
+      singlePhasePoromechanicsReservoirFVM,           ///< single phase poromechanics with finite volume single phase flow with wells
+      thermalSinglePhasePoromechanicsReservoirFVM,    ///< thermal single phase poromechanics with finite volume single phase flow with wells
+      compositionalMultiphaseFVM,                     ///< finite volume compositional multiphase flow
+      compositionalMultiphaseHybridFVM,               ///< hybrid finite volume compositional multiphase flow
+      compositionalMultiphaseReservoirFVM,            ///< finite volume compositional multiphase flow with wells
+      compositionalMultiphaseReservoirHybridFVM,      ///< hybrid finite volume compositional multiphase flow with wells
+      immiscibleMultiphaseFVM,                        ///< finite volume immiscible multiphase flow
+      reactiveCompositionalMultiphaseOBL,             ///< finite volume reactive compositional flow with OBL
+      thermalCompositionalMultiphaseFVM,              ///< finite volume thermal compositional multiphase flow
+      thermalCompositionalMultiphaseReservoirFVM,     ///< finite volume thermal compositional multiphase flow
+      multiphasePoromechanics,                        ///< multiphase poromechanics with finite volume compositional multiphase flow
+      multiphasePoromechanicsReservoirFVM,            ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
+      thermalMultiphasePoromechanics,                 ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
+      hydrofracture,                                  ///< hydrofracture
+      lagrangianContactMechanics,                     ///< Lagrangian contact mechanics
+      augmentedLagrangianContactMechanics,            ///< Augmented Lagrangian contact mechanics
+      lagrangianContactMechanicsBubbleStab,           ///< Lagrangian contact mechanics with bubble stabilization
+      solidMechanicsEmbeddedFractures                 ///< Embedded fractures mechanics
     };
 
-    StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
-    integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
-    integer areWellsShut = false;                  ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the well
-                                                   ///< block
+    StrategyType strategy = StrategyType::invalid;    ///< Predefined MGR solution strategy (solver specific)
+    integer separateComponents = false;               ///< Apply a separate displacement component (SDC) filter before AMG construction
+    integer areWellsShut = false;                     ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the well
+                                                      ///< block
   }
-  mgr;                                             ///< Multigrid reduction (MGR) parameters
+  mgr;                                                ///< Multigrid reduction (MGR) parameters
 
   /// Incomplete factorization parameters
   struct IFact
@@ -582,6 +584,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "singlePhasePoromechanicsEmbeddedFractures",
               "singlePhasePoromechanicsConformingFractures",
               "singlePhasePoromechanicsReservoirFVM",
+              "thermalSinglePhasePoromechanicsReservoirFVM",
               "compositionalMultiphaseFVM",
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
