@@ -34,6 +34,8 @@
 #include <vtkDataSet.h>
 #include <vtkCellData.h>
 
+#include <cmath>
+
 namespace geos
 {
 using namespace dataRepository;
@@ -82,6 +84,68 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to refine mesh partitioning" );
+
+  registerWrapper( viewKeyStruct::partitionModelString(), &m_partitionModel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( vtk::PartitionModel::legacy ).
+    setDescription( "Partition topology/objective: 'legacy' preserves the existing scatter/refinement path; "
+                    "'hybrid' uses exact shared faces and points on a serial root mesh and scatters 3D cells once" );
+
+  registerWrapper( viewKeyStruct::partitionFVMCommunicationWeightString(),
+                   &m_hybridPartitionOptions.fvmCommunicationWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Relative hybrid objective weight for exact cut-face communication" );
+
+  registerWrapper( viewKeyStruct::partitionFEMCommunicationWeightString(),
+                   &m_hybridPartitionOptions.femCommunicationWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Relative hybrid objective weight for exact shared-node replication" );
+
+  registerWrapper( viewKeyStruct::partitionNeighborPenaltyString(),
+                   &m_hybridPartitionOptions.neighborPenalty ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Optional weak hybrid objective penalty for each distinct neighboring-rank pair" );
+
+  registerWrapper( viewKeyStruct::partitionImbalanceString(),
+                   &m_hybridPartitionOptions.imbalance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.05 ).
+    setDescription( "Relative imbalance tolerances for FVM work, FEM work, and resident memory" );
+
+  registerWrapper( viewKeyStruct::partitionSeedString(), &m_hybridPartitionOptions.seed ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 2022 ).
+    setDescription( "Deterministic METIS seed for hybrid root-local partitioning" );
+
+  registerWrapper( viewKeyStruct::partitionFVMWeightFieldString(),
+                   &m_hybridPartitionOptions.fvmWeightField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional scalar VTK cell array overriding topology-derived FVM work" );
+
+  registerWrapper( viewKeyStruct::partitionFEMWeightFieldString(),
+                   &m_hybridPartitionOptions.femWeightField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional scalar VTK cell array overriding topology-derived FEM work" );
+
+  registerWrapper( viewKeyStruct::partitionMemoryWeightFieldString(),
+                   &m_hybridPartitionOptions.memoryWeightField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional scalar VTK cell array overriding topology-derived resident-memory work" );
+
+  registerWrapper( viewKeyStruct::partitionRootGraphMemoryLimitMBString(),
+                   &m_hybridPartitionOptions.rootGraphMemoryLimitMB ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Root hybrid-graph peak-memory limit in MiB; zero is unlimited and falls back explicitly when exceeded" );
+
+  registerWrapper( viewKeyStruct::partitionDiagnosticsString(),
+                   &m_hybridPartitionOptions.diagnostics ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Enable detailed per-rank hybrid partition load and topology diagnostics" );
 
   registerWrapper( viewKeyStruct::scatterMethodString(), &m_scatterMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -137,6 +201,41 @@ void VTKMeshGenerator::postInputInitialization()
                    InputError, getDataContext() );
 
     m_dataSource->open();
+  }
+
+  GEOS_ERROR_IF( m_partitionRefinement < 0,
+                 "partitionRefinement must be nonnegative", getDataContext() );
+  if( m_partitionModel == vtk::PartitionModel::hybrid )
+  {
+#ifndef GEOS_USE_METIS
+    GEOS_ERROR( "partitionModel='hybrid' requires GEOS to be built with ENABLE_METIS=ON",
+                getDataContext() );
+#endif
+    GEOS_ERROR_IF( m_partitionMethod != vtk::PartitionMethod::parmetis,
+                   "partitionModel='hybrid' requires partitionMethod='parmetis'; PT-Scotch remains available "
+                   "through partitionModel='legacy'", getDataContext() );
+    GEOS_ERROR_IF( !std::isfinite( m_hybridPartitionOptions.fvmCommunicationWeight ) ||
+                   !std::isfinite( m_hybridPartitionOptions.femCommunicationWeight ) ||
+                   !std::isfinite( m_hybridPartitionOptions.neighborPenalty ) ||
+                   m_hybridPartitionOptions.fvmCommunicationWeight < 0.0 ||
+                   m_hybridPartitionOptions.femCommunicationWeight < 0.0 ||
+                   m_hybridPartitionOptions.neighborPenalty < 0.0,
+                   "Hybrid partition communication weights and neighbor penalty must be finite and nonnegative",
+                   getDataContext() );
+    GEOS_ERROR_IF( m_hybridPartitionOptions.fvmCommunicationWeight == 0.0 &&
+                   m_hybridPartitionOptions.femCommunicationWeight == 0.0,
+                   "At least one hybrid partition communication weight must be positive", getDataContext() );
+    GEOS_ERROR_IF_NE_MSG( m_hybridPartitionOptions.imbalance.size(), 3,
+                          "partitionImbalance must contain exactly three values" );
+    for( real64 const tolerance : m_hybridPartitionOptions.imbalance )
+    {
+      GEOS_ERROR_IF( !std::isfinite( tolerance ) || tolerance < 0.0,
+                     "partitionImbalance values must be finite and nonnegative", getDataContext() );
+    }
+    GEOS_ERROR_IF( m_hybridPartitionOptions.rootGraphMemoryLimitMB < 0,
+                   "partitionRootGraphMemoryLimitMB must be nonnegative", getDataContext() );
+    GEOS_ERROR_IF( m_hybridPartitionOptions.diagnostics < 0,
+                   "partitionDiagnostics must be nonnegative", getDataContext() );
   }
 
 }
@@ -240,6 +339,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                 "VTKMeshGenerator redistributeMeshes input",
                                 allMeshes.getMainMesh() );
     vtk::meshDebug::log( comm, "VTKMeshGenerator redistributeMeshes begin" );
+    vtk::HybridPartitionOptions hybridOptions = m_hybridPartitionOptions;
+    hybridOptions.refinementPasses = m_partitionRefinement;
+    hybridOptions.fractureWeight = m_partitionFractureWeight;
     vtk::AllMeshes redistributedMeshes = vtk::redistributeMeshes( getLogLevel(),
                                                                    allMeshes.getMainMesh(),
                                                                    allMeshes.getFaceBlocks(),
@@ -250,7 +352,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   m_partitionRefinement,
                                                                   m_partitionFractureWeight,
                                                                   m_useGlobalIds,
-                                                                  m_structuredIndexAttributeName );
+                                                                  m_structuredIndexAttributeName,
+                                                                  m_partitionModel,
+                                                                  hybridOptions );
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     vtk::meshDebug::logDataSet( comm,
@@ -260,12 +364,23 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                           "VTKMeshGenerator redistributeMeshes faceBlockResultCount=%lld",
                           static_cast< long long >( m_faceBlockMeshes.size() ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
-    vtk::meshDebug::log( comm, "VTKMeshGenerator exchangeBoundingBoxes begin" );
-    stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
-    vtk::meshDebug::logf( comm,
-                          "VTKMeshGenerator exchangeBoundingBoxes end boxes=%lld",
-                          static_cast< long long >( boxes.size() ) );
-    stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    stdVector< int > neighbors;
+    if( redistributedMeshes.hasExactNeighborRanks() )
+    {
+      neighbors = redistributedMeshes.getExactNeighborRanks();
+      vtk::meshDebug::logf( comm,
+                            "VTKMeshGenerator using exact hybrid neighbors count=%lld",
+                            static_cast< long long >( neighbors.size() ) );
+    }
+    else
+    {
+      vtk::meshDebug::log( comm, "VTKMeshGenerator exchangeBoundingBoxes begin" );
+      stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
+      vtk::meshDebug::logf( comm,
+                            "VTKMeshGenerator exchangeBoundingBoxes end boxes=%lld",
+                            static_cast< long long >( boxes.size() ) );
+      neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    }
     partition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }

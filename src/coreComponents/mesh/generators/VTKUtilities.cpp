@@ -77,6 +77,7 @@
 #endif
 
 #include <numeric>
+#include <chrono>
 #include <type_traits>
 
 
@@ -2060,6 +2061,43 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   return result;
 }
 
+/**
+ * @brief Broadcast compact root-computed rank-neighbor lists and select this rank's row.
+ */
+static stdVector< int >
+distributeExactNeighborRanks( stdVector< stdVector< int > > const & rootNeighbors,
+                              MPI_Comm const comm )
+{
+  int const rank = MpiWrapper::commRank( comm );
+  int const numRanks = MpiWrapper::commSize( comm );
+  array1d< int > offsets( numRanks + 1 );
+  if( rank == 0 )
+  {
+    GEOS_ERROR_IF_NE_MSG( rootNeighbors.size(), static_cast< std::size_t >( numRanks ),
+                          "Root hybrid neighbor-list count must match the MPI size" );
+    for( int part = 0; part < numRanks; ++part )
+    {
+      offsets[part + 1] = offsets[part] +
+                          LvArray::integerConversion< int >( rootNeighbors[part].size() );
+    }
+  }
+  MpiWrapper::bcast( offsets.data(), LvArray::integerConversion< int >( offsets.size() ), 0, comm );
+
+  array1d< int > flatNeighbors( offsets[numRanks] );
+  if( rank == 0 )
+  {
+    for( int part = 0; part < numRanks; ++part )
+    {
+      std::copy( rootNeighbors[part].begin(), rootNeighbors[part].end(),
+                 flatNeighbors.begin() + offsets[part] );
+    }
+  }
+  MpiWrapper::bcast( flatNeighbors.data(),
+                     LvArray::integerConversion< int >( flatNeighbors.size() ), 0, comm );
+  return stdVector< int >( flatNeighbors.begin() + offsets[rank],
+                           flatNeighbors.begin() + offsets[rank + 1] );
+}
+
 AllMeshes
 redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
@@ -2071,15 +2109,21 @@ redistributeMeshes( integer const logLevel,
                     int const partitionRefinement,
                     int const partitionFractureWeight,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName )
+                    string const & structuredIndexAttributeName,
+                    PartitionModel const partitionModel,
+                    HybridPartitionOptions const & hybridOptions )
 {
   GEOS_MARK_FUNCTION;
   int const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
+  GEOS_ERROR_IF( partitionModel == PartitionModel::hybrid && method != PartitionMethod::parmetis,
+                 "partitionModel='hybrid' requires partitionMethod='parmetis'; use partitionModel='legacy' "
+                 "to retain PT-Scotch partitioning" );
   meshDebug::logDataSet( comm, "redistributeMeshes begin loadedMesh", loadedMesh.GetPointer() );
   meshDebug::logf( comm,
-                   "redistributeMeshes params numRanks=%d scatterMethod=%d partitionRefinement=%d faceBlocks=%lld useGlobalIds=%d",
-                   numRanks, static_cast< int >( scatterMethod ), partitionRefinement,
+                   "redistributeMeshes params numRanks=%d scatterMethod=%d partitionModel=%d partitionRefinement=%d faceBlocks=%lld useGlobalIds=%d",
+                   numRanks, static_cast< int >( scatterMethod ), static_cast< int >( partitionModel ),
+                   partitionRefinement,
                    static_cast< long long >( namesToFractures.size() ), useGlobalIds );
 
   int const numPartZ = structuredIndexAttributeName.empty() ? 1 : partitions[2];
@@ -2241,126 +2285,215 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   // Step 5: Initial redistribution of 3D cells
   // -----------------------------------------------------------------------
-  meshDebug::log( comm, "redistributeMeshes min 3D cells begin" );
-  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( cells3D->GetNumberOfCells(), comm );
-  meshDebug::logf( comm,
-                   "redistributeMeshes min 3D cells end minCellsOnAnyRank=%lld localCells=%lld hasSuperCells=%d",
-                   static_cast< long long >( minCellsOnAnyRank ),
-                   static_cast< long long >( cells3D->GetNumberOfCells() ),
-                   hasSuperCells ? 1 : 0 );
-
   vtkSmartPointer< vtkDataSet > redistributed3D;
+  bool usedDirectHybrid = false;
+  stdVector< int > exactNeighborRanks;
+  HybridPartitionMetrics hybridMetrics;
 
-  if( minCellsOnAnyRank == 0 )
+  if( partitionModel == PartitionModel::hybrid )
   {
-    if( hasSuperCells )
+    array1d< vtkIdType > cellCounts;
+    MpiWrapper::allGather( cells3D->GetNumberOfCells(), cellCounts, comm );
+    int useDirectHybrid = 0;
+    string fallbackReason;
+    if( rank == 0 )
     {
-      meshDebug::log( comm, "redistributeMeshes redistributeBySuperCellBlocks begin" );
-      redistributed3D = redistributeBySuperCellBlocks( cells3D, comm, scatterMethod, partitions );
-      meshDebug::logDataSet( comm,
-                             "redistributeMeshes redistributeBySuperCellBlocks end",
-                             redistributed3D.GetPointer() );
+      bool rootOwnsAllCells = cellCounts[0] > 0;
+      for( int otherRank = 1; otherRank < numRanks; ++otherRank )
+      {
+        rootOwnsAllCells = rootOwnsAllCells && cellCounts[otherRank] == 0;
+      }
+
+#ifdef GEOS_USE_METIS
+      if( !rootOwnsAllCells )
+      {
+        fallbackReason = "3D cells are already distributed rather than owned only by rank 0";
+      }
+      else if( isMeshStructured( mesh ) || !structuredIndexAttributeName.empty() )
+      {
+        fallbackReason = "structured meshes and structured-layer partitioning retain the legacy path";
+      }
+      else if( cells3D->GetNumberOfCells() < numRanks )
+      {
+        fallbackReason = GEOS_FMT( "{} atomic 3D cells cannot populate {} ranks",
+                                   cells3D->GetNumberOfCells(), numRanks );
+      }
+      else
+      {
+        string supportReason;
+        if( !isHybridPartitioningSupported( *cells3D, supportReason ) )
+        {
+          fallbackReason = supportReason;
+        }
+        else
+        {
+          int64_t const estimatedBytes = estimateHybridPartitionMemory( *cells3D );
+          long double const estimatedMiB = estimatedBytes / (1024.0L * 1024.0L);
+          if( hybridOptions.rootGraphMemoryLimitMB > 0 &&
+              estimatedMiB > hybridOptions.rootGraphMemoryLimitMB )
+          {
+            fallbackReason = GEOS_FMT( "estimated root graph peak {:.1f} MiB exceeds "
+                                       "partitionRootGraphMemoryLimitMB={}",
+                                       static_cast< real64 >( estimatedMiB ),
+                                       hybridOptions.rootGraphMemoryLimitMB );
+          }
+          else
+          {
+            useDirectHybrid = 1;
+            GEOS_LOG_RANK_0( GEOS_FMT( "Using direct-root hybrid partitioning (estimated graph peak {:.1f} MiB)",
+                                       static_cast< real64 >( estimatedMiB ) ) );
+          }
+        }
+      }
+#else
+      fallbackReason = "GEOS was built without serial METIS support";
+#endif
+    }
+    MpiWrapper::broadcast( useDirectHybrid, 0, comm );
+    MpiWrapper::broadcast( fallbackReason, 0, comm );
+
+    if( useDirectHybrid == 0 )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "partitionModel='hybrid' falling back to the legacy path: {}",
+                                 fallbackReason ) );
     }
     else
     {
-      meshDebug::log( comm, "redistributeMeshes scatterMesh begin" );
-      redistributed3D = scatterMesh( scatterMethod, *cells3D, partitions, comm );
-      meshDebug::logDataSet( comm, "redistributeMeshes scatterMesh end", redistributed3D.GetPointer() );
-
-      meshDebug::log( comm, "redistributeMeshes post-scatter min begin" );
-      if( MpiWrapper::min( redistributed3D->GetNumberOfCells(), comm ) == 0 )
+#ifdef GEOS_USE_METIS
+      HybridPartitionResult hybridResult;
+      if( rank == 0 )
       {
-        meshDebug::log( comm, "redistributeMeshes ensureNoEmptyRank begin" );
-        redistributed3D = ensureNoEmptyRank( redistributed3D, comm );
-        meshDebug::logDataSet( comm,
-                               "redistributeMeshes ensureNoEmptyRank end",
-                               redistributed3D.GetPointer() );
+        hybridResult = partitionHybridMeshOnRoot( *cells3D,
+                                                   hasSuperCells ? &superCellInfo : nullptr,
+                                                   hybridOptions,
+                                                   numRanks );
       }
-      meshDebug::log( comm, "redistributeMeshes post-scatter min end" );
+      vtkSmartPointer< vtkPartitionedDataSet > const split3D =
+        splitMeshByPartition( cells3D, numRanks, hybridResult.cellParts.toViewConst() );
+
+      auto const redistributionBegin = std::chrono::steady_clock::now();
+      meshDebug::log( comm, "redistributeMeshes direct hybrid redistribute begin" );
+      redistributed3D = vtk::redistribute( *split3D, comm );
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes direct hybrid redistribute end",
+                             redistributed3D.GetPointer() );
+      auto const redistributionEnd = std::chrono::steady_clock::now();
+
+      exactNeighborRanks = distributeExactNeighborRanks( hybridResult.rankNeighbors, comm );
+      if( rank == 0 )
+      {
+        hybridResult.metrics.redistributionSeconds =
+          std::chrono::duration< real64 >( redistributionEnd - redistributionBegin ).count();
+        hybridMetrics = hybridResult.metrics;
+        GEOS_LOG_RANK_0( GEOS_FMT( "Hybrid 3D VTK redistribution completed in {:.3f}s",
+                                   hybridMetrics.redistributionSeconds ) );
+      }
+      usedDirectHybrid = true;
+#endif
     }
   }
-  else
+
+  if( !usedDirectHybrid )
   {
-    // All ranks already have cells - no redistribution needed
-    redistributed3D = cells3D;
-    meshDebug::logDataSet( comm,
-                           "redistributeMeshes initial redistribution skipped",
-                           redistributed3D.GetPointer() );
+    meshDebug::log( comm, "redistributeMeshes min 3D cells begin" );
+    vtkIdType const minCellsOnAnyRank = MpiWrapper::min( cells3D->GetNumberOfCells(), comm );
+    meshDebug::logf( comm,
+                     "redistributeMeshes min 3D cells end minCellsOnAnyRank=%lld localCells=%lld hasSuperCells=%d",
+                     static_cast< long long >( minCellsOnAnyRank ),
+                     static_cast< long long >( cells3D->GetNumberOfCells() ),
+                     hasSuperCells ? 1 : 0 );
+
+    if( minCellsOnAnyRank == 0 )
+    {
+      if( hasSuperCells )
+      {
+        meshDebug::log( comm, "redistributeMeshes redistributeBySuperCellBlocks begin" );
+        redistributed3D = redistributeBySuperCellBlocks( cells3D, comm, scatterMethod, partitions );
+        meshDebug::logDataSet( comm,
+                               "redistributeMeshes redistributeBySuperCellBlocks end",
+                               redistributed3D.GetPointer() );
+      }
+      else
+      {
+        meshDebug::log( comm, "redistributeMeshes scatterMesh begin" );
+        redistributed3D = scatterMesh( scatterMethod, *cells3D, partitions, comm );
+        meshDebug::logDataSet( comm, "redistributeMeshes scatterMesh end", redistributed3D.GetPointer() );
+
+        meshDebug::log( comm, "redistributeMeshes post-scatter min begin" );
+        if( MpiWrapper::min( redistributed3D->GetNumberOfCells(), comm ) == 0 )
+        {
+          meshDebug::log( comm, "redistributeMeshes ensureNoEmptyRank begin" );
+          redistributed3D = ensureNoEmptyRank( redistributed3D, comm );
+          meshDebug::logDataSet( comm,
+                                 "redistributeMeshes ensureNoEmptyRank end",
+                                 redistributed3D.GetPointer() );
+        }
+        meshDebug::log( comm, "redistributeMeshes post-scatter min end" );
+      }
+    }
+    else
+    {
+      // All ranks already have cells - no redistribution needed
+      redistributed3D = cells3D;
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes initial redistribution skipped",
+                             redistributed3D.GetPointer() );
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 6: Legacy refined partitioning
+    // -----------------------------------------------------------------------
+    if( partitionRefinement > 0 )
+    {
+      meshDebug::logf( comm,
+                       "redistributeMeshes refinement begin partitionRefinement=%d hasSuperCells=%d structuredIndex=%d",
+                       partitionRefinement, hasSuperCells ? 1 : 0,
+                       structuredIndexAttributeName.empty() ? 0 : 1 );
+      if( hasSuperCells )
+      {
+        GEOS_LOG_RANK_0( "Refining partition with super-cell constraints..." );
+        redistributed3D = redistributeBySuperCellGraph(
+          redistributed3D, method, comm, partitionRefinement - 1, partitionFractureWeight );
+        meshDebug::logDataSet( comm,
+                               "redistributeMeshes redistributeBySuperCellGraph end",
+                               redistributed3D.GetPointer() );
+      }
+      else if( !structuredIndexAttributeName.empty() )
+      {
+        GEOS_LOG_RANK_0( "Refining partition with structured mesh layers..." );
+        AllMeshes tempWrapper;
+        tempWrapper.setMainMesh( redistributed3D );
+        tempWrapper.setFaceBlocks( stdMap< string, vtkSmartPointer< vtkDataSet > >() );
+        tempWrapper = redistributeByAreaGraphAndLayer(
+          tempWrapper, method, structuredIndexAttributeName, comm, numPartZ, partitionRefinement - 1 );
+        redistributed3D = tempWrapper.getMainMesh();
+        meshDebug::logDataSet( comm,
+                               "redistributeMeshes redistributeByAreaGraphAndLayer end",
+                               redistributed3D.GetPointer() );
+      }
+      else
+      {
+        GEOS_LOG_RANK_0( "Refining partition with standard cell graph..." );
+        redistributed3D = redistributeByCellGraph(
+          redistributed3D, method, comm, partitionRefinement - 1 );
+        meshDebug::logDataSet( comm,
+                               "redistributeMeshes redistributeByCellGraph end",
+                               redistributed3D.GetPointer() );
+      }
+      meshDebug::log( comm, "redistributeMeshes refinement end" );
+    }
+    else
+    {
+      meshDebug::log( comm, "redistributeMeshes refinement skipped" );
+    }
   }
 
-  // Check all ranks have cells after redistribution
+  // Check all ranks have cells after either route.
   meshDebug::logDataSet( comm,
                          "redistributeMeshes initial redistribution final",
                          redistributed3D.GetPointer() );
-  GEOS_ERROR_IF( redistributed3D->GetNumberOfCells() == 0, "Rank has no cells after initial redistribution." );
-
-
-  // -----------------------------------------------------------------------
-  // Step 6: Refined partitioning
-  // -----------------------------------------------------------------------
-  if( partitionRefinement > 0 )
-  {
-    meshDebug::logf( comm,
-                     "redistributeMeshes refinement begin partitionRefinement=%d hasSuperCells=%d structuredIndex=%d",
-                     partitionRefinement, hasSuperCells ? 1 : 0,
-                     structuredIndexAttributeName.empty() ? 0 : 1 );
-    if( hasSuperCells )
-    {
-      GEOS_LOG_RANK_0( "Refining partition with super-cell constraints..." );
-
-      redistributed3D = redistributeBySuperCellGraph(
-        redistributed3D,
-        method,
-        comm,
-        partitionRefinement - 1,
-        partitionFractureWeight );
-      meshDebug::logDataSet( comm,
-                             "redistributeMeshes redistributeBySuperCellGraph end",
-                             redistributed3D.GetPointer() );
-    }
-    else if( !structuredIndexAttributeName.empty() )
-    {
-      // Use structured mesh layered partitioning (no fractures/super-cells)
-      GEOS_LOG_RANK_0( "Refining partition with structured mesh layers..." );
-
-      // Wrap in AllMeshes for compatibility with redistributeByAreaGraphAndLayer
-      AllMeshes tempWrapper;
-      tempWrapper.setMainMesh( redistributed3D );
-      tempWrapper.setFaceBlocks( stdMap< string, vtkSmartPointer< vtkDataSet > >() );  // Empty fractures
-
-      tempWrapper = redistributeByAreaGraphAndLayer(
-        tempWrapper,
-        method,
-        structuredIndexAttributeName,
-        comm,
-        numPartZ,
-        partitionRefinement - 1 );
-
-      redistributed3D = tempWrapper.getMainMesh();
-      meshDebug::logDataSet( comm,
-                             "redistributeMeshes redistributeByAreaGraphAndLayer end",
-                             redistributed3D.GetPointer() );
-    }
-    else
-    {
-      // Use standard cell graph partitioning
-      GEOS_LOG_RANK_0( "Refining partition with standard cell graph..." );
-
-      redistributed3D = redistributeByCellGraph(
-        redistributed3D,
-        method,
-        comm,
-        partitionRefinement - 1 );
-      meshDebug::logDataSet( comm,
-                             "redistributeMeshes redistributeByCellGraph end",
-                             redistributed3D.GetPointer() );
-    }
-    meshDebug::log( comm, "redistributeMeshes refinement end" );
-  }
-  else
-  {
-    meshDebug::log( comm, "redistributeMeshes refinement skipped" );
-  }
+  GEOS_ERROR_IF( redistributed3D->GetNumberOfCells() == 0,
+                 "Rank has no cells after initial redistribution." );
 
   // -----------------------------------------------------------------------
   // Step 7: Merge 2D cells and fractures back with redistributed 3D cells
@@ -2378,6 +2511,10 @@ redistributeMeshes( integer const logLevel,
   meshDebug::logDataSet( comm,
                          "redistributeMeshes redistribute2DAndMergeWith3D main end",
                          finalResult.getMainMesh() );
+  if( usedDirectHybrid )
+  {
+    finalResult.setHybridMetadata( std::move( exactNeighborRanks ), hybridMetrics );
+  }
 
   // -----------------------------------------------------------------------
   // Step 8: Final logging

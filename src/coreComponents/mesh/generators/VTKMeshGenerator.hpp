@@ -115,7 +115,18 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * partitionModelString() { return "partitionModel"; }
     constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
+    constexpr static char const * partitionFVMCommunicationWeightString() { return "partitionFVMCommunicationWeight"; }
+    constexpr static char const * partitionFEMCommunicationWeightString() { return "partitionFEMCommunicationWeight"; }
+    constexpr static char const * partitionNeighborPenaltyString() { return "partitionNeighborPenalty"; }
+    constexpr static char const * partitionImbalanceString() { return "partitionImbalance"; }
+    constexpr static char const * partitionSeedString() { return "partitionSeed"; }
+    constexpr static char const * partitionFVMWeightFieldString() { return "partitionFVMWeightField"; }
+    constexpr static char const * partitionFEMWeightFieldString() { return "partitionFEMWeightField"; }
+    constexpr static char const * partitionMemoryWeightFieldString() { return "partitionMemoryWeightField"; }
+    constexpr static char const * partitionRootGraphMemoryLimitMBString() { return "partitionRootGraphMemoryLimitMB"; }
+    constexpr static char const * partitionDiagnosticsString() { return "partitionDiagnostics"; }
     constexpr static char const * scatterMethodString() { return "scatterMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
@@ -172,6 +183,12 @@ private:
 
   /// Method (library) used to partition the mesh
   vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;
+
+  /// Legacy distributed or direct-root hybrid topology/objective model.
+  vtk::PartitionModel m_partitionModel = vtk::PartitionModel::legacy;
+
+  /// Root-local hybrid partition controls.
+  vtk::HybridPartitionOptions m_hybridPartitionOptions;
 
   /// Method used for initial mesh scatter from rank 0
   vtk::ScatterMethod m_scatterMethod = vtk::ScatterMethod::rcb;

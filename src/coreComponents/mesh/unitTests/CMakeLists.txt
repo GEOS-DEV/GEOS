@@ -10,6 +10,10 @@ if( ENABLE_METIS )
   list( APPEND mesh_tests testMETISInterface.cpp )
 endif()
 
+if( ENABLE_METIS AND ENABLE_VTK )
+  list( APPEND mesh_tests testVTKHybridPartitioning.cpp )
+endif()
+
 set( mesh_tests_mpi
      testGraphColoringMPI.cpp )
 
@@ -74,4 +78,15 @@ set( nranks 4 )
   geos_add_test( NAME testVTKMeshScattering_mpi
                  COMMAND testVTKMeshScattering_mpi
                  NUM_MPI_TASKS 4 )
+
+  if( ENABLE_METIS )
+    blt_add_executable( NAME testVTKHybridRedistribution_mpi
+                        SOURCES testVTKHybridRedistribution.cpp
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${dependencyList} ${tplDependencyList} )
+
+    geos_add_test( NAME testVTKHybridRedistribution_mpi
+                   COMMAND testVTKHybridRedistribution_mpi
+                   NUM_MPI_TASKS 4 )
+  endif()
 endif()

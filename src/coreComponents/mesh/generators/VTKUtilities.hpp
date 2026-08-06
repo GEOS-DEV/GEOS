@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/generators/VTKHybridPartitioning.hpp"
 #include "mesh/generators/VTKMeshScattering.hpp"
 
 #include <vtkDataSet.h>
@@ -37,6 +38,19 @@ namespace geos
 namespace vtk
 {
 class CollocatedNodes;
+
+/**
+ * @brief Topology and objective model used to partition a VTK mesh.
+ */
+enum class PartitionModel : integer
+{
+  legacy, ///< Existing geometric scatter followed by optional distributed graph refinement.
+  hybrid, ///< Root-local exact face/point graph followed by one 3D scatter.
+};
+
+ENUM_STRINGS( PartitionModel,
+              "legacy",
+              "hybrid" );
 
 /**
  * @brief Choice of advanced mesh partitioner
@@ -119,12 +133,48 @@ public:
     m_faceBlocks = faceBlocks;
   }
 
+  /**
+   * @return Whether the redistribution supplied exact shared-topology neighbors.
+   */
+  bool hasExactNeighborRanks() const
+  {
+    return m_hasExactNeighborRanks;
+  }
+
+  /**
+   * @return Exact neighbor ranks for the local partition.
+   */
+  stdVector< int > const & getExactNeighborRanks() const
+  {
+    return m_exactNeighborRanks;
+  }
+
+  /**
+   * @brief Attach root-computed hybrid metadata to the redistributed meshes.
+   */
+  void setHybridMetadata( stdVector< int > neighbors,
+                          HybridPartitionMetrics const & metrics )
+  {
+    m_exactNeighborRanks = std::move( neighbors );
+    m_hybridMetrics = metrics;
+    m_hasExactNeighborRanks = true;
+  }
+
+  HybridPartitionMetrics const & getHybridMetrics() const
+  {
+    return m_hybridMetrics;
+  }
+
 private:
   /// The main 3d mesh (namely the matrix).
   vtkSmartPointer< vtkDataSet > m_main;
 
   /// The face meshes (namely the fractures).
   stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
+
+  bool m_hasExactNeighborRanks = false;
+  stdVector< int > m_exactNeighborRanks;
+  HybridPartitionMetrics m_hybridMetrics;
 };
 
 /**
@@ -159,6 +209,8 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] partitionFractureWeight additional weight to fracture-connected super-cells during partitioning
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] partitionModel legacy or direct-root hybrid partitioning
+ * @param[in] hybridOptions hybrid weight, balance, memory, and diagnostic controls
  * @return the vtk grid redistributed
  */
 AllMeshes
@@ -172,7 +224,9 @@ redistributeMeshes( integer const logLevel,
                     int const partitionRefinement,
                     int const partitionFractureWeight,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName );
+                    string const & structuredIndexAttributeName,
+                    PartitionModel const partitionModel,
+                    HybridPartitionOptions const & hybridOptions );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.

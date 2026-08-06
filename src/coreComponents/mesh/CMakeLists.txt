@@ -211,6 +211,7 @@ if( ENABLE_VTK )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
+         generators/VTKHybridPartitioning.hpp
          generators/VTKHierarchicalDataSource.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
@@ -230,6 +231,9 @@ if( ENABLE_VTK )
          generators/VTKSuperCellPartitioning.cpp
          generators/VTKUtilities.cpp
          )
+    if( ENABLE_METIS )
+      list( APPEND mesh_sources generators/VTKHybridPartitioning.cpp )
+    endif()
     list( APPEND tplDependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       list( APPEND tplDependencyList VTK::IOParallelXML VTK::ParallelMPI )
