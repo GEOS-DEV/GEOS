@@ -44,10 +44,15 @@ public:
     arrayView1d< real64 const > const & bulkModulus,
     arrayView1d< real64 const > const & shearModulus,
     arrayView1d< real64 const > const & thermalExpansionCoefficient,
+    arrayView2d< real64 const > const & anelasticStrainRate,
+    arrayView2d< real64 > const & newAnelasticStrain,
+    arrayView2d< real64 > const & oldAnelasticStrain,
     arrayView3d< real64, solid::STRESS_USD > const & newStress,
     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-    bool const & disableInelasticity )
-    : ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity )
+    bool const & disableInelasticity,
+    integer const & enableAnelasticStrain )
+    : ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, anelasticStrainRate, newAnelasticStrain, oldAnelasticStrain,
+                               newStress, oldStress, disableInelasticity, enableAnelasticStrain )
   {}
 
   /// Default copy constructor
@@ -407,14 +412,16 @@ public:
     if( includeState )
     {
       return KernelWrapper( m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
-                            m_newStress, m_oldStress, m_disableInelasticity );
+                            m_anelasticStrainRate, m_newAnelasticStrain, m_oldAnelasticStrain,
+                            m_newStress, m_oldStress, m_disableInelasticity, m_enableAnelasticStrain );
     }
     else
     {
       return KernelWrapper( m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
+                            m_anelasticStrainRate, m_newAnelasticStrain, m_oldAnelasticStrain,
                             arrayView3d< real64, solid::STRESS_USD >(),
                             arrayView3d< real64, solid::STRESS_USD >(),
-                            m_disableInelasticity );
+                            m_disableInelasticity, m_enableAnelasticStrain );
     }
   }
 
@@ -432,9 +439,13 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainRate,
+                          m_newAnelasticStrain,
+                          m_oldAnelasticStrain,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 protected:
