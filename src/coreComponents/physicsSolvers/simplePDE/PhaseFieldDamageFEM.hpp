@@ -24,6 +24,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFields.hpp"
 
 namespace geos
 {
@@ -145,16 +146,9 @@ public:
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
   } PhaseFieldDamageFEMViewKeys;
 
-  string const & getFieldName() const
-  {
-    return m_fieldName;
-  }
-
 private:
-  string m_fieldName;
   TimeIntegrationOption m_timeIntegrationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;

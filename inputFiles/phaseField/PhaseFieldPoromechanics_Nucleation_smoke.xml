@@ -38,7 +38,6 @@
       name="damageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
       fracturePressureTermFlag="1"
@@ -117,7 +116,7 @@
       name="initialDamage"
       setNames="{ fracture }"
       objectPath="nodeManager"
-      fieldName="Damage"
+      fieldName="damage"
       scale="1.0"/>
 
     <FieldSpecification

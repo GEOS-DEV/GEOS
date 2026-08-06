@@ -36,22 +36,17 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   PhysicsSolverBase( name, parent ),
-  m_fieldName( "primaryField" ),
   m_fracturePressureTermFlag( 0 )
 {
 
   registerWrapper< TimeIntegrationOption >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
-
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "name of field variable" );
 
   registerWrapper( viewKeyStruct::irreversibilityFlagString(), &m_irreversibilityFlag ).
     setApplyDefaultValue( 0 ).
@@ -81,10 +76,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
-    nodes.registerWrapper< real64_array >( m_fieldName )
-      .setApplyDefaultValue( 0.0 )
-      .setPlotLevel( PlotLevel::LEVEL_0 )
-      .setDescription( "Primary field variable" );
+    nodes.registerField< phaseField::damage >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -142,13 +134,13 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( 
                                      DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  dofManager.addField( m_fieldName,
+  dofManager.addField( phaseField::damage::key(),
                        FieldLocation::Node,
                        1,
                        getMeshTargets() );
 
-  dofManager.addCoupling( m_fieldName,
-                          m_fieldName,
+  dofManager.addCoupling( phaseField::damage::key(),
+                          phaseField::damage::key(),
                           DofManager::Connector::Elem );
 
 }
@@ -172,7 +164,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
     NodeManager & nodeManager = mesh.getNodeManager();
 
     arrayView1d< globalIndex const > const & dofIndex =
-      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( phaseField::damage::key() ) );
 
     auto const launchKernels = [&]( auto kernelFactory )
     {
@@ -192,8 +184,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                                                dofManager.rankOffset(),
                                                                localMatrix,
                                                                localRhs,
-                                                               dt,
-                                                               m_fieldName ) );
+                                                               dt ) );
     }
     else
     {
@@ -201,8 +192,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                                     dofManager.rankOffset(),
                                                     localMatrix,
                                                     localRhs,
-                                                    dt,
-                                                    m_fieldName ) );
+                                                    dt ) );
     }
   } );
 }
@@ -216,7 +206,10 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
 
-  dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
+  dofManager.addVectorToField( localSolution,
+                               phaseField::damage::key(),
+                               phaseField::damage::key(),
+                               scalingFactor );
 
   // Syncronize ghost nodes
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -224,7 +217,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                                 string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { phaseField::damage::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -284,7 +277,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
 
     const arrayView1d< const globalIndex > &
-    dofNumber = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    dofNumber = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( phaseField::damage::key() ) );
     const globalIndex rankOffset = dofManager.rankOffset();
 
 
@@ -355,7 +348,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,
-                                             m_fieldName,
+                                             phaseField::damage::key(),
                                              [&]( FieldSpecification const & bc,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,
@@ -367,8 +360,8 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                                          targetSet,
                                                                                          time,
                                                                                          targetGroup,
-                                                                                         m_fieldName,
-                                                                                         dofManager.getKey( m_fieldName ),
+                                                                                         phaseField::damage::key(),
+                                                                                         dofManager.getKey( phaseField::damage::key() ),
                                                                                          dofManager.rankOffset(),
                                                                                          localMatrix,
                                                                                          localRhs );
@@ -391,9 +384,9 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( phaseField::damage::key() ) );
 
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
     globalIndex const rankOffSet = dofManager.rankOffset();
 

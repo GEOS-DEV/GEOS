@@ -38,7 +38,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
       logLevel="1"
       targetRegions="{ DamageRegion }">
       <NonlinearSolverParameters
@@ -166,7 +165,7 @@
 
     <FieldSpecification
       name="initialNotch"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1"
       setNames="{ notch }"/>

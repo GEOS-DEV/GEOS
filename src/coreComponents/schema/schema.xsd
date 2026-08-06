@@ -4698,8 +4698,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="damageUpperBound" type="real64" default="1.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
-		<!--fieldName => name of field variable-->
-		<xsd:attribute name="fieldName" type="groupNameRef" use="required" />
 		<!--fracturePressureTermFlag => The flag to indicate whether to add the fracture pressure contribution-->
 		<xsd:attribute name="fracturePressureTermFlag" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->

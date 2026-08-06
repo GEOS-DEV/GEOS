@@ -34,7 +34,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -141,7 +140,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1"
       setNames="{ centerPoint }"/>

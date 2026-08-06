@@ -28,6 +28,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 PhaseFieldPoromechanicsSolver::PhaseFieldPoromechanicsSolver( const string & name,
                                                               Group * const parent ):
@@ -62,11 +63,9 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
 
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
 
-      string const & damageFieldName = damageSolver()->getFieldName();
-
       string const & discretizationName = damageSolver()->getDiscretizationName();
 
-      arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+      arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -120,10 +119,8 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
-    string const & damageFieldName = damageSolver()->getFieldName();
-
     // Get an array of nodal damage values
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
     fsManager.forSubGroups< TractionBoundaryCondition >( [&] ( TractionBoundaryCondition & fs )
     {

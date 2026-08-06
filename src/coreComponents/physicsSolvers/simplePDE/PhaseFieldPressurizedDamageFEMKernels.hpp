@@ -64,8 +64,6 @@ public:
   /**
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param fieldName The name of the primary field
-   *                  (i.e. Temperature, Pressure, etc.)
    */
   PhaseFieldPressurizedDamageKernel( NodeManager const & nodeManager,
                                      EdgeManager const & edgeManager,
@@ -78,8 +76,7 @@ public:
                                      globalIndex const rankOffset,
                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                      arrayView1d< real64 > const inputRhs,
-                                     real64 const inputDt,
-                                     string const fieldName ):
+                                     real64 const inputDt ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -91,8 +88,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputDt,
-          fieldName ),
+          inputDt ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >()  ),
     m_fluidPressureGradient( elementSubRegion.template getReference< array2d< real64 > >( "pressureGradient" ) )
@@ -212,8 +208,7 @@ using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< P
                                                                                globalIndex,
                                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                                arrayView1d< real64 > const,
-                                                                               real64 const,
-                                                                               string const >;
+                                                                               real64 const >;
 
 } // namespace geos
 

@@ -29,6 +29,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
@@ -63,10 +64,9 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    string const & damageFieldName = damageSolver()->getFieldName();
     string const & discretizationName = damageSolver()->getDiscretizationName();
 
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
