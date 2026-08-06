@@ -733,7 +733,7 @@ assembleForceResidualDerivativeWrtPressure( string const & meshName,
   string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
 
   // Use the same kernel launch pattern as SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution
-  this->solidMechanicsSolver()->template forFiniteElementOnFractureSubRegions( meshName,
+  this->solidMechanicsSolver()->forFiniteElementOnFractureSubRegions( meshName,
                                                                                 [&] ( string const &,
                                                                                       finiteElement::FiniteElementBase const & subRegionFE,
                                                                                       arrayView1d< localIndex const > const & faceElementList )
@@ -829,7 +829,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   // Launch the ComputeApertureDerivatives kernel to fill dAperturedU and dAperturedB
   // This is called for each element type (tri, quad, etc.)
-  this->solidMechanicsSolver()->template forFiniteElementOnFractureSubRegions( meshName,
+  this->solidMechanicsSolver()->forFiniteElementOnFractureSubRegions( meshName,
                                                                                 [&] ( string const &,
                                                                                       finiteElement::FiniteElementBase const & subRegionFE,
                                                                                       arrayView1d< localIndex const > const & faceElementList )
