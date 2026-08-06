@@ -23,9 +23,24 @@
 #include "mesh/MeshFields.hpp"
 #include "common/MpiWrapper.hpp"
 
+#include <numeric>
+
 namespace geos
 {
 using namespace dataRepository;
+
+namespace
+{
+
+void fillAllSet( SortedArray< localIndex > & set, localIndex const numObjects )
+{
+  stdVector< localIndex > values( numObjects );
+  std::iota( values.begin(), values.end(), 0 );
+  set.reserve( numObjects );
+  set.insert( values.begin(), values.end() );
+}
+
+} // namespace
 
 ObjectManagerBase::ObjectManagerBase( string const & name,
                                       Group * const parent ):
@@ -105,12 +120,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
 
   if( setName == "all" )
   {
-    newset.reserve( numObjects );
-
-    for( localIndex ka=0; ka<numObjects; ++ka )
-    {
-      newset.insert( ka );
-    }
+    fillAllSet( newset, numObjects );
   }
   else
   {
@@ -138,12 +148,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
 
   if( setName == "all" )
   {
-    newset.reserve( numObjects );
-
-    for( localIndex ka=0; ka<numObjects; ++ka )
-    {
-      newset.insert( ka );
-    }
+    fillAllSet( newset, numObjects );
   }
   else
   {
@@ -169,11 +174,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
 
   if( setName == "all" )
   {
-    newSet.reserve( numObjects );
-    for( localIndex ka = 0; ka < numObjects; ++ka )
-    {
-      newSet.insert( ka );
-    }
+    fillAllSet( newSet, numObjects );
   }
   else
   {

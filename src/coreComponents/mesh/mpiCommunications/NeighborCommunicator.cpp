@@ -24,6 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 
 namespace geos
 {
@@ -237,8 +238,14 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                                  MPI_Request & mpiSendRequest )
 {
   GEOS_MARK_FUNCTION;
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts begin neighbor=%d depth=%d meshLevel=%s",
+                        m_neighborRank, depth, mesh.getName().c_str() );
 
   this->postSizeRecv( commID, mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts postSizeRecv end neighbor=%d",
+                        m_neighborRank );
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -250,6 +257,10 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
   array1d< localIndex > & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
 
   {
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "NeighborCommunicator::prepareAndSendGhosts generateAdjacencyLists begin neighbor=%d boundaryNodes=%lld",
+                          m_neighborRank,
+                          static_cast< long long >( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary().size() ) );
     ElemAdjListRefWrapType elementAdjacencyList =
       elemManager.constructReferenceAccessor< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                        std::to_string( this->m_neighborRank ) );
@@ -257,9 +268,15 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
     mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
                                  edgeAdjacencyList,
-                                 faceAdjacencyList,
-                                 elementAdjacencyList,
-                                 depth );
+                                  faceAdjacencyList,
+                                  elementAdjacencyList,
+                                  depth );
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "NeighborCommunicator::prepareAndSendGhosts generateAdjacencyLists end neighbor=%d nodes=%lld edges=%lld faces=%lld",
+                          m_neighborRank,
+                          static_cast< long long >( nodeAdjacencyList.size() ),
+                          static_cast< long long >( edgeAdjacencyList.size() ),
+                          static_cast< long long >( faceAdjacencyList.size() ) );
   }
 
   ElemAdjListViewType const elemAdjacencyList =
@@ -269,9 +286,15 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                     edgeManager, edgeAdjacencyList,
                                     faceManager, faceAdjacencyList,
                                     elemManager, elemAdjacencyList );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts GhostSize end neighbor=%d bufferSize=%d",
+                        m_neighborRank, bufferSize );
 
   this->resizeSendBuffer( commID, bufferSize );
   this->postSizeSend( commID, mpiSendSizeRequest );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts postSizeSend end neighbor=%d bufferSize=%d",
+                        m_neighborRank, bufferSize );
 
   buffer_type & sendBuff = sendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
@@ -281,16 +304,27 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                      edgeManager, edgeAdjacencyList,
                                      faceManager, faceAdjacencyList,
                                      elemManager, elemAdjacencyList );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts PackGhosts end neighbor=%d packedSize=%d",
+                        m_neighborRank, packedSize );
 
   GEOS_ERROR_IF_NE( bufferSize, packedSize );
 
   this->postSend( commID, mpiSendRequest );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::prepareAndSendGhosts end neighbor=%d",
+                        m_neighborRank );
 }
 
 void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
                                          int const commID )
 {
   GEOS_MARK_FUNCTION;
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::unpackGhosts begin neighbor=%d recvBytes=%lld meshLevel=%s",
+                        m_neighborRank,
+                        static_cast< long long >( receiveBuffer( commID ).size() ),
+                        mesh.getName().c_str() );
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -316,6 +350,13 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
 
   m_unpackedSize += elemManager.unpackGlobalMaps( m_receiveBufferPtr,
                                                   m_elementAdjacencyReceiveListArray );
+
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "NeighborCommunicator::unpackGhosts end neighbor=%d unpackedSize=%d nodes=%lld edges=%lld faces=%lld",
+                        m_neighborRank, m_unpackedSize,
+                        static_cast< long long >( m_nodeUnpackList.size() ),
+                        static_cast< long long >( m_edgeUnpackList.size() ),
+                        static_cast< long long >( m_faceUnpackList.size() ) );
 
 }
 

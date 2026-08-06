@@ -25,9 +25,24 @@
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 
+#include <numeric>
+
 namespace geos
 {
 using namespace dataRepository;
+
+namespace
+{
+
+void fillAllSet( SortedArray< localIndex > & set, localIndex const numObjects )
+{
+  stdVector< localIndex > values( numObjects );
+  std::iota( values.begin(), values.end(), 0 );
+  set.reserve( numObjects );
+  set.insert( values.begin(), values.end() );
+}
+
+} // namespace
 
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
@@ -502,9 +517,14 @@ void MeshLevel::generateSets()
 
     for( string const & setName : setNames )
     {
-      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
-
       SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      if( setName == "all" )
+      {
+        fillAllSet( targetSet, subRegion.size() );
+        continue;
+      }
+
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

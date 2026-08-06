@@ -19,6 +19,7 @@
 #include "common/TypeDispatch.hpp"
 
 #include "mesh/generators/CollocatedNodes.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/MeshFields.hpp"
@@ -49,7 +50,6 @@
 #include <vtkPolyDataReader.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
-#include <vtkRedistributeDataSetFilter.h>
 #include <vtkStructuredGrid.h>
 #include <vtkStructuredGridReader.h>
 #include <vtkStructuredPoints.h>
@@ -198,6 +198,7 @@ vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 {
   GEOS_MARK_FUNCTION;
+  meshDebug::logDataSet( MPI_COMM_GEOS, "generateGlobalIDs begin", mesh.GetPointer() );
 
   // vtkGenerateGlobalIds may trigger floating-point exceptions internally
   // Temporarily disable FPE trapping while invoking VTK.
@@ -205,8 +206,11 @@ generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( mesh );
+  meshDebug::log( MPI_COMM_GEOS, "generateGlobalIDs vtkGenerateGlobalIds Update begin" );
   generator->Update();
-  return vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  vtkSmartPointer< vtkDataSet > output = vtkDataSet::SafeDownCast( generator->GetOutputDataObject( 0 ) );
+  meshDebug::logDataSet( MPI_COMM_GEOS, "generateGlobalIDs vtkGenerateGlobalIds Update end", output.GetPointer() );
+  return output;
 }
 
 
@@ -275,6 +279,12 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
                       int const numParts,
                       arrayView1d< PART_INDEX const > const & part )
 {
+  meshDebug::logf( MPI_COMM_GEOS,
+                   "splitMeshByPartition begin numParts=%d partSize=%lld inputCells=%lld inputPoints=%lld",
+                   numParts,
+                   static_cast< long long >( part.size() ),
+                   mesh == nullptr ? -1LL : static_cast< long long >( mesh->GetNumberOfCells() ),
+                   mesh == nullptr ? -1LL : static_cast< long long >( mesh->GetNumberOfPoints() ) );
   vtkNew< vtkPartitionedDataSet > result;
   result->SetNumberOfPartitions( LvArray::integerConversion< unsigned int >( numParts ) );
 
@@ -286,18 +296,24 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
       result->SetPartition( LvArray::integerConversion< unsigned int >( p ),
                             vtkNew< vtkUnstructuredGrid >() );
     }
+    meshDebug::logPartitionedDataSet( MPI_COMM_GEOS,
+                                      "splitMeshByPartition end empty",
+                                      result.GetPointer() );
     return result;
   }
 
   // Count cells per partition
   array1d< localIndex > cellCounts( numParts );
+  meshDebug::log( MPI_COMM_GEOS, "splitMeshByPartition count cells begin" );
   forAll< parallelHostPolicy >( part.size(), [part, cellCounts = cellCounts.toView()] ( localIndex const cellIdx )
   {
     RAJA::atomicInc< parallelHostAtomic >( &cellCounts[LvArray::integerConversion< localIndex >( part[cellIdx] )] );
   } );
+  meshDebug::log( MPI_COMM_GEOS, "splitMeshByPartition count cells end" );
 
   // Build cell lists per partition
   ArrayOfArrays< vtkIdType > cellsLists;
+  meshDebug::log( MPI_COMM_GEOS, "splitMeshByPartition build cell lists begin" );
   cellsLists.resizeFromCapacities< serialPolicy >( numParts, cellCounts.data() );
 
   forAll< parallelHostPolicy >( part.size(), [part, cellsLists = cellsLists.toView()] ( localIndex const cellIdx )
@@ -305,6 +321,7 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
     cellsLists.emplaceBackAtomic< parallelHostAtomic >( LvArray::integerConversion< localIndex >( part[cellIdx] ),
                                                         LvArray::integerConversion< vtkIdType >( cellIdx ) );
   } );
+  meshDebug::log( MPI_COMM_GEOS, "splitMeshByPartition build cell lists end" );
 
   // Extract cells for each partition
   vtkNew< vtkExtractCells > extractor;
@@ -316,12 +333,20 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
 
     if( cells.size() > 0 )
     {
+      meshDebug::logf( MPI_COMM_GEOS,
+                       "splitMeshByPartition extract begin part=%lld cells=%lld",
+                       static_cast< long long >( p ), static_cast< long long >( cells.size() ) );
       extractor->SetCellIds( cells.dataIfContiguous(), LvArray::integerConversion< vtkIdType >( cells.size() ) );
       extractor->Update();
 
       vtkNew< vtkUnstructuredGrid > ug;
       ug->ShallowCopy( extractor->GetOutputDataObject( 0 ) );
       result->SetPartition( LvArray::integerConversion< unsigned int >( p ), ug );
+      meshDebug::logf( MPI_COMM_GEOS,
+                       "splitMeshByPartition extract end part=%lld outputCells=%lld outputPoints=%lld",
+                       static_cast< long long >( p ),
+                       static_cast< long long >( ug->GetNumberOfCells() ),
+                       static_cast< long long >( ug->GetNumberOfPoints() ) );
     }
     else
     {
@@ -331,6 +356,9 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
     }
   }
 
+  meshDebug::logPartitionedDataSet( MPI_COMM_GEOS,
+                                    "splitMeshByPartition end",
+                                    result.GetPointer() );
   return result;
 }
 
@@ -387,14 +415,25 @@ loadMesh( Path const & filePath,
           int readerRank = 0 )
 {
   string const extension = filePath.extension();
+  meshDebug::logf( MPI_COMM_GEOS,
+                   "loadMesh begin file=%s extension=%s block=%s readerRank=%d",
+                   filePath.c_str(), extension.c_str(), blockName.c_str(), readerRank );
 
   auto const parallelRead = [&]( auto const vtkGridReader )
   {
     using GridType = TYPEOFPTR( vtkGridReader->GetOutput() );
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "loadMesh parallel UpdateInformation begin file=%s",
+                     filePath.c_str() );
     vtkGridReader->SetFileName( filePath.c_str() );
     vtkGridReader->UpdateInformation();
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "loadMesh parallel UpdatePiece begin piece=%d pieces=%d file=%s",
+                     MpiWrapper::commRank(), MpiWrapper::commSize(), filePath.c_str() );
     vtkGridReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
-    return vtkSmartPointer< GridType >( vtkGridReader->GetOutput() );
+    vtkSmartPointer< GridType > output( vtkGridReader->GetOutput() );
+    meshDebug::logDataSet( MPI_COMM_GEOS, "loadMesh parallel result", output.GetPointer() );
+    return output;
   };
 
   auto const serialRead = [&]( auto const vtkGridReader )
@@ -402,13 +441,20 @@ loadMesh( Path const & filePath,
     using GridType = TYPEOFPTR( vtkGridReader->GetOutput() );
     if( MpiWrapper::commRank() == readerRank )
     {
+      meshDebug::logf( MPI_COMM_GEOS,
+                       "loadMesh serial Update begin readerRank=%d file=%s",
+                       readerRank, filePath.c_str() );
       vtkGridReader->SetFileName( filePath.c_str() );
       vtkGridReader->Update();
-      return vtkSmartPointer< GridType >( vtkGridReader->GetOutput() );
+      vtkSmartPointer< GridType > output( vtkGridReader->GetOutput() );
+      meshDebug::logDataSet( MPI_COMM_GEOS, "loadMesh serial result", output.GetPointer() );
+      return output;
     }
     else
     {
-      return vtkSmartPointer< GridType >::New();
+      vtkSmartPointer< GridType > output = vtkSmartPointer< GridType >::New();
+      meshDebug::logDataSet( MPI_COMM_GEOS, "loadMesh serial non-reader result", output.GetPointer() );
+      return output;
     }
   };
 
@@ -418,11 +464,17 @@ loadMesh( Path const & filePath,
     {
       if( MpiWrapper::commRank() == readerRank )
       {
+        meshDebug::logf( MPI_COMM_GEOS,
+                         "loadMesh vtm Update begin readerRank=%d file=%s block=%s",
+                         readerRank, filePath.c_str(), blockName.c_str() );
         // The multi-block format is a container of multiple datasets (or even of other containers).
         // We must navigate this multi-block to extract the relevant information.
         auto reader = vtkSmartPointer< vtkXMLMultiBlockDataReader >::New();
         reader->SetFileName( filePath.c_str() );
         reader->Update();
+        meshDebug::logf( MPI_COMM_GEOS,
+                         "loadMesh vtm Update end readerRank=%d file=%s block=%s",
+                         readerRank, filePath.c_str(), blockName.c_str() );
         vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
         if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
         {
@@ -443,6 +495,7 @@ loadMesh( Path const & filePath,
             if( block->IsA( "vtkDataSet" ) )
             {
               vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
+              meshDebug::logDataSet( MPI_COMM_GEOS, "loadMesh vtm result", mesh.GetPointer() );
               return mesh;
             }
           }
@@ -455,7 +508,9 @@ loadMesh( Path const & filePath,
       }
       else
       {
-        return vtkSmartPointer< vtkUnstructuredGrid >::New();
+        vtkSmartPointer< vtkUnstructuredGrid > output = vtkSmartPointer< vtkUnstructuredGrid >::New();
+        meshDebug::logDataSet( MPI_COMM_GEOS, "loadMesh vtm non-reader result", output.GetPointer() );
+        return output;
       }
     }
     case VTKMeshExtension::vtk:
@@ -505,16 +560,29 @@ AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
                          string_array const & faceBlockNames )
 {
+  meshDebug::logf( MPI_COMM_GEOS,
+                   "loadAllMeshes begin file=%s mainBlock=%s faceBlockCount=%lld",
+                   filePath.c_str(), mainBlockName.c_str(), static_cast< long long >( faceBlockNames.size() ) );
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
   stdMap< string, vtkSmartPointer< vtkDataSet > > faces;
+  meshDebug::logDataSet( MPI_COMM_GEOS, "loadAllMeshes main loaded", main.GetPointer() );
 
   // Load fractures on rank 0 (same as main mesh for 2D cells)
   // This allows building fracture-to-3D connectivity before redistribution
   for( string const & faceBlockName: faceBlockNames )
   {
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "loadAllMeshes faceBlock begin name=%s",
+                     faceBlockName.c_str() );
     faces.insert( { faceBlockName, loadMesh( filePath, faceBlockName, 0 ) } );
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "loadAllMeshes faceBlock end name=%s",
+                     faceBlockName.c_str() );
   }
 
+  meshDebug::logf( MPI_COMM_GEOS,
+                   "loadAllMeshes end faceBlockCount=%lld",
+                   static_cast< long long >( faces.size() ) );
   return AllMeshes( main, faces );
 }
 
@@ -849,113 +917,6 @@ redistributeBySuperCellGraph(
 }
 
 
-/**
- * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
- *
- * @param[in] mesh a vtk grid
- * @return the vtk grid redistributed
- */
-vtkSmartPointer< vtkDataSet >
-scatterByBlock( vtkDataSet & mesh )
-{
-  GEOS_MARK_FUNCTION;
-
-  int const rank = MpiWrapper::commRank();
-  int const size = MpiWrapper::commSize();
-
-  // Count total cells across all ranks
-  vtkIdType localCells = mesh.GetNumberOfCells();
-  vtkIdType totalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  // Handle edge cases
-  if( totalCells == 0 )
-  {
-    vtkNew< vtkUnstructuredGrid > emptyMesh;
-    return emptyMesh;
-  }
-
-  if( size == 1 )
-  {
-    vtkNew< vtkUnstructuredGrid > copy;
-    copy->DeepCopy( &mesh );
-    return copy;
-  }
-
-  // Verify rank 0 has the complete mesh for redistribution
-  if( rank == 0 && localCells != totalCells )
-  {
-    GEOS_ERROR( GEOS_FMT( "Rank 0 must have the complete mesh. Rank 0 has {} cells but total is {}",
-                          localCells,
-                          totalCells ) );
-  }
-
-  // Scatter cells by contiguous blocks
-  vtkIdType cellsPerRank = totalCells / size;
-  vtkIdType remainder = totalCells % size;
-
-  // Create partitioned dataset
-  vtkNew< vtkPartitionedDataSet > localParts;
-  if( rank == 0 )
-  {
-    // Rank 0 has the full mesh, extract cells for each rank
-    for( int r = 0; r < size; ++r )
-    {
-      vtkIdType rankStart = r * cellsPerRank + std::min( (vtkIdType)r, remainder );
-      vtkIdType rankEnd = rankStart + cellsPerRank + (r < remainder ? 1 : 0);
-
-      // Validate cell range
-      GEOS_ERROR_IF( rankStart< 0 || rankEnd > totalCells,
-                     GEOS_FMT( "Invalid cell range for rank {}: [{}, {}) with total cells {}",
-                               r,
-                               rankStart,
-                               rankEnd,
-                               totalCells ) );
-
-      if( rankEnd > rankStart )
-      {
-        // Add cells for this rank
-        vtkNew< vtkExtractCells > extractor;
-        extractor->SetInputDataObject( &mesh );
-        extractor->AddCellRange( rankStart, rankEnd - 1 );
-        extractor->Update();
-        vtkUnstructuredGrid * extracted = extractor->GetOutput();
-        localParts->SetPartition( r, extracted );
-      }
-      else
-      {
-        // Create empty partition for ranks with no cells
-        vtkNew< vtkUnstructuredGrid > emptyPartition;
-        localParts->SetPartition( r, emptyPartition );
-      }
-    }
-  }
-  else
-  {
-    // Other ranks have an empty mesh, but we still need to create the
-    // partitioned data set structure.
-    localParts->SetNumberOfPartitions( size );
-    for( int r = 0; r < size; ++r )
-    {
-      vtkNew< vtkUnstructuredGrid > emptyPartition;
-      localParts->SetPartition( r, emptyPartition );
-    }
-  }
-
-  //Send cells to appropriate ranks
-  vtkSmartPointer< vtkUnstructuredGrid > result = vtk::redistribute( *localParts, MPI_COMM_GEOS );
-
-  // Final validation
-  vtkIdType finalLocalCells = result->GetNumberOfCells();
-  vtkIdType finalTotalCells = MpiWrapper::allReduce( finalLocalCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  GEOS_ERROR_IF( finalTotalCells != totalCells,
-                 GEOS_FMT( "Block redistribution lost cells: started with {}, ended with {}",
-                           totalCells,
-                           finalTotalCells ) );
-
-  return result;
-}
-
 
 /**
  * @brief Classify cells by dimension
@@ -1125,6 +1086,11 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
   GEOS_MARK_FUNCTION;
 
   int const numRanks = MpiWrapper::commSize( comm );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors begin neighbors=%lld local3DGlobalIds=%lld local3DPartitions=%lld",
+                   static_cast< long long >( neighbors2Dto3D.size() ),
+                   static_cast< long long >( local3DGlobalIds.size() ),
+                   static_cast< long long >( local3DPartitions.size() ) );
 
   // Build local partition lookup
   stdUnorderedMap< int64_t, int > localPartitionMap;
@@ -1136,7 +1102,8 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
   }
 
   // Identify which 3D global IDs we need from other ranks
-  SortedArray< int64_t > missingGlobalIds;
+  stdVector< int64_t > missingGlobalIdsVec;
+  missingGlobalIdsVec.reserve( 2 * neighbors2Dto3D.size() );
 
   for( localIndex i = 0; i < neighbors2Dto3D.size(); ++i )
   {
@@ -1144,14 +1111,23 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
     {
       if( localPartitionMap.count( globalId ) == 0 )
       {
-        missingGlobalIds.insert( globalId );
+        missingGlobalIdsVec.push_back( globalId );
       }
     }
   }
 
+  std::sort( missingGlobalIdsVec.begin(), missingGlobalIdsVec.end() );
+  missingGlobalIdsVec.erase( std::unique( missingGlobalIdsVec.begin(), missingGlobalIdsVec.end() ),
+                             missingGlobalIdsVec.end() );
+
   // Gather all requested IDs across ranks
-  stdVector< int64_t > missingGlobalIdsVec( missingGlobalIds.begin(), missingGlobalIds.end() );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors collectUniqueValues begin missingGlobalIds=%lld",
+                   static_cast< long long >( missingGlobalIdsVec.size() ) );
   stdVector< int64_t > allRequestedIdsVec = collectUniqueValues( missingGlobalIdsVec );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors collectUniqueValues end allRequestedIds=%lld",
+                   static_cast< long long >( allRequestedIdsVec.size() ) );
 
   array1d< int64_t > allRequestedIds( allRequestedIdsVec.size() );
   std::copy( allRequestedIdsVec.begin(), allRequestedIdsVec.end(), allRequestedIds.begin() );
@@ -1177,8 +1153,20 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
   array1d< int64_t > allGlobalIds;
   array1d< int > allPartitions;
 
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors allGatherv globalIds begin contributed=%lld",
+                   static_cast< long long >( contributedGlobalIds.size() ) );
   MpiWrapper::allGatherv( contributedGlobalIds.toViewConst(), allGlobalIds, comm );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors allGatherv globalIds end allGlobalIds=%lld",
+                   static_cast< long long >( allGlobalIds.size() ) );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors allGatherv partitions begin contributed=%lld",
+                   static_cast< long long >( contributedPartitions.size() ) );
   MpiWrapper::allGatherv( contributedPartitions.toViewConst(), allPartitions, comm );
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors allGatherv partitions end allPartitions=%lld",
+                   static_cast< long long >( allPartitions.size() ) );
 
   // Build complete partition map from gathered data
   stdUnorderedMap< int64_t, int > completePartitionMap( localPartitionMap );
@@ -1207,6 +1195,9 @@ assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neig
     partitions2D[i] = it->second;
   }
 
+  meshDebug::logf( comm,
+                   "assignCellsBasedOn3DNeighbors end partitions=%lld",
+                   static_cast< long long >( partitions2D.size() ) );
   return partitions2D;
 }
 
@@ -1309,36 +1300,68 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
+  meshDebug::logDataSet( comm,
+                         "redistribute2DAndMergeWith3D begin redistributed3D",
+                         redistributed3D.GetPointer() );
 
   // -----------------------------------------------------------------------
   // Step 1: Assign and redistribute 2D cells
   // -----------------------------------------------------------------------
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D extract local 3D global ids begin" );
   array1d< int64_t > local3DGlobalIds = extractGlobalIds( *redistributed3D );
+  meshDebug::logf( comm,
+                   "redistribute2DAndMergeWith3D extract local 3D global ids end count=%lld",
+                   static_cast< long long >( local3DGlobalIds.size() ) );
   array1d< int > partitions3D( redistributed3D->GetNumberOfCells() );
   partitions3D.setValues< parallelHostPolicy >( rank );
 
   bool const hasLocal2DCells = (rank == 0 && !cells2DIndices.empty());
 
+  meshDebug::logf( comm,
+                   "redistribute2DAndMergeWith3D assign 2D begin hasLocal2D=%d cells2DIndices=%lld local3DGlobalIds=%lld",
+                   hasLocal2DCells ? 1 : 0,
+                   static_cast< long long >( cells2DIndices.size() ),
+                   static_cast< long long >( local3DGlobalIds.size() ) );
   array1d< int > partitions2D = assignCellsBasedOn3DNeighbors(
     hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< localIndex, int64_t >{},
     local3DGlobalIds.toViewConst(),
     partitions3D.toViewConst(),
     comm );
+  meshDebug::logf( comm,
+                   "redistribute2DAndMergeWith3D assign 2D end partitions2D=%lld",
+                   static_cast< long long >( partitions2D.size() ) );
 
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D extract 2D begin" );
   vtkSmartPointer< vtkUnstructuredGrid > cells2D = hasLocal2DCells
       ? extractCellsByIndices( *originalMesh, cells2DIndices )
       : vtkSmartPointer< vtkUnstructuredGrid >::New();
+  meshDebug::logDataSet( comm,
+                         "redistribute2DAndMergeWith3D extract 2D end",
+                         cells2D.GetPointer() );
 
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D split 2D begin" );
   vtkSmartPointer< vtkPartitionedDataSet > split2D =
     splitMeshByPartition( cells2D, numRanks, partitions2D.toViewConst() );
+  meshDebug::logPartitionedDataSet( comm,
+                                    "redistribute2DAndMergeWith3D split 2D end",
+                                    split2D.GetPointer() );
 
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D redistribute 2D begin" );
   vtkSmartPointer< vtkUnstructuredGrid > redistributed2D =
     vtk::redistribute( *split2D, comm );
+  meshDebug::logDataSet( comm,
+                         "redistribute2DAndMergeWith3D redistribute 2D end",
+                         redistributed2D.GetPointer() );
 
   // Conservation check
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D conservation 2D begin" );
   vtkIdType const total2DCells = MpiWrapper::sum( redistributed2D->GetNumberOfCells(), comm );
   vtkIdType expected2DCells = cells2DIndices.size();
   MpiWrapper::broadcast( expected2DCells, 0, comm );
+  meshDebug::logf( comm,
+                   "redistribute2DAndMergeWith3D conservation 2D end total=%lld expected=%lld",
+                   static_cast< long long >( total2DCells ),
+                   static_cast< long long >( expected2DCells ) );
 
   GEOS_ERROR_IF( total2DCells != expected2DCells,
                  GEOS_FMT( "2D cell redistribution failed: expected {} cells, got {} cells",
@@ -1348,6 +1371,9 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
   // Step 2: Redistribute fractures
   // -----------------------------------------------------------------------
   stdMap< string, vtkSmartPointer< vtkDataSet > > redistributedFractures;
+  meshDebug::logf( comm,
+                   "redistribute2DAndMergeWith3D fractures begin fractureCount=%lld",
+                   static_cast< long long >( fractureNames.size() ) );
 
   for( string const & fractureName : fractureNames )
   {
@@ -1373,11 +1399,17 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
       }
     }
 
+    meshDebug::logf( comm,
+                     "redistribute2DAndMergeWith3D fracture assign begin name=%s",
+                     fractureName.c_str() );
     array1d< int > partitionsFracture = assignCellsBasedOn3DNeighbors(
       localFractureNeighbors,  // Empty on non-root ranks
       local3DGlobalIds.toViewConst(),
       partitions3D.toViewConst(),
       comm );
+    meshDebug::logf( comm,
+                     "redistribute2DAndMergeWith3D fracture assign end name=%s partitions=%lld",
+                     fractureName.c_str(), static_cast< long long >( partitionsFracture.size() ) );
 
     // Split and redistribute
     vtkSmartPointer< vtkPartitionedDataSet > splitFracture;
@@ -1397,8 +1429,14 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
       }
     }
 
+    meshDebug::logf( comm,
+                     "redistribute2DAndMergeWith3D fracture redistribute begin name=%s",
+                     fractureName.c_str() );
     vtkSmartPointer< vtkUnstructuredGrid > localFracture =
       vtk::redistribute( *splitFracture, comm );
+    meshDebug::logDataSet( comm,
+                           "redistribute2DAndMergeWith3D fracture redistribute end",
+                           localFracture.GetPointer() );
 
     vtkIdType const totalFractureCells = MpiWrapper::sum( localFracture->GetNumberOfCells(), comm );
     MpiWrapper::broadcast( expectedFractureCells, 0, comm );
@@ -1409,12 +1447,14 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
     redistributedFractures.insert( { fractureName, localFracture } );
   }
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D fractures end" );
 
   // -----------------------------------------------------------------------
   // Step 3: Merge local 2D and 3D cells
   // -----------------------------------------------------------------------
   vtkSmartPointer< vtkUnstructuredGrid > mergedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
 
+  meshDebug::log( comm, "redistribute2DAndMergeWith3D merge begin" );
   if( redistributed2D->GetNumberOfCells() > 0 )
   {
     vtkNew< vtkAppendFilter > appendFilter;
@@ -1430,6 +1470,9 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
     mergedMesh->ShallowCopy( redistributed3D );
   }
 
+  meshDebug::logDataSet( comm,
+                         "redistribute2DAndMergeWith3D merge end",
+                         mergedMesh.GetPointer() );
   return AllMeshes( mergedMesh, redistributedFractures );
 }
 
@@ -1783,45 +1826,6 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   return AllMeshes( vtk::redistribute( *splitMesh, MPI_COMM_GEOS ), {} );
 }
 
-/**
- * @brief Redistributes the mesh using a Kd-Tree
- *
- * @param[in] mesh a vtk grid
- * @return the vtk grid redistributed
- */
-vtkSmartPointer< vtkDataSet >
-redistributeByKdTree( vtkDataSet & mesh )
-{
-  GEOS_MARK_FUNCTION;
-
-  // Count input cells for verification
-  vtkIdType localInputCells = mesh.GetNumberOfCells();
-  vtkIdType globalInputCells = MpiWrapper::allReduce( localInputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  // Use a VTK filter which employs a kd-tree partition internally
-  vtkNew< vtkRedistributeDataSetFilter > rdsf;
-  rdsf->SetInputDataObject( &mesh );
-  rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  rdsf->Update();
-
-  vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
-
-  // Verify we didn't lose any cells
-  vtkIdType localOutputCells = result->GetNumberOfCells();
-  vtkIdType globalOutputCells = MpiWrapper::allReduce( localOutputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  if( globalOutputCells != globalInputCells )
-  {
-    if( MpiWrapper::commRank() == 0 )
-    {
-      GEOS_WARNING( GEOS_FMT( "VTK KdTree redistribution lost {} elements! Falling back to block redistribution.",
-                              globalInputCells - globalOutputCells ) );
-    }
-    return scatterByBlock( mesh );
-  }
-
-  return result;
-}
 
 stdVector< int >
 findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
@@ -1875,6 +1879,7 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
 
 vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mesh, int useGlobalIds, bool isFractured )
 {
+  meshDebug::logDataSet( MPI_COMM_GEOS, "manageGlobalIds begin", mesh.GetPointer() );
   auto hasGlobalIds = []( vtkSmartPointer< vtkDataSet > m ) -> bool
   {
     return m->GetPointData()->GetGlobalIds() != nullptr && m->GetCellData()->GetGlobalIds() != nullptr;
@@ -1883,7 +1888,13 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   {
     // Add global ids on the fly if needed
     int const me = hasGlobalIds( mesh );
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "manageGlobalIds allReduce begin localHasGlobalIds=%d useGlobalIds=%d isFractured=%d",
+                     me, useGlobalIds, isFractured ? 1 : 0 );
     int const everyone = MpiWrapper::allReduce( me, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    meshDebug::logf( MPI_COMM_GEOS,
+                     "manageGlobalIds allReduce end everyoneHasGlobalIds=%d",
+                     everyone );
 
     if( everyone and not me )
     {
@@ -1919,9 +1930,12 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
                              generalMeshErrorAdvice ) );
 
     GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
+    meshDebug::log( MPI_COMM_GEOS, "manageGlobalIds generateGlobalIDs begin" );
     output = generateGlobalIDs( mesh );
+    meshDebug::logDataSet( MPI_COMM_GEOS, "manageGlobalIds generateGlobalIDs end", output.GetPointer() );
   }
 
+  meshDebug::logDataSet( MPI_COMM_GEOS, "manageGlobalIds end", output.GetPointer() );
   return output;
 }
 
@@ -1941,9 +1955,14 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // step 1: figure out who is a donor and who is a recipient
   localIndex const numElems = LvArray::integerConversion< localIndex >( mesh->GetNumberOfCells() );
   integer const numProcs = MpiWrapper::commSize( comm );
+  meshDebug::logf( comm,
+                   "ensureNoEmptyRank begin localCells=%lld numProcs=%d",
+                   static_cast< long long >( numElems ), numProcs );
 
   array1d< localIndex > elemCounts( numProcs );
+  meshDebug::log( comm, "ensureNoEmptyRank allGather elemCounts begin" );
   MpiWrapper::allGather( numElems, elemCounts, comm );
+  meshDebug::log( comm, "ensureNoEmptyRank allGather elemCounts end" );
 
   SortedArray< integer > recipientRanks;
   array1d< integer > donorRanks;
@@ -2029,8 +2048,16 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   GEOS_WARNING_IF( donorRanks.size() < recipientRanks.size(),
                    "We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks" );
 
+  meshDebug::logf( comm,
+                   "ensureNoEmptyRank split begin donors=%lld recipients=%lld",
+                   static_cast< long long >( donorRanks.size() ),
+                   static_cast< long long >( recipientRanks.size() ) );
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
-  return vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
+  meshDebug::logPartitionedDataSet( comm, "ensureNoEmptyRank split end", splitMesh.GetPointer() );
+  meshDebug::log( comm, "ensureNoEmptyRank redistribute begin" );
+  vtkSmartPointer< vtkDataSet > result = vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
+  meshDebug::logDataSet( comm, "ensureNoEmptyRank redistribute end", result.GetPointer() );
+  return result;
 }
 
 AllMeshes
@@ -2038,16 +2065,24 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
+                    ScatterMethod const scatterMethod,
+                    arrayView1d< int const > partitions,
                     PartitionMethod const method,
                     int const partitionRefinement,
                     int const partitionFractureWeight,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName,
-                    int const numPartZ )
+                    string const & structuredIndexAttributeName )
 {
   GEOS_MARK_FUNCTION;
   int const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
+  meshDebug::logDataSet( comm, "redistributeMeshes begin loadedMesh", loadedMesh.GetPointer() );
+  meshDebug::logf( comm,
+                   "redistributeMeshes params numRanks=%d scatterMethod=%d partitionRefinement=%d faceBlocks=%lld useGlobalIds=%d",
+                   numRanks, static_cast< int >( scatterMethod ), partitionRefinement,
+                   static_cast< long long >( namesToFractures.size() ), useGlobalIds );
+
+  int const numPartZ = structuredIndexAttributeName.empty() ? 1 : partitions[2];
 
   stdVector< vtkSmartPointer< vtkDataSet > > fractures;
   for( auto & nameToFracture: namesToFractures )
@@ -2056,7 +2091,9 @@ redistributeMeshes( integer const logLevel,
   }
 
   // Generate global IDs for vertices and cells, if needed
+  meshDebug::log( comm, "redistributeMeshes manageGlobalIds begin" );
   vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds, !std::empty( fractures ) );
+  meshDebug::logDataSet( comm, "redistributeMeshes manageGlobalIds end", mesh.GetPointer() );
 
   // Ensure mesh is always a valid VTK object, even if empty
   if( !mesh || (mesh->GetNumberOfCells() == 0 && mesh->GetNumberOfPoints() == 0) )
@@ -2078,7 +2115,12 @@ redistributeMeshes( integer const logLevel,
   // Step 1: Classify cells by dimension
   // -----------------------------------------------------------------------
   array1d< vtkIdType > cells3DIndices, cells2DIndices;
+  meshDebug::log( comm, "redistributeMeshes classifyCellsByDimension begin" );
   classifyCellsByDimension( *mesh, cells3DIndices, cells2DIndices );
+  meshDebug::logf( comm,
+                   "redistributeMeshes classifyCellsByDimension end cells3D=%lld cells2D=%lld",
+                   static_cast< long long >( cells3DIndices.size() ),
+                   static_cast< long long >( cells2DIndices.size() ) );
 
   // -----------------------------------------------------------------------
   // Step 2: Build 2D-to-3D neighbor mapping
@@ -2086,9 +2128,13 @@ redistributeMeshes( integer const logLevel,
   ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
   if( !cells2DIndices.empty() )
   {
+    meshDebug::log( comm, "redistributeMeshes build2DTo3DNeighbors begin" );
     neighbors2Dto3D = build2DTo3DNeighbors( *mesh,
                                             cells2DIndices.toViewConst(),
                                             cells3DIndices.toViewConst() );
+    meshDebug::logf( comm,
+                     "redistributeMeshes build2DTo3DNeighbors end rows=%lld",
+                     static_cast< long long >( neighbors2Dto3D.size() ) );
   }
 
   // -----------------------------------------------------------------------
@@ -2108,6 +2154,7 @@ redistributeMeshes( integer const logLevel,
 
   // Broadcast fracture names to all ranks
   {
+    meshDebug::log( comm, "redistributeMeshes broadcast fracture names begin" );
     int numFractures = LvArray::integerConversion< int >( fractureNames.size() );
     MpiWrapper::broadcast( numFractures, 0, comm );
 
@@ -2120,6 +2167,9 @@ redistributeMeshes( integer const logLevel,
     {
       MpiWrapper::broadcast( name, 0, comm );
     }
+    meshDebug::logf( comm,
+                     "redistributeMeshes broadcast fracture names end numFractures=%d",
+                     numFractures );
   }
 
   // Initialize empty neighbor arrays
@@ -2131,6 +2181,7 @@ redistributeMeshes( integer const logLevel,
   // Build actual neighbors only on rank 0
   if( rank == 0 )
   {
+    meshDebug::log( comm, "redistributeMeshes build fracture neighbors begin" );
     for( auto const & [fractureName, fractureMesh]: namesToFractures )
     {
       if( fractureMesh && fractureMesh->GetNumberOfCells() > 0 )
@@ -2139,8 +2190,13 @@ redistributeMeshes( integer const logLevel,
           *mesh,
           fractureMesh,
           cells3DIndices.toViewConst() );
+        meshDebug::logf( comm,
+                         "redistributeMeshes build fracture neighbors end name=%s rows=%lld",
+                         fractureName.c_str(),
+                         static_cast< long long >( fractureNeighbors[fractureName].size() ) );
       }
     }
+    meshDebug::log( comm, "redistributeMeshes build fracture neighbors all end" );
   }
 
   // -----------------------------------------------------------------------
@@ -2149,11 +2205,15 @@ redistributeMeshes( integer const logLevel,
   SuperCellInfo superCellInfo;
   bool hasSuperCells = false;
 
+  meshDebug::log( comm, "redistributeMeshes extract 3D cells begin" );
   vtkSmartPointer< vtkUnstructuredGrid > cells3D = extractCellsByIndices( *mesh, cells3DIndices );
+  meshDebug::logDataSet( comm, "redistributeMeshes extract 3D cells end", cells3D.GetPointer() );
 
   if( rank == 0 && !fractureNames.empty() )
   {
+    meshDebug::log( comm, "redistributeMeshes tag super-cells begin" );
     superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, partitionFractureWeight );
+    meshDebug::log( comm, "redistributeMeshes tag super-cells end" );
 
     // Verify SuperCellId array was actually created
     vtkIdTypeArray * scArray =
@@ -2169,15 +2229,25 @@ redistributeMeshes( integer const logLevel,
 
   // Broadcast whether we have super-cells
   {
+    meshDebug::log( comm, "redistributeMeshes broadcast hasSuperCells begin" );
     int hasSuperCellsInt = hasSuperCells ? 1 : 0;
     MpiWrapper::broadcast( hasSuperCellsInt, 0, comm );
     hasSuperCells = (hasSuperCellsInt > 0);
+    meshDebug::logf( comm,
+                     "redistributeMeshes broadcast hasSuperCells end hasSuperCells=%d",
+                     hasSuperCells ? 1 : 0 );
   }
 
   // -----------------------------------------------------------------------
   // Step 5: Initial redistribution of 3D cells
   // -----------------------------------------------------------------------
+  meshDebug::log( comm, "redistributeMeshes min 3D cells begin" );
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( cells3D->GetNumberOfCells(), comm );
+  meshDebug::logf( comm,
+                   "redistributeMeshes min 3D cells end minCellsOnAnyRank=%lld localCells=%lld hasSuperCells=%d",
+                   static_cast< long long >( minCellsOnAnyRank ),
+                   static_cast< long long >( cells3D->GetNumberOfCells() ),
+                   hasSuperCells ? 1 : 0 );
 
   vtkSmartPointer< vtkDataSet > redistributed3D;
 
@@ -2185,26 +2255,43 @@ redistributeMeshes( integer const logLevel,
   {
     if( hasSuperCells )
     {
-      redistributed3D = redistributeBySuperCellBlocks( cells3D, comm );
+      meshDebug::log( comm, "redistributeMeshes redistributeBySuperCellBlocks begin" );
+      redistributed3D = redistributeBySuperCellBlocks( cells3D, comm, scatterMethod, partitions );
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes redistributeBySuperCellBlocks end",
+                             redistributed3D.GetPointer() );
     }
     else
     {
-      GEOS_LOG_RANK_0( "Initial redistribution using KD-tree..." );
-      redistributed3D = redistributeByKdTree( *cells3D );
+      meshDebug::log( comm, "redistributeMeshes scatterMesh begin" );
+      redistributed3D = scatterMesh( scatterMethod, *cells3D, partitions, comm );
+      meshDebug::logDataSet( comm, "redistributeMeshes scatterMesh end", redistributed3D.GetPointer() );
 
+      meshDebug::log( comm, "redistributeMeshes post-scatter min begin" );
       if( MpiWrapper::min( redistributed3D->GetNumberOfCells(), comm ) == 0 )
       {
+        meshDebug::log( comm, "redistributeMeshes ensureNoEmptyRank begin" );
         redistributed3D = ensureNoEmptyRank( redistributed3D, comm );
+        meshDebug::logDataSet( comm,
+                               "redistributeMeshes ensureNoEmptyRank end",
+                               redistributed3D.GetPointer() );
       }
+      meshDebug::log( comm, "redistributeMeshes post-scatter min end" );
     }
   }
   else
   {
     // All ranks already have cells - no redistribution needed
     redistributed3D = cells3D;
+    meshDebug::logDataSet( comm,
+                           "redistributeMeshes initial redistribution skipped",
+                           redistributed3D.GetPointer() );
   }
 
   // Check all ranks have cells after redistribution
+  meshDebug::logDataSet( comm,
+                         "redistributeMeshes initial redistribution final",
+                         redistributed3D.GetPointer() );
   GEOS_ERROR_IF( redistributed3D->GetNumberOfCells() == 0, "Rank has no cells after initial redistribution." );
 
 
@@ -2213,6 +2300,10 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   if( partitionRefinement > 0 )
   {
+    meshDebug::logf( comm,
+                     "redistributeMeshes refinement begin partitionRefinement=%d hasSuperCells=%d structuredIndex=%d",
+                     partitionRefinement, hasSuperCells ? 1 : 0,
+                     structuredIndexAttributeName.empty() ? 0 : 1 );
     if( hasSuperCells )
     {
       GEOS_LOG_RANK_0( "Refining partition with super-cell constraints..." );
@@ -2223,6 +2314,9 @@ redistributeMeshes( integer const logLevel,
         comm,
         partitionRefinement - 1,
         partitionFractureWeight );
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes redistributeBySuperCellGraph end",
+                             redistributed3D.GetPointer() );
     }
     else if( !structuredIndexAttributeName.empty() )
     {
@@ -2243,6 +2337,9 @@ redistributeMeshes( integer const logLevel,
         partitionRefinement - 1 );
 
       redistributed3D = tempWrapper.getMainMesh();
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes redistributeByAreaGraphAndLayer end",
+                             redistributed3D.GetPointer() );
     }
     else
     {
@@ -2254,12 +2351,21 @@ redistributeMeshes( integer const logLevel,
         method,
         comm,
         partitionRefinement - 1 );
+      meshDebug::logDataSet( comm,
+                             "redistributeMeshes redistributeByCellGraph end",
+                             redistributed3D.GetPointer() );
     }
+    meshDebug::log( comm, "redistributeMeshes refinement end" );
+  }
+  else
+  {
+    meshDebug::log( comm, "redistributeMeshes refinement skipped" );
   }
 
   // -----------------------------------------------------------------------
   // Step 7: Merge 2D cells and fractures back with redistributed 3D cells
   // -----------------------------------------------------------------------
+  meshDebug::log( comm, "redistributeMeshes redistribute2DAndMergeWith3D begin" );
   AllMeshes finalResult = redistribute2DAndMergeWith3D(
     redistributed3D,
     mesh,
@@ -2269,6 +2375,9 @@ redistributeMeshes( integer const logLevel,
     fractureNeighbors,
     fractureNames,
     comm );
+  meshDebug::logDataSet( comm,
+                         "redistributeMeshes redistribute2DAndMergeWith3D main end",
+                         finalResult.getMainMesh() );
 
   // -----------------------------------------------------------------------
   // Step 8: Final logging
@@ -2295,9 +2404,11 @@ redistributeMeshes( integer const logLevel,
     }
 
     array1d< vtkIdType > all2D, all3D, allFracture;
+    meshDebug::log( comm, "redistributeMeshes final stats allGather begin" );
     MpiWrapper::allGather( local2DCells, all2D, comm );
     MpiWrapper::allGather( local3DCells, all3D, comm );
     MpiWrapper::allGather( localFractureCells, allFracture, comm );
+    meshDebug::log( comm, "redistributeMeshes final stats allGather end" );
 
     if( rank == 0 )
     {
@@ -2323,6 +2434,7 @@ redistributeMeshes( integer const logLevel,
     }
   }
 
+  meshDebug::log( comm, "redistributeMeshes end" );
   return finalResult;
 }
 

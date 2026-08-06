@@ -47,6 +47,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -269,22 +270,33 @@ void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::problemSetup begin" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::postInputInitializationRecursive begin" );
   postInputInitializationRecursive();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::postInputInitializationRecursive end" );
 
   LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMesh begin" );
   generateMesh();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMesh end" );
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::applyNumericalMethods begin" );
   applyNumericalMethods();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::applyNumericalMethods end" );
   numericalMethodLog.end();
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::registerDataOnMeshRecursive begin" );
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::registerDataOnMeshRecursive end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::initialize begin" );
   initialize();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::initialize end" );
 
 #ifdef GEOS_USE_HYPREDRV
   logHypredriveInputs( *m_physicsSolverManager, getDomainPartition() );
@@ -292,8 +304,11 @@ void ProblemManager::problemSetup()
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::importFields begin" );
   importFields();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::importFields end" );
   importFieldsLog.end();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::problemSetup end" );
 }
 
 
@@ -699,20 +714,31 @@ void ProblemManager::initializationOrder( string_array & order )
 void ProblemManager::generateMesh()
 {
   GEOS_MARK_FUNCTION;
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMesh internal begin" );
   DomainPartition & domain = getDomainPartition();
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::meshManager.generateMeshes begin" );
   meshManager.generateMeshes( domain );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::meshManager.generateMeshes end" );
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::getDiscretizations begin" );
   map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "ProblemManager::getDiscretizations end count=%lld",
+                        static_cast< long long >( discretizations.size() ) );
 
   // setup the base discretizations (hard code this for now)
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::base mesh bodies begin" );
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::base mesh body begin name=%s hasParticles=%d",
+                          meshBody.getName().c_str(), meshBody.hasParticles() ? 1 : 0 );
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     string_array junk;
 
@@ -720,34 +746,63 @@ void ProblemManager::generateMesh()
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateMeshLevel particles begin meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), baseMesh.getName().c_str() );
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
                                junk );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateMeshLevel particles end meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), baseMesh.getName().c_str() );
     }
     else
     {
       CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateMeshLevel cells begin meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), baseMesh.getName().c_str() );
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
                                nullptr,
                                junk );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateMeshLevel cells end meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), baseMesh.getName().c_str() );
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateWells begin meshBody=%s",
+                            meshBody.getName().c_str() );
       elemManager.generateWells( cellBlockManager, baseMesh );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::generateWells end meshBody=%s",
+                            meshBody.getName().c_str() );
 
     }
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::base mesh body end name=%s",
+                          meshBody.getName().c_str() );
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::base mesh bodies end" );
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::setupBaseLevelMeshGlobalInfo begin" );
   domain.setupBaseLevelMeshGlobalInfo();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::setupBaseLevelMeshGlobalInfo end" );
 
   // setup the MeshLevel associated with the discretizations
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::discretization mesh levels begin" );
   for( auto const & discretizationPair: discretizations )
   {
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::discretization mesh level begin meshBody=%s discretization=%s",
+                          meshBodyName.c_str(),
+                          discretizationPair.first.second == nullptr ? "null" : discretizationPair.first.second->getName().c_str() );
 
     if( discretizationPair.first.second!=nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
     {                                                                          // particle mesh bodies don't have a finite element
@@ -770,17 +825,29 @@ void ProblemManager::generateMesh()
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
 
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::generateMeshLevel high-order begin meshBody=%s meshLevel=%s",
+                                meshBodyName.c_str(), mesh.getName().c_str() );
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
                                    feDiscretization,
                                    regionNames );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::generateMeshLevel high-order end meshBody=%s meshLevel=%s",
+                                meshBodyName.c_str(), mesh.getName().c_str() );
         }
         // Just create a shallow copy of the base discretization.
         else if( order==1  ||  formulationName == FiniteElementDiscretization::Formulation::DG )
         {
           // create a shallow copy of the base discretization
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::createShallowMeshLevel begin meshBody=%s discretization=%s",
+                                meshBodyName.c_str(), discretizationName.c_str() );
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::createShallowMeshLevel end meshBody=%s discretization=%s",
+                                meshBodyName.c_str(), discretizationName.c_str() );
         }
       }
       else // this is a finite volume discretization...i hope
@@ -790,21 +857,38 @@ void ProblemManager::generateMesh()
         if( discretization != nullptr ) // ...it is FV if it isn't nullptr
         {
           string const & discretizationName = discretization->getName();
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::createShallowMeshLevel FV begin meshBody=%s discretization=%s",
+                                meshBodyName.c_str(), discretizationName.c_str() );
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "ProblemManager::createShallowMeshLevel FV end meshBody=%s discretization=%s",
+                                meshBodyName.c_str(), discretizationName.c_str() );
         }
       }
     }
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::discretization mesh level end meshBody=%s",
+                          meshBodyName.c_str() );
   }
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::discretization mesh levels end" );
 
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "ProblemManager::setupCommunications begin useNonblockingMPI=%d",
+                        useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::setupCommunications end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::outputPartitionInformation begin" );
   domain.outputPartitionInformation();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::outputPartitionInformation end" );
 
   // Optionally validate the Euler-Poincaré characteristic χ = V − E + F − C.
   // This must run AFTER setupCommunications() so that ghost cells and proper
   // node ghost ranks are available.  The computation reconstructs V, E, F from
   // cell-to-node maps (iterating owned + ghost cells) and uses a min-global-
   // node ownership rule for MPI de-duplication.
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::EulerCharacteristic checks begin" );
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     MeshGeneratorBase const * const meshGen =
@@ -826,21 +910,41 @@ void ProblemManager::generateMesh()
                           "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
     }
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::EulerCharacteristic checks end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::post-communication mesh body cleanup begin" );
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::post-communication mesh body begin name=%s",
+                          meshBody.getName().c_str() );
     if( meshBody.hasGroup( keys::particleManager ) )
     {
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::deregister particle manager begin meshBody=%s",
+                            meshBody.getName().c_str() );
       meshBody.deregisterGroup( keys::particleManager );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::deregister particle manager end meshBody=%s",
+                            meshBody.getName().c_str() );
     }
     else if( meshBody.hasGroup( keys::cellManager ) )
     {
       // meshBody.deregisterGroup( keys::cellManager );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::deregister cell block manager begin meshBody=%s",
+                            meshBody.getName().c_str() );
       meshBody.deregisterCellBlockManager();
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::deregister cell block manager end meshBody=%s",
+                            meshBody.getName().c_str() );
     }
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::post-communication mesh level begin meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str() );
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
@@ -848,6 +952,10 @@ void ProblemManager::generateMesh()
 
       elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        vtk::meshDebug::logf( MPI_COMM_GEOS,
+                              "ProblemManager::FaceElementSubRegion post-ghost begin meshBody=%s meshLevel=%s subRegion=%s elems=%lld",
+                              meshBody.getName().c_str(), meshLevel.getName().c_str(), subRegion.getName().c_str(),
+                              static_cast< long long >( subRegion.size() ) );
         /// 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
         // because the ghosting ensures that the neighbor cells of the fracture elements are available.
         // These neighbor cells are providing the node information to the fracture elements.
@@ -863,12 +971,29 @@ void ProblemManager::generateMesh()
         //    faceToNodes(kf0, a) and faceToNodes(kf1, a) are geometrically paired (collocated) nodes.
         //    This is required by the conforming contact kernels which assume this pairing.
         subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+        vtk::meshDebug::logf( MPI_COMM_GEOS,
+                              "ProblemManager::FaceElementSubRegion post-ghost end meshBody=%s meshLevel=%s subRegion=%s",
+                              meshBody.getName().c_str(), meshLevel.getName().c_str(), subRegion.getName().c_str() );
       } );
 
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::set external flags begin meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str() );
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::set external flags end meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str() );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "ProblemManager::post-communication mesh level end meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str() );
     } );
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::post-communication mesh body end name=%s",
+                          meshBody.getName().c_str() );
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::post-communication mesh body cleanup end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMesh internal end" );
 
 }
 
@@ -960,6 +1085,10 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         Group const * const discretization,
                                         string_array const & )
 {
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "ProblemManager::generateMeshLevel(CellBlock) begin meshLevel=%s discretization=%s",
+                        meshLevel.getName().c_str(),
+                        discretization == nullptr ? "null" : discretization->getName().c_str() );
   if( discretization != nullptr )
   {
     auto const * const
@@ -979,6 +1108,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
       GEOS_ERROR( "Group expected to cast to a discretization object." );
     }
   }
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel(CellBlock) discretization check end" );
 
   NodeManager & nodeManager = meshLevel.getNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -987,32 +1117,69 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
   bool const isBaseMeshLevel = meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.generateMesh begin" );
   elemRegionManager.generateMesh( cellBlockManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.generateMesh end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setGeometricalRelations begin" );
   nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setGeometricalRelations end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setGeometricalRelations begin" );
   edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setGeometricalRelations end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setGeometricalRelations begin" );
   faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setGeometricalRelations end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.constructGlobalToLocalMap begin" );
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.constructGlobalToLocalMap end" );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.buildSets begin" );
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.buildSets end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.buildSets begin" );
   edgeManager.buildSets( nodeManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.buildSets end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.buildSets begin" );
   faceManager.buildSets( nodeManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.buildSets end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.buildSets begin" );
   elemRegionManager.buildSets( nodeManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.buildSets end" );
   // The edge manager do not hold any information related to the regions nor the elements.
   // This is why the element region manager is not provided.
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setupRelatedObjectsInRelations begin" );
   nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setupRelatedObjectsInRelations end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setupRelatedObjectsInRelations begin" );
   edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setupRelatedObjectsInRelations end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setupRelatedObjectsInRelations begin" );
   faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setupRelatedObjectsInRelations end" );
   // Node and edge managers rely on the boundary information provided by the face manager.
   // This is why `faceManager.setDomainBoundaryObjects` is called first.
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setDomainBoundaryObjects begin" );
   faceManager.setDomainBoundaryObjects( elemRegionManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel faceManager.setDomainBoundaryObjects end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setDomainBoundaryObjects begin" );
   edgeManager.setDomainBoundaryObjects( faceManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel edgeManager.setDomainBoundaryObjects end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setDomainBoundaryObjects begin" );
   nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel nodeManager.setDomainBoundaryObjects end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel meshLevel.generateSets begin" );
   meshLevel.generateSets();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel meshLevel.generateSets end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel subRegion geometry begin" );
   elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::generateMeshLevel subRegion begin name=%s size=%lld isBase=%d",
+                          subRegion.getName().c_str(), static_cast< long long >( subRegion.size() ),
+                          isBaseMeshLevel ? 1 : 0 );
     subRegion.setupRelatedObjectsInRelations( meshLevel );
     // TODO calling calculateElementGeometricQuantities for `FaceElementSubRegion` here is not very accurate:
     // `FaceElementSubRegion` has no node and therefore needs the nodes positions from neighboring elements
@@ -1034,9 +1201,21 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       }
     }
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::generateMeshLevel subRegion setMaxGlobalIndex begin name=%s",
+                          subRegion.getName().c_str() );
     subRegion.setMaxGlobalIndex();
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "ProblemManager::generateMeshLevel subRegion end name=%s",
+                          subRegion.getName().c_str() );
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel subRegion geometry end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.setMaxGlobalIndex begin" );
   elemRegionManager.setMaxGlobalIndex();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "ProblemManager::generateMeshLevel elemRegionManager.setMaxGlobalIndex end" );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "ProblemManager::generateMeshLevel(CellBlock) end meshLevel=%s",
+                        meshLevel.getName().c_str() );
 }
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,

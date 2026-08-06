@@ -51,10 +51,16 @@ using namespace geos::dataRepository;
 
 
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="", string const scatterMethod="" )
 {
   // Automatically use global IDs when fractures are present
   string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
+
+  string scatterAttr;
+  if( !scatterMethod.empty() )
+  {
+    scatterAttr = GEOS_FMT( "scatterMethod=\"{}\"", scatterMethod );
+  }
 
   string const pattern = R"xml(
     <Mesh>
@@ -63,10 +69,12 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
         file="{}"
         partitionRefinement="0"
         useGlobalIds="{}"
+        {}
         {} />
     </Mesh>
   )xml";
   string const meshNode = GEOS_FMT( pattern, meshFilePath, useGlobalIdsStr,
+                                    scatterAttr,
                                     fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
 
   xmlWrapper::xmlDocument xmlDocument;

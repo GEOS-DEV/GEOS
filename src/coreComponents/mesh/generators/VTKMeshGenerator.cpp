@@ -23,6 +23,7 @@
 #include "mesh/ExternalDataSourceManager.hpp"
 #include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -75,12 +76,21 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
-                    "A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). "
+                    "A value of 0 disables graph partitioning and keeps the initial scatter partition. "
                     "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
 
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Method (library) used to partition the mesh" );
+    setDescription( "Method (library) used to refine mesh partitioning" );
+
+  registerWrapper( viewKeyStruct::scatterMethodString(), &m_scatterMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( vtk::ScatterMethod::rcb ).
+    setDescription( "Method for initial mesh scatter from rank 0 to all ranks: "
+                    "contiguous (cell ID ranges, no geometry), "
+                    "cartesian (regular grid using -x/-y/-z partitions), "
+                    "rcb (recursive coordinate bisection, default), "
+                    "kdtree (VTK built-in kd-tree; automatically falls back to rcb when fractures are present)" );
 
   registerWrapper( viewKeyStruct::partitionFractureWeightString(), &m_partitionFractureWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -137,10 +147,21 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_MARK_FUNCTION;
 
   MPI_Comm const comm = MPI_COMM_GEOS;
+  vtk::meshDebug::log( comm, "VTKMeshGenerator::fillCellBlockManager begin" );
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
-  int const numPartZ = m_structuredIndexAttributeName.empty() ? 1 : partition.getPartitions()[2];
+  array1d< int > const & partitions = partition.getPartitions();
+
+  if( m_scatterMethod == vtk::ScatterMethod::cartesian )
+  {
+    int const product = partitions[0] * partitions[1] * partitions[2];
+    GEOS_ERROR_IF( product != MpiWrapper::commSize( comm ),
+                   GEOS_FMT( "scatterMethod=\"cartesian\" requires -x * -y * -z = MPI size. "
+                             "Got {}x{}x{} = {} but MPI size is {}.",
+                             partitions[0], partitions[1], partitions[2],
+                             product, MpiWrapper::commSize( comm ) ) );
+  }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  redistributing mesh..." );
   {
@@ -151,13 +172,22 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     if( !m_filePath.empty())
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
+      vtk::meshDebug::logf( comm,
+                            "VTKMeshGenerator loadAllMeshes begin file=%s",
+                            m_filePath.c_str() );
       allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
+      vtk::meshDebug::logDataSet( comm,
+                                  "VTKMeshGenerator loadAllMeshes main result",
+                                  allMeshes.getMainMesh() );
+      vtk::meshDebug::logf( comm,
+                            "VTKMeshGenerator loadAllMeshes faceBlockCount=%lld",
+                            static_cast< long long >( allMeshes.getFaceBlocks().size() ) );
     }
     else if( !m_dataSourceName.empty())
     {
       if( MpiWrapper::commRank() == 0 )
       {
-        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
+        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > vtkPartitions;
         vtkNew< vtkAppendFilter > appender;
         appender->MergePointsOn();
         for( auto & [key, value] : getSubGroups())
@@ -206,20 +236,35 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps,
                            GEOS_FMT( "{} '{}': redistributing mesh...", catalogName(), getName() ) );
+    vtk::meshDebug::logDataSet( comm,
+                                "VTKMeshGenerator redistributeMeshes input",
+                                allMeshes.getMainMesh() );
+    vtk::meshDebug::log( comm, "VTKMeshGenerator redistributeMeshes begin" );
     vtk::AllMeshes redistributedMeshes = vtk::redistributeMeshes( getLogLevel(),
-                                                                  allMeshes.getMainMesh(),
-                                                                  allMeshes.getFaceBlocks(),
+                                                                   allMeshes.getMainMesh(),
+                                                                   allMeshes.getFaceBlocks(),
                                                                   comm,
+                                                                  m_scatterMethod,
+                                                                  partitions.toViewConst(),
                                                                   m_partitionMethod,
                                                                   m_partitionRefinement,
                                                                   m_partitionFractureWeight,
                                                                   m_useGlobalIds,
-                                                                  m_structuredIndexAttributeName,
-                                                                  numPartZ );
+                                                                  m_structuredIndexAttributeName );
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
+    vtk::meshDebug::logDataSet( comm,
+                                "VTKMeshGenerator redistributeMeshes main result",
+                                m_vtkMesh );
+    vtk::meshDebug::logf( comm,
+                          "VTKMeshGenerator redistributeMeshes faceBlockResultCount=%lld",
+                          static_cast< long long >( m_faceBlockMeshes.size() ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
+    vtk::meshDebug::log( comm, "VTKMeshGenerator exchangeBoundingBoxes begin" );
     stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
+    vtk::meshDebug::logf( comm,
+                          "VTKMeshGenerator exchangeBoundingBoxes end boxes=%lld",
+                          static_cast< long long >( boxes.size() ) );
     stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
     partition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
@@ -228,23 +273,40 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': preprocessing...", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator buildCellMap begin" );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_regionAttributeName );
+  vtk::meshDebug::logf( comm,
+                        "VTKMeshGenerator buildCellMap end elementTypeCount=%lld",
+                        static_cast< long long >( m_cellMap.size() ) );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing nodes...", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeNodes begin" );
   writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, m_translate, m_scale );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeNodes end" );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeCells begin" );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeCells end" );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing surfaces...", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeSurfaces begin" );
   writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator writeSurfaces end" );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': building connectivity maps...", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator buildMaps begin" );
   cellBlockManager.buildMaps();
+  vtk::meshDebug::log( comm, "VTKMeshGenerator buildMaps end" );
 
+  vtk::meshDebug::log( comm, "VTKMeshGenerator getGlobalLengthAndOffset begin" );
   auto lengthAndOffset = getGlobalLengthAndOffset( *m_vtkMesh );
   cellBlockManager.setGlobalLength( lengthAndOffset.first );
   cellBlockManager.setGlobalOffset( lengthAndOffset.second );
+  vtk::meshDebug::logf( comm,
+                        "VTKMeshGenerator getGlobalLengthAndOffset end globalLength=%lld globalOffset=%lld",
+                        static_cast< long long >( lengthAndOffset.first ),
+                        static_cast< long long >( lengthAndOffset.second ) );
 
   for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
@@ -252,6 +314,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
+  vtk::meshDebug::log( comm, "VTKMeshGenerator::fillCellBlockManager end" );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, MPI_COMM_GEOS );
 }
 

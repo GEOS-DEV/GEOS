@@ -24,8 +24,10 @@
 #include "FaceManager.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "mesh/generators/CellBlockUtilities.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 
 namespace geos
 {
@@ -69,6 +71,10 @@ void EdgeManager::resize( localIndex const newSize )
 void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
   GEOS_MARK_FUNCTION;
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "EdgeManager::buildSets begin edges=%lld nodeSets=%lld",
+                        static_cast< long long >( size() ),
+                        static_cast< long long >( nodeManager.sets().wrappers().size() ) );
 
   // Make sets from node sets.
   auto const & nodeSets = nodeManager.sets().wrappers();
@@ -76,17 +82,45 @@ void EdgeManager::buildSets( NodeManager const & nodeManager )
   {
     auto const & setWrapper = nodeSets[i];
     string const & setName = setWrapper->getName();
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "EdgeManager::buildSets createSet begin set=%s",
+                          setName.c_str() );
     createSet( setName );
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "EdgeManager::buildSets createSet end set=%s",
+                          setName.c_str() );
   }
 
   // Then loop over them in parallel.
-  forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
+  if( vtk::meshDebug::enabled() )
   {
-    auto const & setWrapper = nodeSets[i];
-    string const & setName = setWrapper->getName();
-    SortedArrayView< localIndex const > const targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
-    constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
-  } );
+    for( localIndex i = 0; i < nodeSets.size(); ++i )
+    {
+      auto const & setWrapper = nodeSets[i];
+      string const & setName = setWrapper->getName();
+      SortedArrayView< localIndex const > const targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "EdgeManager::buildSets construct begin set=%s inputNodes=%lld edges=%lld",
+                            setName.c_str(), static_cast< long long >( targetSet.size() ),
+                            static_cast< long long >( size() ) );
+      constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "EdgeManager::buildSets construct end set=%s outputEdges=%lld",
+                            setName.c_str(),
+                            static_cast< long long >( sets().getReference< SortedArray< localIndex > >( setName ).size() ) );
+    }
+  }
+  else
+  {
+    forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
+    {
+      auto const & setWrapper = nodeSets[i];
+      string const & setName = setWrapper->getName();
+      SortedArrayView< localIndex const > const targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+      constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
+    } );
+  }
+  vtk::meshDebug::log( MPI_COMM_GEOS, "EdgeManager::buildSets end" );
 }
 
 void EdgeManager::buildEdges( localIndex const numNodes,

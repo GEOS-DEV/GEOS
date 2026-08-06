@@ -19,6 +19,8 @@
 
 #include "VTKMeshGeneratorTools.hpp"
 
+#include "VTKMeshDebug.hpp"
+
 #include <vtkAppendFilter.h>
 #include <vtkDIYGhostUtilities.h>
 #include <vtkDIYUtilities.h>
@@ -33,6 +35,7 @@ vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts,
               MPI_Comm mpiComm )
 {
+  meshDebug::logPartitionedDataSet( mpiComm, "VTKMeshGeneratorTools::redistribute begin", &localParts );
   // The code below is modified from vtkDIYKdTreeUtilities::Exchange():
   // https://gitlab.kitware.com/vtk/vtk/-/blob/7037a148605bf9628710d8b729c22f27dd0ede93/Filters/ParallelDIY2/vtkDIYKdTreeUtilities.cxx#L289
   // We cannot call that function directly because vtkDIYKdTreeUtilities.hpp is a private header in VTK.
@@ -53,6 +56,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   assert( master.size() == 1 );
 
   int const myRank = comm.rank();
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute diy all_to_all begin" );
   diy::all_to_all( master, assigner, [myRank, &localParts]( BlockType * block, diy::ReduceProxy const & reduceProxy )
   {
     if( reduceProxy.in_link().size() == 0 )
@@ -93,6 +97,10 @@ redistribute( vtkPartitionedDataSet & localParts,
       }
     }
   } );
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute diy all_to_all end" );
+  meshDebug::logf( mpiComm,
+                   "VTKMeshGeneratorTools::redistribute receivedBlocks=%lld",
+                   static_cast< long long >( master.block< BlockType >( 0 )->size() ) );
 
   // At this point of the process, it is legitimate to have ranks with no cells for the cases with fractures.
   // But this leaves us with a technical problem since `vtkAppendFilter`
@@ -160,6 +168,7 @@ redistribute( vtkPartitionedDataSet & localParts,
 
   vtkNew< vtkAppendFilter > appender;
   appender->MergePointsOn();
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute append inputs begin" );
   for( unsigned int i = 0; i < master.size(); ++i )
   {
     for( vtkUnstructuredGrid * ug: *master.block< BlockType >( i ) )
@@ -167,7 +176,10 @@ redistribute( vtkPartitionedDataSet & localParts,
       appender->AddInputDataObject( ug );
     }
   }
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute append inputs end" );
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute append Update begin" );
   appender->Update();
+  meshDebug::log( mpiComm, "VTKMeshGeneratorTools::redistribute append Update end" );
 
   vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
   // Now we register back the field info.
@@ -194,12 +206,14 @@ redistribute( vtkPartitionedDataSet & localParts,
     }
   }
 
+  meshDebug::logDataSet( mpiComm, "VTKMeshGeneratorTools::redistribute end", result );
   return result;
 }
 
 stdVector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
 {
+  meshDebug::logDataSet( mpiComm, "exchangeBoundingBoxes begin input", &dataSet );
   // The code below is modified from vtkDIYGhostUtilities::ExchangeBoundingBoxes():
   // https://gitlab.kitware.com/vtk/vtk/-/blob/1f0e4b2d0be7cd328795131642b5bf7984f681c1/Parallel/DIY/vtkDIYGhostUtilities.txx#L300
   // It makes some simplifications (e.g. just one input dataset per rank).
@@ -216,6 +230,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   decomposer.decompose( comm.rank(), assigner, master );
   assert( master.size() == 1 );
 
+  meshDebug::log( mpiComm, "exchangeBoundingBoxes diy all_to_all begin" );
   diy::all_to_all( master, assigner, [&dataSet]( BlockType * block, diy::ReduceProxy const & rp )
   {
     int myBlockId = rp.gid();
@@ -249,6 +264,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
       }
     }
   } );
+  meshDebug::log( mpiComm, "exchangeBoundingBoxes diy all_to_all end" );
 
   BlockType & boxMap = *master.block< BlockType >( 0 );
   boxMap.emplace( comm.rank(), vtkBoundingBox( dataSet.GetBounds() ) );
@@ -260,6 +276,9 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   {
     boxes.push_back( rankBox.second );
   }
+  meshDebug::logf( mpiComm,
+                   "exchangeBoundingBoxes end boxes=%lld",
+                   static_cast< long long >( boxes.size() ) );
   return boxes;
 }
 

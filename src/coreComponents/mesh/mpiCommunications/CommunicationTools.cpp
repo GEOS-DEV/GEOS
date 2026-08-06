@@ -20,6 +20,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 #include <algorithm>
@@ -812,6 +813,10 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                       bool const unorderedComms )
 {
   GEOS_MARK_FUNCTION;
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "CommunicationTools::setupGhosts begin meshLevel=%s neighbors=%lld unordered=%d",
+                        meshLevel.getName().c_str(), static_cast< long long >( neighbors.size() ),
+                        unorderedComms ? 1 : 0 );
   MPI_iCommData commData;
   commData.resize( neighbors.size() );
 
@@ -844,11 +849,13 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts ghost exchange begin" );
   waitOrderedOrWaitAll( neighbors.size(),
                         { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendGhosts ),
                           std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
                           std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), unpackGhosts ) },
                         unorderedComms );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts ghost exchange end" );
 
   // There are cases where the multiple waitOrderedOrWaitAll methods here will clash with
   // each other. This typically occurs at higher processor counts (>256) and large meshes
@@ -856,18 +863,24 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   // async MPI communication will not interfere with subsequent async communication calls.
   // The underlying problem is that for a given phase of async communication, the same
   // tag numbers are used. This will at least isolate the async calls from each other.
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts ghost send waitAll begin" );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts ghost send waitAll end" );
 
   // unpack the ghost inter-object maps and other data
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts unpackGhostsData begin" );
   for( auto & neighbor : neighbors )
   {
     neighbor.unpackGhostsData( meshLevel, commData.commID() );
   }
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts unpackGhostsData end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts setReceiveLists begin" );
   nodeManager.setReceiveLists();
   edgeManager.setReceiveLists();
   faceManager.setReceiveLists();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts setReceiveLists end" );
 
   auto sendSyncLists = [&] ( int idx )
   {
@@ -888,32 +901,43 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
     return MPI_REQUEST_NULL;
   };
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync exchange 1 begin" );
   waitOrderedOrWaitAll( neighbors.size(),
                         { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
                           std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
                           std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
                         unorderedComms );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync exchange 1 end" );
 
   // See above comments for the reason behind these waitAll commands
   // RE: isolate multiple async-wait calls
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync waitAll 1 begin" );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync waitAll 1 end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts fixReceiveLists begin" );
   fixReceiveLists( nodeManager, neighbors );
   fixReceiveLists( edgeManager, neighbors );
   fixReceiveLists( faceManager, neighbors );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts fixReceiveLists end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync exchange 2 begin" );
   waitOrderedOrWaitAll( neighbors.size(),
                         { std::make_tuple( static_cast< MPI_Request * >(nullptr), static_cast< MPI_Status * >(nullptr), sendSyncLists ),
                           std::make_tuple( commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus(), postRecv ),
                           std::make_tuple( commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus(), rebuildSyncLists ) },
                         unorderedComms );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync exchange 2 end" );
 
   // See above comments for the reason behind these waitAll commands
   // RE: isolate multiple async-wait
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync waitAll 2 begin" );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
   MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts sync waitAll 2 end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts fixUpDownMaps/verify begin" );
   nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
   edgeManager.fixUpDownMaps( false );
@@ -929,12 +953,20 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   {
     subRegion.fixSecondaryMappings( nodeManager, edgeManager, faceManager, elemManager );
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts fixUpDownMaps/verify end" );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts removeUnusedNeighbors begin" );
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "CommunicationTools::setupGhosts removeUnusedNeighbors end neighbors=%lld",
+                        static_cast< long long >( neighbors.size() ) );
 
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts compressRelationMaps begin" );
   nodeManager.compressRelationMaps();
   edgeManager.compressRelationMaps();
   faceManager.compressRelationMaps();
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts compressRelationMaps end" );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "CommunicationTools::setupGhosts end" );
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( string_array const & fieldNames,

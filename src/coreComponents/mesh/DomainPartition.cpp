@@ -26,6 +26,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/VTKMeshDebug.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mesh/LogLevelsInfo.hpp"
@@ -236,10 +237,19 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
 void DomainPartition::setupCommunications( bool use_nonblocking )
 {
+  vtk::meshDebug::logf( MPI_COMM_GEOS,
+                        "DomainPartition::setupCommunications begin use_nonblocking=%d",
+                        use_nonblocking ? 1 : 0 );
   forMeshBodies( [&]( MeshBody & meshBody )
   {
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "DomainPartition::setupCommunications meshBody begin name=%s hasParticles=%d",
+                          meshBody.getName().c_str(), meshBody.hasParticles() ? 1 : 0 );
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "DomainPartition::setupCommunications meshLevel begin meshBody=%s meshLevel=%s shallow=%d",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str(), meshLevel.isShallowCopy() ? 1 : 0 );
       if( !meshBody.hasParticles() ) // Currently, particle-based mesh bodies do not construct their
                                      // own domain decomposition. MPM borrows that of the grid.
       {
@@ -249,9 +259,29 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
           FaceManager & faceManager = meshLevel.getFaceManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
 
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications setupGhosts begin meshBody=%s meshLevel=%s neighbors=%lld",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str(),
+                                static_cast< long long >( m_neighbors.size() ) );
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications setupGhosts end meshBody=%s meshLevel=%s neighbors=%lld",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str(),
+                                static_cast< long long >( m_neighbors.size() ) );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications sortAllFaceNodes begin meshBody=%s meshLevel=%s",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str() );
           faceManager.sortAllFaceNodes( nodeManager, elemManager );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications sortAllFaceNodes end meshBody=%s meshLevel=%s",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str() );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications computeGeometry begin meshBody=%s meshLevel=%s",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str() );
           faceManager.computeGeometry( nodeManager );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications computeGeometry end meshBody=%s meshLevel=%s",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str() );
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
@@ -264,15 +294,30 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
           CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
           CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications nonbase setupGhosts begin meshBody=%s meshLevel=%s neighbors=%lld",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str(),
+                                static_cast< long long >( m_neighbors.size() ) );
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          vtk::meshDebug::logf( MPI_COMM_GEOS,
+                                "DomainPartition::setupCommunications nonbase setupGhosts end meshBody=%s meshLevel=%s neighbors=%lld",
+                                meshBody.getName().c_str(), meshLevel.getName().c_str(),
+                                static_cast< long long >( m_neighbors.size() ) );
         }
         else
         {
           GEOS_LOG_LEVEL_RANK_0( logInfo::PartitionCommunication, "No communication setup is needed since it is a shallow copy of the base discretization." );
         }
       }
+      vtk::meshDebug::logf( MPI_COMM_GEOS,
+                            "DomainPartition::setupCommunications meshLevel end meshBody=%s meshLevel=%s",
+                            meshBody.getName().c_str(), meshLevel.getName().c_str() );
     } );
+    vtk::meshDebug::logf( MPI_COMM_GEOS,
+                          "DomainPartition::setupCommunications meshBody end name=%s",
+                          meshBody.getName().c_str() );
   } );
+  vtk::meshDebug::log( MPI_COMM_GEOS, "DomainPartition::setupCommunications end" );
 }
 
 void DomainPartition::addNeighbors( const unsigned int idim,
