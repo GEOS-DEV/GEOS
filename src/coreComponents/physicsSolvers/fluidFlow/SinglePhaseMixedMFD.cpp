@@ -230,6 +230,7 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
                                         elemCenterAccessor.toNestedViewConst(),
                                         permAccessors.get( fields::permeability::permeability {} ),
                                         gradient,
+                                        lengthTolerance,
                                         projFaceFlux );
 
     // steps 2-3: localized normalized residuals, assembled on the global face orientation

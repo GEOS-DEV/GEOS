@@ -134,9 +134,11 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
         LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
 
         // 3) compute the one-sided face transmissibility
-        transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-        transMatrix[ifaceLoc][jfaceLoc] *= mult * faceArea / c2fDistance;
-        transMatrix[ifaceLoc][jfaceLoc]  = LvArray::math::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
+        real64 const halfTrans =
+          LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * mult * faceArea / c2fDistance;
+        // T := sign(T) * max(|T|, tol), so that |T| >= tol and sign(T) is preserved
+        transMatrix[ifaceLoc][jfaceLoc] = ( halfTrans < 0.0 ? -1.0 : 1.0 ) *
+                                          LvArray::math::max( LvArray::math::abs( halfTrans ), weightTolerance );
       }
       else
       {
@@ -189,10 +191,11 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
     // 3) compute T_ii
     real64 Tii = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
 
-    Tii = LvArray::math::max( Tii, weightTolerance );
+    // T := max(|T|, tol), so that M_ii = 1/T is well-defined with M_ii <= 1/tol
+    Tii = LvArray::math::max( LvArray::math::abs( Tii ), weightTolerance );
 
     // 4) M = |T|^{-1}
-    M[ifaceLoc][ifaceLoc] = 1.0 / LvArray::math::abs( Tii );
+    M[ifaceLoc][ifaceLoc] = 1.0 / Tii;
   }
 }
 

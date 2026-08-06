@@ -105,12 +105,11 @@ struct FaceFluxProjectionKernel
           ElementViewConst< arrayView2d< real64 const > > const & elemCenter,
           ElementViewConst< arrayView3d< real64 const > > const & elemPerm,
           real64 const (&gradient)[3],
+          real64 const lengthTolerance,
           arrayView1d< real64 > const & projFaceFlux )
   {
     forAll< POLICY >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const kf )
     {
-      real64 const areaWeightTol = LvArray::NumericLimits< real64 >::epsilon;
-
       real64 sumInvHalfTrans = 0.0;  // sum of d / kappa
       real64 sumDist = 0.0;          // sum of d
       integer elemCounter = 0;
@@ -139,15 +138,19 @@ struct FaceFluxProjectionKernel
           dist += cellToFace[d] * faceNormal[kf][d];
         }
         dist = LvArray::math::abs( dist );
-        dist = LvArray::math::max( dist, areaWeightTol );
+        dist = LvArray::math::max( dist, lengthTolerance );
 
         // face-normal directional diffusive component kappa = n . K . n (diagonal K)
         real64 kappa = 0.0;
+        real64 kappaScale = 0.0;
         for( integer d = 0; d < 3; ++d )
         {
           kappa += elemPerm[er][esr][ei][0][d] * faceNormal[kf][d] * faceNormal[kf][d];
+          kappaScale = LvArray::math::max( kappaScale, elemPerm[er][esr][ei][0][d] );
         }
-        kappa = LvArray::math::max( kappa, areaWeightTol );
+        // roundoff floor: n.K.n is computed from terms bounded by max_d K_d, so values below
+        // eps * max_d K_d are numerically indistinguishable from a collapsed eigenvalue
+        kappa = LvArray::math::max( kappa, LvArray::NumericLimits< real64 >::epsilon * kappaScale );
 
         sumInvHalfTrans += dist / kappa;
         sumDist += dist;
@@ -250,6 +253,10 @@ struct LocalResidualKernel
           real64 const lengthTolerance,
           arrayView1d< real64 > const & faceResidual )
   {
+    // ||DeltaP_C|| >= |g| * (star-shape radius) on admissible cells: a smaller value signals
+    // a degenerate cell, and the normalization saturates at the mesh length tolerance scale
+    real64 const dropTolerance = LvArray::tensorOps::l2Norm< 3 >( gradient ) * lengthTolerance;
+
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
@@ -295,7 +302,7 @@ struct LocalResidualKernel
         pressureDropNorm += drop * drop;
       }
       pressureDropNorm = LvArray::math::sqrt( pressureDropNorm );
-      pressureDropNorm = LvArray::math::max( pressureDropNorm, LvArray::NumericLimits< real64 >::epsilon );
+      pressureDropNorm = LvArray::math::max( pressureDropNorm, dropTolerance );
 
       // normalized constitutive residual, assembled on the global face orientation
       for( integer i = 0; i < NF; ++i )
