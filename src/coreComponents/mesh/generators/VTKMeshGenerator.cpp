@@ -77,9 +77,8 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
-    setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
-                    "A value of 0 disables graph partitioning and keeps the initial scatter partition. "
-                    "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
+    setDescription( "Number of partition refinement iterations. For the legacy model, zero keeps the initial scatter; "
+                    "for the hybrid model, zero keeps the initial METIS partition without exact refinement." );
 
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -116,6 +115,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setDescription( "Relative imbalance tolerances for FVM work, FEM work, and resident memory" );
 
   registerWrapper( viewKeyStruct::partitionSeedString(), &m_hybridPartitionOptions.seed ).
+    setRTTypeName( "integer" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 2022 ).
     setDescription( "Deterministic METIS seed for hybrid root-local partitioning" );
@@ -137,6 +137,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 
   registerWrapper( viewKeyStruct::partitionRootGraphMemoryLimitMBString(),
                    &m_hybridPartitionOptions.rootGraphMemoryLimitMB ).
+    setRTTypeName( "integer" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Root hybrid-graph peak-memory limit in MiB; zero is unlimited and falls back explicitly when exceeded" );
@@ -225,6 +226,11 @@ void VTKMeshGenerator::postInputInitialization()
     GEOS_ERROR_IF( m_hybridPartitionOptions.fvmCommunicationWeight == 0.0 &&
                    m_hybridPartitionOptions.femCommunicationWeight == 0.0,
                    "At least one hybrid partition communication weight must be positive", getDataContext() );
+    if( m_hybridPartitionOptions.imbalance.empty() )
+    {
+      m_hybridPartitionOptions.imbalance.resize( 3 );
+      m_hybridPartitionOptions.imbalance.setValues< serialPolicy >( 0.05 );
+    }
     GEOS_ERROR_IF_NE_MSG( m_hybridPartitionOptions.imbalance.size(), 3,
                           "partitionImbalance must contain exactly three values" );
     for( real64 const tolerance : m_hybridPartitionOptions.imbalance )
