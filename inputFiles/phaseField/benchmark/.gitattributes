@@ -1,0 +1,4 @@
+singleEdgeNotch/meshes/singleEdgeCrackSquareShear.vtu filter=lfs diff=lfs merge=lfs -text
+singleEdgeNotch/meshes/singleEdgeCrackSquareTension.vtu filter=lfs diff=lfs merge=lfs -text
+threePointsBending/mesh/threePointsBendingSingleNotch.vtu filter=lfs diff=lfs merge=lfs -text
+threePointsBendingWithHoles/mesh/threePointsBendingWithHoles.vtu filter=lfs diff=lfs merge=lfs -text
