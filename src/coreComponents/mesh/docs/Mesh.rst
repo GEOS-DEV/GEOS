@@ -203,6 +203,78 @@ The mesh block has the following syntax:
   are imported with their names, which is particularly useful to fill the field of the
   ``CellElementRegions`` block (see below). Some information about the imported surfaces is also provided.
 
+.. _VTKMeshPartitioning:
+
+Partitioning imported VTK meshes
+********************************
+
+``partitionModel="legacy"`` is the default and preserves the established initial-scatter and
+optional ParMETIS/PT-Scotch refinement workflow.  ``partitionModel="hybrid"`` is an opt-in path
+for a serial, unstructured VTK volume mesh initially owned by rank 0.  It supports linear
+tetrahedra, pyramids, wedges, and hexahedra in the same mesh.
+
+The hybrid model uses exact shared faces to represent cell-centered finite-volume communication
+and shared points to represent nodal finite-element communication.  Serial METIS balances three
+independent topology-derived constraints: FVM work, FEM work, and resident mesh/state memory.
+Fracture-connected volume cells remain atomic super-cells.  After partitioning, the 3D mesh uses
+the existing VTK exchange once; lower-dimensional elements, GEOS mesh construction, neighbor
+communication, and ghost construction continue through their normal paths.
+
+For example:
+
+.. code-block:: xml
+
+  <VTKMesh
+    name="mesh"
+    file="/path/to/mixed_mesh.vtu"
+    partitionMethod="parmetis"
+    partitionModel="hybrid"
+    partitionRefinement="2"
+    partitionFVMCommunicationWeight="1.0"
+    partitionFEMCommunicationWeight="1.0"
+    partitionImbalance="{ 0.05, 0.05, 0.08 }"
+    partitionDiagnostics="1" />
+
+The hybrid controls are:
+
+``partitionFVMCommunicationWeight`` and ``partitionFEMCommunicationWeight``
+  Relative weights of exact cut-face traffic and shared-point replication.  Both default to
+  ``1`` and at least one must be positive.
+
+``partitionImbalance``
+  Three relative load tolerances in FVM, FEM, and memory order.  The default is
+  ``{ 0.05, 0.05, 0.05 }``.
+
+``partitionFVMWeightField``, ``partitionFEMWeightField``, and ``partitionMemoryWeightField``
+  Optional names of scalar VTK cell arrays that override the corresponding topology-derived
+  load proxy.  Values must be finite and nonnegative, with at least one positive value per
+  constraint.
+
+``partitionRefinement``
+  Maximum number of deterministic exact-objective refinement passes after METIS.  Zero keeps
+  the initial hybrid METIS result.  This differs from its legacy-model behavior, where zero
+  disables graph refinement after the initial geometric scatter.
+
+``partitionNeighborPenalty``
+  Optional weak penalty for distinct rank-neighbor pairs; the default is ``0``.
+
+``partitionSeed``
+  Deterministic METIS seed; the default is ``2022``.
+
+``partitionRootGraphMemoryLimitMB``
+  Estimated root graph peak-memory limit in MiB.  Zero means unlimited.  If a positive limit
+  is exceeded, GEOS logs the reason and uses the legacy path.
+
+``partitionDiagnostics``
+  Set to ``1`` for per-rank constraint loads and topology diagnostics.  The rank-0 summary
+  reports objective values, cut faces, point replication, maximum neighbor degree, constraint
+  imbalance, graph/METIS/refinement/redistribution times, and estimated root graph memory.
+
+Hybrid mode requires a build with serial METIS and ``partitionMethod="parmetis"``.  GEOS logs
+an explicit legacy fallback for structured or already-distributed input, unsupported volume-cell
+types, fewer volume cells than ranks, or a configured root-memory limit violation.  The default
+remains ``legacy`` while the hybrid path is evaluated across broader mesh families.
+
 GEOS uses ``ElementRegions`` to support different physics or to define different constitutive properties.
 The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion``
 is defined as a set of cell-blocks, which are sets of elements with the same element

@@ -54,12 +54,34 @@ In the command line to run GEOS, the user can specify the partitioning pattern b
 Graph-based partitioning
 ---------------------------
 
-The Graph-based partitioning is used only when importing exernal meshes using the ``VTKMesh``
-(see :ref:`TutorialFieldCase` section for more details using external meshes).
-While importing themesh, ``vtk`` computes the graph of connectivity between all the volume elements of the mesh.
-The partitioning is then done using whether a KD-tree or the PTSCOTCH_, METIS_, PARMETIS_ libraries.
-The graph is not weighted so the expected result is as mesh divided in ``n`` parts,
-with ``n`` being the number of MPI ranks used for simulation containing a similar amount of cells.
+Graph-based partitioning is used when importing external meshes with ``VTKMesh``
+(see :ref:`VTKMeshPartitioning`).  ``partitionModel`` selects one of two ownership models:
+
+``legacy``
+  This is the default and preserves the existing workflow.  A serial mesh is first
+  scattered geometrically, then it may be refined with ParMETIS or PT-Scotch.  Existing
+  structured-layer and already-distributed input behavior is unchanged.
+
+``hybrid``
+  This opt-in model targets an unstructured volume mesh held entirely on rank 0.  It
+  constructs exact mixed-element face adjacency for cell-centered communication and
+  shared-point incidence for nodal communication.  Serial METIS balances independent
+  FVM-work, FEM-work, and resident-memory weights.  An optional root-local refinement
+  evaluates the exact cut-face and point-replication objective.  The resulting owner-only
+  3D mesh is sent through the existing VTK redistribution once.
+
+The hybrid model contracts fracture-connected volume cells into atomic super-cells and
+places lower-dimensional cells with their adjacent volume cells through the established
+VTK workflow.  It also supplies exact shared-face and shared-point rank neighbors.  GEOS's
+normal boundary matching and ghost construction remain authoritative for nodes, edges,
+faces, and elements.
+
+Hybrid partitioning requires METIS and ``partitionMethod="parmetis"``.  It logs an explicit
+fallback to the legacy path for structured or already-distributed meshes, unsupported cell
+topologies, too few volume cells, or a root-graph estimate above
+``partitionRootGraphMemoryLimitMB``.  ``partitionDiagnostics="1"`` prints per-rank loads,
+imbalance, cut faces, point replication, neighbor degree, connected components, timings,
+and estimated root memory.
 
 Ghost ranks
 ===============

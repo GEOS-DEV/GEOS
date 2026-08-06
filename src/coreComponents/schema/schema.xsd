@@ -2087,12 +2087,34 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
+		<!--partitionDiagnostics => Enable detailed per-rank hybrid partition load and topology diagnostics-->
+		<xsd:attribute name="partitionDiagnostics" type="integer" default="0" />
+		<!--partitionFEMCommunicationWeight => Relative hybrid objective weight for exact shared-node replication-->
+		<xsd:attribute name="partitionFEMCommunicationWeight" type="real64" default="1" />
+		<!--partitionFEMWeightField => Optional scalar VTK cell array overriding topology-derived FEM work-->
+		<xsd:attribute name="partitionFEMWeightField" type="string" default="" />
+		<!--partitionFVMCommunicationWeight => Relative hybrid objective weight for exact cut-face communication-->
+		<xsd:attribute name="partitionFVMCommunicationWeight" type="real64" default="1" />
+		<!--partitionFVMWeightField => Optional scalar VTK cell array overriding topology-derived FVM work-->
+		<xsd:attribute name="partitionFVMWeightField" type="string" default="" />
 		<!--partitionFractureWeight => Additional weight to fracture-connected super-cells during partitioning-->
 		<xsd:attribute name="partitionFractureWeight" type="integer" default="0" />
-		<!--partitionMethod => Method (library) used to partition the mesh-->
+		<!--partitionImbalance => Relative imbalance tolerances for FVM work, FEM work, and resident memory-->
+		<xsd:attribute name="partitionImbalance" type="real64_array" default="{0.05,0.05,0.05}" />
+		<!--partitionMemoryWeightField => Optional scalar VTK cell array overriding topology-derived resident-memory work-->
+		<xsd:attribute name="partitionMemoryWeightField" type="string" default="" />
+		<!--partitionMethod => Method (library) used to refine mesh partitioning-->
 		<xsd:attribute name="partitionMethod" type="geos_vtk_PartitionMethod" default="parmetis" />
-		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
+		<!--partitionModel => Partition topology/objective: 'legacy' preserves the existing scatter/refinement path; 'hybrid' uses exact shared faces and points on a serial root mesh and scatters 3D cells once-->
+		<xsd:attribute name="partitionModel" type="geos_vtk_PartitionModel" default="legacy" />
+		<!--partitionNeighborPenalty => Optional weak hybrid objective penalty for each distinct neighboring-rank pair-->
+		<xsd:attribute name="partitionNeighborPenalty" type="real64" default="0" />
+		<!--partitionRefinement => Number of partition refinement iterations. For the legacy model, zero keeps the initial scatter; for the hybrid model, zero keeps the initial METIS partition without exact refinement.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
+		<!--partitionRootGraphMemoryLimitMB => Root hybrid-graph peak-memory limit in MiB; zero is unlimited and falls back explicitly when exceeded-->
+		<xsd:attribute name="partitionRootGraphMemoryLimitMB" type="integer" default="0" />
+		<!--partitionSeed => Deterministic METIS seed for hybrid root-local partitioning-->
+		<xsd:attribute name="partitionSeed" type="integer" default="2022" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
@@ -2113,6 +2135,11 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:simpleType name="geos_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_vtk_PartitionModel">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|legacy|hybrid" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="NumericalMethodsType">
