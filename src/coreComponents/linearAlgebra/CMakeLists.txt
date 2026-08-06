@@ -71,6 +71,7 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/ComponentMask.hpp
+     utilities/DistributedMatrixStatistics.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/LinearSolverParameters.hpp
@@ -105,6 +106,7 @@ set( linearAlgebra_sources
      solvers/KrylovSolver.cpp
      solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
+     utilities/DistributedMatrixStatistics.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
@@ -257,4 +259,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( utilities/unitTests )
 endif( )
-

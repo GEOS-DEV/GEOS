@@ -33,6 +33,7 @@
 
 #include <iomanip>
 #include <numeric>
+#include <vector>
 
 namespace geos
 {
@@ -1425,6 +1426,7 @@ void HypreMatrix::write( string const & filename,
     case LAIOutputFormat::MATRIX_MARKET:
     {
       int const rank = MpiWrapper::commRank( comm() );
+      int const numRanks = MpiWrapper::commSize( comm() );
 
       globalIndex const numRows = numGlobalRows();
       globalIndex const numCols = numGlobalCols();
@@ -1442,36 +1444,64 @@ void HypreMatrix::write( string const & filename,
       // Write matrix values
       if( numRows > 0 && numCols > 0 )
       {
-        // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
-        // Warning: works for a parcsr matrix that is smaller than 2^31-1
-        hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
-
-        // Identify the smallest process where CSRmatrix exists
-        int const printRank = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm() ), comm() );
-
-        // Write to file CSRmatrix on one rank
-        if( rank == printRank )
+        // Stream rank-local rows in global row order. This avoids replicating the full
+        // distributed matrix on every rank, which is prohibitive for production systems.
+        for( int printRank = 0; printRank < numRanks; ++printRank )
         {
-          hypre::CSRData< true > csr{ fullMatrix };
-          std::ofstream os( filename, std::ios_base::app );
-          GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
-          char str[64];
-          int const width = static_cast< int >( std::log10( std::max( csr.nrow, csr.ncol ) ) ) + 1;
-
-          for( HYPRE_Int i = 0; i < csr.nrow; i++ )
+          MpiWrapper::barrier( comm() );
+          if( rank == printRank )
           {
-            for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
+            bool const cloneToHost = hypre_ParCSRMatrixMemoryLocation( m_parcsr_mat ) != HYPRE_MEMORY_HOST;
+            hypre_ParCSRMatrix * const hostMatrix = cloneToHost
+                                                      ? hypre_ParCSRMatrixClone_v2( m_parcsr_mat, 1, HYPRE_MEMORY_HOST )
+                                                      : m_parcsr_mat;
+            GEOS_ERROR_IF( hostMatrix == nullptr, "Unable to create a host matrix for MatrixMarket output" );
+
+            hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( hostMatrix ) };
+            hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( hostMatrix ) };
+            HYPRE_BigInt const * const colMapOffd = hypre_ParCSRMatrixColMapOffd( hostMatrix );
+            globalIndex const firstRow = ilower();
+            globalIndex const firstDiagColumn = jlower();
+
+            std::vector< char > outputBuffer( 1024 * 1024 );
+            std::ofstream os;
+            os.rdbuf()->pubsetbuf( outputBuffer.data(), outputBuffer.size() );
+            os.open( filename, std::ios_base::app );
+            GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+            char str[96];
+            int const width = static_cast< int >( std::log10( std::max( numRows, numCols ) ) ) + 1;
+
+            for( HYPRE_Int localRow = 0; localRow < diag.nrow; ++localRow )
             {
-              // MatrixMarket row/col indices are 1-based
-              GEOS_FMT_TO( str, sizeof( str ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n",
-                           width, i + 1, csr.colind[k] + 1, csr.values[k] );
-              os << str;
+              for( HYPRE_Int entry = diag.rowptr[localRow]; entry < diag.rowptr[localRow + 1]; ++entry )
+              {
+                // MatrixMarket row/column indices are 1-based.
+                GEOS_FMT_TO( str, sizeof( str ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n",
+                             width,
+                             firstRow + localRow + 1,
+                             firstDiagColumn + diag.colind[entry] + 1,
+                             diag.values[entry] );
+                os << str;
+              }
+              for( HYPRE_Int entry = offd.rowptr[localRow]; entry < offd.rowptr[localRow + 1]; ++entry )
+              {
+                GEOS_FMT_TO( str, sizeof( str ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n",
+                             width,
+                             firstRow + localRow + 1,
+                             colMapOffd[offd.colind[entry]] + 1,
+                             offd.values[entry] );
+                os << str;
+              }
+            }
+
+            os.close();
+            if( cloneToHost )
+            {
+              GEOS_LAI_CHECK_ERROR( hypre_ParCSRMatrixDestroy( hostMatrix ) );
             }
           }
         }
-
-        // Destroy temporary matrix
-        GEOS_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( fullMatrix ) );
+        MpiWrapper::barrier( comm() );
       }
       break;
     }

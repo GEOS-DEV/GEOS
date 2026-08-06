@@ -24,10 +24,14 @@
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/utilities/DistributedMatrixStatistics.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
+
+#include <fstream>
+#include <limits>
 #ifdef GEOS_USE_HYPREDRV
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 #endif
@@ -93,6 +97,13 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
+  registerWrapper( viewKeyStruct::linearSystemDiagnosticsString(), &m_linearSystemDiagnostics ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Report exact load and sparse matrix-vector communication statistics for the assembled linear system. "
+                    "Use 1 for a global log summary or 2 to also write per-rank CSV files." );
+
   registerWrapper( viewKeyStruct::allowNonConvergedLinearSolverSolutionString(), &m_allowNonConvergedLinearSolverSolution ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -138,6 +149,10 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
+  GEOS_ERROR_IF( m_linearSystemDiagnostics < 0 || m_linearSystemDiagnostics > 2,
+                 GEOS_FMT( "linearSystemDiagnostics must be 0, 1, or 2, got {}", m_linearSystemDiagnostics ),
+                 getDataContext() );
+
   if( m_linearSolverParameters.getLogLevel() < getLogLevel() )
   {
     m_linearSolverParameters.setLogLevel( getLogLevel() );
@@ -588,6 +603,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
       m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
     }
 
+    debugOutputMatrixStatistics( cycleNumber, 0, m_matrix, m_localMatrix.toViewConst() );
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
@@ -1126,6 +1142,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       // Output the linear system matrix/rhs for debugging purposes
+      debugOutputMatrixStatistics( cycleNumber, newtonIter, m_matrix, m_localMatrix.toViewConst() );
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
       // Solve the linear system
@@ -1292,6 +1309,41 @@ void PhysicsSolverBase::applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM(
 namespace
 {
 
+struct MetricSummary
+{
+  globalIndex total = 0;
+  globalIndex minimum = std::numeric_limits< globalIndex >::max();
+  globalIndex maximum = 0;
+  real64 average = 0.0;
+  real64 imbalance = 0.0;
+};
+
+MetricSummary summarizeMetric( DistributedMatrixStatistics const & statistics,
+                               globalIndex MatrixRankStatistics::* const member )
+{
+  MetricSummary summary;
+  for( MatrixRankStatistics const & rankStatistics : statistics.ranks )
+  {
+    globalIndex const value = rankStatistics.*member;
+    summary.total += value;
+    summary.minimum = std::min( summary.minimum, value );
+    summary.maximum = std::max( summary.maximum, value );
+  }
+
+  if( statistics.ranks.empty() )
+  {
+    summary.minimum = 0;
+    return summary;
+  }
+
+  summary.average = static_cast< real64 >( summary.total ) / statistics.ranks.size();
+  if( summary.average > 0.0 )
+  {
+    summary.imbalance = static_cast< real64 >( summary.maximum ) / summary.average - 1.0;
+  }
+  return summary;
+}
+
 /**
  * @brief Helper for debug output of linear algebra objects (matrices and vectors)
  * @tparam T type of LA object (must have stream insertion and .write() implemented)
@@ -1327,6 +1379,92 @@ void debugOutputLAObject( T const & obj,
   }
 }
 
+}
+
+void PhysicsSolverBase::debugOutputMatrixStatistics(
+  integer const cycleNumber,
+  integer const nonlinearIteration,
+  ParallelMatrix const & matrix,
+  CRSMatrixView< real64 const, globalIndex const > const & localMatrix ) const
+{
+  if( m_linearSystemDiagnostics == 0 )
+  {
+    return;
+  }
+
+  DistributedMatrixStatistics const statistics =
+    computeDistributedMatrixStatistics( localMatrix, matrix.ilower(), matrix.comm() );
+
+  MetricSummary const rows = summarizeMetric( statistics, &MatrixRankStatistics::numRows );
+  MetricSummary const nonzeros = summarizeMetric( statistics, &MatrixRankStatistics::numNonzeros );
+  MetricSummary const offRankNonzeros = summarizeMetric( statistics, &MatrixRankStatistics::numOffRankNonzeros );
+  MetricSummary const haloReceives = summarizeMetric( statistics, &MatrixRankStatistics::numHaloReceiveDofs );
+  MetricSummary const haloSends = summarizeMetric( statistics, &MatrixRankStatistics::numHaloSendDofs );
+  MetricSummary const receiveNeighbors = summarizeMetric( statistics, &MatrixRankStatistics::numReceiveNeighbors );
+  MetricSummary const sendNeighbors = summarizeMetric( statistics, &MatrixRankStatistics::numSendNeighbors );
+  MetricSummary const maxRowNonzeros = summarizeMetric( statistics, &MatrixRankStatistics::maxRowNonzeros );
+  MetricSummary const emptyRows = summarizeMetric( statistics, &MatrixRankStatistics::numEmptyRows );
+
+  real64 const offRankFraction = nonzeros.total > 0
+                                   ? static_cast< real64 >( offRankNonzeros.total ) / nonzeros.total
+                                   : 0.0;
+  real64 const spmvPayloadMiB = static_cast< real64 >( haloReceives.total * sizeof( real64 ) ) /
+                                ( 1024.0 * 1024.0 );
+
+  GEOS_LOG_RANK_0( GEOS_FMT(
+                     "Assembled matrix distribution for {} (cycle {}, nonlinear iteration {}):\n"
+                     "  rows: total {}, avg/rank {:.1f}, range [{}-{}], max/avg imbalance {:.3f}%\n"
+                     "  nonzeros: total {}, avg/rank {:.1f}, range [{}-{}], max/avg imbalance {:.3f}%\n"
+                     "  off-rank nonzeros: total {} ({:.3f}% of all stored entries), range [{}-{}]\n"
+                     "  SpMV halo receives: total {} unique DOFs, avg/rank {:.1f}, range [{}-{}], "
+                     "max/avg imbalance {:.3f}%\n"
+                     "  SpMV communication: {:.3f} MiB one-way vector payload, {} directed receive-neighbor relations, "
+                     "max receive/send neighbors {}/{}, max row length {}, empty rows {}",
+                     getName(), cycleNumber, nonlinearIteration,
+                     rows.total, rows.average, rows.minimum, rows.maximum, 100.0 * rows.imbalance,
+                     nonzeros.total, nonzeros.average, nonzeros.minimum, nonzeros.maximum, 100.0 * nonzeros.imbalance,
+                     offRankNonzeros.total, 100.0 * offRankFraction,
+                     offRankNonzeros.minimum, offRankNonzeros.maximum,
+                     haloReceives.total, haloReceives.average, haloReceives.minimum, haloReceives.maximum,
+                     100.0 * haloReceives.imbalance,
+                     spmvPayloadMiB, receiveNeighbors.total, receiveNeighbors.maximum, sendNeighbors.maximum,
+                     maxRowNonzeros.maximum, emptyRows.total ) );
+
+  GEOS_ERROR_IF_NE_MSG( haloReceives.total, haloSends.total,
+                        "Global sparse matrix-vector halo send and receive counts must match" );
+
+  if( m_linearSystemDiagnostics < 2 || MpiWrapper::commRank( matrix.comm() ) != 0 )
+  {
+    return;
+  }
+
+  string const filename = GEOS_FMT( "{}_matrix_{:06}_{:02}_distribution.csv",
+                                    getName(), cycleNumber, nonlinearIteration );
+  std::ofstream output( filename );
+  GEOS_ERROR_IF( !output, GEOS_FMT( "Unable to open matrix distribution file {}", filename ) );
+  output << "rank,first_row,last_row_exclusive,rows,nonzeros,local_nonzeros,off_rank_nonzeros,"
+            "halo_receive_dofs,halo_send_dofs,receive_neighbors,send_neighbors,max_row_nonzeros,empty_rows,"
+            "spmv_receive_bytes,spmv_send_bytes\n";
+  for( std::size_t rank = 0; rank < statistics.ranks.size(); ++rank )
+  {
+    MatrixRankStatistics const & rankStatistics = statistics.ranks[rank];
+    output << rank << ','
+           << rankStatistics.firstRow << ','
+           << rankStatistics.firstRow + rankStatistics.numRows << ','
+           << rankStatistics.numRows << ','
+           << rankStatistics.numNonzeros << ','
+           << rankStatistics.numNonzeros - rankStatistics.numOffRankNonzeros << ','
+           << rankStatistics.numOffRankNonzeros << ','
+           << rankStatistics.numHaloReceiveDofs << ','
+           << rankStatistics.numHaloSendDofs << ','
+           << rankStatistics.numReceiveNeighbors << ','
+           << rankStatistics.numSendNeighbors << ','
+           << rankStatistics.maxRowNonzeros << ','
+           << rankStatistics.numEmptyRows << ','
+           << rankStatistics.numHaloReceiveDofs * sizeof( real64 ) << ','
+           << rankStatistics.numHaloSendDofs * sizeof( real64 ) << '\n';
+  }
+  GEOS_LOG_RANK_0( GEOS_FMT( "Assembled matrix per-rank distribution written to {}", filename ) );
 }
 
 void PhysicsSolverBase::debugOutputSystem( real64 const & time,

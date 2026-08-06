@@ -493,6 +493,19 @@ public:
                      ParallelVector const & rhs ) const;
 
   /**
+   * @brief Output structural load and communication statistics for the assembled matrix.
+   * @param cycleNumber event cycle number
+   * @param nonlinearIteration current nonlinear iteration number
+   * @param matrix distributed system matrix
+   * @param localMatrix local matrix rows with global column indices
+   */
+  void
+  debugOutputMatrixStatistics( integer cycleNumber,
+                               integer nonlinearIteration,
+                               ParallelMatrix const & matrix,
+                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix ) const;
+
+  /**
    * @brief Output the linear system solution for debug purposes.
    * @param time beginning-of-step time
    * @param cycleNumber event cycle number
@@ -742,6 +755,9 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the linearSystemDiagnostics wrapper
+    static constexpr char const * linearSystemDiagnosticsString() { return "linearSystemDiagnostics"; }
 
     /// @return string for the usePhysicsScaling wrapper
     static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
@@ -1171,6 +1187,9 @@ protected:
 
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
+
+  /// level of assembled matrix distribution diagnostics
+  integer m_linearSystemDiagnostics;
 
   /// Parameter for outputing statistics information
   StatsOutputType m_writeStatisticsCSV;

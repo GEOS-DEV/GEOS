@@ -4,6 +4,7 @@ set( serial_tests
      testHypredrive.cpp )
 
 set( parallel_tests
+     testDistributedMatrixStatistics.cpp
      testMatrices.cpp
      testVectors.cpp
      testExternalSolvers.cpp
