@@ -23,6 +23,7 @@
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotReactivePorosity.hpp"
+#include "constitutive/surfaceArea/ConstantSurfaceArea.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
@@ -41,7 +42,8 @@ namespace constitutive
  * @tparam SOLID_TYPE type of the porosity model
  */
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
 class PorousReactiveSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >
 {
 public:
@@ -53,8 +55,10 @@ public:
    */
   PorousReactiveSolidUpdates( SOLID_TYPE const & solidModel,
                               BiotReactivePorosity const & porosityModel,
-                              PERM_TYPE const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( solidModel, porosityModel, permModel )
+                              PERM_TYPE const & permModel,
+                              SURFACE_AREA_TYPE const & surfaceAreaModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( solidModel, porosityModel, permModel ),
+    m_surfaceAreaUpdate( surfaceAreaModel.createKernelWrapper() )
   {}
 
   GEOS_HOST_DEVICE
@@ -91,21 +95,14 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual void updateSurfaceArea( localIndex const k,
-                                  localIndex const q,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
-                                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
+  void updateSurfaceArea( localIndex const k,
+                          localIndex const q ) const
   {
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
-    real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
-
-    for( integer r=0; r < initialSurfaceArea.size(); ++r )
-    {
-      real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
-      real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
-    }
+    m_surfaceAreaUpdate.updateFromPorosityAndVolumeFractions( k, q,
+                                                              m_porosityUpdate.getPorosity( k, q ),
+                                                              m_porosityUpdate.getInitialPorosity( k, q ),
+                                                              m_porosityUpdate.getVolumeFractions( k, q ),
+                                                              m_porosityUpdate.getInitialVolumeFractions( k, q ) );
   }
 
   GEOS_HOST_DEVICE
@@ -185,6 +182,8 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_permUpdate;
+
+  typename SURFACE_AREA_TYPE::KernelWrapper const m_surfaceAreaUpdate;
 
   GEOS_HOST_DEVICE
   inline
@@ -271,13 +270,14 @@ class PorousReactiveSolidBase
  * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
 class PorousReactiveSolid : public CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >
 {
 public:
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = PorousReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE >;
+  using KernelWrapper = PorousReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >;
 
   /**
    * @brief Constructor
@@ -292,14 +292,17 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )   // default case
+    string name = string( "PorousReactive" ) + SOLID_TYPE::catalogName();
+
+    if constexpr ( !std::is_same_v< PERM_TYPE, ConstantPermeability > )
     {
-      return string( "PorousReactive" ) + SOLID_TYPE::catalogName();
+      name += PERM_TYPE::catalogName();
     }
-    else   // special cases
+    if constexpr ( !std::is_same_v< SURFACE_AREA_TYPE, ConstantSurfaceArea > )
     {
-      return string( "PorousReactive" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
+      name += SURFACE_AREA_TYPE::catalogName();
     }
+    return name;
   }
 
   /**
@@ -317,7 +320,8 @@ public:
   {
     return KernelWrapper( getSolidModel(),
                           getPorosityModel(),
-                          getPermModel() );
+                          getPermModel(),
+                          getSurfaceAreaModel() );
   }
 
   /**
@@ -340,6 +344,9 @@ private:
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPermModel;
+
+  SURFACE_AREA_TYPE const & getSurfaceAreaModel() const
+  { return this->getParent().template getGroup< SURFACE_AREA_TYPE >( this->m_surfaceAreaModelName ); }
 
   /// Name of the fluid model used to read the (constant) fluid compressibility for the
   /// pore-mineral-pressure / porosity coupling (optional; empty => fluid treated as incompressible)

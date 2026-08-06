@@ -26,13 +26,15 @@
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockReactivePorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <EigenStrainReactiveElasticIsotropic
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockReactivePorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <ElasticIsotropic
       name="rockSolid"
@@ -46,6 +48,10 @@
       defaultInitialVolumeFractions="{ 0.1 }"
       molarWeights="{ 0.100087 }"
       mineralDensities="{ 2710 }"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 2.4573e+04 }"/>
 
     <ConstantPermeability
       name="rockPerm"

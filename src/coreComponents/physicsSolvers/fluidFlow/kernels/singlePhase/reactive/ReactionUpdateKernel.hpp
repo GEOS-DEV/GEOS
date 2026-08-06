@@ -71,11 +71,11 @@ struct MixedSystemReactionUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
                       arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc,
-                      arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea )
+                      arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > const surfaceArea )
   {
     forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      reactionWrapper.updateMixedReactionSystem( k, pres[k], temp[k], logPrimaryConc[k], surfaceArea[k] );
+      reactionWrapper.updateMixedReactionSystem( k, pres[k], temp[k], logPrimaryConc[k], surfaceArea[k][0] );
     } );
   }
 
@@ -84,7 +84,7 @@ struct MixedSystemReactionUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
                       arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc,
-                      arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea )
+                      arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > const surfaceArea )
   {
     std::visit( [&]( auto const & reactionWrapper )
     {

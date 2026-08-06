@@ -184,13 +184,13 @@ public:
                                     real64 const pressure,
                                     real64 const temperature,
                                     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const;
+                                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const;
 
     GEOS_HOST_DEVICE
     void computeAggregateConcentrationsAndRates( real64 const pressure,
                                                  real64 const temperature,
                                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea,
+                                                 arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
                                                  arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,
@@ -513,7 +513,7 @@ updateMixedReactionSystem( localIndex const k,
                            real64 const pressure,
                            real64 const temperature,
                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const
+                           arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const
 {
   integer const numPrimarySpecies = m_numPrimarySpecies;
   integer const numSecondarySpecies = m_numSecondarySpecies;
@@ -550,7 +550,7 @@ ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >:
 computeAggregateConcentrationsAndRates( real64 const pressure,
                                         real64 const temperature,
                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea,
+                                        arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
                                         arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,

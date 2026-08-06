@@ -56,7 +56,8 @@
       name="rock_a"
       solidModelName="nullSolid"
       porosityModelName="rockPorosityA"
-      permeabilityModelName="rockPermA"/>
+      permeabilityModelName="rockPermA"
+      surfaceAreaModelName="rockSurfaceAreaA"/>
 
     <NullModel
       name="nullSolid"/>
@@ -71,11 +72,16 @@
       name="rockPermA"
       permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
 
+    <ConstantSurfaceArea
+      name="rockSurfaceAreaA"
+      defaultInitialSurfaceArea="{ }"/>
+
     <CompressibleSolidConstantPermeability
       name="rock_b"
       solidModelName="nullSolid"
       porosityModelName="rockPorosityB"
-      permeabilityModelName="rockPermB"/>
+      permeabilityModelName="rockPermB"
+      surfaceAreaModelName="rockSurfaceAreaB"/>
 
     <PressurePorosity
       name="rockPorosityB"
@@ -86,6 +92,10 @@
     <ConstantPermeability
       name="rockPermB"
       permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceAreaB"
+      defaultInitialSurfaceArea="{ }"/>
 
     <ConstantDiffusion
       name="diffusionA"

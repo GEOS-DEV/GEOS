@@ -570,7 +570,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanics" type="CompositionalMultiphaseReservoirPoromechanicsType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFractures" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALM" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType" />
-			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
@@ -603,11 +602,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReactiveTransport" type="SinglePhaseReactiveTransportType" />
+			<xsd:element name="SinglePhaseReactiveTransportPoromechanics" type="SinglePhaseReactiveTransportPoromechanicsType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFractures" type="SinglePhaseReservoirPoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesALM" type="SinglePhaseReservoirPoromechanicsConformingFracturesALMType" />
-			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsAugmentedLagrangianContact" type="SolidMechanicsAugmentedLagrangianContactType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
@@ -615,6 +614,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SolidMechanicsLagrangianFEM" type="SolidMechanicsLagrangianFEMType" />
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
+			<xsd:element name="WellManager" type="WellManagerType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="AcousticDGType">
@@ -867,27 +867,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseWellType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-			<xsd:element name="WellControls" type="WellControlsType" />
-		</xsd:choice>
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="groupNameRef" />
-		<!--numTimestepsSinceLastDtCut => (no description available)-->
-		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="WellControlsType">
-		<!--currentControl => Current well control-->
-		<xsd:attribute name="currentControl" type="geos_WellControls_Control" />
-	</xsd:complexType>
-	<xsd:simpleType name="geos_WellControls_Control">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="ElasticFirstOrderSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1298,6 +1277,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReactiveTransportPoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1336,18 +1326,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-		</xsd:choice>
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="groupNameRef" />
-		<!--numTimestepsSinceLastDtCut => (no description available)-->
-		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseWellType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" />
@@ -1497,6 +1475,69 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--trailingFaces => Set containing all the trailing faces-->
 		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 	</xsd:complexType>
+	<xsd:complexType name="WellManagerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InjectionMassRateConstraint" type="InjectionMassRateConstraintType" />
+			<xsd:element name="InjectionPhaseVolumeRateConstraint" type="InjectionPhaseVolumeRateConstraintType" />
+			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
+			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
+			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
+			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
+			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
+			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
+			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
+		</xsd:choice>
+		<!--currentControl => Current well control-->
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
+	</xsd:complexType>
+	<xsd:complexType name="InjectionMassRateConstraintType" />
+	<xsd:complexType name="InjectionPhaseVolumeRateConstraintType" />
+	<xsd:complexType name="InjectionVolumeRateConstraintType" />
+	<xsd:complexType name="MaximumBHPConstraintType" />
+	<xsd:complexType name="MinimumBHPConstraintType" />
+	<xsd:complexType name="ProductionMassRateConstraintType" />
+	<xsd:complexType name="ProductionPhaseVolumeRateConstraintType" />
+	<xsd:complexType name="ProductionVolumeRateConstraintType" />
+	<xsd:complexType name="WellNewtonSolverType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:simpleType name="geos_ConstraintTypeId">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="SinglePhaseWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InjectionMassRateConstraint" type="InjectionMassRateConstraintType" />
+			<xsd:element name="InjectionPhaseVolumeRateConstraint" type="InjectionPhaseVolumeRateConstraintType" />
+			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
+			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
+			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
+			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
+			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
+			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
+			<xsd:element name="WellNewtonSolver" type="WellNewtonSolverType" />
+		</xsd:choice>
+		<!--currentControl => Current well control-->
+		<xsd:attribute name="currentControl" type="geos_ConstraintTypeId" />
+	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
@@ -1617,6 +1658,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
+			<xsd:element name="BiotReactivePorosity" type="BiotReactivePorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
@@ -1644,6 +1686,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ConstantSurfaceArea" type="ConstantSurfaceAreaType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
@@ -1652,6 +1695,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropic" type="EigenStrainReactiveElasticIsotropicType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeability" type="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceArea" type="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceArea" type="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicPowerLawSurfaceArea" type="EigenStrainReactiveElasticIsotropicPowerLawSurfaceAreaType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicSubstrateCoverageSurfaceArea" type="EigenStrainReactiveElasticIsotropicSubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
@@ -1687,12 +1736,20 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
 			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousReactiveElasticIsotropic" type="PorousReactiveElasticIsotropicType" />
+			<xsd:element name="PorousReactiveElasticIsotropicCarmanKozenyPermeability" type="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceArea" type="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceArea" type="PorousReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
+			<xsd:element name="PorousReactiveElasticIsotropicPowerLawSurfaceArea" type="PorousReactiveElasticIsotropicPowerLawSurfaceAreaType" />
+			<xsd:element name="PorousReactiveElasticIsotropicSubstrateCoverageSurfaceArea" type="PorousReactiveElasticIsotropicSubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
 			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
 			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PowerLawPermeability" type="PowerLawPermeabilityType" />
+			<xsd:element name="PowerLawSurfaceArea" type="PowerLawSurfaceAreaType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -1704,12 +1761,22 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="ReactiveCompressibleSinglePhaseFluid" type="ReactiveCompressibleSinglePhaseFluidType" />
 			<xsd:element name="ReactivePorosity" type="ReactivePorosityType" />
 			<xsd:element name="ReactiveSolidCarmanKozenyPermeability" type="ReactiveSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceArea" type="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidCarmanKozenyPermeabilitySubstrateCoverageSurfaceArea" type="ReactiveSolidCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidConstantPermeability" type="ReactiveSolidConstantPermeabilityType" />
+			<xsd:element name="ReactiveSolidConstantPermeabilityPowerLawSurfaceArea" type="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidConstantPermeabilitySubstrateCoverageSurfaceArea" type="ReactiveSolidConstantPermeabilitySubstrateCoverageSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeability" type="ReactiveSolidPowerLawPermeabilityType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceArea" type="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidPowerLawPermeabilitySubstrateCoverageSurfaceArea" type="ReactiveSolidPowerLawPermeabilitySubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="ReactiveSolidPressurePermeability" type="ReactiveSolidPressurePermeabilityType" />
+			<xsd:element name="ReactiveSolidPressurePermeabilityPowerLawSurfaceArea" type="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType" />
+			<xsd:element name="ReactiveSolidPressurePermeabilitySubstrateCoverageSurfaceArea" type="ReactiveSolidPressurePermeabilitySubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="ReactiveThermalCompressibleSinglePhaseFluid" type="ReactiveThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
+			<xsd:element name="SubstrateCoverageSurfaceArea" type="SubstrateCoverageSurfaceAreaType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -1752,6 +1819,40 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="solidShearModulus" type="real64_array" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="BiotReactivePorosityType">
+		<!--biotCoefficient => Biot coefficient-->
+		<xsd:attribute name="biotCoefficient" type="real64_array" />
+		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
+		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
+		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
+		<!--grainBulkModulus => Grain bulk modulus-->
+		<xsd:attribute name="grainBulkModulus" type="real64_array" />
+		<!--initialPorosity => Initial porosity-->
+		<xsd:attribute name="initialPorosity" type="real64_array2d" />
+		<!--initialVolumeFractions => Initial volume fractions-->
+		<xsd:attribute name="initialVolumeFractions" type="real64_array3d" />
+		<!--meanEffectiveStressIncrement_k => Mean effective stress increment at quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="meanEffectiveStressIncrement_k" type="real64_array2d" />
+		<!--mineralBulkModulus => Mineral bulk modulus-->
+		<xsd:attribute name="mineralBulkModulus" type="real64_array" />
+		<!--mineralPressure => Current mineral pressure-->
+		<xsd:attribute name="mineralPressure" type="real64_array" />
+		<!--mineralPressure_n => Mineral pressure at last time step-->
+		<xsd:attribute name="mineralPressure_n" type="real64_array" />
+		<!--porosity => Rock porosity-->
+		<xsd:attribute name="porosity" type="real64_array2d" />
+		<!--porosity_n => Rock porosity at the previous converged time step-->
+		<xsd:attribute name="porosity_n" type="real64_array2d" />
+		<!--referencePorosity => Reference porosity-->
+		<xsd:attribute name="referencePorosity" type="real64_array" />
+		<!--solidBulkModulus => Solid bulk modulus-->
+		<xsd:attribute name="solidBulkModulus" type="real64_array" />
+		<!--volumeFractions => Current volume fractions-->
+		<xsd:attribute name="volumeFractions" type="real64_array3d" />
+		<!--volumeFractions_n => Volume fractions at last time step-->
+		<xsd:attribute name="volumeFractions_n" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--PVTO => (no description available)-->
@@ -2442,6 +2543,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="ConstantSurfaceAreaType">
+		<!--initialSurfaceArea => Initial reactive surface area of each mineral-->
+		<xsd:attribute name="initialSurfaceArea" type="real64_array3d" />
+		<!--surfaceArea => Reactive surface area of each mineral-->
+		<xsd:attribute name="surfaceArea" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--cohesion => Cohesion for each element-->
 		<xsd:attribute name="cohesion" type="real64_array" />
@@ -2690,6 +2797,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
 		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicType" />
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicPowerLawSurfaceAreaType" />
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicSubstrateCoverageSurfaceAreaType" />
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--bulkModulus => Bulk modulus-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
@@ -2984,12 +3097,34 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicPowerLawSurfaceAreaType" />
+	<xsd:complexType name="PorousReactiveElasticIsotropicSubstrateCoverageSurfaceAreaType" />
 	<xsd:complexType name="PorousViscoDruckerPragerType" />
 	<xsd:complexType name="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PowerLawPermeabilityType">
+		<!--dPerm_dPorosity => (no description available)-->
+		<xsd:attribute name="dPerm_dPorosity" type="real64_array3d" />
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
+		<!--referencePermeability => Reference permeability field-->
+		<xsd:attribute name="referencePermeability" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PowerLawSurfaceAreaType">
+		<!--initialSurfaceArea => Initial reactive surface area of each mineral-->
+		<xsd:attribute name="initialSurfaceArea" type="real64_array3d" />
+		<!--surfaceArea => Reactive surface area of each mineral-->
+		<xsd:attribute name="surfaceArea" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="PressurePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -3166,20 +3301,33 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--initialVolumeFractions => Initial volume fractions-->
 		<xsd:attribute name="initialVolumeFractions" type="real64_array3d" />
+		<!--meanEffectiveStressIncrement_k => Mean effective stress increment at quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="meanEffectiveStressIncrement_k" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
 		<!--porosity_n => Rock porosity at the previous converged time step-->
 		<xsd:attribute name="porosity_n" type="real64_array2d" />
 		<!--referencePorosity => Reference porosity-->
 		<xsd:attribute name="referencePorosity" type="real64_array" />
+		<!--solidBulkModulus => Solid bulk modulus-->
+		<xsd:attribute name="solidBulkModulus" type="real64_array" />
 		<!--volumeFractions => Current volume fractions-->
 		<xsd:attribute name="volumeFractions" type="real64_array3d" />
 		<!--volumeFractions_n => Volume fractions at last time step-->
 		<xsd:attribute name="volumeFractions_n" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidCarmanKozenyPermeabilitySubstrateCoverageSurfaceAreaType" />
 	<xsd:complexType name="ReactiveSolidConstantPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidConstantPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidConstantPermeabilitySubstrateCoverageSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityType" />
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidPowerLawPermeabilitySubstrateCoverageSurfaceAreaType" />
 	<xsd:complexType name="ReactiveSolidPressurePermeabilityType" />
+	<xsd:complexType name="ReactiveSolidPressurePermeabilityPowerLawSurfaceAreaType" />
+	<xsd:complexType name="ReactiveSolidPressurePermeabilitySubstrateCoverageSurfaceAreaType" />
 	<xsd:complexType name="ReactiveThermalCompressibleSinglePhaseFluidType">
 		<!--aggregateSpeciesRates => aggregateSpeciesRates-->
 		<xsd:attribute name="aggregateSpeciesRates" type="real64_array3d" />
@@ -3245,6 +3393,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--oldInternalEnergy => Internal energy of the solid per unit volume at the previous time-step [J/m^3]-->
 		<xsd:attribute name="oldInternalEnergy" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="SubstrateCoverageSurfaceAreaType">
+		<!--initialSurfaceArea => Initial reactive surface area of each mineral-->
+		<xsd:attribute name="initialSurfaceArea" type="real64_array3d" />
+		<!--surfaceArea => Reactive surface area of each mineral-->
+		<xsd:attribute name="surfaceArea" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--capPresWrappers => (no description available)-->
@@ -3573,7 +3727,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3587,7 +3741,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3597,7 +3751,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3611,7 +3765,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesNodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3621,7 +3775,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3661,7 +3815,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="integer_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -3703,7 +3857,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3715,7 +3869,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3723,7 +3877,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3841,7 +3995,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
 		<!--numEdgesPerElement => (no description available)-->
 		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->

@@ -91,22 +91,6 @@ DECLARE_FIELD( dMobility_dLogPrimaryConc,
                NO_WRITE,
                "Derivative of fluid mobility with respect to log of primary species concentration" );
 
-DECLARE_FIELD( surfaceArea,
-               "surfaceArea",
-               array2dLayoutComp,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Surface area for surface reactions." );
-
-DECLARE_FIELD( initialSurfaceArea,
-               "initialSurfaceArea",
-               array2dLayoutComp,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Initial surface area for surface reactions." );
-
 }
 
 }

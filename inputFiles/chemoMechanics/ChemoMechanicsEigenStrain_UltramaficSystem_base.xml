@@ -41,7 +41,6 @@
       name="SinglePhaseReactiveFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Source, Rock }"
-      isUpdateReactivePorosity="1"
       logLevel="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -74,7 +73,8 @@
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <ElasticIsotropic
       name="rockSolid"
@@ -97,6 +97,10 @@
       defaultInitialVolumeFractions="{ 0.1, 0.1, 0.1, 0.1, 0.1 }"
       molarWeights="{ 0.140693, 0.084314, 0.060084, 0.277112, 0.058320 }"
       mineralDensities="{ 3212.9, 3009.28, 2648.27, 2554.03, 2367.84 }"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 1.3e6, 9e5, 1.3e6, 2.0e7, 4.3e7 }"/>
 
     <ConstantPermeability
       name="rockPerm"

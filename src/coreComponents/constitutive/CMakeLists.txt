@@ -153,6 +153,7 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
+     permeability/PowerLawPermeability.hpp
      permeability/PressurePermeability.hpp
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
@@ -214,6 +215,11 @@ set( constitutive_headers
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
      solid/porosity/ReactivePorosityBase.hpp
+     surfaceArea/ConstantSurfaceArea.hpp
+     surfaceArea/PowerLawSurfaceArea.hpp
+     surfaceArea/SubstrateCoverageSurfaceArea.hpp
+     surfaceArea/SurfaceAreaBase.hpp
+     surfaceArea/SurfaceAreaFields.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
      thermalConductivity/MultiPhaseThermalConductivityBase.hpp
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
@@ -307,6 +313,7 @@ set( constitutive_sources
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
+     permeability/PowerLawPermeability.cpp
      permeability/PressurePermeability.cpp
      permeability/ProppantPermeability.cpp
      permeability/SlipDependentPermeability.cpp
@@ -354,6 +361,10 @@ set( constitutive_sources
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
      solid/porosity/ReactivePorosityBase.cpp
+     surfaceArea/ConstantSurfaceArea.cpp
+     surfaceArea/PowerLawSurfaceArea.cpp
+     surfaceArea/SubstrateCoverageSurfaceArea.cpp
+     surfaceArea/SurfaceAreaBase.cpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp

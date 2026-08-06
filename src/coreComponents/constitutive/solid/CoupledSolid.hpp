@@ -134,15 +134,6 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual void updateSurfaceArea( localIndex const k,
-                                  localIndex const q,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
-                                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const
-  {
-    GEOS_UNUSED_VAR( k, q, initialSurfaceArea, surfaceArea );
-  }
-
-  GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const
   {
     return m_solidUpdate.getShearModulus( k );

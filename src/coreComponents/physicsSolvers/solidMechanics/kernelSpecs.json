@@ -171,10 +171,18 @@
         "CellElementSubRegion"
       ],
       "CONSTITUTIVE_TYPE": [
-        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability>",
-        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
-        "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
-        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability, ConstantSurfaceArea>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, ConstantSurfaceArea>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability, PowerLawSurfaceArea>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, PowerLawSurfaceArea>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability, SubstrateCoverageSurfaceArea>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, SubstrateCoverageSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability, ConstantSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, ConstantSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability, PowerLawSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, PowerLawSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability, SubstrateCoverageSurfaceArea>",
+        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability, SubstrateCoverageSurfaceArea>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

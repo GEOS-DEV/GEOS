@@ -22,6 +22,9 @@
 #include "ElasticIsotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/surfaceArea/ConstantSurfaceArea.hpp"
+#include "constitutive/surfaceArea/PowerLawSurfaceArea.hpp"
+#include "constitutive/surfaceArea/SubstrateCoverageSurfaceArea.hpp"
 
 namespace geos
 {
@@ -32,8 +35,9 @@ namespace constitutive
 {
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
+PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( name, parent )
 {
   this->registerWrapper( "fluidModelName", &m_fluidModelName ).
@@ -43,15 +47,17 @@ PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::PorousReactiveSolid( string const 
 }
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
+void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
 }
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializePreSubGroups()
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
+void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >::initializePreSubGroups()
 {
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializePreSubGroups();
 
@@ -70,12 +76,20 @@ void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializePreSubGroups()
 }
 
 // Register all PorousReactiveSolid model types.
-typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability > PorousReactiveElasticIsotropicConstant;
-typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > PorousReactiveElasticIsotropicCK;
+typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability, ConstantSurfaceArea > PorousReactiveElasticIsotropicConstant;
+typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, ConstantSurfaceArea > PorousReactiveElasticIsotropicCK;
+typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability, PowerLawSurfaceArea > PorousReactiveElasticIsotropicConstantPowerLawSurfaceArea;
+typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, PowerLawSurfaceArea > PorousReactiveElasticIsotropicCKPowerLawSurfaceArea;
+typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability, SubstrateCoverageSurfaceArea > PorousReactiveElasticIsotropicConstantSubstrateCoverageSurfaceArea;
+typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, SubstrateCoverageSurfaceArea > PorousReactiveElasticIsotropicCKSubstrateCoverageSurfaceArea;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstantPowerLawSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCKPowerLawSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstantSubstrateCoverageSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCKSubstrateCoverageSurfaceArea, string const &, Group * const )
 
 
 }

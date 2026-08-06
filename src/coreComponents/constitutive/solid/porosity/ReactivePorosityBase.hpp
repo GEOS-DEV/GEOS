@@ -109,12 +109,12 @@ public:
     if( !m_fixedPorosity )
     {
       real64 const phi0 = m_porosity_n[k][q];
-      real64 const logPorosity = log(std::max(phi0, 1e-8)) + reactionPorosityIncrement / phi0;
+      real64 const logPorosity = log(std::max(phi0, 1e-4)) + reactionPorosityIncrement / phi0;
       m_newPorosity[k][q] = exp(logPorosity);
 
-      if( m_newPorosity[k][q] < 1e-8 )
+      if( m_newPorosity[k][q] < 1e-4 )
       {
-        m_newPorosity[k][q] = 1e-8;
+        m_newPorosity[k][q] = 1e-4; // Avoid negative or very small porosity values that can cause numerical issues
       }
       else if( m_newPorosity[k][q] > 1.0 )
       {
@@ -208,6 +208,24 @@ public:
                                              localIndex const r ) const
   {
     return m_initialVolumeFractions[k][q][r];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 >
+  getVolumeFractions( localIndex const k,
+                      localIndex const q ) const
+  {
+    return m_volumeFractions[k][q];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 >
+  getInitialVolumeFractions( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_initialVolumeFractions[k][q];
   }
 
   GEOS_HOST_DEVICE

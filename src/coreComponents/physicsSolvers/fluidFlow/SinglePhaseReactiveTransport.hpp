@@ -274,8 +274,6 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
-    static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
-    static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
     static constexpr char const * immobilePrimarySpeciesIndicesString() { return "immobilePrimarySpeciesIndices"; }
     static constexpr char const * maxLogConcentrationChangeString() { return "maxLogConcentrationChange"; }
   };
@@ -294,11 +292,8 @@ protected:
   /// flag to determine whether or not to apply diffusion
   integer m_hasDiffusion;
 
-  /// flag to determine whether or not to use the reactive porosity
-  integer m_isUpdateReactivePorosity;
-
-  /// flag to determine whether or not to update the surface area
-  integer m_isUpdateSurfaceArea;
+  /// flag set when the porosity model is a reactive porosity model
+  integer m_hasReactivePorosity;
 
   /// array to store the indices of immobile primary species
   array1d< integer > m_immobilePrimarySpeciesIndices;

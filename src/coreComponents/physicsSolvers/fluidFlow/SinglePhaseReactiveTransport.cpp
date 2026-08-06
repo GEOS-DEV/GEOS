@@ -29,6 +29,7 @@
 #include "constitutive/fluid/reactivefluid/ReactiveFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ReactiveSolid.hpp"
+#include "constitutive/surfaceArea/SurfaceAreaBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -94,17 +95,13 @@ void updatePorosityAndPermeabilityReactionsFixedStress( POROUSWRAPPER_TYPE porou
 
 template< typename POROUSWRAPPER_TYPE >
 void updateSurfaceAreaFromReactions( POROUSWRAPPER_TYPE porousWrapper,
-                                     ElementSubRegionBase & subRegion,
-                                     arrayView2d< real64 const, compflow::USD_COMP > const & initialSurfaceArea,
-                                     arrayView2d< real64, compflow::USD_COMP > const & surfaceArea )
+                                     ElementSubRegionBase & subRegion )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateSurfaceArea( k, q,
-                                       initialSurfaceArea[k],
-                                       surfaceArea[k] );
+      porousWrapper.updateSurfaceArea( k, q );
     }
   } );
 }
@@ -115,20 +112,9 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   m_numPrimarySpecies( 0 ),
   m_numKineticReactions( 0 ),
   m_hasDiffusion( 0 ),
-  m_isUpdateReactivePorosity( 0 ),
-  m_isUpdateSurfaceArea( 0 )
+  m_hasReactivePorosity( 0 )
 {
   // To add modeling parameters we want to add here
-
-  this->registerWrapper( viewKeyStruct::isUpdateReactivePorosityString(), &m_isUpdateReactivePorosity ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether use the reactive porosity or not" );
-
-  this->registerWrapper( viewKeyStruct::isUpdateSurfaceAreaString(), &m_isUpdateSurfaceArea ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether to update the surface area or not" );
 
   this->registerWrapper( viewKeyStruct::immobilePrimarySpeciesIndicesString(), &m_immobilePrimarySpeciesIndices ).
     setApplyDefaultValue( { } ).
@@ -172,6 +158,13 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       if( !diffusionName.empty() )
       {
         m_hasDiffusion = true;
+      }
+
+      // The porosity is driven by the reactions as soon as a reactive porosity model is used
+      string const reactivePorosityName = getConstitutiveName< ReactivePorosityBase >( subRegion );
+      if( !reactivePorosityName.empty() )
+      {
+        m_hasReactivePorosity = true;
       }
     } );
   } );
@@ -241,12 +234,6 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< kineticReactionMolarIncrements >( getName() ).
         reference().resizeDimension< 1 >( m_numKineticReactions );
-
-      subRegion.registerField< surfaceArea >( getName() ).
-        reference().resizeDimension< 1 >( m_numKineticReactions );
-
-      subRegion.registerField< initialSurfaceArea >( getName() ).
-        reference().resizeDimension< 1 >( m_numKineticReactions );
     } );
   } );
 }
@@ -266,14 +253,7 @@ void SinglePhaseReactiveTransport::validateConstitutiveModels( DomainPartition &
     {
       string const & porosityModelName = getConstitutiveName< PorosityBase >( subRegion );
 
-      PorosityBase const & porosity = getConstitutiveModel< PorosityBase >( subRegion, porosityModelName );
-
-      GEOS_THROW_IF( m_isUpdateReactivePorosity && (porosity.getCatalogName() != "ReactivePorosity" && porosity.getCatalogName() != "BiotReactivePorosity"),
-                     GEOS_FMT( "SinglePhaseReactiveTransport {}: the reaction porosity update option is enabled in the solver, but the porosity model {} is not for reactive porosity",
-                               getDataContext(), porosity.getDataContext() ),
-                     InputError );
-
-      if( m_isUpdateReactivePorosity )
+      if( m_hasReactivePorosity )
       {
         ReactivePorosityBase const & reactivePorosity = getConstitutiveModel< ReactivePorosityBase >( subRegion, porosityModelName );
 
@@ -282,6 +262,23 @@ void SinglePhaseReactiveTransport::validateConstitutiveModels( DomainPartition &
                                         reactivePorosity.getDataContext() ),
                               InputError );
       }
+
+      // the kinetic reaction rates are scaled by the surface areas, so a model is always needed
+      string const & surfaceAreaModelName = getConstitutiveName< SurfaceAreaBase >( subRegion );
+
+      GEOS_THROW_IF( surfaceAreaModelName.empty(),
+                     GEOS_FMT( "SinglePhaseReactiveTransport {}: no reactive surface area model was found on subregion {}, "
+                               "set the attribute '{}' of the solid model to the name of a surface area model",
+                               getDataContext(), subRegion.getName(),
+                               CoupledSolidBase::viewKeyStruct::surfaceAreaModelNameString() ),
+                     InputError );
+
+      SurfaceAreaBase const & surfaceAreaModel = getConstitutiveModel< SurfaceAreaBase >( subRegion, surfaceAreaModelName );
+
+      GEOS_THROW_IF_NE_MSG( surfaceAreaModel.numKineticReactions(), m_numKineticReactions,
+                            GEOS_FMT( "Mismatch in number of kinetic reactions, check the number of components input in surface area model {}",
+                                      surfaceAreaModel.getDataContext() ),
+                            InputError );
     } );
   } );
 }
@@ -718,7 +715,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
 {
   GEOS_MARK_FUNCTION;
 
-  if( m_isUpdateReactivePorosity )
+  if( m_hasReactivePorosity )
   {
     arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
     arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
@@ -767,7 +764,10 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
   arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
-  arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
+
+  string const & surfaceAreaName = getConstitutiveName< SurfaceAreaBase >( subRegion );
+  SurfaceAreaBase const & surfaceAreaModel = getConstitutiveModel< SurfaceAreaBase >( subRegion, surfaceAreaName );
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > const surfaceArea = surfaceAreaModel.getSurfaceArea();
 
   if( m_isThermal )
   {
@@ -795,32 +795,21 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView2d< real64 const, compflow::USD_COMP > const initialSurfaceArea = subRegion.getField< fields::flow::initialSurfaceArea >();
-  arrayView2d< real64, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
-
-  if( m_isUpdateReactivePorosity && m_isUpdateSurfaceArea )
+  // without a reactive porosity model the mineral volume fractions never change, so the surface
+  // area model would keep returning the values already set by initializeState
+  if( !m_hasReactivePorosity )
   {
-    string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-    CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
-
-    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
-    {
-      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-      updateSurfaceAreaFromReactions( porousWrapper, subRegion, initialSurfaceArea, surfaceArea );
-    } );
+    return;
   }
-  else
+
+  string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+  CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
+
+  constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
-    integer const numKineticReactions = m_numKineticReactions;
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      for( integer ir = 0; ir < numKineticReactions; ++ir )
-      {
-        surfaceArea[ei][ir] = initialSurfaceArea[ei][ir];
-      }
-    } );
-  }
+    typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
+    updateSurfaceAreaFromReactions( porousWrapper, subRegion );
+  } );
 }
 
 void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, string_array const & regionNames )

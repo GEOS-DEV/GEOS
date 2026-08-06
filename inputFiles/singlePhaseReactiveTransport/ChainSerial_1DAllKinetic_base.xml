@@ -50,7 +50,8 @@
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      surfaceAreaModelName="rockSurfaceArea"/>
 
     <NullModel
       name="nullSolid"/>
@@ -64,6 +65,10 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+
+    <ConstantSurfaceArea
+      name="rockSurfaceArea"
+      defaultInitialSurfaceArea="{ 0.0, 0.0, 0.0 }"/>
 
     <ConstantDiffusion
       name="diffusion"

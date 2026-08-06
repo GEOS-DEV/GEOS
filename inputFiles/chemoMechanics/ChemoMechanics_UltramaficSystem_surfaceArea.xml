@@ -8,7 +8,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="0"
       scale="0.0"/>
 
@@ -17,7 +17,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="1"
       scale="0.0"/>
     
@@ -26,7 +26,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="2"
       scale="0.0"/>
 
@@ -35,7 +35,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="3"
       scale="0.0"/>
     
@@ -44,7 +44,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="4"
       scale="0.0"/>
 
@@ -54,7 +54,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="0"
       scale="1.3e6"/>
 
@@ -63,7 +63,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="1"
       scale="9e6"/>
     
@@ -72,7 +72,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="2"
       scale="1.3e6"/>
 
@@ -81,7 +81,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="3"
       scale="2.0e7"/>
     
@@ -90,7 +90,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="4"
       scale="4.3e7"/>
 

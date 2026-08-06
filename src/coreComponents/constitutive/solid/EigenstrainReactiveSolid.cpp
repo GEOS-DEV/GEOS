@@ -22,6 +22,9 @@
 #include "ElasticIsotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/surfaceArea/ConstantSurfaceArea.hpp"
+#include "constitutive/surfaceArea/PowerLawSurfaceArea.hpp"
+#include "constitutive/surfaceArea/SubstrateCoverageSurfaceArea.hpp"
 
 namespace geos
 {
@@ -32,25 +35,35 @@ namespace constitutive
 {
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::EigenstrainReactiveSolid( string const & name, Group * const parent ):
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
+EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >::EigenstrainReactiveSolid( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( name, parent )
 {}
 
 template< typename SOLID_TYPE,
-          typename PERM_TYPE >
-void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
+          typename PERM_TYPE,
+          typename SURFACE_AREA_TYPE >
+void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, SURFACE_AREA_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::initializeState();
 }
 
 // Register all EigenstrainReactiveSolid model types.
-typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability > EigenStrainReactiveElasticIsotropicConstant;
-typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > EigenStrainReactiveElasticIsotropicCK;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability, ConstantSurfaceArea > EigenStrainReactiveElasticIsotropicConstant;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, ConstantSurfaceArea > EigenStrainReactiveElasticIsotropicCK;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability, PowerLawSurfaceArea > EigenStrainReactiveElasticIsotropicConstantPowerLawSurfaceArea;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, PowerLawSurfaceArea > EigenStrainReactiveElasticIsotropicCKPowerLawSurfaceArea;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability, SubstrateCoverageSurfaceArea > EigenStrainReactiveElasticIsotropicConstantSubstrateCoverageSurfaceArea;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability, SubstrateCoverageSurfaceArea > EigenStrainReactiveElasticIsotropicCKSubstrateCoverageSurfaceArea;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstantPowerLawSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCKPowerLawSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstantSubstrateCoverageSurfaceArea, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCKSubstrateCoverageSurfaceArea, string const &, Group * const )
 
 
 }

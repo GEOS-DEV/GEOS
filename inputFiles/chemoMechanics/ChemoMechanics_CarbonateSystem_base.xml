@@ -38,8 +38,7 @@
       name="SinglePhaseReactiveFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Reaction, Barrier }"
-      isUpdateReactivePorosity="1">
+      targetRegions="{ Reaction, Barrier }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         maxTimeStepCuts="5"
@@ -146,7 +145,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Reaction"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="0"
       scale="2.4573e+04"/>
 
@@ -155,7 +154,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Barrier"
-      fieldName="initialSurfaceArea"
+      fieldName="rockSurfaceArea_initialSurfaceArea"
       component="0"
       scale="0.0"/>
   </FieldSpecifications>
