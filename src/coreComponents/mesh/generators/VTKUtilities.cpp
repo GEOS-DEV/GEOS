@@ -77,6 +77,8 @@
 #endif
 
 #include <numeric>
+#include <array>
+#include <unordered_set>
 #include <type_traits>
 
 
@@ -995,6 +997,143 @@ static void classifyCellsByDimension( vtkDataSet & mesh,
                              cells3DIndices.size(), cells2DIndices.size(), numCells ) );
 }
 
+using VTKPointCoordinate = std::array< real64, 3 >;
+
+struct VTKPointCoordinateHash
+{
+  std::size_t operator()( VTKPointCoordinate const & point ) const
+  {
+    std::size_t hash = 0;
+    for( real64 const coordinate: point )
+    {
+      hash ^= std::hash< real64 >{}( coordinate ) + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+    }
+    return hash;
+  }
+};
+
+static VTKPointCoordinate getPointCoordinate( vtkDataSet & mesh, vtkIdType const pointId )
+{
+  double const * const point = mesh.GetPoint( pointId );
+  return { point[0], point[1], point[2] };
+}
+
+/**
+ * @brief Find 3D cells whose faces match a 2D cell geometrically.
+ *
+ * Some mesh generators keep a separate point for each side of a split
+ * interface. In that case, the point ids of an embedded 2D cell do not
+ * match the point ids of either adjacent 3D face, even though the
+ * coordinates do. This routine performs the co-location lookup through
+ * point coordinates and then verifies that all points belong to one face.
+ *
+ * @param[in] mesh Original mesh
+ * @param[in] pointIds2D Point ids of the 2D cell
+ * @param[in] meshIdxToGlobalId3D Map from 3D mesh indices to global ids
+ * @param[in] pointsByCoordinate All mesh point ids grouped by coordinates
+ * @param[in,out] pointTo3DCells Cache of 3D cells incident to a mesh point
+ * @return Global ids of geometrically matching 3D cells
+ */
+static stdVector< int64_t > find2DTo3DNeighborsByCoordinates(
+  vtkDataSet & mesh,
+  vtkIdList * pointIds2D,
+  stdUnorderedMap< vtkIdType, int64_t > const & meshIdxToGlobalId3D,
+  stdUnorderedMap< VTKPointCoordinate, stdVector< vtkIdType >, VTKPointCoordinateHash > const & pointsByCoordinate,
+  stdUnorderedMap< vtkIdType, stdVector< vtkIdType > > & pointTo3DCells )
+{
+  localIndex const numPoints = pointIds2D->GetNumberOfIds();
+
+  stdVector< VTKPointCoordinate > targetCoordinates;
+  targetCoordinates.reserve( numPoints );
+
+  stdUnorderedMap< vtkIdType, localIndex > candidateCounts;
+
+  vtkNew< vtkIdList > pointCells;
+  for( vtkIdType i = 0; i < pointIds2D->GetNumberOfIds(); ++i )
+  {
+    VTKPointCoordinate const coordinate = getPointCoordinate( mesh, pointIds2D->GetId( i ) );
+    targetCoordinates.emplace_back( coordinate );
+
+    auto const coordinateIt = pointsByCoordinate.find( coordinate );
+    if( coordinateIt == pointsByCoordinate.end() )
+    {
+      continue;
+    }
+
+    // A 3D cell can contain more than one mesh point with the same
+    // coordinate in a degenerate input. Count it only once for this 2D
+    // point when intersecting the incident-cell lists.
+    stdUnorderedMap< vtkIdType, bool > cellsAtCoordinate;
+    for( vtkIdType const meshPointId: coordinateIt->second )
+    {
+      auto pointCellsIt = pointTo3DCells.find( meshPointId );
+      if( pointCellsIt == pointTo3DCells.end() )
+      {
+        stdVector< vtkIdType > & cachedCells = pointTo3DCells.get_inserted( meshPointId );
+        pointCells->Reset();
+        mesh.GetPointCells( meshPointId, pointCells );
+        cachedCells.reserve( pointCells->GetNumberOfIds() );
+        for( vtkIdType j = 0; j < pointCells->GetNumberOfIds(); ++j )
+        {
+          vtkIdType const cellId = pointCells->GetId( j );
+          if( meshIdxToGlobalId3D.count( cellId ) > 0 )
+          {
+            cachedCells.emplace_back( cellId );
+          }
+        }
+        pointCellsIt = pointTo3DCells.find( meshPointId );
+      }
+
+      for( vtkIdType const cellId: pointCellsIt->second )
+      {
+        cellsAtCoordinate.emplace( cellId, true );
+      }
+    }
+
+    for( auto const & cell: cellsAtCoordinate )
+    {
+      ++candidateCounts.get_inserted( cell.first );
+    }
+  }
+
+  std::sort( targetCoordinates.begin(), targetCoordinates.end() );
+
+  stdVector< int64_t > neighbors;
+  for( auto const & candidate: candidateCounts )
+  {
+    if( candidate.second != numPoints )
+    {
+      continue;
+    }
+
+    vtkCell * const cell3D = mesh.GetCell( candidate.first );
+    for( localIndex faceIndex = 0; faceIndex < cell3D->GetNumberOfFaces(); ++faceIndex )
+    {
+      vtkCell * const face = cell3D->GetFace( faceIndex );
+      if( face->GetNumberOfPoints() != numPoints )
+      {
+        continue;
+      }
+
+      stdVector< VTKPointCoordinate > faceCoordinates;
+      faceCoordinates.reserve( numPoints );
+      for( vtkIdType i = 0; i < face->GetNumberOfPoints(); ++i )
+      {
+        faceCoordinates.emplace_back( getPointCoordinate( mesh, face->GetPointId( i ) ) );
+      }
+      std::sort( faceCoordinates.begin(), faceCoordinates.end() );
+
+      if( faceCoordinates == targetCoordinates )
+      {
+        neighbors.emplace_back( meshIdxToGlobalId3D.at( candidate.first ) );
+        break;
+      }
+    }
+  }
+
+  return neighbors;
+}
+
 /**
  * @brief Build mapping from 2D cells to their neighboring 3D cells using indices
  *
@@ -1027,6 +1166,18 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
 
   ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
   neighbors2Dto3D.reserve( cells2DIndices.size() );
+
+  // Build a coordinate lookup for meshes with duplicated/collocated points.
+  // This is only needed when the input contains 2D cells; the lookup is
+  // deliberately kept local to this redistribution step.
+  stdUnorderedMap< VTKPointCoordinate, stdVector< vtkIdType >, VTKPointCoordinateHash > pointsByCoordinate;
+  pointsByCoordinate.reserve( mesh.GetNumberOfPoints() );
+  for( vtkIdType pointId = 0; pointId < mesh.GetNumberOfPoints(); ++pointId )
+  {
+    pointsByCoordinate.get_inserted( getPointCoordinate( mesh, pointId ) ).emplace_back( pointId );
+  }
+  stdUnorderedMap< vtkIdType, stdVector< vtkIdType > > pointTo3DCells;
+  pointTo3DCells.reserve( mesh.GetNumberOfPoints() );
 
   // Topology statistics
   localIndex numStandalone = 0;
@@ -1061,6 +1212,24 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
         neighbor3DGlobalIds.emplace_back( it->second );
       }
       // Non-3D neighbors (2D/1D/0D) are silently skipped
+    }
+
+    // If point ids were duplicated at a split interface, the exact lookup
+    // above can miss one or both physical neighbors. Prefer the geometric
+    // connectivity whenever it is available, and retain the exact result
+    // as a fallback for meshes whose coordinates are not bitwise identical.
+    stdVector< int64_t > coordinateNeighborGlobalIds = find2DTo3DNeighborsByCoordinates(
+      mesh,
+      pointIds2D,
+      meshIdxToGlobalId3D,
+      pointsByCoordinate,
+      pointTo3DCells );
+    if( !coordinateNeighborGlobalIds.empty() )
+    {
+      neighbor3DGlobalIds.resize( coordinateNeighborGlobalIds.size() );
+      std::copy( coordinateNeighborGlobalIds.begin(),
+                 coordinateNeighborGlobalIds.end(),
+                 neighbor3DGlobalIds.begin() );
     }
 
     // Update topology statistics
