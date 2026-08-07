@@ -4704,8 +4704,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--irreversibilityFlag => The flag to indicate whether to apply the irreversibility constraint-->
 		<xsd:attribute name="irreversibilityFlag" type="integer" default="0" />
-		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
-		<xsd:attribute name="localDissipation" type="geos_PhaseFieldDamageKernelLocalDissipation" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
@@ -4735,11 +4733,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_PhaseFieldDamageKernelLocalDissipation">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|Linear|Quadratic" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="geos_PhaseFieldDamageFEM_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
@@ -7596,13 +7589,25 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
-		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
-		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
+		<!--fractureModelType => Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation-->
+		<xsd:attribute name="fractureModelType" type="geos_constitutive_FractureModelType" default="Brittle" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--localDissipationOption => Type of local dissipation function. Must match the damage solver's localDissipation option. Can be Linear or Quadratic-->
+		<xsd:attribute name="localDissipationOption" type="geos_constitutive_LocalDissipationOption" default="Linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_constitutive_FractureModelType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Brittle|Cohesive|Nucleation" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_constitutive_LocalDissipationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linear|Quadratic" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="DamagePermeabilityType">
 		<!--bulkPermeability => Permeability of the intact bulk material-->
 		<xsd:attribute name="bulkPermeability" type="real64" use="required" />
@@ -7636,10 +7641,12 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
-		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
-		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
+		<!--fractureModelType => Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation-->
+		<xsd:attribute name="fractureModelType" type="geos_constitutive_FractureModelType" default="Cohesive" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--localDissipationOption => Type of local dissipation function. Must match the damage solver's localDissipation option. Can be Linear or Quadratic-->
+		<xsd:attribute name="localDissipationOption" type="geos_constitutive_LocalDissipationOption" default="Linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7668,10 +7675,12 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--degradationLowerLimit => The lower limit of the degradation function-->
 		<xsd:attribute name="degradationLowerLimit" type="real64" default="0" />
-		<!--extDrivingForceFlag => Whether to have external driving force. Can be 0 or 1-->
-		<xsd:attribute name="extDrivingForceFlag" type="integer" default="0" />
+		<!--fractureModelType => Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation-->
+		<xsd:attribute name="fractureModelType" type="geos_constitutive_FractureModelType" default="Brittle" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--localDissipationOption => Type of local dissipation function. Must match the damage solver's localDissipation option. Can be Linear or Quadratic-->
+		<xsd:attribute name="localDissipationOption" type="geos_constitutive_LocalDissipationOption" default="Linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

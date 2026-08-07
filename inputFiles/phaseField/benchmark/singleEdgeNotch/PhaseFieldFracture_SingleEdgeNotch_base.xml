@@ -34,7 +34,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
       irreversibilityFlag="1"
       damageUpperBound="0.95"
       logLevel="1"

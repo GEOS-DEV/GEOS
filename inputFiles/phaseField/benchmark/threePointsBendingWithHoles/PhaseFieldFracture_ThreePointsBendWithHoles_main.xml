@@ -41,7 +41,7 @@
 
     <FieldSpecification
       name="contactDamageGuard"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ support_left_damage_guard, support_right_damage_guard, load_damage_guard }"/>
