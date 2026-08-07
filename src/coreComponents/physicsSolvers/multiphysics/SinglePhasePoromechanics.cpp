@@ -25,6 +25,10 @@
 #include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
@@ -78,11 +82,50 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
 
   // setup monolithic coupled system
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  setupLinearSolverNearNullKernel( domain, dofManager );
 
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     this->m_precond = createPreconditioner( domain );
   }
+}
+
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupLinearSolverNearNullKernel(
+  DomainPartition & domain,
+  DofManager const & dofManager )
+{
+  m_linearSolverNearNullKernel.resize( 0 );
+
+#ifdef GEOS_USE_HYPREDRV
+  if( !hypre::hypredrive::shouldUse( this->m_linearSolverParameters.get() ) )
+  {
+    return;
+  }
+
+  this->solidMechanicsSolver()->forDiscretizationOnMeshTargets(
+    domain.getMeshBodies(),
+    [&]( string const &, MeshLevel const & mesh, string_array const & )
+  {
+    if( !m_linearSolverNearNullKernel.empty() )
+    {
+      return;
+    }
+
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const dofIndex =
+      nodeManager.getReference< array1d< globalIndex > >(
+        dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+    m_linearSolverNearNullKernel =
+      LAIHelperFunctions::computeRigidBodyModes< ParallelVector >(
+        nodeManager.referencePosition(),
+        dofIndex,
+        dofManager.rankOffset(),
+        dofManager.numLocalDofs() );
+  } );
+#else
+  GEOS_UNUSED_VAR( domain, dofManager );
+#endif
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >

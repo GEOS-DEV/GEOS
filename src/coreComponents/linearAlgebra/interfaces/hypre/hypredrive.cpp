@@ -886,7 +886,8 @@ enum class AMGFlavor
   pressure,
   pressureTemperature,
   displacementFiltered,
-  displacement
+  displacement,
+  almDisplacement
 };
 
 struct LevelAMGBlock
@@ -923,6 +924,7 @@ struct MGRSpecialization
   stdVector< LevelAMGBlock > fRelaxAMGLevels;
   HYPRE_Int pmax = 0;
   HYPRE_Int coarseMinCoarseSize = -1;
+  char const * cycle = nullptr;
 };
 
 MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType const strategy )
@@ -969,11 +971,18 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     }
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = AMGFlavor::pressure;
       specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
+      return specialization;
+    }
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    {
+      MGRSpecialization specialization;
+      specialization.coarseFlavor = AMGFlavor::pressure;
+      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::almDisplacement } };
+      specialization.cycle = "v(1,0)";
       return specialization;
     }
     case StrategyType::invalid:
@@ -1020,7 +1029,8 @@ void appendAMGHeader( std::ostringstream & stream,
 void appendDisplacementAMG( std::ostringstream & stream,
                             integer const indentLevel,
                             integer const separateComponents,
-                            bool const filterFunctions )
+                            bool const filterFunctions,
+                            bool const useALMSmoother = false )
 {
   appendAMGHeader( stream, indentLevel );
   appendLine( stream, indentLevel + 1, "coarsening:" );
@@ -1037,7 +1047,18 @@ void appendDisplacementAMG( std::ostringstream & stream,
   appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
 #else
   appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "order: 1" );
+  if( useALMSmoother )
+  {
+    appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
+    appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
+    appendLine( stream, indentLevel + 2, "coarse_type: ge" );
+    appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
+    appendLine( stream, indentLevel + 2, "order: 0" );
+  }
+  else
+  {
+    appendLine( stream, indentLevel + 2, "order: 1" );
+  }
 #endif
 }
 
@@ -1133,6 +1154,11 @@ void appendAMGByFlavor( std::ostringstream & stream,
       appendDisplacementAMG( stream, indentLevel, 0, false );
       break;
     }
+    case AMGFlavor::almDisplacement:
+    {
+      appendDisplacementAMG( stream, indentLevel, mgrParams.separateComponents, true, true );
+      break;
+    }
   }
 }
 
@@ -1182,6 +1208,10 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   appendLine( stream, 2, "tolerance: 0.0" );
   appendLine( stream, 2, "max_iter: 1" );
   appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
+  if( specialization.cycle != nullptr )
+  {
+    appendLine( stream, 2, GEOS_FMT( "cycle: {}", specialization.cycle ) );
+  }
   appendLine( stream, 2, GEOS_FMT( "non_c_to_f: {}", 1 ) );
   appendLine( stream, 2, GEOS_FMT( "nonglk_max_elmts: {}", 1 ) );
   appendLine( stream, 2, GEOS_FMT( "pmax: {}", specialization.pmax ) );
@@ -1600,6 +1630,11 @@ void HypredriveSolver::setExecutionContext( LinearSolverExecutionContext const &
   m_hasExecutionContext = true;
 }
 
+void HypredriveSolver::setNearNullKernel( arrayView1d< HypreVector const > const & nearNullKernel )
+{
+  m_nearNullKernel = nearNullKernel;
+}
+
 void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
@@ -1674,6 +1709,32 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                                          LvArray::integerConversion< int >( pointMarkers.size() ),
                                                          pointMarkers.data() ),
                          "HYPREDRV_LinearSystemSetDofmap" );
+  }
+
+  if( !m_nearNullKernel.empty() )
+  {
+    localIndex const numEntries = mat.numLocalRows();
+    localIndex const numModes = m_nearNullKernel.size();
+    std::vector< HYPRE_Complex > values( numEntries * numModes );
+
+    for( localIndex mode = 0; mode < numModes; ++mode )
+    {
+      GEOS_ERROR_IF( m_nearNullKernel[mode].localSize() != numEntries,
+                     "HypreDrive near-null-space vector size does not match the matrix local size" );
+      GEOS_LAI_CHECK_ERROR(
+        HYPRE_IJVectorGetValues( m_nearNullKernel[mode].unwrappedIJ(),
+                                 LvArray::integerConversion< HYPRE_Int >( numEntries ),
+                                 nullptr,
+                                 values.data() + mode * numEntries ) );
+    }
+
+    checkHypredriveCall(
+      HYPREDRV_LinearSystemSetNearNullSpace(
+        m_hypredrive,
+        LvArray::integerConversion< int >( numEntries ),
+        LvArray::integerConversion< int >( numModes ),
+        values.data() ),
+      "HYPREDRV_LinearSystemSetNearNullSpace" );
   }
 }
 

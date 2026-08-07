@@ -147,6 +147,8 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
+  this->setupLinearSolverNearNullKernel( domain, dofManager );
+
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     this->m_precond = this->createPreconditioner( domain );

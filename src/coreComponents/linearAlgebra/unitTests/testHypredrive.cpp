@@ -261,6 +261,39 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   }
 }
 
+TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
+{
+  stdVector< string > const fieldNames = { "totalDisplacement", "totalBubbleDisplacement", "pressure" };
+  array1d< int > numComponentsPerField( 3 );
+  numComponentsPerField[0] = 3;
+  numComponentsPerField[1] = 3;
+  numComponentsPerField[2] = 1;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget(
+                 makeMgrParameters( LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM ),
+                 fieldNames,
+                 numComponentsPerField,
+                 target ) );
+
+  EXPECT_NE( target.argument.find( "num_levels: 3" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "cycle: v(1,0)" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
+             std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2]" ),
+             std::string::npos );
+  EXPECT_NE( target.argument.find( "filter_functions: 1" ), std::string::npos );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  EXPECT_NE( target.argument.find( "down_type: 16" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "up_type: 16" ), std::string::npos );
+#else
+  EXPECT_NE( target.argument.find( "down_type: l1sym-hgs" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "up_type: l1sym-hgs" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "coarse_type: ge" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "order: 0" ), std::string::npos );
+#endif
+}
+
 TEST( HypredriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "compositionalVariables" };
