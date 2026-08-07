@@ -417,7 +417,7 @@ protected:
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_elemDens;
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dElemDens;
   arrayView1d< real64 const > const m_mob;
-  arrayView2d< real64 const > const m_dMob;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_dMob;
 
   /// View on the local CRS matrix and RHS
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -767,9 +767,9 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
   ElementViewConst< arrayView1d< real64 const > > const m_elemGravCoef;
   ElementViewConst< arrayView1d< real64 const > > const m_mob;
-  ElementViewConst< arrayView2d< real64 const > > const m_dMob;
-  ElementViewConst< arrayView2d< real64 const > > const m_dens;
-  ElementViewConst< arrayView3d< real64 const > > const m_dDens;
+  ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const m_dMob;
+  ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const m_dens;
+  ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const m_dDens;
   ElementViewConst< arrayView3d< real64 const > > const m_elemPerm;
 
   /// system views
