@@ -28,17 +28,17 @@ set( dataRepository_headers
      ConduitRestart.hpp
      DefaultValue.hpp
      ExecutableGroup.hpp
-     GlobalViewKeys.hpp
      Group.hpp
      HistoryDataSpec.hpp
      InputFlags.hpp
+     ProblemRepositoryABC.hpp
+     ProblemRepository.hpp
+     ProblemViewKeys.hpp
      KeyIndexT.hpp
-     KeyNames.hpp
      LogLevelsInfo.hpp
      LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
-     ProblemManagerBase.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
      Utilities.hpp
@@ -64,6 +64,7 @@ set( dataRepository_sources
      DataContext.cpp
      GroupContext.cpp
      LogLevelsRegistry.cpp
+     ProblemRepository.cpp
      WrapperContext.cpp )
 
 set( dependencyList ${parallelDeps} codingUtilities )
