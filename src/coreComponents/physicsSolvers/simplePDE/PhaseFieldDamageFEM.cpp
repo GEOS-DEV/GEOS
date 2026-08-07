@@ -58,6 +58,12 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
 
+  registerWrapper( viewKeyStruct::viscousRegularizationCoeffString(), &m_viscousRegularizationCoeff ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Damping coefficient eta of the viscous regularization of the phase-field "
+                    "evolution. The rate-independent limit is recovered for eta = 0" );
+
   registerWrapper( viewKeyStruct::fracturePressureTermFlagString(), &m_fracturePressureTermFlag ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -184,7 +190,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                                                dofManager.rankOffset(),
                                                                localMatrix,
                                                                localRhs,
-                                                               dt ) );
+                                                               dt,
+                                                               m_viscousRegularizationCoeff ) );
     }
     else
     {
@@ -192,7 +199,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                                     dofManager.rankOffset(),
                                                     localMatrix,
                                                     localRhs,
-                                                    dt ) );
+                                                    dt,
+                                                    m_viscousRegularizationCoeff ) );
     }
   } );
 }

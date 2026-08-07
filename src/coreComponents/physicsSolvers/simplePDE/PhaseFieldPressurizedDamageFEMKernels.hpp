@@ -64,6 +64,8 @@ public:
   /**
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param inputViscousRegularizationCoeff The damping coefficient eta of the viscous
+   *                                        regularization of the phase-field evolution
    */
   PhaseFieldPressurizedDamageKernel( NodeManager const & nodeManager,
                                      EdgeManager const & edgeManager,
@@ -76,7 +78,8 @@ public:
                                      globalIndex const rankOffset,
                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                      arrayView1d< real64 > const inputRhs,
-                                     real64 const inputDt ):
+                                     real64 const inputDt,
+                                     real64 const inputViscousRegularizationCoeff ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -88,7 +91,8 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputDt ),
+          inputDt,
+          inputViscousRegularizationCoeff ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_fluidPressure( elementSubRegion.template getField< fields::flow::pressure >()  ),
     m_fluidPressureGradient( elementSubRegion.template getReference< array2d< real64 > >( "pressureGradient" ) )
@@ -208,6 +212,7 @@ using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< P
                                                                                globalIndex,
                                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                                arrayView1d< real64 > const,
+                                                                               real64 const,
                                                                                real64 const >;
 
 } // namespace geos

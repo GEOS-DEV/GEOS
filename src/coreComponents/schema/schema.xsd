@@ -4724,6 +4724,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timeIntegrationOption" type="geos_PhaseFieldDamageFEM_TimeIntegrationOption" use="required" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--viscousRegularizationCoeff => Damping coefficient eta of the viscous regularization of the phase-field evolution. The rate-independent limit is recovered for eta = 0-->
+		<xsd:attribute name="viscousRegularizationCoeff" type="real64" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
 		<!--writeStatistics => When set to `iteration`, output iterations information to a csv

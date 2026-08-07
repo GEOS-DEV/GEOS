@@ -86,6 +86,8 @@ public:
   /**
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param inputViscousRegularizationCoeff The damping coefficient eta of the viscous
+   *                                        regularization of the phase-field evolution
    */
   PhaseFieldDamageKernel( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
@@ -98,7 +100,8 @@ public:
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
-                          real64 const inputDt ):
+                          real64 const inputDt,
+                          real64 const inputViscousRegularizationCoeff ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -113,7 +116,8 @@ public:
           inputDt ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getField< fields::phaseField::damage >()),
-    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() )
+    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
+    m_viscousRegularizationCoeff( inputViscousRegularizationCoeff )
   {}
 
   //***************************************************************************
@@ -230,17 +234,24 @@ public:
                                          0.5 * regularizationLength * m_quadExtDrivingForce[k][q] / Gc :
                                          0.0;
 
+    // Backward-Euler viscous regularization eta*ddot(d) (Miehe et al., 2010, CMAME, Eq. 48),
+    real64 const scaledViscousCoeff = m_dt > LvArray::NumericLimits< real64 >::epsilon ?
+                                      drivingForceCoeff * regularizationLength * m_viscousRegularizationCoeff / ( Gc * m_dt ) :
+                                      0.0;
+    real64 const qp_damage_n = m_constitutiveUpdate.getOldDamage( k, q );
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       stack.localResidual[ a ] -= detJ * ( localDissipation * N[a]
                                            + nonlocalDissipationGradientCoeff * regularizationLength * regularizationLength * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
                                            + scaledDrivingForce * degradationDeriv * N[a]
-                                           + scaledExtDrivingForce * N[a] );
+                                           + scaledExtDrivingForce * N[a]
+                                           + scaledViscousCoeff * ( qp_damage - qp_damage_n ) * N[a] );
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         stack.localJacobian[ a ][ b ] -= detJ * ( nonlocalDissipationGradientCoeff * regularizationLength * regularizationLength * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                  + ( localDissipationDeriv + scaledDrivingForce * degradationSecondDeriv ) * N[a] * N[b] );
+                                                  + ( localDissipationDeriv + scaledDrivingForce * degradationSecondDeriv + scaledViscousCoeff ) * N[a] * N[b] );
       }
     }
   }
@@ -288,6 +299,9 @@ protected:
   /// The array containing the external driving force on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadExtDrivingForce;
 
+  /// The damping coefficient eta of the viscous regularization of the phase-field evolution
+  real64 const m_viscousRegularizationCoeff;
+
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
@@ -295,6 +309,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     globalIndex,
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
+                                                                    real64 const,
                                                                     real64 const >;
 
 } // namespace geos

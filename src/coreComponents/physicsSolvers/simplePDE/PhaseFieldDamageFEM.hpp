@@ -142,6 +142,7 @@ public:
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
+    static constexpr char const * viscousRegularizationCoeffString() { return "viscousRegularizationCoeff"; }
     static constexpr char const * fracturePressureTermFlagString() { return "fracturePressureTermFlag"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
@@ -153,6 +154,9 @@ private:
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
   integer m_fracturePressureTermFlag;
+
+  /// Damping coefficient eta regularizing the rate-independent phase-field evolution (eta = 0 recovers it)
+  real64 m_viscousRegularizationCoeff;
 
   array1d< real64 > m_coeff;
 };
