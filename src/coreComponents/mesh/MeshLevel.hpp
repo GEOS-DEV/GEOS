@@ -26,7 +26,7 @@
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
-#include "dataRepository/GlobalViewKeys.hpp"
+#include "dataRepository/ProblemViewKeys.hpp"
 
 namespace geos
 {
@@ -120,7 +120,7 @@ public:
   struct groupStructKeys
   {
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
-    dataRepository::GroupKey cellManager    = { dataRepository::GlobalViewKeys::cellManager() };
+    dataRepository::GroupKey cellManager    = { "cellManager" };
 
     static constexpr char const * nodeManagerString() { return "nodeManager"; }
     static constexpr char const * edgeManagerString() { return "edgeManager"; }

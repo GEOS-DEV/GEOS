@@ -291,6 +291,14 @@ FieldSpecificationManager::
   } );
 }
 
+// FieldSpecificationManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline FieldSpecificationManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< FieldSpecificationManager >( m_gks.fieldSpecificationManager ); }
+
+// FieldSpecificationManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline FieldSpecificationManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< FieldSpecificationManager >( m_gks.fieldSpecificationManager ); }
+
 } /* namespace geos */
 
 #endif /* GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_ */

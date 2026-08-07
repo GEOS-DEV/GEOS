@@ -18,10 +18,10 @@
  */
 
 #include "DomainPartition.hpp"
+
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
-
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -43,16 +43,14 @@ DomainPartition::DomainPartition( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
+  this->registerWrapper< SpatialPartition, PartitionBase >( m_vks.partitionManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
   registerGroup( groupKeys.meshBodies );
-  registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 
   addLogLevel< logInfo::PartitionCommunication >();
 }
-
 
 DomainPartition::~DomainPartition()
 {}
@@ -61,13 +59,13 @@ void DomainPartition::initializationOrder( string_array & order )
 {
   set< string > usedNames;
   {
-    order.emplace_back( string( groupKeysStruct::constitutiveManagerString() ) );
-    usedNames.insert( groupKeysStruct::constitutiveManagerString() );
+    order.emplace_back( string( ProblemViewKeys::constitutiveManager() ) );
+    usedNames.insert( ProblemViewKeys::constitutiveManager() );
   }
 
   {
-    order.emplace_back( string( groupKeysStruct::meshBodiesString() ) );
-    usedNames.insert( groupKeysStruct::meshBodiesString() );
+    order.emplace_back( groupKeys.meshBodies.key() );
+    usedNames.insert( groupKeys.meshBodies.key() );
   }
 
 
@@ -85,7 +83,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOS_USE_MPI)
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition1 = getPartitionManager();
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
   const std::set< int > metisNeighborList = partition.getMetisNeighborList();
@@ -279,7 +277,7 @@ void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,
                                     int * ncoords )
 {
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition1 = getPartitionManager();
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
   if( idim == partition.m_nsdof )
@@ -521,5 +519,11 @@ void DomainPartition::outputPartitionInformation() const
   } );
 
 }
+
+PartitionBase & DomainPartition::getPartitionManager()
+{ return this->getReference< PartitionBase >( m_vks.partitionManager ); }
+
+PartitionBase const & DomainPartition::getPartitionManager() const
+{ return this->getReference< PartitionBase >( m_vks.partitionManager ); }
 
 } /* namespace geos */

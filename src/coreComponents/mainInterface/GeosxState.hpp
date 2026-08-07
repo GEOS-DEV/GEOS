@@ -182,23 +182,11 @@ public:
    * @note This is useful if you only need at @c dataRepository::Group and don't want to
    *   include @c ProblemManager.hpp.
    */
-  dataRepository::Group & getProblemManagerAsGroup();
-
-  dataRepository::ProblemManagerBase & getProblemManagerBase();
-
-  dataRepository::ProblemManagerBase const & getProblemManagerBase() const;
-
-  /**
-   * @brief Return the FieldSpecificationManager.
-   * @return The FieldSpecificationManager.
-   */
-  FieldSpecificationManager & getFieldSpecificationManager();
-
-  /**
-   * @brief Return the FunctionManager.
-   * @return The FunctionManager.
-   */
-  FunctionManager & getFunctionManager();
+  dataRepository::Group & getProblemManagerAsGroup()
+  {
+    GEOS_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
+    return *(dataRepository::Group *)m_problemManager.get();
+  }
 
   /**
    * @brief Return the CommunicationTools.

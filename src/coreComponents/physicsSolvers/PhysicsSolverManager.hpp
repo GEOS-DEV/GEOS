@@ -17,6 +17,7 @@
 #define GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 namespace geos
 {
@@ -47,6 +48,14 @@ private:
 
   R1Tensor m_gravityVector;
 };
+
+// PhysicsSolverManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline PhysicsSolverManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< PhysicsSolverManager >( m_gks.physicsSolverManager ); }
+
+// PhysicsSolverManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline PhysicsSolverManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< PhysicsSolverManager >( m_gks.physicsSolverManager ); }
 
 } /* namespace geos */
 
