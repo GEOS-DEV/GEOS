@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_SingleEdgeNotch_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="SingleEdgeNotchShear"
+      file="meshes/singleEdgeCrackSquareShear.vtu"
+      nodesetNames="{ lower_boundary, upper_boundary, left_boundary, right_boundary, initial_crack_nodes, fine_lower_right_nodes }"/>
+  </Mesh>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="topShearDisplacement"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="1.0e-5"
+      functionName="loadRamp"
+      setNames="{ upper_boundary }"/>
+
+    <FieldSpecification
+      name="YConstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ upper_boundary, lower_boundary, left_boundary, right_boundary }"/>
+
+    <FieldSpecification
+      name="bottomXConstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ lower_boundary }"/>
+
+    <FieldSpecification
+      name="zConstraints"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ midPlane }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ initial_crack_nodes }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ initial_crack_nodes }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Geometry>
+    <Box
+      name="midPlane"
+      xMin="{ -100.0, -100.0, -0.001 }"
+      xMax="{ 100.0, 100.0, 0.001 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="1600.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="10"
+      target="/Outputs/SingleEdgeNotchShear_VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication"
+      maxEventDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="200"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="SingleEdgeNotchShear_VTKOutput"
+      plotFileRoot="singleEdgeNotchShear"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

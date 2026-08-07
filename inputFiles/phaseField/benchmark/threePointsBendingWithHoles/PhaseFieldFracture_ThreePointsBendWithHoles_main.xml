@@ -1,0 +1,139 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_ThreePointsBendWithHoles_base.xml"/>
+  </Included>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="loadPointDisplacement"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="4.0e-3"
+      functionName="loadRamp"
+      setNames="{ load_line_full_thickness }"/>
+
+    <FieldSpecification
+      name="yConstraints"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line, support_right_line }"/>
+
+    <FieldSpecification
+      name="xConstraints"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line }"/>
+
+    <FieldSpecification
+      name="zConstraints"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ midPlane }"/>
+
+    <FieldSpecification
+      name="contactDamageGuard"
+      fieldName="Damage"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_damage_guard, support_right_damage_guard, load_damage_guard }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ starter_notch_shared_face_nodes }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ starter_notch_shared_face_nodes }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Geometry>
+    <Box
+      name="midPlane"
+      xMin="{ -100.0, -100.0, -0.001 }"
+      xMax="{ 100.0, 100.0, 0.001 }"/>
+
+    <Box
+      name="support_left_damage_guard"
+      xMin="{ 0.50, -0.02, -0.051 }"
+      xMax="{ 1.50, 0.60, 0.051 }"/>
+
+    <Box
+      name="support_right_damage_guard"
+      xMin="{ 18.50, -0.02, -0.051 }"
+      xMax="{ 19.50, 0.60, 0.051 }"/>
+
+    <Box
+      name="load_damage_guard"
+      xMin="{ 9.50, 7.40, -0.051 }"
+      xMax="{ 10.50, 8.02, 0.051 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="67.23">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput0"
+      endTime="65.0"
+      cycleFrequency="50"
+      target="/Outputs/ThreePointsBendWithHoles_VTKOutput"/>
+    
+    <PeriodicEvent
+      name="vtkOutput1"
+      beginTime="65.0"
+      endTime="67.2"
+      cycleFrequency="20"
+      target="/Outputs/ThreePointsBendWithHoles_VTKOutput"/>
+    
+    <PeriodicEvent
+      name="vtkOutput2"
+      beginTime="67.2"
+      cycleFrequency="2"
+      target="/Outputs/ThreePointsBendWithHoles_VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="65.0"
+      maxEventDt="0.1"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="65.0"
+      maxEventDt="0.001"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="100"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="ThreePointsBendWithHoles_VTKOutput"
+      plotFileRoot="threePointsBendWithHoles"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
