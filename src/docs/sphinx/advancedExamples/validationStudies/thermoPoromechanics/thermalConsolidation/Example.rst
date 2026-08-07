@@ -205,8 +205,10 @@ Inspecting results
   - The bottom-right panel compares the **total stress**. By equilibrium, the total vertical
     stress remains equal to the applied surface load at all times and depths
     (:math:`\sigma_{yy} = -F`), which GEOS recovers exactly. The total horizontal stress
-    :math:`\sigma_{xx} = \sigma_{zz}` follows the analytical thermo-poroelastic solution,
-    exhibiting the transient overshoot driven by the coupled pressure and thermal fields.
+    :math:`\sigma_{xx} = \sigma_{zz}` follows the uniaxial-strain thermo-poroelastic relation
+    :math:`\sigma_{xx} = -(\lambda/M)\,F - (2G/M)\,(3K\alpha_s\,\Delta T + b\,p)`
+    (with :math:`M = K + 4G/3` the oedometric modulus), exhibiting the transient overshoot
+    driven by the coupled pressure and thermal fields.   
 
   .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/plotTests_tutorial_updated.py
 
