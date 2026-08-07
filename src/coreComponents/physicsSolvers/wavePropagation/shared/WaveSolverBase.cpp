@@ -20,7 +20,6 @@
 
 #include "WaveSolverBase.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 
 #include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"

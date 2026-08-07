@@ -57,10 +57,12 @@ DomainPartition::~DomainPartition()
 
 void DomainPartition::initializationOrder( string_array & order )
 {
+  constitutive::ConstitutiveManager const & constitutiveManager = getConstitutiveManager();
+
   set< string > usedNames;
   {
-    order.emplace_back( string( ProblemViewKeys::constitutiveManager() ) );
-    usedNames.insert( ProblemViewKeys::constitutiveManager() );
+    order.emplace_back( string( constitutiveManager.getName() ) );
+    usedNames.insert( constitutiveManager.getName() );
   }
 
   {

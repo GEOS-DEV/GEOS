@@ -480,7 +480,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getPartitionManager() );
     int const tileColor=partition.getColor();
     int const numTileColorsLocal=partition.numColor();
     int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );

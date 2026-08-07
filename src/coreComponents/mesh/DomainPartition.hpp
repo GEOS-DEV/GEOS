@@ -24,7 +24,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ProblemRepository.hpp"
-#include "dataRepository/ProblemViewKeys.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"

@@ -26,7 +26,6 @@
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
-#include "dataRepository/ProblemViewKeys.hpp"
 
 namespace geos
 {
@@ -67,11 +66,13 @@ public:
    * @brief Constructor for the MeshLevel object.
    * @param[in] name the name of the MeshLevel object in the repository
    * @param[in] parent the parent group of the MeshLevel object being constructed
+   * @param[in] cellBlockManager the cellBlockManager of the destination MeshBody
    * @param[in] source The source MeshLevel to build the new one from
    * @param[in] order The order of the MeshLevel
    */
   MeshLevel( string const & name,
              Group * const parent,
+             CellBlockManagerABC & cellBlockManager,
              MeshLevel const & source,
              int const order );
 

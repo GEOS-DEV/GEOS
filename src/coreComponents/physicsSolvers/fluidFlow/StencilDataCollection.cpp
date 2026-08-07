@@ -20,7 +20,7 @@
 #include "StencilDataCollection.hpp"
 
 #include "common/Units.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -65,10 +65,10 @@ StencilDataCollection::StencilDataCollection( const string & name,
 
 void StencilDataCollection::postInputInitialization()
 {
-  ProblemManagerBase & problemManager = getProblemManagerBase( *this );
+  ProblemRepository & problem = ProblemRepository::get( *this );
 
   { // find targeted solver
-    PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+    PhysicsSolverManager & physicsSolverManager = problem.getManager< PhysicsSolverManager >();
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
@@ -77,7 +77,7 @@ void StencilDataCollection::postInputInitialization()
   }
 
   { // find mesh & discretization
-    DomainPartition & domain = problemManager.getDomainPartition();
+    DomainPartition & domain = problem.getManager< DomainPartition >();
 
     MeshBody const & meshBody = domain.getMeshBody( m_meshName );
     m_meshLevel = &meshBody.getBaseDiscretization();
