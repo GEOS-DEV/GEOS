@@ -136,7 +136,7 @@ void ProppantTransport::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   ConstitutiveManager & cm = domain.getConstitutiveManager();
 
   // Validate proppant models in regions

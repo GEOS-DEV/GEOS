@@ -193,7 +193,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
 {
   ContactSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   validateTetrahedralQuadrature( domain.getMeshBodies() );
 }
 
@@ -202,7 +202,7 @@ void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Gr
   string const discretizationName = getDiscretizationName();
 
   NumericalMethodsManager const & numericalMethodManager =
-    ProblemRepository::get( *this ).getManager< NumericalMethodsManager >();
+    ProblemRepository::getManager< NumericalMethodsManager >( *this );
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();
   FiniteElementDiscretization const & feDiscretization =
@@ -328,7 +328,7 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
-  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();

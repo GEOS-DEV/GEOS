@@ -132,7 +132,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOS );
   }
 
-  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
                           GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )
