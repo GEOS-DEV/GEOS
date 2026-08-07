@@ -149,7 +149,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 
 void WellSolverBase::initializePostSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   FunctionManager & functionManager = FunctionManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -341,7 +341,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

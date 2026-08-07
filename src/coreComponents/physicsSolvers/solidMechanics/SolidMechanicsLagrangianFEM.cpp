@@ -269,7 +269,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
   PhysicsSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
@@ -379,7 +379,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,

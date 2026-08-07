@@ -91,7 +91,7 @@ void RelpermDriver::outputResults()
 void RelpermDriver::postInputInitialization()
 {
   ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = ProblemRepository::getManager< ConstitutiveManager >( *this );
   RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
@@ -114,7 +114,7 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 
 
   ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = ProblemRepository::getManager< ConstitutiveManager >( *this );
   RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
@@ -164,7 +164,7 @@ template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
   ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = ProblemRepository::getManager< ConstitutiveManager >( *this );
   RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 

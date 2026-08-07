@@ -114,7 +114,8 @@ void VTKMeshGenerator::postInputInitialization()
 
   if( !m_dataSourceName.empty())
   {
-    ExternalDataSourceManager & externalDataManager = getGroupByPath< ExternalDataSourceManager >( "/Problem/ExternalDataSource" );
+    ExternalDataSourceManager & externalDataManager =
+      ProblemRepository::getManager< ExternalDataSourceManager >( *this );
 
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 

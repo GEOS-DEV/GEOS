@@ -161,7 +161,7 @@ PhysicsSolverBase::~PhysicsSolverBase() = default;
 void PhysicsSolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = ProblemRepository::getManager< DomainPartition >( *this );
   generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
 }
 

@@ -66,7 +66,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   m_acousRegions = &(acousSolver->getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() ));
   m_elasRegions = &(elasSolver->getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() ));
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

@@ -288,7 +288,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
 
   integer const numComponents = m_numComponents;

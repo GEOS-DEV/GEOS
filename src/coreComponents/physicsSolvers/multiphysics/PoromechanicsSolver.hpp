@@ -161,7 +161,7 @@ public:
                              this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) ),
                    InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
-    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = dataRepository::ProblemRepository::get( *this ).template getManager< DomainPartition >();
 
     this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                    MeshLevel & mesh,

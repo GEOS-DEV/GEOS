@@ -115,7 +115,7 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
 
   SinglePhaseBase::registerDataOnMesh( meshBodies );
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = ProblemRepository::getManager< DomainPartition >( *this );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 0. Find a reactive fluid model name (at this point, models are already attached to subregions)
@@ -828,7 +828,7 @@ void SinglePhaseReactiveTransport::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

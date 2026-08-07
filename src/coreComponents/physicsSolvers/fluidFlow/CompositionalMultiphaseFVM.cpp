@@ -139,7 +139,7 @@ void CompositionalMultiphaseFVM::postInputInitialization()
                   getWrapperDataContext( viewKeyStruct::useDBCString() ) );
     }
 
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
@@ -201,7 +201,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 
   checkDiscretizationName();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );

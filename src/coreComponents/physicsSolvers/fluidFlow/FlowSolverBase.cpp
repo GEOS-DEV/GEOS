@@ -214,7 +214,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
   } );
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -327,7 +327,7 @@ void FlowSolverBase::initializePreSubGroups()
 {
   PhysicsSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -355,7 +355,7 @@ void FlowSolverBase::initializePreSubGroups()
 
 void FlowSolverBase::checkDiscretizationName() const
 {
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = ProblemRepository::getManager< DomainPartition >( *this );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -455,7 +455,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

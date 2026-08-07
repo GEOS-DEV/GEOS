@@ -109,7 +109,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
   ContactSolverBase::initializePostInitialConditionsPreSubGroups();
-  updateState( getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  updateState( ProblemRepository::getManager< DomainPartition >( *this ) );
 }
 
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )

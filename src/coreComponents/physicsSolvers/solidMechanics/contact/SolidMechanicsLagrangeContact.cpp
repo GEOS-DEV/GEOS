@@ -180,7 +180,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 {
   ContactSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();

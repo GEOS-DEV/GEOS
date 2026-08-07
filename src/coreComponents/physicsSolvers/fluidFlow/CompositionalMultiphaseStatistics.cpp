@@ -441,7 +441,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     stdVector< string > massValues;
     phaseCompName.reserve( numPhases*numComps );
 
-    ConstitutiveManager const & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+    ConstitutiveManager const & constitutiveManager = ProblemRepository::getManager< ConstitutiveManager >( *this );
     MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
     auto const phaseNames = fluid.phaseNames();
     auto const componentNames = fluid.componentNames();

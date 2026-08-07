@@ -399,7 +399,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager & constitutiveManager = ProblemRepository::getManager< ConstitutiveManager >( *this );
 
   SolidBase & baseSolid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
 
