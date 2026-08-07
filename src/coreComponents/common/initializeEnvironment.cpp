@@ -219,6 +219,10 @@ void setupCUDA()
 void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
+  // MikeT Adding cali_ini() as required before any call to this system
+
+  cali_init() ;
+
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
   GEOS_ERROR_IF( caliperManager.error(),
                  GEOS_FMT( "Caliper config error: {}", caliperManager.error_msg() ) );

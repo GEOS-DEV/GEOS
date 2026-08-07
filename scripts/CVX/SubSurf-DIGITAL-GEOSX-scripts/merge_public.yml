@@ -1,0 +1,39 @@
+# Schedule is in UTC
+schedules:
+- cron: "0 6 * * 0"
+  displayName: Sunday midnight build
+  branches:
+    include:
+    - develop
+  always: true
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+  clean: true
+  lfs: true
+  persistCredentials: true
+  # fetchDepth: 1
+
+- script: |
+    git config --global user.name "$(Build.RequestedFor)"
+    git config pull.rebase false
+    git remote add public https://github.com/GEOS-DEV/GEOS.git
+    git remote -v
+    git branch
+    git fetch
+  displayName: Configure Git
+
+- bash: |
+    echo Source branch: $(Build.SourceBranch)
+    echo Source branch name: $(Build.SourceBranchName)
+    echo Build requested for: $(Build.RequestedFor)
+    echo Git status:
+    git status
+    git pull --no-edit public develop
+    git push origin HEAD:$(Build.SourceBranch)
+  displayName: Merge "develop" from Public Repo
