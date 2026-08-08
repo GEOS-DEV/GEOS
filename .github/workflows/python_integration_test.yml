@@ -1,0 +1,79 @@
+name: Python Package Integration Test
+
+on:
+  workflow_call:
+    inputs:
+      PYTHON_PACKAGE_REPO:
+        required: false
+        type: string
+        default: 'https://github.com/GEOS-DEV/geosPythonPackages.git'
+      PYTHON_PACKAGE_BRANCH:
+        required: false
+        type: string
+        default: 'main'
+      DOCKER_IMAGE_TAG:
+        required: true
+        type: string
+      DOCKER_REPOSITORY:
+        required: true
+        type: string
+      RUNS_ON:
+        required: false
+        type: string
+        default: 'ubuntu-22.04'
+    secrets:
+      GOOGLE_CLOUD_GCP:
+        required: false
+
+jobs:
+  python_integration_test:
+    runs-on: ${{ inputs.RUNS_ON }}
+    steps:
+    - name: Checkout GEOS Repository
+      uses: actions/checkout@v4.2.2
+      with:
+        submodules: true
+        fetch-depth: 1
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2.1.10'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
+
+    - name: Test Python Package Integration
+      run: |
+        # Test that GEOS can properly install and use geosPythonPackages
+        docker_args=()
+        docker_args+=(--cap-add=SYS_PTRACE --rm)
+        
+        # Mount workspace
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
+        docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
+        
+        # Set environment variables for python package testing
+        docker_args+=(-e PYTHON_PACKAGE_REPO=${{ inputs.PYTHON_PACKAGE_REPO }})
+        docker_args+=(-e PYTHON_PACKAGE_BRANCH=${{ inputs.PYTHON_PACKAGE_BRANCH }})
+        
+        CONTAINER_NAME=geos_python_integration_${GITHUB_SHA:0:7}
+        echo "CONTAINER_NAME: ${CONTAINER_NAME}"
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        docker_args+=(--name ${CONTAINER_NAME})
+        
+        echo "Running python integration test..."
+        docker run \
+          ${docker_args[@]} \
+          -h=`hostname` \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/test_python_integration.sh
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-integration-test-results
+        path: |
+          python_test_results.xml
+          python_test_logs.txt

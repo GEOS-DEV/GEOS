@@ -497,6 +497,17 @@ jobs:
       LOCAL_BASELINE_DIR: /data/GEOS/baselines
       HOST_CONFIG: /spack-generated.cmake
 
+  # Python package integration test - validates that geosPythonPackages work with GEOS
+  # python_integration_test:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #   uses: ./.github/workflows/python_integration_test.yml
+  #   secrets: inherit
+  #   with:
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+  #     RUNS_ON: ubuntu-22.04
+
   baseline_log:
     needs: [is_not_draft_pull_request]
     runs-on: ubuntu-22.04
@@ -676,6 +687,6 @@ jobs:
           needs.are_submodules_in_sync.result == 'success' &&
           needs.check_code_style_and_documentation.result == 'success' &&
           needs.cpu_builds.result == 'success' &&
-          needs.cuda_builds.result == 'success' && 
+          needs.cuda_builds.result == 'success' &&
           needs.run_integrated_tests.result == 'success'
         }}
