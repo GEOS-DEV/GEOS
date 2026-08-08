@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./staircase_co2_3d_base.xml"/>
+  </Included>  
+
+  <NumericalMethods>
+  <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="fluidHybridMimetic"
+        innerProductType="beiraoDaVeigaLipnikovManzini"/> 
+</FiniteVolume>
+  </NumericalMethods>
+
+  <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
+    <CompositionalMultiphaseHybridFVM
+      name="twoPhaseFlow"
+      logLevel="1"
+      discretization="fluidHybridMimetic"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      targetRegions="{ channel, barrier  }"
+      temperature="300"
+      useMass="1">
+    <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="100"
+        maxSubSteps="1000"
+        lineSearchAction="Attempt"
+        lineSearchStartingIteration="5"
+        timeStepIncreaseIterLimit="0.3"
+        timeStepDecreaseIterLimit="0.6"
+        newtonMaxIter="15" />
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-5"
+        krylovMaxIter="100"
+        logLevel="1" />
+    </CompositionalMultiphaseHybridFVM> 
+</Solvers>
+
+  <Events
+    minTime="0.0"  
+    maxTime="8640000">
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="864000"
+      target="/Outputs/vtkOutputMFD"/>
+
+    
+    <PeriodicEvent
+      name="solverApplications1"
+      endTime="86400000"
+      maxEventDt="86400"
+      target="/Solvers/twoPhaseFlow"/>
+
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutputMFD"
+      fieldNames="{ initialPressure, skeletonChannel_density }"/>
+  </Outputs>
+
+  <Tasks>
+    
+  </Tasks>
+  
+</Problem>
