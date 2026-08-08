@@ -401,6 +401,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::hybridSinglePhasePoromechanics:
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
     case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
     case StrategyType::hydrofracture:
@@ -952,6 +953,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     }
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = AMGFlavor::pressure;
@@ -1268,6 +1270,8 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsConformingFractures:
+      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
