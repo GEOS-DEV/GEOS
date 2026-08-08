@@ -541,7 +541,7 @@ protected:
             solver->saveSequentialIterationState( domain );
           }
 
-          mapSolutionBetweenSolvers( domain, idx() );
+          mapSolutionBetweenSolvers( stepDt, domain, idx() );
 
           if( solverDt < stepDt ) // subsolver had to cut the time step
           {
@@ -618,13 +618,15 @@ protected:
   /**
    * @brief Maps the solution obtained from one solver to the fields used by the other solver(s)
    *
+   * @param dt timestep size
    * @param domain the domain partition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+  virtual void mapSolutionBetweenSolvers( real64 const & dt,
+                                          DomainPartition & domain,
                                           integer const solverType )
   {
-    GEOS_UNUSED_VAR( domain, solverType );
+    GEOS_UNUSED_VAR( dt, domain, solverType );
   }
 
   virtual bool checkSequentialConvergence( integer const cycleNumber,

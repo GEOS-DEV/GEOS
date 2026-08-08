@@ -52,6 +52,8 @@ enum class ChemicalSystemType : integer
   carbonate,
   carbonateAllEquilibrium,
   ultramafic,
+  serpentinization,
+  kineticCarbonate,
   momasEasy,
   momasMedium,
   chainSerialAllKinetic
@@ -112,6 +114,8 @@ public:
   integer numSecondarySpecies() const { return m_numSecondarySpecies; }
 
   integer numKineticReactions() const { return m_numKineticReactions; }
+
+  real64 solventDensity() const { return m_solventDensity; }
 
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
@@ -230,7 +234,8 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType > >
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::kineticCarbonateSystemType > >
   createReactionKernelWrapper() const
   {
     using namespace hpcReact::geochemistry;
@@ -282,6 +287,34 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
+      case ChemicalSystemType::serpentinization:
+        return ReactionKernelWrapper< serpentinizationSystemType >( m_primarySpeciesAggregateConcentration,
+                                                                    m_primarySpeciesMobileAggregateConcentration,
+                                                                    m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                    m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                    m_initialPrimarySpeciesConcentration,
+                                                                    m_secondarySpeciesConcentration,
+                                                                    m_kineticReactionRates,
+                                                                    m_aggregateSpeciesRates,
+                                                                    m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                    m_numPrimarySpecies,
+                                                                    m_numSecondarySpecies,
+                                                                    m_numKineticReactions,
+                                                                    serpentinizationSystem );
+      case ChemicalSystemType::kineticCarbonate:
+        return ReactionKernelWrapper< kineticCarbonateSystemType >( m_primarySpeciesAggregateConcentration,
+                                                                     m_primarySpeciesMobileAggregateConcentration,
+                                                                     m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                     m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                     m_initialPrimarySpeciesConcentration,
+                                                                     m_secondarySpeciesConcentration,
+                                                                     m_kineticReactionRates,
+                                                                     m_aggregateSpeciesRates,
+                                                                     m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                     m_numPrimarySpecies,
+                                                                     m_numSecondarySpecies,
+                                                                     m_numKineticReactions,
+                                                                     kineticCarbonateSystem );
       case ChemicalSystemType::chainSerialAllKinetic:
         return ReactionKernelWrapper< serialAllKineticType >( m_primarySpeciesAggregateConcentration,
                                                               m_primarySpeciesMobileAggregateConcentration,
@@ -365,6 +398,8 @@ protected:
   array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations;
 
   ChemicalSystemType m_chemicalSystemType;
+
+  real64 m_solventDensity;
 };
 
 // these aliases are useful in constitutive dispatch
@@ -516,6 +551,8 @@ ENUM_STRINGS( ChemicalSystemType,
               "carbonate",
               "carbonateAllEquilibrium",
               "ultramafic",
+              "serpentinization",
+              "kineticCarbonate",
               "momasEasy",
               "momasMedium",
               "chainSerialAllKinetic" );

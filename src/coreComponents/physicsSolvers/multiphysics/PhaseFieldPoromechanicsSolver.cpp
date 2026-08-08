@@ -57,8 +57,10 @@ PhaseFieldPoromechanicsSolver::~PhaseFieldPoromechanicsSolver()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType )
 {
+  GEOS_UNUSED_VAR( dt );
+
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     GEOS_MARK_FUNCTION;

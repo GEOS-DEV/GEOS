@@ -86,6 +86,7 @@ public:
   using Base::m_sei;
   using Base::m_facePres;
   using Base::m_faceGravCoef;
+  using Base::m_solventDensity;
 
   using ReactiveSinglePhaseFlowAccessors = typename Base::ReactiveSinglePhaseFlowAccessors;
   using ReactiveSinglePhaseFluidAccessors = typename Base::ReactiveSinglePhaseFluidAccessors;
@@ -137,6 +138,7 @@ public:
                               PermeabilityAccessors const & permeabilityAccessors,
                               ThermalConductivityAccessors const & thermalConductivityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
+                              real64 const & solventDensity,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -152,6 +154,7 @@ public:
             reactiveSinglePhaseFluidAccessors,
             permeabilityAccessors,
             mobilePrimarySpeciesFlags,
+            solventDensity,
             dt,
             localMatrix,
             localRhs ),
@@ -392,6 +395,7 @@ public:
                            permeabilityAccessors,
                            thermalConductivityAccessors,
                            mobilePrimarySpeciesFlags,
+                           reactiveFluid.solventDensity(),
                            dt,
                            localMatrix,
                            localRhs );

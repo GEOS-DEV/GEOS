@@ -22,6 +22,7 @@
 #define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 
 namespace geos
 {
@@ -103,6 +104,42 @@ public:
     GEOS_UNUSED_VAR( k, q,
                      pressure, pressure_k, pressure_n,
                      temperature, temperature_k, temperature_n );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void updateStateReactionsFixedStress( localIndex const k,
+                                                localIndex const q,
+                                                real64 const & pressure,
+                                                real64 const & pressure_k,
+                                                real64 const & pressure_n,
+                                                real64 const & temperature,
+                                                real64 const & temperature_k,
+                                                real64 const & temperature_n,
+                                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > mineralReactionMolarIncrements ) const
+  {
+    GEOS_UNUSED_VAR( k, q,
+                     pressure, pressure_k, pressure_n,
+                     temperature, temperature_k, temperature_n,
+                     mineralReactionMolarIncrements );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void updateStateFromPressureTemperatureAndReactions( localIndex const k,
+                                                               localIndex const q,
+                                                               real64 const & pressure,
+                                                               real64 const & temperature,
+                                                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
+  {
+    GEOS_UNUSED_VAR( k, q, pressure, temperature, kineticReactionMolarIncrements );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void updateSurfaceArea( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
+                                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const
+  {
+    GEOS_UNUSED_VAR( k, q, initialSurfaceArea, surfaceArea );
   }
 
   GEOS_HOST_DEVICE
