@@ -32,34 +32,27 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhaseMixedMFD strategy: stencilFlag-guided three-level MGR reduction of the
- *        mixed mimetic finite difference saddle-point system
+ * @brief SinglePhaseMixedMFD strategy: two-level MGR reduction of the mixed mimetic
+ *        finite difference saddle-point system
  *          [ M  -B^T ]
  *          [ B    0  ]
  *        with face mass-flux and cell pressure unknowns.
  *
- * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers)
- * splitting the face-flux dofs by the Global Adaptation classification:
- *  dofLabel: 0 = face flux whose adjacent cells are all TPFA-compatible (the assembled
- *               flux row is exactly diagonal: TPFA/TPFA interfaces, boundary faces of
- *               TPFA cells and no-flow identity rows)
+ * The solver supplies three labels in point_marker_array:
+ *  dofLabel: 0 = face flux whose adjacent cells are all TPFA-compatible (an exactly
+ *                diagonal assembled flux row)
  *  dofLabel: 1 = face flux adjacent to at least one MFD-compatible cell
  *  dofLabel: 2 = cell-centered pressure
  *
  * Ingredients:
- * 1. Level 0: F-points = TPFA-diagonal face fluxes (label 0). The F-block is exactly
- *    diagonal, so a single Jacobi sweep and Jacobi (diagonal) prolongation perform the
- *    elimination exactly, and the Galerkin (RAP) coarse grid is the exact Schur complement.
- *    The cost of this level is proportional to the TPFA fraction selected by the
- *    residual tolerance, mirroring the sparsity-reduction metric of the adaptive scheme.
- * 2. Level 1: F-points = MFD face fluxes (label 1), relaxed with symmetric Gauss-Seidel
- *    sweeps on the (SPD, well-conditioned) MFD flux block; Jacobi prolongation,
- *    injection restriction, Galerkin (RAP) coarse grid approximating the pressure
- *    Schur complement.
- * 3. Coarsest level: cell-pressure system solved with BoomerAMG.
- * 4. Global smoother: none. The Krylov solver is (F)GMRES.
+ * 1. F-points = both face-flux classes (labels 0 and 1), eliminated together in a
+ *    single reduction level and relaxed with one Jacobi sweep on the complete flux block.
+ * 2. C-points = cell pressures (label 2); Jacobi prolongation, injection restriction,
+ *    and a Galerkin (RAP) coarse grid form an approximate pressure Schur complement.
+ * 3. The pressure coarse system is solved with BoomerAMG.
+ * 4. Global (G) relaxation: none. The Krylov solver is (F)GMRES.
  */
-class SinglePhaseMixedMFD : public MGRStrategyBase< 2 >
+class SinglePhaseMixedMFD : public MGRStrategyBase< 1 >
 {
 public:
   /**
@@ -68,31 +61,19 @@ public:
   explicit SinglePhaseMixedMFD( arrayView1d< int const > const & )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 3 ) )
   {
-    // Level 0: eliminate the TPFA-diagonal face fluxes, keep the MFD fluxes and the pressure
-    m_labels[0].push_back( 1 );
+    // Eliminate both face-flux labels together and keep cell pressure.
     m_labels[0].push_back( 2 );
-
-    // Level 1: eliminate the MFD face fluxes, keep the pressure
-    m_labels[1].push_back( 2 );
 
     setupLabels();
 
-    // Level 0: the F-block is exactly diagonal - one Jacobi sweep is an exact solve
+    // The RT0-like face-flux mass block is well-conditioned, so use one inexpensive
+    // Jacobi sweep for F-relaxation.
     m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
-
-    // Level 1: SGS sweeps on the well-conditioned SPD flux block outperform an AMG
-    // V-cycle; Jacobi prolongation avoids the setup cost of approximateInverse
-    m_levelFRelaxType[1]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
-    m_levelFRelaxIters[1]        = 3;
-    m_levelInterpType[1]         = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]       = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
   }
 
   /**
@@ -106,10 +87,14 @@ public:
   {
     setReduction( precond, mgrData );
 
-    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur
-    // complement. Two V-cycles per MGR application: the coarse solve accuracy governs the
-    // outer FGMRES iteration count (a single cycle leaves the reduction quality unused)
+    // Use two BoomerAMG V-cycles for the scalar pressure Schur complement. The stronger
+    // coarse solve targets the slowly converging pressure modes without doubling the cost
+    // of each FGMRES iteration.
+    // No numFunctions override is needed for this scalar coarse system.
     setPressureAMG( mgrData.coarseSolver );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.coarseSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr,
+                                                       hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1sgs ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 2 ) );
   }
 };

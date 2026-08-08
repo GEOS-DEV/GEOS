@@ -620,6 +620,13 @@ stdVector< string > buildDofLabelNames( LinearSolverParameters::MGR::StrategyTyp
                                         stdVector< string > const & fieldNames,
                                         arrayView1d< int const > const & numComponentsPerField )
 {
+  if( strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD )
+  {
+    // The adaptive mixed MFD solver deliberately splits its face-flux field into two
+    // point-marker labels while retaining a single reduction level.
+    return { "tpfaFlux", "mfdFlux", "pressure" };
+  }
+
   stdVector< string > labels;
   labels.reserve( std::accumulate( numComponentsPerField.begin(), numComponentsPerField.end(), 0 ) );
 
@@ -908,6 +915,7 @@ struct MGRSpecialization
   stdVector< LevelAMGBlock > fRelaxAMGLevels;
   HYPRE_Int pmax = 0;
   HYPRE_Int coarseMinCoarseSize = -1;
+  bool strongPressureCoarseAMG = false;
 };
 
 MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType const strategy )
@@ -960,10 +968,15 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
       specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
       return specialization;
     }
+    case StrategyType::singlePhaseMixedMFD:
+    {
+      MGRSpecialization specialization;
+      specialization.strongPressureCoarseAMG = true;
+      return specialization;
+    }
     case StrategyType::invalid:
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
-    case StrategyType::singlePhaseMixedMFD:
     case StrategyType::singlePhaseReservoirHybridFVM:
     case StrategyType::compositionalMultiphaseFVM:
     case StrategyType::compositionalMultiphaseHybridFVM:
@@ -994,11 +1007,12 @@ std::optional< AMGFlavor > getFRelaxAMGFlavor( MGRSpecialization const & special
 }
 
 void appendAMGHeader( std::ostringstream & stream,
-                      integer const indentLevel )
+                      integer const indentLevel,
+                      HYPRE_Int const maxIter = 1 )
 {
   appendLine( stream, indentLevel, "amg:" );
   appendLine( stream, indentLevel + 1, "tolerance: 0.0" );
-  appendLine( stream, indentLevel + 1, "max_iter: 1" );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "max_iter: {}", maxIter ) );
   appendLine( stream, indentLevel + 1, "print_level: 0" );
 }
 
@@ -1028,11 +1042,12 @@ void appendDisplacementAMG( std::ostringstream & stream,
 
 void appendPressureAMG( std::ostringstream & stream,
                         integer const indentLevel,
-                        HYPRE_Int const minCoarseSize )
+                        HYPRE_Int const minCoarseSize,
+                        bool const strongCoarseAMG = false )
 {
-  appendAMGHeader( stream, indentLevel );
+  appendAMGHeader( stream, indentLevel, strongCoarseAMG ? 2 : 1 );
   appendLine( stream, indentLevel + 1, "aggressive:" );
-  appendLine( stream, indentLevel + 2, "num_levels: 1" );
+  appendLine( stream, indentLevel + 2, GEOS_FMT( "num_levels: {}", strongCoarseAMG ? 0 : 1 ) );
   appendLine( stream, indentLevel + 2, "max_nnz_row: 20" );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   appendLine( stream, indentLevel + 2, "prolongation_type: 7" );
@@ -1048,9 +1063,18 @@ void appendPressureAMG( std::ostringstream & stream,
   appendLine( stream, indentLevel + 2, "type: 8" );
   appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
   appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "down_type: 18" );
-  appendLine( stream, indentLevel + 2, "up_type: 18" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 18" );
+  if( strongCoarseAMG )
+  {
+    appendLine( stream, indentLevel + 2, "down_type: l1-hsgs" );
+    appendLine( stream, indentLevel + 2, "up_type: l1-hsgs" );
+    appendLine( stream, indentLevel + 2, "coarse_type: l1-hsgs" );
+  }
+  else
+  {
+    appendLine( stream, indentLevel + 2, "down_type: 18" );
+    appendLine( stream, indentLevel + 2, "up_type: 18" );
+    appendLine( stream, indentLevel + 2, "coarse_type: 18" );
+  }
   appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
 #else
   if( minCoarseSize >= 0 )
@@ -1059,6 +1083,11 @@ void appendPressureAMG( std::ostringstream & stream,
     appendLine( stream, indentLevel + 2, GEOS_FMT( "min_coarse_size: {}", minCoarseSize ) );
   }
   appendLine( stream, indentLevel + 1, "relaxation:" );
+  if( strongCoarseAMG )
+  {
+    appendLine( stream, indentLevel + 2, "down_type: l1-hsgs" );
+    appendLine( stream, indentLevel + 2, "up_type: l1-hsgs" );
+  }
   appendLine( stream, indentLevel + 2, "order: 1" );
 #endif
 }
@@ -1094,13 +1123,14 @@ void appendAMGByFlavor( std::ostringstream & stream,
                         integer const indentLevel,
                         AMGFlavor const flavor,
                         LinearSolverParameters::MGR const & mgrParams,
-                        HYPRE_Int const coarseMinCoarseSize = -1 )
+                        HYPRE_Int const coarseMinCoarseSize = -1,
+                        bool const strongPressureCoarseAMG = false )
 {
   switch( flavor )
   {
     case AMGFlavor::pressure:
     {
-      appendPressureAMG( stream, indentLevel, coarseMinCoarseSize );
+      appendPressureAMG( stream, indentLevel, coarseMinCoarseSize, strongPressureCoarseAMG );
       break;
     }
     case AMGFlavor::pressureTemperature:
@@ -1225,7 +1255,12 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   }
 
   appendLine( stream, 2, "coarsest_level:" );
-  appendAMGByFlavor( stream, 3, specialization.coarseFlavor, params.mgr, specialization.coarseMinCoarseSize );
+  appendAMGByFlavor( stream,
+                     3,
+                     specialization.coarseFlavor,
+                     params.mgr,
+                     specialization.coarseMinCoarseSize,
+                     specialization.strongPressureCoarseAMG );
 
   preconditionerYaml = stream.str();
 
@@ -1684,6 +1719,17 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
     fieldNames = dofManager->fieldNames();
     numComponentsPerField = dofManager->numComponentsPerField();
     dofManager->getLocalDofComponentLabels( pointMarkers );
+  }
+
+  if( !m_params.mgr.customPointMarkers.empty() )
+  {
+    GEOS_ERROR_IF_NE_MSG( m_params.mgr.customPointMarkers.size(), mat.numLocalRows(),
+                          "hypredrive: customPointMarkers size does not match the number of local matrix rows" );
+    pointMarkers.resize( m_params.mgr.customPointMarkers.size() );
+    for( localIndex i = 0; i < pointMarkers.size(); ++i )
+    {
+      pointMarkers[i] = LvArray::integerConversion< int >( m_params.mgr.customPointMarkers[i] );
+    }
   }
 
   hypre::hypredrive::InputArgsParseTarget parseTarget;

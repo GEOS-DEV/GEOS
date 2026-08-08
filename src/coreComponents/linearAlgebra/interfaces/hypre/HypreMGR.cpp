@@ -78,8 +78,8 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
-  // solver-provided per-dof labels override the field-component labels (e.g. to distinguish
-  // sub-blocks of a field, as in the adaptive mixed MFD TPFA/MFD face-flux splitting)
+  // Solver-provided per-dof labels override the field-component labels (e.g. to distinguish
+  // sub-blocks of a field, as in the adaptive mixed MFD TPFA/MFD face-flux splitting).
   if( !params.mgr.customPointMarkers.empty() )
   {
     GEOS_ERROR_IF_NE_MSG( params.mgr.customPointMarkers.size(), mgrData.pointMarkers.size(),

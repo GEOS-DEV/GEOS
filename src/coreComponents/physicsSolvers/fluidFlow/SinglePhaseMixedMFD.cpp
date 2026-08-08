@@ -425,8 +425,8 @@ void SinglePhaseMixedMFD::setupSystem( DomainPartition & domain,
 {
   SinglePhaseBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  // with the dof numbering finalized, build the per-dof labels driving the
-  // stencilFlag-guided three-level MGR reduction
+  // With dof numbering finalized, preserve the TPFA/MFD split as three labels while
+  // the MGR strategy eliminates both flux labels in one reduction level.
   computeMgrPointMarkers( domain, dofManager );
 }
 
@@ -441,6 +441,7 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
 
   array1d< integer > & pointMarkers = m_linearSolverParameters.get().mgr.customPointMarkers;
   pointMarkers.resize( dofManager.numLocalDofs() );
+  pointMarkers.setValues< parallelHostPolicy >( -1 );
   arrayView1d< integer > const markers = pointMarkers.toView();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -455,7 +456,7 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     arrayView1d< integer const > const faceStencilLabel = faceManager.getField< mixedMimetic::faceStencilLabel >();
 
-    // face-flux dofs: the face classification is the MGR label (0 = exactly-diagonal row)
+    // Face-flux dofs retain the adaptive classification: 0 = TPFA-diagonal, 1 = MFD-adjacent.
     forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const kf )
     {
       if( faceGhostRank[kf] >= 0 || faceDofNumber[kf] < 0 )
@@ -465,7 +466,7 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
       markers[faceDofNumber[kf] - rankOffset] = faceStencilLabel[kf];
     } );
 
-    // cell-pressure dofs: label 2
+    // Cell-pressure dofs use label 2.
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase const & subRegion )
@@ -483,6 +484,13 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
       } );
     } );
   } );
+
+  for( localIndex localDof = 0; localDof < markers.size(); ++localDof )
+  {
+    GEOS_ERROR_IF( markers[localDof] < 0 || markers[localDof] > 2,
+                   GEOS_FMT( "Invalid adaptive mixed MFD point marker {} for local dof {}",
+                             markers[localDof], localDof ) );
+  }
 }
 
 void SinglePhaseMixedMFD::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

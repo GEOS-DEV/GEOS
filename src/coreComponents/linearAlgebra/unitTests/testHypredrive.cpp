@@ -248,17 +248,57 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
       EXPECT_EQ( target.source, hypre::hypredrive::InputSource::generatedFallback ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "linear_system:" ), std::string::npos ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "dof_labels:" ), std::string::npos ) << static_cast< int >( value );
-      EXPECT_NE( target.argument.find( "field0_0: 0" ), std::string::npos ) << static_cast< int >( value );
+      if( strategy == StrategyType::singlePhaseMixedMFD )
+      {
+        EXPECT_NE( target.argument.find( "tpfaFlux: 0" ), std::string::npos );
+      }
+      else
+      {
+        EXPECT_NE( target.argument.find( "field0_0: 0" ), std::string::npos ) << static_cast< int >( value );
+      }
       EXPECT_NE( target.argument.find( "preconditioner:" ), std::string::npos ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "mgr:" ), std::string::npos ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "coarsest_level:" ), std::string::npos ) << static_cast< int >( value );
-      EXPECT_NE( target.argument.find( "f_dofs: [field" ), std::string::npos ) << static_cast< int >( value );
+      EXPECT_NE( target.argument.find( "f_dofs: [" ), std::string::npos ) << static_cast< int >( value );
     }
     catch( std::exception const & error )
     {
       FAIL() << static_cast< int >( value ) << ": " << error.what();
     }
   }
+}
+
+TEST( HypredriveYaml, BuildsStrongMixedMFDPressureCoarseSolve )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  stdVector< string > const fieldNames = { "faceMassFlux", "singlePhaseVariables" };
+  array1d< int > numComponentsPerField( 2 );
+  numComponentsPerField[0] = 1;
+  numComponentsPerField[1] = 1;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( StrategyType::singlePhaseMixedMFD ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "tpfaFlux: 0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "mfdFlux: 1" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "pressure: 2" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "num_levels: 2" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [tpfaFlux, mfdFlux]" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_relaxation: jacobi" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "prolongation_type: 2" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "restriction_type: 0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "coarse_level_type: 0" ), std::string::npos );
+
+  size_t const coarsePosition = target.argument.find( "coarsest_level:" );
+  ASSERT_NE( coarsePosition, std::string::npos );
+  std::string const coarseYaml = target.argument.substr( coarsePosition );
+  EXPECT_NE( coarseYaml.find( "max_iter: 2" ), std::string::npos );
+  EXPECT_NE( coarseYaml.find( "num_levels: 0" ), std::string::npos );
+  EXPECT_NE( coarseYaml.find( "down_type: l1-hsgs" ), std::string::npos );
+  EXPECT_NE( coarseYaml.find( "up_type: l1-hsgs" ), std::string::npos );
 }
 
 TEST( HypredriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )

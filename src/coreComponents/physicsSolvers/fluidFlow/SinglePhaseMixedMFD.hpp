@@ -189,10 +189,13 @@ private:
   void computeFaceStencilLabels( DomainPartition & domain );
 
   /**
-   * @brief Build the per-dof labels used by the stencilFlag-guided three-level MGR strategy:
-   *        0 = face flux with exactly-diagonal row (all adjacent cells TPFA-compatible),
+   * @brief Build the three per-dof labels retained by the two-level MGR strategy:
+   *        0 = face flux with an exactly-diagonal row (all adjacent cells TPFA-compatible),
    *        1 = face flux adjacent to at least one MFD-compatible cell,
    *        2 = cell pressure.
+   *
+   * Both face labels are eliminated together in the single reduction level. Keeping them
+   * distinct preserves the adaptive TPFA/MFD classification in the HYPRE/HYPREDRV dofmap.
    * @param[in] domain the domain
    * @param[in] dofManager the dof manager (dof numbers must be finalized)
    */
