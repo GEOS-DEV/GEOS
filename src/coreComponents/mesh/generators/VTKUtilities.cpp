@@ -1971,7 +1971,14 @@ redistributeByKdTree( vtkDataSet & mesh )
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  rdsf->Update();
+  {
+    // vtkRedistributeDataSetFilter uses VTK's XML writer internally to
+    // serialize datasets exchanged by DIY. The writer may raise floating-point
+    // exceptions while calculating progress for empty arrays. These exceptions
+    // are harmless to VTK, but GEOS' enabled FPE traps turn them into SIGFPE.
+    LvArray::system::FloatingPointExceptionGuard guard;
+    rdsf->Update();
+  }
 
   vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 
