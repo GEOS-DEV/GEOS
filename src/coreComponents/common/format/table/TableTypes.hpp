@@ -64,7 +64,7 @@ public:
   void clear();
 
   /// The iterator alias for the  errors vector of string
-  using Iterator = std::vector< string >::const_iterator;
+  using Iterator = stdVector< string >::const_iterator;
 
   /**
    * @return An Iterator pointing to the first element of the errors vector
@@ -82,24 +82,24 @@ public:
    * @brief Append a vector of string to the errors vector.
    * @param errors A vector of string to append
    */
-  void appendErrors( std::vector< string > & errors )
+  void appendErrors( stdVector< string > const & errors )
   { m_errorList.insert( m_errorList.end(), errors.begin(), errors.end() );}
 
   /**
    * @return A const reference to the errors vector.
    */
-  std::vector< string > const & getErrors() const
+  stdVector< string > const & getErrors() const
   { return m_errorList; }
 
   /**
    * @return A reference to the errors vector.
    */
-  std::vector< string > & getErrors()
+  stdVector< string > & getErrors()
   { return m_errorList; }
 
 private:
   /// Contain all the errors  to display at the end of the table
-  std::vector< string > m_errorList;
+  stdVector< string > m_errorList;
 };
 
 inline void TableErrorListing::addError( string_view text )
