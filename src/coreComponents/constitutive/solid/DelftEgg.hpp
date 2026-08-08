@@ -54,9 +54,11 @@ public:
    * @param[in] bulkModulus                 The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] anelasticStrainRate    The ArrayView holding the anelastic strain rate data for each element.
    * @param[in] newStress                   The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress                   The ArrayView holding the old stress data from the previous converged state for each point
    * @param[in] disableInelasticity         Flag to disable plastic response
+   * @param[in] enableAnelasticStrain       Flag to enable stress modification due to anelastic strain
    */
   DelftEggUpdates( arrayView1d< real64 const > const & recompressionIndex,
                    arrayView1d< real64 const > const & virginCompressionIndex,
@@ -67,10 +69,15 @@ public:
                    arrayView1d< real64 const > const & bulkModulus,
                    arrayView1d< real64 const > const & shearModulus,
                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                   arrayView2d< real64 const > const & anelasticStrainRate,
+                   arrayView2d< real64 > const & newAnelasticStrain,
+                   arrayView2d< real64 > const & oldAnelasticStrain,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                   const bool & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+                   const bool & disableInelasticity,
+                   const integer & enableAnelasticStrain ):
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, anelasticStrainRate, newAnelasticStrain, oldAnelasticStrain, newStress, oldStress,
+                             disableInelasticity, enableAnelasticStrain ),
     m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
@@ -524,9 +531,13 @@ public:
                             m_bulkModulus,
                             m_shearModulus,
                             m_thermalExpansionCoefficient,
+                            m_anelasticStrainRate,
+                            m_newAnelasticStrain,
+                            m_oldAnelasticStrain,
                             m_newStress,
                             m_oldStress,
-                            m_disableInelasticity );
+                            m_disableInelasticity,
+                            m_enableAnelasticStrain );
   }
 
   /**
@@ -549,9 +560,13 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainRate,
+                          m_newAnelasticStrain,
+                          m_oldAnelasticStrain,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 

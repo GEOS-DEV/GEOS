@@ -1,0 +1,214 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ DamageRegion, ShrinkRegion }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ DamageRegion, ShrinkRegion }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="20"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Quadratic"
+      irreversibilityFlag="1"
+      damageUpperBound="0.98"
+      logLevel="1"
+      targetRegions="{ DamageRegion, ShrinkRegion }">
+      <NonlinearSolverParameters
+        newtonMaxIter="20"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ DamageRegion }"
+      initialRockToughness="0"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Events
+    maxTime="100.0">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="5"
+      target="/Outputs/VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="0.1"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 30 }"
+      yCoords="{ -5, -2.0, 0, 2.0, 5 }"
+      zCoords="{ 0, 0.1 }"
+      nx="{ 240 }"
+      ny="{ 20, 80, 80, 20 }"
+      nz="{ 1 }"
+      yBias="{0.75, 0, 0, -0.75}"
+      cellBlockNames="{ bottom, middle1, middle2, top }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="DamageRegion"
+      cellBlocks="{ middle1, middle2 }"
+      materialList="{ damageRock }"/>
+
+    <CellElementRegion
+      name="ShrinkRegion"
+      cellBlocks="{ bottom, top }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="1e-6"
+      materialList="{ damageRock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageElasticIsotropic
+      name="damageRock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.73333333e4"
+      defaultShearModulus="8e3"
+      lengthScale="0.05"
+      defaultCriticalFractureEnergy="1.0"
+      criticalStrainEnergy="0"/>
+
+    <DamageElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.73333333e4"
+      defaultShearModulus="8e3"
+      enableAnelasticStrain="1"
+      defaultAnelasticStrainRate="{ 0.0, -1e-4, 0.0 }"
+      lengthScale="0.05"
+      defaultCriticalFractureEnergy="1e20"
+      criticalStrainEnergy="0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/DamageRegion"
+       fieldName="damageRock_criticalFractureEnergy"
+       scale="1.0"/>
+
+    <FieldSpecification
+       name="GcShrinkage"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/ShrinkRegion"
+       fieldName="rock_criticalFractureEnergy"
+       scale="1e20"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="VTKOutput"
+      plotFileRoot="damageAnelasticStrain"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{  5.001,  0.001,  1.001 }"/>
+  </Geometry>
+
+</Problem>

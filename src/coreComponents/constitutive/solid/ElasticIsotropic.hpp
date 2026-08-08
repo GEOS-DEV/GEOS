@@ -46,17 +46,24 @@ public:
    * @param[in] bulkModulus  The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] anelasticStrainRate The ArrayView holding the anelastic strain rate data for each element.
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
+   * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                           arrayView2d< real64 const > const & anelasticStrainRate,
+                           arrayView2d< real64 > const & newAnelasticStrain,
+                           arrayView2d< real64 > const & oldAnelasticStrain,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                           const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+                           const bool & disableInelasticity,
+                           const integer & enableAnelasticStrain ):
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity, anelasticStrainRate, newAnelasticStrain, oldAnelasticStrain,
+                      enableAnelasticStrain ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -156,6 +163,12 @@ public:
   virtual void viscousStateUpdate( localIndex const k,
                                    localIndex const q,
                                    real64 beta ) const override;
+
+  GEOS_HOST_DEVICE
+  virtual void stressModificationByAnelasticStain( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 const & timeIncrement,
+                                                   real64 ( &stressModifier )[6] ) const override;
 
   // TODO: confirm hyper stress/strain measures before activatiing
 
@@ -374,6 +387,29 @@ void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
   GEOS_UNUSED_VAR( beta );
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticIsotropicUpdates::stressModificationByAnelasticStain( localIndex const k,
+                                                                  localIndex const q,
+                                                                  real64 const & timeIncrement,
+                                                                  real64 ( & stressModifier )[6] ) const
+{
+  if( m_enableAnelasticStrain == 0 )
+  {
+    return;
+  }
+
+  arraySlice1d< real64 const > const anelasticStrainRate = getAnelasticStrainRate( k );
+  real64 anelasticStrain[6] = {};
+  for( integer i = 0; i < 3; ++i )
+  {
+    m_newAnelasticStrain[k][i] = m_oldAnelasticStrain[k][i] + anelasticStrainRate[i] * timeIncrement;
+    anelasticStrain[i] = m_newAnelasticStrain[k][i];
+  }
+
+  smallStrainNoStateUpdate_StressOnly( k, q, anelasticStrain, stressModifier );
+}
+
 
 // TODO: need to confirm stress / strain measures before activating hyper inferface
 /*
@@ -533,18 +569,26 @@ public:
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_thermalExpansionCoefficient,
+                                      m_anelasticStrainRate,
+                                      m_newAnelasticStrain,
+                                      m_oldAnelasticStrain,
                                       m_newStress,
                                       m_oldStress,
-                                      m_disableInelasticity );
+                                      m_disableInelasticity,
+                                      m_enableAnelasticStrain );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_thermalExpansionCoefficient,
+                                      m_anelasticStrainRate,
+                                      m_newAnelasticStrain,
+                                      m_oldAnelasticStrain,
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       arrayView3d< real64, solid::STRESS_USD >(),
-                                      m_disableInelasticity );
+                                      m_disableInelasticity,
+                                      m_enableAnelasticStrain );
     }
   }
 
@@ -563,9 +607,13 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainRate,
+                          m_newAnelasticStrain,
+                          m_oldAnelasticStrain,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 protected:
