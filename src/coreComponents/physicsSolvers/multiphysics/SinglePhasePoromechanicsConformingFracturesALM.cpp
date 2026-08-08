@@ -95,15 +95,20 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
 
   if( setSparsity )
   {
-    // Get sparsity pattern from flow solver (could include wells)
-    SparsityPattern< globalIndex > patternOriginal;
-    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternOriginal );
+    // Start from both subsolver patterns. The flow pattern may contain well and
+    // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
+    SparsityPattern< globalIndex > flowPattern;
+    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, flowPattern );
 
-    // Get the original row lengths
-    array1d< localIndex > rowLengths( patternOriginal.numRows() );
-    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+    SparsityPattern< globalIndex > mechanicsPattern;
+    this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
+
+    // Sum the row lengths to provide enough capacity for the union. Entries
+    // common to both patterns are deduplicated when they are inserted below.
+    array1d< localIndex > rowLengths( flowPattern.numRows() );
+    for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
     {
-      rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
+      rowLengths[localRow] = flowPattern.numNonZeros( localRow ) + mechanicsPattern.numNonZeros( localRow );
     }
 
     // Add the number of nonzeros induced by coupling
@@ -113,24 +118,26 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
 
     // Create a new pattern with enough capacity for coupled matrix
     SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
-                                                           patternOriginal.numColumns(),
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( flowPattern.numRows(),
+                                                           flowPattern.numColumns(),
                                                            rowLengths.data() );
 
-    // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+    // Copy the flow and mechanics nonzeros.
+    for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
     {
-      globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
+      globalIndex const * cols = flowPattern.getColumns( localRow ).dataIfContiguous();
+      pattern.insertNonZeros( localRow, cols, cols + flowPattern.numNonZeros( localRow ) );
+    }
+    for( localIndex localRow = 0; localRow < mechanicsPattern.numRows(); ++localRow )
+    {
+      globalIndex const * cols = mechanicsPattern.getColumns( localRow ).dataIfContiguous();
+      pattern.insertNonZeros( localRow, cols, cols + mechanicsPattern.numNonZeros( localRow ) );
     }
 
     // Add the nonzeros from coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
     addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
     addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
-
-    // Assemble the full sparsity pattern using the solid mechanics solver
-    this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, pattern );
 
     // Set up the derivative flux residual matrix
     setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
@@ -1089,7 +1096,7 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                [&]( localIndex const, CellElementSubRegion const & subRegion )
     {
-      if( !subRegion.hasWrapper( "bubbleElementsList" ) )
+      if( !subRegion.hasWrapper( CellElementSubRegion::viewKeyStruct::bubbleCellsString() ) )
         return;
 
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
@@ -1141,7 +1148,7 @@ addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                [&]( localIndex const, CellElementSubRegion const & subRegion )
     {
-      if( !subRegion.hasWrapper( "bubbleElementsList" ) )
+      if( !subRegion.hasWrapper( CellElementSubRegion::viewKeyStruct::bubbleCellsString() ) )
         return;
 
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
