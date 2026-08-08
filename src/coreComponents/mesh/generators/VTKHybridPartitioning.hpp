@@ -18,6 +18,7 @@
 #define GEOS_MESH_GENERATORS_VTKHYBRIDPARTITIONING_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "mesh/generators/METISInterface.hpp"
 
 class vtkUnstructuredGrid;
@@ -28,6 +29,18 @@ namespace vtk
 {
 
 struct SuperCellInfo;
+
+/**
+ * @brief Initial partition used before exact hybrid balance repair/refinement.
+ */
+enum class HybridInitialPartitionMethod : integer
+{
+  metis,      ///< Unconstrained weighted k-way graph partitioning.
+  legacyRcb,  ///< Existing equal-vertex recursive coordinate bisection.
+  weightedRcb ///< Solver-weighted recursive coordinate bisection.
+};
+
+ENUM_STRINGS( HybridInitialPartitionMethod, "metis", "legacyRcb", "weightedRcb" );
 
 /**
  * @brief Configuration for root-local mixed FVM/FEM partitioning.
@@ -49,6 +62,15 @@ struct HybridPartitionOptions
   /// Weak penalty for each distinct pair of neighboring ranks.
   real64 neighborPenalty = 0.0;
 
+  /// Compact geometric or graph-based initial partition.
+  HybridInitialPartitionMethod initialPartitionMethod = HybridInitialPartitionMethod::metis;
+
+  /// Ask METIS to explicitly minimize maximum subdomain connectivity.
+  integer minimizeConnectivity = 0;
+
+  /// Ask METIS to keep each part connected when the hybrid graph is connected.
+  integer contiguous = 0;
+
   /// Per-constraint relative imbalance tolerance: FVM, FEM, memory.
   array1d< real64 > imbalance;
 
@@ -65,6 +87,15 @@ struct HybridPartitionOptions
 
   /// Number of exact objective-decreasing refinement passes.
   integer refinementPasses = 1;
+
+  /// Maximum balance-repair moves as a fraction of partition vertices.
+  real64 maxRepairMoveFraction = 1.0;
+
+  /// Allowed final communication-objective growth relative to the seed.
+  real64 maxRepairObjectiveGrowth = 0.0;
+
+  /// Allow load repair to spend communication savings from earlier moves.
+  integer spendRepairObjectiveSavings = 0;
 
   /// Backward-compatible additive cost for fracture-connected super-cells.
   integer fractureWeight = 0;
@@ -127,6 +158,7 @@ struct HybridPartitionMetrics
   real64 finalObjective = 0.0;
   int64_t initialCutFaces = 0;
   int64_t initialPointReplication = 0;
+  int64_t balanceRepairMoves = 0;
   int64_t refinementMoves = 0;
 
   real64 graphBuildSeconds = 0.0;

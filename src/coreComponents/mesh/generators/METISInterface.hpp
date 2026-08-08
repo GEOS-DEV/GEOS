@@ -33,6 +33,8 @@ namespace metis
  * @param numParts Number of target partitions.
  * @param imbalance Relative imbalance tolerance for every constraint.
  * @param seed Deterministic METIS seed.
+ * @param minimizeConnectivity Explicitly minimize the maximum subdomain degree.
+ * @param contiguous Request connected partitions when the input graph is connected.
  * @return One target partition per graph vertex.
  */
 array1d< pmet_idx_t >
@@ -41,7 +43,9 @@ partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & gra
                    arrayView2d< pmet_idx_t const > const & vertexWeights,
                    pmet_idx_t numParts,
                    arrayView1d< real64 const > const & imbalance,
-                   pmet_idx_t seed );
+                   pmet_idx_t seed,
+                   bool minimizeConnectivity = false,
+                   bool contiguous = false );
 
 } // namespace metis
 } // namespace geos

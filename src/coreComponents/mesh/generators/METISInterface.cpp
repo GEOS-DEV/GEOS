@@ -38,7 +38,9 @@ partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & gra
                    arrayView2d< pmet_idx_t const > const & vertexWeights,
                    pmet_idx_t const numParts,
                    arrayView1d< real64 const > const & imbalance,
-                   pmet_idx_t const seed )
+                   pmet_idx_t const seed,
+                   bool const minimizeConnectivity,
+                   bool const contiguous )
 {
   GEOS_MARK_FUNCTION;
 
@@ -91,7 +93,8 @@ partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & gra
   options[METIS_OPTION_SEED] = seed;
   options[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
   options[METIS_OPTION_NUMBERING] = 0;
-  options[METIS_OPTION_CONTIG] = 0;
+  options[METIS_OPTION_MINCONN] = minimizeConnectivity ? 1 : 0;
+  options[METIS_OPTION_CONTIG] = contiguous ? 1 : 0;
 
   idx_t numVerticesArg = numVertices;
   idx_t numConstraintsArg = numConstraints;

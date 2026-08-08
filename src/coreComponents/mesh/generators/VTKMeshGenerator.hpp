@@ -120,7 +120,13 @@ private:
     constexpr static char const * partitionFVMCommunicationWeightString() { return "partitionFVMCommunicationWeight"; }
     constexpr static char const * partitionFEMCommunicationWeightString() { return "partitionFEMCommunicationWeight"; }
     constexpr static char const * partitionNeighborPenaltyString() { return "partitionNeighborPenalty"; }
+    constexpr static char const * partitionInitialMethodString() { return "partitionInitialMethod"; }
+    constexpr static char const * partitionMinimizeConnectivityString() { return "partitionMinimizeConnectivity"; }
+    constexpr static char const * partitionContiguousString() { return "partitionContiguous"; }
     constexpr static char const * partitionImbalanceString() { return "partitionImbalance"; }
+    constexpr static char const * partitionMaxRepairMoveFractionString() { return "partitionMaxRepairMoveFraction"; }
+    constexpr static char const * partitionMaxRepairObjectiveGrowthString() { return "partitionMaxRepairObjectiveGrowth"; }
+    constexpr static char const * partitionRepairSpendObjectiveSavingsString() { return "partitionRepairSpendObjectiveSavings"; }
     constexpr static char const * partitionSeedString() { return "partitionSeed"; }
     constexpr static char const * partitionFVMWeightFieldString() { return "partitionFVMWeightField"; }
     constexpr static char const * partitionFEMWeightFieldString() { return "partitionFEMWeightField"; }

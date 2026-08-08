@@ -18,6 +18,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/format/Format.hpp"
+#include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
 
 #include <vtkCellArray.h>
@@ -944,14 +945,17 @@ public:
   RefinementState( HybridPartitionTopology const & topology,
                    HybridPartitionOptions const & options,
                    int const numParts,
-                   array1d< int64_t > & parts )
+                   array1d< int64_t > & parts,
+                   bool const preserveRankAdjacency )
     : m_topology( topology ),
       m_options( options ),
       m_numParts( numParts ),
       m_parts( parts ),
+      m_preserveRankAdjacency( preserveRankAdjacency ),
       m_loads( numParts * NUM_CONSTRAINTS, 0.0L ),
       m_limits( NUM_CONSTRAINTS, 0.0L ),
-      m_partCounts( numParts, 0 )
+      m_partCounts( numParts, 0 ),
+      m_connectivityMarkers( topology.vertexToCells.size(), -1 )
   {
     std::array< long double, NUM_CONSTRAINTS > totals = {};
     for( localIndex vertex = 0; vertex < m_topology.vertexToCells.size(); ++vertex )
@@ -973,7 +977,7 @@ public:
                              totals[constraint] / m_numParts;
     }
 
-    if( m_options.neighborPenalty > 0.0 )
+    if( m_options.neighborPenalty > 0.0 || m_preserveRankAdjacency )
     {
       for( localIndex face = 0; face < m_topology.faceToVertices.size( 0 ); ++face )
       {
@@ -1028,6 +1032,26 @@ public:
         return false;
       }
     }
+    if( m_preserveRankAdjacency )
+    {
+      if( !touchesPart( vertex, destination ) ||
+          !removalPreservesFaceConnectivity( vertex, source ))
+      {
+        return false;
+      }
+      std::map< uint64_t, int64_t > deltas;
+      pairDeltas( vertex, destination, deltas );
+      for( auto const &[key, delta] : deltas )
+      {
+        auto const oldIt = m_rankPairMultiplicities.find( key );
+        int64_t const oldCount =
+          oldIt == m_rankPairMultiplicities.end() ? 0 : oldIt->second;
+        if( oldCount == 0 && delta > 0 )
+        {
+          return false;
+        }
+      }
+    }
     return true;
   }
 
@@ -1063,7 +1087,7 @@ public:
                 (static_cast< int64_t >( oldParts.size() ) - static_cast< int64_t >( newParts.size() ));
     }
 
-    if( m_options.neighborPenalty > 0.0 )
+    if( m_options.neighborPenalty > 0.0 || m_preserveRankAdjacency )
     {
       std::map< uint64_t, int64_t > deltas;
       pairDeltas( vertex, destination, deltas );
@@ -1083,7 +1107,7 @@ public:
   void apply( localIndex const vertex, int const destination )
   {
     int const source = LvArray::integerConversion< int >( m_parts[vertex] );
-    if( m_options.neighborPenalty > 0.0 )
+    if( m_options.neighborPenalty > 0.0 || m_preserveRankAdjacency )
     {
       std::map< uint64_t, int64_t > deltas;
       pairDeltas( vertex, destination, deltas );
@@ -1125,6 +1149,88 @@ public:
   }
 
 private:
+  bool touchesPart( localIndex const vertex, int const part ) const
+  {
+    for( localIndex const face : m_topology.vertexToFaces[vertex] )
+    {
+      localIndex const first = m_topology.faceToVertices( face, 0 );
+      localIndex const second = m_topology.faceToVertices( face, 1 );
+      localIndex const neighbor = first == vertex ? second : first;
+      if( neighbor != vertex && m_parts[neighbor] == part )
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool removalPreservesFaceConnectivity( localIndex const vertex,
+                                         int const source ) const
+  {
+    stdVector< localIndex > sourceNeighbors;
+    for( localIndex const face : m_topology.vertexToFaces[vertex] )
+    {
+      localIndex const first = m_topology.faceToVertices( face, 0 );
+      localIndex const second = m_topology.faceToVertices( face, 1 );
+      localIndex const neighbor = first == vertex ? second : first;
+      if( neighbor != vertex && m_parts[neighbor] == source )
+      {
+        sourceNeighbors.push_back( neighbor );
+      }
+    }
+    std::sort( sourceNeighbors.begin(), sourceNeighbors.end());
+    sourceNeighbors.erase(
+      std::unique( sourceNeighbors.begin(), sourceNeighbors.end()),
+      sourceNeighbors.end());
+    if( sourceNeighbors.size() <= 1 )
+    {
+      return true;
+    }
+
+    if( ++m_connectivityMarker == std::numeric_limits< int >::max())
+    {
+      std::fill( m_connectivityMarkers.begin(), m_connectivityMarkers.end(), -1 );
+      m_connectivityMarker = 0;
+    }
+    stdVector< localIndex > queue;
+    queue.reserve( 128 );
+    queue.push_back( sourceNeighbors.front());
+    m_connectivityMarkers[sourceNeighbors.front()] = m_connectivityMarker;
+    std::size_t reachedNeighbors = 1;
+    constexpr std::size_t MAX_CONNECTIVITY_VISITS = 4096;
+
+    for( std::size_t head = 0;
+         head < queue.size() && queue.size() <= MAX_CONNECTIVITY_VISITS;
+         ++head )
+    {
+      localIndex const current = queue[head];
+      for( localIndex const face : m_topology.vertexToFaces[current] )
+      {
+        localIndex const first = m_topology.faceToVertices( face, 0 );
+        localIndex const second = m_topology.faceToVertices( face, 1 );
+        localIndex const neighbor = first == current ? second : first;
+        if( neighbor == current || neighbor == vertex ||
+            m_parts[neighbor] != source ||
+            m_connectivityMarkers[neighbor] == m_connectivityMarker )
+        {
+          continue;
+        }
+        m_connectivityMarkers[neighbor] = m_connectivityMarker;
+        queue.push_back( neighbor );
+        if( std::binary_search( sourceNeighbors.begin(), sourceNeighbors.end(),
+                                neighbor ))
+        {
+          ++reachedNeighbors;
+          if( reachedNeighbors == sourceNeighbors.size())
+          {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   long double & load( int const part, localIndex const constraint )
   {
     return m_loads[part * NUM_CONSTRAINTS + constraint];
@@ -1173,9 +1279,12 @@ private:
   HybridPartitionOptions const & m_options;
   int m_numParts;
   array1d< int64_t > & m_parts;
+  bool m_preserveRankAdjacency;
   stdVector< long double > m_loads;
   stdVector< long double > m_limits;
   stdVector< int64_t > m_partCounts;
+  mutable stdVector< int > m_connectivityMarkers;
+  mutable int m_connectivityMarker = 0;
   std::unordered_map< uint64_t, int64_t > m_rankPairMultiplicities;
 };
 
@@ -1189,6 +1298,296 @@ stdVector< localIndex > orderedVertices( HybridPartitionTopology const & topolog
            (topology.representativeGlobalCellIds[lhs] == topology.representativeGlobalCellIds[rhs] && lhs < rhs);
   } );
   return order;
+}
+
+stdVector< std::array< real64, 3 > >
+computePartitionVertexCentroids( vtkUnstructuredGrid const & mesh,
+                                 HybridPartitionTopology const & topology )
+{
+  vtkUnstructuredGrid & mutableMesh = const_cast< vtkUnstructuredGrid & >(mesh);
+  MeshArrays const arrays = getMeshArrays( mesh );
+  localIndex const numVertices = topology.vertexToCells.size();
+  stdVector< std::array< real64, 3 > > centroids( numVertices );
+  stdVector< int64_t > counts( numVertices, 0 );
+
+  for( localIndex cell = 0; cell < topology.cellToVertex.size(); ++cell )
+  {
+    localIndex const vertex = topology.cellToVertex[cell];
+    CellModel const model = cellModel( arrays.cellTypes[cell] );
+    vtkIdType const begin = arrays.offsets[cell];
+    std::array< long double, 3 > cellCenter = {};
+    for( localIndex node = 0; node < model.numNodes; ++node )
+    {
+      real64 point[3] = {};
+      mutableMesh.GetPoint( arrays.connectivity[begin + node], point );
+      for( integer dim = 0; dim < 3; ++dim )
+      {
+        GEOS_ERROR_IF( !std::isfinite( point[dim] ),
+                       GEOS_FMT( "Non-finite coordinate on global cell {}",
+                                 arrays.globalCellIds[cell] ));
+        cellCenter[dim] += point[dim];
+      }
+    }
+    for( integer dim = 0; dim < 3; ++dim )
+    {
+      centroids[vertex][dim] +=
+        static_cast< real64 >(cellCenter[dim] / model.numNodes);
+    }
+    ++counts[vertex];
+  }
+
+  for( localIndex vertex = 0; vertex < numVertices; ++vertex )
+  {
+    GEOS_ERROR_IF(
+      counts[vertex] <= 0,
+      GEOS_FMT( "Hybrid partition vertex {} contains no cells", vertex ));
+    for( integer dim = 0; dim < 3; ++dim )
+    {
+      centroids[vertex][dim] /= counts[vertex];
+    }
+  }
+  return centroids;
+}
+
+array1d< int64_t >
+legacyRecursiveCoordinateBisection( vtkUnstructuredGrid const & mesh,
+                                    HybridPartitionTopology const & topology,
+                                    int const numParts )
+{
+  localIndex const numVertices = topology.vertexToCells.size();
+  localIndex const numCells = topology.cellToVertex.size();
+  array1d< int64_t > parts( numVertices );
+
+  // Match the existing scatter exactly when partition vertices are individual
+  // cells. This is the common path and makes boundary refinement a strict
+  // perturbation of the established legacy partition.
+  if( numVertices == numCells )
+  {
+    array1d< integer > unusedCartesianPartitions;
+    stdVector< integer > const cellParts = computeCellRanks(
+      ScatterMethod::rcb, const_cast< vtkUnstructuredGrid & >(mesh),
+      unusedCartesianPartitions.toViewConst(), numParts );
+    GEOS_ERROR_IF_NE_MSG(
+      LvArray::integerConversion< localIndex >( cellParts.size()), numCells,
+      "Legacy RCB returned an invalid cell assignment" );
+    for( localIndex cell = 0; cell < numCells; ++cell )
+    {
+      localIndex const vertex = topology.cellToVertex[cell];
+      GEOS_ERROR_IF_NE_MSG( vertex, cell,
+                            "Singleton partition vertices must preserve cell "
+                            "ordering" );
+      parts[vertex] = cellParts[cell];
+    }
+    return parts;
+  }
+
+  // Fracture-connected super-cells are indivisible. Reproduce the legacy RCB
+  // rule on their aggregate centroids instead of allowing a cell-level seed
+  // to split an atomic vertex.
+  stdVector< std::array< real64, 3 > > const centroids =
+    computePartitionVertexCentroids( mesh, topology );
+  stdVector< localIndex > vertices( numVertices );
+  std::iota( vertices.begin(), vertices.end(), 0 );
+
+  auto bisect = [&]( auto && self, localIndex const begin, localIndex const end,
+                     int const partBegin, int const partEnd ) -> void {
+    int const partCount = partEnd - partBegin;
+    GEOS_ERROR_IF( end - begin < partCount,
+                   "Legacy RCB cannot populate every requested partition" );
+    if( partCount == 1 )
+    {
+      for( localIndex position = begin; position < end; ++position )
+      {
+        parts[vertices[position]] = partBegin;
+      }
+      return;
+    }
+
+    std::array< real64, 3 > lower = {std::numeric_limits< real64 >::max(),
+                                     std::numeric_limits< real64 >::max(),
+                                     std::numeric_limits< real64 >::max()};
+    std::array< real64, 3 > upper = {std::numeric_limits< real64 >::lowest(),
+                                     std::numeric_limits< real64 >::lowest(),
+                                     std::numeric_limits< real64 >::lowest()};
+    for( localIndex position = begin; position < end; ++position )
+    {
+      localIndex const vertex = vertices[position];
+      for( integer dim = 0; dim < 3; ++dim )
+      {
+        lower[dim] = std::min( lower[dim], centroids[vertex][dim] );
+        upper[dim] = std::max( upper[dim], centroids[vertex][dim] );
+      }
+    }
+    integer bestDimension = 0;
+    for( integer dim = 1; dim < 3; ++dim )
+    {
+      if( upper[dim] - lower[dim] >
+          upper[bestDimension] - lower[bestDimension] )
+      {
+        bestDimension = dim;
+      }
+    }
+
+    int const leftParts = partCount / 2;
+    localIndex const split = begin + (end - begin) * leftParts / partCount;
+    int const middlePart = partBegin + leftParts;
+    std::nth_element( vertices.begin() + begin, vertices.begin() + split,
+                      vertices.begin() + end,
+                      [&]( localIndex const lhs, localIndex const rhs ) {
+      return centroids[lhs][bestDimension] <
+      centroids[rhs][bestDimension];
+    } );
+    self( self, begin, split, partBegin, middlePart );
+    self( self, split, end, middlePart, partEnd );
+  };
+
+  bisect( bisect, 0, numVertices, 0, numParts );
+  return parts;
+}
+
+array1d< int64_t >
+weightedRecursiveCoordinateBisection( vtkUnstructuredGrid const & mesh,
+                                      HybridPartitionTopology const & topology,
+                                      int const numParts )
+{
+  localIndex const numVertices = topology.vertexToCells.size();
+  stdVector< std::array< real64, 3 > > const centroids =
+    computePartitionVertexCentroids( mesh, topology );
+  stdVector< localIndex > vertices( numVertices );
+  std::iota( vertices.begin(), vertices.end(), 0 );
+  array1d< int64_t > parts( numVertices );
+
+  auto bisect = [&]( auto && self, localIndex const begin, localIndex const end,
+                     int const partBegin, int const partEnd ) -> void {
+    int const partCount = partEnd - partBegin;
+    GEOS_ERROR_IF( end - begin < partCount,
+                   "Weighted RCB cannot populate every requested partition" );
+    if( partCount == 1 )
+    {
+      for( localIndex position = begin; position < end; ++position )
+      {
+        parts[vertices[position]] = partBegin;
+      }
+      return;
+    }
+
+    std::array< real64, 3 > lower = {std::numeric_limits< real64 >::max(),
+                                     std::numeric_limits< real64 >::max(),
+                                     std::numeric_limits< real64 >::max()};
+    std::array< real64, 3 > upper = {std::numeric_limits< real64 >::lowest(),
+                                     std::numeric_limits< real64 >::lowest(),
+                                     std::numeric_limits< real64 >::lowest()};
+    for( localIndex position = begin; position < end; ++position )
+    {
+      localIndex const vertex = vertices[position];
+      for( integer dim = 0; dim < 3; ++dim )
+      {
+        lower[dim] = std::min( lower[dim], centroids[vertex][dim] );
+        upper[dim] = std::max( upper[dim], centroids[vertex][dim] );
+      }
+    }
+    std::array< integer, 3 > dimensions = {0, 1, 2};
+    std::sort( dimensions.begin(), dimensions.end(),
+               [&]( integer const lhs, integer const rhs ) {
+      real64 const lhsExtent = upper[lhs] - lower[lhs];
+      real64 const rhsExtent = upper[rhs] - lower[rhs];
+      if( lhsExtent > rhsExtent )
+      {
+        return true;
+      }
+      if( rhsExtent > lhsExtent )
+      {
+        return false;
+      }
+      return lhs < rhs;
+    } );
+    std::sort( vertices.begin() + begin, vertices.begin() + end,
+               [&]( localIndex const lhs, localIndex const rhs ) {
+      for( integer const dim : dimensions )
+      {
+        if( centroids[lhs][dim] < centroids[rhs][dim] )
+        {
+          return true;
+        }
+        if( centroids[rhs][dim] < centroids[lhs][dim] )
+        {
+          return false;
+        }
+      }
+      return topology.representativeGlobalCellIds[lhs] <
+      topology.representativeGlobalCellIds[rhs] ||
+      (topology.representativeGlobalCellIds[lhs] ==
+       topology.representativeGlobalCellIds[rhs] &&
+       lhs < rhs);
+    } );
+
+    int const leftParts = partCount / 2;
+    int const rightParts = partCount - leftParts;
+    int const middlePart = partBegin + leftParts;
+    long double const targetFraction =
+      static_cast< long double >(leftParts) / partCount;
+    std::array< long double, NUM_CONSTRAINTS > totals = {};
+    for( localIndex position = begin; position < end; ++position )
+    {
+      localIndex const vertex = vertices[position];
+      for( localIndex constraint = 0; constraint < NUM_CONSTRAINTS;
+           ++constraint )
+      {
+        totals[constraint] += topology.vertexWeights( vertex, constraint );
+      }
+    }
+
+    localIndex bestSplit = begin + leftParts;
+    long double bestMaximumError = std::numeric_limits< long double >::max();
+    long double bestTotalError = std::numeric_limits< long double >::max();
+    std::array< long double, NUM_CONSTRAINTS > prefix = {};
+    for( localIndex split = begin; split <= end; ++split )
+    {
+      if( split > begin )
+      {
+        localIndex const vertex = vertices[split - 1];
+        for( localIndex constraint = 0; constraint < NUM_CONSTRAINTS;
+             ++constraint )
+        {
+          prefix[constraint] += topology.vertexWeights( vertex, constraint );
+        }
+      }
+      if( split - begin < leftParts || end - split < rightParts )
+      {
+        continue;
+      }
+
+      long double maximumError = 0.0L;
+      long double totalError = 0.0L;
+      for( localIndex constraint = 0; constraint < NUM_CONSTRAINTS;
+           ++constraint )
+      {
+        if( totals[constraint] <= 0.0L )
+        {
+          continue;
+        }
+        long double const error =
+          std::abs( prefix[constraint] / totals[constraint] - targetFraction );
+        maximumError = std::max( maximumError, error );
+        totalError += error;
+      }
+      constexpr long double epsilon = 1.0e-18L;
+      if( maximumError < bestMaximumError - epsilon ||
+          (std::abs( maximumError - bestMaximumError ) <= epsilon &&
+           totalError < bestTotalError - epsilon))
+      {
+        bestMaximumError = maximumError;
+        bestTotalError = totalError;
+        bestSplit = split;
+      }
+    }
+
+    self( self, begin, bestSplit, partBegin, middlePart );
+    self( self, bestSplit, end, middlePart, partEnd );
+  };
+
+  bisect( bisect, 0, numVertices, 0, numParts );
+  return parts;
 }
 
 void ensureNonemptyParts( HybridPartitionTopology const & topology,
@@ -1254,15 +1653,33 @@ int64_t repairBalance( HybridPartitionTopology const & topology,
                        HybridPartitionOptions const & options,
                        int const numParts,
                        stdVector< localIndex > const & order,
-                       array1d< int64_t > & parts )
+                       array1d< int64_t > & parts,
+                       bool const preserveRankAdjacency )
 {
-  RefinementState state( topology, options, numParts, parts );
+  int64_t const maxMoves = static_cast< int64_t >(
+    std::ceil( options.maxRepairMoveFraction * topology.vertexToCells.size()));
+  if( maxMoves == 0 )
+  {
+    return 0;
+  }
+  real64 const initialObjective =
+    evaluateHybridObjective( topology, parts.toViewConst(), numParts, options );
+  real64 const maximumObjectiveIncrease =
+    options.maxRepairObjectiveGrowth * initialObjective;
+  real64 objectiveIncrease = 0.0;
+  RefinementState state( topology, options, numParts, parts,
+                         preserveRankAdjacency );
   int64_t moves = 0;
-  for( integer pass = 0; pass < 4 && state.anyPartIsOverloaded(); ++pass )
+  for( integer pass = 0;
+       pass < 4 && moves < maxMoves && state.anyPartIsOverloaded(); ++pass )
   {
     bool changed = false;
     for( localIndex const vertex : order )
     {
+      if( moves == maxMoves )
+      {
+        break;
+      }
       int const source = LvArray::integerConversion< int >( parts[vertex] );
       if( !state.partIsOverloaded( source ) )
       {
@@ -1270,22 +1687,37 @@ int64_t repairBalance( HybridPartitionTopology const & topology,
       }
       int bestDestination = -1;
       long double bestLoad = std::numeric_limits< long double >::max();
+      real64 bestGain = -std::numeric_limits< real64 >::max();
       for( int destination = 0; destination < numParts; ++destination )
       {
-        if( state.canMove( vertex, destination ) )
+        if( !state.canMove( vertex, destination ) )
         {
-          long double const load = state.normalizedDestinationLoad( vertex, destination );
-          if( load < bestLoad ||
-              (std::abs( load - bestLoad ) < 1.0e-18L && destination < bestDestination) )
-          {
-            bestLoad = load;
-            bestDestination = destination;
-          }
+          continue;
+        }
+        real64 const gain = state.gain( vertex, destination );
+        if( gain < -1.0e-12 && options.spendRepairObjectiveSavings == 0 )
+        {
+          continue;
+        }
+        if( objectiveIncrease - gain > maximumObjectiveIncrease + 1.0e-10 )
+        {
+          continue;
+        }
+        long double const load = state.normalizedDestinationLoad( vertex, destination );
+        if( load < bestLoad ||
+            ( std::abs( load - bestLoad ) < 1.0e-18L &&
+              ( gain > bestGain + 1.0e-12 ||
+                ( std::abs( gain - bestGain ) <= 1.0e-12 && destination < bestDestination ) ) ) )
+        {
+          bestLoad = load;
+          bestGain = gain;
+          bestDestination = destination;
         }
       }
       if( bestDestination >= 0 )
       {
         state.apply( vertex, bestDestination );
+        objectiveIncrease -= bestGain;
         ++moves;
         changed = true;
       }
@@ -1298,6 +1730,13 @@ int64_t repairBalance( HybridPartitionTopology const & topology,
   GEOS_WARNING_IF( state.anyPartIsOverloaded(),
                    "Hybrid balance repair could not satisfy every tolerance; an indivisible vertex or "
                    "conflicting multi-constraint loads may be responsible" );
+  real64 const finalObjective =
+    evaluateHybridObjective( topology, parts.toViewConst(), numParts, options );
+  real64 const tolerance = 1.0e-10 * std::max( 1.0, initialObjective );
+  GEOS_ERROR_IF(
+    finalObjective > initialObjective + maximumObjectiveIncrease + tolerance,
+    GEOS_FMT( "Hybrid balance repair exceeded its objective budget: {} -> {}",
+              initialObjective, finalObjective ));
   return moves;
 }
 
@@ -1305,7 +1744,8 @@ int64_t refineExactObjective( HybridPartitionTopology const & topology,
                               HybridPartitionOptions const & options,
                               int const numParts,
                               stdVector< localIndex > const & order,
-                              array1d< int64_t > & parts )
+                              array1d< int64_t > & parts,
+                              bool const preserveRankAdjacency )
 {
   if( options.refinementPasses <= 0 || numParts == 1 )
   {
@@ -1314,7 +1754,8 @@ int64_t refineExactObjective( HybridPartitionTopology const & topology,
 
   array1d< int64_t > const baselineParts = parts;
   real64 const baselineObjective = evaluateHybridObjective( topology, parts.toViewConst(), numParts, options );
-  RefinementState state( topology, options, numParts, parts );
+  RefinementState state( topology, options, numParts, parts,
+                         preserveRankAdjacency );
   stdVector< int > markers( numParts, -1 );
   stdVector< int > candidates;
   candidates.reserve( std::min( numParts, 32 ) );
@@ -1656,27 +2097,53 @@ HybridPartitionResult partitionHybridMeshOnRoot(
                  GEOS_FMT( "Cannot partition {} atomic vertices over {} nonempty ranks", numVertices, numParts ) );
 
   Clock::time_point const partitionBegin = Clock::now();
-  array1d< pmet_idx_t > const metisParts = metis::partitionWeighted(
-    topology.graph.toViewConst(),
-    topology.edgeWeights.toViewConst(),
-    topology.vertexWeights.toViewConst(),
-    numParts,
-    options.imbalance.toViewConst(),
-    options.seed );
-  array1d< int64_t > vertexParts( numVertices );
-  for( localIndex vertex = 0; vertex < numVertices; ++vertex )
+  array1d< int64_t > vertexParts;
+  if( options.initialPartitionMethod == HybridInitialPartitionMethod::metis )
   {
-    vertexParts[vertex] = metisParts[vertex];
+    array1d< pmet_idx_t > const metisParts = metis::partitionWeighted(
+      topology.graph.toViewConst(),
+      topology.edgeWeights.toViewConst(),
+      topology.vertexWeights.toViewConst(),
+      numParts,
+      options.imbalance.toViewConst(),
+      options.seed,
+      options.minimizeConnectivity != 0,
+      options.contiguous != 0 );
+    vertexParts.resize( numVertices );
+    for( localIndex vertex = 0; vertex < numVertices; ++vertex )
+    {
+      vertexParts[vertex] = metisParts[vertex];
+    }
+  }
+  else if( options.initialPartitionMethod == HybridInitialPartitionMethod::legacyRcb )
+  {
+    vertexParts = legacyRecursiveCoordinateBisection( cells3D, topology, numParts );
+  }
+  else
+  {
+    vertexParts = weightedRecursiveCoordinateBisection( cells3D, topology, numParts );
   }
   Clock::time_point const partitionEnd = Clock::now();
 
+  bool const preserveRankAdjacency =
+    options.initialPartitionMethod != HybridInitialPartitionMethod::metis;
   stdVector< localIndex > const order = orderedVertices( topology );
   ensureNonemptyParts( topology, numParts, order, vertexParts );
-  repairBalance( topology, options, numParts, order, vertexParts );
   ExactStats const initialStats = exactStats( topology, vertexParts.toViewConst(), numParts, options );
+  int64_t const balanceRepairMoves = repairBalance( topology,
+                                                    options,
+                                                    numParts,
+                                                    order,
+                                                    vertexParts,
+                                                    preserveRankAdjacency );
 
   Clock::time_point const refinementBegin = Clock::now();
-  int64_t const refinementMoves = refineExactObjective( topology, options, numParts, order, vertexParts );
+  int64_t const refinementMoves = refineExactObjective( topology,
+                                                        options,
+                                                        numParts,
+                                                        order,
+                                                        vertexParts,
+                                                        preserveRankAdjacency );
   Clock::time_point const refinementEnd = Clock::now();
   ExactStats const finalStats = exactStats( topology, vertexParts.toViewConst(), numParts, options );
 
@@ -1688,6 +2155,7 @@ HybridPartitionResult partitionHybridMeshOnRoot(
   }
   result.metrics = buildMetrics( topology, vertexParts.toViewConst(), numParts, options,
                                  initialStats, finalStats );
+  result.metrics.balanceRepairMoves = balanceRepairMoves;
   result.metrics.refinementMoves = refinementMoves;
   result.metrics.graphBuildSeconds = std::chrono::duration< real64 >( buildEnd - buildBegin ).count();
   result.metrics.initialPartitionSeconds = std::chrono::duration< real64 >( partitionEnd - partitionBegin ).count();
@@ -1696,8 +2164,9 @@ HybridPartitionResult partitionHybridMeshOnRoot(
 
   GEOS_LOG_RANK_0( GEOS_FMT(
     "Hybrid partition: {} cells, {} atomic vertices, {} graph edges; objective {:.3f} -> {:.3f}, "
-    "cut faces {} -> {}, point replication {} -> {}, max neighbors {}, imbalance [{:.3f}%, {:.3f}%, {:.3f}%], "
-    "build {:.3f}s, METIS {:.3f}s, refine {:.3f}s ({} moves), estimated peak {:.1f} MiB",
+    "cut faces {} -> {}, point replication {} -> {}, max neighbors {}, max components {}, "
+    "imbalance [{:.3f}%, {:.3f}%, {:.3f}%], initial {} [minconn={}, contig={}], "
+    "build {:.3f}s, initial {:.3f}s, repair {} moves, refine {:.3f}s ({} moves), estimated peak {:.1f} MiB",
     result.metrics.numCells,
     result.metrics.numPartitionVertices,
     result.metrics.numGraphEdges,
@@ -1708,11 +2177,16 @@ HybridPartitionResult partitionHybridMeshOnRoot(
     result.metrics.initialPointReplication,
     result.metrics.pointReplication,
     result.metrics.maxRankNeighbors,
+    result.metrics.maxConnectedComponents,
     100.0 * result.metrics.imbalanceByConstraint[0],
     100.0 * result.metrics.imbalanceByConstraint[1],
     100.0 * result.metrics.imbalanceByConstraint[2],
+    EnumStrings< HybridInitialPartitionMethod >::toString( options.initialPartitionMethod ),
+    options.minimizeConnectivity,
+    options.contiguous,
     result.metrics.graphBuildSeconds,
     result.metrics.initialPartitionSeconds,
+    result.metrics.balanceRepairMoves,
     result.metrics.exactRefinementSeconds,
     result.metrics.refinementMoves,
     result.metrics.estimatedRootGraphPeakBytes / (1024.0 * 1024.0) ) );

@@ -77,6 +77,14 @@ TEST( METISInterface, WeightedMultiConstraintPartitionIsBalancedAndDeterministic
                                                                  2,
                                                                  imbalance.toViewConst(),
                                                                  739 );
+  array1d< pmet_idx_t > const connectivityConstrained = metis::partitionWeighted( graph.toViewConst(),
+                                                                                  edgeWeights.toViewConst(),
+                                                                                  vertexWeights.toViewConst(),
+                                                                                  2,
+                                                                                  imbalance.toViewConst(),
+                                                                                  739,
+                                                                                  true,
+                                                                                  true );
 
   pmet_idx_t counts[2] = { 0, 0 };
   pmet_idx_t loads[2][numConstraints] = {};
@@ -97,6 +105,43 @@ TEST( METISInterface, WeightedMultiConstraintPartitionIsBalancedAndDeterministic
   for( pmet_idx_t constraint = 0; constraint < numConstraints; ++constraint )
   {
     EXPECT_EQ( loads[0][constraint], loads[1][constraint] );
+  }
+
+  for( pmet_idx_t part = 0; part < 2; ++part )
+  {
+    std::vector< pmet_idx_t > stack;
+    std::vector< bool > visited( numVertices, false );
+    pmet_idx_t expectedVertices = 0;
+    for( pmet_idx_t vertex = 0; vertex < numVertices; ++vertex )
+    {
+      if( connectivityConstrained[vertex] == part )
+      {
+        ++expectedVertices;
+        if( stack.empty() )
+        {
+          stack.push_back( vertex );
+          visited[vertex] = true;
+        }
+      }
+    }
+
+    pmet_idx_t reachedVertices = 0;
+    while( !stack.empty() )
+    {
+      pmet_idx_t const vertex = stack.back();
+      stack.pop_back();
+      ++reachedVertices;
+      for( pmet_idx_t const neighbor : graph[vertex] )
+      {
+        if( connectivityConstrained[neighbor] == part && !visited[neighbor] )
+        {
+          visited[neighbor] = true;
+          stack.push_back( neighbor );
+        }
+      }
+    }
+    EXPECT_GT( expectedVertices, 0 );
+    EXPECT_EQ( reachedVertices, expectedVertices );
   }
 }
 

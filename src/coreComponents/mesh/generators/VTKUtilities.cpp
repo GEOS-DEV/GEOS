@@ -21,6 +21,7 @@
 #include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshDebug.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
@@ -2378,14 +2379,21 @@ redistributeMeshes( integer const logLevel,
                                                    hybridOptions,
                                                    numRanks );
       }
-      vtkSmartPointer< vtkPartitionedDataSet > const split3D =
-        splitMeshByPartition( cells3D, numRanks, hybridResult.cellParts.toViewConst() );
+      stdVector< integer > cellAssignment;
+      if( rank == 0 )
+      {
+        cellAssignment.resize( hybridResult.cellParts.size() );
+        for( localIndex cell = 0; cell < hybridResult.cellParts.size(); ++cell )
+        {
+          cellAssignment[cell] = LvArray::integerConversion< integer >( hybridResult.cellParts[cell] );
+        }
+      }
 
       auto const redistributionBegin = std::chrono::steady_clock::now();
-      meshDebug::log( comm, "redistributeMeshes direct hybrid redistribute begin" );
-      redistributed3D = vtk::redistribute( *split3D, comm );
+      meshDebug::log( comm, "redistributeMeshes direct hybrid scatter begin" );
+      redistributed3D = scatterByRankAssignment( cells3D.Get(), std::move( cellAssignment ), comm );
       meshDebug::logDataSet( comm,
-                             "redistributeMeshes direct hybrid redistribute end",
+                             "redistributeMeshes direct hybrid scatter end",
                              redistributed3D.GetPointer() );
       auto const redistributionEnd = std::chrono::steady_clock::now();
 

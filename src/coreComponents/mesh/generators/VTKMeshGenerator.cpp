@@ -108,11 +108,53 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setApplyDefaultValue( 0.0 ).
     setDescription( "Optional weak hybrid objective penalty for each distinct neighboring-rank pair" );
 
+  registerWrapper( viewKeyStruct::partitionInitialMethodString(),
+                   &m_hybridPartitionOptions.initialPartitionMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( vtk::HybridInitialPartitionMethod::metis ).
+    setDescription( "Initial hybrid partition: 'metis' minimizes weighted graph cut; "
+                    "'legacyRcb' exactly seeds from the existing compact scatter when cells are atomic; "
+                    "'weightedRcb' recomputes compact geometric boundaries while balancing solver-work proxies" );
+
+  registerWrapper( viewKeyStruct::partitionMinimizeConnectivityString(),
+                   &m_hybridPartitionOptions.minimizeConnectivity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Ask hybrid METIS to minimize the maximum number of neighboring subdomains" );
+
+  registerWrapper( viewKeyStruct::partitionContiguousString(),
+                   &m_hybridPartitionOptions.contiguous ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Ask hybrid METIS to produce connected parts when the input graph is connected" );
+
   registerWrapper( viewKeyStruct::partitionImbalanceString(),
                    &m_hybridPartitionOptions.imbalance ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.05 ).
     setDescription( "Relative imbalance tolerances for FVM work, FEM work, and resident memory" );
+
+  registerWrapper( viewKeyStruct::partitionMaxRepairMoveFractionString(),
+                   &m_hybridPartitionOptions.maxRepairMoveFraction ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Maximum topology-preserving balance-repair moves as a fraction of atomic partition vertices; "
+                    "zero disables repair" );
+
+  registerWrapper( viewKeyStruct::partitionMaxRepairObjectiveGrowthString(),
+                   &m_hybridPartitionOptions.maxRepairObjectiveGrowth ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Maximum final communication-objective growth relative to the initial partition; "
+                    "zero prevents net growth. When partitionRepairSpendObjectiveSavings is enabled, repair may "
+                    "spend objective savings earned by earlier moves up to this final limit" );
+
+  registerWrapper( viewKeyStruct::partitionRepairSpendObjectiveSavingsString(),
+                   &m_hybridPartitionOptions.spendRepairObjectiveSavings ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Allow topology-preserving load repair to spend communication savings accumulated by earlier "
+                    "moves while respecting the final objective-growth budget" );
 
   registerWrapper( viewKeyStruct::partitionSeedString(), &m_hybridPartitionOptions.seed ).
     setRTTypeName( "integer" ).
@@ -223,6 +265,12 @@ void VTKMeshGenerator::postInputInitialization()
                    m_hybridPartitionOptions.neighborPenalty < 0.0,
                    "Hybrid partition communication weights and neighbor penalty must be finite and nonnegative",
                    getDataContext() );
+    GEOS_ERROR_IF( ( m_hybridPartitionOptions.minimizeConnectivity != 0 &&
+                     m_hybridPartitionOptions.minimizeConnectivity != 1 ) ||
+                   ( m_hybridPartitionOptions.contiguous != 0 &&
+                     m_hybridPartitionOptions.contiguous != 1 ),
+                   "partitionMinimizeConnectivity and partitionContiguous must be 0 or 1",
+                   getDataContext() );
     GEOS_ERROR_IF( m_hybridPartitionOptions.fvmCommunicationWeight == 0.0 &&
                    m_hybridPartitionOptions.femCommunicationWeight == 0.0,
                    "At least one hybrid partition communication weight must be positive", getDataContext() );
@@ -238,6 +286,17 @@ void VTKMeshGenerator::postInputInitialization()
       GEOS_ERROR_IF( !std::isfinite( tolerance ) || tolerance < 0.0,
                      "partitionImbalance values must be finite and nonnegative", getDataContext() );
     }
+    GEOS_ERROR_IF( !std::isfinite( m_hybridPartitionOptions.maxRepairMoveFraction ) ||
+                   m_hybridPartitionOptions.maxRepairMoveFraction < 0.0 ||
+                   m_hybridPartitionOptions.maxRepairMoveFraction > 1.0,
+                   "partitionMaxRepairMoveFraction must be finite and in [0, 1]", getDataContext() );
+    GEOS_ERROR_IF( !std::isfinite( m_hybridPartitionOptions.maxRepairObjectiveGrowth ) ||
+                   m_hybridPartitionOptions.maxRepairObjectiveGrowth < 0.0 ||
+                   m_hybridPartitionOptions.maxRepairObjectiveGrowth > 1.0,
+                   "partitionMaxRepairObjectiveGrowth must be finite and in [0, 1]", getDataContext() );
+    GEOS_ERROR_IF( m_hybridPartitionOptions.spendRepairObjectiveSavings != 0 &&
+                   m_hybridPartitionOptions.spendRepairObjectiveSavings != 1,
+                   "partitionRepairSpendObjectiveSavings must be 0 or 1", getDataContext() );
     GEOS_ERROR_IF( m_hybridPartitionOptions.rootGraphMemoryLimitMB < 0,
                    "partitionRootGraphMemoryLimitMB must be nonnegative", getDataContext() );
     GEOS_ERROR_IF( m_hybridPartitionOptions.diagnostics < 0,
