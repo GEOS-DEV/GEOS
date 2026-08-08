@@ -89,6 +89,27 @@ computeDistributedMatrixStatistics( CRSMatrixView< real64 const, globalIndex con
                                     globalIndex firstLocalRow,
                                     MPI_Comm comm );
 
+/**
+ * @brief Write one MatrixMarket file per rank and a JSON ownership manifest.
+ * @param[in] localMatrix local rows with global column indices
+ * @param[in] firstLocalRow first global row owned by this rank
+ * @param[in] numGlobalRows global matrix row count
+ * @param[in] numGlobalColumns global matrix column count
+ * @param[in] filenamePrefix common output prefix
+ * @param[in] comm matrix communicator
+ *
+ * Each piece is a valid global-shape MatrixMarket coordinate matrix containing
+ * only the rows owned by its rank. The manifest records the zero-based owned
+ * row interval and local entry count for reconstruction and partition-aware
+ * analysis.
+ */
+void writeDistributedMatrixMarket( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                                   globalIndex firstLocalRow,
+                                   globalIndex numGlobalRows,
+                                   globalIndex numGlobalColumns,
+                                   string const & filenamePrefix,
+                                   MPI_Comm comm );
+
 } // namespace geos
 
 #endif // GEOS_LINEARALGEBRA_UTILITIES_DISTRIBUTEDMATRIXSTATISTICS_HPP_

@@ -102,7 +102,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Report exact load and sparse matrix-vector communication statistics for the assembled linear system. "
-                    "Use 1 for a global log summary or 2 to also write per-rank CSV files." );
+                    "Use 1 for a global log summary, 2 to also write per-rank CSV statistics, or 3 to additionally "
+                    "write one MatrixMarket matrix piece per rank and an ownership manifest." );
 
   registerWrapper( viewKeyStruct::allowNonConvergedLinearSolverSolutionString(), &m_allowNonConvergedLinearSolverSolution ).
     setApplyDefaultValue( 1 ).
@@ -149,8 +150,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  GEOS_ERROR_IF( m_linearSystemDiagnostics < 0 || m_linearSystemDiagnostics > 2,
-                 GEOS_FMT( "linearSystemDiagnostics must be 0, 1, or 2, got {}", m_linearSystemDiagnostics ),
+  GEOS_ERROR_IF( m_linearSystemDiagnostics < 0 || m_linearSystemDiagnostics > 3,
+                 GEOS_FMT( "linearSystemDiagnostics must be 0, 1, 2, or 3, got {}", m_linearSystemDiagnostics ),
                  getDataContext() );
 
   if( m_linearSolverParameters.getLogLevel() < getLogLevel() )
@@ -1432,6 +1433,16 @@ void PhysicsSolverBase::debugOutputMatrixStatistics(
 
   GEOS_ERROR_IF_NE_MSG( haloReceives.total, haloSends.total,
                         "Global sparse matrix-vector halo send and receive counts must match" );
+
+  if( m_linearSystemDiagnostics >= 3 )
+  {
+    string const prefix = GEOS_FMT( "{}_matrix_{:06}_{:02}_partitioned",
+                                    getName(), cycleNumber, nonlinearIteration );
+    writeDistributedMatrixMarket( localMatrix, matrix.ilower(),
+                                  matrix.numGlobalRows(), matrix.numGlobalCols(),
+                                  prefix, matrix.comm() );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Partitioned assembled matrix written with prefix {}", prefix ) );
+  }
 
   if( m_linearSystemDiagnostics < 2 || MpiWrapper::commRank( matrix.comm() ) != 0 )
   {

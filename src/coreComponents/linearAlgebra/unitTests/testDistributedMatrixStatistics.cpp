@@ -70,6 +70,92 @@ TEST( DistributedMatrixStatistics, TwoRankPattern )
   }
 }
 
+TEST( DistributedMatrixStatistics, PartitionedMatrixMarketOutput )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 2 )
+  {
+    GTEST_SKIP() << "This output test exercises two distributed row blocks";
+  }
+
+  CRSMatrix< real64, globalIndex > localMatrix( 2, 4, 3 );
+  real64 const values[3] = { 1.0, 2.0, 3.0 };
+  if( rank == 0 )
+  {
+    globalIndex const row0Columns[2] = { 0, 2 };
+    globalIndex const row1Columns[3] = { 0, 1, 3 };
+    localMatrix.insertNonZeros( 0, row0Columns, values, 2 );
+    localMatrix.insertNonZeros( 1, row1Columns, values, 3 );
+  }
+  else
+  {
+    globalIndex const row0Columns[2] = { 0, 2 };
+    globalIndex const row1Columns[3] = { 1, 2, 3 };
+    localMatrix.insertNonZeros( 0, row0Columns, values, 2 );
+    localMatrix.insertNonZeros( 1, row1Columns, values, 3 );
+  }
+
+  string const prefix = "testDistributedMatrixStatistics_partitioned";
+  string const pieceFilename = GEOS_FMT( "{}_rank_{:06}.mtx", prefix, rank );
+  std::remove( pieceFilename.c_str() );
+  if( rank == 0 )
+  {
+    std::remove( ( prefix + "_manifest.json" ).c_str() );
+  }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+
+  writeDistributedMatrixMarket( localMatrix.toViewConst(), 2 * rank, 4, 4,
+                                prefix, MPI_COMM_GEOS );
+
+  std::ifstream piece( pieceFilename );
+  ASSERT_TRUE( piece );
+  string line;
+  ASSERT_TRUE( static_cast< bool >( std::getline( piece, line ) ) );
+  EXPECT_EQ( line, "%%MatrixMarket matrix coordinate real general" );
+  ASSERT_TRUE( static_cast< bool >( std::getline( piece, line ) ) );
+  EXPECT_NE( line.find( GEOS_FMT( "rank {} of 2", rank ) ), string::npos );
+  ASSERT_TRUE( static_cast< bool >( std::getline( piece, line ) ) );
+  EXPECT_EQ( line, "4 4 5" );
+
+  std::map< std::pair< globalIndex, globalIndex >, real64 > entries;
+  globalIndex row = 0;
+  globalIndex column = 0;
+  real64 value = 0.0;
+  while( piece >> row >> column >> value )
+  {
+    entries.emplace( std::make_pair( row - 1, column - 1 ), value );
+  }
+  EXPECT_EQ( entries.size(), 5 );
+  for( auto const & [coordinates, entryValue] : entries )
+  {
+    EXPECT_GE( coordinates.first, 2 * rank );
+    EXPECT_LT( coordinates.first, 2 * rank + 2 );
+    EXPECT_GE( coordinates.second, 0 );
+    EXPECT_LT( coordinates.second, 4 );
+    EXPECT_GT( entryValue, 0.0 );
+  }
+
+  if( rank == 0 )
+  {
+    std::ifstream manifest( prefix + "_manifest.json" );
+    ASSERT_TRUE( manifest );
+    std::ostringstream contents;
+    contents << manifest.rdbuf();
+    EXPECT_NE( contents.str().find( "\"global_rows\": 4" ), string::npos );
+    EXPECT_NE( contents.str().find( "\"num_ranks\": 2" ), string::npos );
+    EXPECT_NE( contents.str().find( "\"first_row\": 2" ), string::npos );
+    EXPECT_NE( contents.str().find( "rank_000001.mtx" ), string::npos );
+  }
+
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+  std::remove( pieceFilename.c_str() );
+  if( rank == 0 )
+  {
+    std::remove( ( prefix + "_manifest.json" ).c_str() );
+  }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+}
+
 #ifdef GEOS_USE_HYPRE
 TEST( DistributedMatrixStatistics, StreamedMatrixMarketOutput )
 {

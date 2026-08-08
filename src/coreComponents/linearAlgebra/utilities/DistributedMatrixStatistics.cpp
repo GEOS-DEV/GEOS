@@ -23,6 +23,9 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <vector>
 
 namespace geos
 {
@@ -201,6 +204,88 @@ computeDistributedMatrixStatistics( CRSMatrixView< real64 const, globalIndex con
   }
 
   return result;
+}
+
+void writeDistributedMatrixMarket( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                                   globalIndex const firstLocalRow,
+                                   globalIndex const numGlobalRows,
+                                   globalIndex const numGlobalColumns,
+                                   string const & filenamePrefix,
+                                   MPI_Comm const comm )
+{
+  int const rank = MpiWrapper::commRank( comm );
+  int const numRanks = MpiWrapper::commSize( comm );
+  globalIndex const numLocalRows = LvArray::integerConversion< globalIndex >( localMatrix.numRows() );
+
+  localMatrix.move( hostMemorySpace, false );
+  globalIndex localNonzeros = 0;
+  for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+  {
+    localNonzeros += LvArray::integerConversion< globalIndex >( localMatrix.numNonZeros( row ) );
+  }
+
+  string const pieceFilename = GEOS_FMT( "{}_rank_{:06}.mtx", filenamePrefix, rank );
+  std::vector< char > outputBuffer( 1024 * 1024 );
+  std::ofstream output;
+  output.rdbuf()->pubsetbuf( outputBuffer.data(), outputBuffer.size() );
+  output.open( pieceFilename );
+  GEOS_ERROR_IF( !output, GEOS_FMT( "Unable to open distributed matrix piece {}", pieceFilename ) );
+  output << "%%MatrixMarket matrix coordinate real general\n";
+  output << GEOS_FMT( "% distributed rank {} of {}; zero-based owned rows [{}, {})\n",
+                      rank, numRanks, firstLocalRow, firstLocalRow + numLocalRows );
+  output << GEOS_FMT( "{} {} {}\n", numGlobalRows, numGlobalColumns, localNonzeros );
+
+  char line[96];
+  globalIndex const maximumDimension = std::max( { numGlobalRows, numGlobalColumns, globalIndex( 1 ) } );
+  int const width = static_cast< int >( std::log10( maximumDimension ) ) + 1;
+  for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
+  {
+    arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( localRow );
+    arraySlice1d< real64 const > const values = localMatrix.getEntries( localRow );
+    for( localIndex entry = 0; entry < columns.size(); ++entry )
+    {
+      GEOS_FMT_TO( line, sizeof( line ), "{1:>{0}} {2:>{0}} {3:>24.16e}\n", width,
+                   firstLocalRow + localRow + 1, columns[entry] + 1, values[entry] );
+      output << line;
+    }
+  }
+  output.close();
+
+  array1d< globalIndex > localMetadata( 3 );
+  localMetadata[0] = firstLocalRow;
+  localMetadata[1] = numLocalRows;
+  localMetadata[2] = localNonzeros;
+  array1d< globalIndex > allMetadata;
+  MpiWrapper::allGather( localMetadata.toViewConst(), allMetadata, comm );
+  MpiWrapper::barrier( comm );
+
+  if( rank == 0 )
+  {
+    string const manifestFilename = filenamePrefix + "_manifest.json";
+    std::ofstream manifest( manifestFilename );
+    GEOS_ERROR_IF( !manifest,
+                   GEOS_FMT( "Unable to open distributed matrix manifest {}", manifestFilename ) );
+    manifest << "{\n"
+             << "  \"format\": \"distributed-matrix-market-v1\",\n"
+             << "  \"global_rows\": " << numGlobalRows << ",\n"
+             << "  \"global_columns\": " << numGlobalColumns << ",\n"
+             << "  \"num_ranks\": " << numRanks << ",\n"
+             << "  \"parts\": [\n";
+    for( int partRank = 0; partRank < numRanks; ++partRank )
+    {
+      globalIndex const partFirstRow = allMetadata[3 * partRank];
+      globalIndex const partNumRows = allMetadata[3 * partRank + 1];
+      globalIndex const partNonzeros = allMetadata[3 * partRank + 2];
+      manifest << "    { \"rank\": " << partRank
+               << ", \"first_row\": " << partFirstRow
+               << ", \"last_row_exclusive\": " << partFirstRow + partNumRows
+               << ", \"nonzeros\": " << partNonzeros
+               << ", \"file\": \"" << GEOS_FMT( "{}_rank_{:06}.mtx", filenamePrefix, partRank )
+               << "\" }" << ( partRank + 1 == numRanks ? "\n" : ",\n" );
+    }
+    manifest << "  ]\n}\n";
+  }
+  MpiWrapper::barrier( comm );
 }
 
 } // namespace geos
