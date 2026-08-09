@@ -396,7 +396,6 @@ jobs:
             echo "No new baseline archive was generated."
           fi
         fi
-
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
             CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
