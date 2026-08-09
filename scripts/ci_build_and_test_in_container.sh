@@ -99,6 +99,83 @@ function print_phase_summary () {
     done
 }
 
+function openssl_fips_provider_available () {
+    local fips_module_path
+
+    for fips_module_path in \
+        /usr/lib/x86_64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib/aarch64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib64/ossl-modules/fips.so \
+        /usr/lib/ossl-modules/fips.so \
+        /usr/local/lib64/ossl-modules/fips.so \
+        /usr/local/lib/ossl-modules/fips.so; do
+        if [[ -f "${fips_module_path}" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+function configure_openssl_for_non_fips_ubuntu_container () {
+    local fips_enabled=""
+    local openssl_conf_path=/tmp/geos-openssl-non-fips.cnf
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" ]]; then
+        return 0
+    fi
+
+    if [[ ! -r /etc/os-release ]] || ! grep -Eq '^ID="?ubuntu"?$' /etc/os-release; then
+        return 0
+    fi
+
+    if [[ -e /etc/system-fips ]]; then
+        return 0
+    fi
+
+    if openssl_fips_provider_available; then
+        return 0
+    fi
+
+    export OPENSSL_FORCE_FIPS_MODE=0
+
+    if [[ -n "${OPENSSL_CONF:-}" ]]; then
+        echo "Host FIPS mode is visible in this Ubuntu container, but OPENSSL_CONF is already set to ${OPENSSL_CONF}; leaving it unchanged."
+        echo "Using OPENSSL_FORCE_FIPS_MODE=0 because no OpenSSL FIPS provider module was found."
+        return 0
+    fi
+
+    if ! cat > "${openssl_conf_path}" <<'EOF'
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+[provider_sect]
+default = default_sect
+
+[default_sect]
+activate = 1
+
+[algorithm_sect]
+default_properties = fips=no
+EOF
+    then
+        echo "WARNING: unable to write ${openssl_conf_path}; leaving OpenSSL configuration unchanged."
+        return 0
+    fi
+
+    export OPENSSL_CONF="${openssl_conf_path}"
+
+    echo "Host FIPS mode is visible in this non-FIPS Ubuntu container, and no OpenSSL FIPS provider module was found."
+    echo "Using OPENSSL_CONF=${OPENSSL_CONF} so OpenSSL initializes the default provider for CI tooling."
+}
+
 function print_crypto_diagnostics () {
     echo "Crypto/FIPS diagnostics:"
     echo "  uname: $(uname -a)"
@@ -119,6 +196,9 @@ function print_crypto_diagnostics () {
         fi
     done
     grep -nEi 'fips|provider|default_properties|openssl_conf|activate' /etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf 2>/dev/null | head -n 80 | sed 's/^/  openssl config match: /' || true
+    if [[ -n "${OPENSSL_CONF:-}" && -r "${OPENSSL_CONF}" ]]; then
+        grep -nEi 'fips|provider|default_properties|openssl_conf|activate' "${OPENSSL_CONF}" 2>/dev/null | head -n 80 | sed 's/^/  active openssl config match: /' || true
+    fi
 
     for var in OPENSSL_CONF OPENSSL_MODULES OPENSSL_FORCE_FIPS_MODE SSL_CERT_FILE CURL_CA_BUNDLE REQUESTS_CA_BUNDLE; do
         echo "  ${var}: ${!var:-<unset>}"
@@ -373,6 +453,7 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
+configure_openssl_for_non_fips_ubuntu_container
 print_crypto_diagnostics
 
 if [[ "${USE_SCCACHE}" == true ]]; then
