@@ -328,13 +328,13 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
-  or_die apt-get update
-  or_die apt-get install -y python3-dev python3-venv
+  #or_die apt-get update
+  #or_die apt-get install -y python3-dev python3-venv
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
-  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
+  #or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
+  #${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
