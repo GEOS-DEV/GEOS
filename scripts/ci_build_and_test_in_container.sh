@@ -342,7 +342,6 @@ if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
   HYPREDRV_CMAKE_ARGS+=(-DHYPREDRV_DIR=${GEOSX_TPL_DIR}/hypredrive
                         -DGEOS_REQUIRE_HYPREDRV=ON)
 fi
-
 if [[ "${USE_SCCACHE}" == true ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
