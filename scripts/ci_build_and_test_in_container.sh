@@ -99,6 +99,97 @@ function print_phase_summary () {
     done
 }
 
+function print_crypto_diagnostics () {
+    echo "Crypto/FIPS diagnostics:"
+    echo "  uname: $(uname -a)"
+
+    if [[ -r /etc/os-release ]]; then
+        sed 's/^/  os-release: /' /etc/os-release
+    fi
+
+    for path in /proc/sys/crypto/fips_enabled /etc/system-fips /etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf; do
+        if [[ -e "${path}" ]]; then
+            if [[ -r "${path}" && ! -d "${path}" ]]; then
+                echo "  ${path}: $(head -n 1 "${path}" 2>/dev/null || true)"
+            else
+                echo "  ${path}: present"
+            fi
+        else
+            echo "  ${path}: absent"
+        fi
+    done
+    grep -nEi 'fips|provider|default_properties|openssl_conf|activate' /etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf 2>/dev/null | head -n 80 | sed 's/^/  openssl config match: /' || true
+
+    for var in OPENSSL_CONF OPENSSL_MODULES OPENSSL_FORCE_FIPS_MODE SSL_CERT_FILE CURL_CA_BUNDLE REQUESTS_CA_BUNDLE; do
+        echo "  ${var}: ${!var:-<unset>}"
+    done
+
+    if command -v openssl >/dev/null 2>&1; then
+        echo "  openssl path: $(command -v openssl)"
+        openssl version -a 2>&1 | sed 's/^/  openssl version: /' || true
+        openssl list -providers -verbose 2>&1 | sed 's/^/  openssl providers: /' || true
+        openssl md5 /dev/null 2>&1 | sed 's/^/  openssl md5: /' || true
+        openssl sha256 /dev/null 2>&1 | sed 's/^/  openssl sha256: /' || true
+        openssl rand -hex 8 2>&1 | sed 's/^/  openssl rand: /' || true
+    else
+        echo "  openssl: not found"
+    fi
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - <<'PY' 2>&1 | sed 's/^/  python crypto: /' || true
+import hashlib
+import os
+import ssl
+import sys
+
+print("executable:", sys.executable)
+print("version:", sys.version.replace("\n", " "))
+print("ssl:", ssl.OPENSSL_VERSION)
+print("default verify paths:", ssl.get_default_verify_paths())
+
+for name in ("md5", "sha1", "sha256"):
+    try:
+        digest = getattr(hashlib, name)(b"geos").hexdigest()
+        print(f"hashlib {name}: ok {digest}")
+    except Exception as exc:
+        print(f"hashlib {name}: failed {type(exc).__name__}: {exc}")
+
+try:
+    print("os.urandom:", os.urandom(8).hex())
+except Exception as exc:
+    print(f"os.urandom: failed {type(exc).__name__}: {exc}")
+PY
+    else
+        echo "  python3: not found"
+    fi
+
+    if command -v sccache >/dev/null 2>&1; then
+        echo "  sccache path: $(command -v sccache)"
+        sccache --version 2>&1 | sed 's/^/  sccache version: /' || true
+        ldd "$(command -v sccache)" 2>&1 | sed 's/^/  sccache ldd: /' || true
+    else
+        echo "  sccache: not found"
+    fi
+}
+
+function bootstrap_pip () {
+    local python_executable="$1"
+
+    if [[ "${GEOS_SKIP_PIP_BOOTSTRAP:-false}" == "true" ]]; then
+        echo "Skipping pip bootstrap because GEOS_SKIP_PIP_BOOTSTRAP=true."
+        return 0
+    fi
+
+    echo "Updating pip"
+    if ! "${python_executable}" -m pip install --upgrade pip setuptools wheel; then
+        echo "::warning::pip bootstrap failed for ${python_executable}; continuing with the existing pip so the package install step can report the actionable failure."
+        "${python_executable}" -m pip --version || true
+        return 0
+    fi
+
+    "${python_executable}" -m pip cache purge || true
+}
+
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -282,6 +373,8 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
+print_crypto_diagnostics
+
 if [[ "${USE_SCCACHE}" == true ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
@@ -327,14 +420,20 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
-  # We install the python environment required by ATS to run the integrated tests.
-  #or_die apt-get update
-  #or_die apt-get install -y python3-dev python3-venv
-  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  #or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
-  #${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
+  # We install the python environment required by ATS to run the integrated tests.
+  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
+  if ! python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}" ||
+     ! "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel' >/dev/null 2>&1; then
+    echo "The ATS virtualenv is missing distro Python build tools; installing them and recreating the virtualenv."
+    rm -rf "${ATS_PYTHON_HOME}"
+    or_die apt-get update
+    or_die apt-get install -y python3-dev python3-venv python3-setuptools python3-wheel
+    or_die python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}"
+    or_die "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel'
+  fi
+
+  bootstrap_pip "${ATS_PYTHON_HOME}/bin/python3"
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
