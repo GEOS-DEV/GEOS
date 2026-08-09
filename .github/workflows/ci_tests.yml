@@ -247,6 +247,7 @@ jobs:
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      UPLOAD_TO_GCP: ${{ matrix.UPLOAD_TO_GCP || false }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
@@ -270,11 +271,12 @@ jobs:
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
+      UPLOAD_TO_GCP: false
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=256g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
       REQUIRED_LABEL: "ci: run integrated tests"
-      LOCAL_BASELINE_DIR: /data/GEOS/baselines
+      LOCAL_BASELINE_DIR: /home/geos-data/baselines
       HOST_CONFIG: /spack-generated.cmake
 
   baseline_log:

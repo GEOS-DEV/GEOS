@@ -49,6 +49,10 @@ on:
       GCP_BUCKET:
         required: false
         type: string
+      UPLOAD_TO_GCP:
+        required: false
+        type: boolean
+        default: false
       HOST_CONFIG:
         required: false
         type: string
@@ -59,6 +63,10 @@ on:
       RUNS_ON:
         required: true
         type: string
+      SCCACHE_HOST_DIR:
+        required: false
+        type: string
+        default: ''
       USE_SCCACHE:
         required: false
         type: boolean
@@ -127,7 +135,7 @@ jobs:
         fetch-depth: 1
 
     - id: 'auth'
-      if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
+      if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
       uses: 'google-github-actions/auth@v2.1.10'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
@@ -146,7 +154,7 @@ jobs:
         echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
 
     - name: 'Set up Cloud SDK'
-      if: inputs.GCP_BUCKET
+      if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v2.1.4'
       with:
         version: '>= 363.0.0'
@@ -157,6 +165,10 @@ jobs:
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
+
+        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
+        # Since this information is repeated twice, we use a variable.
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
@@ -173,15 +185,24 @@ jobs:
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
-        # All the data exchanged with the docker container is eventually meant to be sent to the cloud.
-        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
-          if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
-            DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
-          elif [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]; then
-            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
-            script_args+=(--run-integrated-tests)
-          fi
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          echo "::error::UPLOAD_TO_GCP=true requires GCP_BUCKET to be set."
+          exit 1
+        fi
 
+        HAS_DATA_EXCHANGE=false
+        DATA_BASENAME=
+        DATA_EXCHANGE_DIR=
+        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
+          HAS_DATA_EXCHANGE=true
+          DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+          script_args+=(--run-integrated-tests)
+        elif [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
+          HAS_DATA_EXCHANGE=true
+          DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
+        fi
+
+        if [[ "${HAS_DATA_EXCHANGE}" == "true" ]]; then
           script_args+=(--data-basename ${DATA_BASENAME})
 
           DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
@@ -197,12 +218,24 @@ jobs:
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
-          script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+          SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
+          if [[ -z "${SCCACHE_HOST_DIR}" ]]; then
+            case "${{ inputs.RUNS_ON }}" in
+              streak2*)
+                SCCACHE_HOST_DIR=/home/geos-data/sccache
+                ;;
+              *)
+                SCCACHE_HOST_DIR="${RUNNER_TEMP}/geos-sccache"
+                ;;
+            esac
+          fi
+
+          mkdir -p "${SCCACHE_HOST_DIR}"
+          docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
+          docker_args+=(-e SCCACHE_DIR=/sccache)
+          script_args+=(--use-sccache)
         fi
 
-        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
-        # Since this information is repeated twice, we use a variable.
-        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
@@ -327,8 +360,35 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
-        # Send to the bucket and print the download link when it makes sense.
-        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
+        if [[ "${HAS_DATA_EXCHANGE}" == "true" ]]; then
+          if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
+            echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
+          fi
+
+          if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+          fi
+
+          if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
+            if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
+              # Copy baselines to local Streak2 storage even when cloud upload is disabled.
+              THIS_PR_NUMBER=pr${{ github.event.number }}
+              NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
+              TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/${NEW_PR_BASELINE_FOLDER_NAME}"
+              echo "Create folder ${TARGET_DIR}"
+              mkdir -p "${TARGET_DIR}"
+
+              SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
+              cp "${SOURCE_FILE}" "${TARGET_DIR}"
+            fi
+          else
+            echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not generated. Likely because no rebaseline was necessary."
+          fi
+        fi
+
+        # Send to the bucket and print the download link when explicitly enabled.
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
             # disable warning about parallel composite upload
             CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
@@ -344,29 +404,11 @@ jobs:
             fi
 
             if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
-
-              if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
-                # 1. We copy the baselines to a local directory to store them
-
-                # 1.a Create the new target directory to store the new baselines
-                THIS_PR_NUMBER=pr${{ github.event.number }}
-                NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/${NEW_PR_BASELINE_FOLDER_NAME}"
-                echo "Create folder ${TARGET_DIR}"
-                mkdir -p "${TARGET_DIR}"
-
-                # 1.b We copy the new baselines to the new target directory
-                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
-                cp "${SOURCE_FILE}" "${TARGET_DIR}"
-              fi
-
-              # 2. We push the baselines to the cloud
               CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
               echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
               echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
             else
-              echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
+              echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likely because no rebaseline was necessary."
             fi
           fi
         fi
@@ -401,6 +443,16 @@ jobs:
         SSL_CERT_FILE: /etc/pki/tls/certs/ca-bundle.crt
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
+
+    - name: Show sccache stats
+      if: ${{ always() && inputs.USE_SCCACHE }}
+      run: |
+        SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
+        if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
+          cat "${SCCACHE_STATS_FILE}"
+        else
+          echo "No in-container sccache stats file was captured."
+        fi
 
     - name: 'Cleanup build folder'
       if: always()
