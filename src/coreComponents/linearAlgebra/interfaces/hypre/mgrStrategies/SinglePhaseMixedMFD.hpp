@@ -20,6 +20,7 @@
 #ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEMIXEDMFD_HPP_
 #define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEMIXEDMFD_HPP_
 
+#include "common/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geos
@@ -100,17 +101,47 @@ public:
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const &,
+  void setup( LinearSolverParameters::MGR const & mgrParams,
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, mgrData );
+    // if the label-1 set is empty the level-1 reduction is the identity: use a single
+    // level eliminating all (diagonal) fluxes at once
+    integer localAnyLive = 0;
+    for( localIndex i = 0; i < mgrParams.customPointMarkers.size(); ++i )
+    {
+      if( mgrParams.customPointMarkers[i] == 1 )
+      {
+        localAnyLive = 1;
+        break;
+      }
+    }
+    bool const anyLiveFaces = MpiWrapper::max( localAnyLive ) == 1;
+
+    m_labels[0].clear();
+    m_labels[1].clear();
+    if( anyLiveFaces )
+    {
+      m_labels[0].push_back( 1 );
+      m_labels[0].push_back( 2 );
+      m_labels[1].push_back( 2 );
+    }
+    else
+    {
+      m_labels[0].push_back( 2 );
+    }
+    setupLabels();
+
+    setReduction( precond, mgrData, anyLiveFaces ? numLevels : 1 );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur
     // complement. Two V-cycles per MGR application: the coarse solve accuracy governs the
     // outer FGMRES iteration count (a single cycle leaves the reduction quality unused)
     setPressureAMG( mgrData.coarseSolver );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 2 ) );
+    // strength threshold suited to 3D anisotropic permeability fields (hypre default 0.25
+    // over-couples the weak direction and degrades coarsening quality)
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.coarseSolver.ptr, 0.6 ) );
   }
 };
 

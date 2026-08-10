@@ -181,10 +181,10 @@ struct FaceFluxProjectionKernel
 
 /**
  * @class FaceLabelKernel
- * @brief Classify the faces from the cell-wise stencil activation flags: a face whose
- *        adjacent target cells are all TPFA-compatible gets label 0 (its constitutive row
- *        is exactly diagonal and the flux can be condensed into a two-point expression);
- *        a face adjacent to at least one MFD-compatible cell gets label 1 (live unknown).
+ * @brief Classify the face dofs. A face dof f is a TPFA dof iff, for every adjacent
+ *        cell C, (i) chi_C = 0 and (ii) (x_f - x_C) . K_C n_out > 0: its constitutive
+ *        row is then exactly diagonal with a positive two-point coefficient. Only TPFA
+ *        dofs are condensed (label 0); every other face dof is a live unknown (label 1).
  *        When the selected inner product is itself TPFA, the effective operator is diagonal
  *        everywhere and all faces get label 0.
  */
@@ -201,6 +201,10 @@ struct FaceLabelKernel
           arrayView2d< localIndex const > const & elemList,
           SortedArrayView< localIndex const > const & regionFilter,
           ElementViewConst< arrayView1d< integer const > > const & stencilFlag,
+          arrayView2d< real64 const > const & faceCenter,
+          arrayView2d< real64 const > const & faceNormal,
+          ElementViewConst< arrayView2d< real64 const > > const & elemCenter,
+          ElementViewConst< arrayView3d< real64 const > > const & elemPerm,
           bool const effectiveTpfa,
           arrayView1d< integer > const & faceStencilLabel )
   {
@@ -217,6 +221,25 @@ struct FaceLabelKernel
           if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
           {
             label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
+
+            // u = x_f - x_C, n the fixed global normal: n_out = sign(u . n) n, so
+            // sign(u . K n_out) = sign((u . K n)(u . n))
+            real64 uDotKn = 0.0;
+            for( integer d = 0; d < 3; ++d )
+            {
+              uDotKn += ( faceCenter[kf][d] - elemCenter[er][esr][ei][d] ) *
+                        elemPerm[er][esr][ei][0][d] * faceNormal[kf][d];
+            }
+            real64 uDotN = 0.0;
+            for( integer d = 0; d < 3; ++d )
+            {
+              uDotN += ( faceCenter[kf][d] - elemCenter[er][esr][ei][d] ) * faceNormal[kf][d];
+            }
+            // u . K n_out <= 0: half-transmissibility not positive, keep the flux live
+            if( uDotKn * uDotN <= 0.0 )
+            {
+              label = 1;
+            }
           }
         }
       }

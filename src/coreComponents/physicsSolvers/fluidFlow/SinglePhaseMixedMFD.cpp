@@ -315,10 +315,16 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
                                                                 string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const stencilFlagAccessor =
       elemManager.constructArrayViewAccessor< integer, 1 >( mixedMimetic::stencilFlag::key() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenterAccessor =
+      elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase, fields::permeability::permeability >;
+    PermeabilityAccessors const permAccessors( elemManager, getName() );
 
     mixedMimeticKernels::FaceLabelKernel::
       launch< parallelDevicePolicy<> >( faceManager.size(),
@@ -327,6 +333,10 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
                                         faceManager.elementList(),
                                         m_regionFilter.toViewConst(),
                                         stencilFlagAccessor.toNestedViewConst(),
+                                        faceManager.faceCenter(),
+                                        faceManager.faceNormal(),
+                                        elemCenterAccessor.toNestedViewConst(),
+                                        permAccessors.get( fields::permeability::permeability {} ),
                                         effectiveTpfa,
                                         faceManager.getField< mixedMimetic::faceStencilLabel >() );
   } );
@@ -443,6 +453,29 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
   array1d< integer > & pointMarkers = m_linearSolverParameters.get().mgr.customPointMarkers;
   pointMarkers.resize( dofManager.numLocalDofs() );
   arrayView1d< integer > const markers = pointMarkers.toView();
+
+  // an empty intermediate level is not supported by hypre MGR: when the marking produces
+  // no live MFD faces, relabel to two blocks and use the two-level condensed strategy
+  localIndex numLiveFaces = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    arrayView1d< globalIndex const > const faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+    arrayView1d< integer const > const faceStencilLabel = faceManager.getField< mixedMimetic::faceStencilLabel >();
+
+    RAJA::ReduceSum< parallelHostReduce, localIndex > numLive( 0 );
+    forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const kf )
+    {
+      numLive += ( faceGhostRank[kf] < 0 && faceDofNumber[kf] >= 0 && faceStencilLabel[kf] == 1 ) ? 1 : 0;
+    } );
+    numLiveFaces += numLive.get();
+  } );
+  globalIndex const globalNumLiveFaces = MpiWrapper::sum< globalIndex >( numLiveFaces );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: {} live MFD face dofs", getName(), globalNumLiveFaces ) );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
