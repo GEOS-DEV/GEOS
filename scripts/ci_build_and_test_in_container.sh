@@ -198,6 +198,8 @@ Usage: $0
       Enable sccache as compiler launcher.
   --sccache-credentials credentials.json
       Basename of the json credentials file to connect to the sccache cloud cache.
+  --sccache-config config.toml
+      Relative path to an sccache config file to use inside the container.
   --test-code-style
   --test-documentation
   -h | --help
@@ -287,6 +289,7 @@ do
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
     --sccache-credentials)   SCCACHE_CREDS=$2; USE_SCCACHE=true; shift 2;;
+    --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
@@ -362,6 +365,16 @@ cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
 bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
+  fi
+
+  if [[ -n "${SCCACHE_CONFIG_FILE:-}" ]]; then
+    if [[ ! -f "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" ]]; then
+      echo "Unable to find requested sccache config file at ${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}."
+      exit 1
+    fi
+
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cp "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" "${HOME}/.config/sccache/config"
   fi
 
   # Backend-specific credentials and endpoints are injected through the environment or generated config.
