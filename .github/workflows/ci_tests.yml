@@ -268,6 +268,7 @@ jobs:
       UPLOAD_TO_GCP: ${{ matrix.UPLOAD_TO_GCP || false }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
+      CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
     secrets: inherit
 
@@ -442,6 +443,7 @@ jobs:
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
+      CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: run CUDA builds"
     secrets: inherit
