@@ -188,16 +188,16 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3, typename >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivativesAtOffset( string const propName,
-                                                                                  string const testPoint,
-                                                                                  ArrayView< real64 const, NDIM, USD1 > const & valueArray,
-                                                                                  ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
-                                                                                  ArraySlice< real64 const, 1, USD3 > const & displacements,
-                                                                                  real64 const valueScale,
-                                                                                  string_array const & dofNames,
-                                                                                  real64 const relTol,
-                                                                                  real64 const absTol,
-                                                                                  integer const offset,
-                                                                                  INDICES const ... indices )
+                                                                                 string const testPoint,
+                                                                                 ArrayView< real64 const, NDIM, USD1 > const & valueArray,
+                                                                                 ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
+                                                                                 ArraySlice< real64 const, 1, USD3 > const & displacements,
+                                                                                 real64 const valueScale,
+                                                                                 string_array const & dofNames,
+                                                                                 real64 const relTol,
+                                                                                 real64 const absTol,
+                                                                                 integer const offset,
+                                                                                 INDICES const ... indices )
 {
   integer const numberOfDof = dofNames.size();
   real64 const invScale = 1.0 / valueScale;
