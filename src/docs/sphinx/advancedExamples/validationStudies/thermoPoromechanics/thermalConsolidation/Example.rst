@@ -210,7 +210,7 @@ Inspecting results
     (with :math:`M = K + 4G/3` the oedometric modulus), exhibiting the transient overshoot
     driven by the coupled pressure and thermal fields.   
 
-  .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/plotTests_tutorial_updated.py
+  .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/plotTests_tutorial_THM.py
 
 ------------------------------------------------------------------
 To go further

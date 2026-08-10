@@ -6,22 +6,18 @@ import xml.etree.ElementTree as ElementTree
 from mpmath import *
 import math
 import os
-import glob
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 
-def readGeosTotalStress(depths=(0.0, 4.2, 5.6)):
-    """Contrainte TOTALE GEOS aux profondeurs demandees.
-    averageStress = contrainte effective thermo-poro (terme -3aKdT inclus) ->
-    contrainte totale = averageStress - biot * pression.
-    Lit stressHistory.hdf5 s'il existe, sinon retombe sur les VTU du .pvd."""
-    if os.path.exists("stressHistory.hdf5"):
-        return _readStressFromHDF5(depths)
-    return _readStressFromVTU(depths)
-
-
-def _readStressFromHDF5(depths, biot=1.0):
+def readGeosTotalStress(depths=(0.0, 4.2, 5.6), biot=1.0):
+    """Contrainte TOTALE GEOS aux profondeurs demandees, lue UNIQUEMENT depuis les HDF5
+    (sortie TimeHistory de GEOS ; aucune dependance a vtk).
+    averageStress = contrainte effective thermo-poro (terme -3aKdT inclus sur cette branche)
+    -> contrainte totale = averageStress - biot * pression.
+    Necessite stressHistory.hdf5 et pressureHistory.hdf5."""
+    if not os.path.exists("stressHistory.hdf5"):
+        raise FileNotFoundError(
+            "stressHistory.hdf5 introuvable : activez la sortie TimeHistory de averageStress "
+            "dans le XML (Task 'stressCollection' + Output 'stressHistoryOutput') puis relancez GEOS.")
     hs = h5py.File("stressHistory.hdf5", 'r')
     ts = np.array(hs.get('averageStress Time')).ravel()
     center = np.array(hs.get('averageStress elementCenter'))   # (nt, ncell, 3)
@@ -41,41 +37,6 @@ def _readStressFromHDF5(depths, biot=1.0):
     for d, i in cid.items():
         out[d] = dict(syy=S[:, i, 1] - biot * P[:, i],
                       sxx=0.5 * (S[:, i, 0] + S[:, i, 2]) - biot * P[:, i])
-    return ts, out
-
-
-def _readStressFromVTU(depths,
-                       pvd="thermoPoro_consolidation_fim.pvd",
-                       root="thermoPoro_consolidation_fim"):
-    seen = {}
-    for d in ElementTree.parse(pvd).getroot().iter('DataSet'):
-        t = float(d.get('timestep'))
-        stem = d.get('file').split('/')[-1].replace('.vtm', '')
-        vtus = glob.glob(f"{root}/{stem}/**/Domain/*.vtu", recursive=True)
-        if vtus:
-            seen[t] = vtus[0]
-    ts = np.array(sorted(seen))
-    files = [seen[t] for t in ts]
-
-    r = vtk.vtkXMLUnstructuredGridReader(); r.SetFileName(files[0]); r.Update()
-    cc = vtk.vtkCellCenters(); cc.SetInputData(r.GetOutput()); cc.Update()
-    yc = vtk_to_numpy(cc.GetOutput().GetPoints().GetData())[:, 1]
-    cid = {d: int(np.argmin(np.abs(yc - d))) for d in depths}
-
-    out = {d: {'sxx': [], 'syy': []} for d in depths}
-    for f in files:
-        rr = vtk.vtkXMLUnstructuredGridReader(); rr.SetFileName(f); rr.Update()
-        cd = rr.GetOutput().GetCellData()
-        A = lambda n: vtk_to_numpy(cd.GetArray(n))
-        S = A('averageStress'); p = A('pressure'); b = A('rockPorosity_biotCoefficient')
-        if b is None:
-            b = np.ones_like(p)
-        for d, i in cid.items():
-            out[d]['syy'].append(S[i, 1] - b[i] * p[i])
-            out[d]['sxx'].append(0.5 * (S[i, 0] + S[i, 2]) - b[i] * p[i])
-    for d in out:
-        for k in out[d]:
-            out[d][k] = np.asarray(out[d][k])
     return ts, out
 
 
@@ -494,7 +455,7 @@ def main():
     #   sigma_xx^tot = sigma_zz^tot = -(lamda/M) F - (2G/M)(beta*theta + alpha*p)
     #   avec beta = a_m (3 lamda + 2G)/3 = 3 K a_s (contrainte thermique),
     #        alpha = coefficient de Biot, M = lamda + 2G (module oedometrique).
-    #   GEOS : sigma^tot = averageStress - biot * pression (lu depuis le .pvd).
+    #   GEOS : sigma^tot = averageStress - biot * pression (lu depuis stressHistory.hdf5).
     # ------------------------------------------------------------------
     zdepths = [0.0, 4.2, 5.6]
     ts_geos, geosStress = readGeosTotalStress(depths=tuple(zdepths))
