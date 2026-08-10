@@ -81,7 +81,7 @@
       defaultBulkModulus="1.75e5"
       defaultShearModulus="8.077e4"
       lengthScale="0.0075"
-      degradationLowerLimit="1e-4"
+      degradationLowerLimit="1e-6"
       defaultCriticalFractureEnergy="2.7"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"

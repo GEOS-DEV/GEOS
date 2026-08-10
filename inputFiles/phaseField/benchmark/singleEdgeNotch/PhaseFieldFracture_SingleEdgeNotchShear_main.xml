@@ -6,10 +6,16 @@
   </Included>
 
   <Mesh>
-    <VTKMesh
+    <InternalMesh
       name="SingleEdgeNotchShear"
-      file="meshes/singleEdgeCrackSquareShear.vtu"
-      nodesetNames="{ lower_boundary, upper_boundary, left_boundary, right_boundary, initial_crack_nodes, fine_lower_right_nodes }"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 0.45, 0.5, 1.0 }"
+      yCoords="{ 0.0, 0.5, 0.55, 1.0 }"
+      zCoords="{ -0.005, 0.005 }"
+      nx="{ 50, 25, 250 }"
+      ny="{ 250, 25, 30 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb }"/>
   </Mesh>
 
   <FieldSpecifications>
@@ -20,7 +26,7 @@
       objectPath="nodeManager"
       scale="1.0e-5"
       functionName="loadRamp"
-      setNames="{ upper_boundary }"/>
+      setNames="{ ypos }"/>
 
     <FieldSpecification
       name="YConstraint"
@@ -28,7 +34,7 @@
       component="1"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{ upper_boundary, lower_boundary, left_boundary, right_boundary }"/>
+      setNames="{ ypos, yneg, xneg, xpos }"/>
 
     <FieldSpecification
       name="bottomXConstraint"
@@ -36,7 +42,7 @@
       component="0"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{ lower_boundary }"/>
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zConstraints"
@@ -44,7 +50,7 @@
       component="2"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{ midPlane }"/>
+      setNames="{ all }"/>
 
     <FieldSpecification
       name="separableFace"
@@ -65,9 +71,9 @@
 
   <Geometry>
     <Box
-      name="midPlane"
-      xMin="{ -100.0, -100.0, -0.001 }"
-      xMax="{ 100.0, 100.0, 0.001 }"/>
+      name="initial_crack_nodes"
+      xMin="{ -1.0e-7, 0.4999999, -0.0050001 }"
+      xMax="{ 0.5000001, 0.5000001, 0.0050001 }"/>
   </Geometry>
 
   <Events
@@ -78,7 +84,7 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="10"
+      cycleFrequency="50"
       target="/Outputs/SingleEdgeNotchShear_VTKOutput"/>
 
     <PeriodicEvent
@@ -88,7 +94,7 @@
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="200"
+      cycleFrequency="500"
       target="/Outputs/restartOutput"/>
   </Events>
 
