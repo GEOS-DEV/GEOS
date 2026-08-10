@@ -110,16 +110,16 @@ void testDruckerPragerDriver()
   data.strainIncrement[0] = -1e-4;
   real64 timeIncrement = 0;
 
-  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
+  forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    for( localIndex loadstep=0; loadstep < 50; ++loadstep )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stress, stiffness );
-    } );
-    cm.saveConvergedState();
-  }
+      cmw.saveConvergedState( k, 0 );
+    }
+  } );
 
   real64 stress[6] = {0};
   getStress( cmw, stress );
@@ -225,31 +225,27 @@ void testDruckerPragerExtendedDriver()
   StrainData data;
   real64 timeIncrement = 0;
   data.strainIncrement[0] = -1e-3;
-  real64 invariantP, invariantQ;
-  real64 deviator[6] = {0};
-
-  //FILE* fp = fopen("pq.txt","w");
-  for( localIndex loadstep=0; loadstep < 300; ++loadstep )
+  forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    for( localIndex loadstep=0; loadstep < 300; ++loadstep )
     {
       real64 stress[6] = {0};
       real64 stiffness[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stress, stiffness );
-    } );
+      cmw.saveConvergedState( k, 0 );
+    }
+  } );
 
-    cm.saveConvergedState();
+  real64 stress[6] = {0};
+  getStress( cmw, stress );
 
-    real64 stress[6] = {0};
-    getStress( cmw, stress );
+  real64 invariantP, invariantQ;
+  real64 deviator[6] = {0};
 
-    twoInvariant::stressDecomposition( stress,
-                                       invariantP,
-                                       invariantQ,
-                                       deviator );
-    //fprintf(fp,"%.4e %.4e %.4e\n",invariantP,invariantQ,total);
-  }
-  //fclose(fp);
+  twoInvariant::stressDecomposition( stress,
+                                     invariantP,
+                                     invariantQ,
+                                     deviator );
 
   // loading was set up to drive to residual strength, at which
   // point the Q/(P-P0) ratio should equal the slope of residual yield surface:

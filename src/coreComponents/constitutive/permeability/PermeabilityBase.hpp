@@ -107,6 +107,9 @@ class PermeabilityBase : public ConstitutiveBase
 {
 public:
 
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {};
+
   PermeabilityBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,

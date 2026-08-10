@@ -96,6 +96,9 @@ class SinglePhaseThermalConductivityBase : public ConstitutiveBase
 {
 public:
 
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {};
+
   /**
    * @brief Constructor for the abstract base class
    * @param[in] name the name of the class

@@ -137,6 +137,8 @@ public:
     constexpr real64 temperatures[] = { 367.65, 368.00, 368.75 };
     constexpr real64 pressures[] = { 20.01e5, 75.01e5, 120.1e5 };
     auto const samples = { Feed< 2 >{0.7, 0.3}, Feed< 2 >{0.01, 0.99}, Feed< 2 >{0.99, 0.01} };
+    stdVector< typename Base::TestPoint > testData;
+    testData.reserve( 27 );
 
     for( auto const & sample : samples )
     {
@@ -144,11 +146,11 @@ public:
       {
         for( real64 const temperature : temperatures )
         {
-          typename Base::TestPoint const data ( pressure, temperature, sample );
-          Base::testNumericalDerivatives( fluid, data, eps );
+          testData.emplace_back( pressure, temperature, sample );
         }
       }
     }
+    Base::testNumericalDerivatives( fluid, testData, eps );
   }
 
   static string getFluidName();

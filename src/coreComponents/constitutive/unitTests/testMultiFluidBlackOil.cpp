@@ -154,10 +154,7 @@ TEST_F( MultiFluidBlackOilTestMass, numericalDerivatives )
 
   real64 constexpr eps = 1.0e-6;
 
-  for( auto const & data : getTestData< MultiFluidBlackOilTestMass >())
-  {
-    Base::testNumericalDerivatives( fluid, data, eps );
-  }
+  Base::testNumericalDerivatives( fluid, getTestData< MultiFluidBlackOilTestMass >(), eps );
 }
 
 TEST_F( MultiFluidBlackOilTestMolar, numericalDerivatives )
@@ -166,10 +163,7 @@ TEST_F( MultiFluidBlackOilTestMolar, numericalDerivatives )
 
   real64 constexpr eps = 1.0e-6;
 
-  for( auto const & data : getTestData< MultiFluidBlackOilTestMolar >())
-  {
-    Base::testNumericalDerivatives( fluid, data, eps );
-  }
+  Base::testNumericalDerivatives( fluid, getTestData< MultiFluidBlackOilTestMolar >(), eps );
 }
 
 TEST_P( MultiFluidBlackOilTestMolar, testFluidValues )

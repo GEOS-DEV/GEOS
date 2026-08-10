@@ -226,12 +226,14 @@ TYPED_TEST_SUITE( MultiFluidDeadOilTestFixture, TestTypes, NameGenerator );
 TYPED_TEST( MultiFluidDeadOilTestFixture, numericalDerivatives )
 {
   DeadOilFluid * fluid = this->getFluid( this->getFluidName() );
+  stdVector< typename TestFixture::Base::TestPoint > testData;
+  testData.reserve( 3 );
 
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
-    typename TestFixture::Base::TestPoint const data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    TestFixture::Base::testNumericalDerivatives( fluid, data );
+    testData.emplace_back( pressure, 297.15, Feed< 3 >{ 0.1, 0.3, 0.6 } );
   }
+  TestFixture::Base::testNumericalDerivatives( fluid, testData );
 }
 
 } // testing

@@ -48,6 +48,22 @@ using TestData = std::tuple<
   real64 const                             // Permeability (mD) (if required)
   >;
 
+struct InverseCapillaryPressureTestState
+{
+  conduit::Node m_node;
+  std::unique_ptr< Group > m_parent{};
+  std::unique_ptr< FunctionManager > m_functionManager{};
+  std::unique_ptr< ConstitutiveManager > m_constitutiveManager{};
+
+  InverseCapillaryPressureTestState();
+};
+
+static InverseCapillaryPressureTestState & getInverseCapillaryPressureTestState()
+{
+  static InverseCapillaryPressureTestState state;
+  return state;
+}
+
 template< typename CAP_PRESSURE, integer NUM_PHASE=2 >
 class InverseCapillaryPressureTestFixture : public ::testing::TestWithParam< TestData< NUM_PHASE > >
 {
@@ -61,14 +77,19 @@ public:
   void testInversion( TestData< NUM_PHASE > const & testData );
 
 private:
-  conduit::Node m_node;
-  std::unique_ptr< Group > m_parent{};
-  std::unique_ptr< FunctionManager > m_functionManager{};
-  std::unique_ptr< ConstitutiveManager > m_constitutiveManager{};
+  static InverseCapillaryPressureTestState & getState()
+  {
+    return getInverseCapillaryPressureTestState();
+  }
 };
 
 template< typename CAP_PRESSURE, integer NUM_PHASE >
 InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::InverseCapillaryPressureTestFixture()
+{
+  getState();
+}
+
+InverseCapillaryPressureTestState::InverseCapillaryPressureTestState()
   : m_parent( std::make_unique< Group >( "parent", m_node )),
   m_functionManager( std::make_unique< FunctionManager >( FunctionManager::catalogName(), m_parent.get() )),
   m_constitutiveManager( std::make_unique< ConstitutiveManager >( ConstitutiveManager::groupKeyStruct::constitutiveModelsString(), m_parent.get() ))
@@ -143,6 +164,7 @@ template< typename CAP_PRESSURE, integer NUM_PHASE >
 void
 InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::testInversion( TestData< NUM_PHASE > const & testData )
 {
+  InverseCapillaryPressureTestState & state = getState();
   StackArray< real64, 2, NUM_PHASE, compflow::LAYOUT_PHASE > phaseVolumeFraction( 1, NUM_PHASE );
   StackArray< real64, 3, NUM_PHASE, constitutive::cappres::LAYOUT_CAPPRES > capillaryPressure( 1, 1, NUM_PHASE );
   StackArray< real64, 1, NUM_PHASE > jFunctionMultiplier( NUM_PHASE-1 );
@@ -157,11 +179,11 @@ InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::testInversion( T
   }
 
   string const modelName = GEOS_FMT( "{}{}", CapPressureModel::catalogName(), NUM_PHASE );
-  CapPressureModel & model = m_constitutiveManager->getConstitutiveRelation< CapPressureModel >( modelName );
+  CapPressureModel & model = state.m_constitutiveManager->template getConstitutiveRelation< CapPressureModel >( modelName );
 
   if constexpr (std::is_same_v< CapPressureModel, JFunctionCapillaryPressure >)
   {
-    model.allocateConstitutiveData( *m_constitutiveManager, 2 );
+    model.allocateConstitutiveData( *state.m_constitutiveManager, 2 );
     array3d< real64 > perm( 1, 1, 3 );
     array2d< real64 > poro( 1, 2 );
     perm( 0, 0, 0 ) = permeability;

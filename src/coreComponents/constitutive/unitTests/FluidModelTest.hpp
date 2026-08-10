@@ -132,6 +132,17 @@ public:
                                  real64 const relTol = relTolerance,
                                  real64 const absTol = absTolerance );
 
+  /**
+   * @brief Tests numerical derivatives for several independent test points in one update pass.
+   * @details This preserves the same finite-difference checks as the single-point overload while
+   *          avoiding repeated fluid allocation and cloning for each point.
+   */
+  void testNumericalDerivatives( FluidModel * fluid,
+                                 stdVector< TestPoint > const & data,
+                                 real64 const perturbationLevel = 1.0e-4,
+                                 real64 const relTol = relTolerance,
+                                 real64 const absTol = absTolerance );
+
 protected:
   /**
    * @brief Writes content to a file
@@ -251,6 +262,20 @@ protected:
                                real64 const relTol,
                                real64 const absTol,
                                INDICES const ... indices );
+
+  template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3,
+            typename=std::enable_if_t< sizeof ... ( INDICES ) == NDIM-2 > >
+  static void testDerivativesAtOffset( string const propName,
+                                       string const testValues,
+                                       ArrayView< real64 const, NDIM, USD1 > const & valueArray,
+                                       ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
+                                       ArraySlice< real64 const, 1, USD3 > const & displacements,
+                                       real64 const valueScale,
+                                       string_array const & dofNames,
+                                       real64 const relTol,
+                                       real64 const absTol,
+                                       integer const offset,
+                                       INDICES const ... indices );
 
 private:
   void createFunctionManager();

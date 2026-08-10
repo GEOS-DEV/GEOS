@@ -135,16 +135,16 @@ void testModifiedCamClayDriver()
 
   // run loading
 
-  for( localIndex loadstep=0; loadstep < 500; ++loadstep )
+  forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    for( localIndex loadstep=0; loadstep < 500; ++loadstep )
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stressLocal, stiffnessLocal );
-    } );
-    cm.saveConvergedState();
-  }
+      cmw.saveConvergedState( k, 0 );
+    }
+  } );
 
   // get final stress state in p-q space
 
@@ -162,8 +162,6 @@ void testModifiedCamClayDriver()
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
-
-  SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement, true );
 
   EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement ) );
 }
