@@ -135,7 +135,7 @@ jobs:
         fetch-depth: 1
 
     - id: 'auth'
-      if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
+      if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
       uses: 'google-github-actions/auth@v2.1.10'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
@@ -218,25 +218,25 @@ jobs:
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
-          SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
-          if [[ -z "${SCCACHE_HOST_DIR}" ]]; then
-            case "${{ inputs.RUNS_ON }}" in
-              streak2*)
+          case "${{ inputs.RUNS_ON }}" in
+            streak2*)
+              SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
+              if [[ -z "${SCCACHE_HOST_DIR}" ]]; then
                 SCCACHE_HOST_DIR=/home/geos-data/sccache
-                ;;
-              *)
-                SCCACHE_HOST_DIR="${RUNNER_TEMP}/geos-sccache"
-                ;;
-            esac
-          fi
+              fi
 
-          mkdir -p "${SCCACHE_HOST_DIR}"
-          docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
-          docker_args+=(-e SCCACHE_DIR=/sccache)
-          if [[ -n "${SCCACHE_CACHE_SIZE:-}" ]]; then
-            docker_args+=(-e SCCACHE_CACHE_SIZE)
-          fi
-          script_args+=(--use-sccache)
+              mkdir -p "${SCCACHE_HOST_DIR}"
+              docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
+              docker_args+=(-e SCCACHE_DIR=/sccache)
+              if [[ -n "${SCCACHE_CACHE_SIZE:-}" ]]; then
+                docker_args+=(-e SCCACHE_CACHE_SIZE)
+              fi
+              script_args+=(--use-sccache)
+              ;;
+            *)
+              script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+              ;;
+          esac
         fi
 
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
