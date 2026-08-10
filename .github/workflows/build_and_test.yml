@@ -233,6 +233,9 @@ jobs:
           mkdir -p "${SCCACHE_HOST_DIR}"
           docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
           docker_args+=(-e SCCACHE_DIR=/sccache)
+          if [[ -n "${SCCACHE_CACHE_SIZE:-}" ]]; then
+            docker_args+=(-e SCCACHE_CACHE_SIZE)
+          fi
           script_args+=(--use-sccache)
         fi
 
