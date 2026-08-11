@@ -597,7 +597,7 @@ fi
 if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   LLVM_TEST_PROFILE_DIR=/tmp/geos-coverage-profiles
   LLVM_REPORT_DIR=/tmp/geos-coverage-report
-  LLVM_CTEST_PARALLEL=12
+  LLVM_CTEST_PARALLEL="${CTEST_PARALLEL_LEVEL_ARG:-12}"
   or_die mkdir -p "${LLVM_TEST_PROFILE_DIR}" "${LLVM_REPORT_DIR}"
 
   export OMP_NUM_THREADS=1
