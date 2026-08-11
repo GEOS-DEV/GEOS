@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+
+<!--
+  Ordered coverage overlay: pass this as the second -i argument after one of the cube_msrsb.xml
+  inputs. GEOS merges the repeated mesh and event-manager groups by name, retaining the original
+  solver events while reducing the mesh and limiting execution to one cycle.
+-->
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ hex }"/>
+  </Mesh>
+
+  <Events
+    maxTime="100.0"
+    maxCycle="1"/>
+
+</Problem>
