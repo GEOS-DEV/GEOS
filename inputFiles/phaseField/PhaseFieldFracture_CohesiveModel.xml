@@ -168,14 +168,6 @@
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{xneg,xpos}"/> -->
-    <!-- <FieldSpecification name="diffusionCoeff"
-                        initialCondition="1"
-                        setNames="{all}"
-                        objectPath="ElementRegions"
-                        fieldName="coeffField"
-                        scale="2e3"
-                        functionName="f_b"
-                        /> -->
   </FieldSpecifications>
 
   <Functions>

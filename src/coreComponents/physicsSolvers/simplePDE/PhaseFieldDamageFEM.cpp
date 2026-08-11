@@ -26,6 +26,7 @@
 #include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -76,27 +77,27 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM() = default;
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
+  // drives the setConstitutiveNamesCallSuper()
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    string_array const & regionNames )
+                                                    string_array const & )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
     nodes.registerField< phaseField::damage >( getName() );
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [ &]( localIndex const, CellElementSubRegion & subRegion )
-    {
-      subRegion.registerWrapper( viewKeyStruct::coeffNameString(), &m_coeff ).
-        setApplyDefaultValue( 0.0 ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setDescription( "field variable representing the diffusion coefficient" );
-
-      // TODO this should be in setConstitutiveNames
-      setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
-    } );
   } );
+}
+
+void PhaseFieldDamageFEM::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
+
+  if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
+  {
+    setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
+  }
 }
 
 real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
@@ -374,8 +375,6 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                                                          localMatrix,
                                                                                          localRhs );
     } );
-
-    fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
 

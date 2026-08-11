@@ -21,8 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFields.hpp"
 
@@ -32,8 +30,6 @@ namespace dataRepository
 {
 class Group;
 }
-class FieldSpecification;
-class FiniteElementBase;
 class DomainPartition;
 
 class PhaseFieldDamageFEM : public PhysicsSolverBase
@@ -139,7 +135,6 @@ public:
 
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
     static constexpr char const * viscousRegularizationCoeffString() { return "viscousRegularizationCoeff"; }
@@ -149,6 +144,10 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
   } PhaseFieldDamageFEMViewKeys;
 
+protected:
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
 private:
   TimeIntegrationOption m_timeIntegrationOption;
   integer m_irreversibilityFlag;
@@ -157,8 +156,6 @@ private:
 
   /// Damping coefficient eta regularizing the rate-independent phase-field evolution (eta = 0 recovers it)
   real64 m_viscousRegularizationCoeff;
-
-  array1d< real64 > m_coeff;
 };
 
 /// Declare strings associated with enumeration values.

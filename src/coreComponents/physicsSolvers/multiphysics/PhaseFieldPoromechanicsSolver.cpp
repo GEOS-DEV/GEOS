@@ -20,6 +20,7 @@
 
 #include "PhaseFieldPoromechanicsSolver.hpp"
 
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/DomainPartition.hpp"
 
