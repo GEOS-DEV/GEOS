@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "scope": "src/coreComponents",
+  "minimum_basis_points": {
+    "branches": 5001
+  }
+}

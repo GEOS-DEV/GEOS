@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: LGPL-2.1-only
 #
-# Merge Clang source-coverage profiles and report three production branch metrics:
+# Merge Clang source-coverage profiles and report two production branch metrics:
 #
 #   canonical   LLVM's CoverageReport summary for the compiled configuration.
-#   native      Every LCOV source-branch outcome emitted by Clang. Template and
-#               inline-function instantiations can appear more than once.
-#   definition  The same LCOV outcomes after llvm-cov combines execution counts
-#               for C++ function instantiations. No source condition is excluded
-#               based on whether it was covered.
+#   native      Every LCOV source-branch outcome emitted by llvm-cov. Template
+#               and inline-function instantiations can appear more than once.
 #
 # All metrics include source files below src/coreComponents, excluding
 # test/support directory names listed in production_exclude_regex below.
@@ -42,9 +39,10 @@ Typical profile collection:
   LLVM_PROFILE_FILE='BUILD_DIR/profiles/%p-%m.profraw' \
     ctest --test-dir BUILD_DIR --parallel 12 --output-on-failure
 
-The script writes merged.profdata, llvm-summary.json, native.info,
-definition.info, export logs, and branch-summary.txt. The JSON and .info files
-make every numerator and denominator auditable with LLVM and LCOV tooling.
+The script writes merged.profdata, llvm-summary.json, coverage-summary.json,
+native.info, export logs, and branch-summary.txt. The JSON and .info files make
+every numerator and denominator auditable with LLVM and LCOV tooling.
+coverage-summary.json is the stable contract consumed by CI.
 EOF
 }
 
@@ -62,7 +60,23 @@ mkdir -p -- "${output_arg}"
 output_dir="$(cd -- "${output_arg}" && pwd -P)"
 source_dir="${GEOS_SOURCE_DIR:-${project_root}/src/coreComponents}"
 source_dir="$(cd -- "${source_dir}" && pwd -P)"
-rm -f -- "${output_dir}/branch-summary.txt" "${output_dir}/branch-summary.txt.tmp"
+# A reused report directory must never mix fresh summaries with stale evidence
+# from an earlier invocation that failed before exporting every format.
+rm -f -- \
+  "${output_dir}/branch-summary.txt" \
+  "${output_dir}/branch-summary.txt.tmp" \
+  "${output_dir}/coverage-objects.txt" \
+  "${output_dir}/coverage-summary.json" \
+  "${output_dir}/coverage-summary.json.tmp" \
+  "${output_dir}/definition-export.log" \
+  "${output_dir}/definition.info" \
+  "${output_dir}/llvm-summary.json" \
+  "${output_dir}/mapping-integrity.log" \
+  "${output_dir}/merged.profdata" \
+  "${output_dir}/native-export.log" \
+  "${output_dir}/native.info" \
+  "${output_dir}/profraw-inputs.txt" \
+  "${output_dir}/summary-export.log"
 
 cache_file="${build_dir}/CMakeCache.txt"
 if [[ ! -f "${cache_file}" ]]; then
@@ -202,20 +216,14 @@ for object in "${coverage_objects[@]:1}"; do
   object_args+=( -object "${object}" )
 done
 
-# Escape a literal path for LLVM's regular-expression parser. Keeping the
-# inclusion boundary anchored prevents similarly named sibling trees from
-# entering the denominator.
-source_regex="$(printf '%s' "${source_dir}" | sed 's/[][(){}.^$*+?|\\]/\\&/g')"
-source_regex="^${source_regex}/"
 production_exclude_regex='/(unitTests|unitTestUtilities|integrationTests|tests|examples|benchmarks|testingUtilities)/'
 production_exclude_regex+='|/codingUtilities/UnitTestUtilities[.]hpp$'
 
 native_info="${output_dir}/native.info"
-definition_info="${output_dir}/definition.info"
 llvm_summary="${output_dir}/llvm-summary.json"
 common_export_args=(
   -instr-profile "${profdata}"
-  -include-filename-regex "${source_regex}"
+  --sources "${source_dir}"
   -ignore-filename-regex "${production_exclude_regex}"
   -num-threads=1
 )
@@ -275,12 +283,15 @@ run_export()
   fi
 }
 
+native_instantiation_args=()
+llvm_cov_export_help="$("${llvm_cov}" export --help 2>&1)"
+if grep -q -- '--unify-instantiations' <<< "${llvm_cov_export_help}"; then
+  native_instantiation_args=( -unify-instantiations=false )
+fi
 run_export "${native_info}" "${output_dir}/native-export.log" \
-  -format=lcov -unify-instantiations=false
-run_export "${definition_info}" "${output_dir}/definition-export.log" \
-  -format=lcov -unify-instantiations=true
+  -format=lcov "${native_instantiation_args[@]}"
 run_export "${llvm_summary}" "${output_dir}/summary-export.log" \
-  -format=text -summary-only -unify-instantiations=false
+  -format=text -summary-only
 
 summarize_branches()
 {
@@ -302,8 +313,6 @@ summarize_branches()
 }
 
 read -r native_covered native_total native_percent < <(summarize_branches "${native_info}")
-read -r definition_covered definition_total definition_percent \
-  < <(summarize_branches "${definition_info}")
 read -r canonical_covered canonical_total canonical_percent < <(
   "${python}" - "${llvm_summary}" <<'PY'
 import json
@@ -323,7 +332,7 @@ profile_count="$(wc -l < "${profile_list}")"
 object_count="${#coverage_objects[@]}"
 zero_hash_mappings="${mismatch_details}"
 
-if (( canonical_total == 0 || native_total == 0 || definition_total == 0 )); then
+if (( canonical_total == 0 || native_total == 0 )); then
   echo "LLVM reported a zero production branch denominator." >&2
   exit 1
 fi
@@ -340,8 +349,74 @@ summary_tmp="${summary}.tmp"
     "${canonical_covered}" "${canonical_total}" "${canonical_percent}"
   printf 'native LCOV branch outcomes: %d/%d (%.6f%%)\n' \
     "${native_covered}" "${native_total}" "${native_percent}"
-  printf 'definition-normalized LCOV branch outcomes: %d/%d (%.6f%%)\n' \
-    "${definition_covered}" "${definition_total}" "${definition_percent}"
-  printf 'collapsed branch outcomes: %d\n' "$(( native_total - definition_total ))"
 } | tee "${summary_tmp}"
 mv -- "${summary_tmp}" "${summary}"
+
+coverage_summary="${output_dir}/coverage-summary.json"
+coverage_summary_tmp="${coverage_summary}.tmp"
+"${python}" - "${llvm_summary}" "${coverage_summary_tmp}" \
+  "${project_root}" "${source_dir}" "${production_exclude_regex}" \
+  "${compiler_major}" "${profile_count}" "${object_count}" \
+  "${zero_hash_mappings}" \
+  "${native_covered}" "${native_total}" <<'PY'
+import json
+import os
+import sys
+
+(
+  llvm_summary_path,
+  output_path,
+  project_root,
+  source_dir,
+  excluded_regex,
+  compiler_major,
+  profile_count,
+  object_count,
+  zero_hash_mappings,
+  native_covered,
+  native_total,
+) = sys.argv[1:]
+
+with open( llvm_summary_path, encoding="utf-8" ) as stream:
+  llvm_document = json.load( stream )
+
+totals = llvm_document["data"][0]["totals"]
+
+def metric( covered, total ):
+  covered = int( covered )
+  total = int( total )
+  return {
+    "covered": covered,
+    "total": total,
+    "not_covered": total - covered,
+    "percent": round( 100.0 * covered / total if total else 0.0, 6 ),
+  }
+
+canonical = {}
+for name in ( "regions", "functions", "lines", "branches" ):
+  canonical[name] = metric( totals[name]["covered"], totals[name]["count"] )
+
+document = {
+  "schema_version": 1,
+  "scope": os.path.relpath( source_dir, project_root ),
+  "excluded_regex": excluded_regex,
+  "tool": {
+    "name": "llvm-cov",
+    "major": int( compiler_major ),
+  },
+  "inputs": {
+    "profiles": int( profile_count ),
+    "coverage_objects": int( object_count ),
+    "zero_hash_mappings": int( zero_hash_mappings ),
+  },
+  "metrics": canonical,
+  "supplemental": {
+    "native_branch_outcomes": metric( native_covered, native_total ),
+  },
+}
+
+with open( output_path, "w", encoding="utf-8" ) as stream:
+  json.dump( document, stream, indent=2, sort_keys=True )
+  stream.write( "\n" )
+PY
+mv -- "${coverage_summary_tmp}" "${coverage_summary}"

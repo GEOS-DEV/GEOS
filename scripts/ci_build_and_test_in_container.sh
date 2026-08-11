@@ -154,8 +154,8 @@ Usage: $0
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
   --cmake-cuda-architectures ...
       Optional override for CMAKE_CUDA_ARCHITECTURES.
-  --code-coverage
-      run a code build and test.
+  --coverage-output-dir /path/to/output
+      Directory where compact LLVM source-coverage artifacts are written.
   --ctest-parallel-level N
       Number of tests ctest may run in parallel.
   --data-basename output.tar.gz
@@ -177,6 +177,9 @@ Usage: $0
       The host-config. Path is relative to the root of the repository.
   --install-dir-basename GEOS-e42ffc1
       GEOS installation basename.
+  --llvm-source-coverage
+      Build with Clang source coverage, run the coverage smoke suite, and
+      enforce the repository coverage policy.
   --makefile
       Use "Unix Makefiles" as build system generator.
   --ninja
@@ -208,7 +211,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,coverage-output-dir:,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,llvm-source-coverage,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -225,7 +228,8 @@ UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
-CODE_COVERAGE=false
+LLVM_SOURCE_COVERAGE=false
+COVERAGE_OUTPUT_DIR=""
 CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
@@ -235,7 +239,6 @@ USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
 ATS_CMAKE_ARGS=()
-LCOV_CMAKE_ARGS=""
 
 eval set -- ${args}
 while :
@@ -249,6 +252,7 @@ do
     --cmake-cuda-architectures)
       CMAKE_CUDA_ARCHITECTURES_ARGS+=("-DCMAKE_CUDA_ARCHITECTURES=$2")
       shift 2;;
+    --coverage-output-dir)    COVERAGE_OUTPUT_DIR=$2;     shift 2;;
     --ninja)
         BUILD_GENERATOR=$1;
         shift;;
@@ -270,6 +274,7 @@ do
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
     --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --llvm-source-coverage)  LLVM_SOURCE_COVERAGE=true;  shift;;
     --makefile)              BUILD_GENERATOR="";         shift;;
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
@@ -281,7 +286,6 @@ do
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
-    --code-coverage)         CODE_COVERAGE=true;         shift;;
     --ctest-parallel-level)
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
@@ -419,39 +423,41 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 fi
 
 
-if [[ "${CODE_COVERAGE}" = true ]]; then
-  or_die apt-get update
-  or_die apt-get install -y lcov
-
-  LCOV_REAL=$(command -v lcov || true)
-  if [[ -n "${LCOV_REAL}" ]]; then
-    export GEOS_REAL_LCOV="${LCOV_REAL}"
-    LCOV_WRAPPER=/tmp/geos-lcov-wrapper
-    cat > "${LCOV_WRAPPER}" <<'EOF'
-#!/bin/bash
-set -e
-
-extra_args=()
-if "${GEOS_REAL_LCOV}" --version 2>&1 | grep -Eq 'LCOV version ([2-9]|[1-9][0-9])\.'; then
-  for arg in "$@"; do
-    case "${arg}" in
-      --capture|-c)
-        extra_args=(--ignore-errors mismatch,empty)
-        break
-        ;;
-      --remove|-r)
-        extra_args=(--ignore-errors unused)
-        break
-        ;;
-    esac
-  done
-fi
-
-exec "${GEOS_REAL_LCOV}" "${extra_args[@]}" "$@"
-EOF
-    or_die chmod +x "${LCOV_WRAPPER}"
-    LCOV_CMAKE_ARGS="-DLCOV_EXECUTABLE=${LCOV_WRAPPER}"
+if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
+  if [[ -z "${COVERAGE_OUTPUT_DIR}" ]]; then
+    echo "--llvm-source-coverage requires --coverage-output-dir." >&2
+    exit 1
   fi
+
+  # The pinned Clang CI image intentionally contains the compiler and TPLs but
+  # not the compiler-native coverage reporter or profile runtime. Install the
+  # matching LLVM-major packages in this ephemeral container.
+  or_die apt-get update -qq
+  or_die env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+               --no-install-recommends llvm-20 libclang-rt-20-dev
+
+  for llvm_tool in llvm-cov-20 llvm-profdata-20 llvm-readelf-20; do
+    or_die command -v "${llvm_tool}"
+  done
+  or_die mkdir -p "${COVERAGE_OUTPUT_DIR}"
+  for coverage_artifact in \
+    CMakeCache.txt \
+    branch-summary.txt \
+    coverage-objects.txt \
+    coverage-status.md \
+    coverage-summary.json \
+    coverage-summary.md \
+    ctest.log \
+    llvm-summary.json \
+    mapping-integrity.log \
+    native-export.log \
+    summary-export.log \
+    toolchain.txt; do
+    or_die rm -f -- "${COVERAGE_OUTPUT_DIR}/${coverage_artifact}"
+  done
+  or_die python3 -m unittest discover \
+               -s "${GEOS_SRC_DIR}/scripts/tests" \
+               -p 'test_check_coverage_thresholds.py'
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -468,6 +474,20 @@ fi
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOS_BUILD_DIR=/tmp/geos-build
+LLVM_COVERAGE_CMAKE_ARGS=(
+  -DENABLE_COVERAGE=OFF
+  -DGEOS_ENABLE_LLVM_SOURCE_COVERAGE=$([[ "${LLVM_SOURCE_COVERAGE}" = true ]] && echo ON || echo OFF)
+)
+if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
+  LLVM_COVERAGE_CMAKE_ARGS+=(
+    -DGEOS_BUILD_SHARED_LIBS=ON
+    -DENABLE_DOXYGEN=OFF
+  )
+  LLVM_BUILD_PROFILE_DIR=/tmp/geos-coverage-build-profiles
+  or_die mkdir -p "${LLVM_BUILD_PROFILE_DIR}"
+  export LLVM_PROFILE_FILE="${LLVM_BUILD_PROFILE_DIR}/%p-%m.profraw"
+fi
+
 or_die python3 scripts/config-build.py \
                -hc ${HOST_CONFIG} \
                -bt ${CMAKE_BUILD_TYPE} \
@@ -481,12 +501,11 @@ or_die python3 scripts/config-build.py \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
-               -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
                "${CMAKE_NATIVE_ARCHITECTURE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
-               ${LCOV_CMAKE_ARGS} \
+               "${LLVM_COVERAGE_CMAKE_ARGS[@]}" \
                "${ATS_CMAKE_ARGS[@]}"
 
 # The configuration step is now over, we can now move to the build directory for the build!
@@ -506,9 +525,9 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die cmake --build . -j $NPROC --target geosx
+  or_die cmake --build . --parallel "${NPROC}" --target geosx
 else
-  or_die cmake --build . -j $NPROC
+  or_die cmake --build . --parallel "${NPROC}"
   #or_die cmake --install .
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
@@ -536,10 +555,112 @@ if [[ -n "${SCCACHE_BIN}" ]]; then
   fi
 fi
 
-if [[ "${CODE_COVERAGE}" = true ]]; then
+if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
+  LLVM_TEST_PROFILE_DIR=/tmp/geos-coverage-profiles
+  LLVM_REPORT_DIR=/tmp/geos-coverage-report
+  or_die mkdir -p "${LLVM_TEST_PROFILE_DIR}" "${LLVM_REPORT_DIR}"
+
   export OMP_NUM_THREADS=1
-  or_die cmake --build . --target coreComponents_coverage
-  or_die cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+  export OPENBLAS_NUM_THREADS=1
+  export LLVM_PROFILE_FILE="${LLVM_TEST_PROFILE_DIR}/%p-%m.profraw"
+
+  # The CI container runs as root so it can install the compiler-matched LLVM
+  # runtime. Open MPI requires this explicit, two-part acknowledgement before
+  # it will launch the three MPI coverage smokes.
+  if [[ "$(id -u)" -eq 0 ]]; then
+    export OMPI_ALLOW_RUN_AS_ROOT=1
+    export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  fi
+
+  {
+    printf 'container image: %s\n' "${GEOS_CI_CONTAINER_IMAGE:-unknown}"
+    printf 'container image ID: %s\n' "${GEOS_CI_CONTAINER_IMAGE_ID:-unknown}"
+    printf 'container image digests: %s\n' "${GEOS_CI_CONTAINER_IMAGE_DIGESTS:-unknown}"
+    or_die /usr/bin/clang-20 --version
+    or_die llvm-cov-20 --version
+    or_die llvm-profdata-20 --version
+    or_die llvm-readelf-20 --version
+    or_die cmake --version
+    or_die dpkg-query -W -f='${Package}=${Version}\n' llvm-20 libclang-rt-20-dev
+  } > "${COVERAGE_OUTPUT_DIR}/toolchain.txt"
+  or_die test -s "${COVERAGE_OUTPUT_DIR}/toolchain.txt"
+
+  coverage_ctest_status=0
+  ctest --test-dir "${GEOS_BUILD_DIR}" \
+        --parallel 12 \
+        --progress \
+        --output-on-failure \
+        --output-log "${COVERAGE_OUTPUT_DIR}/ctest.log" \
+        -L '^coverage_smoke$' || coverage_ctest_status=$?
+
+  coverage_report_status=0
+  "${GEOS_SRC_DIR}/scripts/llvm_source_branch_coverage.sh" \
+    "${GEOS_BUILD_DIR}" \
+    "${LLVM_TEST_PROFILE_DIR}" \
+    "${LLVM_REPORT_DIR}" || coverage_report_status=$?
+
+  coverage_gate_status=0
+  if [[ ${coverage_report_status} -eq 0 ]]; then
+    python3 "${GEOS_SRC_DIR}/scripts/check_coverage_thresholds.py" \
+      "${LLVM_REPORT_DIR}/coverage-summary.json" \
+      "${GEOS_SRC_DIR}/.github/coverage-thresholds.json" \
+      --markdown "${COVERAGE_OUTPUT_DIR}/coverage-summary.md" \
+      || coverage_gate_status=$?
+  else
+    coverage_gate_status=1
+  fi
+
+  for report_file in \
+    branch-summary.txt \
+    coverage-summary.json \
+    coverage-objects.txt \
+    llvm-summary.json \
+    mapping-integrity.log \
+    native-export.log \
+    summary-export.log; do
+    if [[ -f "${LLVM_REPORT_DIR}/${report_file}" ]]; then
+      cp -- "${LLVM_REPORT_DIR}/${report_file}" "${COVERAGE_OUTPUT_DIR}/" \
+        || coverage_report_status=1
+    fi
+  done
+  cp -- "${GEOS_BUILD_DIR}/CMakeCache.txt" "${COVERAGE_OUTPUT_DIR}/" \
+    || coverage_report_status=1
+
+  coverage_overall_status=PASS
+  if [[ ${coverage_ctest_status} -ne 0 ||
+        ${coverage_report_status} -ne 0 ||
+        ${coverage_gate_status} -ne 0 ]]; then
+    coverage_overall_status=FAIL
+  fi
+
+  coverage_phase_status()
+  {
+    if [[ "$1" -eq 0 ]]; then
+      printf 'PASS'
+    else
+      printf 'FAIL (%d)' "$1"
+    fi
+  }
+
+  coverage_status_markdown="${COVERAGE_OUTPUT_DIR}/coverage-status.md"
+  coverage_status_tmp="${coverage_status_markdown}.tmp"
+  {
+    printf '### Overall coverage job: **%s**\n\n' "${coverage_overall_status}"
+    printf '| Phase | Status |\n'
+    printf '|---|:---:|\n'
+    printf '| Coverage smoke CTest | %s |\n' "$(coverage_phase_status "${coverage_ctest_status}")"
+    printf '| LLVM report integrity | %s |\n' "$(coverage_phase_status "${coverage_report_status}")"
+    printf '| Repository threshold gate | %s |\n' "$(coverage_phase_status "${coverage_gate_status}")"
+    printf '\n'
+  } > "${coverage_status_tmp}"
+  or_die mv -- "${coverage_status_tmp}" "${coverage_status_markdown}"
+
+  if [[ "${coverage_overall_status}" = FAIL ]]; then
+    echo "LLVM source coverage failed: ctest=${coverage_ctest_status}, " \
+         "report=${coverage_report_status}, gate=${coverage_gate_status}." >&2
+    exit 1
+  fi
+  exit 0
 fi
 
 # Run the unit tests (excluding previously ran checks).

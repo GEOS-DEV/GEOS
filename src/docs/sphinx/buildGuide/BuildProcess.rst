@@ -72,7 +72,7 @@ Option                          Default   Explanation
 ``ENABLE_DOCS``                 ``ON``    Build documentation (Sphinx and Doxygen)
 ``ENABLE_WARNINGS_AS_ERRORS``   ``ON``    Treat all warnings as errors
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
-``ENABLE_COV``                  ``OFF``   Enables code coverage
+``ENABLE_COVERAGE``             ``OFF``   Enables legacy gcov-compatible code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
@@ -81,3 +81,8 @@ Option                          Default   Explanation
 ``GEOS_PARALLEL_LINK_JOBS``               Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_INSTALL_SCHEMA``         ``ON``    Enables schema generation and installation
 =============================== ========= ==============================================================================
+
+For compiler-native Clang source coverage, configure a CPU shared-library build
+with ``GEOS_ENABLE_LLVM_SOURCE_COVERAGE=ON`` and ``ENABLE_COVERAGE=OFF``. The
+``scripts/llvm_source_branch_coverage.sh`` helper generates the production
+report from the resulting raw profiles.

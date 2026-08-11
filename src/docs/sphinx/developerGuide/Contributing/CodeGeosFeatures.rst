@@ -161,10 +161,17 @@ Unit testing is not about testing every single line of code (an unrealistic goal
 Code Coverage
 ^^^^^^^^^^^^^
 
-**Code coverage should never decrease.** New code contributions must maintain or improve overall code coverage.
-Use Codecov to report untested code paths.
+New code contributions should maintain or improve overall code coverage. The
+dedicated Clang/LLVM CI job runs the ``coverage_smoke`` suite and enforces the
+repository-owned canonical branch floor in
+``.github/coverage-thresholds.json``. Regions, functions, lines, and the native
+instantiation-weighted branch interpretation are reported for review without
+being hard gates. The compiler-native report is published in the GitHub job
+summary and retained as a compact workflow artifact; no hosted coverage service
+or secret is required.
 
-Currently, Codecov does not cover integrated tests execution but they should be taken into account, especially for minor physical kernel changes.
+Integrated tests are not part of this focused CI coverage pass, but they should
+still be taken into account, especially for minor physical kernel changes.
 
 Integrated Tests & Examples  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
