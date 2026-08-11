@@ -4,22 +4,36 @@
 """Validate and enforce repository-owned LLVM coverage thresholds."""
 
 import argparse
+import html
 import json
 import math
 import pathlib
 import sys
 
 
+COVERAGE_SUMMARY_SCHEMA_VERSION = 2
+COVERAGE_POLICY_SCHEMA_VERSION = 1
 CANONICAL_METRICS = ( "regions", "functions", "lines", "branches" )
+DISPLAY_METRICS = ( "lines", "functions", "branches", "regions" )
 SUPPLEMENTAL_METRICS = (
     ( "native_branch_outcomes", "Native branch outcomes" ),
 )
+if set( DISPLAY_METRICS ) != set( CANONICAL_METRICS ):
+    raise RuntimeError( "display metrics must match canonical coverage metrics" )
 
 
-def require_schema_version( document: dict, description: str ) -> None:
+def require_schema_version(
+    document: dict, description: str, expected_version: int
+) -> None:
     version = document.get( "schema_version" )
-    if isinstance( version, bool ) or not isinstance( version, int ) or version != 1:
-        raise ValueError( f"{description} schema_version must be the integer 1" )
+    if (
+        isinstance( version, bool )
+        or not isinstance( version, int )
+        or version != expected_version
+    ):
+        raise ValueError(
+            f"{description} schema_version must be the integer {expected_version}"
+        )
 
 
 def load_json( path: pathlib.Path ) -> dict:
@@ -70,8 +84,46 @@ def validate_metric( metric: object, description: str ) -> dict:
     }
 
 
+def validate_branch_gaps( raw_gaps: object, scope: str ) -> list[dict]:
+    if not isinstance( raw_gaps, list ) or len( raw_gaps ) > 5:
+        raise ValueError( "top_branch_gaps must be an array with at most 5 entries" )
+
+    scope_prefix = f"{scope.rstrip( '/' )}/"
+    gaps = []
+    seen_paths = set()
+    for index, raw_gap in enumerate( raw_gaps ):
+        if not isinstance( raw_gap, dict ):
+            raise ValueError( f"top_branch_gaps[{index}] must be an object" )
+        path = raw_gap.get( "path" )
+        if not isinstance( path, str ) or not path.startswith( scope_prefix ):
+            raise ValueError( f"top_branch_gaps[{index}].path is outside the scope" )
+        normalized_path = pathlib.PurePosixPath( path )
+        if (
+            len( path ) == len( scope_prefix )
+            or normalized_path.as_posix() != path
+            or ".." in normalized_path.parts
+            or path in seen_paths
+        ):
+            raise ValueError( "top_branch_gaps paths must be normalized and unique" )
+        seen_paths.add( path )
+
+        gap = validate_metric( raw_gap, f"top_branch_gaps[{index}]" )
+        if gap["not_covered"] == 0:
+            raise ValueError( "top_branch_gaps entries must have missed branches" )
+        gaps.append( { "path": path, **gap } )
+
+    expected_order = sorted(
+        gaps, key=lambda gap: ( -gap["not_covered"], gap["path"] )
+    )
+    if gaps != expected_order:
+        raise ValueError( "top_branch_gaps must be sorted by missed branches" )
+    return gaps
+
+
 def validate_summary( document: dict ) -> dict:
-    require_schema_version( document, "coverage summary" )
+    require_schema_version(
+        document, "coverage summary", COVERAGE_SUMMARY_SCHEMA_VERSION
+    )
     scope = document.get( "scope" )
     if not isinstance( scope, str ) or not scope:
         raise ValueError( "coverage summary scope must be a nonempty string" )
@@ -113,18 +165,24 @@ def validate_summary( document: dict ) -> dict:
         name: validate_metric( raw_supplemental.get( name ), f"supplemental.{name}" )
         for name, _ in SUPPLEMENTAL_METRICS
     }
+    branch_gaps = validate_branch_gaps( document.get( "top_branch_gaps" ), scope )
+    if sum( gap["total"] for gap in branch_gaps ) > metrics["branches"]["total"]:
+        raise ValueError( "top_branch_gaps totals exceed canonical branch coverage" )
     return {
         "scope": scope,
         "excluded_regex": excluded_regex,
         "tool": { "name": "llvm-cov", "major": tool_major },
         "inputs": inputs,
         "metrics": metrics,
+        "top_branch_gaps": branch_gaps,
         "supplemental": supplemental,
     }
 
 
 def validate_policy( document: dict, expected_scope: str ) -> dict:
-    require_schema_version( document, "coverage policy" )
+    require_schema_version(
+        document, "coverage policy", COVERAGE_POLICY_SCHEMA_VERSION
+    )
     if document.get( "scope" ) != expected_scope:
         raise ValueError(
             f"coverage policy scope {document.get('scope')!r} does not match "
@@ -148,52 +206,127 @@ def validate_policy( document: dict, expected_scope: str ) -> dict:
 
 
 def percent_text( covered: int, total: int ) -> str:
-    return f"{100.0 * covered / total:.6f}%"
+    return f"{100.0 * covered / total:.2f}%"
 
 
 def build_markdown( summary: dict, thresholds: dict ) -> tuple[str, bool]:
-    rows = [
-        "### Coverage metrics",
-        "",
-        f"Scope: `{summary['scope']}`",
-        "",
-        "| Metric | Covered | Total | Percent | Minimum | Status |",
-        "|---|---:|---:|---:|---:|:---:|",
-    ]
-    all_passed = True
+    threshold_results = {
+        name: summary["metrics"][name]["covered"] * 10000
+        >= threshold * summary["metrics"][name]["total"]
+        for name, threshold in thresholds.items()
+    }
+    all_passed = all( threshold_results.values() )
     display_names = {
         "regions": "Regions",
         "functions": "Functions",
         "lines": "Lines",
         "branches": "Canonical branches",
     }
-    for name in CANONICAL_METRICS:
+    metric_rows = []
+    for name in DISPLAY_METRICS:
         metric = summary["metrics"][name]
         threshold = thresholds.get( name )
         if threshold is None:
-            minimum = "—"
-            status = "Report only"
+            requirement = "—"
+            result = "ℹ️ Measured"
         else:
-            passed = metric["covered"] * 10000 >= threshold * metric["total"]
-            all_passed = all_passed and passed
-            minimum = f"{threshold / 100:.2f}%"
-            status = "PASS" if passed else "FAIL"
-        rows.append(
+            passed = threshold_results[name]
+            requirement = f"≥ {threshold / 100:.2f}%"
+            margin = 100.0 * metric["covered"] / metric["total"] - threshold / 100
+            if 0 < abs( margin ) < 0.01:
+                direction = "above" if margin > 0 else "below"
+                margin_display = f"<0.01 pp {direction}"
+            else:
+                margin_display = f"{margin:+.2f} pp"
+            result = f"{'✅ Pass' if passed else '❌ Fail'} ({margin_display})"
+        metric_rows.append(
             f"| {display_names[name]} | {metric['covered']:,} | "
-            f"{metric['total']:,} | "
+            f"{metric['not_covered']:,} | {metric['total']:,} | "
             f"{percent_text(metric['covered'], metric['total'])} | "
-            f"{minimum} | {status} |"
+            f"{requirement} | {result} |"
         )
 
+    policy_result = "passed" if all_passed else "failed"
+    policy_icon = "✅" if all_passed else "❌"
+    rows = [
+        f"### {policy_icon} Coverage policy {policy_result}",
+        "",
+        f"Production scope: `{summary['scope']}` · "
+        f"Reporter: `{summary['tool']['name']} {summary['tool']['major']}`",
+        "",
+        "| Metric | Covered | Missed | Total | Coverage | Requirement | Result |",
+        "|---|---:|---:|---:|---:|---:|:---:|",
+        *metric_rows,
+        "",
+        "Percentages are rounded for display; policy thresholds use exact covered/total counts.",
+    ]
+    branch_gaps = summary["top_branch_gaps"]
+    if branch_gaps:
+        rows.extend(
+            (
+                "",
+                "### Largest branch gaps",
+                "",
+                "| Source file | Covered | Missed | Total | Coverage |",
+                "|---|---:|---:|---:|---:|",
+            )
+        )
+        for gap in branch_gaps:
+            scope_prefix = f"{summary['scope'].rstrip( '/' )}/"
+            display_path = html.escape( gap["path"][len( scope_prefix ):] )
+            display_path = display_path.replace( "|", "&#124;" )
+            display_path = display_path.replace( "\n", "&#10;" ).replace(
+                "\r", "&#13;"
+            )
+            rows.append(
+                f"| <code>{display_path}</code> | {gap['covered']:,} | "
+                f"{gap['not_covered']:,} | {gap['total']:,} | "
+                f"{percent_text(gap['covered'], gap['total'])} |"
+            )
+        rows.extend(
+            (
+                "",
+                "Ranked by missed canonical branch outcomes within the production scope.",
+            )
+        )
+
+    rows.extend(
+        (
+            "",
+            "### Coverage collection",
+            "",
+            "| Input | Value |",
+            "|---|---:|",
+            f"| Profile files merged | {summary['inputs']['profiles']:,} |",
+            f"| Instrumented product objects | {summary['inputs']['coverage_objects']:,} |",
+            f"| Audited zero-hash mappings | {summary['inputs']['zero_hash_mappings']:,} |",
+            "",
+            "Zero-hash mappings have no profile counters and are audited during report "
+            "generation; any nonzero or unaudited mismatch fails the job.",
+            "",
+            "<details>",
+            "<summary>Branch diagnostic (not gated)</summary>",
+            "",
+            "| Diagnostic | Covered | Total | Coverage |",
+            "|---|---:|---:|---:|",
+        )
+    )
     for name, display_name in SUPPLEMENTAL_METRICS:
         metric = summary["supplemental"][name]
         rows.append(
             f"| {display_name} | {metric['covered']:,} | "
-            f"{metric['total']:,} | "
-            f"{percent_text(metric['covered'], metric['total'])} | — | Diagnostic |"
+            f"{metric['total']:,} | {percent_text(metric['covered'], metric['total'])} |"
         )
 
-    rows.extend( ( "", "Thresholds are compared using exact integer counts." ) )
+    rows.extend(
+        (
+            "",
+            "Native outcomes are instantiation-weighted: C++ template and inline-function "
+            "instances may appear more than once. This diagnostic is not the policy metric.",
+            "",
+            "</details>",
+        )
+    )
     return "\n".join( rows ) + "\n", all_passed
 
 

@@ -396,8 +396,38 @@ canonical = {}
 for name in ( "regions", "functions", "lines", "branches" ):
   canonical[name] = metric( totals[name]["covered"], totals[name]["count"] )
 
+source_root = os.path.realpath( source_dir )
+branch_gaps = []
+file_branch_covered = 0
+file_branch_total = 0
+for source in llvm_document["data"][0]["files"]:
+  filename = os.path.realpath( source["filename"] )
+  try:
+    in_scope = os.path.commonpath( ( source_root, filename ) ) == source_root
+  except ValueError:
+    in_scope = False
+  if not in_scope:
+    continue
+  branches = source["summary"]["branches"]
+  branch_metric = metric( branches["covered"], branches["count"] )
+  file_branch_covered += branch_metric["covered"]
+  file_branch_total += branch_metric["total"]
+  if branch_metric["not_covered"] == 0:
+    continue
+  branch_gaps.append(
+    {
+      "path": os.path.relpath( filename, project_root ).replace( os.sep, "/" ),
+      **branch_metric,
+    }
+  )
+branch_gaps.sort( key=lambda gap: ( -gap["not_covered"], gap["path"] ) )
+if ( file_branch_covered, file_branch_total ) != (
+  canonical["branches"]["covered"], canonical["branches"]["total"]
+):
+  raise ValueError( "per-file branch counts do not match canonical totals" )
+
 document = {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": os.path.relpath( source_dir, project_root ),
   "excluded_regex": excluded_regex,
   "tool": {
@@ -410,6 +440,7 @@ document = {
     "zero_hash_mappings": int( zero_hash_mappings ),
   },
   "metrics": canonical,
+  "top_branch_gaps": branch_gaps[:5],
   "supplemental": {
     "native_branch_outcomes": metric( native_covered, native_total ),
   },

@@ -558,6 +558,7 @@ fi
 if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   LLVM_TEST_PROFILE_DIR=/tmp/geos-coverage-profiles
   LLVM_REPORT_DIR=/tmp/geos-coverage-report
+  LLVM_CTEST_PARALLEL=12
   or_die mkdir -p "${LLVM_TEST_PROFILE_DIR}" "${LLVM_REPORT_DIR}"
 
   export OMP_NUM_THREADS=1
@@ -587,7 +588,7 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
 
   coverage_ctest_status=0
   ctest --test-dir "${GEOS_BUILD_DIR}" \
-        --parallel 12 \
+        --parallel "${LLVM_CTEST_PARALLEL}" \
         --progress \
         --output-on-failure \
         --output-log "${COVERAGE_OUTPUT_DIR}/ctest.log" \
@@ -600,14 +601,14 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     "${LLVM_REPORT_DIR}" || coverage_report_status=$?
 
   coverage_gate_status=0
+  coverage_gate_ran=false
   if [[ ${coverage_report_status} -eq 0 ]]; then
+    coverage_gate_ran=true
     python3 "${GEOS_SRC_DIR}/scripts/check_coverage_thresholds.py" \
       "${LLVM_REPORT_DIR}/coverage-summary.json" \
       "${GEOS_SRC_DIR}/.github/coverage-thresholds.json" \
       --markdown "${COVERAGE_OUTPUT_DIR}/coverage-summary.md" \
       || coverage_gate_status=$?
-  else
-    coverage_gate_status=1
   fi
 
   for report_file in \
@@ -635,22 +636,102 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
 
   coverage_phase_status()
   {
+    if [[ "${2:-true}" != true ]]; then
+      printf '⏭️ Not run'
+      return
+    fi
     if [[ "$1" -eq 0 ]]; then
-      printf 'PASS'
+      printf '✅ Pass'
     else
-      printf 'FAIL (%d)' "$1"
+      printf '❌ Fail (%d)' "$1"
     fi
   }
 
+  coverage_ctest_detail="See the retained CTest log."
+  coverage_ctest_summary="$(
+    grep -E '^[0-9]+% tests passed, [0-9]+ tests failed out of [0-9]+$' \
+      "${COVERAGE_OUTPUT_DIR}/ctest.log" | tail -n 1 || true
+  )"
+  coverage_ctest_elapsed_line="$(
+    grep -E '^Total Test time \(real\) = +[0-9.]+ sec$' \
+      "${COVERAGE_OUTPUT_DIR}/ctest.log" | tail -n 1 || true
+  )"
+  coverage_ctest_summary_regex='^[0-9]+% tests passed, ([0-9]+) tests failed out of ([0-9]+)$'
+  coverage_ctest_elapsed_regex='^Total Test time \(real\) = +([0-9.]+) sec$'
+  if [[ "${coverage_ctest_summary}" =~ ${coverage_ctest_summary_regex} ]]; then
+    coverage_ctest_failed="${BASH_REMATCH[1]}"
+    coverage_ctest_total="${BASH_REMATCH[2]}"
+    coverage_ctest_passed=$(( coverage_ctest_total - coverage_ctest_failed ))
+    coverage_ctest_detail="${coverage_ctest_passed}/${coverage_ctest_total} passed"
+    if (( coverage_ctest_failed > 0 )); then
+      coverage_ctest_detail+=", ${coverage_ctest_failed} failed"
+    fi
+    if [[ "${coverage_ctest_elapsed_line}" =~ ${coverage_ctest_elapsed_regex} ]]; then
+      coverage_ctest_detail+=" in ${BASH_REMATCH[1]} s"
+    fi
+    coverage_ctest_detail+=" with ${LLVM_CTEST_PARALLEL}-way scheduling"
+  fi
+
+  if [[ ${coverage_report_status} -eq 0 ]]; then
+    coverage_report_detail="Profile mappings and report inputs validated"
+  else
+    coverage_report_detail="Report generation or artifact staging failed; inspect the logs"
+  fi
+  if [[ "${coverage_gate_ran}" != true ]]; then
+    coverage_gate_detail="Skipped because the LLVM report was unavailable"
+  elif [[ ${coverage_gate_status} -eq 0 ]]; then
+    coverage_gate_detail="Exact repository thresholds evaluated below"
+  else
+    coverage_gate_detail="Repository threshold check failed"
+  fi
+
   coverage_status_markdown="${COVERAGE_OUTPUT_DIR}/coverage-status.md"
   coverage_status_tmp="${coverage_status_markdown}.tmp"
+  coverage_image_id="${GEOS_CI_CONTAINER_IMAGE_ID:-unknown}"
+  coverage_image_id_display="${coverage_image_id}"
+  if (( ${#coverage_image_id_display} > 20 )); then
+    coverage_image_id_display="${coverage_image_id_display:0:20}…"
+  fi
+  coverage_clang_version="$(
+    /usr/bin/clang-20 --version | sed -nE \
+      '1s/.*version[[:space:]]+([0-9]+([.][0-9]+)+).*/\1/p'
+  )"
+  if [[ -z "${coverage_clang_version}" ]]; then
+    coverage_clang_version=20
+  fi
+  coverage_llvm_version="$(
+    llvm-cov-20 --version | sed -nE \
+      '1s/.*version[[:space:]]+([0-9]+([.][0-9]+)+).*/\1/p'
+  )"
+  if [[ -z "${coverage_llvm_version}" ]]; then
+    coverage_llvm_version=20
+  fi
   {
-    printf '### Overall coverage job: **%s**\n\n' "${coverage_overall_status}"
-    printf '| Phase | Status |\n'
-    printf '|---|:---:|\n'
-    printf '| Coverage smoke CTest | %s |\n' "$(coverage_phase_status "${coverage_ctest_status}")"
-    printf '| LLVM report integrity | %s |\n' "$(coverage_phase_status "${coverage_report_status}")"
-    printf '| Repository threshold gate | %s |\n' "$(coverage_phase_status "${coverage_gate_status}")"
+    if [[ "${coverage_overall_status}" = PASS ]]; then
+      printf '### ✅ LLVM source coverage passed\n\n'
+    else
+      printf '### ❌ LLVM source coverage failed\n\n'
+    fi
+    printf '| Validation | Result | Details |\n'
+    printf '|---|:---:|---|\n'
+    printf '| Coverage smoke suite | %s | %s |\n' \
+      "$(coverage_phase_status "${coverage_ctest_status}")" "${coverage_ctest_detail}"
+    printf '| LLVM report integrity | %s | %s |\n' \
+      "$(coverage_phase_status "${coverage_report_status}")" "${coverage_report_detail}"
+    printf '| Repository coverage policy | %s | %s |\n' \
+      "$(coverage_phase_status "${coverage_gate_status}" "${coverage_gate_ran}")" \
+      "${coverage_gate_detail}"
+    printf '\n'
+    printf '### Run configuration\n\n'
+    printf '| Item | Value |\n'
+    printf '|---|---|\n'
+    printf '| Runner | `%s` |\n' "${GEOS_CI_RUNNER_LABEL:-unknown}"
+    printf '| Container | `%s` |\n' "${GEOS_CI_CONTAINER_IMAGE:-unknown}"
+    printf '| Immutable image ID (short) | `%s` |\n' "${coverage_image_id_display}"
+    printf '| Toolchain | `Clang %s / LLVM %s` |\n' \
+      "${coverage_clang_version}" "${coverage_llvm_version}"
+    printf '| Build | `%s`, %s-way compilation |\n' "${CMAKE_BUILD_TYPE}" "${NPROC}"
+    printf '| Test scheduling | %s CTest slots |\n' "${LLVM_CTEST_PARALLEL}"
     printf '\n'
   } > "${coverage_status_tmp}"
   or_die mv -- "${coverage_status_tmp}" "${coverage_status_markdown}"

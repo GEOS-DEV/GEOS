@@ -153,6 +153,7 @@ jobs:
         CI_DOCKER_IMAGE_TAG: ${{ inputs.DOCKER_IMAGE_TAG }}
         CI_DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
         CI_LLVM_SOURCE_COVERAGE: ${{ inputs.LLVM_SOURCE_COVERAGE }}
+        CI_RUNNER_LABEL: ${{ inputs.RUNS_ON }}
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -247,6 +248,7 @@ jobs:
           docker_args+=(-e "GEOS_CI_CONTAINER_IMAGE=${DOCKER_IMAGE}")
           docker_args+=(-e "GEOS_CI_CONTAINER_IMAGE_ID=${docker_image_id}")
           docker_args+=(-e "GEOS_CI_CONTAINER_IMAGE_DIGESTS=${docker_image_digests}")
+          docker_args+=(-e "GEOS_CI_RUNNER_LABEL=${CI_RUNNER_LABEL}")
           script_args+=(--llvm-source-coverage --coverage-output-dir ${COVERAGE_ARTIFACT_MOUNT_POINT})
         fi
 
@@ -462,18 +464,40 @@ jobs:
         fi
 
     - name: Publish LLVM coverage summary
-      if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE && steps.validate_llvm_coverage_artifact.outcome == 'success' }}
+      if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE }}
+      env:
+        CI_COVERAGE_ARTIFACT_VALIDATION: ${{ steps.validate_llvm_coverage_artifact.outcome }}
       run: |
         printf '## LLVM source coverage\n\n' >> "${GITHUB_STEP_SUMMARY}"
-        for report in coverage-status.md coverage-summary.md; do
-          report_path="${LLVM_COVERAGE_ARTIFACT_DIR}/${report}"
-          if [[ -f "${report_path}" && ! -L "${report_path}" ]]; then
-            cat "${report_path}" >> "${GITHUB_STEP_SUMMARY}"
-          else
-            printf '%s is unavailable; inspect the job log.\n\n' "${report}" \
-              >> "${GITHUB_STEP_SUMMARY}"
-          fi
-        done
+        if [[ "${CI_COVERAGE_ARTIFACT_VALIDATION}" != success ]]; then
+          {
+            printf '### ❌ Coverage results unavailable\n\n'
+            printf '| Validation | Result | Details |\n'
+            printf '|---|:---:|---|\n'
+            printf '| Compact report artifact | ❌ Failed | Artifact validation failed; inspect the job log |\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+          exit 0
+        fi
+        status_report="${LLVM_COVERAGE_ARTIFACT_DIR}/coverage-status.md"
+        metrics_report="${LLVM_COVERAGE_ARTIFACT_DIR}/coverage-summary.md"
+        if [[ -f "${status_report}" && ! -L "${status_report}" ]]; then
+          cat "${status_report}" >> "${GITHUB_STEP_SUMMARY}"
+        else
+          {
+            printf '### ❌ Coverage results unavailable\n\n'
+            printf '| Validation | Result | Details |\n'
+            printf '|---|:---:|---|\n'
+            printf '| Build, test, and report | ❌ Failed | No status report was produced; inspect the job log |\n\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+        fi
+        if [[ -f "${metrics_report}" && ! -L "${metrics_report}" ]]; then
+          cat "${metrics_report}" >> "${GITHUB_STEP_SUMMARY}"
+        else
+          {
+            printf '### Coverage metrics unavailable\n\n'
+            printf 'The job did not produce a validated coverage report. Inspect the build and report logs.\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+        fi
 
     - name: Retain compact LLVM coverage report
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE && steps.validate_llvm_coverage_artifact.outcome == 'success' }}
