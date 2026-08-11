@@ -944,6 +944,8 @@ public:
                        DomainPartition & domain,
                        MeshLevel & mesh );
 
+  bool usePrecomputedGridToParticleMapping( mpm::UpdateMethodOption updateMethod ) const;
+
   void performFLIPUpdate( real64 dt,
                           ParticleManager & particleManager,
                           NodeManager & nodeManager );
@@ -1324,6 +1326,7 @@ protected:
   string m_gpuDebugPreviousLabel;
   bool m_gpuDebugVerbose;
   mpm::GPUSchemeOption m_gpuScheme;
+  mpm::GridToParticleMappingOption m_gridToParticleMapping;
   int m_hasContact;
   array1d< real64 > m_hEl;                // Grid spacing in x-y-z
   array3d< localIndex > m_ijkMap;        // Map from indices in each spatial dimension to local node ID

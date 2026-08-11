@@ -143,6 +143,25 @@ Internal Energy (Part 2)
 Grid-To-Particle Mapping
 --------------------------
 
+The source of particle-grid connectivity and shape-function data used by the
+particle update is selected with ``gridToParticleMapping``:
+
+* ``Automatic`` (default) preserves the behavior used before this option was
+  introduced. Host builds use precomputed mappings for all update methods. GPU
+  builds use precomputed mappings for PIC and on-the-fly mappings for FLIP,
+  XPIC, and FMPM.
+* ``Precomputed`` reuses the mapping arrays assembled near the start of the
+  explicit step. FLIP, XPIC, and FMPM use the effective/coalesced map. PIC uses
+  the raw map because its overlap correction is applied per raw support entry.
+* ``OnTheFly`` recomputes mapped nodes, shape-function values, gradients, and
+  velocity-field assignments inside each grid-to-particle update.
+
+The early mapping arrays are still assembled in ``OnTheFly`` mode because they
+are also consumed by particle-to-grid transfer and other MPM operations. In HIP
+builds, FLIP and PIC execute their selected mapping path on the GPU; XPIC and
+FMPM retain their existing host fallback while honoring the selected mapping
+mode.
+
 Fluid Implicit Particle (FLIP)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -492,6 +511,10 @@ This solver has many solver specific variables. The following list describes eac
      - updateMethod
      - FLIP
      - Grid-to-particle update method (FLIP, PIC, XPIC, FMPM)
+   * - string
+     - gridToParticleMapping
+     - Automatic
+     - Mapping source for grid-to-particle updates (Automatic, Precomputed, or OnTheFly)
    * - int
      - updateOrder
      - 2

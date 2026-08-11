@@ -1672,6 +1672,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="generalizedVortexMMS" type="integer" default="0" />
 		<!--gpuScheme => GPU Scheme (Atomics, No atomics, Random shuffling, Minimal atomics)-->
 		<xsd:attribute name="gpuScheme" type="geos_SolidMechanicsMPM_GPUSchemeOption" default="Atomics" />
+		<!--gridToParticleMapping => Grid-to-particle mapping mode: Automatic preserves the legacy method/execution-space behavior, Precomputed reuses the mapping arrays built near the start of the explicit step, and OnTheFly recomputes connectivity and shape functions inside each grid-to-particle routine. This option controls G2P consumption only; the explicit step still builds mapping arrays for P2G and other mapping-dependent operations.-->
+		<xsd:attribute name="gridToParticleMapping" type="geos_SolidMechanicsMPM_GridToParticleMappingOption" default="Automatic" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
@@ -1879,6 +1881,11 @@ When set to `all` output both convergence & iteration information to a csv.-->
 	<xsd:simpleType name="geos_SolidMechanicsMPM_GPUSchemeOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Atomics|NoAtomics|RandomMix|MinimalAtomics|Reduction|Colors" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_SolidMechanicsMPM_GridToParticleMappingOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Automatic|Precomputed|OnTheFly" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_SolidMechanicsMPM_NormalsAndPositionsMethodOption">

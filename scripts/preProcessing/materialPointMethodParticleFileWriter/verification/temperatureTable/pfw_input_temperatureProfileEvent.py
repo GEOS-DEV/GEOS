@@ -101,8 +101,8 @@ tracers.set_tracers(
 pfw["useEvents"] = 1
 pfw["mpmEventsString"] = f"""
 <TemperatureProfile
-  time="0.0"
-  interval="{stop_time}"
+  startTime="0.0"
+  endTime="{stop_time}"
   temperatureTable="{_temperature_table_xml(temperature_table)}"
   interpolationType="{temperature_table_interp_type}"/>
 """

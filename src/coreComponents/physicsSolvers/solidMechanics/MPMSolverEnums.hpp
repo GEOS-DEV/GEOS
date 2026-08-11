@@ -179,6 +179,20 @@ namespace mpm
     Colors
   };
 
+  /**
+   * @enum GridToParticleMappingOption
+   *
+   * Controls how grid-to-particle routines obtain particle-grid connectivity
+   * and shape-function data. Early mapping construction remains active for P2G
+   * and other mapping-dependent explicit-step operations.
+   */
+  enum struct GridToParticleMappingOption : integer
+  {
+    Automatic,   //!< Preserve the legacy method- and execution-space-specific behavior.
+    Precomputed, //!< Reuse the mapping arrays populated near the start of the explicit step.
+    OnTheFly     //!< Recompute connectivity and shape functions inside each grid-to-particle routine.
+  };
+
   enum struct NormalsAndPositionsMethodOption : integer
   {
     LogisticRegression,
@@ -255,6 +269,11 @@ ENUM_STRINGS( mpm::GPUSchemeOption,
               "MinimalAtomics",
               "Reduction",
               "Colors" );
+
+ENUM_STRINGS( mpm::GridToParticleMappingOption,
+              "Automatic",
+              "Precomputed",
+              "OnTheFly" );
 
 ENUM_STRINGS( mpm::NormalsAndPositionsMethodOption,
               "LogisticRegression",
