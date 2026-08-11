@@ -23,7 +23,20 @@ set( coverage_smoke_inputs
      proppant/FlowProppantBedTransport2d_smoke.xml
      singlePhaseReactiveTransport/mixedReactionCarbonateSystemPorosityUpdateThermal_1D_smoke.xml
      phaseField/PhaseFieldFracture_Nucleation_smoke.xml
-     phaseField/PhaseFieldPoromechanics_Nucleation_smoke.xml )
+     phaseField/PhaseFieldPoromechanics_Nucleation_smoke.xml
+     inducedSeismicity/SeismicityRate_analytical_verification_smoke.xml
+     inducedSeismicity/SpringSliderExplicit_A_smoke.xml
+     inducedSeismicity/SpringSliderImplicit_A_smoke.xml
+     efemFractureMechanics/EmbFrac_Compression_CoulombFriction_smoke.xml
+     poromechanics/PoroDelftEggWellbore_smoke.xml
+     poromechanics/PoroViscoDruckerPrager_smoke.xml
+     poromechanicsFractures/Contact/LagrangianMultipliers/PoroElastic_conformingFracture_2d_faultSlip_smoke.xml
+     poromechanicsFractures/EDFM/PoroElastic_efem-edfm_verticalFrac_smoke.xml
+     thermoPoromechanics/ThermoPoroDruckerPrager_consolidation_smoke.xml
+     thermoPoromechanicsFractures/ThermoPoroElastic_conforming_smoke.xml
+     simplePDE/10x10x10Hex_LaplaceVEM_smoke.xml
+     solidMechanics/elasticHollowCylinder_orthotropic_smoke.xml
+     wellbore/CasedThermoElasticWellbore_ImperfectInterfaces_smoke.xml )
 
 foreach( coverage_smoke_input IN LISTS coverage_smoke_inputs )
   set( input_path "${CMAKE_SOURCE_DIR}/../inputFiles/${coverage_smoke_input}" )
