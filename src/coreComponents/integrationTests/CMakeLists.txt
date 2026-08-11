@@ -32,3 +32,7 @@ endif()
 add_subdirectory( wellsTests )
 add_subdirectory( wavePropagationTests )
 add_subdirectory( mechanicTest )
+
+if( ENABLE_COVERAGE )
+  add_subdirectory( coverageSmokeTests )
+endif()
