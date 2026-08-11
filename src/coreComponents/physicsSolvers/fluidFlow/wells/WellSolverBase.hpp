@@ -20,13 +20,13 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
-#include "physicsSolvers/PhysicsSolverBase.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "dataRepository/Group.hpp"
 namespace geos
 {
 
 class DomainPartition;
-class WellControls;
+
 class WellElementSubRegion;
 
 /**
@@ -35,7 +35,7 @@ class WellElementSubRegion;
  * Base class for well solvers.
  * Provides some common features
  */
-class WellSolverBase : public PhysicsSolverBase
+class WellSolverBase : public WellControls
 {
 public:
 
@@ -60,7 +60,7 @@ public:
   WellSolverBase( WellSolverBase const & ) = delete;
 
   /// default move constructor
-  WellSolverBase( WellSolverBase && ) = default;
+  WellSolverBase( WellSolverBase && ) = delete;
 
   /// deleted assignment operator
   WellSolverBase & operator=( WellSolverBase const & ) = delete;
@@ -129,6 +129,12 @@ public:
   virtual localIndex numFluidPhases() const = 0;
 
   /**
+   * @brief getter for the well associated to this subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the well
+   */
+  WellSolverBase & getWell( WellElementSubRegion const & subRegion );
+  /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a reference to the controls
@@ -149,26 +155,62 @@ public:
    * @param domain  the domain
    */
   void setPerforationStatus( real64 const & time_n, DomainPartition & domain );
-
+  void setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion );
   /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
+   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
+
    */
   /**@{*/
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
+  virtual real64
+  calculateWellResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                             real64 const & GEOS_UNUSED_PARAM( dt ),
+                             WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
+
+  virtual real64
+    scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) ) = 0;
+
+  virtual bool
+    checkWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ) ) = 0;
+  virtual void
+    applyWellSystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                             real64 const GEOS_UNUSED_PARAM( dt ),
+                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) = 0;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
+                            DomainPartition & domain ) override;
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain ) override;
 
   virtual void implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                      real64 const & GEOS_UNUSED_PARAM( dt ),
                                      DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override {}
+
 
   virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
                                         real64 const GEOS_UNUSED_PARAM( dt ),
@@ -177,17 +219,23 @@ public:
                                         CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                         arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
 
+  /**
+   * @brief Selects the active well constraint  based on current conditions
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] coupledIterationNumber the current coupled iteration number
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  void selectWellConstraint( real64 const & time_n,
+                             real64 const & dt,
+                             integer const coupledIterationNumber,
+                             DomainPartition & domain );
 
   /**@}*/
 
   /**
-   * @brief function to assemble the linear system matrix and rhs
-   * @param time the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @copydoc PhysicsSolverBase::assembleSystem()
    */
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -197,14 +245,15 @@ public:
                                arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the flux terms for all connections between well elements
+   * @brief assembles the flux terms for individual well for all connections between well elements
    * @param time_n previous time value
    * @param dt time step
-   * @param domain the physical domain object
+   * @param subRegion the well subregion containing all the primary and dependent fields
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
+
   virtual void assembleFluxTerms( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition & domain,
@@ -226,34 +275,38 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
-  /**
-   * @brief assembles the pressure relations at all connections between well elements except at the well head
-   * @param time_n time at the beginning of the time step
-   * @param dt the time step size
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void assemblePressureRelations( real64 const & time_n,
-                                          real64 const & dt,
-                                          DomainPartition const & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs ) = 0;
+
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param elemManager the element region manager
+   * @param subRegion the well subRegion containing the well elements and their associated fields
+   */
+  virtual real64 updateWellState( MeshBody const & meshBody,
+                                  ElementRegionManager const & elemManager,
+                                  WellElementSubRegion & subRegion ) = 0;
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
    * @param domain the domain containing the mesh and fields
    */
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param elemManager the elemManager containing the well
-   * @param subRegion the well subRegion containing the well elements and their associated fields
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
    */
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
+
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param elemManager the element region manager
+   * fields
+   */
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -263,21 +316,14 @@ public:
                                         real64 const & dt,
                                         DomainPartition & domain ) = 0;
 
-  /**
-   * @brief function to set the next time step size
-   * @param[in] currentTime the current time
-   * @param[in] currentDt the current time step size
-   * @param[in] domain the domain object
-   * @return the prescribed time step size
-   */
-  virtual real64 setNextDt( real64 const & currentTime,
-                            real64 const & currentDt,
-                            DomainPartition & domain ) override;
 
   /**
-   * @brief Utility function to keep the well variables during a time step (used in poromechanics simulations)
-   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
+   * @brief Utility function to keep the well variables during a time step (used in
+   * poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
+   * primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the
+   * initialization step
    */
   void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
   { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
@@ -287,6 +333,8 @@ public:
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
+    /// @return string for the  targetRegions wrapper
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
@@ -307,11 +355,6 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
-  /**
-   * @brief Initialize all the primary and secondary variables in all the wells
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
 
   /**
    * @brief Make sure that the well constraints are compatible
@@ -326,6 +369,8 @@ protected:
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
+
+
 
   /// name of the flow solver
   string m_flowSolverName;
@@ -357,6 +402,10 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// flag to use the estimator
+  integer m_estimateSolution;
+
 };
 
 }

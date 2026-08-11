@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+
 namespace geos
 {
 
@@ -36,12 +37,12 @@ inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
-                 WellControls::Control const & currentControl,
+                 ConstraintTypeId const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
                  real64 const & currentBHP,
                  real64 const & currentVolRate,
-                 WellControls::Control & newControl )
+                 ConstraintTypeId & newControl )
 {
   // if isViable is true at the end of the following checks, no need to switch
   bool controlIsViable = false;
@@ -51,7 +52,7 @@ ControlEquationHelper::
   // The well changes its mode of control whenever the existing control mode would
   // violate one of these limits.
   // BHP control
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     // the control is viable if the reference rate is below the max rate
     controlIsViable = ( LvArray::math::abs( currentVolRate ) <= LvArray::math::abs( targetRate ) + EPS );
@@ -79,9 +80,9 @@ ControlEquationHelper::
   {
     // Note: if BHP control is not viable, we switch to TOTALVOLRATE
     //       if TOTALVOLRATE are not viable, we switch to BHP
-    newControl = ( currentControl == WellControls::Control::BHP )
-               ? WellControls::Control::TOTALVOLRATE
-               : WellControls::Control::BHP;
+    newControl = ( currentControl == ConstraintTypeId::BHP )
+               ? ConstraintTypeId::TOTALVOLRATE
+               : ConstraintTypeId::BHP;
   }
 }
 
@@ -91,7 +92,7 @@ inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
-           WellControls::Control const currentControl,
+           ConstraintTypeId const currentControl,
            real64 const & targetBHP,
            real64 const & targetRate,
            real64 const & currentBHP,
@@ -123,7 +124,7 @@ ControlEquationHelper::
   //       the well element that contains the reference elevation.
 
   // BHP control
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     // control equation is a difference between current BHP and target BHP
     controlEqn = currentBHP - targetBHP;
@@ -133,7 +134,7 @@ ControlEquationHelper::
 
   }
   // Total volumetric rate control
-  else if( currentControl == WellControls::Control::TOTALVOLRATE )
+  else if( currentControl == ConstraintTypeId::TOTALVOLRATE )
   {
     // control equation is the difference between volumetric current rate and target rate
     controlEqn = currentVolRate - targetRate;
@@ -262,14 +263,10 @@ FluxKernel::
 
 #define INST_PressureRelationKernel( IS_THERMAL ) \
   template \
-  localIndex \
+  void \
   PressureRelationKernel:: \
     launch< IS_THERMAL >( localIndex const size, \
                           globalIndex const rankOffset, \
-                          bool const isLocallyOwned, \
-                          localIndex const iwelemControl, \
-                          WellControls const & wellControls, \
-                          real64 const & timeAtEndOfStep, \
                           arrayView1d< globalIndex const > const & wellElemDofNumber, \
                           arrayView1d< real64 const > const & wellElemGravCoef, \
                           arrayView1d< localIndex const > const & nextWellElemIndex, \
@@ -283,14 +280,10 @@ INST_PressureRelationKernel( 0 );
 INST_PressureRelationKernel( 1 );
 
 template< integer IS_THERMAL >
-localIndex
+void
 PressureRelationKernel::
   launch( localIndex const size,
           globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          WellControls const & wellControls,
-          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -303,23 +296,6 @@ PressureRelationKernel::
   using Deriv = constitutive::singlefluid::DerivativeOffset;
   using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
   // static well control data
-  bool const isProducer = wellControls.isProducer();
-  WellControls::Control const currentControl = wellControls.getControl();
-  real64 const targetBHP = wellControls.getTargetBHP( time );
-  real64 const targetRate = wellControls.getTargetTotalRate( time );
-
-  // dynamic well control data
-  real64 const & currentBHP =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 const > const & dCurrentBHP =
-    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
-
-  real64 const & currentVolRate =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
-  arrayView1d< real64 const > const & dCurrentVolRate =
-    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
-
-  RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
@@ -327,34 +303,7 @@ PressureRelationKernel::
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
-    if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
-    {
-      WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( isProducer,
-                                            currentControl,
-                                            targetBHP,
-                                            targetRate,
-                                            currentBHP,
-                                            currentVolRate,
-                                            newControl );
-      if( currentControl != newControl )
-      {
-        switchControl.max( 1 );
-      }
-
-      ControlEquationHelper::compute< IS_THERMAL >( rankOffset,
-                                                    newControl,
-                                                    targetBHP,
-                                                    targetRate,
-                                                    currentBHP,
-                                                    dCurrentBHP,
-                                                    currentVolRate,
-                                                    dCurrentVolRate,
-                                                    wellElemDofNumber[iwelemControl],
-                                                    localMatrix,
-                                                    localRhs );
-    }
-    else if( iwelemNext >= 0 )  // if iwelemNext >= 0, form momentum equation
+    if( iwelemNext >= 0 )  // if iwelemNext >= 0, form momentum equation
     {
 
       // local working variables and arrays
@@ -406,7 +355,6 @@ PressureRelationKernel::
       }
     }
   } );
-  return switchControl.get();
 }
 
 /******************************** AccumulationKernel ********************************/
@@ -455,6 +403,7 @@ PresTempInitializationKernel::
           localIndex const subRegionSize,
           localIndex const numPerforations,
           WellControls const & wellControls,
+          real64 const & refWellElemGravCoef,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
@@ -468,9 +417,8 @@ PresTempInitializationKernel::
           arrayView1d< real64 > const & wellElemTemperature )
 {
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
-  real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   real64 const initialPressureCoef = wellControls.getInitialPressureCoefficient();
-  WellControls::Control const currentControl = wellControls.getControl();
+  ConstraintTypeId const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
 
 
@@ -529,7 +477,7 @@ PresTempInitializationKernel::
     avgTemp = wellControls.getInjectionTemperature();
   }
   // if the well is controlled by pressure, initialize the reference pressure at the target pressure
-  if( currentControl == WellControls::Control::BHP )
+  if( currentControl == ConstraintTypeId::BHP )
   {
     refPres = targetBHP;
   }
@@ -581,7 +529,7 @@ PresTempInitializationKernel::
   GEOS_THROW_IF( foundNegativePressure.get() == 1,
                  "Invalid well initialization, negative pressure was found.",
                  InputError, wellControls.getDataContext() );
-  if( isThermal )   // tjb change  temp in isothermal cases shouldnt be an issue (also what if temp in fluid prop calcs like compo)
+  if( isThermal )
   {
     GEOS_THROW_IF( foundNegativeTemp.get() == 1,
                    "Invalid well initialization, negative temperature was found.",
@@ -599,29 +547,35 @@ RateInitializationKernel::
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDens,
           arrayView1d< real64 > const & connRate )
 {
-  real64 const targetRate = wellControls.getTargetTotalRate( currentTime );
-  WellControls::Control const control = wellControls.getControl();
+
+  ConstraintTypeId const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
+  auto const * rateConstraint = wellControls.getRateConstraints().front();
+  real64 const constraintVal = rateConstraint->getConstraintValue( currentTime );
 
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
-    if( control == WellControls::Control::BHP )
+    if( control == ConstraintTypeId::BHP )
     {
       // if BHP constraint set rate below the absolute max rate
       // with the appropriate sign (negative for prod, positive for inj)
       if( isProducer )
       {
-        connRate[iwelem] = LvArray::math::max( 0.1 * targetRate * wellElemDens[iwelem][0], -1e3 );
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * wellElemDens[iwelem][0], -1e3 );
       }
       else
       {
-        connRate[iwelem] = LvArray::math::min( 0.1 * targetRate * wellElemDens[iwelem][0], 1e3 );
+        connRate[iwelem] = LvArray::math::min( 0.1 * constraintVal * wellElemDens[iwelem][0], 1e3 );
       }
+    }
+    else if( control == ConstraintTypeId::MASSRATE )
+    {
+      connRate[iwelem] = constraintVal;
     }
     else
     {
-      connRate[iwelem] = targetRate * wellElemDens[iwelem][0];
+      connRate[iwelem] = constraintVal * wellElemDens[iwelem][0];
     }
   } );
 }
