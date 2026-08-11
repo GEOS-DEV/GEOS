@@ -111,7 +111,7 @@ set( coverage_smoke_inputs
 
 function( add_coverage_smoke_test )
   set( options )
-  set( one_value_args NAME MPI_RANKS TIMEOUT )
+  set( one_value_args NAME MPI_RANKS SCHEMA TIMEOUT )
   set( multi_value_args INPUTS GEOS_ARGS )
   cmake_parse_arguments( arg
                          "${options}"
@@ -125,8 +125,11 @@ function( add_coverage_smoke_test )
   if( NOT arg_NAME )
     message( FATAL_ERROR "Coverage smoke test requires NAME" )
   endif()
-  if( NOT arg_INPUTS )
-    message( FATAL_ERROR "Coverage smoke test ${arg_NAME} requires at least one input" )
+  if( arg_INPUTS AND arg_SCHEMA )
+    message( FATAL_ERROR "Coverage smoke test ${arg_NAME} cannot use both INPUTS and SCHEMA" )
+  endif()
+  if( NOT arg_INPUTS AND NOT arg_SCHEMA )
+    message( FATAL_ERROR "Coverage smoke test ${arg_NAME} requires INPUTS or SCHEMA" )
   endif()
 
   set( ctest_name "coverageSmoke_${arg_NAME}" )
@@ -160,11 +163,14 @@ function( add_coverage_smoke_test )
          ${MPIEXEC_POSTFLAGS} )
   endif()
 
+  if( arg_SCHEMA )
+    set( run_arguments -s "${output_directory}/${arg_SCHEMA}" ${arg_GEOS_ARGS} )
+  else()
+    set( run_arguments ${input_arguments} ${arg_GEOS_ARGS} -o "${output_directory}" )
+  endif()
+
   add_test( NAME "${ctest_name}"
-            COMMAND ${test_command}
-                    ${input_arguments}
-                    ${arg_GEOS_ARGS}
-                    -o "${output_directory}" )
+            COMMAND ${test_command} ${run_arguments} )
 
   if( NOT arg_TIMEOUT )
     set( arg_TIMEOUT 180 )
@@ -199,6 +205,17 @@ add_coverage_smoke_test(
   INPUTS wavePropagation/acous3D_dg_order2_coverage.xml
          wavePropagation/acous3D_dg_order3_overlay.xml
          wavePropagation/acous3D_dg_setup_only_overlay.xml )
+
+# One order-3 timestep atomically exercises the generated mass, stiffness, and surface kernels.
+add_coverage_smoke_test(
+  NAME acous3D_dg_order3
+  INPUTS wavePropagation/acous3D_dg_order2_coverage.xml
+         wavePropagation/acous3D_dg_order3_overlay.xml )
+
+# Schema generation expands every registered object catalog into a complete data-repository tree.
+add_coverage_smoke_test(
+  NAME schema_catalog
+  SCHEMA catalog_schema.xsd )
 
 # The second input is an ordered overlay that reduces each cube problem to a one-cycle smoke test.
 foreach( multiscale_solver IN ITEMS singlePhaseFlow solidMechanics singlePhasePoromechanics )
