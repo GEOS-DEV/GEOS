@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events maxTime="30">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="30"
+      target="/Outputs/siloOutput"/>
+  </Events>
+</Problem>

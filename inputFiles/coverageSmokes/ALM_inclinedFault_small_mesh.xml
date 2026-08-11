@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <VTKMesh
+      name="FaultModel"
+      useGlobalIds="0"
+      nodesetNames="{ f1_node_set }"
+      file="fault_contact_coverage.vtu"
+      regionAttribute="CellEntityIds"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="xneg"
+      xMin="{ -301, -1, -3501 }"
+      xMax="{ -250, 1001, -2499 }"/>
+    <Box
+      name="xpos"
+      xMin="{ 250, -1, -3501 }"
+      xMax="{ 299, 1001, -2499 }"/>
+    <Box
+      name="yneg"
+      xMin="{ -301, -1, -3501 }"
+      xMax="{ 299, 1, -2499 }"/>
+    <Box
+      name="ypos"
+      xMin="{ -301, 999, -3501 }"
+      xMax="{ 299, 1001, -2499 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="injection"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/97_hexahedra"
+      fieldName="pressure"
+      scale="0.0"/>
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="0.0"/>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="0.0"/>
+  </FieldSpecifications>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="1"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="1.0e2"
+      iterPenaltyT="1.0e2"
+      tolTauLimit="1.0e-1"
+      tolJumpN="1.0e-5"
+      tolJumpT="1.0e-5"
+      targetRegions="{ Domain, Fault }"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="100"
+        krylovTol="1.0e-5"
+        logLevel="1"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+  </Solvers>
+</Problem>

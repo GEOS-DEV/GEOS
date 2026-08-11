@@ -185,13 +185,106 @@ function( add_coverage_smoke_test )
     set_tests_properties( "${ctest_name}"
                           PROPERTIES
                           PROCESSORS "${arg_MPI_RANKS}" )
+  elseif( GEOS_ENABLE_LLVM_SOURCE_COVERAGE )
+    # Each instrumented process flushes every component DSO profile at exit
+    # (about 70 MiB per serial smoke). Account for that I/O weight so a
+    # --parallel 12 run does not issue twelve simultaneous profile flushes.
+    set_tests_properties( "${ctest_name}"
+                          PROPERTIES
+                          PROCESSORS 4 )
   endif()
 endfunction()
 
 foreach( coverage_smoke_input IN LISTS coverage_smoke_inputs )
   get_filename_component( test_name "${coverage_smoke_input}" NAME_WE )
+  set( coverage_smoke_overlays )
+
+  if( test_name STREQUAL "ALM_inclinedFault_ISG_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/ALM_inclinedFault_small_mesh.xml )
+  elseif( test_name STREQUAL "staircase_co2_wells_hybrid_3d" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/staircase_co2_wells_hybrid_small_mesh.xml )
+  elseif( test_name STREQUAL "acouselas3D_Q2_abc_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/acouselas3D_Q2_small_mesh.xml )
+  elseif( test_name STREQUAL "ALM_TFrac_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/TFrac_small_mesh.xml )
+  elseif( test_name STREQUAL "ThermoPoroElastic_staircase_co2_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/ThermoPoroElastic_staircase_small_mesh.xml )
+  elseif( test_name STREQUAL "PoroElastic_staircase_co2_3d_fim_stab" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/PoroElastic_staircase_fim_small_mesh.xml )
+  elseif( test_name STREQUAL "ThermoPoroDruckerPrager_consolidation_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/ThermoPoroDruckerPrager_fast_events.xml )
+  elseif( test_name STREQUAL "LagrangeContactBubbleStab_FixedSlip_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/LagrangeContactBubbleStab_small_mesh.xml )
+  elseif( test_name STREQUAL "PhaseFieldFracture_Nucleation_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/PhaseFieldFracture_Nucleation_fast_events.xml )
+  elseif( test_name STREQUAL "FieldCaseTutorial3_Thermal_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/FieldCaseTutorial3_Thermal_small_mesh.xml )
+  elseif( test_name STREQUAL "FieldCaseTutorial3_Isothermal_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/FieldCaseTutorial3_Isothermal_small_mesh.xml )
+  elseif( test_name STREQUAL "SeismicityRate_poromechanics_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/SeismicityRate_small_mesh.xml )
+  elseif( test_name STREQUAL "co2_thermal_obl_3d" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/co2_thermal_obl_small_mesh.xml )
+  elseif( test_name STREQUAL "deadOil_fractureMatrixFlow_edfm_horizontalFrac_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/deadOil_edfm_small_mesh.xml )
+  elseif( test_name STREQUAL "SpringSliderImplicit_A_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/SpringSliderImplicit_fast_events.xml )
+  elseif( test_name STREQUAL "staircase_co2_wells_3d" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/staircase_co2_wells_small_mesh.xml )
+  elseif( test_name STREQUAL "deadOilEgg_smoke_3d" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/deadOilEgg_small_mesh.xml )
+  elseif( test_name STREQUAL "ContactMechanics_SimpleCubes_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/ContactMechanics_SimpleCubes_small_mesh.xml )
+  elseif( test_name STREQUAL "grav_seg_1d_DBC" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/grav_seg_1d_DBC_small_mesh.xml )
+  elseif( test_name STREQUAL "co2_flux_dirichlet" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/co2_flux_dirichlet_small_mesh.xml )
+  elseif( test_name STREQUAL "co2_flux_3d" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/co2_flux_3d_small_mesh.xml )
+  elseif( test_name STREQUAL "kgdViscosityDominated_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/kgdViscosityDominated_small_mesh.xml )
+  elseif( test_name STREQUAL "FlowProppantBedTransport2d_smoke" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/FlowProppantBedTransport2d_fast_outputs.xml )
+  elseif( test_name STREQUAL "isothm_mass_inj_table" )
+    list( APPEND coverage_smoke_overlays
+          coverageSmokes/isothm_mass_inj_table_fast_outputs.xml )
+  endif()
+
   add_coverage_smoke_test( NAME "${test_name}"
-                           INPUTS "${coverage_smoke_input}" )
+                           INPUTS "${coverage_smoke_input}" ${coverage_smoke_overlays} )
+
+  if( GEOS_ENABLE_LLVM_SOURCE_COVERAGE AND
+      ( test_name STREQUAL "ContactMechanics_SimpleCubes_smoke" OR
+        test_name STREQUAL "LagrangeContactBubbleStab_FixedSlip_smoke" ) )
+    # These nonlinear contact matrices remain sensitive to concurrent
+    # instrumented solves and profile flushes.
+    set_tests_properties( "coverageSmoke_${test_name}"
+                          PROPERTIES
+                          PROCESSORS 12 )
+  endif()
 endforeach()
 
 # Higher-order DG tetrahedra have very high template multiplicity. Initialize order 3 separately

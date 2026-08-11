@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events
+    maxTime="130.0"
+    maxCycle="2">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="65.0"
+      target="/Solvers/PhaseFieldSolve"/>
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="65.0"
+      target="/Outputs/DamageNucleation_VTKOutput"/>
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="65.0"
+      target="/Outputs/DamageNucleation_SiloOutput"/>
+  </Events>
+</Problem>

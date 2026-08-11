@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events maxTime="2.5e5">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.5e5"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2.5e5"
+      target="/Outputs/sidreRestart"/>
+  </Events>
+</Problem>
