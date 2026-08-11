@@ -6,7 +6,34 @@ message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 ### OPTIONS ###
 option( GEOS_ENABLE_FPE "Enables floating point exceptions" ON )
 option( GEOS_ENABLE_TESTS "Enables unit tests" ON )
+option( GEOS_ENABLE_LLVM_SOURCE_COVERAGE
+        "Enables Clang source-based code coverage instrumentation" OFF )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
+
+if( GEOS_ENABLE_LLVM_SOURCE_COVERAGE )
+  if( NOT CMAKE_C_COMPILER_ID MATCHES "Clang" OR
+      NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    message( FATAL_ERROR
+             "GEOS_ENABLE_LLVM_SOURCE_COVERAGE requires Clang C and C++ compilers." )
+  endif()
+  if( ENABLE_CUDA OR ENABLE_HIP )
+    message( FATAL_ERROR
+             "GEOS_ENABLE_LLVM_SOURCE_COVERAGE currently supports CPU builds only." )
+  endif()
+  if( ENABLE_COVERAGE )
+    message( FATAL_ERROR
+             "GEOS_ENABLE_LLVM_SOURCE_COVERAGE and BLT ENABLE_COVERAGE use "
+             "different instrumentation formats and cannot both be enabled." )
+  endif()
+
+  # Keep this mode separate from BLT's gcov-compatible ENABLE_COVERAGE mode.
+  # Source-based coverage records source conditions rather than compiler CFG
+  # arcs and is consumed by llvm-profdata/llvm-cov.
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:C,CXX>:-fprofile-instr-generate>
+    $<$<COMPILE_LANGUAGE:C,CXX>:-fcoverage-mapping> )
+  add_link_options( $<$<LINK_LANGUAGE:C,CXX>:-fprofile-instr-generate> )
+endif()
 
 option( ENABLE_MATHPRESSO "" ON )
 

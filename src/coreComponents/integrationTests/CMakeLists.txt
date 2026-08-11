@@ -33,6 +33,6 @@ add_subdirectory( wellsTests )
 add_subdirectory( wavePropagationTests )
 add_subdirectory( mechanicTest )
 
-if( ENABLE_COVERAGE )
+if( ENABLE_COVERAGE OR GEOS_ENABLE_LLVM_SOURCE_COVERAGE )
   add_subdirectory( coverageSmokeTests )
 endif()

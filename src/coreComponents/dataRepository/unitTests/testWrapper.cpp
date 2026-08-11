@@ -17,12 +17,15 @@
 #include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
+#include "LvArray/src/system.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
 // System includes
+#include <cstdlib>
+#include <stdexcept>
 #include <tuple>
 
 using namespace geos;
@@ -31,9 +34,34 @@ using namespace dataRepository;
 namespace
 {
 
+class ScopedThrowingLvArrayErrorHandler
+{
+public:
+  ScopedThrowingLvArrayErrorHandler()
+  {
+    LvArray::system::setErrorHandler( []()
+    {
+      throw std::runtime_error( "Expected WrapperStandardArrays error" );
+    } );
+  }
+
+  ~ScopedThrowingLvArrayErrorHandler() noexcept
+  {
+    LvArray::system::setErrorHandler( []()
+    {
+      std::abort();
+    } );
+  }
+
+  ScopedThrowingLvArrayErrorHandler( ScopedThrowingLvArrayErrorHandler const & ) = delete;
+  ScopedThrowingLvArrayErrorHandler & operator=( ScopedThrowingLvArrayErrorHandler const & ) = delete;
+};
+
 template< typename ... ARRAY_TYPES >
 void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
 {
+  ScopedThrowingLvArrayErrorHandler const scopedErrorHandler;
+
   // Keep the arrays outside the Group so both the registered wrappers and their clones are
   // non-owning. This makes it safe to exercise clone() without sharing ownership of the data.
   std::tuple< ARRAY_TYPES ... > storage;
@@ -85,6 +113,11 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
     wrapper.reserve( 3 );
     EXPECT_GT( wrapper.capacity(), 0 );
 
+    // These validation failures occur before Array dimensions or storage are modified.
+    EXPECT_THROW( wrapper.resize( numDims + 1, dims.data() ), std::runtime_error );
+    EXPECT_THROW( wrapper.resize( localIndex( -1 ) ), std::runtime_error );
+    EXPECT_THROW( wrapper.move( static_cast< LvArray::MemorySpace >( -1 ), false ), std::runtime_error );
+
     for( integer dim = 0; dim < numDims; ++dim )
     {
       EXPECT_EQ( &wrapper.setDimLabels( dim, dimLabels ), &wrapper );
@@ -93,6 +126,28 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
       EXPECT_EQ( labels[0], dimLabels[0] );
       EXPECT_EQ( labels[1], dimLabels[1] );
     }
+
+    EXPECT_THROW( wrapper.setDimLabels( -1, dimLabels ), std::runtime_error );
+    EXPECT_THROW( wrapper.setDimLabels( numDims, dimLabels ), std::runtime_error );
+    EXPECT_THROW( wrapper.getDimLabels( -1 ), std::runtime_error );
+    EXPECT_THROW( wrapper.getDimLabels( numDims ), std::runtime_error );
+
+    stdVector< string > const invalidComponentNames( wrapper.numArrayComp() + 1, "invalid" );
+    conduit::Node invalidFields;
+    conduit::Node invalidMCArray;
+    EXPECT_THROW( wrapper.addBlueprintField( invalidFields,
+                                             wrapper.getName(),
+                                             "topology",
+                                             invalidComponentNames ),
+                  std::runtime_error );
+    EXPECT_THROW( wrapper.populateMCArray( invalidMCArray, invalidComponentNames ), std::runtime_error );
+
+    wrapper.resize( 0 );
+    conduit::Node emptyFields;
+    conduit::Node emptyMCArray;
+    EXPECT_THROW( wrapper.addBlueprintField( emptyFields, wrapper.getName(), "topology" ), std::runtime_error );
+    EXPECT_THROW( wrapper.populateMCArray( emptyMCArray ), std::runtime_error );
+    wrapper.resize( numDims, dims.data() );
 
     // Restrict dispatch to the production type catalog so the test does not introduce unrelated
     // Wrapper<T> types solely for coverage.
@@ -160,6 +215,7 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
     EXPECT_TRUE( clone->getTypeId() == wrapper.getTypeId() );
     EXPECT_EQ( clone->voidPointer(), wrapper.voidPointer() );
     EXPECT_EQ( clone->bytesAllocated(), 0 );
+    EXPECT_THROW( clone->copyWrapper( wrapper ), std::runtime_error );
 
     for( bool const withMetadata : { false, true } )
     {
@@ -171,6 +227,12 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
       buffer_unit_type * packBuffer = packed.data();
       EXPECT_EQ( wrapper.pack< true >( packBuffer, withMetadata, false, events ), packedSize );
       EXPECT_EQ( packBuffer, packed.data() + packedSize );
+
+      if( withMetadata )
+      {
+        buffer_unit_type const * mismatchedBuffer = packed.data();
+        EXPECT_THROW( clone->unpack( mismatchedBuffer, true, false, events ), std::runtime_error );
+      }
 
       EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
       {
@@ -212,6 +274,18 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
                                               events ),
                  indexedPackedSize );
       EXPECT_EQ( packBuffer, indexedPacked.data() + indexedPackedSize );
+
+      if( withMetadata )
+      {
+        buffer_unit_type const * mismatchedBuffer = indexedPacked.data();
+        EXPECT_THROW( clone->unpackByIndex( mismatchedBuffer,
+                                            packIndices.toViewConst(),
+                                            true,
+                                            false,
+                                            events,
+                                            MPI_REPLACE ),
+                      std::runtime_error );
+      }
 
       EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
       {
@@ -267,6 +341,37 @@ void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
     wrapper.finishWriting();
     EXPECT_FALSE( wrapper.loadFromConduit() );
 
+    stdVector< camp::idx_t > invalidMetadata( numDims + 1, 0 );
+    conduit::DataType const invalidMetadataType( conduitTypeInfo< camp::idx_t >::id,
+                                                 invalidMetadata.size() );
+    wrapper.setRestartFlags( RestartFlags::WRITE_AND_READ );
+
+    wrapper.registerToWrite();
+    group.getConduitNode()[wrapper.getName()]["__permutation__"].set( invalidMetadataType,
+                                                                      invalidMetadata.data() );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    camp::idx_t * const permutation =
+      group.getConduitNode()[wrapper.getName()]["__permutation__"].value();
+    permutation[0] = numDims;
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    group.getConduitNode()[wrapper.getName()]["__dimensions__"].set( invalidMetadataType,
+                                                                     invalidMetadata.data() );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    buffer_unit_type invalidValue = 0;
+    conduit::DataType const invalidValueType( conduitTypeInfo< buffer_unit_type >::id, 1 );
+    group.getConduitNode()[wrapper.getName()]["__values__"].set( invalidValueType, &invalidValue );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    wrapper.finishWriting();
+
+    EXPECT_THROW( wrapper.erase( std::set< localIndex >{} ), std::runtime_error );
     wrapper.erase( { 0 } );
   } );
 
