@@ -36,7 +36,25 @@ set( coverage_smoke_inputs
      thermoPoromechanicsFractures/ThermoPoroElastic_conforming_smoke.xml
      simplePDE/10x10x10Hex_LaplaceVEM_smoke.xml
      solidMechanics/elasticHollowCylinder_orthotropic_smoke.xml
-     wellbore/CasedThermoElasticWellbore_ImperfectInterfaces_smoke.xml )
+     wellbore/CasedThermoElasticWellbore_ImperfectInterfaces_smoke.xml
+     compositionalMultiphaseFlow/2ph_cap_1d_ihu.xml
+     compositionalMultiphaseFlow/soreideWhitson/lockExchange/lockExchange_Z.xml
+     poromechanics/PoroElastic_staircase_co2_3d_fim_stab.xml
+     compositionalMultiphaseWell/staircase_co2_wells_3d.xml
+     constitutiveDriver/testPVT.xml
+     constitutiveDriver/testRelperm_Table_2_phase.xml
+     constitutiveDriver/testTriaxial_druckerPragerExtended.xml
+     thermalMultiphaseFlow/co2_thermal_2d.xml
+     compositionalMultiphaseFlow/4comp_2ph_1d.xml
+     wavePropagation/acous3D_pml_smoke.xml
+     multipleMeshBodies/testMultipleBodies.xml
+     singlePhaseWell/compressible_single_phase_wells_1d.xml
+     simplePDE/10x10x10Hex_LaplaceFEM_smoke.xml
+     poromechanics/PoroElastic_staircase_singlephase_3d_fim_stab.xml
+     phaseField/PhaseFieldFracture_CohesiveModel.xml
+     singlePhaseFlow/incompressible_pebi3d.xml
+     meshGeneration/multiBodyMeshGen_smoke.xml
+     phaseField/PhaseFieldFracture_DamageOnly.xml )
 
 foreach( coverage_smoke_input IN LISTS coverage_smoke_inputs )
   set( input_path "${CMAKE_SOURCE_DIR}/../inputFiles/${coverage_smoke_input}" )
