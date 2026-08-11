@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4110 (2026-08-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4110-17223-d3106be.tar.gz>
+Update THM validation case + documentation with thermal stress included in effective stress calculation
+
 PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
 Fluid reset after convergence failure
 
