@@ -188,6 +188,18 @@ foreach( coverage_smoke_input IN LISTS coverage_smoke_inputs )
                            INPUTS "${coverage_smoke_input}" )
 endforeach()
 
+# Higher-order DG tetrahedra have very high template multiplicity. Initialize order 3 separately
+# so the order-2 timestep and order-3 setup form a bounded function-coverage milestone.
+add_coverage_smoke_test(
+  NAME acous3D_dg_order2
+  INPUTS wavePropagation/acous3D_dg_order2_coverage.xml )
+
+add_coverage_smoke_test(
+  NAME acous3D_dg_order3_setup
+  INPUTS wavePropagation/acous3D_dg_order2_coverage.xml
+         wavePropagation/acous3D_dg_order3_overlay.xml
+         wavePropagation/acous3D_dg_setup_only_overlay.xml )
+
 # The second input is an ordered overlay that reduces each cube problem to a one-cycle smoke test.
 foreach( multiscale_solver IN ITEMS singlePhaseFlow solidMechanics singlePhasePoromechanics )
   add_coverage_smoke_test(

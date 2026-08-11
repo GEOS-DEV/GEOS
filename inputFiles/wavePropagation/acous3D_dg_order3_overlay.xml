@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+
+<!-- Ordered overlay: pass this as the second input after acous3D_dg_order2_coverage.xml. -->
+<Problem>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="3"
+        formulation="DG"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+</Problem>
