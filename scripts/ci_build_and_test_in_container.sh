@@ -706,6 +706,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   phase_start "Build ATS environment"
   or_die cmake --build . --target ats_environment
+  # The system-site virtualenv inherits Ubuntu's NumPy 1.x-built Matplotlib,
+  # while the GEOS Python packages require NumPy 2.x.
+  or_die "${ATS_PYTHON_HOME}/bin/python3" -m pip install --disable-pip-version-check --upgrade matplotlib
   phase_finish 0
 
   # The tests are not run using cmake (`cmake --build . --verbose  --target ats_run`)
