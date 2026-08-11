@@ -34,6 +34,15 @@ Environment overrides:
                  coreComponents source directory
                  (default: PROJECT_ROOT/src/coreComponents)
 
+CI provenance (required):
+  GEOS_CI_CONTAINER_IMAGE
+  GEOS_CI_CONTAINER_IMAGE_ID
+  GEOS_CI_CONTAINER_IMAGE_DIGESTS
+  GEOS_CI_LLVM_PACKAGE_VERSIONS
+                 Container label, immutable image ID, and JSON array of
+                 immutable repository digests plus the exact runtime-installed
+                 LLVM package revisions supplied by the CI launcher.
+
 Typical profile collection:
   mkdir -p BUILD_DIR/profiles
   LLVM_PROFILE_FILE='BUILD_DIR/profiles/%p-%m.profraw' \
@@ -358,9 +367,13 @@ coverage_summary_tmp="${coverage_summary}.tmp"
   "${project_root}" "${source_dir}" "${production_exclude_regex}" \
   "${compiler_major}" "${profile_count}" "${object_count}" \
   "${zero_hash_mappings}" \
-  "${native_covered}" "${native_total}" <<'PY'
+  "${native_covered}" "${native_total}" \
+  "${cache_file}" "${c_compiler}" "${cxx_compiler}" "${llvm_cov}" <<'PY'
+import hashlib
 import json
 import os
+import re
+import subprocess
 import sys
 
 (
@@ -375,7 +388,255 @@ import sys
   zero_hash_mappings,
   native_covered,
   native_total,
+  cache_file,
+  c_compiler,
+  cxx_compiler,
+  llvm_cov,
 ) = sys.argv[1:]
+
+COVERAGE_CONTRACT_ID = "geos-llvm-source-coverage-v1"
+METRIC_SEMANTICS = {
+  "canonical_metrics": "llvm-cov-summary-instantiation-groups-v1",
+  "native_branch_outcomes": "llvm-cov-lcov-emitted-brda-records-v1",
+  "source_selection": "llvm-cov-sources-and-ignore-regex-v1",
+}
+OBJECT_SELECTION = {
+  "contract_version": 1,
+  "primary_object": "bin/geosx",
+  "additional_object_directory": "lib",
+  "additional_object_globs": [ "*.dll", "*.dylib", "*.so", "*.so.*" ],
+  "excluded_library_basenames": [ "libgtest*", "libtestingUtilities.*" ],
+  "required_object_basenames": [ "geosx", "libmainInterface" ],
+  "coverage_mapping_section": "__llvm_covmap",
+  "test_executables": "excluded",
+}
+
+
+def command_output( description, command ):
+  try:
+    result = subprocess.run(
+      command,
+      check=True,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      text=True,
+    )
+  except ( OSError, subprocess.CalledProcessError ) as error:
+    output = getattr( error, "stdout", "" ) or ""
+    raise ValueError(
+      f"cannot determine {description}: {output.strip() or error}"
+    ) from error
+  output = result.stdout.rstrip( "\r\n" )
+  if not output:
+    raise ValueError( f"cannot determine {description}: empty output" )
+  return output
+
+
+def normalize_cmake_bool( value ):
+  value = value.strip()
+  upper = value.upper()
+  if upper in ( "", "0", "FALSE", "IGNORE", "N", "NO", "NOTFOUND", "OFF" ):
+    return False
+  if upper.endswith( "-NOTFOUND" ):
+    return False
+  return True
+
+
+def normalized_build_config( path ):
+  entries = {}
+  cache_entry = re.compile( r"^([^#/:=]+):([^=]+)=(.*)$" )
+  with open( path, encoding="utf-8" ) as stream:
+    for raw_line in stream:
+      match = cache_entry.match( raw_line.rstrip( "\r\n" ) )
+      if match is None:
+        continue
+      name, entry_type, value = match.groups()
+      if entry_type == "INTERNAL":
+        continue
+      if name in entries:
+        raise ValueError( f"duplicate CMake cache entry: {name}" )
+      entries[name] = ( entry_type, value.strip() )
+
+  if "CMAKE_BUILD_TYPE" not in entries:
+    raise ValueError( "CMake cache does not define CMAKE_BUILD_TYPE" )
+  build_type = entries["CMAKE_BUILD_TYPE"][1]
+  build_type_suffix = re.sub( r"[^A-Za-z0-9]", "_", build_type ).upper()
+  active_flag_names = {
+    "CMAKE_C_FLAGS",
+    "CMAKE_CXX_FLAGS",
+    "CMAKE_EXE_LINKER_FLAGS",
+    "CMAKE_MODULE_LINKER_FLAGS",
+    "CMAKE_SHARED_LINKER_FLAGS",
+    f"CMAKE_C_FLAGS_{build_type_suffix}",
+    f"CMAKE_CXX_FLAGS_{build_type_suffix}",
+    f"CMAKE_EXE_LINKER_FLAGS_{build_type_suffix}",
+    f"CMAKE_MODULE_LINKER_FLAGS_{build_type_suffix}",
+    f"CMAKE_SHARED_LINKER_FLAGS_{build_type_suffix}",
+  }
+  fixed_names = {
+    "BLT_CXX_STD",
+    "BUILD_SHARED_LIBS",
+    "CMAKE_BUILD_TYPE",
+    "CMAKE_CUDA_ARCHITECTURES",
+    "CMAKE_C_EXTENSIONS",
+    "CMAKE_C_STANDARD",
+    "CMAKE_C_STANDARD_REQUIRED",
+    "CMAKE_CXX_EXTENSIONS",
+    "CMAKE_CXX_STANDARD",
+    "CMAKE_CXX_STANDARD_REQUIRED",
+    "CMAKE_INTERPROCEDURAL_OPTIMIZATION",
+    "CMAKE_POSITION_INDEPENDENT_CODE",
+    "CMAKE_UNITY_BUILD",
+    "GEOS_GLOBALINDEX_TYPE",
+    "GEOS_GLOBALINDEX_TYPE_FLAG",
+    "GEOS_LA_INTERFACE",
+    "GEOS_LA_INTERFACE_HYPRE",
+    "GEOS_LOCALINDEX_TYPE",
+    "GEOS_LOCALINDEX_TYPE_FLAG",
+  }
+
+  config = {}
+  for name, ( entry_type, value ) in entries.items():
+    relevant = (
+      name in fixed_names
+      or name in active_flag_names
+      or name.startswith( "ENABLE_" )
+      or name.startswith( "GEOS_BUILD_" )
+      or name.startswith( "GEOS_ENABLE_" )
+      or name.startswith( "LVARRAY_" )
+      or name.startswith( "RAJA_ENABLE_" )
+    )
+    if not relevant:
+      continue
+    config[name] = normalize_cmake_bool( value ) if entry_type == "BOOL" else value
+
+  required = {
+    "BLT_CXX_STD",
+    "BUILD_SHARED_LIBS",
+    "CMAKE_BUILD_TYPE",
+    "ENABLE_COVERAGE",
+    "ENABLE_CUDA",
+    "ENABLE_HIP",
+    "ENABLE_HYPRE",
+    "ENABLE_MPI",
+    "ENABLE_OPENMP",
+    "ENABLE_TRILINOS",
+    "GEOS_BUILD_SHARED_LIBS",
+    "GEOS_ENABLE_BOUNDS_CHECK",
+    "GEOS_ENABLE_LLVM_SOURCE_COVERAGE",
+    "GEOS_GLOBALINDEX_TYPE",
+    "GEOS_LA_INTERFACE",
+    "GEOS_LOCALINDEX_TYPE",
+    "LVARRAY_BOUNDS_CHECK",
+    "RAJA_ENABLE_CUDA",
+    "RAJA_ENABLE_HIP",
+    "RAJA_ENABLE_OPENMP",
+  }
+  missing = sorted( required - config.keys() )
+  if missing:
+    raise ValueError(
+      "CMake coverage configuration is incomplete: " + ", ".join( missing )
+    )
+  if config["ENABLE_COVERAGE"] is not False:
+    raise ValueError( "ENABLE_COVERAGE must be OFF in normalized build config" )
+  if config["GEOS_ENABLE_LLVM_SOURCE_COVERAGE"] is not True:
+    raise ValueError(
+      "GEOS_ENABLE_LLVM_SOURCE_COVERAGE must be ON in normalized build config"
+    )
+  if config["BUILD_SHARED_LIBS"] is not True or \
+      config["GEOS_BUILD_SHARED_LIBS"] is not True:
+    raise ValueError( "coverage object selection requires shared libraries" )
+  return dict( sorted( config.items() ) )
+
+
+def container_provenance():
+  environment_names = (
+    "GEOS_CI_CONTAINER_IMAGE",
+    "GEOS_CI_CONTAINER_IMAGE_ID",
+    "GEOS_CI_CONTAINER_IMAGE_DIGESTS",
+  )
+  missing = [ name for name in environment_names if not os.environ.get( name ) ]
+  if missing:
+    raise ValueError(
+      "missing CI container provenance: " + ", ".join( missing )
+    )
+
+  image = os.environ["GEOS_CI_CONTAINER_IMAGE"]
+  image_id = os.environ["GEOS_CI_CONTAINER_IMAGE_ID"]
+  try:
+    image_digests = json.loads( os.environ["GEOS_CI_CONTAINER_IMAGE_DIGESTS"] )
+  except json.JSONDecodeError as error:
+    raise ValueError( "GEOS_CI_CONTAINER_IMAGE_DIGESTS is not valid JSON" ) from error
+  if (
+    not isinstance( image_digests, list )
+    or not image_digests
+    or any( not isinstance( digest, str ) or not digest for digest in image_digests )
+  ):
+    raise ValueError(
+      "GEOS_CI_CONTAINER_IMAGE_DIGESTS must be a nonempty JSON string array"
+    )
+  image_digests = sorted( set( image_digests ) )
+  if re.fullmatch( r"sha256:[0-9a-f]{64}", image_id ) is None:
+    raise ValueError( "GEOS_CI_CONTAINER_IMAGE_ID must be an immutable SHA256 ID" )
+  for digest in image_digests:
+    if re.fullmatch( r"[^\s@]+@sha256:[0-9a-f]{64}", digest ) is None:
+      raise ValueError( "container repository digests must be immutable SHA256 digests" )
+  if any( character in image for character in "\r\n\0" ):
+    raise ValueError( "GEOS_CI_CONTAINER_IMAGE contains a control character" )
+  return {
+    "image": image,
+    "image_id": image_id,
+    "image_digests": image_digests,
+  }
+
+
+git_command = [
+  "git",
+  "-c",
+  f"safe.directory={project_root}",
+  "-C",
+  project_root,
+  "rev-parse",
+  "--verify",
+]
+commit_sha = command_output( "Git HEAD commit", git_command + [ "HEAD^{commit}" ] )
+tree_sha = command_output( "Git HEAD tree", git_command + [ "HEAD^{tree}" ] )
+git_object_id = re.compile( r"(?:[0-9a-f]{40}|[0-9a-f]{64})" )
+if git_object_id.fullmatch( commit_sha ) is None or \
+    git_object_id.fullmatch( tree_sha ) is None:
+  raise ValueError( "Git commit/tree provenance is not a canonical object ID" )
+
+c_compiler_version = command_output( "C compiler version", [ c_compiler, "--version" ] )
+cxx_compiler_version = command_output(
+  "C++ compiler version", [ cxx_compiler, "--version" ]
+)
+llvm_cov_version = command_output( "llvm-cov version", [ llvm_cov, "--version" ] )
+c_compiler_target = command_output( "C compiler target", [ c_compiler, "-dumpmachine" ] )
+cxx_compiler_target = command_output(
+  "C++ compiler target", [ cxx_compiler, "-dumpmachine" ]
+)
+if c_compiler_target != cxx_compiler_target:
+  raise ValueError( "C and C++ compiler targets differ" )
+
+container = container_provenance()
+toolchain = {
+  "c_compiler_version": c_compiler_version,
+  "cxx_compiler_version": cxx_compiler_version,
+  "llvm_cov_version": llvm_cov_version,
+  "compiler_target": cxx_compiler_target,
+}
+package_versions = os.environ.get( "GEOS_CI_LLVM_PACKAGE_VERSIONS", "" ).splitlines()
+if (
+  not package_versions
+  or package_versions != sorted( set( package_versions ) )
+  or any( re.fullmatch( r"[A-Za-z0-9.+-]+=[^\s=]+", entry ) is None
+          for entry in package_versions )
+):
+  raise ValueError(
+    "GEOS_CI_LLVM_PACKAGE_VERSIONS must be a sorted package=version list"
+  )
+toolchain["llvm_package_versions"] = package_versions
+build_config = normalized_build_config( cache_file )
 
 with open( llvm_summary_path, encoding="utf-8" ) as stream:
   llvm_document = json.load( stream )
@@ -385,6 +646,8 @@ totals = llvm_document["data"][0]["totals"]
 def metric( covered, total ):
   covered = int( covered )
   total = int( total )
+  if covered < 0 or total < 0 or covered > total:
+    raise ValueError( "LLVM emitted invalid coverage counts" )
   return {
     "covered": covered,
     "total": total,
@@ -398,38 +661,91 @@ for name in ( "regions", "functions", "lines", "branches" ):
 
 source_root = os.path.realpath( source_dir )
 branch_gaps = []
-file_branch_covered = 0
-file_branch_total = 0
+per_file_metrics = []
+file_aggregates = {
+  name: { "covered": 0, "total": 0 }
+  for name in ( "regions", "functions", "lines", "branches" )
+}
+seen_paths = set()
 for source in llvm_document["data"][0]["files"]:
-  filename = os.path.realpath( source["filename"] )
+  raw_filename = source["filename"]
+  if not os.path.isabs( raw_filename ):
+    raw_filename = os.path.join( project_root, raw_filename )
+  filename = os.path.realpath( raw_filename )
   try:
     in_scope = os.path.commonpath( ( source_root, filename ) ) == source_root
   except ValueError:
     in_scope = False
   if not in_scope:
     continue
-  branches = source["summary"]["branches"]
-  branch_metric = metric( branches["covered"], branches["count"] )
-  file_branch_covered += branch_metric["covered"]
-  file_branch_total += branch_metric["total"]
+  relative_path = os.path.relpath( filename, project_root ).replace( os.sep, "/" )
+  if relative_path in seen_paths:
+    raise ValueError( f"duplicate LLVM per-file coverage path: {relative_path}" )
+  seen_paths.add( relative_path )
+  file_metrics = {}
+  for name in ( "regions", "functions", "lines", "branches" ):
+    llvm_metric = source["summary"][name]
+    file_metrics[name] = metric( llvm_metric["covered"], llvm_metric["count"] )
+    file_aggregates[name]["covered"] += file_metrics[name]["covered"]
+    file_aggregates[name]["total"] += file_metrics[name]["total"]
+  per_file_metrics.append( { "path": relative_path, "metrics": file_metrics } )
+
+  branch_metric = file_metrics["branches"]
   if branch_metric["not_covered"] == 0:
     continue
   branch_gaps.append(
     {
-      "path": os.path.relpath( filename, project_root ).replace( os.sep, "/" ),
+      "path": relative_path,
       **branch_metric,
     }
   )
+per_file_metrics.sort( key=lambda source: source["path"] )
 branch_gaps.sort( key=lambda gap: ( -gap["not_covered"], gap["path"] ) )
-if ( file_branch_covered, file_branch_total ) != (
-  canonical["branches"]["covered"], canonical["branches"]["total"]
-):
-  raise ValueError( "per-file branch counts do not match canonical totals" )
+for name, aggregate in file_aggregates.items():
+  if ( aggregate["covered"], aggregate["total"] ) != (
+    canonical[name]["covered"], canonical[name]["total"]
+  ):
+    raise ValueError( f"per-file {name} counts do not match canonical totals" )
+
+scope = os.path.relpath( source_dir, project_root ).replace( os.sep, "/" )
+contract_payload = {
+  "summary_schema_version": 3,
+  "contract_id": COVERAGE_CONTRACT_ID,
+  "scope": scope,
+  "excluded_regex": excluded_regex,
+  "metric_semantics": METRIC_SEMANTICS,
+  "container": {
+    "image_id": container["image_id"],
+    "image_digests": container["image_digests"],
+  },
+  "toolchain": toolchain,
+  "build_config": build_config,
+  "object_selection": OBJECT_SELECTION,
+}
+contract_bytes = json.dumps(
+  contract_payload,
+  allow_nan=False,
+  ensure_ascii=True,
+  separators=( ",", ":" ),
+  sort_keys=True,
+).encode( "utf-8" )
+contract_fingerprint = hashlib.sha256( contract_bytes ).hexdigest()
 
 document = {
-  "schema_version": 2,
-  "scope": os.path.relpath( source_dir, project_root ),
+  "schema_version": 3,
+  "scope": scope,
   "excluded_regex": excluded_regex,
+  "measurement": {
+    "commit_sha": commit_sha,
+    "tree_sha": tree_sha,
+    "contract_id": COVERAGE_CONTRACT_ID,
+    "contract_fingerprint": contract_fingerprint,
+    "container": container,
+    "toolchain": toolchain,
+    "build_config": build_config,
+    "metric_semantics": METRIC_SEMANTICS,
+    "object_selection": OBJECT_SELECTION,
+  },
   "tool": {
     "name": "llvm-cov",
     "major": int( compiler_major ),
@@ -440,6 +756,7 @@ document = {
     "zero_hash_mappings": int( zero_hash_mappings ),
   },
   "metrics": canonical,
+  "per_file_metrics": per_file_metrics,
   "top_branch_gaps": branch_gaps[:5],
   "supplemental": {
     "native_branch_outcomes": metric( native_covered, native_total ),

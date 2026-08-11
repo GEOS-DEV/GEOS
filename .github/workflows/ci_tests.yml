@@ -13,6 +13,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
@@ -304,11 +308,16 @@ jobs:
   llvm_source_coverage:
     needs:
       - is_not_draft_pull_request
+    permissions:
+      actions: read
+      contents: read
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: "--build-exe-only"
       BUILD_SHARED_LIBS: "ON"
       CMAKE_BUILD_TYPE: RelWithDebInfo
+      COVERAGE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+      COVERAGE_HEAD_SHA: ${{ github.sha }}
       CTEST_PARALLEL_LEVEL: "12"
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu24.04-clang20

@@ -170,6 +170,16 @@ being hard gates. The compiler-native report is published in the GitHub job
 summary and retained as a compact workflow artifact; no hosted coverage service
 or secret is required.
 
+For pull requests, the same job also intersects the tested merge commit's diff
+with LLVM's detailed source records. It reports coverage of changed executable
+lines, new function entry sites, and native branch outcomes, then ranks the
+changed locations with the largest misses and suggests the kind of case needed
+to exercise each one. When an artifact exists for the exact target-branch
+commit, the summary also shows the canonical project coverage change from that
+base. A missing or incompatible base artifact is reported as unavailable rather
+than substituted with a different commit. These PR-specific signals are
+advisory; the repository canonical branch floor remains the enforced policy.
+
 Integrated tests are not part of this focused CI coverage pass, but they should
 still be taken into account, especially for minor physical kernel changes.
 

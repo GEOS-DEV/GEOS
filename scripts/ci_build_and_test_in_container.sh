@@ -156,6 +156,12 @@ Usage: $0
       Optional override for CMAKE_CUDA_ARCHITECTURES.
   --coverage-output-dir /path/to/output
       Directory where compact LLVM source-coverage artifacts are written.
+  --coverage-base-sha SHA
+      Exact pull-request base commit used for advisory patch coverage.
+  --coverage-head-sha SHA
+      Exact commit being built and measured by the coverage job.
+  --coverage-baseline-summary /path/to/coverage-summary.json
+      Optional trusted summary for the exact base commit.
   --ctest-parallel-level N
       Number of tests ctest may run in parallel.
   --data-basename output.tar.gz
@@ -211,7 +217,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,coverage-output-dir:,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,llvm-source-coverage,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,coverage-base-sha:,coverage-baseline-summary:,coverage-head-sha:,coverage-output-dir:,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,llvm-source-coverage,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -230,6 +236,9 @@ TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 LLVM_SOURCE_COVERAGE=false
 COVERAGE_OUTPUT_DIR=""
+COVERAGE_BASE_SHA=""
+COVERAGE_HEAD_SHA=""
+COVERAGE_BASELINE_SUMMARY=""
 CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
@@ -252,6 +261,9 @@ do
     --cmake-cuda-architectures)
       CMAKE_CUDA_ARCHITECTURES_ARGS+=("-DCMAKE_CUDA_ARCHITECTURES=$2")
       shift 2;;
+    --coverage-base-sha)      COVERAGE_BASE_SHA=$2;       shift 2;;
+    --coverage-baseline-summary) COVERAGE_BASELINE_SUMMARY=$2; shift 2;;
+    --coverage-head-sha)      COVERAGE_HEAD_SHA=$2;       shift 2;;
     --coverage-output-dir)    COVERAGE_OUTPUT_DIR=$2;     shift 2;;
     --ninja)
         BUILD_GENERATOR=$1;
@@ -428,6 +440,27 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     echo "--llvm-source-coverage requires --coverage-output-dir." >&2
     exit 1
   fi
+  if [[ ! "${COVERAGE_HEAD_SHA}" =~ ^[0-9a-f]{40}$ ||
+        "$(git -c "safe.directory=${GEOS_SRC_DIR}" -C "${GEOS_SRC_DIR}" rev-parse HEAD)" != "${COVERAGE_HEAD_SHA}" ]]; then
+    echo "--coverage-head-sha must identify the checked-out commit." >&2
+    exit 1
+  fi
+  if [[ -n "${COVERAGE_BASE_SHA}" ]]; then
+    if [[ ! "${COVERAGE_BASE_SHA}" =~ ^[0-9a-f]{40}$ ]] ||
+       ! git -c "safe.directory=${GEOS_SRC_DIR}" -C "${GEOS_SRC_DIR}" \
+             cat-file -e "${COVERAGE_BASE_SHA}^{commit}" 2>/dev/null; then
+      echo "--coverage-base-sha must identify an available commit." >&2
+      exit 1
+    fi
+  fi
+  if [[ -n "${COVERAGE_BASELINE_SUMMARY}" ]]; then
+    if [[ -z "${COVERAGE_BASE_SHA}" ||
+          ! -f "${COVERAGE_BASELINE_SUMMARY}" ||
+          -L "${COVERAGE_BASELINE_SUMMARY}" ]]; then
+      echo "--coverage-baseline-summary requires a safe file and a base SHA." >&2
+      exit 1
+    fi
+  fi
 
   # The pinned Clang CI image intentionally contains the compiler and TPLs but
   # not the compiler-native coverage reporter or profile runtime. Install the
@@ -435,6 +468,10 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   or_die apt-get update -qq
   or_die env DEBIAN_FRONTEND=noninteractive apt-get install -y \
                --no-install-recommends llvm-20 libclang-rt-20-dev
+  export GEOS_CI_LLVM_PACKAGE_VERSIONS="$({
+    dpkg-query -W -f='${Package}=${Version}\n' llvm-20 libclang-rt-20-dev
+  } | LC_ALL=C sort)"
+  or_die test -n "${GEOS_CI_LLVM_PACKAGE_VERSIONS}"
 
   for llvm_tool in llvm-cov-20 llvm-profdata-20 llvm-readelf-20; do
     or_die command -v "${llvm_tool}"
@@ -451,13 +488,15 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     llvm-summary.json \
     mapping-integrity.log \
     native-export.log \
+    pr-coverage.json \
+    pr-coverage.md \
     summary-export.log \
     toolchain.txt; do
     or_die rm -f -- "${COVERAGE_OUTPUT_DIR}/${coverage_artifact}"
   done
   or_die python3 -m unittest discover \
                -s "${GEOS_SRC_DIR}/scripts/tests" \
-               -p 'test_check_coverage_thresholds.py'
+               -p 'test_*coverage*.py'
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -600,6 +639,26 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     "${LLVM_TEST_PROFILE_DIR}" \
     "${LLVM_REPORT_DIR}" || coverage_report_status=$?
 
+  coverage_pr_status=0
+  coverage_pr_ran=false
+  if [[ ${coverage_report_status} -eq 0 && -n "${COVERAGE_BASE_SHA}" ]]; then
+    coverage_pr_ran=true
+    coverage_pr_args=(
+      --repository "${GEOS_SRC_DIR}"
+      --base-sha "${COVERAGE_BASE_SHA}"
+      --head-sha "${COVERAGE_HEAD_SHA}"
+      --native-info "${LLVM_REPORT_DIR}/native.info"
+      --candidate-summary "${LLVM_REPORT_DIR}/coverage-summary.json"
+      --output-json "${COVERAGE_OUTPUT_DIR}/pr-coverage.json"
+      --output-markdown "${COVERAGE_OUTPUT_DIR}/pr-coverage.md"
+    )
+    if [[ -n "${COVERAGE_BASELINE_SUMMARY}" ]]; then
+      coverage_pr_args+=(--baseline-summary "${COVERAGE_BASELINE_SUMMARY}")
+    fi
+    python3 "${GEOS_SRC_DIR}/scripts/compare_pr_coverage.py" \
+      "${coverage_pr_args[@]}" || coverage_pr_status=$?
+  fi
+
   coverage_gate_status=0
   coverage_gate_ran=false
   if [[ ${coverage_report_status} -eq 0 ]]; then
@@ -630,7 +689,8 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   coverage_overall_status=PASS
   if [[ ${coverage_ctest_status} -ne 0 ||
         ${coverage_report_status} -ne 0 ||
-        ${coverage_gate_status} -ne 0 ]]; then
+        ${coverage_gate_status} -ne 0 ||
+        ${coverage_pr_status} -ne 0 ]]; then
     coverage_overall_status=FAIL
   fi
 
@@ -684,6 +744,17 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   else
     coverage_gate_detail="Repository threshold check failed"
   fi
+  if [[ "${coverage_pr_ran}" != true ]]; then
+    if [[ -n "${COVERAGE_BASE_SHA}" ]]; then
+      coverage_pr_detail="Skipped because the LLVM report was unavailable"
+    else
+      coverage_pr_detail="Not a pull-request coverage run"
+    fi
+  elif [[ ${coverage_pr_status} -eq 0 ]]; then
+    coverage_pr_detail="Changed-code coverage and exact-base comparison rendered below"
+  else
+    coverage_pr_detail="Patch-specific coverage analysis failed"
+  fi
 
   coverage_status_markdown="${COVERAGE_OUTPUT_DIR}/coverage-status.md"
   coverage_status_tmp="${coverage_status_markdown}.tmp"
@@ -721,6 +792,9 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     printf '| Repository coverage policy | %s | %s |\n' \
       "$(coverage_phase_status "${coverage_gate_status}" "${coverage_gate_ran}")" \
       "${coverage_gate_detail}"
+    printf '| PR coverage analysis | %s | %s |\n' \
+      "$(coverage_phase_status "${coverage_pr_status}" "${coverage_pr_ran}")" \
+      "${coverage_pr_detail}"
     printf '\n'
     printf '### Run configuration\n\n'
     printf '| Item | Value |\n'
@@ -738,7 +812,8 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
 
   if [[ "${coverage_overall_status}" = FAIL ]]; then
     echo "LLVM source coverage failed: ctest=${coverage_ctest_status}, " \
-         "report=${coverage_report_status}, gate=${coverage_gate_status}." >&2
+         "report=${coverage_report_status}, gate=${coverage_gate_status}, " \
+         "pr=${coverage_pr_status}." >&2
     exit 1
   fi
   exit 0

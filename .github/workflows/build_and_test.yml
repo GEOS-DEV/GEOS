@@ -24,6 +24,14 @@ on:
         required: false
         type: boolean
         default: false
+      COVERAGE_BASE_SHA:
+        required: false
+        type: string
+        default: ''
+      COVERAGE_HEAD_SHA:
+        required: false
+        type: string
+        default: ''
       CTEST_PARALLEL_LEVEL:
         required: false
         type: string
@@ -133,7 +141,9 @@ jobs:
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
-        fetch-depth: 1
+        # A coverage PR is built from GitHub's merge commit. Its two parents
+        # are needed to attribute coverage to the exact patch that was tested.
+        fetch-depth: ${{ inputs.LLVM_SOURCE_COVERAGE && 2 || 1 }}
 
     - id: 'auth'
       if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
@@ -154,6 +164,12 @@ jobs:
         CI_DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
         CI_LLVM_SOURCE_COVERAGE: ${{ inputs.LLVM_SOURCE_COVERAGE }}
         CI_RUNNER_LABEL: ${{ inputs.RUNS_ON }}
+        CI_COVERAGE_BASE_SHA: ${{ inputs.COVERAGE_BASE_SHA }}
+        CI_COVERAGE_HEAD_SHA: ${{ inputs.COVERAGE_HEAD_SHA }}
+        CI_REPOSITORY: ${{ github.repository }}
+        # This standard, read-only Actions token is used only by the bounded
+        # host-side baseline fetcher and is never passed into Docker.
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -176,7 +192,7 @@ jobs:
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
-        COMMIT=${{ github.event.pull_request.head.sha }}
+        COMMIT=${{ github.event.pull_request.head.sha || github.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
@@ -233,6 +249,35 @@ jobs:
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
         if [[ "${CI_LLVM_SOURCE_COVERAGE}" == 'true' ]]; then
+          coverage_base_sha="${CI_COVERAGE_BASE_SHA}"
+          coverage_head_sha="${CI_COVERAGE_HEAD_SHA}"
+          if [[ ! "${coverage_head_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Coverage head SHA is missing or invalid: ${coverage_head_sha}" >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "${coverage_head_sha}" ]]; then
+            echo "Coverage checkout does not match the tested head SHA." >&2
+            exit 1
+          fi
+
+          if [[ -n "${coverage_base_sha}" ]]; then
+            if [[ ! "${coverage_base_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Coverage base SHA is invalid: ${coverage_base_sha}" >&2
+              exit 1
+            fi
+            if ! git cat-file -e "${coverage_base_sha}^{commit}" 2>/dev/null; then
+              git fetch --no-tags --depth=1 origin "${coverage_base_sha}"
+            fi
+            if ! git cat-file -e "${coverage_base_sha}^{commit}" 2>/dev/null; then
+              echo "Coverage base commit is unavailable after fetching it." >&2
+              exit 1
+            fi
+            if [[ "$(git rev-parse "${coverage_head_sha}^1")" != "${coverage_base_sha}" ]]; then
+              echo "Coverage base SHA is not the first parent of the tested merge commit." >&2
+              exit 1
+            fi
+          fi
+
           COVERAGE_ARTIFACT_DIR=$(mktemp -d "${RUNNER_TEMP}/llvm-source-coverage.XXXXXX")
           if [[ ! -d "${COVERAGE_ARTIFACT_DIR}" || -L "${COVERAGE_ARTIFACT_DIR}" ]]; then
             echo "Failed to create a safe LLVM coverage artifact directory." >&2
@@ -249,7 +294,43 @@ jobs:
           docker_args+=(-e "GEOS_CI_CONTAINER_IMAGE_ID=${docker_image_id}")
           docker_args+=(-e "GEOS_CI_CONTAINER_IMAGE_DIGESTS=${docker_image_digests}")
           docker_args+=(-e "GEOS_CI_RUNNER_LABEL=${CI_RUNNER_LABEL}")
-          script_args+=(--llvm-source-coverage --coverage-output-dir ${COVERAGE_ARTIFACT_MOUNT_POINT})
+          script_args+=(--llvm-source-coverage
+                        --coverage-output-dir "${COVERAGE_ARTIFACT_MOUNT_POINT}"
+                        --coverage-head-sha "${coverage_head_sha}")
+
+          if [[ -n "${coverage_base_sha}" ]]; then
+            script_args+=(--coverage-base-sha "${coverage_base_sha}")
+            COVERAGE_BASELINE_DIR=$(mktemp -d "${RUNNER_TEMP}/llvm-coverage-baseline.XXXXXX")
+            if [[ ! -d "${COVERAGE_BASELINE_DIR}" || -L "${COVERAGE_BASELINE_DIR}" ]]; then
+              echo "Failed to create a safe coverage baseline directory." >&2
+              exit 1
+            fi
+            printf 'LLVM_COVERAGE_BASELINE_DIR=%s\n' "${COVERAGE_BASELINE_DIR}" >> "${GITHUB_ENV}"
+
+            set +e
+            python3 scripts/fetch_coverage_baseline.py \
+              --repository "${CI_REPOSITORY}" \
+              --workflow ci_tests.yml \
+              --base-sha "${coverage_base_sha}" \
+              --artifact-name-prefix llvm-source-coverage-baseline- \
+              --token-env GITHUB_TOKEN \
+              --output-dir "${COVERAGE_BASELINE_DIR}"
+            baseline_fetch_status=$?
+            set -e
+            case "${baseline_fetch_status}" in
+              0)
+                baseline_mount=/tmp/llvm-coverage-baseline
+                docker_args+=(--volume="${COVERAGE_BASELINE_DIR}:${baseline_mount}:ro")
+                script_args+=(--coverage-baseline-summary "${baseline_mount}/coverage-summary.json")
+                ;;
+              3)
+                echo "No trusted exact-base coverage artifact is available; PR patch coverage will still be reported."
+                ;;
+              *)
+                echo "::warning::Coverage baseline lookup failed with status ${baseline_fetch_status}; PR patch coverage will continue without an aggregate delta."
+                ;;
+            esac
+          fi
         fi
 
         if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
@@ -425,6 +506,14 @@ jobs:
           echo "GCP upload disabled."
         fi
 
+        if [[ "${CI_LLVM_SOURCE_COVERAGE}" == 'true' &&
+              -n "${COVERAGE_BASELINE_DIR:-}" &&
+              -f "${COVERAGE_BASELINE_DIR}/coverage-baseline-status.json" &&
+              ! -L "${COVERAGE_BASELINE_DIR}/coverage-baseline-status.json" ]]; then
+          cp -- "${COVERAGE_BASELINE_DIR}/coverage-baseline-status.json" \
+                "${COVERAGE_ARTIFACT_DIR}/coverage-baseline-status.json"
+        fi
+
         exit ${EXIT_STATUS}
 
     - name: Validate compact LLVM coverage report
@@ -449,7 +538,7 @@ jobs:
         fi
         while IFS= read -r artifact_file; do
           case "$(basename -- "${artifact_file}")" in
-            CMakeCache.txt|branch-summary.txt|coverage-objects.txt|coverage-status.md|coverage-summary.json|coverage-summary.md|ctest.log|llvm-summary.json|mapping-integrity.log|native-export.log|summary-export.log|toolchain.txt) ;;
+            CMakeCache.txt|branch-summary.txt|coverage-baseline-status.json|coverage-objects.txt|coverage-status.md|coverage-summary.json|coverage-summary.md|ctest.log|llvm-summary.json|mapping-integrity.log|native-export.log|pr-coverage.json|pr-coverage.md|summary-export.log|toolchain.txt) ;;
             *)
               echo "Unexpected LLVM coverage artifact: ${artifact_file}" >&2
               exit 1
@@ -467,6 +556,7 @@ jobs:
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE }}
       env:
         CI_COVERAGE_ARTIFACT_VALIDATION: ${{ steps.validate_llvm_coverage_artifact.outcome }}
+        CI_COVERAGE_BASE_SHA: ${{ inputs.COVERAGE_BASE_SHA }}
       run: |
         printf '## LLVM source coverage\n\n' >> "${GITHUB_STEP_SUMMARY}"
         if [[ "${CI_COVERAGE_ARTIFACT_VALIDATION}" != success ]]; then
@@ -498,6 +588,18 @@ jobs:
             printf 'The job did not produce a validated coverage report. Inspect the build and report logs.\n'
           } >> "${GITHUB_STEP_SUMMARY}"
         fi
+        if [[ -n "${CI_COVERAGE_BASE_SHA}" ]]; then
+          pr_report="${LLVM_COVERAGE_ARTIFACT_DIR}/pr-coverage.md"
+          if [[ -f "${pr_report}" && ! -L "${pr_report}" ]]; then
+            printf '\n' >> "${GITHUB_STEP_SUMMARY}"
+            cat "${pr_report}" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            {
+              printf '\n### PR coverage unavailable\n\n'
+              printf 'The patch-specific report was not produced; inspect the job log.\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+        fi
 
     - name: Retain compact LLVM coverage report
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE && steps.validate_llvm_coverage_artifact.outcome == 'success' }}
@@ -507,6 +609,7 @@ jobs:
         path: |
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/CMakeCache.txt
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/branch-summary.txt
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-baseline-status.json
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-objects.txt
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-status.md
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-summary.json
@@ -515,24 +618,44 @@ jobs:
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/llvm-summary.json
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/mapping-integrity.log
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/native-export.log
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/pr-coverage.json
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/pr-coverage.md
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/summary-export.log
           ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/toolchain.txt
         if-no-files-found: warn
         retention-days: 7
 
+    - name: Retain trusted develop coverage baseline
+      if: ${{ success() && inputs.LLVM_SOURCE_COVERAGE && github.event_name == 'push' && github.ref == 'refs/heads/develop' && steps.validate_llvm_coverage_artifact.outcome == 'success' }}
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: llvm-source-coverage-baseline-${{ github.sha }}
+        path: |
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-summary.json
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/llvm-summary.json
+          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/toolchain.txt
+        if-no-files-found: error
+        overwrite: true
+        retention-days: 90
+
     - name: Remove temporary LLVM coverage files
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE }}
       run: |
-        if [[ -z "${LLVM_COVERAGE_ARTIFACT_DIR:-}" ||
-              ! -d "${LLVM_COVERAGE_ARTIFACT_DIR}" ||
-              -L "${LLVM_COVERAGE_ARTIFACT_DIR}" ]]; then
-          exit 0
+        if [[ -n "${LLVM_COVERAGE_ARTIFACT_DIR:-}" &&
+              -d "${LLVM_COVERAGE_ARTIFACT_DIR}" &&
+              ! -L "${LLVM_COVERAGE_ARTIFACT_DIR}" ]]; then
+          docker run --rm \
+            --volume="${LLVM_COVERAGE_ARTIFACT_DIR}:/tmp/coverage-artifact" \
+            alpine:3.20 \
+            sh -lc 'find /tmp/coverage-artifact -mindepth 1 -delete'
+          rmdir "${LLVM_COVERAGE_ARTIFACT_DIR}"
         fi
-        docker run --rm \
-          --volume="${LLVM_COVERAGE_ARTIFACT_DIR}:/tmp/coverage-artifact" \
-          alpine:3.20 \
-          sh -lc 'find /tmp/coverage-artifact -mindepth 1 -delete'
-        rmdir "${LLVM_COVERAGE_ARTIFACT_DIR}"
+        if [[ -n "${LLVM_COVERAGE_BASELINE_DIR:-}" &&
+              -d "${LLVM_COVERAGE_BASELINE_DIR}" &&
+              ! -L "${LLVM_COVERAGE_BASELINE_DIR}" ]]; then
+          find "${LLVM_COVERAGE_BASELINE_DIR}" -mindepth 1 -maxdepth 1 -type f -delete
+          rmdir "${LLVM_COVERAGE_BASELINE_DIR}"
+        fi
 
     - name: Show sccache summary
       if: ${{ always() && inputs.USE_SCCACHE }}

@@ -19,37 +19,121 @@ def metric( covered, total ):
         "covered": covered,
         "total": total,
         "not_covered": total - covered,
-        "percent": round( 100.0 * covered / total, 6 ),
+        "percent": round( 100.0 * covered / total if total else 0.0, 6 ),
     }
 
 
+def measurement( scope, excluded_regex ):
+    value = {
+        "commit_sha": "1" * 40,
+        "tree_sha": "2" * 40,
+        "contract_id": coverage_gate.COVERAGE_CONTRACT_ID,
+        "contract_fingerprint": "0" * 64,
+        "container": {
+            "image": "geosx/ubuntu24.04-clang20:349-1014",
+            "image_id": f"sha256:{'3' * 64}",
+            "image_digests": [
+                f"geosx/ubuntu24.04-clang20@sha256:{'4' * 64}"
+            ],
+        },
+        "toolchain": {
+            "c_compiler_version": (
+                "Ubuntu clang version 20.1.2 (0ubuntu1~24.04.3)\n"
+                "Target: x86_64-pc-linux-gnu"
+            ),
+            "cxx_compiler_version": (
+                "Ubuntu clang version 20.1.2 (0ubuntu1~24.04.3)\n"
+                "Target: x86_64-pc-linux-gnu"
+            ),
+            "llvm_cov_version": (
+                "Ubuntu LLVM version 20.1.2\n  Optimized build."
+            ),
+            "llvm_package_versions": [
+                "libclang-rt-20-dev=1:20.1.2-0ubuntu1~24.04.3",
+                "llvm-20=1:20.1.2-0ubuntu1~24.04.3",
+            ],
+            "compiler_target": "x86_64-pc-linux-gnu",
+        },
+        "build_config": {
+            "BLT_CXX_STD": "c++17",
+            "BUILD_SHARED_LIBS": True,
+            "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+            "CMAKE_C_FLAGS": "-pthread",
+            "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+            "CMAKE_CXX_FLAGS": "-pthread",
+            "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+            "ENABLE_COVERAGE": False,
+            "ENABLE_CUDA": False,
+            "ENABLE_HIP": False,
+            "ENABLE_HYPRE": True,
+            "ENABLE_MPI": True,
+            "ENABLE_OPENMP": True,
+            "ENABLE_HYPRE_DEVICE": "CPU",
+            "ENABLE_TRILINOS": False,
+            "GEOS_BUILD_SHARED_LIBS": True,
+            "GEOS_ENABLE_BOUNDS_CHECK": False,
+            "GEOS_ENABLE_LLVM_SOURCE_COVERAGE": True,
+            "GEOS_GLOBALINDEX_TYPE": "long long int",
+            "GEOS_LA_INTERFACE": "Hypre",
+            "GEOS_LOCALINDEX_TYPE": "int",
+            "LVARRAY_BOUNDS_CHECK": False,
+            "RAJA_ENABLE_CUDA": False,
+            "RAJA_ENABLE_HIP": False,
+            "RAJA_ENABLE_OPENMP": False,
+        },
+        "metric_semantics": json.loads(
+            json.dumps( coverage_gate.METRIC_SEMANTICS )
+        ),
+        "object_selection": json.loads(
+            json.dumps( coverage_gate.OBJECT_SELECTION )
+        ),
+    }
+    value["contract_fingerprint"] = coverage_gate.compute_contract_fingerprint(
+        scope, excluded_regex, value
+    )
+    return value
+
+
 def summary( branch_covered=1, branch_total=2 ):
-    return {
-        "schema_version": 2,
-        "scope": "src/coreComponents",
-        "excluded_regex": "/unitTests/",
+    scope = "src/coreComponents"
+    excluded_regex = "/unitTests/"
+    canonical = {
+        "regions": metric( 1, 2 ),
+        "functions": metric( 1, 2 ),
+        "lines": metric( 1, 2 ),
+        "branches": metric( branch_covered, branch_total ),
+    }
+    document = {
+        "schema_version": 3,
+        "scope": scope,
+        "excluded_regex": excluded_regex,
+        "measurement": measurement( scope, excluded_regex ),
         "tool": { "name": "llvm-cov", "major": 20 },
         "inputs": {
             "profiles": 10,
             "coverage_objects": 2,
             "zero_hash_mappings": 3,
         },
-        "metrics": {
-            "regions": metric( 1, 2 ),
-            "functions": metric( 1, 2 ),
-            "lines": metric( 1, 2 ),
-            "branches": metric( branch_covered, branch_total ),
-        },
-        "top_branch_gaps": [
+        "metrics": canonical,
+        "per_file_metrics": [
             {
                 "path": "src/coreComponents/example.cpp",
-                **metric( 0, 1 ),
+                "metrics": json.loads( json.dumps( canonical ) ),
             }
         ],
+        "top_branch_gaps": [],
         "supplemental": {
             "native_branch_outcomes": metric( 1, 4 ),
         },
     }
+    if branch_covered < branch_total:
+        document["top_branch_gaps"] = [
+            {
+                "path": "src/coreComponents/example.cpp",
+                **metric( branch_covered, branch_total ),
+            }
+        ]
+    return document
 
 
 class CoverageThresholdTests( unittest.TestCase ):
@@ -98,7 +182,7 @@ class CoverageThresholdTests( unittest.TestCase ):
     def test_boolean_schema_version_is_rejected( self ):
         document = summary()
         document["schema_version"] = True
-        with self.assertRaisesRegex( ValueError, "integer 2" ):
+        with self.assertRaisesRegex( ValueError, "integer 3" ):
             coverage_gate.validate_summary( document )
 
     def test_invalid_metadata_is_rejected( self ):
@@ -107,10 +191,153 @@ class CoverageThresholdTests( unittest.TestCase ):
         with self.assertRaisesRegex( ValueError, "inputs.profiles" ):
             coverage_gate.validate_summary( document )
 
+    def test_contract_fingerprint_is_stable_and_excludes_revision_inputs( self ):
+        document = summary()
+        self.assertEqual(
+            document["measurement"]["contract_fingerprint"],
+            "392f58cf380615f8214dc716273efbadcabefb0f25d6bfdd83560077f1cd4672",
+        )
+
+        document["measurement"]["commit_sha"] = "a" * 40
+        document["measurement"]["tree_sha"] = "b" * 40
+        document["measurement"]["container"]["image"] = "local/relabel:latest"
+        document["inputs"]["profiles"] = 999
+        document["inputs"]["coverage_objects"] = 77
+        validated = coverage_gate.validate_summary( document )
+        self.assertEqual( validated["measurement"]["commit_sha"], "a" * 40 )
+
+    def test_hard_contract_changes_require_a_new_fingerprint( self ):
+        mutations = (
+            lambda document: document["measurement"]["build_config"].__setitem__(
+                "ENABLE_HYPRE", False
+            ),
+            lambda document: document["measurement"]["toolchain"].__setitem__(
+                "compiler_target", "aarch64-unknown-linux-gnu"
+            ),
+            lambda document: document["measurement"]["toolchain"].__setitem__(
+                "llvm_package_versions", [ "llvm-20=20.1.3" ]
+            ),
+            lambda document: document["measurement"]["container"].__setitem__(
+                "image_id", f"sha256:{'5' * 64}"
+            ),
+        )
+        for mutate in mutations:
+            with self.subTest( mutation=mutate ):
+                document = summary()
+                mutate( document )
+                with self.assertRaisesRegex( ValueError, "fingerprint" ):
+                    coverage_gate.validate_summary( document )
+
+    def test_measurement_contract_fields_are_strictly_validated( self ):
+        document = summary()
+        document["measurement"]["contract_id"] = "other-contract"
+        with self.assertRaisesRegex( ValueError, "contract_id" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        document["measurement"]["toolchain"]["llvm_cov_version"] = (
+            "Ubuntu LLVM version 19.1.0"
+        )
+        with self.assertRaisesRegex( ValueError, "does not match tool.major" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        package = document["measurement"]["toolchain"]["llvm_package_versions"][0]
+        document["measurement"]["toolchain"]["llvm_package_versions"] = [
+            package,
+            package,
+        ]
+        with self.assertRaisesRegex( ValueError, "sorted and unique" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        digest = document["measurement"]["container"]["image_digests"][0]
+        document["measurement"]["container"]["image_digests"] = [ digest, digest ]
+        with self.assertRaisesRegex( ValueError, "sorted and unique" ):
+            coverage_gate.validate_summary( document )
+
+    def test_build_config_must_be_normalized_and_relevant( self ):
+        document = summary()
+        document["measurement"]["build_config"]["ENABLE_COVERAGE"] = "OFF"
+        with self.assertRaisesRegex( ValueError, "ENABLE_COVERAGE" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        document["measurement"]["build_config"]["CMAKE_INSTALL_PREFIX"] = "/tmp"
+        with self.assertRaisesRegex( ValueError, "irrelevant key" ):
+            coverage_gate.validate_summary( document )
+
     def test_inconsistent_percent_is_rejected( self ):
         document = summary()
         document["metrics"]["branches"]["percent"] = 99.0
         with self.assertRaisesRegex( ValueError, "percent is inconsistent" ):
+            coverage_gate.validate_summary( document )
+
+    def test_per_file_metrics_are_sorted_unique_and_in_scope( self ):
+        document = summary()
+        document["per_file_metrics"] = [
+            {
+                "path": "src/coreComponents/z.cpp",
+                "metrics": {
+                    name: metric( 0, 1 ) for name in coverage_gate.CANONICAL_METRICS
+                },
+            },
+            {
+                "path": "src/coreComponents/a.cpp",
+                "metrics": {
+                    name: metric( 1, 1 ) for name in coverage_gate.CANONICAL_METRICS
+                },
+            },
+        ]
+        document["top_branch_gaps"] = [
+            { "path": "src/coreComponents/z.cpp", **metric( 0, 1 ) }
+        ]
+        with self.assertRaisesRegex( ValueError, "sorted by path" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        document["per_file_metrics"][0]["path"] = "outside.cpp"
+        with self.assertRaisesRegex( ValueError, "outside the scope" ):
+            coverage_gate.validate_summary( document )
+
+        document = summary()
+        duplicate = json.loads( json.dumps( document["per_file_metrics"][0] ) )
+        document["per_file_metrics"].append( duplicate )
+        with self.assertRaisesRegex( ValueError, "paths must be unique" ):
+            coverage_gate.validate_summary( document )
+
+    def test_per_file_metrics_must_reconcile_every_canonical_metric( self ):
+        for name in coverage_gate.CANONICAL_METRICS:
+            with self.subTest( metric=name ):
+                document = summary()
+                document["per_file_metrics"][0]["metrics"][name] = metric( 0, 2 )
+                with self.assertRaisesRegex( ValueError, f"{name} covered" ):
+                    coverage_gate.validate_summary( document )
+
+    def test_per_file_zero_denominators_are_allowed( self ):
+        document = summary()
+        document["per_file_metrics"].insert(
+            0,
+            {
+                "path": "src/coreComponents/empty.cpp",
+                "metrics": {
+                    name: metric( 0, 0 ) for name in coverage_gate.CANONICAL_METRICS
+                },
+            },
+        )
+        validated = coverage_gate.validate_summary( document )
+        self.assertEqual(
+            validated["per_file_metrics"][0]["metrics"]["branches"]["total"],
+            0,
+        )
+
+    def test_top_branch_gaps_must_match_per_file_metrics( self ):
+        document = summary()
+        document["top_branch_gaps"][0] = {
+            "path": "src/coreComponents/example.cpp",
+            **metric( 0, 2 ),
+        }
+        with self.assertRaisesRegex( ValueError, "does not match canonical per-file" ):
             coverage_gate.validate_summary( document )
 
     def test_policy_scope_must_match( self ):
@@ -153,7 +380,7 @@ Percentages are rounded for display; policy thresholds use exact covered/total c
 
 | Source file | Covered | Missed | Total | Coverage |
 |---|---:|---:|---:|---:|
-| <code>example.cpp</code> | 0 | 1 | 1 | 0.00% |
+| <code>example.cpp</code> | 1 | 1 | 2 | 50.00% |
 
 Ranked by missed canonical branch outcomes within the production scope.
 
@@ -182,7 +409,7 @@ Native outcomes are instantiation-weighted: C++ template and inline-function ins
         self.assertEqual( markdown, expected )
 
     def test_markdown_presents_counts_inputs_and_diagnostics( self ):
-        document = summary( 19686, 35810 )
+        document = summary( 12, 23 )
         document["inputs"] = {
             "profiles": 3451,
             "coverage_objects": 29,
@@ -195,11 +422,31 @@ Native outcomes are instantiation-weighted: C++ template and inline-function ins
         document["top_branch_gaps"] = [
             {
                 "path": "src/coreComponents/a.cpp",
-                **metric( 10, 30 ),
+                **metric( 10, 20 ),
             },
             {
                 "path": "src/coreComponents/nested/b.cpp",
-                **metric( 2, 7 ),
+                **metric( 2, 3 ),
+            },
+        ]
+        document["per_file_metrics"] = [
+            {
+                "path": "src/coreComponents/a.cpp",
+                "metrics": {
+                    "regions": metric( 1, 2 ),
+                    "functions": metric( 10887, 14276 ),
+                    "lines": metric( 1, 2 ),
+                    "branches": metric( 10, 20 ),
+                },
+            },
+            {
+                "path": "src/coreComponents/nested/b.cpp",
+                "metrics": {
+                    "regions": metric( 0, 0 ),
+                    "functions": metric( 0, 0 ),
+                    "lines": metric( 0, 0 ),
+                    "branches": metric( 2, 3 ),
+                },
             },
         ]
         validated = coverage_gate.validate_summary( document )
@@ -214,7 +461,7 @@ Native outcomes are instantiation-weighted: C++ template and inline-function ins
         )
         self.assertIn( "### Largest branch gaps", markdown )
         self.assertLess( markdown.index( "a.cpp" ), markdown.index( "nested/b.cpp" ) )
-        self.assertIn( "| <code>a.cpp</code> | 10 | 20 | 30 | 33.33% |", markdown )
+        self.assertIn( "| <code>a.cpp</code> | 10 | 10 | 20 | 50.00% |", markdown )
         self.assertIn( "| Profile files merged | 3,451 |", markdown )
         self.assertIn( "| Instrumented product objects | 29 |", markdown )
         self.assertIn( "| Audited zero-hash mappings | 29,966 |", markdown )
@@ -242,7 +489,7 @@ Native outcomes are instantiation-weighted: C++ template and inline-function ins
             with self.subTest( path=invalid_path ):
                 document = summary()
                 document["top_branch_gaps"][0]["path"] = invalid_path
-                with self.assertRaisesRegex( ValueError, "normalized and unique" ):
+                with self.assertRaisesRegex( ValueError, "normalized" ):
                     coverage_gate.validate_summary( document )
 
     def test_branch_gaps_must_be_sorted_by_missed_count( self ):
