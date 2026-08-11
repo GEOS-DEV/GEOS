@@ -198,6 +198,10 @@ generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 {
   GEOS_MARK_FUNCTION;
 
+  // vtkGenerateGlobalIds may trigger floating-point exceptions internally
+  // Temporarily disable FPE trapping while invoking VTK.
+  LvArray::system::FloatingPointExceptionGuard guard;
+
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( mesh );
   generator->Update();
