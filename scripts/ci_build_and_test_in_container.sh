@@ -317,6 +317,8 @@ Usage: $0
       Run the integrated tests. Then bundle and send the results to the cloud.
   --use-sccache
       Enable sccache as compiler launcher.
+  --sccache-credentials credentials.json
+      Basename of the json credentials file to connect to the sccache cloud cache.
   --sccache-config config.toml
       Relative path to an sccache config file to use inside the container.
   --test-code-style
@@ -330,7 +332,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -351,6 +353,7 @@ CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
+SCCACHE_CREDS=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
@@ -404,6 +407,7 @@ do
     --ctest-parallel-level)
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
+    --sccache-credentials)   SCCACHE_CREDS=$2; USE_SCCACHE=true; shift 2;;
     --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -462,6 +466,20 @@ if [[ "${USE_SCCACHE}" == true ]]; then
   if [[ -z "${SCCACHE_BIN}" ]]; then
     echo "sccache was requested, but no sccache binary is available in the container."
     exit 1
+  fi
+
+  if [[ -n "${SCCACHE_CREDS:-}" ]]; then
+    # The credential json file is available at the root of the geos repository.
+    # We hereafter create the config file that points to it.
+    # We use this file since it's managed by the 'google-github-actions/auth' actions.
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cat <<EOT >> ${HOME}/.config/sccache/config
+[cache.gcs]
+rw_mode = "READ_WRITE"
+cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
+bucket = "geos-dev"
+key_prefix = "sccache"
+EOT
   fi
 
   if [[ -n "${SCCACHE_CONFIG_FILE:-}" ]]; then

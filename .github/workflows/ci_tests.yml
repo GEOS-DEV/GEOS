@@ -174,9 +174,6 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=192g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
             HOST_CONFIG: /spack-generated.cmake
 
           # this keeps missing sccache so we are skipping it for now.
@@ -210,9 +207,6 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=192g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Rocky Linux 8 - gcc 13
@@ -222,9 +216,6 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=192g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Rocky Linux 8 - clang 19
@@ -268,6 +259,7 @@ jobs:
       UPLOAD_TO_GCP: ${{ matrix.UPLOAD_TO_GCP || false }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
+      CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
     secrets: inherit
 
@@ -442,6 +434,7 @@ jobs:
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
+      CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: run CUDA builds"
     secrets: inherit
