@@ -20,9 +20,245 @@ function or_die () {
     local status=$?
 
     if [[ $status != 0 ]] ; then
+        if [[ -n "${CURRENT_PHASE_LABEL:-}" ]]; then
+            phase_finish "${status}"
+        fi
         echo ERROR $status command: $@
         exit $status
     fi
+}
+
+PHASE_TIMINGS=()
+CURRENT_PHASE_LABEL=""
+CURRENT_PHASE_START=""
+tempdir=""
+
+function now_epoch () {
+    date +%s
+}
+
+function format_duration () {
+    local total_seconds=$1
+    local hours=$(( total_seconds / 3600 ))
+    local minutes=$(( (total_seconds % 3600) / 60 ))
+    local seconds=$(( total_seconds % 60 ))
+
+    if (( hours > 0 )); then
+        printf '%dh %02dm %02ds' "${hours}" "${minutes}" "${seconds}"
+    elif (( minutes > 0 )); then
+        printf '%dm %02ds' "${minutes}" "${seconds}"
+    else
+        printf '%ds' "${seconds}"
+    fi
+}
+
+function phase_start () {
+    CURRENT_PHASE_LABEL="$1"
+    CURRENT_PHASE_START="$(now_epoch)"
+}
+
+function phase_finish () {
+    local status="${1:-0}"
+    local label="${CURRENT_PHASE_LABEL:-}"
+    local start="${CURRENT_PHASE_START:-}"
+
+    if [[ -z "${label}" || -z "${start}" ]]; then
+        return 0
+    fi
+
+    local duration=$(( $(now_epoch) - start ))
+    PHASE_TIMINGS+=("${label}|${duration}|${status}")
+
+    if [[ "${status}" -eq 0 ]]; then
+        echo ">>> ${label} completed in $(format_duration "${duration}")"
+    else
+        echo ">>> ${label} failed after $(format_duration "${duration}") (exit ${status})"
+    fi
+
+    CURRENT_PHASE_LABEL=""
+    CURRENT_PHASE_START=""
+}
+
+function print_phase_summary () {
+    local entry label duration status status_text
+
+    if [[ ${#PHASE_TIMINGS[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    echo "Phase timing summary:"
+    for entry in "${PHASE_TIMINGS[@]}"; do
+        IFS='|' read -r label duration status <<< "${entry}"
+        if [[ "${status}" -eq 0 ]]; then
+            status_text="ok"
+        else
+            status_text="exit ${status}"
+        fi
+        printf '  - %s: %s (%s)\n' "${label}" "$(format_duration "${duration}")" "${status_text}"
+    done
+}
+
+function openssl_fips_provider_available () {
+    local fips_module_path
+
+    for fips_module_path in \
+        /usr/lib/x86_64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib/aarch64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib64/ossl-modules/fips.so \
+        /usr/lib/ossl-modules/fips.so \
+        /usr/local/lib64/ossl-modules/fips.so \
+        /usr/local/lib/ossl-modules/fips.so; do
+        if [[ -f "${fips_module_path}" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+function configure_openssl_for_non_fips_ubuntu_container () {
+    local fips_enabled=""
+    local openssl_conf_path=/tmp/geos-openssl-non-fips.cnf
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" ]]; then
+        return 0
+    fi
+
+    if [[ ! -r /etc/os-release ]] || ! grep -Eq '^ID="?ubuntu"?$' /etc/os-release; then
+        return 0
+    fi
+
+    if [[ -e /etc/system-fips ]]; then
+        return 0
+    fi
+
+    if openssl_fips_provider_available; then
+        return 0
+    fi
+
+    export OPENSSL_FORCE_FIPS_MODE=0
+
+    if [[ -n "${OPENSSL_CONF:-}" ]]; then
+        echo "Host FIPS mode is visible in this Ubuntu container, but OPENSSL_CONF is already set to ${OPENSSL_CONF}; leaving it unchanged."
+        echo "Using OPENSSL_FORCE_FIPS_MODE=0 because no OpenSSL FIPS provider module was found."
+        return 0
+    fi
+
+    if ! cat > "${openssl_conf_path}" <<'EOF'
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+[provider_sect]
+default = default_sect
+
+[default_sect]
+activate = 1
+
+[algorithm_sect]
+default_properties = fips=no
+EOF
+    then
+        echo "WARNING: unable to write ${openssl_conf_path}; leaving OpenSSL configuration unchanged."
+        return 0
+    fi
+
+    export OPENSSL_CONF="${openssl_conf_path}"
+
+    echo "Host FIPS mode is visible in this non-FIPS Ubuntu container, and no OpenSSL FIPS provider module was found."
+    echo "Using OPENSSL_CONF=${OPENSSL_CONF} so OpenSSL initializes the default provider for CI tooling."
+}
+
+function print_crypto_diagnostics () {
+    local fips_enabled=""
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" && -z "${OPENSSL_CONF:-}" && -z "${OPENSSL_FORCE_FIPS_MODE:-}" ]]; then
+        return 0
+    fi
+
+    echo "Crypto/FIPS summary:"
+
+    if [[ -r /etc/os-release ]]; then
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        echo "  os: ${PRETTY_NAME:-${ID:-unknown}}"
+    fi
+
+    echo "  host fips_enabled: ${fips_enabled:-unavailable}"
+    echo "  container /etc/system-fips: $(if [[ -e /etc/system-fips ]]; then echo present; else echo absent; fi)"
+    echo "  openssl fips provider module: $(if openssl_fips_provider_available; then echo present; else echo absent; fi)"
+
+    for var in OPENSSL_CONF OPENSSL_MODULES OPENSSL_FORCE_FIPS_MODE; do
+        echo "  ${var}: ${!var:-<unset>}"
+    done
+
+    if command -v openssl >/dev/null 2>&1; then
+        openssl version 2>&1 | sed 's/^/  openssl version: /' || true
+        if openssl md5 /dev/null >/dev/null 2>&1 && openssl rand -hex 8 >/dev/null 2>&1; then
+            echo "  openssl smoke test: ok"
+        else
+            echo "  openssl smoke test: failed"
+            openssl list -providers 2>&1 | sed 's/^/  openssl providers: /' || true
+            if [[ -n "${OPENSSL_CONF:-}" && -r "${OPENSSL_CONF}" ]]; then
+                grep -Ei '^(openssl_conf|providers|alg_section|activate|default_properties)' "${OPENSSL_CONF}" 2>/dev/null | sed 's/^/  active openssl config: /' || true
+            fi
+        fi
+    else
+        echo "  openssl: not found"
+    fi
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - <<'PY' 2>&1 | sed 's/^/  python crypto: /' || true
+import hashlib
+import os
+import ssl
+
+print("ssl:", ssl.OPENSSL_VERSION)
+
+try:
+    hashlib.md5(b"geos").hexdigest()
+    hashlib.sha256(b"geos").hexdigest()
+    print("hashlib smoke test: ok")
+except Exception as exc:
+    print(f"hashlib smoke test: failed {type(exc).__name__}: {exc}")
+
+try:
+    os.urandom(8)
+    print("os.urandom smoke test: ok")
+except Exception as exc:
+    print(f"os.urandom smoke test: failed {type(exc).__name__}: {exc}")
+PY
+    else
+        echo "  python3: not found"
+    fi
+}
+
+function bootstrap_pip () {
+    local python_executable="$1"
+
+    if [[ "${GEOS_SKIP_PIP_BOOTSTRAP:-false}" == "true" ]]; then
+        echo "Skipping pip bootstrap because GEOS_SKIP_PIP_BOOTSTRAP=true."
+        return 0
+    fi
+
+    echo "Updating pip"
+    if ! "${python_executable}" -m pip install --upgrade pip setuptools wheel; then
+        echo "::warning::pip bootstrap failed for ${python_executable}; continuing with the existing pip so the package install step can report the actionable failure."
+        "${python_executable}" -m pip --version || true
+        return 0
+    fi
+
+    "${python_executable}" -m pip cache purge || true
 }
 
 function usage () {
@@ -70,6 +306,8 @@ Usage: $0
       Internal mountpoint where the geos repository will be available.
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
+  --use-sccache
+      Enable sccache as compiler launcher.
   --sccache-credentials credentials.json
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
@@ -83,7 +321,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -103,6 +341,9 @@ CODE_COVERAGE=false
 CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
+SCCACHE_BIN=""
+SCCACHE_CREDS=""
+USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
 ATS_CMAKE_ARGS=()
@@ -155,7 +396,8 @@ do
     --ctest-parallel-level)
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
-    --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
+    --sccache-credentials)   SCCACHE_CREDS=$2; USE_SCCACHE=true; shift 2;;
+    --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
     -h | --help)             usage;                      shift;;
@@ -173,7 +415,15 @@ fi
 
 
 cleanup() {
+  if [[ -n "${CURRENT_PHASE_LABEL:-}" ]]; then
+    phase_finish 1
+  fi
+
+  print_phase_summary
   echo "Container cleanup..."
+  if [[ -n "${tempdir:-}" ]]; then
+    rm -rf "${tempdir}" || true
+  fi
   rm -rf "${GEOS_SRC_DIR}/src/docs/sphinx/datastructure" || true
 
   if [[ -n "${HOST_UID:-}" && -n "${HOST_GID:-}" ]]; then
@@ -195,33 +445,41 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  # The credential json file is available at the root of the geos repository.
-  # We hereafter create the config file that points to it.
-  # We use this file since it's managed by the 'google-github-actions/auth' actions.
-  or_die mkdir -p ${HOME}/.config/sccache
-  or_die cat <<EOT >> ${HOME}/.config/sccache/config
+configure_openssl_for_non_fips_ubuntu_container
+print_crypto_diagnostics
+
+if [[ "${USE_SCCACHE}" == true ]]; then
+  SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
+
+  if [[ -z "${SCCACHE_BIN}" ]]; then
+    echo "sccache was requested, but no sccache binary is available in the container."
+    exit 1
+  fi
+
+  if [[ -n "${SCCACHE_CREDS:-}" ]]; then
+    # The credential json file is available at the root of the geos repository.
+    # We hereafter create the config file that points to it.
+    # We use this file since it's managed by the 'google-github-actions/auth' actions.
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
 rw_mode = "READ_WRITE"
 cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
 bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
+  fi
 
-  # To use `sccache`, it's enough to tell `cmake` to launch the compilation using `sccache`.
-  # The path to the `sccache` executable is available through the SCCACHE environment variable.
-  SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
+  # Backend-specific credentials and endpoints are injected through the environment or generated config.
+  SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
-  case "$(hostname -f 2>/dev/null || hostname)" in
-    *.llnl.gov|streak2*|streak*)
-      export SSL_CERT_FILE=/certs/ca-bundle.crt
-      export CURL_CA_BUNDLE=/certs/ca-bundle.crt
-      export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
-      ;;
-  esac
+  if [[ -f /certs/ca-bundle.crt ]]; then
+    export SSL_CERT_FILE=/certs/ca-bundle.crt
+    export CURL_CA_BUNDLE=/certs/ca-bundle.crt
+    export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
+  fi
 
-  echo "sccache initial state"
-  ${SCCACHE} --show-stats
+  echo "sccache enabled: ${SCCACHE_BIN}, cache directory: ${SCCACHE_DIR:-default}"
 fi
 
 if [ -z "${NPROC}" ]; then
@@ -236,20 +494,26 @@ if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+  phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
-  # We install the python environment required by ATS to run the integrated tests.
-  or_die apt-get update
-  or_die apt-get install -y python3-dev python3-venv
-  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
-  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
+  # We install the python environment required by ATS to run the integrated tests.
+  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
+  if ! python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}" ||
+     ! "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel' >/dev/null 2>&1; then
+    echo "ATS virtualenv lacks required Python packaging modules; installing distro packages and recreating it."
+    rm -rf "${ATS_PYTHON_HOME}"
+    or_die apt-get update
+    or_die apt-get install -y python3-dev python3-venv python3-setuptools python3-wheel
+    or_die python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}"
+    or_die "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel'
+  fi
+
+  bootstrap_pip "${ATS_PYTHON_HOME}/bin/python3"
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
   echo "Setting up a temporary directory to hold tests and baselines: $tempdir"
-  trap "rm -rf $tempdir" EXIT
   ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
@@ -260,6 +524,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
                   "-DATS_BASELINE_DIR=${ATS_BASELINE_DIR}"
                   "-DATS_WORKING_DIR=${ATS_WORKING_DIR}")
+  phase_finish 0
 fi
 
 
@@ -312,6 +577,7 @@ fi
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOS_BUILD_DIR=/tmp/geos-build
+phase_start "Configure"
 or_die python3 scripts/config-build.py \
                -hc ${HOST_CONFIG} \
                -bt ${CMAKE_BUILD_TYPE} \
@@ -331,23 +597,29 @@ or_die python3 scripts/config-build.py \
                ${SCCACHE_CMAKE_ARGS} \
                ${LCOV_CMAKE_ARGS} \
                "${ATS_CMAKE_ARGS[@]}"
+phase_finish 0
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOS_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
+  phase_start "Code style check"
   or_die ctest --output-on-failure -R "testUncrustifyCheck"
+  phase_finish 0
   exit 0
 fi
 
 # Documentation check
 if [[ "${TEST_DOCUMENTATION}" = true ]]; then
+  phase_start "Documentation check"
   or_die ctest --output-on-failure -R "testDoxygenCheck"
+  phase_finish 0
   exit 0
 fi
 
 # Performing the requested build.
+phase_start "Build"
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die cmake --build . -j $NPROC --target geosx
 else
@@ -366,25 +638,37 @@ else
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
+phase_finish 0
 
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  echo "sccache post-build state"
-  or_die ${SCCACHE} --show-adv-stats
+if [[ -n "${SCCACHE_BIN}" ]]; then
+  echo "Capturing sccache post-build stats"
+  SCCACHE_STATS_FILE="${GEOS_SRC_DIR}/.sccache-runtime/stats.txt"
+  or_die mkdir -p "$(dirname "${SCCACHE_STATS_FILE}")"
+  ${SCCACHE_BIN} --show-adv-stats > "${SCCACHE_STATS_FILE}"
+  SCCACHE_STATS_STATUS=$?
+  if [[ ${SCCACHE_STATS_STATUS} != 0 ]]; then
+    echo ERROR ${SCCACHE_STATS_STATUS} command: ${SCCACHE_BIN} --show-adv-stats
+    exit ${SCCACHE_STATS_STATUS}
+  fi
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
+  phase_start "Generate code coverage"
   export OMP_NUM_THREADS=1
   or_die cmake --build . --target coreComponents_coverage
-  cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+  or_die cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+  phase_finish 0
 fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  phase_start "Unit tests"
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
   fi
+  phase_finish 0
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
@@ -397,7 +681,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   fi
 
   # We split the process in two steps. First installing the environment, then running the tests.
+  phase_start "Build ATS environment"
   or_die cmake --build . --target ats_environment
+  # The system-site virtualenv inherits Ubuntu's NumPy 1.x-built Matplotlib,
+  # while the GEOS Python packages require NumPy 2.x.
+  or_die "${ATS_PYTHON_HOME}/bin/python3" -m pip install --disable-pip-version-check --upgrade matplotlib
+  phase_finish 0
 
   # The tests are not run using cmake (`cmake --build . --verbose  --target ats_run`)
   # because with ninja it swallows the output while all the
@@ -407,17 +696,29 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ls -lR /tmp/geos/baselines
 
   echo "Running integrated tests..."
+  phase_start "Integrated tests"
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
+  ATS_RUN_STATUS=$?
+  phase_finish "${ATS_RUN_STATUS}"
+
+  phase_start "Process integrated test logs"
+  PROCESS_LOGS_STATUS=0
   echo "Processing logs..."
-  bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt
-  echo "Packing logs..."
-  tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
+  bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt || PROCESS_LOGS_STATUS=$?
+  if [[ "${PROCESS_LOGS_STATUS}" -eq 0 ]]; then
+    echo "Packing logs..."
+    tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults || PROCESS_LOGS_STATUS=$?
+  fi
+  phase_finish "${PROCESS_LOGS_STATUS}"
 
   echo "Checking results..."
+  phase_start "Check integrated test results"
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
+  LOG_CHECK_STATUS=$?
   cat $tempdir/log_check.txt
+  phase_finish "${LOG_CHECK_STATUS}"
 
-  if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
+  if [[ "${ATS_RUN_STATUS}" -eq 0 && "${LOG_CHECK_STATUS}" -eq 0 ]] && grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."
     INTEGRATED_TEST_EXIT_STATUS=0
   else
@@ -425,25 +726,33 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
     # Rebaseline and pack into an archive
     echo "Rebaselining..."
-    integratedTests/geos_ats.sh -a rebaselinefailed
+    phase_start "Rebaseline integrated tests"
+    REBASELINE_STATUS=0
+    integratedTests/geos_ats.sh -a rebaselinefailed || REBASELINE_STATUS=$?
 
-    echo "Packing baselines..."
-    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory /tmp/geos/baselines
+    if [[ "${REBASELINE_STATUS}" -eq 0 ]]; then
+      echo "Packing baselines..."
+      integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory /tmp/geos/baselines || REBASELINE_STATUS=$?
+    fi
+    phase_finish "${REBASELINE_STATUS}"
     INTEGRATED_TEST_EXIT_STATUS=1
   fi
 
   echo "Done!"
 
-  # INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 fi
 
 # Cleaning the build directory.
+phase_start "Clean build directory"
 or_die cmake --build . --target clean
+phase_finish 0
 
 # Clean the repository
+phase_start "Clean repository"
 or_die cd ${GEOS_SRC_DIR}/inputFiles
-find . -name *.pyc | xargs rm -f
+find . -name '*.pyc' -delete
+phase_finish 0
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
