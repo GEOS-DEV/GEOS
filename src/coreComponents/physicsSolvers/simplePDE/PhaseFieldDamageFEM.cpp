@@ -125,11 +125,12 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
 }
 
 real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                          real64 const & dt,
+                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                           const int GEOS_UNUSED_PARAM( cycleNumber ),
                                           DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  return dt;
+  GEOS_ERROR( "ExplicitTransient time integration is not implemented for the damage equation", getDataContext() );
+  return 0;
 }
 
 void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),

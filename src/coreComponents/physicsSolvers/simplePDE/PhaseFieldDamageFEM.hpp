@@ -130,7 +130,7 @@ public:
   {
     SteadyState,
     ImplicitTransient,
-    ExplicitTransient
+    ExplicitTransient ///< not implemented
   };
 
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
