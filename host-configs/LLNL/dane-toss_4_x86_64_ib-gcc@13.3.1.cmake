@@ -125,7 +125,7 @@ set(TRILINOS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-gcc-13_tpls/gcc-13.3.
 
 set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-gcc-13_tpls/gcc-13.3.1/hypre-git.9fbaf60dc9435e71ff5af984f1e12e2bf8be6ad8_master-obgrfae6tjeywyz5xufz77nm44qexv55" CACHE PATH "")
 
-set(ENABLE_HYPREDRV ON CACHE BOOL "")
+set(ENABLE_HYPREDRV OFF CACHE BOOL "")
 
 set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-gcc-13_tpls/gcc-13.3.1/hypredrive-git.4eb4f1b126332844feaaf941e32ae5dc125e5bdc_master-s75vosid4wxvttywirk75zdaqxdb5zw7" CACHE PATH "")
 

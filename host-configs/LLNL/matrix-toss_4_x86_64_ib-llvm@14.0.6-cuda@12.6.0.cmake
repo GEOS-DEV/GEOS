@@ -141,7 +141,7 @@ set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-llvm-14-cuda-12.6_tpls
 
 set(ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "")
 
-set(ENABLE_HYPREDRV ON CACHE BOOL "")
+set(ENABLE_HYPREDRV OFF CACHE BOOL "")
 
 set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-llvm-14-cuda-12.6_tpls/llvm-14.0.6/hypredrive-git.4eb4f1b126332844feaaf941e32ae5dc125e5bdc_master-cccwwkyyauh5ma5pq7ibwt6hhlsauw2c" CACHE PATH "")
 

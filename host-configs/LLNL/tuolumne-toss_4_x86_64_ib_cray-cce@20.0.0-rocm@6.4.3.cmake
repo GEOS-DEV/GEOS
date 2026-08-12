@@ -135,7 +135,7 @@ set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tp
 
 set(ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "")
 
-set(ENABLE_HYPREDRV ON CACHE BOOL "")
+set(ENABLE_HYPREDRV OFF CACHE BOOL "")
 
 set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hypredrive-git.4eb4f1b126332844feaaf941e32ae5dc125e5bdc_master-b4cizv3pkm255dru3juyk4vpne4lzr2h" CACHE PATH "")
 
