@@ -166,8 +166,7 @@ jobs:
         docker_args=()
         script_args=()
 
-        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
-        # Since this information is repeated twice, we use a variable.
+        # Keep the repository mount point consistent between Docker and script args.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
@@ -217,7 +216,7 @@ jobs:
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
-        if ${{ inputs.USE_SCCACHE }} == 'true'; then
+        if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
           case "${{ inputs.RUNS_ON }}" in
             streak2*)
               SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
@@ -447,12 +446,12 @@ jobs:
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
 
-    - name: Show sccache stats
+    - name: Show sccache summary
       if: ${{ always() && inputs.USE_SCCACHE }}
       run: |
         SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
         if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
-          cat "${SCCACHE_STATS_FILE}"
+          grep -E '^(Compile requests|Cache hits|Cache misses|Cache timeouts|Cache read errors|Cache write errors|Compilation failures|Cache errors|Non-cacheable compilations|Non-cacheable calls|Cache location|Cache size|Max cache size|Version \(client\))' "${SCCACHE_STATS_FILE}" || cat "${SCCACHE_STATS_FILE}"
         else
           echo "No in-container sccache stats file was captured."
         fi

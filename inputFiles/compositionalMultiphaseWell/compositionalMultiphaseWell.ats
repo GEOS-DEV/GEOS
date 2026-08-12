@@ -85,7 +85,7 @@ decks = [
         restart_step=13,
         check_step=26,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    # Disabled for debugging.
+    # Temporarily disabled; this problematic test will be fixed in a separate PR.
     # TestDeck(
     #     name="isothm_mass_inj_table",
     #     description=

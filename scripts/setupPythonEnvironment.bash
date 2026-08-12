@@ -7,7 +7,7 @@ PYTHON_TARGET=
 BIN_DIR=
 PACKAGE_DIR=
 TMP_CLONE_DIR=
-declare -a PIP_INSTALL_ARGS=(--disable-pip-version-check install --no-build-isolation --upgrade)
+declare -a PIP_INSTALL_ARGS=(--disable-pip-version-check install --upgrade)
 PACKAGE_BRANCH=main
 
 
@@ -159,11 +159,11 @@ do
         then
             echo $INSTALL_MSG
 
-            if [[ $INSTALL_MSG =~ "SSLError" || $INSTALL_MSG =~ "[CRYPTO]" ]]
+            if [[ $INSTALL_MSG == *SSLError* || $INSTALL_MSG == *"[CRYPTO]"* ]]
             then
                 echo "The setup script failed while pip was using HTTPS."
                 echo "On FIPS-enabled hosts running non-FIPS containers, this can indicate an OpenSSL/FIPS policy mismatch."
-                echo "Check the earlier Crypto/FIPS diagnostics in the CI log."
+                echo "Check the earlier Crypto/FIPS summary in the CI log."
             elif [[ $INSTALL_MSG =~ "HTTP error" ]]
             then
                 echo "The setup script may have failed to fetch external dependencies"

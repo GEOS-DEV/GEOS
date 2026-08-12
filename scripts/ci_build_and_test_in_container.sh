@@ -55,7 +55,6 @@ function format_duration () {
 function phase_start () {
     CURRENT_PHASE_LABEL="$1"
     CURRENT_PHASE_START="$(now_epoch)"
-    echo ">>> ${CURRENT_PHASE_LABEL} started at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 }
 
 function phase_finish () {
@@ -177,40 +176,43 @@ EOF
 }
 
 function print_crypto_diagnostics () {
-    echo "Crypto/FIPS diagnostics:"
-    echo "  uname: $(uname -a)"
+    local fips_enabled=""
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" && -z "${OPENSSL_CONF:-}" && -z "${OPENSSL_FORCE_FIPS_MODE:-}" ]]; then
+        return 0
+    fi
+
+    echo "Crypto/FIPS summary:"
 
     if [[ -r /etc/os-release ]]; then
-        sed 's/^/  os-release: /' /etc/os-release
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        echo "  os: ${PRETTY_NAME:-${ID:-unknown}}"
     fi
 
-    for path in /proc/sys/crypto/fips_enabled /etc/system-fips /etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf; do
-        if [[ -e "${path}" ]]; then
-            if [[ -r "${path}" && ! -d "${path}" ]]; then
-                echo "  ${path}: $(head -n 1 "${path}" 2>/dev/null || true)"
-            else
-                echo "  ${path}: present"
-            fi
-        else
-            echo "  ${path}: absent"
-        fi
-    done
-    grep -nEi 'fips|provider|default_properties|openssl_conf|activate' /etc/ssl/openssl.cnf /usr/lib/ssl/openssl.cnf 2>/dev/null | head -n 80 | sed 's/^/  openssl config match: /' || true
-    if [[ -n "${OPENSSL_CONF:-}" && -r "${OPENSSL_CONF}" ]]; then
-        grep -nEi 'fips|provider|default_properties|openssl_conf|activate' "${OPENSSL_CONF}" 2>/dev/null | head -n 80 | sed 's/^/  active openssl config match: /' || true
-    fi
+    echo "  host fips_enabled: ${fips_enabled:-unavailable}"
+    echo "  container /etc/system-fips: $(if [[ -e /etc/system-fips ]]; then echo present; else echo absent; fi)"
+    echo "  openssl fips provider module: $(if openssl_fips_provider_available; then echo present; else echo absent; fi)"
 
-    for var in OPENSSL_CONF OPENSSL_MODULES OPENSSL_FORCE_FIPS_MODE SSL_CERT_FILE CURL_CA_BUNDLE REQUESTS_CA_BUNDLE; do
+    for var in OPENSSL_CONF OPENSSL_MODULES OPENSSL_FORCE_FIPS_MODE; do
         echo "  ${var}: ${!var:-<unset>}"
     done
 
     if command -v openssl >/dev/null 2>&1; then
-        echo "  openssl path: $(command -v openssl)"
-        openssl version -a 2>&1 | sed 's/^/  openssl version: /' || true
-        openssl list -providers -verbose 2>&1 | sed 's/^/  openssl providers: /' || true
-        openssl md5 /dev/null 2>&1 | sed 's/^/  openssl md5: /' || true
-        openssl sha256 /dev/null 2>&1 | sed 's/^/  openssl sha256: /' || true
-        openssl rand -hex 8 2>&1 | sed 's/^/  openssl rand: /' || true
+        openssl version 2>&1 | sed 's/^/  openssl version: /' || true
+        if openssl md5 /dev/null >/dev/null 2>&1 && openssl rand -hex 8 >/dev/null 2>&1; then
+            echo "  openssl smoke test: ok"
+        else
+            echo "  openssl smoke test: failed"
+            openssl list -providers 2>&1 | sed 's/^/  openssl providers: /' || true
+            if [[ -n "${OPENSSL_CONF:-}" && -r "${OPENSSL_CONF}" ]]; then
+                grep -Ei '^(openssl_conf|providers|alg_section|activate|default_properties)' "${OPENSSL_CONF}" 2>/dev/null | sed 's/^/  active openssl config: /' || true
+            fi
+        fi
     else
         echo "  openssl: not found"
     fi
@@ -220,35 +222,24 @@ function print_crypto_diagnostics () {
 import hashlib
 import os
 import ssl
-import sys
 
-print("executable:", sys.executable)
-print("version:", sys.version.replace("\n", " "))
 print("ssl:", ssl.OPENSSL_VERSION)
-print("default verify paths:", ssl.get_default_verify_paths())
-
-for name in ("md5", "sha1", "sha256"):
-    try:
-        digest = getattr(hashlib, name)(b"geos").hexdigest()
-        print(f"hashlib {name}: ok {digest}")
-    except Exception as exc:
-        print(f"hashlib {name}: failed {type(exc).__name__}: {exc}")
 
 try:
-    print("os.urandom:", os.urandom(8).hex())
+    hashlib.md5(b"geos").hexdigest()
+    hashlib.sha256(b"geos").hexdigest()
+    print("hashlib smoke test: ok")
 except Exception as exc:
-    print(f"os.urandom: failed {type(exc).__name__}: {exc}")
+    print(f"hashlib smoke test: failed {type(exc).__name__}: {exc}")
+
+try:
+    os.urandom(8)
+    print("os.urandom smoke test: ok")
+except Exception as exc:
+    print(f"os.urandom smoke test: failed {type(exc).__name__}: {exc}")
 PY
     else
         echo "  python3: not found"
-    fi
-
-    if command -v sccache >/dev/null 2>&1; then
-        echo "  sccache path: $(command -v sccache)"
-        sccache --version 2>&1 | sed 's/^/  sccache version: /' || true
-        ldd "$(command -v sccache)" 2>&1 | sed 's/^/  sccache ldd: /' || true
-    else
-        echo "  sccache: not found"
     fi
 }
 
@@ -319,8 +310,6 @@ Usage: $0
       Enable sccache as compiler launcher.
   --sccache-credentials credentials.json
       Basename of the json credentials file to connect to the sccache cloud cache.
-  --sccache-config config.toml
-      Relative path to an sccache config file to use inside the container.
   --test-code-style
   --test-documentation
   -h | --help
@@ -332,7 +321,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -408,7 +397,6 @@ do
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
     --sccache-credentials)   SCCACHE_CREDS=$2; USE_SCCACHE=true; shift 2;;
-    --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
@@ -482,17 +470,7 @@ key_prefix = "sccache"
 EOT
   fi
 
-  if [[ -n "${SCCACHE_CONFIG_FILE:-}" ]]; then
-    if [[ ! -f "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" ]]; then
-      echo "Unable to find requested sccache config file at ${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}."
-      exit 1
-    fi
-
-    or_die mkdir -p ${HOME}/.config/sccache
-    or_die cp "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" "${HOME}/.config/sccache/config"
-  fi
-
-  # Backend-specific credentials and endpoints are injected through the environment and/or config file.
+  # Backend-specific credentials and endpoints are injected through the environment or generated config.
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   if [[ -f /certs/ca-bundle.crt ]]; then
@@ -501,8 +479,7 @@ EOT
     export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
   fi
 
-  echo "sccache initial state"
-  ${SCCACHE_BIN} --show-stats || true
+  echo "sccache enabled: ${SCCACHE_BIN}, cache directory: ${SCCACHE_DIR:-default}"
 fi
 
 if [ -z "${NPROC}" ]; then
@@ -524,7 +501,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   if ! python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}" ||
      ! "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel' >/dev/null 2>&1; then
-    echo "The ATS virtualenv is missing distro Python build tools; installing them and recreating the virtualenv."
+    echo "ATS virtualenv lacks required Python packaging modules; installing distro packages and recreating it."
     rm -rf "${ATS_PYTHON_HOME}"
     or_die apt-get update
     or_die apt-get install -y python3-dev python3-venv python3-setuptools python3-wheel
@@ -664,11 +641,11 @@ fi
 phase_finish 0
 
 if [[ -n "${SCCACHE_BIN}" ]]; then
-  echo "sccache post-build state"
+  echo "Capturing sccache post-build stats"
   SCCACHE_STATS_FILE="${GEOS_SRC_DIR}/.sccache-runtime/stats.txt"
   or_die mkdir -p "$(dirname "${SCCACHE_STATS_FILE}")"
-  ${SCCACHE_BIN} --show-adv-stats | tee "${SCCACHE_STATS_FILE}"
-  SCCACHE_STATS_STATUS=${PIPESTATUS[0]}
+  ${SCCACHE_BIN} --show-adv-stats > "${SCCACHE_STATS_FILE}"
+  SCCACHE_STATS_STATUS=$?
   if [[ ${SCCACHE_STATS_STATUS} != 0 ]]; then
     echo ERROR ${SCCACHE_STATS_STATUS} command: ${SCCACHE_BIN} --show-adv-stats
     exit ${SCCACHE_STATS_STATUS}
@@ -741,7 +718,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   cat $tempdir/log_check.txt
   phase_finish "${LOG_CHECK_STATUS}"
 
-  if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
+  if [[ "${ATS_RUN_STATUS}" -eq 0 && "${LOG_CHECK_STATUS}" -eq 0 ]] && grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."
     INTEGRATED_TEST_EXIT_STATUS=0
   else
@@ -763,7 +740,6 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   echo "Done!"
 
-  # INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 fi
 
