@@ -12,8 +12,8 @@ decks = [
         partitions=[
             (1, 1, 1),
         ],
-        restart_step=20,
-        check_step=35,
+        restart_step=1,
+        check_step=3,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
 

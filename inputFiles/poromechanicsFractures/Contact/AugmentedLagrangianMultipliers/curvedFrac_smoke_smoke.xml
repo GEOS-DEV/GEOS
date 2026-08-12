@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./curvedFrac_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="../../MESH/curvedFrac_smoke.vtm"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="zmin"
+      xMin="{   -0.01,   -0.01, -4000.01 }"
+      xMax="{ 6000.01, 6000.01, -3999.99 }"/>
+
+    <Box
+      name="zmax"
+      xMin="{   -0.01,   -0.01,  -0.01 }"
+      xMax="{ 6000.01, 6000.01,   0.01 }"/>
+
+    <Box
+      name="xmin"
+      xMin="{ -0.01,   -0.01, -4000.01 }"
+      xMax="{  0.01, 6000.01,     0.01 }"/>
+
+    <Box
+      name="xmax"
+      xMin="{ 5999.99,   -0.01, -4000.01 }"
+      xMax="{ 6000.01, 6000.01,     0.01 }"/>
+
+    <Box
+      name="ymin"
+      xMin="{   -0.01, -0.01, -4000.01 }"
+      xMax="{ 6000.01,  0.01,     0.01 }"/>
+
+    <Box
+      name="ymax"
+      xMin="{   -0.01, 5999.99, -4000.01 }"
+      xMax="{ 6000.01, 6000.01,     0.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="30.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      endTime="100.0"
+      forceDt="10.0"
+      target="/Solvers/poroFractureSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restart"
+      timeFrequency="10.0"
+      target="/Outputs/restarts"/>
+  </Events>
+
+</Problem>

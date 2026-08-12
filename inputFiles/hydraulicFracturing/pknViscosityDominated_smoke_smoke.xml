@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./pknViscosityDominated_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -0.0 }">
+    <Hydrofracture
+      name="hydrofracture"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Fracture }"
+      maxNumResolves="1"
+      initialDt="0.01">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </Hydrofracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0e0">
+    </SolidMechanicsLagrangianFEM>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }">
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      nodeBasedSIF="1"
+      initialRockToughness="1e4"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 15, 25 }"
+      yCoords="{ -10, 0, 10 }"
+      zCoords="{ 0, 10, 15 }"
+      nx="{ 10, 3 }"
+      ny="{ 3, 3 }"
+      nz="{ 5, 2 }"
+      xBias="{ 0, -0.5 }"
+      yBias="{ 0.5, -0.5 }"
+      zBias="{ 0, -0.5 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="fracture"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 2.1, 0.1, 5.1 }"/>
+
+    <Box
+      name="source"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 1.1, 0.1, 1.1 }"/>
+
+    <Box
+      name="core"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 1e6, 0.1, 5.1 }"/>
+  </Geometry>
+
+  <Events
+   maxTime="4"
+   maxCycle="10">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      maxEventDt="0.2"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="sourcePressureCollection"
+      beginTime="0.5"
+      target="/Tasks/sourcePressureCollection"/>
+
+    <PeriodicEvent
+      name="sourceHydraulicApertureCollection"
+      beginTime="0.5"
+      target="/Tasks/sourceHydraulicApertureCollection"/>
+
+    <PeriodicEvent
+      name="curveOutput"
+      timeFrequency="0.75"
+      targetExactTimestep="0"
+      target="/Outputs/curveOutput"/>
+
+    <!-- <PeriodicEvent
+      name="vtk"
+      target="/Outputs/vtkOutput"/> -->
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="5"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />
+  </Events>
+
+</Problem>

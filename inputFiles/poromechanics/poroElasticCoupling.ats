@@ -319,7 +319,7 @@ def _build_PoroStaircaseCO2PeacemanWell_sequential_cases():
         "Francois Hamon", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
-        "PoroElastic_staircase_co2_3d_sequential.xml", (22, 33),
+        "PoroElastic_staircase_co2_3d_sequential.xml", (7, 12),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 

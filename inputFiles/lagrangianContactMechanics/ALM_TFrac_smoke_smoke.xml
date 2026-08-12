@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./TFrac_smoke.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+    <SolidMechanicsAugmentedLagrangianContact
+      name="AugmentedLagrangian"
+      logLevel="2"
+      discretization="FE1"
+      targetRegions="{ Region, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1000, -100, 100, 1000 }"
+      yCoords="{ -1000, -100, 100, 1000 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 8, 8, 8 }"
+      ny="{ 8, 8, 8 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="0.2">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      endTime="0.2"
+      forceDt="0.2"
+      target="/Solvers/AugmentedLagrangian"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="0.2"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="tractionHistoryCollection"
+      timeFrequency="0.2"
+      target="/Tasks/tractionCollection" />
+
+    <PeriodicEvent
+      name="tractionHistoryOutput"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/tractionOutput"/>
+
+    <PeriodicEvent
+      name="displacementHistoryCollection"
+      timeFrequency="0.2"
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="displacementHistoryOutput"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/displacementOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>
