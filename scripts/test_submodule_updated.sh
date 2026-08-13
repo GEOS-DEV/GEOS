@@ -22,9 +22,6 @@ declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
 # Initialize submodule paths
 declare -ar paths_array=( $(git submodule status | awk '{print $2}') )
 
-# Initialize differences between PR and origin/develop branches
-declare -ar diff_array=( $(git diff --name-only origin/develop) )
-
 # Initialize main branches for submodules
 declare -Ar main_branches=(
   ["blt"]="origin/develop"
