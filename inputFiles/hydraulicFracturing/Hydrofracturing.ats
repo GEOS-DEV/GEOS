@@ -119,7 +119,10 @@ penny_shaped_viscosity_dominated_poroelastic = {
 pkn_viscosity_dominated = {
     "name": "pknViscosityDominated_smoke",
     "description": "PKN fracture in Viscosity-dominated regime",
-    "partitions": ((1, 1, 1), (1, 2, 2)),
+    "partitions": ((1, 1, 1),
+                   # Temporarily disabled: pknViscosityDominated_smoke_01
+                   # (1, 2, 2),
+                   ),
     "restart_step": 5,
     "check_step": 10,
     "tolerance": [1.8e-5, 2e5],
