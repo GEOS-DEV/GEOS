@@ -95,6 +95,11 @@ struct ConstraintHelper
                                 wellElemGravCoef,
                                 &dControlEqn,
                                 &iwelemRef,
+                                localRhs,
+                                localMatrix,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
                                 &refGravCoef] ( localIndex const )
     {
       real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
@@ -103,14 +108,13 @@ struct ConstraintHelper
       {
         dControlEqn[COFFSET_WJ::dT] =  dDensity[iwelemRef][0][Deriv::dT] * diffGravCoef;
       }
+      // add solver matrices
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
     } );
-
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
   }
   template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
@@ -166,7 +170,12 @@ struct ConstraintHelper
                                 dDensity,
                                 &dControlEqn,
                                 &useSurfaceConditions,
-                                &iwelemRef] ( localIndex const )
+                                &iwelemRef,
+                                localRhs,
+                                localMatrix,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices] ( localIndex const )
     {
       // compute the inverse of the total density and derivatives
       real64 const densInv = 1.0 / density[iwelemRef][0];
@@ -178,14 +187,13 @@ struct ConstraintHelper
         dControlEqn[COFFSET_WJ::dT] = -( useSurfaceConditions ==  0 ) * dDensity[iwelemRef][0][Deriv::dT] * currentVolRate * densInv;
       }
 
+      // add solver matrices
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
     } );
-
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
   }
 };
 
