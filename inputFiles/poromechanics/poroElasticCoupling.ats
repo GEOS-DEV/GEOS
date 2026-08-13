@@ -369,7 +369,7 @@ def _build_PoroElasticPEBICO2FIM_cases():
         "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (5, 10),
         (# Temporarily disabled: PoroElastic_hybridHexPrism_co2_fim_3d_01
          # (1, 1, 1),
-         (2, 2, 1),
+          (2, 2, 1),
          ), description, restartcheck_params)
 
 
