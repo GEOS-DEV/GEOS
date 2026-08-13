@@ -719,7 +719,6 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
             residual.zero();
             jacobian.zero();
             assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-            std::cout << "tjb dq iwelem " << iwelem << " " <<  (residual[25] - residualOrig[25])/dRate <<  std::endl;
             fillNumericalJacobian( residual.toViewConst(),
                                    residualOrig.toViewConst(),
                                    wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC,
