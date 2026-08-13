@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 
 namespace geos
 {
@@ -474,19 +475,16 @@ public:
     }
 
     // Compute Jacobian for pressure equation w.r.t. displacement:
-    // dR_p/du = density * unitNormal^T * Atu
+    // dR_p/du = density * unitNormal^T * Atu = density * area * dAperture/dU
     // This is: dRpdU[j] = sum_i( unitNormal[i] * Atu[i][j] ) * density
     // Use Ri_eq_AjiBj for transpose: R[i] = sum_j(A[j][i] * B[j])
-    // Note: The ALM Atu matrix has opposite sign convention compared to LM's dAper/dU,
-    // so we negate the result to match the LM sign convention.
     LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.dRpdU, stack.localAtu, stack.unitNormal );
-    LvArray::tensorOps::scale< numUdofs >( stack.dRpdU, -m_density[k] );
+    LvArray::tensorOps::scale< numUdofs >( stack.dRpdU, m_density[k] );
 
     // Compute Jacobian for pressure equation w.r.t. bubble displacement:
     // dR_p/db = density * unitNormal^T * Atb
-    // Note: Same sign convention fix as for displacement.
     LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.dRpdB, stack.localAtb, stack.unitNormal );
-    LvArray::tensorOps::scale< numBdofs >( stack.dRpdB, -m_density[k] );
+    LvArray::tensorOps::scale< numBdofs >( stack.dRpdB, m_density[k] );
 
     // Assemble into matrix
     localIndex const localRow = LvArray::integerConversion< localIndex >( stack.pressureRowIndex );
@@ -546,10 +544,10 @@ using AssembleFluidMassResidualDerivativeWrtDisplacementFactory =
  * d(aperture)/du = (1/area) * unitNormal^T * Atu
  * d(aperture)/db = (1/area) * unitNormal^T * Atb
  *
- * IMPORTANT: The ALM Atu/Atb matrices have opposite sign convention compared to the LM
- * dAper/dU formulas. When using these pre-computed values, they must be negated to match
- * the LM sign convention. The assembly in assembleFluidMassResidualDerivativeWrtDisplacement
- * handles this negation.
+ * The Atu/Atb matrices encode the sign convention directly: face 0 gets -N*detJ
+ * and face 1 gets +N*detJ. This means (1/area) * Atu^T * unitNormal already gives
+ * the correct dAperture/dU matching the LM convention (negative for face 0 nodes,
+ * positive for face 1 nodes).
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -813,7 +811,8 @@ public:
                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                arrayView1d< real64 > const inputRhs,
                                real64 const inputDt,
-                               string const & pressureDofKey ):
+                               string const pressureDofKey,
+                               string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -831,7 +830,10 @@ public:
     m_pDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( pressureDofKey ) ),
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
     m_elemsToFaces( elementSubRegion.faceElementsList() ),
-    m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() )
+    m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() ),
+    m_incrBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
+                      elementSubRegion.template getReference< string >( fluidModelKey ) ).density() )
   {}
 
   //***************************************************************************
@@ -858,9 +860,12 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       bEqnRowIndices{},
+      bColIndices{},
       pColIndex( 0 ),
+      pRowIndex( 0 ),
       localRb{},
       localdRbdP{},
+      localdRpdB{},
       X{ {} },
       pLocal{}
     {}
@@ -868,14 +873,23 @@ public:
     /// C-array storage for the element local row degrees of freedom (bubble).
     globalIndex bEqnRowIndices[3];
 
-    /// Column index for pressure DOF
+    /// C-array storage for the (global) bubble column degrees of freedom (for A_pb).
+    globalIndex bColIndices[3];
+
+    /// Column index for pressure DOF (for A_bp)
     globalIndex pColIndex;
+
+    /// Row index (local) for pressure DOF (for A_pb)
+    globalIndex pRowIndex;
 
     /// C-array storage for the element local Rb residual vector.
     real64 localRb[numBubbleUdofs];
 
     /// C-array storage for the element local dRb/dP Jacobian.
     real64 localdRbdP[numBubbleUdofs];
+
+    /// C-array storage for the element local dRp/dB Jacobian (A_pb bulk term).
+    real64 localdRpdB[numBubbleUdofs];
 
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
@@ -947,9 +961,11 @@ public:
     for( int i=0; i<3; ++i )
     {
       stack.bEqnRowIndices[i] = m_bDofNumber[localFaceIndex] + i - m_dofRankOffset;
+      stack.bColIndices[i] = m_bDofNumber[localFaceIndex] + i;  // global column for A_pb
     }
 
     stack.pColIndex = m_pDofNumber[k];
+    stack.pRowIndex = m_pDofNumber[k] - m_dofRankOffset;
     stack.pLocal[0] = m_pressure( k );
   }
 
@@ -998,6 +1014,15 @@ public:
     real64 dRbdP_gauss[nBubbleUdof];
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdP_gauss, strainBubbleMatrix, biotIdentity );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdP, dRbdP_gauss, -detJ );
+
+    // ---- A_pb^Omega : transpose Biot term for the fluid-mass equation ----
+    // The bubble mode contributes to the cell volumetric strain, hence to the
+    // fluid mass storage.  With dPorosity_dVolStrain = biot (BiotPorosity),
+    //   dFluidMassIncrement_dVolStrainIncrement = biot * fluidDensity,
+    // so dR_p/db = fluidDensity * dR_b/dp (same geometric factor biot*div(beta),
+    // times the fluid density that puts it in mass units). We reuse dRbdP_gauss.
+    real64 const rhof = m_fluidDensity( k, 0 );
+    LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRpdB, dRbdP_gauss, -detJ * rhof );
   }
 
   /**
@@ -1014,12 +1039,15 @@ public:
     // on which the bubble function was applied.
     real64 localRb[3];
     real64 localdRbdP[3];
+    real64 localdRpdB[3];
     for( localIndex i = 0; i < 3; ++i )
     {
       localRb[i] = stack.localRb[parentFaceIndex*3+i];
       localdRbdP[i] = stack.localdRbdP[parentFaceIndex*3+i];
+      localdRpdB[i] = stack.localdRpdB[parentFaceIndex*3+i];
     }
 
+    // ---- A_bp : bubble-momentum row (dR_b/dP) ----
     for( localIndex i=0; i < 3; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.bEqnRowIndices[ i ] );
@@ -1035,6 +1063,27 @@ public:
                                                           &stack.pColIndex,
                                                           &localdRbdP[i],
                                                           1 );
+    }
+
+    // ---- A_pb^Omega : fluid-mass row (dR_p/db) + storage residual ----
+    localIndex const pRow = LvArray::integerConversion< localIndex >( stack.pRowIndex );
+    if( pRow >= 0 && pRow < m_matrix.numRows() )
+    {
+      // Residual: R_p += fluidDensity * biot * tr(grad beta) * delta_b (bubble storage),
+      // using the incremental bubble displacement of the bubble face.
+      localIndex const bFace = m_elemsToFaces[kk][0];
+      real64 rp = 0.0;
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        rp += localdRpdB[i] * m_incrBubbleDisp[bFace][i];
+      }
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[pRow], rp );
+
+      // Jacobian dR_p/db (three bubble columns of the parent face)
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pRow,
+                                                                              stack.bColIndices,
+                                                                              localdRpdB,
+                                                                              3 );
     }
 
     return 0.0;
@@ -1060,6 +1109,12 @@ protected:
   /// The array containing the pressure of each element.
   arrayView1d< real64 const > const m_pressure;
 
+  /// Incremental bubble displacement (face field) -- used for the fluid-mass storage residual.
+  arrayView2d< real64 const > const m_incrBubbleDisp;
+
+  /// Fluid density [elem][q].
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidDensity;
+
 };
 
 /// The factory used to construct MatrixPressureBubbleKernels.
@@ -1070,7 +1125,8 @@ using MatrixPressureBubbleFactory = finiteElement::KernelFactory< MatrixPressure
                                                                    CRSMatrixView< real64, globalIndex const > const,
                                                                    arrayView1d< real64 > const,
                                                                    real64 const,
-                                                                   string const & >;
+                                                                   string const,
+                                                                   string const >;
 
 } // namespace poromechanicsMatrixBubbleKernels
 
