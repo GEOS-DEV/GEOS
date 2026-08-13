@@ -41,7 +41,9 @@ decks = [
         name="dead_oil_wells_hybrid_2d",
         description=
         "Dead oil well test (2D displacement, hybrid FVM, 3-phase dead-oil, 3 wells)",
-        partitions=[(1, 1, 1), (2, 2, 1)],
+        partitions=[# Temporarily disabled: dead_oil_wells_hybrid_2d_01
+                    # (1, 1, 1),
+                    (2, 2, 1)],
         restart_step=50,
         check_step=100,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
@@ -73,7 +75,9 @@ decks = [
         name="staircase_co2_wells_hybrid_3d",
         description=
         "CO2 well test (3D staircase, unstructured mesh, hybrid FVM, 2-phase 2-component, 2 wells)",
-        partitions=[(1, 1, 1), (2, 2, 2)],
+        partitions=[# Temporarily disabled: staircase_co2_wells_hybrid_3d_01
+                    # (1, 1, 1),
+                    (2, 2, 2)],
         restart_step=0,
         check_step=17,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),

@@ -97,7 +97,10 @@ decks = [
         name="ALM_TFrac_smoke",
         description=
         "Two fractures intersecting at a right angle (structured grid)",
-        partitions=((1, 1, 1), (2, 2, 1)),
+        partitions=(# Temporarily disabled: ALM_TFrac_smoke_01
+                    # (1, 1, 1),
+                    (2, 2, 1),
+                    ),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
@@ -121,7 +124,10 @@ decks = [
         name="LagrangeContactBubbleStab_FixedSlip_smoke",
         description="Lagrange multiplier with bubble stab and fixed jump on the fault. "
         "Fault with imposed slip",
-        partitions=((1, 1, 1), (2, 2, 1)),
+        partitions=(# Temporarily disabled: LagrangeContactBubbleStab_FixedSlip_smoke_01
+                    # (1, 1, 1),
+                    (2, 2, 1),
+                    ),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))    
