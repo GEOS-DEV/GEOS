@@ -325,7 +325,8 @@ public:
     }
 
     // Solve linear system
-    solveLinearSystem( A.toSlice(), X.toSlice() );
+    bool const solveStatus = solveLinearSystem( A.toSlice(), X.toSlice() );
+    GEOS_ERROR_IF( !solveStatus, "Failed to solve for the derivatives." );
 
     for( integer idof = 0; idof < numDofs; ++idof )
     {

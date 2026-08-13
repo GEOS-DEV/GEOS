@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_UTILITIES_HPP_
 
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/denseLASolvers.hpp"
 
 namespace geos
 {
@@ -166,14 +166,19 @@ GEOS_HOST_DEVICE
 static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
                                arraySlice2d< real64, USD > const & X )
 {
-#if defined(GEOS_DEVICE_COMPILE)
-  GEOS_UNUSED_VAR( A );
-  GEOS_UNUSED_VAR( X );
-  return false;
-#else
-  BlasLapackLA::solveLinearSystem( A, X );
-  return true;
-#endif
+  // The flash and stability-test systems are A: N x N and X: N x (N+1).
+  // denseLinearAlgebra::solve is GEOS_HOST_DEVICE but needs both dimensions at compile time.
+  switch( A.size( 0 ) )
+  {
+    case 2:  return denseLinearAlgebra::solve< 2, 3 >( A, X );
+    case 3:  return denseLinearAlgebra::solve< 3, 4 >( A, X );
+    case 4:  return denseLinearAlgebra::solve< 4, 5 >( A, X );
+    case 5:  return denseLinearAlgebra::solve< 5, 6 >( A, X );
+    case 6:  return denseLinearAlgebra::solve< 6, 7 >( A, X );
+    case 7:  return denseLinearAlgebra::solve< 7, 8 >( A, X );
+    case 8:  return denseLinearAlgebra::solve< 8, 9 >( A, X );
+    default: return false;
+  }
 }
 
 } // namespace compositional

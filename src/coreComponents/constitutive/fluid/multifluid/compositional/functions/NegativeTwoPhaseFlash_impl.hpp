@@ -358,7 +358,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   }
 
   // Solve linear system
-  solveLinearSystem( A.toSlice(), X.toSlice() );
+  bool const solveStatus = solveLinearSystem( A.toSlice(), X.toSlice() );
+  GEOS_ERROR_IF( !solveStatus, "Failed to solve for the derivatives." );
 
   // Fill in the derivatives
   for( integer i = 0; i < numComps; ++i )
