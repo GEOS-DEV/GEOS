@@ -829,6 +829,12 @@ scatterMesh( ScatterMethod method,
   // KdTree: legacy path using VTK's built-in redistribution
   if( method == ScatterMethod::kdtree )
   {
+    constexpr vtkIdType largeMeshCellCount = 10000000;
+    GEOS_WARNING_IF( rank == 0 && totalCells > largeMeshCellCount,
+                     GEOS_FMT( "Scattering {} cells with scatterMethod=kdtree. This method is significantly "
+                               "slower than the alternatives on meshes of this size; "
+                               "consider scatterMethod=rcb (geometry aware) instead.",
+                               totalCells ) );
 #ifdef GEOS_USE_MPI
     vtkNew< vtkMPIController > controller;
     vtkMPICommunicatorOpaqueComm vtkComm( &comm );
