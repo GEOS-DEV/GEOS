@@ -260,245 +260,117 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
 vtkSmartPointer< vtkDataSet >
 redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
                                MPI_Comm comm,
-                               InitialDistributionStrategy strategy )
+                               ScatterMethod scatterMethod,
+                               arrayView1d< integer const > cartesianPartitions )
 {
   GEOS_MARK_FUNCTION;
 
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
-  vtkSmartPointer< vtkPartitionedDataSet > partitionedMesh =
-    vtkSmartPointer< vtkPartitionedDataSet >::New();
+  if( scatterMethod == ScatterMethod::kdtree )
+  {
+    GEOS_LOG_RANK_0( "scatterMethod=kdtree is not supported with fractures (cannot preserve "
+                     "super-cell atomicity). Automatically falling back to rcb." );
+    scatterMethod = ScatterMethod::rcb;
+  }
+
+  // Per-cell rank assignment is computed on rank 0 (empty elsewhere) then consumed by
+  // scatterByRankAssignment. Super-cell atomicity is enforced by assigning one rank
+  // per super-cell and propagating it to every cell of that super-cell.
+  stdVector< integer > cellRanks;
 
   if( rank == 0 )
   {
     vtkIdTypeArray * superCellIdArray =
       vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
-
     GEOS_ERROR_IF( !superCellIdArray, "SuperCellId array not found" );
 
     vtkIdType const numCells = cells3D->GetNumberOfCells();
 
-    // Build super-cell metadata
-    stdMap< vtkIdType, stdVector< vtkIdType > > superCellToLocalCells;
-
+    // Group cells by super-cell ID. The iteration order of the map gives a stable
+    // 0..numSuperCells-1 indexing used by the virtual "atom mesh" below.
+    stdMap< vtkIdType, stdVector< vtkIdType > > superCellToCells;
     for( vtkIdType i = 0; i < numCells; ++i )
     {
-      vtkIdType scId = superCellIdArray->GetValue( i );
-      superCellToLocalCells.get_inserted( scId ).push_back( i );
+      superCellToCells.get_inserted( superCellIdArray->GetValue( i ) ).push_back( i );
     }
-    vtkIdType numSuperCells = superCellToLocalCells.size();
+    vtkIdType const numSuperCells = superCellToCells.size();
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "Initial distribution: {} super-cells across {} ranks ({} ordering)",
+    GEOS_LOG_RANK_0( GEOS_FMT( "Initial distribution: {} super-cells across {} ranks (method={})",
                                numSuperCells, numRanks,
-                               (strategy == InitialDistributionStrategy::MORTON ? "MORTON" : "BLOCK") ) );
+                               EnumStrings< ScatterMethod >::toString( scatterMethod ) ) );
 
-    // -----------------------------------------------------------------------
-    // Step 1: Build super-cell list and optionally sort by spatial locality
-    // -----------------------------------------------------------------------
-    struct SuperCellDistributionInfo
+    // Build a virtual mesh with one VTK_VERTEX cell per super-cell, placed at the
+    // super-cell's centroid (average over all points of all member cells). This lets
+    // computeCellRanks() see super-cells as atomic and partition them as such.
+    vtkNew< vtkPoints > atomPoints;
+    atomPoints->SetNumberOfPoints( numSuperCells );
+
+    vtkNew< vtkUnstructuredGrid > atomMesh;
+    atomMesh->SetPoints( atomPoints );
+    atomMesh->Allocate( numSuperCells );
+
+    stdVector< integer > cellToAtom( numCells );
+    vtkPoints * meshPoints = cells3D->GetPoints();
+
+    vtkIdType atomIdx = 0;
+    for( auto const & kv : superCellToCells )
     {
-      vtkIdType scId;
-      stdVector< vtkIdType > cellIndices;
-      stdArray< double, 3 > centroid;  // Only computed for Morton strategy
-    };
+      stdVector< vtkIdType > const & cellIndices = kv.second;
 
-    stdVector< SuperCellDistributionInfo > superCells;
-    superCells.reserve( numSuperCells );
-
-    if( strategy == InitialDistributionStrategy::MORTON )
-    {
-      vtkPoints * meshPoints = cells3D->GetPoints();
-
-      // Compute super-cell centroids directly
-      for( auto const & [scId, cellIndices] : superCellToLocalCells )
+      real64 cx = 0.0, cy = 0.0, cz = 0.0;
+      vtkIdType totalPoints = 0;
+      for( vtkIdType cellIdx : cellIndices )
       {
-        stdArray< double, 3 > centroid = {0.0, 0.0, 0.0};
-        vtkIdType totalPoints = 0;
-
-        // Accumulate all points from all cells in this super-cell
-        for( vtkIdType cellIdx : cellIndices )
+        vtkIdType npts;
+        vtkIdType const * pts;
+        cells3D->GetCellPoints( cellIdx, npts, pts );
+        for( vtkIdType i = 0; i < npts; ++i )
         {
-          vtkIdType npts;
-          const vtkIdType * pts;
-          cells3D->GetCellPoints( cellIdx, npts, pts );
-
-          for( vtkIdType i = 0; i < npts; ++i )
-          {
-            double pt[3];
-            meshPoints->GetPoint( pts[i], pt );
-            centroid[0] += pt[0];
-            centroid[1] += pt[1];
-            centroid[2] += pt[2];
-          }
-          totalPoints += npts;
+          real64 p[3];
+          meshPoints->GetPoint( pts[i], p );
+          cx += p[0];
+          cy += p[1];
+          cz += p[2];
         }
-
-        // Average over all points
-        centroid[0] /= totalPoints;
-        centroid[1] /= totalPoints;
-        centroid[2] /= totalPoints;
-
-        superCells.push_back( SuperCellDistributionInfo{ scId, cellIndices, centroid } );
+        totalPoints += npts;
+        cellToAtom[cellIdx] = static_cast< integer >( atomIdx );
       }
 
-      // Find bounding box
-      double minCoord[3] = {std::numeric_limits< double >::max(),
-                            std::numeric_limits< double >::max(),
-                            std::numeric_limits< double >::max()};
-      double maxCoord[3] = {std::numeric_limits< double >::lowest(),
-                            std::numeric_limits< double >::lowest(),
-                            std::numeric_limits< double >::lowest()};
+      real64 const inv = (totalPoints > 0) ? 1.0 / totalPoints : 0.0;
+      atomPoints->SetPoint( atomIdx, cx * inv, cy * inv, cz * inv );
 
-      for( auto const & sc : superCells )
-      {
-        for( int d = 0; d < 3; ++d )
-        {
-          minCoord[d] = std::min( minCoord[d], sc.centroid[d] );
-          maxCoord[d] = std::max( maxCoord[d], sc.centroid[d] );
-        }
-      }
+      vtkIdType const pid = atomIdx;
+      atomMesh->InsertNextCell( VTK_VERTEX, 1, &pid );
 
-      // Morton encoding
-      auto computeMorton = []( stdArray< double, 3 > const & centroid,
-                               double bounds_min[3],
-                               double bounds_max[3] ) -> uint64_t
-      {
-        auto normalize = [&]( double val, int dim ) -> uint32_t
-        {
-          double range = bounds_max[dim] - bounds_min[dim];
-          if( range < 1e-10 )
-            return 0;
-          double norm = (val - bounds_min[dim]) / range;
-          norm = std::max( 0.0, std::min( 1.0, norm ) );
-          return static_cast< uint32_t >( norm * ((1u << 21) - 1) );
-        };
-
-        uint32_t x = normalize( centroid[0], 0 );
-        uint32_t y = normalize( centroid[1], 1 );
-        uint32_t z = normalize( centroid[2], 2 );
-
-        uint64_t code = 0;
-        for( int i = 0; i < 21; ++i )
-        {
-          code |= ((x & (1u << i)) ? (1ull << (3*i)) : 0);
-          code |= ((y & (1u << i)) ? (1ull << (3*i + 1)) : 0);
-          code |= ((z & (1u << i)) ? (1ull << (3*i + 2)) : 0);
-        }
-        return code;
-      };
-
-      // Sort by Morton code
-      std::sort( superCells.begin(), superCells.end(),
-                 [&]( SuperCellDistributionInfo const & a, SuperCellDistributionInfo const & b )
-      {
-        return computeMorton( a.centroid, minCoord, maxCoord ) <
-        computeMorton( b.centroid, minCoord, maxCoord );
-      } );
-
-    }
-    else
-    {
-      // BLOCK: Simple ordering by super-cell ID (no centroid computation needed)
-      for( auto const & [scId, cellIndices] : superCellToLocalCells )
-      {
-        superCells.push_back( SuperCellDistributionInfo{ scId, cellIndices, {0.0, 0.0, 0.0} } );
-      }
-
-      // Sort by super-cell ID for deterministic partitioning
-      std::sort( superCells.begin(), superCells.end(),
-                 []( SuperCellDistributionInfo const & a, SuperCellDistributionInfo const & b )
-      {
-        return a.scId < b.scId;
-      } );
+      ++atomIdx;
     }
 
-    // -----------------------------------------------------------------------
-    // Step 2: Assign super-cells to ranks in contiguous blocks
-    // -----------------------------------------------------------------------
-    array1d< int64_t > cellPartitions( numCells );
-    stdVector< vtkIdType > cellsPerRank( numRanks, 0 );
+    // One rank per super-cell, then expand to per-cell so atomicity is preserved.
+    stdVector< integer > const atomRanks =
+      computeCellRanks( scatterMethod, *atomMesh, cartesianPartitions, numRanks );
 
-    vtkIdType superCellsPerRank = (numSuperCells + numRanks - 1) / numRanks;
-
-    for( vtkIdType scIdx = 0; scIdx < numSuperCells; ++scIdx )
+    cellRanks.resize( numCells );
+    for( vtkIdType c = 0; c < numCells; ++c )
     {
-      int targetRank = std::min( static_cast< int >(scIdx / superCellsPerRank), numRanks - 1 );
-
-      // All cells in this super-cell go to the same rank
-      for( vtkIdType cellIdx : superCells[scIdx].cellIndices )
-      {
-        cellPartitions[cellIdx] = targetRank;
-        cellsPerRank[targetRank]++;
-      }
-    }
-
-    // -----------------------------------------------------------------------
-    // Step 3: Build partitions
-    // -----------------------------------------------------------------------
-    partitionedMesh->SetNumberOfPartitions( numRanks );
-
-    for( int r = 0; r < numRanks; ++r )
-    {
-      vtkNew< vtkIdList > cellsForRank;
-
-      for( vtkIdType i = 0; i < numCells; ++i )
-      {
-        if( cellPartitions[i] == r )
-        {
-          cellsForRank->InsertNextId( i );
-        }
-      }
-
-      if( cellsForRank->GetNumberOfIds() == 0 )
-      {
-        vtkNew< vtkUnstructuredGrid > emptyPart;
-        partitionedMesh->SetPartition( r, emptyPart );
-        continue;
-      }
-
-      vtkNew< vtkExtractCells > extractor;
-      extractor->SetInputData( cells3D );
-      extractor->SetCellList( cellsForRank );
-      extractor->Update();
-
-      vtkSmartPointer< vtkUnstructuredGrid > partition =
-        vtkUnstructuredGrid::SafeDownCast( extractor->GetOutput() );
-
-      partitionedMesh->SetPartition( r, partition );
-    }
-  }
-  else
-  {
-    // Other ranks: create empty partitioned dataset
-    partitionedMesh->SetNumberOfPartitions( numRanks );
-    for( int r = 0; r < numRanks; ++r )
-    {
-      vtkNew< vtkUnstructuredGrid > emptyPart;
-      partitionedMesh->SetPartition( r, emptyPart );
+      cellRanks[c] = atomRanks[ cellToAtom[c] ];
     }
   }
 
-  // -----------------------------------------------------------------------
-  // Step 4: Redistribute using VTK
-  // -----------------------------------------------------------------------
-  vtkSmartPointer< vtkDataSet > result = vtk::redistribute( *partitionedMesh, comm );
+  // All ranks ship cells
+  vtkSmartPointer< vtkUnstructuredGrid > result =
+    scatterByRankAssignment( cells3D.Get(), std::move( cellRanks ), comm );
 
-  partitionedMesh = nullptr;
   if( rank == 0 )
   {
     cells3D = nullptr;
   }
 
-  vtkIdType localCells = result->GetNumberOfCells();
-
-  // Verify SuperCellId array survived redistribution
-  if( localCells > 0 )
+  // SuperCellId must survive redistribution
+  if( result->GetNumberOfCells() > 0 )
   {
-    vtkIdTypeArray * resultSuperCellIdArray =
-      vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "SuperCellId" ) );
-
-    GEOS_ERROR_IF( !resultSuperCellIdArray,
+    GEOS_ERROR_IF( !vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "SuperCellId" ) ),
                    GEOS_FMT( "Rank {}: SuperCellId array lost during redistribution", rank ) );
   }
 
@@ -891,9 +763,8 @@ void validateSuperCellGraph(
         isolated++;
         if( isolated <= 5 )
         {
-          pmet_idx_t globalId = localStart + i;
           GEOS_LOG_RANK( GEOS_FMT( "WARNING: Super-cell {} (global {}) has no neighbors (isolated)",
-                                   i, globalId ) );
+                                   i, localStart + i ) );
         }
       }
     }
