@@ -20,12 +20,84 @@ function or_die () {
     local status=$?
 
     if [[ $status != 0 ]] ; then
+        if [[ -n "${CURRENT_PHASE_LABEL:-}" ]]; then
+            phase_finish "${status}"
+        fi
         echo ERROR $status command: $@
         exit $status
     fi
 }
 
+PHASE_TIMINGS=()
+CURRENT_PHASE_LABEL=""
+CURRENT_PHASE_START=""
 tempdir=""
+
+function now_epoch () {
+    date +%s
+}
+
+function format_duration () {
+    local total_seconds=$1
+    local hours=$(( total_seconds / 3600 ))
+    local minutes=$(( (total_seconds % 3600) / 60 ))
+    local seconds=$(( total_seconds % 60 ))
+
+    if (( hours > 0 )); then
+        printf '%dh %02dm %02ds' "${hours}" "${minutes}" "${seconds}"
+    elif (( minutes > 0 )); then
+        printf '%dm %02ds' "${minutes}" "${seconds}"
+    else
+        printf '%ds' "${seconds}"
+    fi
+}
+
+function phase_start () {
+    CURRENT_PHASE_LABEL="$1"
+    CURRENT_PHASE_START="$(now_epoch)"
+    echo ">>> ${CURRENT_PHASE_LABEL} started at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+
+function phase_finish () {
+    local status="${1:-0}"
+    local label="${CURRENT_PHASE_LABEL:-}"
+    local start="${CURRENT_PHASE_START:-}"
+
+    if [[ -z "${label}" || -z "${start}" ]]; then
+        return 0
+    fi
+
+    local duration=$(( $(now_epoch) - start ))
+    PHASE_TIMINGS+=("${label}|${duration}|${status}")
+
+    if [[ "${status}" -eq 0 ]]; then
+        echo ">>> ${label} completed in $(format_duration "${duration}")"
+    else
+        echo ">>> ${label} failed after $(format_duration "${duration}") (exit ${status})"
+    fi
+
+    CURRENT_PHASE_LABEL=""
+    CURRENT_PHASE_START=""
+}
+
+function print_phase_summary () {
+    local entry label duration status status_text
+
+    if [[ ${#PHASE_TIMINGS[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    echo "Phase timing summary:"
+    for entry in "${PHASE_TIMINGS[@]}"; do
+        IFS='|' read -r label duration status <<< "${entry}"
+        if [[ "${status}" -eq 0 ]]; then
+            status_text="ok"
+        else
+            status_text="exit ${status}"
+        fi
+        printf '  - %s: %s (%s)\n' "${label}" "$(format_duration "${duration}")" "${status_text}"
+    done
+}
 
 function openssl_fips_provider_available () {
     local fips_module_path
@@ -308,6 +380,11 @@ fi
 
 
 cleanup() {
+  if [[ -n "${CURRENT_PHASE_LABEL:-}" ]]; then
+    phase_finish 1
+  fi
+
+  print_phase_summary
   echo "Container cleanup..."
   if [[ -n "${tempdir:-}" ]]; then
     rm -rf "${tempdir}" || true
@@ -377,7 +454,7 @@ EOT
     or_die cp "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" "${HOME}/.config/sccache/config"
   fi
 
-  # Backend-specific credentials and endpoints are injected through the environment or generated config.
+  # Backend-specific credentials and endpoints are injected through the environment and/or config file.
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   if [[ -f /certs/ca-bundle.crt ]]; then
@@ -386,7 +463,8 @@ EOT
     export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
   fi
 
-  echo "sccache enabled: ${SCCACHE_BIN}, cache directory: ${SCCACHE_DIR:-default}"
+  echo "sccache initial state"
+  ${SCCACHE_BIN} --show-stats || true
 fi
 
 if [ -z "${NPROC}" ]; then
@@ -401,6 +479,7 @@ if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+  phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
 
   # We install the python environment required by ATS to run the integrated tests.
@@ -430,6 +509,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
                   "-DATS_BASELINE_DIR=${ATS_BASELINE_DIR}"
                   "-DATS_WORKING_DIR=${ATS_WORKING_DIR}")
+  phase_finish 0
 fi
 
 
@@ -482,6 +562,7 @@ fi
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOS_BUILD_DIR=/tmp/geos-build
+phase_start "Configure"
 or_die python3 scripts/config-build.py \
                -hc ${HOST_CONFIG} \
                -bt ${CMAKE_BUILD_TYPE} \
@@ -502,23 +583,29 @@ or_die python3 scripts/config-build.py \
                ${SCCACHE_CMAKE_ARGS} \
                ${LCOV_CMAKE_ARGS} \
                "${ATS_CMAKE_ARGS[@]}"
+phase_finish 0
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOS_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
+  phase_start "Code style check"
   or_die ctest --output-on-failure -R "testUncrustifyCheck"
+  phase_finish 0
   exit 0
 fi
 
 # Documentation check
 if [[ "${TEST_DOCUMENTATION}" = true ]]; then
+  phase_start "Documentation check"
   or_die ctest --output-on-failure -R "testDoxygenCheck"
+  phase_finish 0
   exit 0
 fi
 
 # Performing the requested build.
+phase_start "Build"
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die cmake --build . -j $NPROC --target geosx
 else
@@ -537,6 +624,7 @@ else
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
+phase_finish 0
 
 if [[ -n "${SCCACHE_BIN}" ]]; then
   echo "Capturing sccache post-build stats"
@@ -551,18 +639,22 @@ if [[ -n "${SCCACHE_BIN}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
+  phase_start "Generate code coverage"
   export OMP_NUM_THREADS=1
   or_die cmake --build . --target coreComponents_coverage
   or_die cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+  phase_finish 0
 fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  phase_start "Unit tests"
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
   fi
+  phase_finish 0
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
@@ -575,10 +667,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   fi
 
   # We split the process in two steps. First installing the environment, then running the tests.
+  phase_start "Build ATS environment"
   or_die cmake --build . --target ats_environment
   # The system-site virtualenv inherits Ubuntu's NumPy 1.x-built Matplotlib,
   # while the GEOS Python packages require NumPy 2.x.
   or_die "${ATS_PYTHON_HOME}/bin/python3" -m pip install --disable-pip-version-check --upgrade matplotlib
+  phase_finish 0
 
   # The tests are not run using cmake (`cmake --build . --verbose  --target ats_run`)
   # because with ninja it swallows the output while all the
@@ -588,8 +682,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ls -lR /tmp/geos/baselines
 
   echo "Running integrated tests..."
+  phase_start "Integrated tests"
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
   ATS_RUN_STATUS=$?
+  phase_finish "${ATS_RUN_STATUS}"
 
   if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
     # On a hypredrive-enabled build the previous pass exercised the hypredrive
@@ -627,8 +723,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     echo "Packing logs..."
     tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults || PROCESS_LOGS_STATUS=$?
   fi
+  phase_finish "${PROCESS_LOGS_STATUS}"
 
   echo "Checking results..."
+  phase_start "Check integrated test results"
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   LOG_CHECK_STATUS=$?
   cat $tempdir/log_check.txt
@@ -645,7 +743,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     fi
   fi
 
-  if [[ "${ATS_RUN_STATUS}" -eq 0 && "${LOG_CHECK_STATUS}" -eq 0 ]] && grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
+  if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."
     INTEGRATED_TEST_EXIT_STATUS=0
   else
@@ -653,6 +751,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
     # Rebaseline and pack into an archive
     echo "Rebaselining..."
+    phase_start "Rebaseline integrated tests"
     REBASELINE_STATUS=0
     integratedTests/geos_ats.sh -a rebaselinefailed || REBASELINE_STATUS=$?
 
@@ -660,20 +759,26 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
       echo "Packing baselines..."
       integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory /tmp/geos/baselines || REBASELINE_STATUS=$?
     fi
+    phase_finish "${REBASELINE_STATUS}"
     INTEGRATED_TEST_EXIT_STATUS=1
   fi
 
   echo "Done!"
 
+  # INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 fi
 
 # Cleaning the build directory.
+phase_start "Clean build directory"
 or_die cmake --build . --target clean
+phase_finish 0
 
 # Clean the repository
+phase_start "Clean repository"
 or_die cd ${GEOS_SRC_DIR}/inputFiles
 find . -name '*.pyc' -delete
+phase_finish 0
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then

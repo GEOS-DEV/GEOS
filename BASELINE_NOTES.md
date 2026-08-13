@@ -19,6 +19,10 @@ PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Well model refactor .  Integrated test update due to schema changes
 
+PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
+=====================
+Fluid reset after convergence failure
+
 PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
 =====================
 Added statistics `Group` objects for each statistics `Task` instance
