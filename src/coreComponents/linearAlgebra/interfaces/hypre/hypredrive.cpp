@@ -23,6 +23,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
@@ -40,6 +41,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <numeric>
@@ -57,12 +59,26 @@ namespace
 {
 
 void checkHypredriveCall( uint32_t const errorCode,
-                          char const * const call )
+                          char const * const call,
+                          std::string const & context = {} )
 {
   if( errorCode != 0 )
   {
     HYPREDRV_ErrorCodeDescribe( errorCode );
-    GEOS_ERROR( GEOS_FMT( "Error in call to {}", call ) );
+    std::fflush( stderr );
+    HYPREDRV_ErrorCodeClear();
+
+    std::string const contextMessage = context.empty()
+                                             ? std::string{}
+                                             : GEOS_FMT( "\nContext: {}", context );
+    GEOS_ERROR( GEOS_FMT( "Error in call to {} (HYPREDRV error code: 0x{:08x}, decimal: {}).{}\n"
+                          "HypreDrive error details are written to stderr; use '2>&1' to merge them into stdout. "
+                          "For additional library tracing, set HYPREDRV_LOG_LEVEL=3 and "
+                          "HYPREDRV_LOG_STREAM=stdout.",
+                          call,
+                          errorCode,
+                          errorCode,
+                          contextMessage ) );
   }
 }
 
@@ -870,7 +886,8 @@ enum class AMGFlavor
   pressure,
   pressureTemperature,
   displacementFiltered,
-  displacement
+  displacement,
+  almDisplacement
 };
 
 struct LevelAMGBlock
@@ -907,6 +924,7 @@ struct MGRSpecialization
   stdVector< LevelAMGBlock > fRelaxAMGLevels;
   HYPRE_Int pmax = 0;
   HYPRE_Int coarseMinCoarseSize = -1;
+  char const * cycle = nullptr;
 };
 
 MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType const strategy )
@@ -960,6 +978,14 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
       specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
       return specialization;
     }
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    {
+      MGRSpecialization specialization;
+      specialization.coarseFlavor = AMGFlavor::pressure;
+      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::almDisplacement } };
+      specialization.cycle = "v(1,0)";
+      return specialization;
+    }
     case StrategyType::invalid:
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
@@ -1004,7 +1030,8 @@ void appendAMGHeader( std::ostringstream & stream,
 void appendDisplacementAMG( std::ostringstream & stream,
                             integer const indentLevel,
                             integer const separateComponents,
-                            bool const filterFunctions )
+                            bool const filterFunctions,
+                            bool const useALMSmoother = false )
 {
   appendAMGHeader( stream, indentLevel );
   appendLine( stream, indentLevel + 1, "coarsening:" );
@@ -1021,7 +1048,18 @@ void appendDisplacementAMG( std::ostringstream & stream,
   appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
 #else
   appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "order: 1" );
+  if( useALMSmoother )
+  {
+    appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
+    appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
+    appendLine( stream, indentLevel + 2, "coarse_type: ge" );
+    appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
+    appendLine( stream, indentLevel + 2, "order: 0" );
+  }
+  else
+  {
+    appendLine( stream, indentLevel + 2, "order: 1" );
+  }
 #endif
 }
 
@@ -1117,6 +1155,11 @@ void appendAMGByFlavor( std::ostringstream & stream,
       appendDisplacementAMG( stream, indentLevel, 0, false );
       break;
     }
+    case AMGFlavor::almDisplacement:
+    {
+      appendDisplacementAMG( stream, indentLevel, mgrParams.separateComponents, true, true );
+      break;
+    }
   }
 }
 
@@ -1166,6 +1209,10 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   appendLine( stream, 2, "tolerance: 0.0" );
   appendLine( stream, 2, "max_iter: 1" );
   appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
+  if( specialization.cycle != nullptr )
+  {
+    appendLine( stream, 2, GEOS_FMT( "cycle: {}", specialization.cycle ) );
+  }
   appendLine( stream, 2, GEOS_FMT( "non_c_to_f: {}", 1 ) );
   appendLine( stream, 2, GEOS_FMT( "nonglk_max_elmts: {}", 1 ) );
   appendLine( stream, 2, GEOS_FMT( "pmax: {}", specialization.pmax ) );
@@ -1272,7 +1319,7 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
     case StrategyType::singlePhasePoromechanicsConformingFractures:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
+      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
@@ -1584,6 +1631,11 @@ void HypredriveSolver::setExecutionContext( LinearSolverExecutionContext const &
   m_hasExecutionContext = true;
 }
 
+void HypredriveSolver::setNearNullKernel( arrayView1d< HypreVector const > const & nearNullKernel )
+{
+  m_nearNullKernel = nearNullKernel;
+}
+
 void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
@@ -1607,8 +1659,13 @@ void HypredriveSolver::createHypredrive( HypreMatrix const & mat,
   checkHypredriveCall( HYPREDRV_SetLibraryMode( m_hypredrive ), "HYPREDRV_SetLibraryMode" );
 
   char * argv[] = { const_cast< char * >( parseTarget.argument.c_str() ) };
+  std::string const parseContext =
+    parseTarget.source == hypre::hypredrive::InputSource::authoritativeFile
+    ? GEOS_FMT( "authoritative YAML file '{}'", parseTarget.argument )
+    : "YAML generated by GEOS";
   checkHypredriveCall( HYPREDRV_InputArgsParse( 1, argv, m_hypredrive ),
-                       "HYPREDRV_InputArgsParse" );
+                       "HYPREDRV_InputArgsParse",
+                       parseContext );
   if( parseTarget.source == hypre::hypredrive::InputSource::generatedFallback &&
       m_hasExecutionContext &&
       !m_executionContext.solverName.empty() )
@@ -1653,6 +1710,32 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                                          LvArray::integerConversion< int >( pointMarkers.size() ),
                                                          pointMarkers.data() ),
                          "HYPREDRV_LinearSystemSetDofmap" );
+  }
+
+  if( !m_nearNullKernel.empty() )
+  {
+    localIndex const numEntries = mat.numLocalRows();
+    localIndex const numModes = m_nearNullKernel.size();
+    std::vector< HYPRE_Complex > values( numEntries * numModes );
+
+    for( localIndex mode = 0; mode < numModes; ++mode )
+    {
+      GEOS_ERROR_IF( m_nearNullKernel[mode].localSize() != numEntries,
+                     "HypreDrive near-null-space vector size does not match the matrix local size" );
+      GEOS_LAI_CHECK_ERROR(
+        HYPRE_IJVectorGetValues( m_nearNullKernel[mode].unwrappedIJ(),
+                                 LvArray::integerConversion< HYPRE_Int >( numEntries ),
+                                 nullptr,
+                                 values.data() + mode * numEntries ) );
+    }
+
+    checkHypredriveCall(
+      HYPREDRV_LinearSystemSetNearNullSpace(
+        m_hypredrive,
+        LvArray::integerConversion< int >( numEntries ),
+        LvArray::integerConversion< int >( numModes ),
+        values.data() ),
+      "HYPREDRV_LinearSystemSetNearNullSpace" );
   }
 }
 
