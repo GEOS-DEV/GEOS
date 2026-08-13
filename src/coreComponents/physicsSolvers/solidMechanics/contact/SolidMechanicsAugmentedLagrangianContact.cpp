@@ -1258,7 +1258,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [m_symmetric=m_symmetric]( localIndex const,
+      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [symmetric = m_symmetric]( localIndex const,
                                                                                                         FaceElementSubRegion & subRegion )
       {
 
@@ -1294,7 +1294,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               oldDispJump,
                                               dispJump,
                                               iterativePenalty,
-                                              m_symmetric,
+                                              symmetric,
                                               normalTractionTolerance,
                                               traction,
                                               fractureState );
