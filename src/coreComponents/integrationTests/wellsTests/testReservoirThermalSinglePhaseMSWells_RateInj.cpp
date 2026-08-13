@@ -258,6 +258,9 @@ template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
 {
+  matrix1.move( hostMemorySpace, false );
+  matrix2.move( hostMemorySpace, false );
+
   std::ofstream omat1( testName+".csv" );
 
 
