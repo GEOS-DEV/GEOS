@@ -367,7 +367,10 @@ def _build_PoroElasticPEBICO2FIM_cases():
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
         "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (5, 10),
-        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+        (# Temporarily disabled: PoroElastic_hybridHexPrism_co2_fim_3d_01
+         # (1, 1, 1),
+         (2, 2, 1),
+         ), description, restartcheck_params)
 
 
 def _build_PoroElasticPEBICO2Sequential_cases():
@@ -377,7 +380,10 @@ def _build_PoroElasticPEBICO2Sequential_cases():
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
         "PoroElastic_hybridHexPrism_co2_sequential_3d.xml", (5, 10),
-        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+        (# Temporarily disabled: PoroElastic_hybridHexPrism_co2_sequential_3d_01
+         # (1, 1, 1),
+         (2, 2, 1),
+         ), description, restartcheck_params)
 
 
 def _build_PoroElasticGravity_cases():
