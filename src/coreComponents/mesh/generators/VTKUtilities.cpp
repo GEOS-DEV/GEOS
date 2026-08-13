@@ -34,7 +34,9 @@
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
 #include <vtkCellTypeUtilities.h>
+#endif
 #include <vtkDataArray.h>
 #include <vtkDataSetReader.h>
 #include <vtkExtractCells.h>

@@ -975,13 +975,6 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = AMGFlavor::pressure;
-      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
-      return specialization;
-    }
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
-    {
-      MGRSpecialization specialization;
-      specialization.coarseFlavor = AMGFlavor::pressure;
       specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::almDisplacement } };
       specialization.cycle = "v(1,0)";
       return specialization;
