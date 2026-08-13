@@ -30,6 +30,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -637,7 +638,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue( time_n + dt,
                                mesh,
                                solidMechanics::totalDisplacement::key(),
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -651,7 +652,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
         vel( a, component ) = u( a, component );
       } );
     },
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -731,21 +732,22 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     fsManager.apply< NodeManager >( time,
                                     mesh,
                                     solidMechanics::totalDisplacement::key(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
                                          string const fieldName )
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     fieldName,
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time,
+                                                                                          targetGroup,
+                                                                                          fieldName,
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
 
       if( targetSet.size() > 0 && bc.getComponent() == 0 )
       {
@@ -1262,22 +1264,23 @@ SolidMechanicsLagrangianFEM::
     fsManager.apply< NodeManager >( time_n + dt,
                                     mesh,
                                     viewKeyStruct::forceString(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       // TODO: fix use of dummy name
-      bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time_n + dt,
-                                                                     targetGroup,
-                                                                     solidMechanics::totalDisplacement::key(),
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationAdd,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time_n + dt,
+                                                                                          targetGroup,
+                                                                                          solidMechanics::totalDisplacement::key(),
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
     } );
 
   } );

@@ -22,6 +22,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -843,17 +844,18 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -923,7 +925,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
+                                             [&]( FieldSpecification const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
                                                   ElementSubRegionBase & subRegion,
@@ -947,7 +949,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
                                                    ElementSubRegionBase & subRegion,
@@ -995,7 +997,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       fsManager.apply< ElementSubRegionBase >( time,
                                                mesh,
                                                flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const &,
+                                               [&]( FieldSpecification const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
                                                     ElementSubRegionBase & subRegion,
@@ -1082,7 +1084,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const & fs,
+                                             [&]( FieldSpecification const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   ElementSubRegionBase & subRegion,
@@ -1098,33 +1100,37 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                         fs );
       }
 
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcPressure::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcPressure::key() );
     } );
 
     // 2. Apply composition BC (global component fraction), store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcGlobalCompFraction::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcGlobalCompFraction::key() );
     } );
 
     // 3. Apply temperature Dirichlet BCs, store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::temperature::key(),
-                                             [&]( FieldSpecificationBase const & fs,
+                                             [&]( FieldSpecification const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   ElementSubRegionBase & subRegion,
@@ -1140,10 +1146,12 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                         fs );
       }
 
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcTemperature::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcTemperature::key() );
     } );
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1154,7 +1162,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
