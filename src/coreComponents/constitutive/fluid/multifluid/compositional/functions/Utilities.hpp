@@ -177,6 +177,8 @@ static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
     case 6:  return denseLinearAlgebra::solve< 6, 7 >( A, X );
     case 7:  return denseLinearAlgebra::solve< 7, 8 >( A, X );
     case 8:  return denseLinearAlgebra::solve< 8, 9 >( A, X );
+    case 9:  return denseLinearAlgebra::solve< 9, 10 >( A, X );
+    case 10:  return denseLinearAlgebra::solve< 10, 11 >( A, X );
     default: return false;
   }
 }

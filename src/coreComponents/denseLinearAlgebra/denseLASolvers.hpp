@@ -519,7 +519,7 @@ inline
 bool solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 {
   static_assert( N > 0, "N must be greater than 0." );
-  static_assert( N < 10, "N cannot be larger than 9" );
+  static_assert( N < 11, "N cannot be larger than 10" );
   LvArray::tensorOps::internal::checkSizes< N, N >( A );
   LvArray::tensorOps::internal::checkSizes< N >( b );
   LvArray::tensorOps::internal::checkSizes< N >( x );
@@ -587,9 +587,9 @@ inline
 bool solve( MATRIX_TYPE & A, SOL_TYPE && X )
 {
   static_assert( N > 0, "N must be greater than 0." );
-  static_assert( N < 10, "N cannot be larger than 9" );
+  static_assert( N < 11, "N cannot be larger than 10" );
   static_assert( M > 0, "M must be greater than 0." );
-  static_assert( M < 10, "M cannot be larger than 9" );
+  static_assert( M < 12, "M cannot be larger than 11" );
   LvArray::tensorOps::internal::checkSizes< N, N >( A );
   LvArray::tensorOps::internal::checkSizes< N, M >( X );
 
@@ -656,9 +656,9 @@ inline
 bool solve( MATRIX_TYPE & A, RHS_TYPE & B, SOL_TYPE && X )
 {
   static_assert( N > 0, "N must be greater than 0." );
-  static_assert( N < 10, "N cannot be larger than 9" );
+  static_assert( N < 11, "N cannot be larger than 10" );
   static_assert( M > 0, "M must be greater than 0." );
-  static_assert( M < 10, "M cannot be larger than 9" );
+  static_assert( M < 12, "M cannot be larger than 11" );
   LvArray::tensorOps::internal::checkSizes< N, N >( A );
   LvArray::tensorOps::internal::checkSizes< N, M >( B );
   LvArray::tensorOps::internal::checkSizes< N, M >( X );
