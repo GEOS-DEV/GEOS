@@ -27,7 +27,6 @@
 #include "constitutiveDrivers/solid/TriaxialDriver.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
-#include "dataRepository/KeyNames.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
@@ -67,6 +66,81 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+
+CommandLine::CommandLine( string const & name, Group * parent )
+  : Group( name, parent )
+{
+  registerWrapper< string >( m_vks.inputFileName ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Name of the input xml file." );
+
+  registerWrapper< string >( m_vks.restartFileName ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Name of the restart file." );
+
+  registerWrapper< integer >( m_vks.beginFromRestart ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Flag to indicate restart run." );
+
+  registerWrapper< string >( m_vks.problemName ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Used in writing the output files, if not specified defaults to the name of the input file." );
+
+  registerWrapper< string >( m_vks.outputDirectory ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Directory in which to put the output files, if not specified defaults to the current directory." );
+
+  registerWrapper< integer >( m_vks.xPartitionsOverride ).
+    setApplyDefaultValue( 1 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Number of partitions in the x-direction" );
+
+  registerWrapper< integer >( m_vks.yPartitionsOverride ).
+    setApplyDefaultValue( 1 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Number of partitions in the y-direction" );
+
+  registerWrapper< integer >( m_vks.zPartitionsOverride ).
+    setApplyDefaultValue( 1 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Number of partitions in the z-direction" );
+
+  registerWrapper< integer >( m_vks.overridePartitionNumbers ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Flag to indicate partition number override" );
+
+  registerWrapper< string >( m_vks.schemaFileName ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Name of the output schema" );
+
+  registerWrapper< integer >( m_vks.useNonblockingMPI ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering)." );
+
+  registerWrapper< integer >( m_vks.suppressPinned ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
+}
+
+void CommandLine::setValues( CommandLineOptions const & opts,
+                             string_view inputFileName )
+{
+  getReference< string >( m_vks.inputFileName ) = inputFileName;
+  getReference< string >( m_vks.restartFileName ) = opts.restartFileName;
+  getReference< integer >( m_vks.beginFromRestart ) = opts.beginFromRestart;
+  getReference< integer >( m_vks.xPartitionsOverride ) = opts.xPartitionsOverride;
+  getReference< integer >( m_vks.yPartitionsOverride ) = opts.yPartitionsOverride;
+  getReference< integer >( m_vks.zPartitionsOverride ) = opts.zPartitionsOverride;
+  getReference< integer >( m_vks.overridePartitionNumbers ) = opts.overridePartitionNumbers;
+  getReference< string >( m_vks.schemaFileName ) = opts.schemaName;
+  getReference< string >( m_vks.problemName ) = opts.problemName;
+  getReference< string >( m_vks.outputDirectory ) = opts.outputDirectory;
+  getReference< integer >( m_vks.useNonblockingMPI ) = opts.useNonblockingMPI;
+  getReference< integer >( m_vks.suppressPinned ) = opts.suppressPinned;
+}
 
 #ifdef GEOS_USE_HYPREDRV
 namespace
@@ -159,86 +233,29 @@ void logHypredriveInputs( PhysicsSolverManager & physicsSolverManager,
 #endif
 
 ProblemManager::ProblemManager( conduit::Node & root ):
-  ProblemManagerBase( keys::ProblemManager, root ),
-  m_physicsSolverManager( nullptr ),
-  m_eventManager( nullptr ),
-  m_functionManager( nullptr ),
-  m_fieldSpecificationManager( nullptr )
+  dataRepository::Group( ProblemGroupKeys::problemString(), root ),
+  dataRepository::ProblemRepository( (Group &)*this )
 {
-  // Groups that do not read from the xml
-  registerGroup< DomainPartition >( groupKeys.domain );
-  Group & commandLine = registerGroup< Group >( groupKeys.commandLine );
-  commandLine.setRestartFlags( RestartFlags::WRITE );
-
   setInputFlags( InputFlags::PROBLEM_ROOT );
 
-  registerGroup< ExternalDataSourceManager >( groupKeys.externalDataSourceManager );
+  // Groups that do not read from the xml
+  CommandLine & commandLine = registerGroup< CommandLine >( m_gks.commandLine );
+  commandLine.setRestartFlags( RestartFlags::WRITE );
 
-  m_fieldSpecificationManager = &registerGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager );
+  DomainPartition & domain = registerGroup< DomainPartition >( m_gks.domain );
+  domain.registerGroup< constitutive::ConstitutiveManager >( m_gks.constitutiveManager );
+  domain.groupKeys.constitutiveManager = m_gks.constitutiveManager.index();
 
-  m_eventManager = &registerGroup< EventManager >( groupKeys.eventManager );
-  registerGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
-  registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-  registerGroup< MeshManager >( groupKeys.meshManager );
-  registerGroup< OutputManager >( groupKeys.outputManager );
-  m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
-  m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
-
-  // Command line entries
-  commandLine.registerWrapper< string >( viewKeys.inputFileName.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Name of the input xml file." );
-
-  commandLine.registerWrapper< string >( viewKeys.restartFileName.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Name of the restart file." );
-
-  commandLine.registerWrapper< integer >( viewKeys.beginFromRestart.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Flag to indicate restart run." );
-
-  commandLine.registerWrapper< string >( viewKeys.problemName.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Used in writing the output files, if not specified defaults to the name of the input file." );
-
-  commandLine.registerWrapper< string >( viewKeys.outputDirectory.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Directory in which to put the output files, if not specified defaults to the current directory." );
-
-  commandLine.registerWrapper< integer >( viewKeys.xPartitionsOverride.key() ).
-    setApplyDefaultValue( 1 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Number of partitions in the x-direction" );
-
-  commandLine.registerWrapper< integer >( viewKeys.yPartitionsOverride.key() ).
-    setApplyDefaultValue( 1 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Number of partitions in the y-direction" );
-
-  commandLine.registerWrapper< integer >( viewKeys.zPartitionsOverride.key() ).
-    setApplyDefaultValue( 1 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Number of partitions in the z-direction" );
-
-  commandLine.registerWrapper< integer >( viewKeys.overridePartitionNumbers.key() ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Flag to indicate partition number override" );
-
-  commandLine.registerWrapper< string >( viewKeys.schemaFileName.key() ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Name of the output schema" );
-
-  commandLine.registerWrapper< integer >( viewKeys.useNonblockingMPI.key() ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering)." );
-
-  commandLine.registerWrapper< integer >( viewKeys.suppressPinned.key( ) ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE ).
-    setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
+  registerGroup< ExternalDataSourceManager >( m_gks.externalDataSourceManager );
+  registerGroup< FieldSpecificationManager >( m_gks.fieldSpecificationManager );
+  registerGroup< EventManager >( m_gks.eventManager );
+  registerGroup< NumericalMethodsManager >( m_gks.numericalMethodsManager );
+  registerGroup< GeometricObjectManager >( m_gks.geometricObjectManager );
+  registerGroup< MeshManager >( m_gks.meshManager );
+  registerGroup< OutputManager >( m_gks.outputManager );
+  registerGroup< PhysicsSolverManager >( m_gks.physicsSolverManager );
+  registerGroup< TasksManager >( m_gks.tasksManager );
+  registerGroup< FunctionManager >( m_gks.functionManager );
 }
 
 ProblemManager::~ProblemManager()
@@ -280,12 +297,12 @@ void ProblemManager::problemSetup()
   applyNumericalMethods();
   numericalMethodLog.end();
 
-  registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
+  registerDataOnMeshRecursive( getManager< DomainPartition >().getMeshBodies() );
 
   initialize();
 
 #ifdef GEOS_USE_HYPREDRV
-  logHypredriveInputs( *m_physicsSolverManager, getDomainPartition() );
+  logHypredriveInputs( *m_physicsSolverManager, getManager< DomainPartition >() );
 #endif
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
@@ -297,45 +314,29 @@ void ProblemManager::problemSetup()
 
 void ProblemManager::parseCommandLineInput()
 {
-  Group & commandLine = getGroup< Group >( groupKeys.commandLine );
-
   CommandLineOptions const & opts = getGlobalState().getCommandLineOptions();
 
-  commandLine.getReference< string >( viewKeys.restartFileName ) = opts.restartFileName;
-  commandLine.getReference< integer >( viewKeys.beginFromRestart ) = opts.beginFromRestart;
-  commandLine.getReference< integer >( viewKeys.xPartitionsOverride ) = opts.xPartitionsOverride;
-  commandLine.getReference< integer >( viewKeys.yPartitionsOverride ) = opts.yPartitionsOverride;
-  commandLine.getReference< integer >( viewKeys.zPartitionsOverride ) = opts.zPartitionsOverride;
-  commandLine.getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
-  commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
-  commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
+  string inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames,
+                                                            getName(),
+                                                            opts.outputDirectory );
+  if( opts.schemaName.empty())
+  {
+    inputFileName = getAbsolutePath( inputFileName );
+    Path::setPathPrefix( splitPath( inputFileName ).first );
+  }
 
-  string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
-  outputDirectory = opts.outputDirectory;
-  OutputBase::setOutputDirectory( outputDirectory );
-  TaskBase::setOutputDirectory( outputDirectory );
+  CommandLine & commandLine = getManager< CommandLine >();
+  commandLine.setValues( opts, inputFileName.c_str() );
 
-  string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+  OutputBase::setOutputDirectory( opts.outputDirectory );
+  TaskBase::setOutputDirectory( opts.outputDirectory );
+
+  OutputBase::setFileNameRoot( opts.problemName );
 
   for( string const & xmlFile : opts.inputFileNames )
   {
     string const absPath = getAbsolutePath( xmlFile );
     GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
-  }
-
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
-
-  string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
-  schemaName = opts.schemaName;
-
-  string & problemName = commandLine.getReference< string >( viewKeys.problemName );
-  problemName = opts.problemName;
-  OutputBase::setFileNameRoot( problemName );
-
-  if( schemaName.empty())
-  {
-    inputFileName = getAbsolutePath( inputFileName );
-    Path::setPathPrefix( splitPath( inputFileName ).first );
   }
 
   if( opts.traceDataMigration )
@@ -346,6 +347,7 @@ void ProblemManager::parseCommandLineInput()
   {
     chai::ArrayManager::getInstance()->disableCallbacks();
   }
+
 }
 
 
@@ -394,16 +396,16 @@ void ProblemManager::generateDocumentation()
 {
   // Documentation output
   GEOS_LOG_RANK_0( "Trying to generate schema..." );
-  Group & commandLine = getGroup< Group >( groupKeys.commandLine );
-  string const & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  string const & schemaName = commandLine.getReference< string >( commandLine.m_vks.schemaFileName );
 
   if( !schemaName.empty() )
   {
     // Generate an extensive data structure
     generateDataStructureSkeleton( 0 );
 
-    MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-    DomainPartition & domain = getDomainPartition();
+    MeshManager & meshManager = getManager< MeshManager >();
+    DomainPartition & domain = getManager< DomainPartition >();
     meshManager.generateMeshLevels( domain );
 
     registerDataOnMeshRecursive( domain.getMeshBodies() );
@@ -431,18 +433,20 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   // These objects are handled differently during the xml read step,
   // so we need to explicitly add them into the schema structure
-  DomainPartition & domain = getDomainPartition();
+  DomainPartition & domain = getManager< DomainPartition >();
 
-  m_functionManager->generateDataStructureSkeleton( 0 );
-  schemaUtilities::SchemaConstruction( *m_functionManager, schemaRoot, targetChoiceNode, documentationType );
+  FunctionManager & functionManager = getManager< FunctionManager >();
+  functionManager.generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( functionManager, schemaRoot, targetChoiceNode, documentationType );
 
-  m_fieldSpecificationManager->generateDataStructureSkeleton( 0 );
-  schemaUtilities::SchemaConstruction( *m_fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
+  FieldSpecificationManager & fieldSpecificationManager = getManager< FieldSpecificationManager >();
+  fieldSpecificationManager.generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
 
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
 
-  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+  MeshManager & meshManager = getManager< MeshManager >();
   meshManager.generateMeshLevels( domain );
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
@@ -525,8 +529,8 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::parseInputFile()
 {
-  Group & commandLine = getGroup( groupKeys.commandLine );
-  string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  string const & inputFileName = commandLine.getReference< string >( commandLine.m_vks.inputFileName );
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
@@ -560,13 +564,13 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 
   // The objects in domain are handled separately for now
   {
-    DomainPartition & domain = getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+    DomainPartition & domain = getManager< DomainPartition >();
+    ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
     // Open mesh levels
-    MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+    MeshManager & meshManager = getManager< MeshManager >();
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
 
@@ -618,17 +622,17 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 
 void ProblemManager::postInputInitialization()
 {
-  DomainPartition & domain = getDomainPartition();
+  DomainPartition & domain = getManager< DomainPartition >();
 
-  Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
-  integer const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
-  integer const & yparCL = commandLine.getReference< integer >( viewKeys.yPartitionsOverride );
-  integer const & zparCL = commandLine.getReference< integer >( viewKeys.zPartitionsOverride );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  integer const & xparCL = commandLine.getReference< integer >( commandLine.m_vks.xPartitionsOverride );
+  integer const & yparCL = commandLine.getReference< integer >( commandLine.m_vks.yPartitionsOverride );
+  integer const & zparCL = commandLine.getReference< integer >( commandLine.m_vks.zPartitionsOverride );
 
-  integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
+  integer const & suppressPinned = commandLine.getReference< integer >( commandLine.m_vks.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition = domain.getPartitionManager();
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;
@@ -666,19 +670,19 @@ void ProblemManager::initializationOrder( string_array & order )
   set< string > usedNames;
 
   // first, numerical methods
-  order.emplace_back( groupKeys.numericalMethodsManager.key() );
-  usedNames.insert( groupKeys.numericalMethodsManager.key() );
+  order.emplace_back( m_gks.numericalMethodsManager.key() );
+  usedNames.insert( m_gks.numericalMethodsManager.key() );
 
   // next, domain
-  order.emplace_back( groupKeys.domain.key() );
-  usedNames.insert( groupKeys.domain.key() );
+  order.emplace_back( m_gks.domain.key() );
+  usedNames.insert( m_gks.domain.key() );
 
   // next, events
-  order.emplace_back( groupKeys.eventManager.key() );
-  usedNames.insert( groupKeys.eventManager.key() );
+  order.emplace_back( m_gks.eventManager.key() );
+  usedNames.insert( m_gks.eventManager.key() );
 
   // (keeping outputs for the end)
-  usedNames.insert( groupKeys.outputManager.key() );
+  usedNames.insert( m_gks.outputManager.key() );
 
   // next, everything...
   for( auto const & subGroup : this->getSubGroups() )
@@ -690,16 +694,16 @@ void ProblemManager::initializationOrder( string_array & order )
   }
 
   // end with outputs (in order to define the chunk sizes after any data source)
-  order.emplace_back( groupKeys.outputManager.key() );
+  order.emplace_back( m_gks.outputManager.key() );
 }
 
 
 void ProblemManager::generateMesh()
 {
   GEOS_MARK_FUNCTION;
-  DomainPartition & domain = getDomainPartition();
+  DomainPartition & domain = getManager< DomainPartition >();
 
-  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+  MeshManager & meshManager = getManager< MeshManager >();
 
   meshManager.generateMeshes( domain );
 
@@ -716,7 +720,7 @@ void ProblemManager::generateMesh()
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
-      ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
+      ParticleBlockManagerABC & particleBlockManager = meshBody.getParticleBlockManager();
 
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
@@ -724,7 +728,7 @@ void ProblemManager::generateMesh()
     }
     else
     {
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      CellBlockManagerABC & cellBlockManager = meshBody.getCellBlockManager();
 
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
@@ -737,8 +741,8 @@ void ProblemManager::generateMesh()
     }
   } );
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  integer const useNonblockingMPI = commandLine.getReference< integer >( commandLine.m_vks.useNonblockingMPI );
   domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
@@ -827,13 +831,12 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    if( meshBody.hasGroup( keys::particleManager ) )
+    if( meshBody.hasParticleBlockManager() )
     {
-      meshBody.deregisterGroup( keys::particleManager );
+      meshBody.deregisterParticleBlockManager();
     }
-    else if( meshBody.hasGroup( keys::cellManager ) )
+    else if( meshBody.hasCellBlockManager() )
     {
-      // meshBody.deregisterGroup( keys::cellManager );
       meshBody.deregisterCellBlockManager();
     }
 
@@ -874,16 +877,16 @@ void ProblemManager::generateMesh()
 void ProblemManager::importFields()
 {
   GEOS_MARK_FUNCTION;
-  DomainPartition & domain = getDomainPartition();
-  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+  DomainPartition & domain = getManager< DomainPartition >();
+  MeshManager & meshManager = getManager< MeshManager >();
   meshManager.importFields( domain );
 }
 
 void ProblemManager::applyNumericalMethods()
 {
 
-  DomainPartition & domain  = getDomainPartition();
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+  DomainPartition & domain  = getManager< DomainPartition >();
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   Group & meshBodies = domain.getMeshBodies();
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
@@ -896,13 +899,13 @@ void ProblemManager::applyNumericalMethods()
 
 
 map< std::pair< string, Group const * const >, string_array const & >
-ProblemManager::getDiscretizations() const
+ProblemManager::getDiscretizations()
 {
 
   map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
-  numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
+  numericalMethodManager = getManager< NumericalMethodsManager >();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
@@ -910,10 +913,12 @@ ProblemManager::getDiscretizations() const
   FiniteVolumeManager const &
   fvDiscretizationManager = numericalMethodManager.getFiniteVolumeManager();
 
-  DomainPartition const & domain  = getDomainPartition();
+  DomainPartition const & domain  = getManager< DomainPartition >();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
+  PhysicsSolverManager & physicsSolverManager = getManager< PhysicsSolverManager >();
+
+  physicsSolverManager.forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
   {
 
     solver.generateMeshTargetsFromTargetRegions( meshBodies );
@@ -981,7 +986,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
-  nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+  nodeManager.buildSets( cellBlockManager, getManager< GeometricObjectManager >() );
   edgeManager.buildSets( nodeManager );
   faceManager.buildSets( nodeManager );
   elemRegionManager.buildSets( nodeManager );
@@ -1051,17 +1056,19 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 }
 
 
-map< std::tuple< string, string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+map< std::tuple< string, string, string, string >, localIndex >
+ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
-  NumericalMethodsManager const &
-  numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
+  NumericalMethodsManager const & numericalMethodManager = getManager< NumericalMethodsManager >();
+
+  PhysicsSolverManager & physicsSolverManager = getManager< PhysicsSolverManager >();
 
   map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
-  for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
+  for( localIndex solverIndex=0; solverIndex<physicsSolverManager.numSubGroups(); ++solverIndex )
   {
-    PhysicsSolverBase const * const solver = m_physicsSolverManager->getGroupPointer< PhysicsSolverBase >( solverIndex );
+    PhysicsSolverBase const * const solver = physicsSolverManager.getGroupPointer< PhysicsSolverBase >( solverIndex );
 
     if( solver != nullptr )
     {
@@ -1267,96 +1274,51 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 
 bool ProblemManager::runSimulation()
 {
-  return m_eventManager->run( getDomainPartition() );
+  return getManager< EventManager >().run( getManager< DomainPartition >() );
 }
 
-ConstitutiveManager & ProblemManager::getConstitutiveManager()
+string const & ProblemManager::getProblemName() const
 {
-  return getDomainPartition().getConstitutiveManager();
+  CommandLine const & commandLine = getManager< CommandLine >();
+  return commandLine.getReference< string >( commandLine.m_vks.problemName );
 }
 
-ConstitutiveManager const & ProblemManager::getConstitutiveManager() const
+string const & ProblemManager::getInputFileName() const
 {
-  return getDomainPartition().getConstitutiveManager();
+  CommandLine const & commandLine = getManager< CommandLine >();
+  return commandLine.getReference< string >( commandLine.m_vks.inputFileName );
 }
 
-DomainPartition & ProblemManager::getDomainPartition()
+string const & ProblemManager::getRestartFileName() const
 {
-  return getGroup< DomainPartition >( groupKeys.domain );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  return commandLine.getReference< string >( commandLine.m_vks.restartFileName );
 }
 
-DomainPartition const & ProblemManager::getDomainPartition() const
+string const & ProblemManager::getSchemaFileName() const
 {
-  return getGroup< DomainPartition >( groupKeys.domain );
-}
-
-ExternalDataSourceManager & ProblemManager::getExternalDataSourceManager()
-{
-  return getGroup< ExternalDataSourceManager >( groupKeys.externalDataSourceManager );;
-}
-
-ExternalDataSourceManager const & ProblemManager::getExternalDataSourceManager() const
-{
-  return getGroup< ExternalDataSourceManager >( groupKeys.externalDataSourceManager );;
-}
-
-GeometricObjectManager & ProblemManager::getGeometricObjectManager()
-{
-  return getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-}
-
-GeometricObjectManager const & ProblemManager::getGeometricObjectManager() const
-{
-  return getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-}
-
-MeshManager & ProblemManager::getMeshManager()
-{
-  return getGroup< MeshManager >( groupKeys.meshManager );
-}
-
-MeshManager const & ProblemManager::getMeshManager() const
-{
-  return getGroup< MeshManager >( groupKeys.meshManager );
-}
-
-NumericalMethodsManager & ProblemManager::getNumericalMethodsManager()
-{
-  return getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
-}
-
-NumericalMethodsManager const & ProblemManager::getNumericalMethodsManager() const
-{
-  return getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
-}
-
-OutputManager & ProblemManager::getOutputManager()
-{
-  return getGroup< OutputManager >( groupKeys.outputManager );
-}
-
-OutputManager const & ProblemManager::getOutputManager() const
-{
-  return getGroup< OutputManager >( groupKeys.outputManager );
+  CommandLine const & commandLine = getManager< CommandLine >();
+  return commandLine.getReference< string >( commandLine.m_vks.schemaFileName );
 }
 
 void ProblemManager::applyInitialConditions()
 {
+  FieldSpecificationManager & fsManager = getManager< FieldSpecificationManager >();
 
-  m_fieldSpecificationManager->forSubGroups< FieldSpecification >( [&]( FieldSpecification & fs )
+  fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification & fs )
   {
-    fs.setMeshObjectPath( getDomainPartition().getMeshBodies() );
+    fs.setMeshObjectPath( getManager< DomainPartition >().getMeshBodies() );
   } );
 
-  getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
+  getManager< DomainPartition >().forMeshBodies( [&] ( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
       if( !meshLevel.isShallowCopy() ) // to avoid messages printed three times
       {
-        m_fieldSpecificationManager->validateBoundaryConditions( meshLevel );
+        fsManager.validateBoundaryConditions( meshLevel );
       }
-      m_fieldSpecificationManager->applyInitialConditions( meshLevel );
+      fsManager.applyInitialConditions( meshLevel );
     } );
   } );
   initializePostInitialConditions();
