@@ -182,32 +182,11 @@ public:
    * @note This is useful if you only need at @c dataRepository::Group and don't want to
    *   include @c ProblemManager.hpp.
    */
-  dataRepository::Group & getProblemManagerAsGroup();
-
-  /**
-   * @brief Return the @c ProblemManager as a @c ProblemManagerBase.
-   * @return The @c ProblemManagerBase interface.
-   * @note Prefer this when you only need accessors to common objects and don't want to
-   *   include @c ProblemManager.hpp.
-   */
-  dataRepository::ProblemManagerBase & getProblemManagerBase();
-
-  /**
-   * @copydoc getProblemManagerBase()
-   */
-  dataRepository::ProblemManagerBase const & getProblemManagerBase() const;
-
-  /**
-   * @brief Return the FieldSpecificationManager.
-   * @return The FieldSpecificationManager.
-   */
-  FieldSpecificationManager & getFieldSpecificationManager();
-
-  /**
-   * @brief Return the FunctionManager.
-   * @return The FunctionManager.
-   */
-  FunctionManager & getFunctionManager();
+  dataRepository::Group & getProblemManagerAsGroup()
+  {
+    GEOS_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
+    return *(dataRepository::Group *)m_problemManager.get();
+  }
 
   /**
    * @brief Return the CommunicationTools.

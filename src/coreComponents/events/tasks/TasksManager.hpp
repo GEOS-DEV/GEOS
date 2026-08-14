@@ -21,6 +21,7 @@
 #define GEOS_EVENTS_TASKS_TASKSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "TaskBase.hpp"
 
 namespace geos
@@ -48,6 +49,14 @@ private:
   TasksManager() = delete;
 
 };
+
+// TasksManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline TasksManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< TasksManager >( m_gks.tasksManager ); }
+
+// TasksManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline TasksManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< TasksManager >( m_gks.tasksManager ); }
 
 } /* namespace geos */
 
