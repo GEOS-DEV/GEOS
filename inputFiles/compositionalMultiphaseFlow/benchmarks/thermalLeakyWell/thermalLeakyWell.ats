@@ -9,10 +9,7 @@ decks = [
         name="thermalLeakyWell_smoke_3d",
         description=
         "Smoke test for thermalLeakyWell (3D displacement, 2-phase co2-brine, hydrostatic initial condition)",
-        partitions=(# Temporarily disabled: thermalLeakyWell_smoke_3d_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=60,
         check_step=104,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
