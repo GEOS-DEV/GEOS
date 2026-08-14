@@ -164,6 +164,9 @@ Usage: $0
       Either ON or OFF (default is ON). Build geos with bounds check.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
+  --enable-hypredrv
+      One of ON or OFF (default is OFF). Build geos with hypredrive.
+      Overrides the TPL image host-config, which may set ENABLE_HYPREDRV ON.
   --enable-hypre-device
       One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
   --enable-trilinos
@@ -205,7 +208,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -213,6 +216,7 @@ BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 ENABLE_HYPRE=ON
+ENABLE_HYPREDRV=OFF
 ENABLE_HYPRE_DEVICE=CPU
 GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
@@ -260,6 +264,7 @@ do
       shift 2;;
     --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
+    --enable-hypredrv)       ENABLE_HYPREDRV=$2;         shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
@@ -463,6 +468,7 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
+               -DENABLE_HYPREDRV=${ENABLE_HYPREDRV} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
