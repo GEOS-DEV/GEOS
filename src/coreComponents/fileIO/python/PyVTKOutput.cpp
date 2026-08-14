@@ -95,7 +95,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  DomainPartition & domain = dataRepository::ProblemRepository::get( *self->group ).getManager< DomainPartition >();
+  DomainPartition & domain = dataRepository::ProblemRepository::getManager< DomainPartition >( *self->group );
 
   try
   {

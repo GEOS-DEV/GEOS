@@ -32,8 +32,8 @@ namespace dataRepository
  * @brief Base class for the problem data-repository repository, gives access to all the roots Groups.
  *         Usage examples:
  *        - to consult other managers:
- *            * from a FS instance:      ProblemRepository::get( myFieldSpec ).getManager< FunctionManager >()
- *            * form a solver instance:  ProblemRepository::get( mySolver ).getManager< FieldSpecificationManager >()
+ *            * from a FS instance:      ProblemRepository::getManager< FunctionManager >( myFieldSpec )
+ *            * form a solver instance:  ProblemRepository::getManager< FieldSpecificationManager >( mySolver )
  *        - to consult data from the ProblemManager (mainInterface / high-level testing):
  *            * get the physics solvers manager:  problemManager.getManager< PhysicsSolverManager >()
  *            * get the CommandLine Group:        problemManager.getManager< CommandLine >()
@@ -84,7 +84,7 @@ public:
    * @copydoc getManager()
    */
   template< typename ManagerType >
-  static ManagerType const & getManager( Group & group )
+  static ManagerType & getManager( Group & group )
   { return ProblemRepository::get( group ).getManager< ManagerType >(); }
 
   /**

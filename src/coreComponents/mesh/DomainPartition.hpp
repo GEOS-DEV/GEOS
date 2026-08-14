@@ -155,13 +155,13 @@ public:
    * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager const & getNumericalMethodManager() const
-  { return dataRepository::ProblemRepository::get( *this ).getManager< NumericalMethodsManager >(); }
+  { return dataRepository::ProblemRepository::getManager< NumericalMethodsManager >( *this ); }
 
   /**
    * @brief @return Return a reference to NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager & getNumericalMethodManager()
-  { return dataRepository::ProblemRepository::get( *this ).getManager< NumericalMethodsManager >(); }
+  { return dataRepository::ProblemRepository::getManager< NumericalMethodsManager >( *this ); }
 
   /**
    * @return Get the global partition.
