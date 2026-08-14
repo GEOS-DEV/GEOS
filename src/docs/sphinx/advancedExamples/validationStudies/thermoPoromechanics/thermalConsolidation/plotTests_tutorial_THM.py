@@ -20,7 +20,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+try:
+    HERE = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    HERE = os.getcwd()
 
 # sous-echantillonnage des marqueurs GEOS (1 = tous les instants collectes)
 N1 = 4
