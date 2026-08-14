@@ -921,13 +921,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       // Accumulation derivative w.r.t. nodal displacement
       // dR_accum/du = density * unitNormal^T * Atu = density * area * dAperturedU
       // (dAperturedU already has 1/area factor, so multiply by area to cancel it)
-      // Note: The ALM Atu matrix has opposite sign convention compared to LM's dAper/dU,
-      // so we need to negate the result to match the LM sign convention.
       if( isFractureOpen )
       {
         for( localIndex j = 0; j < numUdofs; ++j )
         {
-          dRdU( j ) = -density[kfe][0] * dAperturedU( kfe, j ) * area[kfe];
+          dRdU( j ) = density[kfe][0] * dAperturedU( kfe, j ) * area[kfe];
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -974,11 +972,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
 
         // dR_flux/du = dR_flux/dAper * dAper/du (pre-computed for element kfe2)
-        // Note: Negate to match LM sign convention (ALM Atu has opposite sign)
         stackArray1d< real64, maxNumUdofs > dRdU2( maxNumUdofs );
         for( localIndex j = 0; j < numUdofs2; ++j )
         {
-          dRdU2( j ) = -dR_dAper * dAperturedU( kfe2, j );
+          dRdU2( j ) = dR_dAper * dAperturedU( kfe2, j );
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -1008,13 +1005,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       // Accumulation derivative w.r.t. bubble displacement
       // dR_accum/db = density * unitNormal^T * Atb = density * area * dAperturedB
       // (dAperturedB already has 1/area factor, so multiply by area to cancel it)
-      // Note: Negate to match LM sign convention (ALM Atb has opposite sign)
       if( isFractureOpen )
       {
         real64 dRdB[numBdofs];
         for( localIndex j = 0; j < numBdofs; ++j )
         {
-          dRdB[j] = -density[kfe][0] * dAperturedB( kfe, j ) * area[kfe];
+          dRdB[j] = density[kfe][0] * dAperturedB( kfe, j ) * area[kfe];
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -1050,11 +1046,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
 
         // dR_flux/db = dR_flux/dAper * dAper/db (pre-computed for element kfe2)
-        // Note: Negate to match LM sign convention (ALM Atb has opposite sign)
         real64 dRdB2[numBdofs];
         for( localIndex j = 0; j < numBdofs; ++j )
         {
-          dRdB2[j] = -dR_dAper * dAperturedB( kfe2, j );
+          dRdB2[j] = dR_dAper * dAperturedB( kfe2, j );
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -1088,6 +1083,7 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+    string const flowDofKey = dofManager.getKey( m_pressureKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1101,12 +1097,14 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
 
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
+      arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
       forAll< serialPolicy >( bubbleElems.size(), [=, &rowLengths]( localIndex const kk )
       {
+        localIndex const k = bubbleElems[kk];
         localIndex const faceIndex = elemsToFaces[kk][0];
 
-        // Add 1 pressure column for each of the 3 bubble DOFs
+        // (bubble_row, pressure_col): 1 pressure column for each of the 3 bubble DOFs
         for( localIndex i = 0; i < 3; ++i )
         {
           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
@@ -1114,6 +1112,13 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
           {
             rowLengths[rowNumber] += 1;  // One pressure DOF from matrix cell
           }
+        }
+
+        // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb)
+        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+        if( pRow >= 0 && pRow < rowLengths.size() )
+        {
+          rowLengths[pRow] += 3;  // Three bubble DOFs
         }
       } );
     } );
@@ -1161,13 +1166,23 @@ addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
         localIndex const faceIndex = elemsToFaces[kk][0];
         globalIndex const pressureColIndex = pressureDofNumber[k];
 
-        // Add pattern for (bubble_row, pressure_col)
+        // (bubble_row, pressure_col) : A_bp
         for( localIndex i = 0; i < 3; ++i )
         {
           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
           {
             pattern.insertNonZero( rowIndex, pressureColIndex );
+          }
+        }
+
+        // (pressure_row, bubble_col) : A_pb -- transpose location
+        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+        if( pRow >= 0 && pRow < pattern.numRows() )
+        {
+          for( localIndex i = 0; i < 3; ++i )
+          {
+            pattern.insertNonZero( pRow, bubbleDofNumber[faceIndex] + i );
           }
         }
       } );
@@ -1227,11 +1242,12 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
                                                                                   localMatrix,
                                                                                   localRhs,
                                                                                   dt,
-                                                                                  flowDofKey );
+                                                                                  flowDofKey,
+                                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     real64 maxResidual = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy<>,
-                           constitutive::PorousSolid< constitutive::ElasticIsotropic, constitutive::ConstantPermeability >,
+                           constitutive::PorousSolidBase,
                            CellElementSubRegion >( mesh,
                                                    poromechanicsRegionNames,
                                                    this->solidMechanicsSolver()->getDiscretizationName(),

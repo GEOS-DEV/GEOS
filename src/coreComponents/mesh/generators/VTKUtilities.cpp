@@ -34,6 +34,9 @@
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+#include <vtkCellTypeUtilities.h>
+#endif
 #include <vtkDataArray.h>
 #include <vtkDataSetReader.h>
 #include <vtkExtractCells.h>
@@ -68,6 +71,7 @@
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkAppendFilter.h>
+#include <vtkVersionMacros.h>
 
 #ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
@@ -982,7 +986,11 @@ static void classifyCellsByDimension( vtkDataSet & mesh,
   // Single pass: classify and populate
   for( vtkIdType i = 0; i < numCells; ++i )
   {
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+    int const dim = vtkCellTypeUtilities::GetDimension( mesh.GetCellType( i ) );
+#else
     int const dim = vtkCellTypes::GetDimension( mesh.GetCellType( i ) );
+#endif
     if( dim == 3 )
     {
       cells3DIndices.emplace_back( i );
