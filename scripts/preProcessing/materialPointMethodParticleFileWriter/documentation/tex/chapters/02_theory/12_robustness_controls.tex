@@ -165,6 +165,10 @@ resetDefGradForScaledSurfaceParticles = 0
 \subsection{Particle splitting}
 \label{subsec:robust-particle-splitting}
 \index{subdivideParticles}
+\index{oversizedParticleTreatment}
+\index{oversizedParticleResetRankParticleCountThreshold}
+\index{defGradResetMaxParticleDomainToGridCellRatio}
+\index{resetDefGradForOversizedParticles}
 \index{particleSubdivideFlag}
 \index{particleCopyFlag}
 \index{CPDI!particle splitting}
@@ -177,6 +181,8 @@ Particle splitting is a conservative topology change used when the requested par
   \item[\texttt{subdivideParticles=1}] enable subdivision explicitly.
 \end{description}
 The constructor default is $-1$.  Automatic subdivision resolves to enabled only when \texttt{cpdiDomainScaling=1}, \texttt{cpdiDomainScalingType="vpHencky"}, and at least one linear \texttt{CPDI} particle subregion is present.  It remains disabled by default for single-point B-spline particles and for deformation-gradient reset alone.  Explicitly setting the value to 1 enables the VP-Hencky reset feasibility test for B-spline or other particle types that carry domain vectors.  In a mixed-particle simulation, the automatic policy acts only on the linear CPDI subregions that caused it to be enabled.
+
+Oversized-domain handling is selected separately with \texttt{oversizedParticleTreatment}.  The legacy \texttt{resetDefGradForOversizedParticles=1} path is equivalent to \texttt{oversizedParticleTreatment="resetDeformationGradient"} when the new option is left at \texttt{"none"}.  With \texttt{oversizedParticleTreatment="split"}, a particle whose full domain diagonal exceeds \texttt{defGradResetMaxParticleDomainToGridCellRatio} times the active grid-cell diagonal is routed through the same conservative child-creation path used below.  The split pass first applies the VP-Hencky fixed-volume feasibility count when relevant, then adds longest domain directions until one bisection pass would bring the oversized diagonal below the configured limit, or all active directions have been bisected.  Deformation-gradient reset is used as a count-control fallback only on ranks whose total local particle count exceeds \texttt{oversizedParticleResetRankParticleCountThreshold}; a negative threshold disables that fallback.
 
 For either VP-Hencky path, define
 \begin{equation}

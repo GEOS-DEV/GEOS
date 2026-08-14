@@ -874,6 +874,8 @@ parameters = {
                'resetDefGradForMeltedParticles': ( None, True ),  # MPM: reset F for melted particles
                'resetDefGradForScaledSurfaceParticles': ( None, True ),  # MPM: reset F for CPDI-scaled surface particles.
                'resetDefGradForOversizedParticles': ( None, True ),  # MPM: reset F for oversized particle domains; use only for fluids, melted/damaged material, or hypo-elastic deviatoric models where deviatoric F is not constitutive state.
+               'oversizedParticleTreatment': ( None, True ),  # MPM: oversized-domain action: none, resetDeformationGradient, or split.
+               'oversizedParticleResetRankParticleCountThreshold': ( None, True ),  # MPM: with oversizedParticleTreatment=split, reset oversized domains only on ranks above this particle count; negative disables fallback.
                'defGradResetMaxParticleDomainToGridCellRatio': ( None, True ),  # MPM: oversized-domain reset threshold, as full particle-domain diagonal divided by active grid-cell diagonal.
                'restartCycleNum': ( 0, False ),  # PFW: restart cycle number.
                'restartInterval': ( None, False ),  # PFW: restart event interval.
