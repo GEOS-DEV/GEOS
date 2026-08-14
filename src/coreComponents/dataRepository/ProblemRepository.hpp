@@ -81,6 +81,20 @@ public:
   ManagerType const & getManager() const;
 
   /**
+   * @copydoc getManager()
+   */
+  template< typename ManagerType >
+  static ManagerType const & getManager( Group & group )
+  { return ProblemRepository::get( group ).getManager< ManagerType >(); }
+
+  /**
+   * @copydoc getManager()
+   */
+  template< typename ManagerType >
+  static ManagerType const & getManager( Group const & group )
+  { return ProblemRepository::get( group ).getManager< ManagerType >(); }
+
+  /**
    * @return the root Group which contain all the problem data-repository
    */
   Group & getRootGroup()
