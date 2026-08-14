@@ -2793,6 +2793,14 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
+      // discard any warm-started state held by the fluid model (e.g. K-values
+      // used to seed the flash) so the rolled-back step does not inherit
+      // iterate-dependent state from the failed Newton attempt.
+      {
+        string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        fluid.initializeState();
+      }
       // update all fluid properties
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy
