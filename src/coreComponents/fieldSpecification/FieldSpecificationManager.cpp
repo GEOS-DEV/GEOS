@@ -14,7 +14,7 @@
  */
 
 #include "FieldSpecificationManager.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshObjectPath.hpp"
@@ -71,7 +71,7 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  DomainPartition const & domain = getProblemManagerBase( *this ).getDomainPartition();
+  DomainPartition const & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )

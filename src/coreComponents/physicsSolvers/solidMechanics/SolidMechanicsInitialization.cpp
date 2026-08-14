@@ -26,6 +26,7 @@
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 namespace geos
 {
@@ -67,8 +68,8 @@ SolidMechanicsInitialization< SOLID_SOLVER >::~SolidMechanicsInitialization() = 
 template< typename SOLID_SOLVER >
 void SolidMechanicsInitialization< SOLID_SOLVER >::postInputInitialization()
 {
-  ProblemManagerBase & problemManager = getProblemManagerBase( *this );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  ProblemRepository & problemManager = ProblemRepository::get( *this );
+  PhysicsSolverManager & physicsSolverManager = problemManager.getManager< PhysicsSolverManager >();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",
@@ -81,7 +82,7 @@ void SolidMechanicsInitialization< SOLID_SOLVER >::postInputInitialization()
 
   if( !m_solidMechanicsStatisticsName.empty() )
   {
-    TasksManager & tasksManager = problemManager.getTasksManager();
+    TasksManager & tasksManager = problemManager.getManager< TasksManager >();
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
                    GEOS_FMT( "{}: {} task named {} not found",

@@ -19,7 +19,7 @@
 
 #include "SurfaceGenerator.hpp"
 
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -287,7 +287,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     // TODO: handle this in registerField().
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
 
-    FieldSpecificationManager & fsm = getProblemManagerBase( *this ).getFieldSpecificationManager();
+    FieldSpecificationManager & fsm = ProblemRepository::get( *this ).getManager< FieldSpecificationManager >();
     fsm.setIsSurfaceGenerationCase( true );
   } );
 
@@ -481,7 +481,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getPartitionManager() );
     int const tileColor=partition.getColor();
     int const numTileColorsLocal=partition.numColor();
     int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );

@@ -50,7 +50,6 @@ namespace geos
 namespace dataRepository
 {
 class Group;
-class ProblemManagerBase;
 }
 
 class ProblemManager;

@@ -38,9 +38,10 @@
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 #include <stdio.h>
 
@@ -194,7 +195,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
 {
   ContactSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getProblemManagerBase( *this ).getDomainPartition();
+  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
   validateTetrahedralQuadrature( domain.getMeshBodies() );
 }
 
@@ -203,7 +204,7 @@ void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Gr
   string const discretizationName = getDiscretizationName();
 
   NumericalMethodsManager const & numericalMethodManager =
-    getProblemManagerBase( *this ).getDomainPartition().getNumericalMethodManager();
+    ProblemRepository::get( *this ).getManager< NumericalMethodsManager >();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();
   FiniteElementDiscretization const & feDiscretization =
@@ -329,7 +330,7 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
-  DomainPartition & domain = getProblemManagerBase( *this ).getDomainPartition();
+  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();

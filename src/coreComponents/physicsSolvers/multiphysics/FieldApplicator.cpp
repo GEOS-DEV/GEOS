@@ -14,7 +14,7 @@
  */
 
 #include "FieldApplicator.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "fieldSpecification/FieldSpecification.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
@@ -107,7 +107,7 @@ FieldApplicator::
     // Find the flow solver to delegate initialization to.
     // Use m_solverName if provided, otherwise find the first FlowSolverBase.
     FlowSolverBase * flowSolver = nullptr;
-    PhysicsSolverManager & solversGroup = getProblemManagerBase( *this ).getPhysicsSolverManager();
+    PhysicsSolverManager & solversGroup = ProblemRepository::get( *this ).getManager< PhysicsSolverManager >();
 
     if( !m_solverName.empty() )
     {
@@ -241,7 +241,7 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
   // Use m_solverName if provided, otherwise search all solvers.
   CompositionalMultiphaseBase * flowSolver = nullptr;
 
-  PhysicsSolverManager & solversGroup = getProblemManagerBase( *this ).getPhysicsSolverManager();
+  PhysicsSolverManager & solversGroup = ProblemRepository::get( *this ).getManager< PhysicsSolverManager >();
 
   if( !m_solverName.empty() )
   {

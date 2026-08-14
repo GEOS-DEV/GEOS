@@ -20,7 +20,6 @@
 
 #include "WaveSolverBase.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 
 #include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
@@ -406,7 +405,7 @@ void WaveSolverBase::postInputInitialization()
                  "Invalid number of physical coordinates for the receivers",
                  InputError, getDataContext() );
 
-  EventManager const & event = getProblemManagerBase( *this ).getEventManager();
+  EventManager const & event = ProblemRepository::get( *this ).getManager< EventManager >();
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
 
   if( m_dtSeismoTrace > 0 )

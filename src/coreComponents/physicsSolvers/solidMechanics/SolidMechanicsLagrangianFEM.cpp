@@ -200,7 +200,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
-    OutputManager const & outputs = getProblemManagerBase( *this ).getOutputManager();
+    Group const & outputs = ProblemRepository::get( *this ).getManager< OutputManager >();
     if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || outputs.hasSubGroupOfType< ChomboIO >() )
     {
       nodes.registerField< solidMechanics::velocity >( getName() ).

@@ -20,6 +20,7 @@
 #include "CompositionalMultiphaseStatisticsTask.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
@@ -119,7 +120,7 @@ void StatsTask::prepareFluidMetaData()
 {
   using namespace constitutive;
 
-  ConstitutiveManager const & constitutiveManager = getProblemManagerBase( *this ).getConstitutiveManager();
+  ConstitutiveManager const & constitutiveManager = ProblemRepository::get( *this ).getManager< ConstitutiveManager >();
   MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
 
   m_fluid.m_numPhases = fluid.numFluidPhases();

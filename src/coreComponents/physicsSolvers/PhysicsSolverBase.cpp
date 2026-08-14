@@ -20,7 +20,7 @@
 #include "codingUtilities/RTTypes.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
@@ -161,12 +161,12 @@ PhysicsSolverBase::~PhysicsSolverBase() = default;
 
 DomainPartition & PhysicsSolverBase::getDomainPartition()
 {
-  return getProblemManagerBase( *this ).getDomainPartition();
+  return ProblemRepository::get( *this ).getManager< DomainPartition >();
 }
 
 DomainPartition const & PhysicsSolverBase::getDomainPartition() const
 {
-  return getProblemManagerBase( *this ).getDomainPartition();
+  return ProblemRepository::get( *this ).getManager< DomainPartition >();
 }
 
 void PhysicsSolverBase::initialize_postMeshGeneration()

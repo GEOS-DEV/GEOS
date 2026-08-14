@@ -21,6 +21,7 @@
 
 #include "PyHistoryOutputType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 
 #define VERIFY_NON_NULL_SELF( self ) \
@@ -95,7 +96,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = geos::dataRepository::getProblemManagerBase( *self->group ).getDomainPartition();
+  geos::DomainPartition & domain = geos::dataRepository::ProblemRepository::get( *self->group ).getManager< geos::DomainPartition >();
 
   try
   {

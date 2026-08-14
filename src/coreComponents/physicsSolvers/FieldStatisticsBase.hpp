@@ -20,7 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -97,7 +97,7 @@ protected:
   void postInputInitialization() override
   {
     PhysicsSolverManager & physicsSolverManager =
-      dataRepository::getProblemManagerBase( *this ).getPhysicsSolverManager();
+      dataRepository::ProblemRepository::get( *this ).template getManager< PhysicsSolverManager >();
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,

@@ -28,17 +28,14 @@ set( dataRepository_headers
       ConduitRestart.hpp
       DefaultValue.hpp
       ExecutableGroup.hpp
-      GlobalViewKeys.hpp
       Group.hpp
       HistoryDataSpec.hpp
       InputFlags.hpp
       KeyIndexT.hpp
-      KeyNames.hpp
       LogLevelsInfo.hpp
       LogLevelsRegistry.hpp
       MappedVector.hpp
       ObjectCatalog.hpp
-      ProblemManagerBase.hpp
       ProblemRepositoryABC.hpp
       ProblemRepository.hpp
       ReferenceWrapper.hpp

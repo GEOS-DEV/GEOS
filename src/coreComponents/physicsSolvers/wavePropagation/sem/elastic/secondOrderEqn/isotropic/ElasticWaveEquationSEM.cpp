@@ -486,7 +486,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     //We use the timeStep defined inside the xml
     else if( m_timestepStabilityLimit==0 )
     {
-      EventManager const & event = getProblemManagerBase( *this ).getEventManager();
+      EventManager const & event = ProblemRepository::get( *this ).getManager< EventManager >();
       for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
       {
         EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );

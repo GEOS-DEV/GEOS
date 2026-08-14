@@ -20,7 +20,7 @@
 #include "VTKMeshGenerator.hpp"
 
 #include "common/DataTypes.hpp"
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "mesh/ExternalDataSourceManager.hpp"
 #include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
@@ -119,7 +119,7 @@ void VTKMeshGenerator::postInputInitialization()
 
   if( !m_dataSourceName.empty())
   {
-    ExternalDataSourceManager & externalDataManager = getProblemManagerBase( *this ).getExternalDataSourceManager();
+    ExternalDataSourceManager & externalDataManager = ProblemRepository::get( *this ).getManager< ExternalDataSourceManager >();
 
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 

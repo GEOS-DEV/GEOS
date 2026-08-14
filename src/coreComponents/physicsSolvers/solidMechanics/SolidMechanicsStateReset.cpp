@@ -19,7 +19,7 @@
 
 #include "SolidMechanicsStateReset.hpp"
 
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -63,7 +63,7 @@ SolidMechanicsStateReset::~SolidMechanicsStateReset()
 
 void SolidMechanicsStateReset::postInputInitialization()
 {
-  PhysicsSolverManager & physicsSolverManager = getProblemManagerBase( *this ).getPhysicsSolverManager();
+  PhysicsSolverManager & physicsSolverManager = ProblemRepository::get( *this ).getManager< PhysicsSolverManager >();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "physics solver named {} not found", m_solidSolverName ),

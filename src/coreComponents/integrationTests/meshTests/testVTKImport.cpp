@@ -84,7 +84,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
 
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
 
-  validate( domain.getMeshBody( "mesh" ).getGroup< CellBlockManagerABC >( keys::cellManager ) );
+  validate( domain.getMeshBody( "mesh" ).getCellBlockManager() );
 }
 
 

@@ -20,7 +20,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "dataRepository/ProblemManagerBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 
@@ -73,7 +73,7 @@ void FluxApproximationBase::initializePreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  DomainPartition & domain = getProblemManagerBase( *this ).getDomainPartition();
+  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -114,7 +114,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  DomainPartition & domain = getProblemManagerBase( *this ).getDomainPartition();
+  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   for( auto const & [meshBodyName, meshBodyRegions] : m_targetRegions )
