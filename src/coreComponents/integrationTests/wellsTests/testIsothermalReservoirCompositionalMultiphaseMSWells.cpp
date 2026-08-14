@@ -219,8 +219,8 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
+      phasePVTParaFiles="{ testIsothermalReservoirCompositionalMultiphaseMSWells_pvtgas.txt, testIsothermalReservoirCompositionalMultiphaseMSWells_pvtliquid.txt }"
+      flashModelParaFile="testIsothermalReservoirCompositionalMultiphaseMSWells_co2flash.txt"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -702,15 +702,15 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
 
 int main( int argc, char * * argv )
 {
-  writeTableToFile( "co2flash.txt", co2flash );
-  writeTableToFile( "pvtliquid.txt", pvtLiquid );
-  writeTableToFile( "pvtgas.txt", pvtGas );
+  writeTableToFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_co2flash.txt", co2flash );
+  writeTableToFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_pvtliquid.txt", pvtLiquid );
+  writeTableToFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_pvtgas.txt", pvtGas );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  removeFile( "co2flash.txt" );
-  removeFile( "pvtliquid.txt" );
-  removeFile( "pvtgas.txt" );
+  removeFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_co2flash.txt" );
+  removeFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_pvtliquid.txt" );
+  removeFile( "testIsothermalReservoirCompositionalMultiphaseMSWells_pvtgas.txt" );
   return result;
 }
