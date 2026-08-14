@@ -1950,6 +1950,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ m_numComponents };
         massProdArr[fluidComponentId] = massProd.get();
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
         wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );

@@ -51,7 +51,7 @@ public:
     /// Flux(es) production rate. Negative if injecting. One value for each fluid phase.
     /// In kg/s by default, or in mol/s if useMass = 0 on the solver.
     array1d< real64 > m_productionRate;
-    /// Number of elements in which we are producing / injecting
+    /// Owned cells producing/injecting. Local until mpiReduce()/finalizePeriod(), then global.
     integer m_elementCount = 0;
 
     /**
@@ -99,7 +99,7 @@ public:
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep
      * @param producedMass Amount of produced fluid (see StatData::m_producedMass).
-     * @param elementCount number of cell elements concerned by this instance
+     * @param elementCount local owned (non-ghost) cell count for this flux; MPI-summed in finalizePeriod()
      */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
                               arrayView1d< real64 const > const & producedMass,
@@ -114,8 +114,8 @@ public:
 
     /**
      * @brief Aggregate the statistics of the instance with those of another one.
-     * @details Combines the statistics from the other object into this one and also advances the period
-     * start if the other object has a later time recorded.
+     * @details Adds @p other 's StatData into this object. Period start is the max of the two
+     *          values so a parent wrapper still at the -max sentinel picks up a child's real time.
      * @param other the other WrappedStats object.
      */
     void combine( WrappedStats const & other );

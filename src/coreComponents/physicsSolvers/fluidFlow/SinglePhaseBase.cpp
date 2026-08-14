@@ -1166,6 +1166,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ 1 };
         massProdArr[0] = massProd.get();
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
         wrapper.gatherTimeStepStats( time_n, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
