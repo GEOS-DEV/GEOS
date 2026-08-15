@@ -97,10 +97,6 @@ set(ZLIB_DIR "/usr" CACHE PATH "")
 
 set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hdf5-1.14.6-qqfx3gxy555optxhwmffsjtwuo7wpwlo" CACHE PATH "")
 
-set(ENABLE_ADIOS2 ON CACHE BOOL "")
-
-set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/adios2-2.12.1-xzmxlump2er7gcy65dpdxbaof4dkczm2" CACHE PATH "")
-
 set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/conduit-0.9.5-qqbspejhqzbjqxr7antnfuedgxehjysl" CACHE PATH "")
 
 set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/silo-4.12.0-ale723hmqzp6vwhbqp3r7xnslpj73pww" CACHE PATH "")

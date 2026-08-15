@@ -103,10 +103,6 @@ set(ZLIB_DIR "/usr" CACHE PATH "")
 
 set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hdf5-1.14.6-7n343tz7mztayupsigyaj7chzbsltayo" CACHE PATH "")
 
-set(ENABLE_ADIOS2 ON CACHE BOOL "")
-
-set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/adios2-2.12.1-ohdg2rgdnmmxbiipnwx72yhwergwn7ek" CACHE PATH "")
-
 set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/conduit-0.9.5-j25t5t5kvxjhbt3vzvrig6ejqyjuy3pl" CACHE PATH "")
 
 set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/silo-4.12.0-wo3vlynxc3jkwkunrlikk3645pg76gog" CACHE PATH "")

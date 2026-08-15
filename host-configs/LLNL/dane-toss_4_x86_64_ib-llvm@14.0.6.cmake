@@ -89,10 +89,6 @@ set(ZLIB_DIR "/usr" CACHE PATH "")
 
 set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-llvm-14_tpls/llvm-14.0.6/hdf5-1.14.6-ottiokh52c2uvkujg6s4yc63afy24e7d" CACHE PATH "")
 
-set(ENABLE_ADIOS2 ON CACHE BOOL "")
-
-set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-llvm-14_tpls/llvm-14.0.6/adios2-2.12.1-o3jfgpz2law4r2q376s66r4jeu6dyhu4" CACHE PATH "")
-
 set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-llvm-14_tpls/llvm-14.0.6/conduit-0.9.5-y5dwa2wdrmelzcpyx7yzayckzo3gpgrm" CACHE PATH "")
 
 set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/dane-llvm-14_tpls/llvm-14.0.6/silo-4.12.0-24vfiuq62fnn5ui6uqdhvouz65zytin2" CACHE PATH "")

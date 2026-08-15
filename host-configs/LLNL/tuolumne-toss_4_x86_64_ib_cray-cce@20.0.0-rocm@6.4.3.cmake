@@ -97,10 +97,6 @@ set(ZLIB_DIR "/usr" CACHE PATH "")
 
 set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hdf5-1.14.6-b55srpmbowvfsql65n2652uh5xj3n3b5" CACHE PATH "")
 
-set(ENABLE_ADIOS2 ON CACHE BOOL "")
-
-set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/adios2-2.12.1-2ji4ttcd6rwaubb4v63jbd6isdhtuls5" CACHE PATH "")
-
 set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/conduit-0.9.5-74psmq2xghvj4rfuqymomncufbxjxb7b" CACHE PATH "")
 
 set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/silo-4.12.0-dvjbdqytwnsndxfskcpkdodgj6zr7k5n" CACHE PATH "")
