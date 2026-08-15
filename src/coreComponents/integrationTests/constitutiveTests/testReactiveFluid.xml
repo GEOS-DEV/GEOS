@@ -7,16 +7,17 @@
     <ReactiveFluidDriver
       name="testDistilledWaterCO2"
       fluid="reactiveFluid"
-      feedComposition="{1e-1, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
+      feedComposition="{ 1e-1, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       baseline="testDistilledWater.txt"
       steps="1"
       logLevel="1"/>
+
     <ReactiveFluidDriver
       name="testReactiveBrine"
       fluid="reactiveFluid"
-      feedComposition="{3.76e-1, 3.76e-1, 3.87e-2, 3.21e-2, 1.89, 1.65e-2, 1.09 }"
+      feedComposition="{ 3.76e-1, 3.76e-1, 3.87e-2, 3.21e-2, 1.89, 1.65e-2, 1.09 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       baseline="testReactiveBrine.txt"
@@ -26,12 +27,9 @@
 
   <Events
     maxTime="1">
-    <SoloEvent
-      name="testDistilledWaterCO2"
-      target="/Tasks/testDistilledWaterCO2"/>
-    <SoloEvent
-      name="testReactiveBrine"
-      target="/Tasks/testReactiveBrine"/>
+    <SoloEvent name="testDistilledWaterCO2" target="/Tasks/testDistilledWaterCO2"/>
+
+    <SoloEvent name="testReactiveBrine" target="/Tasks/testReactiveBrine"/>
   </Events>
 
   <Constitutive>
@@ -39,7 +37,7 @@
       name="reactiveFluid"
       phaseNames="{ water }"
       componentNames="{ H+, HCO3-, Ca+2, SO4-2, Cl-, Mg+2, Na+1 }"
-      componentMolarWeight="{ 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3}"
+      componentMolarWeight="{ 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3 }"
       phasePVTParaFiles="{ testPVT_data/reactiveBrinePVT.txt }"/>
   </Constitutive>
 
@@ -72,9 +70,6 @@
   </Mesh>
 
   <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
+    <CellElementRegion name="dummy" cellBlocks="{ * }" materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>

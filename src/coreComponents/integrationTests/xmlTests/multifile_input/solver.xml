@@ -11,26 +11,18 @@
 
   <Events
     maxTime="1.0e-3">
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0e-3"
-      target="/Solvers/lagsolve"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0e-3" target="/Solvers/lagsolve"/>
   </Events>
 
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
+      <FiniteElementSpace name="FE1" order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+    <CellElementRegion name="Region2" cellBlocks="{ * }" materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>

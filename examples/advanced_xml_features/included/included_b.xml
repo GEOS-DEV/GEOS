@@ -3,15 +3,9 @@
 <Problem>
   <Events
     maxTime="2e4">
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="1000.0"
-      target="/Outputs/siloOutput"/>
+    <PeriodicEvent name="outputs" timeFrequency="1000.0" target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1e3"
-      target="/Solvers/SinglePhaseFlow"/>
+    <PeriodicEvent name="solverApplications" forceDt="1e3" target="/Solvers/SinglePhaseFlow"/>
 
     <PeriodicEvent
       name="restarts"
@@ -22,16 +16,12 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"/>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ * }"
-      materialList="{ water, rock }"/>
+    <CellElementRegion name="Region1" cellBlocks="{ * }" materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -49,8 +39,7 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-    <NullModel
-      name="nullSolid"/>
+    <NullModel name="nullSolid"/>
 
     <PressurePorosity
       name="rockPorosity"
@@ -58,16 +47,12 @@
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <Silo name="siloOutput"/>
 
-    <Restart
-      name="restartOutput"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 </Problem>

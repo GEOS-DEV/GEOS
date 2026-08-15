@@ -2,14 +2,10 @@
 
 <Problem>
   <Events>
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
+    <PeriodicEvent name="outputs" target="/Outputs/siloOutput"/>
   </Events>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
-      childDirectory="sub"/>
+    <Silo name="siloOutput" childDirectory="sub"/>
   </Outputs>
 </Problem>

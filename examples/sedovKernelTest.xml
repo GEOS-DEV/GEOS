@@ -26,10 +26,7 @@
     maxTime="1.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0e-5"
-      target="/Solvers/lagsolve"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0e-5" target="/Solvers/lagsolve"/>
 
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -54,17 +51,12 @@
 
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
+      <FiniteElementSpace name="FE1" order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+    <CellElementRegion name="Region2" cellBlocks="{ * }" materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -121,19 +113,12 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"
-      childDirectory="sub"/>
+    <Silo name="siloOutput" parallelThreads="32" childDirectory="sub"/>
 
-    <Restart
-      name="sidreRestart"/>
+    <Restart name="sidreRestart"/>
   </Outputs>
 
   <Geometry>
-    <Box
-      name="source"
-      xMin="{ -1, -1, -1 }"
-      xMax="{ 1.1, 1.1, 1.1 }"/>
+    <Box name="source" xMin="{ -1, -1, -1 }" xMax="{ 1.1, 1.1, 1.1 }"/>
   </Geometry>
 </Problem>

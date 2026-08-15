@@ -24,30 +24,20 @@
 
   <Events
     maxTime="1.0e-3">
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0e-3"
-      target="/Solvers/lagsolve"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0e-3" target="/Solvers/lagsolve"/>
 
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
+    <PeriodicEvent name="outputs" target="/Outputs/siloOutput"/>
   </Events>
 
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
+      <FiniteElementSpace name="FE1" order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+    <CellElementRegion name="Region2" cellBlocks="{ * }" materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -102,15 +92,10 @@
   </Functions>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
-      childDirectory="sub"/>
+    <Silo name="siloOutput" childDirectory="sub"/>
   </Outputs>
 
   <Geometry>
-    <Box
-      name="perf"
-      xMin="{ 0, 0, 0 }"
-      xMax="{ 1, 1, 1 }"/>
+    <Box name="perf" xMin="{ 0, 0, 0 }" xMax="{ 1, 1, 1 }"/>
   </Geometry>
 </Problem>

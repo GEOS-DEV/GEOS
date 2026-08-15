@@ -1,17 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
-  <Events maxTime="10">
-    <PeriodicEvent
-      name="python"
-      maxEventDt="1"
-      target="/Outputs/pythonOutput"/>
+  <Events
+    maxTime="10">
+    <PeriodicEvent name="python" maxEventDt="1" target="/Outputs/pythonOutput"/>
   </Events>
 
   <Outputs>
-    <Python
-      name="pythonOutput"/>
+    <Python name="pythonOutput"/>
   </Outputs>
 
   <Mesh>
@@ -28,10 +24,6 @@
   </Mesh>
 
   <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
+    <CellElementRegion name="dummy" cellBlocks="{ * }" materialList="{ dummy }"/>
   </ElementRegions>
-
 </Problem>

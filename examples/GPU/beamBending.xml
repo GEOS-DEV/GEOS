@@ -12,9 +12,7 @@
       discretization="FE1"
       targetRegions="{ Region2 }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="8"/>
       <LinearSolverParameters
         logLevel="1"
         solverType="gmres"
@@ -43,10 +41,7 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0"
-      target="/Solvers/lagsolve"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0" target="/Solvers/lagsolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
@@ -67,18 +62,13 @@
   <!-- SPHINX_FEDiscretization -->
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
+      <FiniteElementSpace name="FE1" order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+    <CellElementRegion name="Region2" cellBlocks="{ * }" materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -145,12 +135,8 @@
 
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"
-      childDirectory="sub"/>
+    <Silo name="siloOutput" parallelThreads="32" childDirectory="sub"/>
 
-    <Restart
-      name="restartOutput"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 </Problem>
