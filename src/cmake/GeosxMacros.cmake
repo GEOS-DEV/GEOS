@@ -329,6 +329,10 @@ endfunction()
 ## Adds a test to the project, remaining arguments are forwarded to `blt_add_test`
 ## As a side effect, uses and populates a global property named `geos_tests_exe_list`
 ## initialized in `src/CMakeLists.txt`.
+## MPI tests keep using BLT's NUM_MPI_TASKS command wrapping, and GEOS mirrors
+## that rank count into CTest's PROCESSORS property so parallel CTest runs can
+## schedule multi-rank tests against the same processor-slot budget as serial
+## tests.
 ##------------------------------------------------------------------------------
 macro( geos_add_test )
 
@@ -351,8 +355,27 @@ macro( geos_add_test )
 
     message( DEBUG "arg_NAME=${arg_NAME} arg_EXECUTABLE=${arg_EXECUTABLE} arg_COMMAND=${arg_COMMAND} ARGN=${ARGN}" )  # debug
 
+    set( _geos_test_processors )
+    set( _geos_read_num_mpi_tasks OFF )
+    foreach( _geos_test_arg ${ARGN} )
+      if( _geos_read_num_mpi_tasks )
+        set( _geos_test_processors ${_geos_test_arg} )
+        set( _geos_read_num_mpi_tasks OFF )
+      elseif( _geos_test_arg STREQUAL "NUM_MPI_TASKS" )
+        set( _geos_read_num_mpi_tasks ON )
+      endif()
+    endforeach()
+
     blt_add_test( NAME ${arg_NAME}
                   COMMAND ${arg_COMMAND} ${ARGN} )
+
+    if( _geos_test_processors )
+      set_tests_properties( ${arg_NAME} PROPERTIES PROCESSORS ${_geos_test_processors} )
+    endif()
+
+    unset( _geos_read_num_mpi_tasks )
+    unset( _geos_test_processors )
+    unset( _geos_test_arg )
 
 endmacro( geos_add_test )
 

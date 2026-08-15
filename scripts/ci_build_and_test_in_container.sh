@@ -371,6 +371,10 @@ if [ -z "${NPROC}" ]; then
   NPROC=$(nproc)
   echo "NPROC unset, setting to ${NPROC}..."
 fi
+if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "NPROC must be a positive integer, got '${NPROC}'."
+  exit 1
+fi
 echo "Using ${NPROC} cores."
 
 if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
@@ -402,7 +406,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  # Open MPI refuses root launches in CI containers unless both guard variables are set.
+  # Keep this separate from openmpi_args because repeated geos-ats overrides replace values.
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
+  echo "Integrated test ATS arguments: ${ATS_ARGUMENTS}"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
@@ -543,10 +552,12 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  export OMP_NUM_THREADS=1
+  echo "Running unit tests with OMP_NUM_THREADS=${OMP_NUM_THREADS}."
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck|testExternalSolvers"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck"
   fi
 fi
 
@@ -571,6 +582,36 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We directly use the script instead...
   echo "Available baselines:"
   ls -lR /tmp/geos/baselines
+
+  # This CI route configures geos-ats' Open MPI machine explicitly. Capture the
+  # selected launcher's identity once, and fail before tests if an image change
+  # would make the Open MPI placement environment below ineffective.
+  echo "Diagnostic: mpirun --version"
+  MPIRUN_VERSION_OUTPUT="$(/usr/bin/mpirun --version 2>&1)"
+  MPIRUN_VERSION_STATUS=$?
+  printf '%s\n' "${MPIRUN_VERSION_OUTPUT}"
+  echo "Diagnostic 'mpirun --version' exit status: ${MPIRUN_VERSION_STATUS}"
+  if [[ "${MPIRUN_VERSION_STATUS}" -ne 0 ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun --version to succeed."
+    exit "${MPIRUN_VERSION_STATUS}"
+  fi
+  if [[ "${MPIRUN_VERSION_OUTPUT}" != *"Open MPI"* ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun to identify itself as Open MPI."
+    exit 1
+  fi
+
+  # ATS accounts for the rank capacity of concurrent tests but does not assign
+  # disjoint CPU affinities to their independent mpirun processes. Disable each
+  # launcher's local rank binding so Linux can schedule ranks across the
+  # container's allowed CPU set; this policy does not guarantee exclusive cores.
+  export OMPI_MCA_hwloc_base_binding_policy=none
+  echo "Open MPI rank binding disabled with OMPI_MCA_hwloc_base_binding_policy=${OMPI_MCA_hwloc_base_binding_policy}."
+
+  # Report the resulting Open MPI placement policy. Each report is written to
+  # the individual launch's stderr, which ATS retains in TestResults for the
+  # packed diagnostic artifact.
+  export OMPI_MCA_hwloc_base_report_bindings=1
+  echo "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
 
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
