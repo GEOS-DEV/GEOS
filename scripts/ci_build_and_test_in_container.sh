@@ -164,6 +164,9 @@ Usage: $0
       Either ON or OFF (default is ON). Build geos with bounds check.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
+  --enable-hypredrv
+      One of ON or OFF (default is OFF). Build geos with hypredrive.
+      Overrides the TPL image host-config, which may set ENABLE_HYPREDRV ON.
   --enable-hypre-device
       One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
   --enable-trilinos
@@ -205,7 +208,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypredrv:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -213,6 +216,7 @@ BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 ENABLE_HYPRE=ON
+ENABLE_HYPREDRV=OFF
 ENABLE_HYPRE_DEVICE=CPU
 GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
@@ -260,6 +264,7 @@ do
       shift 2;;
     --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
+    --enable-hypredrv)       ENABLE_HYPREDRV=$2;         shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
@@ -365,6 +370,10 @@ if [ -z "${NPROC}" ]; then
   NPROC=$(nproc)
   echo "NPROC unset, setting to ${NPROC}..."
 fi
+if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "NPROC must be a positive integer, got '${NPROC}'."
+  exit 1
+fi
 echo "Using ${NPROC} cores."
 
 if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
@@ -396,7 +405,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  # Open MPI refuses root launches in CI containers unless both guard variables are set.
+  # Keep this separate from openmpi_args because repeated geos-ats overrides replace values.
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
+  echo "Integrated test ATS arguments: ${ATS_ARGUMENTS}"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
@@ -463,6 +477,7 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
+               -DENABLE_HYPREDRV=${ENABLE_HYPREDRV} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
@@ -529,10 +544,12 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  export OMP_NUM_THREADS=1
+  echo "Running unit tests with OMP_NUM_THREADS=${OMP_NUM_THREADS}."
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck"
   fi
 fi
 
@@ -557,6 +574,36 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We directly use the script instead...
   echo "Available baselines:"
   ls -lR /tmp/geos/baselines
+
+  # This CI route configures geos-ats' Open MPI machine explicitly. Capture the
+  # selected launcher's identity once, and fail before tests if an image change
+  # would make the Open MPI placement environment below ineffective.
+  echo "Diagnostic: mpirun --version"
+  MPIRUN_VERSION_OUTPUT="$(/usr/bin/mpirun --version 2>&1)"
+  MPIRUN_VERSION_STATUS=$?
+  printf '%s\n' "${MPIRUN_VERSION_OUTPUT}"
+  echo "Diagnostic 'mpirun --version' exit status: ${MPIRUN_VERSION_STATUS}"
+  if [[ "${MPIRUN_VERSION_STATUS}" -ne 0 ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun --version to succeed."
+    exit "${MPIRUN_VERSION_STATUS}"
+  fi
+  if [[ "${MPIRUN_VERSION_OUTPUT}" != *"Open MPI"* ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun to identify itself as Open MPI."
+    exit 1
+  fi
+
+  # ATS accounts for the rank capacity of concurrent tests but does not assign
+  # disjoint CPU affinities to their independent mpirun processes. Disable each
+  # launcher's local rank binding so Linux can schedule ranks across the
+  # container's allowed CPU set; this policy does not guarantee exclusive cores.
+  export OMPI_MCA_hwloc_base_binding_policy=none
+  echo "Open MPI rank binding disabled with OMPI_MCA_hwloc_base_binding_policy=${OMPI_MCA_hwloc_base_binding_policy}."
+
+  # Report the resulting Open MPI placement policy. Each report is written to
+  # the individual launch's stderr, which ATS retains in TestResults for the
+  # packed diagnostic artifact.
+  export OMPI_MCA_hwloc_base_report_bindings=1
+  echo "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
 
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines

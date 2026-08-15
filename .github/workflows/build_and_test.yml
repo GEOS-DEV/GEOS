@@ -40,6 +40,9 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
+      ENABLE_HYPREDRV:
+        required: false
+        type: string
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
@@ -128,7 +131,7 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -243,9 +246,9 @@ jobs:
           script_args+=(--cmake-cuda-architectures "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}")
         fi
 
-        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
-        # are passed as scripts parameters. Specific care must be taken to be sure
-        # there's no conflict with the host-config files.
+        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPREDRV,
+        # ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS) are passed as script parameters.
+        # Specific care must be taken to be sure there's no conflict with the host-config files.
 
         # Hypre
         ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
@@ -253,9 +256,16 @@ jobs:
           script_args+=(--enable-hypre "${{ inputs.ENABLE_HYPRE }}")
         fi
 
+        # Hypredrive is off by default so the TPL image host-config cannot enable it.
+        ENABLE_HYPREDRV=${{ inputs.ENABLE_HYPREDRV }}
+        if [ ! -z "${{ inputs.ENABLE_HYPREDRV }}" ]; then
+          script_args+=(--enable-hypredrv "${{ inputs.ENABLE_HYPREDRV }}")
+        fi
+
         # Trilinos
         ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
+        docker_args+=(-e ENABLE_HYPREDRV=${ENABLE_HYPREDRV:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
         docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
@@ -425,7 +435,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v6.0.1
+      uses: codecov/codecov-action@v7.0.0
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
