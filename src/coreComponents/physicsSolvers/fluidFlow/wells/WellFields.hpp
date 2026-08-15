@@ -34,6 +34,21 @@ namespace fields
 namespace well
 {
 
+DECLARE_FIELD( connectionRate,
+               "wellElementConnectionRate",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Connection rate" );
+
+DECLARE_FIELD( connectionRate_n,
+               "wellElementConnectionRate_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Connection rate at the previous converged time step" );
 DECLARE_FIELD( energyPerforationFlux,
                "energyPerforationFlux",
                array1d< real64 >,
@@ -50,6 +65,61 @@ DECLARE_FIELD( dEnergyPerforationFlux,
                NO_WRITE,
                "Derivative of energy perforation flux with respect to pressure temperature and global component density (compositional only)" );
 
+DECLARE_FIELD( pressure,
+               "pressure",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pressure" );
+
+DECLARE_FIELD( pressure_n,
+               "pressure_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Pressure at the previous converged time step" );
+
+DECLARE_FIELD( temperature,
+               "temperature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Temperature" );
+
+DECLARE_FIELD( temperature_n,
+               "temperature_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Temperature at the previous converged time step" );
+
+DECLARE_FIELD( gravityCoefficient,
+               "gravityCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
+
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
 
 }
 

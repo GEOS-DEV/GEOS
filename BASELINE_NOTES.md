@@ -5,8 +5,16 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4114 (2026-08-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4114-17283-3bb33cb.tar.gz>
+Stop dumping linear systems from ATS decks (`writeLinearSystem` no longer set). That flag is stored in restart files, so `perf_status_test` restartchecks need a new baseline.
+
+PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
+Fluid reset after convergence failure
+
+PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
+Well model refactor .  Integrated test update due to schema changes 
+
 PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
-=====================
 Added statistics `Group` objects for each statistics `Task` instance
 
 PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>

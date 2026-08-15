@@ -67,7 +67,7 @@ It is illustrated in :ref:`TutorialPoroelasticity` for a poroelastic test case.
 The three solvers employed in this example are:
 
  - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFVM** named ``compositionalMultiphaseFlow`` (more information on this solver at :ref:`CompositionalMultiphaseFlow`),
- - the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` (more information on this solver at :ref:`CompositionalMultiphaseWell`),
+ - the single-physics well solver manager, a solver of type **WellManager** named ``compositionalMultiphaseWell`` (more information on this solver at :ref:`CompositionalMultiphaseWell`),
  - the coupling solver that binds the two single-physics solvers above, an object of type **CompositionalMultiphaseReservoir** named ``coupledFlowAndWells``.
 
 The **Solvers** XML block is shown below.
@@ -146,7 +146,7 @@ needed in the XML file to define them.
 
 Each well is defined internally (i.e., not imported from a file) in a separate **InternalWell**
 XML sub-block. An **InternalWell** sub-block must point to the region corresponding to this well using the attribute
-``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
+``wellRegionName``, and to the control of this well using the attribute ``control``.
 
 Each well is defined using a vertical polyline going through the seven layers of the
 mesh with a perforation in each layer.
