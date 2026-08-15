@@ -73,15 +73,15 @@ set(ROCM_PATH "/opt/rocm-6.4.3" CACHE PATH "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/chai-2025.12.0-xnyu3aqqd7benfr7fkwlates66mruuth" CACHE PATH "")
+set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/chai-2025.12.0-xnyu3aqqd7benfr7fkwlates66mruuth" CACHE PATH "")
 
-set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/raja-2025.12.0-amgdvrnkwl2oh5lpddgvyupteldgl6ip" CACHE PATH "")
+set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/raja-2025.12.0-amgdvrnkwl2oh5lpddgvyupteldgl6ip" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/umpire-2025.12.0-l7ni3umhaf7f4rwoy4qhjfyrnye3oit6" CACHE PATH "")
+set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/umpire-2025.12.0-l7ni3umhaf7f4rwoy4qhjfyrnye3oit6" CACHE PATH "")
 
-set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/camp-2025.12.0-p2srwdveimzi7csrjw7o3u4ryxpaz5wm" CACHE PATH "")
+set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/camp-2025.12.0-p2srwdveimzi7csrjw7o3u4ryxpaz5wm" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -89,27 +89,27 @@ set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpl
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/caliper-2.14.0-xfkj7r2zaqfuuugu2wdkppydyr3fwrph" CACHE PATH "")
+set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/caliper-2.14.0-xfkj7r2zaqfuuugu2wdkppydyr3fwrph" CACHE PATH "")
 
-set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/adiak-0.4.0-6rim24h5wdcrhoaxgpw5mldcufzkfqxb" CACHE PATH "")
+set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/adiak-0.4.0-6rim24h5wdcrhoaxgpw5mldcufzkfqxb" CACHE PATH "")
 
 set(ZLIB_DIR "/usr" CACHE PATH "")
 
-set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hdf5-1.14.6-b55srpmbowvfsql65n2652uh5xj3n3b5" CACHE PATH "")
+set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hdf5-1.14.6-b55srpmbowvfsql65n2652uh5xj3n3b5" CACHE PATH "")
 
 set(ENABLE_ADIOS2 ON CACHE BOOL "")
 
-set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/adios2-2.12.1-2ji4ttcd6rwaubb4v63jbd6isdhtuls5" CACHE PATH "")
+set(ADIOS2_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/adios2-2.12.1-2ji4ttcd6rwaubb4v63jbd6isdhtuls5" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/conduit-0.9.5-74psmq2xghvj4rfuqymomncufbxjxb7b" CACHE PATH "")
+set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/conduit-0.9.5-74psmq2xghvj4rfuqymomncufbxjxb7b" CACHE PATH "")
 
-set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/silo-4.12.0-dvjbdqytwnsndxfskcpkdodgj6zr7k5n" CACHE PATH "")
+set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/silo-4.12.0-dvjbdqytwnsndxfskcpkdodgj6zr7k5n" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/pugixml-1.13-o2jle7fb6idvyr32ibcsvm552yq5xqbe" CACHE PATH "")
+set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/pugixml-1.13-o2jle7fb6idvyr32ibcsvm552yq5xqbe" CACHE PATH "")
 
-set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/vtk-9.4.2-ztzvsmp6mlmtyk5o3rpqbgn7phg7ervu" CACHE PATH "")
+set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/vtk-9.4.2-ztzvsmp6mlmtyk5o3rpqbgn7phg7ervu" CACHE PATH "")
 
-set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/fmt-11.0.2-x7b5m6zdgekxl3mmjyampxc2pmt4lgur" CACHE PATH "")
+set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/fmt-11.0.2-x7b5m6zdgekxl3mmjyampxc2pmt4lgur" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -123,25 +123,25 @@ set(LAPACK_LIBRARIES /usr/lib64/liblapack.so CACHE STRING "")
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/metis-5.1.0-oo45sjxzdfx4e4z3qgrmnudzvwfboi7n" CACHE PATH "")
+set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/metis-5.1.0-oo45sjxzdfx4e4z3qgrmnudzvwfboi7n" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/parmetis-4.0.3-onkwfgqwdwkund4tmpvzo3gif3cewf7y" CACHE PATH "")
+set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/parmetis-4.0.3-onkwfgqwdwkund4tmpvzo3gif3cewf7y" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/scotch-7.0.8-wphygatd54wcwziiuvi63jzkzx3pvrp7" CACHE PATH "")
+set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/scotch-7.0.8-wphygatd54wcwziiuvi63jzkzx3pvrp7" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/superlu-dist-9.2.1-t3fmcjdkmgtbi3il5fji6t4mihzrxzni" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/superlu-dist-9.2.1-t3fmcjdkmgtbi3il5fji6t4mihzrxzni" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/suite-sparse-5.10.1-x3vbz2scbieouiqnnqxoirfsvrx7fj5t" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/suite-sparse-5.10.1-x3vbz2scbieouiqnnqxoirfsvrx7fj5t" CACHE PATH "")
 
 set(ENABLE_TRILINOS OFF CACHE BOOL "")
 
-set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hypre-git.8b0093306228fef1b92384d9face7fbe5a63b460_master-bwdj6fuiqwuyd25pegpk3s6zu6bfzvju" CACHE PATH "")
+set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hypre-git.9fbaf60dc9435e71ff5af984f1e12e2bf8be6ad8_master-32ln76na4x6hzj25ts3gcsakjirunz6p" CACHE PATH "")
 
 set(ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "")
 
-set(ENABLE_HYPREDRV ON CACHE BOOL "")
+set(ENABLE_HYPREDRV OFF CACHE BOOL "")
 
-set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hypredrive-git.d062c48cc8d26a9bee92f33f3c588d071c230d30_master-kruuawah55xa3lyknsq6e7e6qyow7fok" CACHE PATH "")
+set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/hypredrive-git.4eb4f1b126332844feaaf941e32ae5dc125e5bdc_master-b4cizv3pkm255dru3juyk4vpne4lzr2h" CACHE PATH "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
@@ -175,7 +175,7 @@ set(ENABLE_SPHINX OFF CACHE BOOL "")
 
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-6hvpggvwvhbhd322pnqivylw2ywdkhaq/bin/uncrustify" CACHE PATH "")
+set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-6hvpggvwvhbhd322pnqivylw2ywdkhaq/bin/uncrustify" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # Other
@@ -183,7 +183,7 @@ set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-r
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL "")
 
-set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-31/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/mathpresso-geos-w3ssu5ocek533pxesneyk3urbxhnhgmw" CACHE PATH "")
+set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-12/tuolumne-cce-20-rocm-6.4.3_tpls/cce-20.0.0/mathpresso-geos-w3ssu5ocek533pxesneyk3urbxhnhgmw" CACHE PATH "")
 
 set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 

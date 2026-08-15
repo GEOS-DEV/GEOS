@@ -1502,7 +1502,6 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
   {
     for( integer i = 0; i < numNorm; ++i )
     {
-      localResidualNorm[i] = 0.0;
       localResidualNormalizer[i] =  nonlinearSolverParameters.m_minNormalizer;
     }
   }
