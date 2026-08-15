@@ -306,6 +306,7 @@ struct LinearSolverParameters
       singlePhasePoromechanicsEmbeddedFractures,      ///< single phase poromechanics with FV embedded fractures
       singlePhasePoromechanicsConformingFractures,    ///< single phase poromechanics with conforming fractures
       singlePhasePoromechanicsConformingFracturesALM, ///< single phase poromechanics with conforming fractures for ALM
+      singlePhasePoromechanicsConformingFracturesALMReservoirFVM, ///< single phase poromechanics with conforming fractures for ALM, with wells
       singlePhasePoromechanicsReservoirFVM,           ///< single phase poromechanics with finite volume single phase flow with wells
       thermalSinglePhasePoromechanicsReservoirFVM,    ///< thermal single phase poromechanics with finite volume single phase flow with wells
       compositionalMultiphaseFVM,                     ///< finite volume compositional multiphase flow
@@ -584,6 +585,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "singlePhasePoromechanicsEmbeddedFractures",
               "singlePhasePoromechanicsConformingFractures",
               "singlePhasePoromechanicsConformingFracturesALM",
+              "singlePhasePoromechanicsConformingFracturesALMReservoirFVM",
               "singlePhasePoromechanicsReservoirFVM",
               "thermalSinglePhasePoromechanicsReservoirFVM",
               "compositionalMultiphaseFVM",

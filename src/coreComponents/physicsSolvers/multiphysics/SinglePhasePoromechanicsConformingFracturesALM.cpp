@@ -25,6 +25,7 @@
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
@@ -63,103 +64,84 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCouplin
 
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
-                                                                                 DofManager & dofManager,
-                                                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                                 ParallelVector & rhs,
-                                                                                 ParallelVector & solution,
-                                                                                 bool const setSparsity )
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
+                                                                                         DofManager & dofManager,
+                                                                                         CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                         SparsityPattern< globalIndex > & pattern )
 {
   GEOS_MARK_FUNCTION;
 
-  if( this->m_precond )
-  {
-    this->m_precond->clear();
-  }
-
-  // Set domain on DofManager
-  dofManager.setDomain( domain );
-
   // Initialize ALM contact solver internal data structures
-  // These must be called before DOF setup and assembly
+  // These must be called before assembling the contact-dependent pattern.
   this->solidMechanicsSolver()->createFaceTypeList( domain );
   this->solidMechanicsSolver()->updateStickSlipList( domain );
   this->solidMechanicsSolver()->createBubbleCellList( domain );
 
-  // Setup DOFs for all sub-solvers and coupling (uses PoromechanicsSolver::setupDofs)
-  // This adds: displacement DOFs, bubble DOFs, pressure DOFs, and all couplings
-  this->setupDofs( domain, dofManager );
+  // Start from both subsolver patterns. The flow pattern may contain well and
+  // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
+  SparsityPattern< globalIndex > flowPattern;
+  this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, flowPattern );
 
-  // Reorder DOFs to optimize matrix structure
-  dofManager.reorderByRank();
+  SparsityPattern< globalIndex > mechanicsPattern;
+  this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
+  GEOS_ERROR_IF_NE( flowPattern.numRows(), mechanicsPattern.numRows() );
+  GEOS_ERROR_IF_NE( flowPattern.numColumns(), mechanicsPattern.numColumns() );
 
-  if( setSparsity )
+  // Count the union of the two sorted row sets. This avoids double-counting
+  // shared diagonal entries without assuming either pattern contains the
+  // other.
+  array1d< localIndex > rowLengths( flowPattern.numRows() );
+  rowLengths.zero();
+  for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
   {
-    // Start from both subsolver patterns. The flow pattern may contain well and
-    // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
-    SparsityPattern< globalIndex > flowPattern;
-    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, flowPattern );
-
-    SparsityPattern< globalIndex > mechanicsPattern;
-    this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
-
-    // Sum the row lengths to provide enough capacity for the union. Entries
-    // common to both patterns are deduplicated when they are inserted below.
-    array1d< localIndex > rowLengths( flowPattern.numRows() );
-    for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
+    arraySlice1d< globalIndex const > const flowColumns = flowPattern.getColumns( localRow );
+    arraySlice1d< globalIndex const > const mechanicsColumns = mechanicsPattern.getColumns( localRow );
+    localIndex flowColumn = 0;
+    localIndex mechanicsColumn = 0;
+    while( flowColumn < flowColumns.size() || mechanicsColumn < mechanicsColumns.size() )
     {
-      rowLengths[localRow] = flowPattern.numNonZeros( localRow ) + mechanicsPattern.numNonZeros( localRow );
+      if( mechanicsColumn == mechanicsColumns.size() ||
+          ( flowColumn < flowColumns.size() && flowColumns[flowColumn] < mechanicsColumns[mechanicsColumn] ) )
+      {
+        ++flowColumn;
+      }
+      else if( flowColumn == flowColumns.size() || mechanicsColumns[mechanicsColumn] < flowColumns[flowColumn] )
+      {
+        ++mechanicsColumn;
+      }
+      else
+      {
+        ++flowColumn;
+        ++mechanicsColumn;
+      }
+      ++rowLengths[localRow];
     }
-
-    // Add the number of nonzeros induced by coupling
-    addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
-    addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-    addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );
-
-    // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( flowPattern.numRows(),
-                                                           flowPattern.numColumns(),
-                                                           rowLengths.data() );
-
-    // Copy the flow and mechanics nonzeros.
-    for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
-    {
-      globalIndex const * cols = flowPattern.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + flowPattern.numNonZeros( localRow ) );
-    }
-    for( localIndex localRow = 0; localRow < mechanicsPattern.numRows(); ++localRow )
-    {
-      globalIndex const * cols = mechanicsPattern.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + mechanicsPattern.numNonZeros( localRow ) );
-    }
-
-    // Add the nonzeros from coupling
-    addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
-    addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
-    addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
-
-    // Set up the derivative flux residual matrix
-    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-
-    // Assimilate the sparsity pattern into the local matrix
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
 
-  localMatrix.setName( this->getName() + "/matrix" );
+  // Add the number of nonzeros induced by coupling
+  addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
+  addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
+  addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );
 
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // Allocate the coupled pattern in one pass. Growing an already populated
+  // pattern row by row would shift every subsequent row of the contiguous
+  // column buffer on each call, which is quadratic in the number of rows.
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( flowPattern.numRows(),
+                                                        flowPattern.numColumns(),
+                                                        rowLengths.data() );
 
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // Copy both subsolver patterns in. insertNonZeros discards entries that are
+  // already present, so what remains is the union counted above.
+  appendSparsityPattern( pattern, flowPattern );
+  appendSparsityPattern( pattern, mechanicsPattern );
 
-  this->setupLinearSolverNearNullKernel( domain, dofManager );
+  // Add the nonzeros from coupling
+  addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
+  addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
+  addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
 
-  if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    this->m_precond = this->createPreconditioner( domain );
-  }
+  // Set up the derivative flux residual matrix
+  setUpDflux_dApertureMatrix( domain );
 }
 
 template< typename FLOW_SOLVER >
@@ -175,6 +157,18 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSyst
   // Synchronize fracture state
   this->solidMechanicsSolver()->synchronizeFractureState( domain );
 
+  // setSparsityPattern owns the contact lookup tables and this matrix. Rather
+  // than lazily rebuilding a second copy of that prologue here, require that it
+  // has run: setupSystem( ..., setSparsity = false ) is not supported.
+  GEOS_ERROR_IF( !m_derivativeFluxResidual_dAperture,
+                 GEOS_FMT( "{}: setupSystem must be called with sparsity construction enabled before assembling.",
+                           this->getName() ) );
+
+  // Move without touching: zero() below memsets the entries in this space, and
+  // touching here would mark the immutable sparsity structure dirty on device.
+  m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
+  m_derivativeFluxResidual_dAperture->zero();
+
   // Assemble element-based contributions (mechanics + flow accumulation)
   assembleElementBasedContributions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
@@ -185,10 +179,23 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSyst
                                                   dofManager,
                                                   localMatrix,
                                                   localRhs,
-                                                  getDerivativeFluxResidual_dNormalJump() );
+                                                  getDerivativeFluxResidual_dNormalJump(),
+                                                  &m_derivativeFluxResidual_dApertureOffsets );
+
+  // The flux kernel populates the derivative matrix in device memory. The
+  // coupling assembly below reads it on the host, so bring it over without
+  // touching it: touching would force a re-upload on the next assembly.
+  m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
   // Assemble coupling terms (must be after flux assembly)
   assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
+  if constexpr( hasWells )
+  {
+    this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  }
+
 }
 
 template< typename FLOW_SOLVER >
@@ -325,50 +332,102 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState(
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-setUpDflux_dApertureMatrix( DomainPartition & domain,
-                            DofManager const & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix )
+setUpDflux_dApertureMatrix( DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( dofManager );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+  string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  // Build the global row offsets and the row capacities together, so that each
+  // target is visited only once before the matrix is allocated.
+  m_derivativeFluxResidual_dApertureOffsets.clear();
+  stdVector< localIndex > rowCapacities;
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                       MeshLevel const & mesh,
                                                                       string_array const & regionNames )
   {
-    std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+    GEOS_UNUSED_VAR( regionNames );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
 
+    // These offsets are consumed by the flow sub-solver, which walks its own
+    // mesh targets and therefore resolves the discretization level with its own
+    // discretization name. The mesh body name is the only part of a target both
+    // solvers are guaranteed to agree on, so it is the key; that in turn
+    // requires each body to appear exactly once here.
+    GEOS_ERROR_IF( m_derivativeFluxResidual_dApertureOffsets.find( meshName ) !=
+                   m_derivativeFluxResidual_dApertureOffsets.end(),
+                   GEOS_FMT( "{}: mesh body '{}' is targeted at more than one discretization level. The augmented "
+                             "Lagrangian contact formulation supports a single level per mesh body.",
+                             this->getName(), meshName ) );
+
+    localIndex const rowOffset = rowCapacities.size();
+    m_derivativeFluxResidual_dApertureOffsets.get_inserted( meshName ) = rowOffset;
+
+    // The stencil sweeps below index rows by the raw surface-element index, so
+    // the contact fracture must be the only face-element region on this target:
+    // a second one would alias into its rows. Embedded-surface regions hold a
+    // different subregion type and contribute no SurfaceElementStencil here, so
+    // they are left alone. The region is required rather than optional because
+    // every consumer of this matrix (assembleCouplingTerms,
+    // assembleFluidMassResidualDerivativeWrtDisplacement) looks it up
+    // unconditionally on every target; skipping a target here would also leave
+    // its offset pointing at the next target's rows.
+    localIndex numFractureRegions = 0;
+    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
     {
-      // Calculate number of fracture elements
-      localIndex numRows = 0;
-      mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                                          [&]( localIndex const, FaceElementSubRegion const & subRegion )
+      if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
       {
-        numRows += subRegion.size();
-      } );
-
-      // Number of columns (derivatives) = number of fracture elements
-      localIndex numCol = numRows;
-
-      derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCol );
-      derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-      derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-      localIndex maxRowSize = -1;
-      for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-      {
-        localIndex const rowSize = localMatrix.numNonZeros( row );
-        maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+        ++numFractureRegions;
       }
+    } );
+    GEOS_ERROR_IF_NE_MSG( numFractureRegions, 1,
+                          GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The augmented Lagrangian "
+                                    "contact formulation requires exactly one, named '{}'.",
+                                    this->getName(), meshName, numFractureRegions, fractureRegionName ) );
+    GEOS_ERROR_IF( !elemManager.hasRegion( fractureRegionName ),
+                   GEOS_FMT( "{}: mesh target '{}' does not hold the fracture region '{}' of the contact solver.",
+                             this->getName(), meshName, fractureRegionName ) );
 
-      for( localIndex row = 0; row < numRows; ++row )
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    rowCapacities.resize( rowOffset + fractureSubRegion.size(), 0 );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+    {
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
       {
-        derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+        localIndex const numFluxElems = stencil.stencilSize( iconn );
+        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+        {
+          localIndex const row = rowOffset + sei[iconn][k0];
+          GEOS_ERROR_IF_GE_MSG( row,
+                                LvArray::integerConversion< localIndex >( rowCapacities.size() ),
+                                "Surface stencil index exceeds the fracture derivative matrix size." );
+          rowCapacities[row] += numFluxElems;
+        }
       }
-    }
+    } );
+  } );
 
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+  localIndex const numRows = rowCapacities.size();
+  derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+  derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+  if( numRows > 0 )
+  {
+    derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+                                                                                      numRows,
+                                                                                      rowCapacities.data() );
+  }
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                      MeshLevel const & mesh,
+                                                                      string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( regionNames );
+    localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -379,9 +438,13 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
 
         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
         {
+          localIndex const row = rowOffset + sei[iconn][k0];
+          GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
-            derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+            derivativeFluxResidual_dAperture->insertNonZero( row,
+                                                              rowOffset + sei[iconn][k1],
+                                                              0.0 );
           }
         }
       }
@@ -800,8 +863,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
+  // assembleSystem has already brought this matrix to the host after the flux
+  // assembly; the traversal below only reads it.
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
+  auto const derivativeOffsetIt = m_derivativeFluxResidual_dApertureOffsets.find( meshName );
+  GEOS_ERROR_IF( derivativeOffsetIt == m_derivativeFluxResidual_dApertureOffsets.end(),
+                 GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
+  localIndex const derivativeOffset = derivativeOffsetIt->second;
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
@@ -826,22 +895,24 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   localIndex const numElems = subRegion.size();
 
-  // Allocate temporary storage for aperture derivatives (computed via kernels)
+  // These arrays are temporary workspaces for one assembly call. Keeping them
+  // local avoids retaining potentially large aperture buffers for the solver's
+  // lifetime while still giving the device kernels explicit views to capture.
   array2d< real64 > dAperturedU( numElems, maxNumUdofs );
   array2d< real64 > dAperturedB( numElems, numBdofs );
-
-  // Initialize to zero and move to device for kernel access
   dAperturedU.zero();
   dAperturedB.zero();
   dAperturedU.move( parallelDeviceMemorySpace, true );
   dAperturedB.move( parallelDeviceMemorySpace, true );
+  arrayView2d< real64 > const dAperturedUView = dAperturedU.toView();
+  arrayView2d< real64 > const dAperturedBView = dAperturedB.toView();
 
   // Launch the ComputeApertureDerivatives kernel to fill dAperturedU and dAperturedB
   // This is called for each element type (tri, quad, etc.)
   this->solidMechanicsSolver()->forFiniteElementOnFractureSubRegions( meshName,
-                                                                                [&] ( string const &,
-                                                                                      finiteElement::FiniteElementBase const & subRegionFE,
-                                                                                      arrayView1d< localIndex const > const & faceElementList )
+                                                                                [&, dAperturedUView, dAperturedBView] ( string const &,
+                                                                                                                 finiteElement::FiniteElementBase const & subRegionFE,
+                                                                                                                 arrayView1d< localIndex const > const & faceElementList )
   {
     poromechanicsALMKernels::ComputeApertureDerivativesFactory
     kernelFactory( dispDofNumber,
@@ -851,8 +922,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                    localRhs,
                    0.0,  // dt not used
                    faceElementList,
-                   dAperturedU.toView(),
-                   dAperturedB.toView() );
+                   dAperturedUView,
+                   dAperturedBView );
 
     real64 maxResidual = finiteElement::
                            interfaceBasedKernelApplication
@@ -940,14 +1011,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       }
 
       // Flux derivative w.r.t. nodal displacement
-      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( derivativeOffset + kfe );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( derivativeOffset + kfe );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( derivativeOffset + kfe );
 
       for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
       {
         real64 const dR_dAper = values[kfe1];
-        localIndex const kfe2 = columns[kfe1];
+        localIndex const kfe2 = columns[kfe1] - derivativeOffset;
 
         bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
         if( !isOpen && !isFractureOpen )
@@ -1028,7 +1099,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
       {
         real64 const dR_dAper = values[kfe1];
-        localIndex const kfe2 = columns[kfe1];
+        localIndex const kfe2 = columns[kfe1] - derivativeOffset;
 
         bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
         if( !isOpen && !isFractureOpen )
@@ -1092,9 +1163,6 @@ addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                [&]( localIndex const, CellElementSubRegion const & subRegion )
     {
-      if( !subRegion.hasWrapper( CellElementSubRegion::viewKeyStruct::bubbleCellsString() ) )
-        return;
-
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
       arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
@@ -1153,9 +1221,6 @@ addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                [&]( localIndex const, CellElementSubRegion const & subRegion )
     {
-      if( !subRegion.hasWrapper( CellElementSubRegion::viewKeyStruct::bubbleCellsString() ) )
-        return;
-
       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
       arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
@@ -1202,6 +1267,9 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
   using namespace contact;
 
+  string const flowDofKey = dofManager.getKey( m_pressureKey );
+  string const mechanicsDiscretizationName = this->solidMechanicsSolver()->getDiscretizationName();
+
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
@@ -1212,8 +1280,6 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     string const & bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-    string const & flowDofKey = dofManager.getKey( m_pressureKey );
-
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
@@ -1250,7 +1316,7 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
                            constitutive::PorousSolidBase,
                            CellElementSubRegion >( mesh,
                                                    poromechanicsRegionNames,
-                                                   this->solidMechanicsSolver()->getDiscretizationName(),
+                                                   mechanicsDiscretizationName,
                                                    FlowSolverBase::viewKeyStruct::solidNamesString(),
                                                    kernelFactory );
 

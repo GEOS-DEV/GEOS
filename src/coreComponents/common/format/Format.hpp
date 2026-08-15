@@ -34,6 +34,7 @@
 #include "../include/fmt/xchar.h"
 #define GEOS_FMT_NS fmt
 #else // use C++20's <format>
+#include <concepts>
 #include <format>
 #define GEOS_FMT_NS std
 #endif
@@ -143,12 +144,22 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
 #if __cplusplus < 202002L
 template< class T >
 static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+template< class T >
+static constexpr bool is_formattable_v = fmt::is_formattable< fmt::remove_cvref_t< T > >::value;
 #else
 template< typename T >
 concept has_formatter_v = requires ( T& v, std::format_context ctx )
 {
   std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
 };
+// std::format cannot be used to probe formattability: its consteval
+// format_string constructor static_asserts, and a static_assert failure is not
+// a substitution failure, so a non-formattable type would fail to compile
+// instead of yielding false. The standard instead specifies that a formatter
+// specialization is enabled iff it is semiregular.
+template< typename T >
+inline constexpr bool is_formattable_v =
+  std::semiregular< std::formatter< std::remove_cvref_t< T >, char > >;
 #endif
 
 namespace geos::format

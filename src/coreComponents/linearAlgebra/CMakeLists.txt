@@ -73,6 +73,7 @@ set( linearAlgebra_headers
      utilities/ComponentMask.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
+     utilities/SparsityPatternUtilities.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
@@ -169,6 +170,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp

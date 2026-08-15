@@ -1234,10 +1234,8 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
       pointTo3DCells );
     if( !coordinateNeighborGlobalIds.empty() )
     {
-      neighbor3DGlobalIds.resize( coordinateNeighborGlobalIds.size() );
-      std::copy( coordinateNeighborGlobalIds.begin(),
-                 coordinateNeighborGlobalIds.end(),
-                 neighbor3DGlobalIds.begin() );
+      neighbor3DGlobalIds.clear();
+      neighbor3DGlobalIds.insert( 0, coordinateNeighborGlobalIds.begin(), coordinateNeighborGlobalIds.end() );
     }
 
     // Update topology statistics

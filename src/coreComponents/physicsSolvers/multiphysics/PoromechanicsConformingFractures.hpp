@@ -27,12 +27,14 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 
 namespace geos
 {
@@ -86,16 +88,12 @@ public:
                                                            rowLengths.data());
 
     // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
-    {
-      globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ));
-    }
+    appendSparsityPattern( pattern, patternOriginal );
 
     // Add the nonzeros from coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
 
-    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+    setUpDflux_dApertureMatrix( domain );
   }
 
   virtual void assembleSystem( real64 const time_n,
@@ -109,6 +107,16 @@ public:
     GEOS_MARK_FUNCTION;
 
     this->solidMechanicsSolver()->synchronizeFractureState( domain );
+
+    // The flux assembly accumulates into this matrix. Clear it before every
+    // Newton assembly and make the host copy explicit before the host-side
+    // coupling kernels consume it.
+    if( !m_derivativeFluxResidual_dAperture )
+    {
+      setUpDflux_dApertureMatrix( domain );
+    }
+    m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
+    m_derivativeFluxResidual_dAperture->zero();
 
     assembleElementBasedContributions( time_n,
                                        dt,
@@ -124,7 +132,10 @@ public:
                                                     dofManager,
                                                     localMatrix,
                                                     localRhs,
-                                                    getDerivativeFluxResidual_dNormalJump() );
+                                                    getDerivativeFluxResidual_dNormalJump(),
+                                                    nullptr );
+
+    m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
     // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
     assembleCouplingTerms( time_n,
@@ -335,54 +346,76 @@ protected:
    * @brief Set up the Dflux_dApertureMatrix object
    *
    * @param domain
-   * @param dofManager
-   * @param localMatrix
    */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                   CRSMatrix< real64, globalIndex > & localMatrix )
+  void setUpDflux_dApertureMatrix( DomainPartition & domain )
   {
     integer const numComp = numFluidComponents();
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    localIndex numMeshTargets = 0;
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
     {
       std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
 
+      // The matrix is re-created per target and the flux kernel indexes it by
+      // the raw per-target surface element index, so only the last target would
+      // survive and the others would write into its rows.
+      ++numMeshTargets;
+      GEOS_ERROR_IF_GT_MSG( numMeshTargets, 1,
+                            GEOS_FMT( "{}: this solver supports a single mesh target; '{}' is the second.",
+                                      this->getName(), meshName ) );
+
+      localIndex numRows = 0;
+      localIndex numCol = 0;
       {
         // calculate number of fracture elements
-        localIndex numRows = 0;
         mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                             [&]( localIndex const, FaceElementSubRegion const & subRegion )
         {
           numRows += subRegion.size();
         } );
         // number of columns (derivatives) = number of fracture elements
-        localIndex numCol = numRows;
+        numCol = numRows;
         // number of rows (equations) = number of fracture elements * number of components
         numRows *= numComp;
 
         derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCol );
         derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-        derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-        localIndex maxRowSize = -1;
-        for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-        {
-          localIndex const rowSize = localMatrix.numNonZeros( row );
-          maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-        }
-        // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
-        for( localIndex row = 0; row < numRows; ++row )
-        {
-          derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
-        }
       }
 
-      NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+      // array1d's sized constructor value-initializes, so no explicit zero().
+      array1d< localIndex > rowCapacities( numRows );
+      fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+      {
+        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+        {
+          localIndex const numFluxElems = stencil.stencilSize( iconn );
+          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+          for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+          {
+            // The stencil sweep covers every SurfaceElementStencil on the mesh,
+            // while numRows only counts the subregions found in regionNames.
+            GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numComp + numComp - 1, numRows,
+                                  "Surface stencil index exceeds the fracture derivative matrix size." );
+            for( integer ic = 0; ic < numComp; ic++ )
+            {
+              rowCapacities[sei[iconn][k0] * numComp + ic] += numFluxElems;
+            }
+          }
+        }
+      } );
+
+      if( numRows > 0 )
+      {
+        derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+                                                                                          numCol,
+                                                                                          rowCapacities.data() );
+      }
 
       fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
       {
@@ -393,11 +426,15 @@ protected:
 
           for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
           {
+            GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numComp + numComp - 1, numRows,
+                                  "Surface stencil index exceeds the fracture derivative matrix size." );
             for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
             {
-              for( integer ic = 0; ic < numComp; ic++ )
+              for( integer ic = 0; ic < numComp; ++ic )
               {
-                derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1], 0.0 );
+                derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic,
+                                                                  sei[iconn][k1],
+                                                                  0.0 );
               }
             }
           }

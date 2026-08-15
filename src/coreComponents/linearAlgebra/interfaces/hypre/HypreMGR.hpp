@@ -99,6 +99,21 @@ protected:
   // HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
 
   /**
+   * @brief Total number of dof labels, i.e. the sum of all fields' components.
+   * @param numComponentsPerField number of components of each field
+   * @return the total number of blocks
+   */
+  static HYPRE_Int totalNumBlocks( arrayView1d< int const > const & numComponentsPerField )
+  {
+    HYPRE_Int result = 0;
+    for( localIndex i = 0; i < numComponentsPerField.size(); ++i )
+    {
+      result += LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[i] );
+    }
+    return result;
+  }
+
+  /**
    * @brief Constructor.
    * @param numBlocks number of blocks
    */

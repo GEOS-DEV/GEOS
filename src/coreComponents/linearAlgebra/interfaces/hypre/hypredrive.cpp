@@ -24,6 +24,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
@@ -418,6 +419,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
     case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
     case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
     case StrategyType::hydrofracture:
@@ -971,7 +973,15 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     }
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
+    {
+      MGRSpecialization specialization;
+      specialization.coarseFlavor = AMGFlavor::pressure;
+      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
+      specialization.cycle = "v(1,0)";
+      return specialization;
+    }
     case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = AMGFlavor::pressure;
@@ -1313,6 +1323,8 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM >( params, labelNames, numComponentsPerField, preconditionerYaml );
+    case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
+      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALMReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
@@ -1709,7 +1721,8 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
   {
     localIndex const numEntries = mat.numLocalRows();
     localIndex const numModes = m_nearNullKernel.size();
-    std::vector< HYPRE_Complex > values( numEntries * numModes );
+    array1d< HYPRE_Complex > values;
+    values.resizeWithoutInitializationOrDestruction( hypre::memorySpace, numEntries * numModes );
 
     for( localIndex mode = 0; mode < numModes; ++mode )
     {
@@ -1721,6 +1734,9 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                  nullptr,
                                  values.data() + mode * numEntries ) );
     }
+
+    values.registerTouch( hypre::memorySpace );
+    values.move( hostMemorySpace );
 
     checkHypredriveCall(
       HYPREDRV_LinearSystemSetNearNullSpace(

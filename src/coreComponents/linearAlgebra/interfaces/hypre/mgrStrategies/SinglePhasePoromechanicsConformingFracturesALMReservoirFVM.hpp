@@ -14,11 +14,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFracturesALM.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp
  */
 
-#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
-#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALMRESERVOIRFVM_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALMRESERVOIRFVM_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -32,7 +32,7 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhasePoromechanicsConformingFracturesALM strategy.
+ * @brief SinglePhasePoromechanicsConformingFracturesALMReservoirFVM strategy.
  *
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
@@ -41,39 +41,44 @@ namespace mgr
  * dofLabel: 4 = displacement bubble function, y-component
  * dofLabel: 5 = displacement bubble function, z-component
  * dofLabel: 6 = pressure (cell elem + fracture elems)
- *
- * Well unknowns are not handled here: see
- * SinglePhasePoromechanicsConformingFracturesALMReservoirFVM, which adds a
- * third level to eliminate the well block before the coarse solve.
+ * dofLabel: 7 = well pressure
+ * dofLabel: 8 = well rate
  *
  * Ingredients:
  * 1. Level 0 eliminates bubble displacement (3,4,5) with L1-Jacobi.
  * 2. Level 1 eliminates nodal displacement (0,1,2) with one BoomerAMG V-cycle.
- * 3. The displacement AMG uses three functions, separate-component filtering,
+ * 3. Level 2 eliminates the well block (7,8), as in
+ *    SinglePhasePoromechanicsReservoirFVM. Leaving the well unknowns in the
+ *    coarse grid would hand BoomerAMG the well rate and BHP constraint rows,
+ *    which have no elliptic structure.
+ * 4. The displacement AMG uses three functions, separate-component filtering,
  *    and symmetric L1 hybrid Gauss-Seidel relaxation on CPU.
- * 4. The pressure Schur complement is solved with BoomerAMG.
- * 5. The MGR V-cycle uses pre-relaxation only and no global smoother.
+ * 5. The reservoir pressure Schur complement is solved with BoomerAMG.
+ * 6. The MGR V-cycle uses pre-relaxation only and no global smoother.
  */
-class SinglePhasePoromechanicsConformingFracturesALM : public MGRStrategyBase< 2 >
+class SinglePhasePoromechanicsConformingFracturesALMReservoirFVM : public MGRStrategyBase< 3 >
 {
 public:
 
   /**
    * @brief Constructor.
+   * @param numComponentsPerField array with number of components for each field
    */
-  explicit SinglePhasePoromechanicsConformingFracturesALM( arrayView1d< int const > const & numComponentsPerField )
+  explicit SinglePhasePoromechanicsConformingFracturesALMReservoirFVM( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( totalNumBlocks( numComponentsPerField ) )
   {
-    GEOS_ERROR_IF_NE_MSG( numComponentsPerField.size(), 3,
-                          "singlePhasePoromechanicsConformingFracturesALM requires exactly the displacement, "
-                          "bubble-displacement, and pressure fields. Use "
-                          "singlePhasePoromechanicsConformingFracturesALMReservoirFVM when wells are present." );
+    GEOS_ERROR_IF_NE_MSG( numComponentsPerField.size(), 4,
+                          "singlePhasePoromechanicsConformingFracturesALMReservoirFVM requires exactly the "
+                          "displacement, bubble-displacement, pressure, and well fields. Any further field would "
+                          "be swept into the well block eliminated on level 2." );
 
-    // Eliminate bubble displacement first, then nodal displacement. The
-    // pressure is retained on both coarse levels.
+    // Eliminate bubble displacement first, then nodal displacement, then the
+    // well block. Only the reservoir pressure survives on the coarsest grid.
     HYPRE_Int const numDisplacementLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
     HYPRE_Int const pressureLabel = numDisplacementLabels +
-                                     LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+                                    LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+    HYPRE_Int const wellLabel = pressureLabel +
+                                LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[2] );
     for( HYPRE_Int label = 0; label < numDisplacementLabels; ++label )
     {
       m_labels[0].push_back( label );
@@ -82,6 +87,10 @@ public:
     {
       m_labels[0].push_back( label );
       m_labels[1].push_back( label );
+    }
+    for( HYPRE_Int label = pressureLabel; label < wellLabel; ++label )
+    {
+      m_labels[2].push_back( label );
     }
 
     setupLabels();
@@ -103,10 +112,18 @@ public:
     m_levelRestrictType[1]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::nonGalerkin;
 
+    // Level 2
+    m_levelFRelaxType[2]         = MGRFRelaxationType::gsElimWInverse;
+    m_levelFRelaxIters[2]        = 1;
+    m_levelGlobalSmootherType[2] = MGRGlobalSmootherType::none;
+    m_levelInterpType[2]         = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[2]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[2]   = MGRCoarseGridMethod::galerkin;
   }
 
   /**
    * @brief Setup the MGR strategy.
+   * @param mgrParams MGR configuration parameters
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
@@ -137,7 +154,7 @@ public:
 #endif
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
 
-    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
+    // Configure the BoomerAMG solver used as mgr coarse solver for the reservoir pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }
 };
@@ -148,4 +165,4 @@ public:
 
 } // namespace geos
 
-#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALMRESERVOIRFVM_HPP_*/

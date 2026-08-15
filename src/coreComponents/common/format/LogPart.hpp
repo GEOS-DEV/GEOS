@@ -197,6 +197,8 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
   size_t & formattedDescriptionMaxWidth = formattedDescription.m_maxValueWidth;
   size_t & formattedDescriptionNameWidth = formattedDescription.m_maxNameWidth;
   ( [&] {
+    static_assert( is_formattable_v< decltype(args) >,
+                   "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
     stdVector< string_view > dividedDescriptionValues =
