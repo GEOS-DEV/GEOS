@@ -44,6 +44,7 @@ set(ENABLE_CUDA OFF CACHE BOOL "")
 
 set(ENABLE_TOTALVIEW_OUTPUT OFF CACHE BOOL "Enables Totalview custom view" FORCE)
 set(ENABLE_PETSC OFF CACHE BOOL "")
+set(ENABLE_HYPREDRV ON CACHE BOOL "")
 
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /opt/intel/compilers_and_libraries_2019.3.199/linux/mkl)
