@@ -486,6 +486,12 @@ or_die cd ${GEOS_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
+  # Ubuntu 24.04 system Python is PEP 668-managed. geosx_python_tools then
+  # creates a venv, which needs the stdlib venv/ensurepip modules.
+  if ! python3 -c "import venv, ensurepip" >/dev/null 2>&1; then
+    or_die apt-get update
+    or_die apt-get install -y python3-venv
+  fi
   or_die cmake --build . --target geosx_python_tools
   or_die ctest --output-on-failure -R "testUncrustifyCheck|testXmlFormatCheck"
   exit 0

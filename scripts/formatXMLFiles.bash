@@ -148,6 +148,9 @@ for path in "$@"; do
     fi
     while IFS= read -r file; do
         [[ -z "${file}" ]] && continue
+        # examples/ contains git-tracked symlinks into inputFiles/. Skip them
+        # so this check does not rewrite or require formatting that tree.
+        [[ -L "${file}" ]] && continue
         n_checked=$((n_checked + 1))
         process_file "${file}"
     done < <(list_xml_files_${METHOD} "${path}")

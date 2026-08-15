@@ -262,6 +262,8 @@ if ( Python3_EXECUTABLE )
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
+    # setupPythonEnvironment.bash installs into a build-tree venv when the
+    # target interpreter is PEP 668 externally-managed (Ubuntu 24.04+).
     add_custom_command( OUTPUT ${GEOS_PYTHON_TOOLS_BINS}
                         COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )

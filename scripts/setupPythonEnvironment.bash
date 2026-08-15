@@ -117,6 +117,30 @@ then
     exit 1
 fi
 
+# Ubuntu 24.04+ marks the system interpreter as EXTERNALLY-MANAGED (PEP 668).
+# geosx_python_tools_test already expects packages in ${CMAKE_BINARY_DIR}/python/geosx.
+if "${PYTHON_TARGET}" -c 'import os, sysconfig; raise SystemExit(0 if os.path.isfile(os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")) else 1)'
+then
+    if [[ -z "${BIN_DIR}" ]]
+    then
+        echo "The target python (${PYTHON_TARGET}) is externally managed (PEP 668)."
+        echo "Pass -b/--bin-dir so a virtual environment can be created."
+        exit 1
+    fi
+
+    VENV_DIR="$(cd "$(dirname "${BIN_DIR}")" && pwd)/python/geosx"
+    echo "The target python (${PYTHON_TARGET}) is externally managed (PEP 668)."
+    echo "Creating a virtual environment at ${VENV_DIR}"
+    mkdir -p "$(dirname "${VENV_DIR}")"
+    if ! "${PYTHON_TARGET}" -m venv "${VENV_DIR}"
+    then
+        echo "Failed to create a virtual environment at ${VENV_DIR}."
+        echo "On Debian/Ubuntu, install the python3-venv package and retry."
+        exit 1
+    fi
+    PYTHON_TARGET="${VENV_DIR}/bin/python"
+fi
+
 
 # Check for a predefined package directory
 echo "Checking for python packages..."
