@@ -15,7 +15,7 @@ Usage: $0 [--check|--fix] [-a|--all|-g|--git] <FORMAT_SCRIPT> [<path>...]
 
   --check   Fail if any XML file is malformed or not in format_xml form
   --fix     Rewrite XML files in place (default)
-  -a, --all Search all *.xml files under each path
+  -a, --all Search all regular *.xml files under each path (default)
   -g, --git Search git-tracked *.xml files under each path
 EOF
 }
@@ -77,20 +77,26 @@ if [[ "${METHOD}" = "git" ]] && ! command -v git >/dev/null 2>&1; then
     exit 1
 fi
 
+# Regular files only. Do not follow directory symlinks, and do not match
+# symlink-to-file entries (examples/ has links into inputFiles/).
 list_xml_files_all() {
     local search_path=$1
-    find "${search_path}" -type f -name "*.xml" -not -path "*/.*" -print
+    find -P "${search_path}" -type f -name "*.xml" -not -path "*/.*" -print
 }
 
 list_xml_files_git() {
     local search_path=$1
-    local git_root prefix
-    git_root=$(cd "${search_path}" && git rev-parse --show-toplevel 2>/dev/null) || {
+    local git_root prefix tracked
+    git_root=$(cd "${search_path}" && git rev-parse --show-toplevel) || {
         echo "Error: ${search_path} does not appear to be part of a git repository" >&2
         return 1
     }
-    prefix=$(cd "${search_path}" && git rev-parse --show-prefix 2>/dev/null)
-    git --git-dir="${git_root}/.git" ls-files "${prefix}" | grep -e '.*[.]xml$' | sed "s|^|${git_root}/|g" || true
+    prefix=$(cd "${search_path}" && git rev-parse --show-prefix) || return 1
+    tracked=$(git -C "${git_root}" ls-files -- "${prefix}") || {
+        echo "Error: git ls-files failed under ${search_path}" >&2
+        return 1
+    }
+    printf '%s\n' "${tracked}" | grep -e '.*[.]xml$' | sed "s|^|${git_root}/|g" || true
 }
 
 LOGFILE=xml_formatting_results.log
@@ -117,8 +123,10 @@ process_file() {
         return
     fi
 
-    local tmp
-    tmp="$(mktemp)"
+    # Keep a .xml suffix: format_xml may ignore extensionless temp files.
+    local tmpdir tmp
+    tmpdir="$(mktemp -d)"
+    tmp="${tmpdir}/check.xml"
     cp "${file}" "${tmp}"
     if ! "${FORMAT_SCRIPT}" "${tmp}" &>> "${LOGFILE}"; then
         echo "Invalid XML: ${file}"
@@ -133,7 +141,7 @@ process_file() {
         n_unformatted=$((n_unformatted + 1))
         status=1
     fi
-    rm -f "${tmp}"
+    rm -rf "${tmpdir}"
 }
 
 if [[ $# -eq 0 ]]; then
@@ -146,6 +154,14 @@ for path in "$@"; do
         echo "Error: directory not found: ${path}" >&2
         exit 1
     fi
+
+    list_file="$(mktemp)"
+    if ! list_xml_files_${METHOD} "${path}" > "${list_file}"; then
+        rm -f "${list_file}"
+        echo "Error: failed to list XML files under ${path}" >&2
+        exit 1
+    fi
+
     while IFS= read -r file; do
         [[ -z "${file}" ]] && continue
         # examples/ contains git-tracked symlinks into inputFiles/. Skip them
@@ -153,8 +169,15 @@ for path in "$@"; do
         [[ -L "${file}" ]] && continue
         n_checked=$((n_checked + 1))
         process_file "${file}"
-    done < <(list_xml_files_${METHOD} "${path}")
+    done < "${list_file}"
+    rm -f "${list_file}"
 done
+
+if [[ ${n_checked} -eq 0 ]]; then
+    echo "Error: no XML files were found under: $*" >&2
+    echo "The format check must not pass when it inspected nothing." >&2
+    exit 1
+fi
 
 if [[ "${MODE}" == "fix" ]]; then
     echo "XML formatting: ${n_checked} file(s) processed, ${n_invalid} invalid."
