@@ -279,11 +279,26 @@ if ( Python3_EXECUTABLE )
                        DEPENDS geosx_python_tools
                      )
 
+    # Format / check XML with the existing Python format_xml tool.
+    # This is not a replacement for geosx_validate_all_xml_files (schema validation).
     add_custom_target( geosx_format_all_xml_files
                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS geosx_python_tools
                      )
+
+    add_custom_target( geosx_check_xml_files
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash --check -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx_python_tools
+                     )
+
+    set_property( TARGET geosx_check_xml_files PROPERTY EXCLUDE_FROM_ALL TRUE )
+    set_property( TARGET geosx_check_xml_files PROPERTY EXCLUDE_FROM_DEFAULT_BUILD TRUE )
+
+    add_test( NAME testXmlFormatCheck
+              COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash --check -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+              WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
 else()
     message(WARNING "Building the GEOSX python tools requires Python >= 3.6.")

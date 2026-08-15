@@ -171,6 +171,22 @@ While quite extensive, uncrustify does not enforce every example of the preferre
 In cases where uncrusitfy is unable to enforce code style, it will ignore formatting rules.
 In these cases it is acceptable to proceed with pull requests, as there is no logical recourse.
 
+XML input files
+===============
+GEOS XML files under ``src`` and ``examples`` are formatted with the Python
+``format_xml`` tool from geos-xml-tools. CI runs this as
+``testXmlFormatCheck`` alongside the uncrustify code-style job.
+
+From the build directory:
+
+.. code-block:: bash
+
+   make geosx_check_xml_files
+   make geosx_format_all_xml_files
+
+XML formatting is not a replacement for schema validation
+(``make geosx_validate_all_xml_files``).
+
 Header Guards
 =============
 Header guard names should consist of the name `GEOS`, followed by the component name (e.g. dataRepository),

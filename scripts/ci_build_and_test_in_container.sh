@@ -198,6 +198,7 @@ Usage: $0
   --sccache-credentials credentials.json
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
+      Check C++ style (uncrustify) and XML formatting (format_xml).
   --test-documentation
   -h | --help
 EOF
@@ -485,7 +486,8 @@ or_die cd ${GEOS_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
-  or_die ctest --output-on-failure -R "testUncrustifyCheck"
+  or_die cmake --build . --target geosx_python_tools
+  or_die ctest --output-on-failure -R "testUncrustifyCheck|testXmlFormatCheck"
   exit 0
 fi
 
@@ -536,9 +538,9 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck"
   fi
 fi
 
