@@ -95,16 +95,32 @@ public:
                                   localIndex const q,
                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
-  {
+ {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
+    real64 const porosity_crit = 1e-4; // critical porosity below which the surface area is set to 0
+    real64 const g = std::max(1e-15, ((porosity - porosity_crit) / (initialPorosity - porosity_crit))); // accesibility factor
 
+    real64 const area_crack = 2 / 10e-6;  // specific area between two flat plates in the test case from Pittsburg
+    
+    real64 const volumeFraction_characteristic = initialPorosity/10.0; // Characteristic precipitate volume fraction needed to significantly coat or block the substrate
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
     {
+      real64 const area_total = initialSurfaceArea[r] > 0 ? area_crack : 0; 
       real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
       real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
+     if (volumeFraction_r - initialVolumeFraction_r < 0) { // dissolution
+        surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 ) * g;                        
+      } else { //precipitation
+        // Mineral area growth from precipitation
+        real64 const area_self = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 );
+        // Mineral precipitation on existing surface area of the fracture, where f_cov is the coverage factor, accounting for loss of substrate or coating
+        real64 const f_cov = std::max(1e-15, exp(-std::max(0.0, (volumeFraction_r)) / volumeFraction_characteristic));
+        real64 const area_substrate = initialVolumeFraction_r * area_total * f_cov;   
+        // Nucleation area                                          
+        real64 const area_nuc = 0.0; // area_nuc = area_nuc_max * 1.0 / (1.0 + exp(-k_nuc*(Q_i - 1.0))) * (1.0 - exp(-(Q_i - Qi_crit) / (Q_i_max - Qi_crit))); // sigmoidal function for nucleation area
+        surfaceArea[r] = (area_self + area_substrate + area_nuc) * g;
+      }
     }
   }
 

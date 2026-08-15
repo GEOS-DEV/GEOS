@@ -24,9 +24,37 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/version.hpp"
 
+#include <fenv.h>
+#include <csignal>      // for signal()
+#include <iostream>
 
 using namespace geos;
 
+static void
+fpe_signal_handler( int sig, siginfo_t *sip, void *scp )
+{
+  GEOS_UNUSED_VAR( sig );
+  GEOS_UNUSED_VAR( scp );
+  int fe_code = sip->si_code;
+  printf( "In signal handler : " );
+  if( fe_code == ILL_ILLTRP )
+    printf( "Illegal trap detected\n" );
+  else
+    printf( "Code detected : %d\n", fe_code );
+  abort();
+}
+void enable_floating_point_exceptions()
+{
+  fenv_t env;
+  fegetenv( &env );
+  env.__fpcr = env.__fpcr | __fpcr_trap_invalid; 
+ fesetenv( &env );
+  struct sigaction act;
+  act.sa_sigaction = fpe_signal_handler;
+  sigemptyset ( &act.sa_mask );
+  act.sa_flags = SA_SIGINFO;
+  sigaction( SIGILL, &act, NULL );
+}
 
 int main( int argc, char *argv[] )
 {

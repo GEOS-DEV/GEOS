@@ -156,11 +156,17 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
   real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity + eps), 2 );
 
   real64 const dPerm_dPorValue = -constant * ( (porosity - 3) *  pow( porosity, 2 ) / pow( (1-porosity+eps), 3 )  );
+  real64 const K_min = 1e-13;
 
   for( localIndex i = 0; i < permeability.size(); ++i )
   {
     permeability[i] = permValue * m_anisotropy[i];
     dPerm_dPorosity[i] = dPerm_dPorValue * m_anisotropy[i];
+
+    if (permeability[i] < K_min) {
+      permeability[i] = K_min; // Avoid very small permeability
+      dPerm_dPorosity[i] = 0;
+    }
   }
 }
 
