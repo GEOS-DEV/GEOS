@@ -4,7 +4,7 @@
 #   geosx/ubuntu24.04-gcc12:<GEOS_TPL_TAG>
 # where GEOS_TPL_TAG comes from .devcontainer/devcontainer.json.
 #
-# Hypredrive is left off (ENABLE_HYPREDRV=OFF), matching CI.
+# Hypredrive is enabled for these integrated-test runs.
 #
 # Usage:
 #   scripts/runIntegratedTests.sh
@@ -20,9 +20,11 @@
 # against packed baselines.
 #
 # --generateBaselines builds origin/develop (worktree if this checkout is not
-# develop) with 32 cores and 128g, then packs the archive named in develop's
+# develop) with 32 cores and 128g, copies every restart/hdf5 artifact the run
+# produced into the baseline tree, then packs the archive named in develop's
 # .integrated_tests.yaml into this repo's .integrated-test-baselines/. Use that
-# when the GCS download is unavailable.
+# when the GCS download is unavailable. ATS -a rebaseline is not used: it
+# aborts the rest of an .ats file when one test has no restart output.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -70,8 +72,9 @@ Options:
   --baselines DIR       Host directory of ATS baseline tarballs (mounted read-only).
                         If omitted, download the archive from .integrated_tests.yaml.
                         If the download fails, continue without baseline comparison.
-  --generateBaselines   Build develop at 32 cores / 128g and pack the tarball
-                        named in develop's .integrated_tests.yaml into
+  --generateBaselines   Build develop at 32 cores / 128g, copy every restart
+                        and hdf5 artifact the run produced, and pack the
+                        tarball named in develop's .integrated_tests.yaml into
                         .integrated-test-baselines/. Cannot be used with --baselines.
   --filter EXPR         ATS name filter (tests whose name contains EXPR)
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
@@ -526,7 +529,7 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Container: configure, build, run ATS (no hypredrive)
+# Container: configure, build, run ATS (HypreDrive enabled)
 # ---------------------------------------------------------------------------
 NPROC="${GEOS_ITS_NPROC:-8}"
 CUTOFF="${GEOS_ITS_CUTOFF:-45m}"
@@ -556,6 +559,36 @@ seed_dummy_ats_baselines()
   log "ATS will not fetch GCS (seeded ${ATS_BASELINE_DIR}/.blob_name=${blob})"
 }
 
+# Mirror restart roots (and their rank hdf5 dirs) plus standalone hdf5
+# (curve-check histories) from the ATS working tree into the baseline tree.
+copy_run_outputs_to_baselines()
+{
+  local src="$1" dst="$2" n=0 nh=0
+  local root rel dest datadir hdf
+  [[ -d "${src}" ]] || die "working directory not found: ${src}"
+  mkdir -p "${dst}"
+  while IFS= read -r -d '' root; do
+    rel="${root#"${src}"/}"
+    dest="${dst}/${rel}"
+    mkdir -p "$(dirname "${dest}")"
+    cp -a "${root}" "${dest}"
+    datadir="${root%.root}"
+    if [[ -d "${datadir}" ]]; then
+      rm -rf "${dest%.root}"
+      cp -a "${datadir}" "${dest%.root}"
+    fi
+    n=$(( n + 1 ))
+  done < <(find "${src}" -type f -name '*.root' -print0)
+  while IFS= read -r -d '' hdf; do
+    rel="${hdf#"${src}"/}"
+    dest="${dst}/${rel}"
+    mkdir -p "$(dirname "${dest}")"
+    cp -a "${hdf}" "${dest}"
+    nh=$(( nh + 1 ))
+  done < <(find "${src}" -type f -name '*.hdf5' ! -path '*_restart_*/*' -print0)
+  log "Copied ${n} restart roots and ${nh} standalone hdf5 files into ${dst}"
+}
+
 or_die()
 {
   "$@"
@@ -574,13 +607,13 @@ git config --global --add safe.directory /workspace 2>/dev/null || true
 "${VENV_PY}" -m pip install --upgrade pip setuptools wheel || true
 "${VENV_PY}" -m pip install --disable-pip-version-check --upgrade matplotlib || true
 
-log "Configure (ENABLE_HYPREDRV=OFF)"
+log "Configure (ENABLE_HYPREDRV=ON)"
 or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
   -C "${HOST_CONFIG}" \
   -DCMAKE_BUILD_TYPE=Release \
   -DGEOS_INSTALL_SCHEMA=ON \
   -DENABLE_HYPRE=ON \
-  -DENABLE_HYPREDRV=OFF \
+  -DENABLE_HYPREDRV=ON \
   -DENABLE_HYPRE_DEVICE=CPU \
   -DENABLE_TRILINOS=OFF \
   -DGEOS_LA_INTERFACE:PATH=Hypre \
@@ -593,8 +626,8 @@ or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
 
 ENABLE_HYPREDRV_VAL="$(sed -n 's/^ENABLE_HYPREDRV:[^=]*=//p' "${BUILD_DIR}/CMakeCache.txt" | head -n1)"
 log "CMake ENABLE_HYPREDRV=${ENABLE_HYPREDRV_VAL}"
-if [[ "${ENABLE_HYPREDRV_VAL}" != "OFF" ]]; then
-  die "ENABLE_HYPREDRV is ${ENABLE_HYPREDRV_VAL}; expected OFF"
+if [[ "${ENABLE_HYPREDRV_VAL}" != "ON" ]]; then
+  die "ENABLE_HYPREDRV is ${ENABLE_HYPREDRV_VAL}; expected ON"
 fi
 
 export ATS_FILTER="np<=${NPROC}"
@@ -609,7 +642,7 @@ cd "${BUILD_DIR}"
 ATS_CMD=(integratedTests/geos_ats.sh)
 if [[ "${GEOS_ITS_GENERATE_BASELINES:-0}" == 1 ]]; then
   seed_dummy_ats_baselines
-  log "Generate mode: run ATS without packed baselines, then rebaseline and pack"
+  log "Generate mode: run ATS without packed baselines, then copy outputs and pack"
 elif [[ "${GEOS_ITS_SKIP_BASELINES:-0}" == 1 || ! -d /tmp/geos/baselines ]]; then
   seed_dummy_ats_baselines
   cat >&2 <<EOF
@@ -641,10 +674,11 @@ set -e
 
 if [[ "${GEOS_ITS_GENERATE_BASELINES:-0}" == 1 ]]; then
   [[ -n "${GEOS_ITS_BASELINE_ARCHIVE:-}" ]] || die "GEOS_ITS_BASELINE_ARCHIVE is empty"
-  log "Rebaseline failed tests"
-  # Some decks have no restart output (did not run, or geosx failed). ATS
-  # treats those as invalid and exits unless okInvalid is set.
-  integratedTests/geos_ats.sh -a rebaselinefailed --ats okInvalid || true
+  log "Copy run outputs into the baseline tree"
+  # ATS -a rebaseline stops the rest of an .ats file when one test has no
+  # restart (e.g. np=27 never wrote a file). That dropped later tests in the
+  # same file. Copy every restart/hdf5 artifact the run produced instead.
+  copy_run_outputs_to_baselines "${ATS_WORKING_DIR}" "${ATS_BASELINE_DIR}"
   mkdir -p /tmp/geos/generated-baselines
   pack_dest="/tmp/geos/generated-baselines/${GEOS_ITS_BASELINE_ARCHIVE}.tar.gz"
   log "Pack ${pack_dest}"
