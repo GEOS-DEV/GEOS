@@ -57,20 +57,14 @@ decks = [
     TestDeck(
         name="multiphasePoromechanics_FaultModel_smoke",
         description='PoroElastic conformingFracture with external mesh (multiphase)',
-        partitions=(# Temporarily disabled: multiphasePoromechanics_FaultModel_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
     TestDeck(
         name="multiphasePoromechanics_FaultModel_well_fim_smoke",
         description='PoroElastic conformingFracture fully implicit (multiphase with wells)',
-        partitions=(# Temporarily disabled: multiphasePoromechanics_FaultModel_well_fim_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),

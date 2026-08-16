@@ -1055,6 +1055,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       localIndex const rankOffset = dofManager.rankOffset();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > elementCount( 0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
@@ -1096,7 +1097,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              rhsContributionArrayView,
                                                              localRhs,
                                                              localMatrix,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             massProd,
+                                                             elementCount] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1111,6 +1113,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
+          elementCount += 1;
           //add the value to the energy balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
@@ -1138,7 +1141,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              dofNumber,
                                                              rhsContributionArrayView,
                                                              localRhs,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             massProd,
+                                                             elementCount] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1152,6 +1156,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
           localRhs[rowIndex] += rhsValue;
           massProd += rhsValue;
+          elementCount += 1;
         } );
       }
 
@@ -1161,7 +1166,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ 1 };
         massProdArr[0] = massProd.get();
-        wrapper.gatherTimeStepStats( time_n, dt, massProdArr.toViewConst(), targetSet.size() );
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
+        wrapper.gatherTimeStepStats( time_n, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
   } );
