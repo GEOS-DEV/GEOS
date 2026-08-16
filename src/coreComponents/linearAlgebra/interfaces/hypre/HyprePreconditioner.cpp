@@ -448,6 +448,10 @@ void HyprePreconditioner::clear()
   {
     GEOS_LAI_CHECK_ERROR( m_mgrData->mechSolver.destroy( m_mgrData->mechSolver.ptr ) );
   }
+  if( m_mgrData && m_mgrData->nestedSolver.ptr && m_mgrData->nestedSolver.destroy )
+  {
+    GEOS_LAI_CHECK_ERROR( m_mgrData->nestedSolver.destroy( m_mgrData->nestedSolver.ptr ) );
+  }
   m_precond.reset();
   m_mgrData.reset();
 }

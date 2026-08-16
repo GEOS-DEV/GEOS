@@ -39,6 +39,7 @@ struct HypreMGRData
   array1d< HYPRE_Int > pointMarkers;  ///< array1d of unique tags for local degrees of freedom
   HyprePrecWrapper coarseSolver;      ///< MGR coarse solver pointer and functions
   HyprePrecWrapper mechSolver;        ///< MGR mechanics fine solver pointer and functions
+  HyprePrecWrapper nestedSolver;      ///< Optional nested MGR F-relaxation wrapper
 };
 
 namespace hypre
@@ -205,6 +206,58 @@ protected:
 
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 3 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( solver.ptr, separateComponents ) );
+
+    solver.setup = HYPRE_BoomerAMGSetup;
+    solver.solve = HYPRE_BoomerAMGSolve;
+    solver.destroy = HYPRE_BoomerAMGDestroy;
+  }
+
+  /**
+   * @brief Set up one of the two BoomerAMG instances used by the fully
+   *        coupled single-phase ALM hierarchy.
+   * @param solver solver wrapper to initialize
+   * @param separateComponents whether displacement components are filtered
+   * @param bubbleCoarse true for the inner (bubble-displacement) coarse solve
+   *
+   * The CPU values mirror the reference nested-MGR YAML.  The device branch
+   * retains the device-safe smoother choices used by the existing strategies.
+   */
+  void setALMDisplacementAMG( HyprePrecWrapper & solver,
+                              integer const separateComponents,
+                              bool const bubbleCoarse )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( solver.ptr, bubbleCoarse ? 0.75 : 0.8 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 3 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( solver.ptr, bubbleCoarse ? 0 : separateComponents ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( solver.ptr, bubbleCoarse ? 10 : 20 ) );
+
+    if( !bubbleCoarse )
+    {
+      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
+      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
+                                                            hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout ) ) );
+    }
+
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
+                                                          hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr,
+                                                       hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, bubbleCoarse ? 1 : 2 ) );
+#else
+    HYPRE_Int constexpr l1SymmetricHybridGaussSeidel = 89;
+    HYPRE_Int constexpr gaussianElimination = 9;
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, l1SymmetricHybridGaussSeidel, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, l1SymmetricHybridGaussSeidel, 2 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, gaussianElimination, 3 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, bubbleCoarse ? 1 : 2 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 0 ) );
+#endif
 
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;

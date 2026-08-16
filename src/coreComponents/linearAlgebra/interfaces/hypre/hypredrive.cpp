@@ -981,6 +981,12 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
       return specialization;
     }
     case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    {
+      MGRSpecialization specialization;
+      specialization.coarseFlavor = AMGFlavor::pressure;
+      specialization.cycle = "v(1,0)";
+      return specialization;
+    }
     case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
     {
       MGRSpecialization specialization;
@@ -1103,6 +1109,93 @@ void appendPressureAMG( std::ostringstream & stream,
 #endif
 }
 
+void appendALMDisplacementFineAMG( std::ostringstream & stream,
+                                   integer const indentLevel )
+{
+  appendAMGHeader( stream, indentLevel );
+  appendLine( stream, indentLevel + 1, "aggressive:" );
+  appendLine( stream, indentLevel + 2, "num_levels: 1" );
+  appendLine( stream, indentLevel + 1, "interpolation:" );
+  appendLine( stream, indentLevel + 2, "max_nnz_row: 20" );
+  appendLine( stream, indentLevel + 1, "coarsening:" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, indentLevel + 2, "type: 8" );
+#else
+  appendLine( stream, indentLevel + 2, "type: falgout" );
+#endif
+  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
+  appendLine( stream, indentLevel + 2, "strong_th: 0.8" );
+  appendLine( stream, indentLevel + 2, "num_functions: 3" );
+  appendLine( stream, indentLevel + 2, "filter_functions: 1" );
+  appendLine( stream, indentLevel + 1, "relaxation:" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, indentLevel + 2, "down_type: 16" );
+  appendLine( stream, indentLevel + 2, "up_type: 16" );
+  appendLine( stream, indentLevel + 2, "coarse_type: 16" );
+  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
+#else
+  appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
+  appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
+  appendLine( stream, indentLevel + 2, "coarse_type: ge" );
+  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
+  appendLine( stream, indentLevel + 2, "order: 0" );
+#endif
+}
+
+void appendALMDisplacementBubbleAMG( std::ostringstream & stream,
+                                     integer const indentLevel )
+{
+  appendAMGHeader( stream, indentLevel );
+  appendLine( stream, indentLevel + 1, "interpolation:" );
+  appendLine( stream, indentLevel + 2, "max_nnz_row: 10" );
+  appendLine( stream, indentLevel + 1, "coarsening:" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, indentLevel + 2, "type: 8" );
+#endif
+  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
+  appendLine( stream, indentLevel + 2, "strong_th: 0.75" );
+  appendLine( stream, indentLevel + 2, "num_functions: 3" );
+  appendLine( stream, indentLevel + 2, "filter_functions: 0" );
+  appendLine( stream, indentLevel + 1, "relaxation:" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, indentLevel + 2, "down_type: 16" );
+  appendLine( stream, indentLevel + 2, "up_type: 16" );
+  appendLine( stream, indentLevel + 2, "coarse_type: 16" );
+  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
+#else
+  appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
+  appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
+  appendLine( stream, indentLevel + 2, "coarse_type: ge" );
+  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
+  appendLine( stream, indentLevel + 2, "order: 0" );
+#endif
+}
+
+void appendALMNestedMGR( std::ostringstream & stream,
+                         integer const indentLevel,
+                         stdVector< string > const & labelNames )
+{
+  stdVector< HYPRE_Int > const nodalLabels = { 0, 1, 2 };
+  appendLine( stream, indentLevel, "mgr:" );
+  appendLine( stream, indentLevel + 1, "tolerance: 0.0" );
+  appendLine( stream, indentLevel + 1, "max_iter: 1" );
+  appendLine( stream, indentLevel + 1, "print_level: 0" );
+  appendLine( stream, indentLevel + 1, "cycle: v(1,0)" );
+  appendLine( stream, indentLevel + 1, "num_levels: 2" );
+  appendLine( stream, indentLevel + 1, "level:" );
+  appendLine( stream, indentLevel + 2, "0:" );
+  appendLine( stream, indentLevel + 3,
+              GEOS_FMT( "f_dofs: [{}]", joinLabelNames( nodalLabels, labelNames ) ) );
+  appendLine( stream, indentLevel + 3, "f_relaxation:" );
+  appendALMDisplacementFineAMG( stream, indentLevel + 4 );
+  appendLine( stream, indentLevel + 3, "g_relaxation: none" );
+  appendLine( stream, indentLevel + 3, "prolongation_type: injection" );
+  appendLine( stream, indentLevel + 3, "restriction_type: injection" );
+  appendLine( stream, indentLevel + 3, "coarse_level_type: rap" );
+  appendLine( stream, indentLevel + 1, "coarsest_level:" );
+  appendALMDisplacementBubbleAMG( stream, indentLevel + 2 );
+}
+
 void appendPressureTemperatureAMG( std::ostringstream & stream,
                                    integer const indentLevel )
 {
@@ -1207,6 +1300,45 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   strategy.setup( params.mgr, precond, mgrData );
 
   std::ostringstream stream;
+  if( params.mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM )
+  {
+    // Keep this representation in lockstep with the fully coupled ALM
+    // strategy: the outer F block is displacement plus bubble displacement,
+    // and its F-relaxation is a two-level nested MGR.
+    appendLine( stream, 0, "preconditioner:" );
+    appendLine( stream, 1, "mgr:" );
+    appendLine( stream, 2, "tolerance: 0.0" );
+    appendLine( stream, 2, "max_iter: 1" );
+    appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
+    appendLine( stream, 2, "cycle: v(1,0)" );
+    appendLine( stream, 2, "non_c_to_f: 1" );
+    appendLine( stream, 2, "nonglk_max_elmts: 1" );
+    appendLine( stream, 2, "pmax: 0" );
+    appendLine( stream, 2, GEOS_FMT( "coarse_th: {}", strategy.m_coarseGridThreshold ) );
+    appendLine( stream, 2, "num_levels: 3" );
+    appendLine( stream, 2, "level:" );
+    appendLine( stream, 3, "0:" );
+    stdVector< HYPRE_Int > const displacementLabels = { 0, 1, 2, 3, 4, 5 };
+    appendLine( stream, 4,
+                GEOS_FMT( "f_dofs: [{}]", joinLabelNames( displacementLabels, labelNames ) ) );
+    appendLine( stream, 4, "f_relaxation:" );
+    appendALMNestedMGR( stream, 5, labelNames );
+    appendLine( stream, 4, "g_relaxation: none" );
+    appendLine( stream, 4, "prolongation_type: 2" );
+    appendLine( stream, 4, "restriction_type: injection" );
+    appendLine( stream, 4, "coarse_level_type: rap" );
+    appendLine( stream, 2, "coarsest_level:" );
+    appendPressureAMG( stream, 3, -1 );
+
+    preconditionerYaml = stream.str();
+
+    destroyWrapper( mgrData.coarseSolver );
+    destroyWrapper( mgrData.mechSolver );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
+    destroyWrapper( mgrData.nestedSolver );
+    return true;
+  }
+
   appendLine( stream, 0, "preconditioner:" );
   appendLine( stream, 1, "mgr:" );
   appendLine( stream, 2, "tolerance: 0.0" );
@@ -1281,6 +1413,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   destroyWrapper( mgrData.coarseSolver );
   destroyWrapper( mgrData.mechSolver );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
+  destroyWrapper( mgrData.nestedSolver );
 
   return true;
 }

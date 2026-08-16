@@ -13,6 +13,8 @@
 
 #ifdef GEOS_USE_HYPRE
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #ifdef GEOS_USE_HYPREDRV
@@ -236,13 +238,25 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
        ++value )
   {
     StrategyType const strategy = static_cast< StrategyType >( value );
+    stdVector< string > strategyFieldNames = fieldNames;
+    array1d< int > strategyNumComponentsPerField = numComponentsPerField;
+    if( strategy == StrategyType::singlePhasePoromechanicsConformingFracturesALM )
+    {
+      strategyFieldNames = { "field0", "field1", "field2" };
+      strategyNumComponentsPerField.resize( 3 );
+    }
+    else if( strategy == StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM )
+    {
+      strategyFieldNames = { "field0", "field1", "field2", "field3" };
+      strategyNumComponentsPerField.resize( 4 );
+    }
     hypre::hypredrive::InputArgsParseTarget target;
 
     try
     {
       EXPECT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
-                                                                 fieldNames,
-                                                                 numComponentsPerField,
+                                                                 strategyFieldNames,
+                                                                 strategyNumComponentsPerField,
                                                                  target ) )
         << static_cast< int >( value );
       EXPECT_EQ( target.source, hypre::hypredrive::InputSource::generatedFallback ) << static_cast< int >( value );
@@ -275,14 +289,16 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
                  fieldNames,
                  numComponentsPerField,
                  target ) );
-
   EXPECT_NE( target.argument.find( "num_levels: 3" ), std::string::npos );
   EXPECT_NE( target.argument.find( "cycle: v(1,0)" ), std::string::npos );
-  EXPECT_NE( target.argument.find( "f_dofs: [totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
+  EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2, "
+                                  "totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
              std::string::npos );
   EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2]" ),
              std::string::npos );
   EXPECT_NE( target.argument.find( "filter_functions: 1" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "aggressive:" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "max_nnz_row: 10" ), std::string::npos );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   EXPECT_NE( target.argument.find( "down_type: 16" ), std::string::npos );
   EXPECT_NE( target.argument.find( "up_type: 16" ), std::string::npos );
@@ -292,6 +308,44 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
   EXPECT_NE( target.argument.find( "coarse_type: ge" ), std::string::npos );
   EXPECT_NE( target.argument.find( "order: 0" ), std::string::npos );
 #endif
+}
+
+TEST( HypreMGR, SetsUpFullyCoupledSinglePhaseALM )
+{
+  array1d< int > numComponentsPerField( 3 );
+  numComponentsPerField[0] = 3;
+  numComponentsPerField[1] = 3;
+  numComponentsPerField[2] = 1;
+
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 7, matrix );
+
+  LinearSolverParameters params = makeMgrParameters( LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM );
+  HyprePrecWrapper precond;
+  ASSERT_EQ( HYPRE_MGRCreate( &precond.ptr ), 0 );
+  HypreMGRData mgrData;
+  mgrData.pointMarkers.resize( 7 );
+  for( HYPRE_Int label = 0; label < 7; ++label )
+  {
+    mgrData.pointMarkers[label] = label;
+  }
+
+  hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM strategy( numComponentsPerField.toView() );
+  strategy.setup( params.mgr, precond, mgrData );
+
+  EXPECT_EQ( HYPRE_MGRSetup( precond.ptr, matrix.unwrapped(), nullptr, nullptr ), 0 );
+
+  HypreVector rhs;
+  HypreVector solution;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  solution.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  solution.zero();
+  EXPECT_EQ( HYPRE_MGRSolve( precond.ptr, matrix.unwrapped(), rhs.unwrapped(), solution.unwrapped() ), 0 );
+
+  EXPECT_EQ( HYPRE_MGRDestroy( precond.ptr ), 0 );
+  EXPECT_EQ( mgrData.coarseSolver.destroy( mgrData.coarseSolver.ptr ), 0 );
+  EXPECT_EQ( mgrData.nestedSolver.destroy( mgrData.nestedSolver.ptr ), 0 );
 }
 
 TEST( HypredriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
