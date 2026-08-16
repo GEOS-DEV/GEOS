@@ -12,11 +12,17 @@
 #   scripts/runIntegratedTests.sh --cpus 32 --memory 256g          # match streak2
 #   scripts/runIntegratedTests.sh --baselines /path/to/baselines
 #   scripts/runIntegratedTests.sh --filter _mgr
+#   scripts/runIntegratedTests.sh --generateBaselines
 #
 # If --baselines is omitted, the archive named in .integrated_tests.yaml is
 # downloaded from GCS (public, ~1.5 GB) into .integrated-test-baselines/.
 # A failed download does not abort the run: ATS continues without comparing
 # against packed baselines.
+#
+# --generateBaselines builds origin/develop (worktree if this checkout is not
+# develop) with 32 cores and 128g, then packs the archive named in develop's
+# .integrated_tests.yaml into this repo's .integrated-test-baselines/. Use that
+# when the GCS download is unavailable.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -45,6 +51,9 @@ FILTER=""
 CUTOFF="45m"
 BUILD_DIR_NAME="build-integrated-tests"
 PULL=1
+GENERATE_BASELINES=0
+CPUS_FROM_CLI=0
+MEMORY_FROM_CLI=0
 EXTRA_ATS_ARGS=()
 
 usage()
@@ -61,6 +70,9 @@ Options:
   --baselines DIR       Host directory of ATS baseline tarballs (mounted read-only).
                         If omitted, download the archive from .integrated_tests.yaml.
                         If the download fails, continue without baseline comparison.
+  --generateBaselines   Build develop at 32 cores / 128g and pack the tarball
+                        named in develop's .integrated_tests.yaml into
+                        .integrated-test-baselines/. Cannot be used with --baselines.
   --filter EXPR         ATS name filter (tests whose name contains EXPR)
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
   --build-dir NAME      Build directory name under the repo (default ${BUILD_DIR_NAME})
@@ -169,6 +181,41 @@ ensure_baselines()
   mv "${dest}.partial" "${dest}"
   log "Saved ${dest}"
   BASELINES="${cache}"
+}
+
+# Use origin/develop (or local develop) so the packed archive matches what
+# this repo's .integrated_tests.yaml expects. Copies this script into the
+# worktree because develop does not contain it.
+prepare_develop_for_baselines()
+{
+  local br wt ref sha
+  br="$(git -C "${GEOS_SRC_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [[ "${br}" == "develop" ]]; then
+    log "Using current develop checkout"
+    return
+  fi
+  if git -C "${GEOS_SRC_DIR}" fetch origin develop; then
+    ref=origin/develop
+  elif git -C "${GEOS_SRC_DIR}" rev-parse --verify develop >/dev/null 2>&1; then
+    ref=develop
+    log "Could not fetch origin/develop; using local develop"
+  else
+    die "Need origin/develop (or a local develop branch) to generate baselines"
+  fi
+  sha="$(git -C "${GEOS_SRC_DIR}" rev-parse "${ref}")"
+  wt="${ORIGINAL_SRC}-develop-baselines"
+  if [[ -e "${wt}/.git" ]]; then
+    git -C "${wt}" checkout --detach "${sha}"
+  elif [[ -e "${wt}" ]]; then
+    die "Refusing to use ${wt}; path exists and is not a git worktree"
+  else
+    git -C "${ORIGINAL_SRC}" worktree add --detach "${wt}" "${sha}"
+  fi
+  mkdir -p "${wt}/scripts"
+  cp "${SCRIPT_DIR}/runIntegratedTests.sh" "${wt}/scripts/runIntegratedTests.sh"
+  GEOS_SRC_DIR="${wt}"
+  log "Using develop worktree ${wt} ($(git -C "${wt}" rev-parse --short HEAD))"
+  git -C "${GEOS_SRC_DIR}" submodule update --init --recursive
 }
 
 resolve_path()
@@ -327,10 +374,11 @@ normalize_memory()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --cpus)       CPUS="$2"; shift 2;;
-    --memory)     MEMORY="$2"; shift 2;;
+    --cpus)       CPUS_FROM_CLI=1; CPUS="$2"; shift 2;;
+    --memory)     MEMORY_FROM_CLI=1; MEMORY="$2"; shift 2;;
     --nproc)      NPROC="$2"; shift 2;;
     --baselines)  BASELINES="$2"; shift 2;;
+    --generateBaselines) GENERATE_BASELINES=1; shift;;
     --filter)     FILTER="$2"; shift 2;;
     --cutoff)     CUTOFF="$2"; shift 2;;
     --build-dir)  BUILD_DIR_NAME="$2"; shift 2;;
@@ -341,6 +389,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "${GENERATE_BASELINES}" -eq 1 ]]; then
+  [[ -z "${BASELINES}" ]] || die "--generateBaselines cannot be used with --baselines"
+  [[ "${CPUS_FROM_CLI}" -eq 1 ]] || CPUS=32
+  [[ "${MEMORY_FROM_CLI}" -eq 1 ]] || MEMORY=128g
+fi
 [[ -n "${NPROC}" ]] || NPROC="${CPUS}"
 normalize_memory
 
@@ -363,6 +416,28 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     die "docker or podman is not on PATH"
   fi
 
+  ORIGINAL_SRC="${GEOS_SRC_DIR}"
+  BASELINE_CACHE="${ORIGINAL_SRC}/.integrated-test-baselines"
+  BASELINE_ARCHIVE=""
+  if [[ "${GENERATE_BASELINES}" -eq 1 ]]; then
+    SKIP_PACKED_BASELINES=1
+    prepare_develop_for_baselines
+    yaml="${GEOS_SRC_DIR}/.integrated_tests.yaml"
+    [[ -f "${yaml}" ]] || die "missing ${yaml}"
+    BASELINE_ARCHIVE="$(grep -A 5 '^baselines:' "${yaml}" | awk '/baseline:/{print $2; exit}')"
+    BASELINE_ARCHIVE="$(basename "${BASELINE_ARCHIVE}")"
+    [[ -n "${BASELINE_ARCHIVE}" ]] || die "could not parse baseline name from ${yaml}"
+    mkdir -p "${BASELINE_CACHE}"
+    log "Will pack ${BASELINE_CACHE}/${BASELINE_ARCHIVE}.tar.gz"
+  else
+    ensure_baselines
+    if [[ -n "${BASELINES}" ]]; then
+      log "Baselines: ${BASELINES}"
+    else
+      log "Baselines: none (ATS will not compare against a packed archive)"
+    fi
+  fi
+
   TPL_TAG="$(read_tpl_tag)"
   IMAGE="geosx/ubuntu24.04-gcc12:${TPL_TAG}"
 
@@ -376,13 +451,6 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
 
   if [[ "${CONTAINER_CMD}" == podman ]]; then
     configure_podman_storage
-  fi
-
-  ensure_baselines
-  if [[ -n "${BASELINES}" ]]; then
-    log "Baselines: ${BASELINES}"
-  else
-    log "Baselines: none (ATS will not compare against a packed archive)"
   fi
 
   runtime_args=()
@@ -411,6 +479,8 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_ITS_FILTER="${FILTER}"
     --env GEOS_ITS_BUILD_DIR="${BUILD_DIR_NAME}"
     --env GEOS_ITS_SKIP_BASELINES="${SKIP_PACKED_BASELINES}"
+    --env GEOS_ITS_GENERATE_BASELINES="${GENERATE_BASELINES}"
+    --env GEOS_ITS_BASELINE_ARCHIVE="${BASELINE_ARCHIVE}"
     --env GEOS_ITS_HOST_SRC="${GEOS_SRC_DIR}"
     --mount "type=bind,src=${GEOS_SRC_DIR},dst=/workspace"
   )
@@ -436,7 +506,13 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     docker_args+=(--cpus="${CPUS}" --memory="${MEMORY}")
   fi
 
-  if [[ -n "${BASELINES}" ]]; then
+  if [[ "${GENERATE_BASELINES}" -eq 1 ]]; then
+    docker_args+=(--mount "type=bind,src=${BASELINE_CACHE},dst=/tmp/geos/generated-baselines")
+    if [[ "${GEOS_SRC_DIR}" != "${ORIGINAL_SRC}" ]]; then
+      # Worktree .git is a pointer into the main repo; ATS needs that for history.
+      docker_args+=(--mount "type=bind,src=${ORIGINAL_SRC},dst=${ORIGINAL_SRC},readonly")
+    fi
+  elif [[ -n "${BASELINES}" ]]; then
     docker_args+=(--mount "type=bind,src=$(cd "${BASELINES}" && pwd),dst=/tmp/geos/baselines,readonly")
   fi
 
@@ -531,7 +607,10 @@ or_die cmake --build "${BUILD_DIR}" --target ats_environment --parallel "${NPROC
 
 cd "${BUILD_DIR}"
 ATS_CMD=(integratedTests/geos_ats.sh)
-if [[ "${GEOS_ITS_SKIP_BASELINES:-0}" == 1 || ! -d /tmp/geos/baselines ]]; then
+if [[ "${GEOS_ITS_GENERATE_BASELINES:-0}" == 1 ]]; then
+  seed_dummy_ats_baselines
+  log "Generate mode: run ATS without packed baselines, then rebaseline and pack"
+elif [[ "${GEOS_ITS_SKIP_BASELINES:-0}" == 1 || ! -d /tmp/geos/baselines ]]; then
   seed_dummy_ats_baselines
   cat >&2 <<EOF
 
@@ -559,6 +638,20 @@ set +e
 "${ATS_CMD[@]}"
 ATS_STATUS=$?
 set -e
+
+if [[ "${GEOS_ITS_GENERATE_BASELINES:-0}" == 1 ]]; then
+  [[ -n "${GEOS_ITS_BASELINE_ARCHIVE:-}" ]] || die "GEOS_ITS_BASELINE_ARCHIVE is empty"
+  log "Rebaseline failed tests"
+  # Some decks have no restart output (did not run, or geosx failed). ATS
+  # treats those as invalid and exits unless okInvalid is set.
+  integratedTests/geos_ats.sh -a rebaselinefailed --ats okInvalid || true
+  mkdir -p /tmp/geos/generated-baselines
+  pack_dest="/tmp/geos/generated-baselines/${GEOS_ITS_BASELINE_ARCHIVE}.tar.gz"
+  log "Pack ${pack_dest}"
+  or_die integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName "${pack_dest}"
+  log "Baselines archive: ${pack_dest}"
+  exit 0
+fi
 
 if [[ -x bin/geos_ats_log_check && -f integratedTests/TestResults/test_results.ini ]]; then
   log "geos_ats_log_check"
