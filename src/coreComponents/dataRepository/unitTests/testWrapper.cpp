@@ -693,6 +693,7 @@ TEST_F( WrapperLimitsTest, Array2dValidateEmpty )
   w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   EXPECT_NO_THROW( w.validateLimits() );
+}
 
 TEST( WrapperStandardArrays, VirtualInterface )
 {
