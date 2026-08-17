@@ -85,6 +85,37 @@ bool hasExplicitPartitionSurfaceNormal( VECTOR const & normal )
          explicitSurfaceNormalNormSquaredTolerance;
 }
 
+mpm::OversizedParticleTreatmentOption effectiveOversizedParticleTreatment(
+  int const resetDefGradForOversizedParticles,
+  mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment )
+{
+  if( oversizedParticleTreatment != mpm::OversizedParticleTreatmentOption::None )
+  {
+    return oversizedParticleTreatment;
+  }
+  return resetDefGradForOversizedParticles == 1
+         ? mpm::OversizedParticleTreatmentOption::ResetDeformationGradient
+         : mpm::OversizedParticleTreatmentOption::None;
+}
+
+localIndex countRankParticles( ParticleManager & particleManager )
+{
+  localIndex rankParticleCount = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    rankParticleCount += subRegion.size();
+  } );
+  return rankParticleCount;
+}
+
+bool exceedsOversizedParticleResetRankThreshold(
+  integer const threshold,
+  localIndex const rankParticleCount )
+{
+  return threshold >= 0 &&
+         rankParticleCount > static_cast< localIndex >( threshold );
+}
+
 template< typename T, typename = void >
 struct HasMPMHostStressUpdate : std::false_type
 {};
@@ -1388,6 +1419,26 @@ int longestParticleDomainDirectionsMask( R_VECTORS const & rVectors,
   return mask;
 }
 
+template< typename R_VECTORS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 particleDomainMaximumDiagonalAfterSubdivisionMask(
+  R_VECTORS const & rVectors,
+  int const numDims,
+  int const subdivisionMask )
+{
+  real64 childRVectors[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( childRVectors, rVectors );
+  for( int d = 0; d < numDims; ++d )
+  {
+    if( ( subdivisionMask & ( 1 << d ) ) != 0 )
+    {
+      LvArray::tensorOps::scale< 3 >( childRVectors[d], 0.5 );
+    }
+  }
+  return particleDomainMaximumDiagonal( childRVectors, numDims );
+}
+
 /**
  * @brief Recovers F from row-wise reference and current particle-domain matrices.
  *
@@ -1760,6 +1811,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_resetDefGradForMeltedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
   m_resetDefGradForOversizedParticles( 0 ),
+  m_oversizedParticleTreatment( mpm::OversizedParticleTreatmentOption::None ),
+  m_oversizedParticleResetRankParticleCountThreshold( -1 ),
   m_defGradResetMaxParticleDomainToGridCellRatio( -1.0 ),
   m_separabilityMinDamage( 0.5 ),
   m_maxSingleFieldStateFractionForSeparability( -1.0 ),
@@ -2084,7 +2137,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_domainResetType ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Deformation-gradient reset algorithm for fluid, melted, damaged, and explicitly requested scaled-surface particles. Options are:\n* " +
+    setDescription( "Deformation-gradient reset algorithm for fluid, melted, damaged, explicitly requested scaled-surface particles, "
+                    "and oversized particles treated with deformation-gradient reset. Options are:\n* " +
                     EnumStrings< mpm::DomainResetTypeOption >::concat( "\n* " ) );
 
   registerWrapper( "domainStress", &m_domainStress ).
@@ -2606,17 +2660,35 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_resetDefGradForOversizedParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for resetting deformation gradient of particles whose current domain diagonal exceeds the configured grid-cell ratio. "
+    setDescription( "Compatibility flag for resetting deformation gradient of particles whose current domain diagonal exceeds the configured grid-cell ratio. "
+                    "Equivalent to oversizedParticleTreatment=\"resetDeformationGradient\" when oversizedParticleTreatment is left at \"none\". "
                     "Use only for materials where the stored deviatoric deformation gradient is not constitutive state, such as fluids, melted material, "
                     "fully damaged material, or hypo-elastic deviatoric models; do not enable for finite-strain hyperelastic, crystal-plasticity, "
                     "fiber, or other orientation/stretch-history-dependent solids unless the material model explicitly supports this reset." );
+
+  registerWrapper( "oversizedParticleTreatment", &m_oversizedParticleTreatment ).
+    setApplyDefaultValue( m_oversizedParticleTreatment ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Action for particles whose current domain diagonal exceeds defGradResetMaxParticleDomainToGridCellRatio. "
+                    "\"none\" preserves the legacy resetDefGradForOversizedParticles flag, \"resetDeformationGradient\" resets F, "
+                    "and \"split\" uses the particle subdivision path unless the rank particle-count threshold requests reset fallback. "
+                    "Allowed values are \"none\", \"resetDeformationGradient\", and \"split\"." );
+
+  registerWrapper( "oversizedParticleResetRankParticleCountThreshold", &m_oversizedParticleResetRankParticleCountThreshold ).
+    setApplyDefaultValue( m_oversizedParticleResetRankParticleCountThreshold ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Rank-local total particle-count threshold for oversizedParticleTreatment=\"split\". "
+                    "Oversized particles are split while the rank count is less than or equal to this value, and deformation-gradient reset is used only "
+                    "on ranks whose count exceeds it. A negative value disables the reset fallback." );
 
   registerWrapper( "defGradResetMaxParticleDomainToGridCellRatio", &m_defGradResetMaxParticleDomainToGridCellRatio ).
     setApplyDefaultValue( m_defGradResetMaxParticleDomainToGridCellRatio ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Maximum full particle-domain diagonal divided by active grid-cell diagonal before optional deformation-gradient reset. "
-                    "This threshold is intended for the same fluid, melted, damaged, or hypo-elastic material classes as resetDefGradForOversizedParticles." );
+    setDescription( "Maximum full particle-domain diagonal divided by active grid-cell diagonal before optional oversized-particle treatment. "
+                    "Deformation-gradient reset fallback is intended for the same fluid, melted, damaged, or hypo-elastic material classes as resetDefGradForOversizedParticles." );
 
   registerWrapper( "separabilityMinDamage", &m_separabilityMinDamage ).
     setApplyDefaultValue( m_separabilityMinDamage ).
@@ -3215,9 +3287,14 @@ void SolidMechanicsMPM::postInputInitialization()
                  "thinFeatureDFGThreshold must be non-negative." );
   GEOS_ERROR_IF( m_subdivideParticles < -1 || m_subdivideParticles > 1,
                  "subdivideParticles must be -1 (automatic), 0 (disabled), or 1 (enabled)." );
-  GEOS_ERROR_IF( m_resetDefGradForOversizedParticles == 1 &&
+  GEOS_ERROR_IF( m_oversizedParticleResetRankParticleCountThreshold < -1,
+                 "oversizedParticleResetRankParticleCountThreshold must be -1 or a non-negative rank particle count." );
+  mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment =
+    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                         m_oversizedParticleTreatment );
+  GEOS_ERROR_IF( oversizedParticleTreatment != mpm::OversizedParticleTreatmentOption::None &&
                  m_defGradResetMaxParticleDomainToGridCellRatio <= 0.0,
-                 "defGradResetMaxParticleDomainToGridCellRatio must be positive when resetDefGradForOversizedParticles is enabled." );
+                 "defGradResetMaxParticleDomainToGridCellRatio must be positive when oversized-particle treatment is enabled." );
 
   GEOS_LOG_RANK_0_IF( m_exactJIntegration != 0,
                       "exactJIntegration is deprecated and ignored: the volumetric split always advances particle volume with exp(dt*tr(L))." );
@@ -3853,7 +3930,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
           subRegion.registerField< particleSPHF >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         }
 
-        if( m_subdivideParticles != 0 )
+        if( m_subdivideParticles != 0 ||
+            effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                                 m_oversizedParticleTreatment ) ==
+            mpm::OversizedParticleTreatmentOption::Split )
         {
           subRegion.registerField< particleSubdivideFlag >( getName() );
           subRegion.registerField< particleCopyFlag >( getName() );
@@ -5365,7 +5445,12 @@ void SolidMechanicsMPM::prepareParticleTopologyForExplicitStep( real64 const dt,
   {
     resolveParticleSubdivisionDefault( particleManager );
   }
-  if( m_subdivideParticles == 1 )
+  bool const splitOversizedParticles =
+    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                         m_oversizedParticleTreatment ) ==
+    mpm::OversizedParticleTreatmentOption::Split &&
+    m_defGradResetMaxParticleDomainToGridCellRatio > 0.0;
+  if( m_subdivideParticles == 1 || splitOversizedParticles )
   {
     subdivideParticles( particleManager );
   }
@@ -11930,6 +12015,21 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     m_cpdiDomainScalingType == mpm::CPDIDomainScalingTypeOption::VPHencky;
   bool const useVPHenckyReset =
     m_domainResetType == mpm::DomainResetTypeOption::VPHencky;
+  bool const subdivisionEnabled = m_subdivideParticles == 1;
+  mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment =
+    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                         m_oversizedParticleTreatment );
+  localIndex const rankParticleCount = countRankParticles( particleManager );
+  bool const oversizedResetFallbackOnThisRank =
+    oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
+    exceedsOversizedParticleResetRankThreshold(
+      m_oversizedParticleResetRankParticleCountThreshold,
+      rankParticleCount );
+  bool const splitOversizedParticles =
+    oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
+    !oversizedResetFallbackOnThisRank;
+  bool const resetOversizedParticles =
+    oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::ResetDeformationGradient;
   real64 const maximumDiagonal = 0.99999 * m_neighborRadius;
   real64 const maximumFeasibleHalfMeasure =
     particleDomainMaximumFeasibleHalfMeasure( numDims, maximumDiagonal );
@@ -12008,9 +12108,6 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       m_resetDefGradForMeltedParticles;
     int const resetDefGradForScaledSurfaceParticles =
       m_resetDefGradForScaledSurfaceParticles;
-    int const resetDefGradForOversizedParticles =
-      m_resetDefGradForOversizedParticles;
-
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionNumNewParticles( 0 );
 
     // There should be no ghost particles at this point in the explicit step.
@@ -12056,14 +12153,22 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         isScaledParticle &&
         isSurfaceLikeParticle;
       bool const isOversizedParticle =
-        resetDefGradForOversizedParticles == 1 &&
+        ( resetOversizedParticles || splitOversizedParticles ) &&
         oversizedResetMaximumDiagonal > 0.0 &&
         particleDomainMaximumDiagonal( rawRVectors, numDims ) >
           oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 );
+      bool const oversizedResetCandidate =
+        resetOversizedParticles && isOversizedParticle;
+      bool const oversizedSplitCandidate =
+        splitOversizedParticles &&
+        isOversizedParticle &&
+        hasParticleDomainVectors;
 
       bool const cpdiVPHenckyCandidate =
+        subdivisionEnabled &&
         useVPHenckyCPDIScaling && isLinearCPDISubRegion;
       bool const resetVPHenckyCandidate =
+        subdivisionEnabled &&
         useVPHenckyReset &&
         hasParticleDomainVectors &&
         ( automaticSubdivision == 0 || cpdiVPHenckyCandidate ) &&
@@ -12071,7 +12176,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
           isMeltedParticle ||
           isFullyDamagedParticle ||
           resetForScaledSurfaceParticle ||
-          isOversizedParticle );
+          oversizedResetCandidate );
 
       int subdivisionMask = 0;
       if( hasActiveCohesiveState )
@@ -12082,10 +12187,12 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         // integration-domain projection remains the fallback for this case.
         subdivisionMask = 0;
       }
-      else if( cpdiVPHenckyCandidate || resetVPHenckyCandidate )
+      else if( cpdiVPHenckyCandidate ||
+               resetVPHenckyCandidate ||
+               oversizedSplitCandidate )
       {
         real64 const activeMaximumFeasibleHalfMeasure =
-          resetVPHenckyCandidate && isOversizedParticle
+          ( oversizedResetCandidate || oversizedSplitCandidate )
             ? oversizedMaximumFeasibleHalfMeasure
             : maximumFeasibleHalfMeasure;
         real64 requiredHalfMeasure = 0.0;
@@ -12095,7 +12202,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
             particleDomainHalfMeasure( rawRVectors, numDims );
         }
 
-        if( resetVPHenckyCandidate )
+        if( resetVPHenckyCandidate || oversizedSplitCandidate )
         {
           real64 const referenceHalfMeasure =
             particleDomainHalfMeasure( particleReferenceRVectors[p], numDims );
@@ -12127,8 +12234,28 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
             numDims,
             numberOfDirections );
         }
+
+        if( oversizedSplitCandidate )
+        {
+          int numberOfDirections =
+            countSubdivisionDirections( subdivisionMask, numDims );
+          while( numberOfDirections < numDims &&
+                 particleDomainMaximumDiagonalAfterSubdivisionMask(
+                   rawRVectors,
+                   numDims,
+                   subdivisionMask ) >
+                 oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 ) )
+          {
+            ++numberOfDirections;
+            subdivisionMask = longestParticleDomainDirectionsMask(
+              rawRVectors,
+              numDims,
+              numberOfDirections );
+          }
+        }
       }
-      else if( automaticSubdivision == 0 &&
+      else if( subdivisionEnabled &&
+               automaticSubdivision == 0 &&
                !useVPHenckyCPDIScaling &&
                !useVPHenckyReset )
       {
@@ -31261,12 +31388,26 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     m_resetDefGradForMeltedParticles;
   int const resetDefGradForScaledSurfaceParticles =
     m_resetDefGradForScaledSurfaceParticles;
-  int const resetDefGradForOversizedParticles =
-    m_resetDefGradForOversizedParticles;
   int const disableSurfaceNormalsAndPositionsOnOversizedDomainReset =
     m_disableSurfaceNormalsAndPositionsOnOversizedDomainReset;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
-  int const subdivisionEnabled = m_subdivideParticles == 1;
+  mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment =
+    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                         m_oversizedParticleTreatment );
+  localIndex const rankParticleCount = countRankParticles( particleManager );
+  bool const oversizedResetFallbackOnThisRank =
+    oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
+    exceedsOversizedParticleResetRankThreshold(
+      m_oversizedParticleResetRankParticleCountThreshold,
+      rankParticleCount );
+  bool const splitOversizedParticles =
+    oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
+    !oversizedResetFallbackOnThisRank;
+  int const resetDefGradForOversizedParticles =
+    ( oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::ResetDeformationGradient ||
+      oversizedResetFallbackOnThisRank ) ? 1 : 0;
+  int const subdivisionEnabled =
+    ( m_subdivideParticles == 1 || splitOversizedParticles ) ? 1 : 0;
   mpm::DomainResetTypeOption const domainResetType = m_domainResetType;
   real64 const defaultMaximumDiagonal = 0.99999 * m_neighborRadius;
   real64 const gridCellDiagonal = m_planeStrain == 1

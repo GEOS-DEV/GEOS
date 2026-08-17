@@ -1485,6 +1485,8 @@ protected:
   int m_resetDefGradForMeltedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
   int m_resetDefGradForOversizedParticles;
+  mpm::OversizedParticleTreatmentOption m_oversizedParticleTreatment;
+  integer m_oversizedParticleResetRankParticleCountThreshold;
   real64 m_defGradResetMaxParticleDomainToGridCellRatio;
   real64 m_separabilityMinDamage;
   real64 m_maxSingleFieldStateFractionForSeparability;

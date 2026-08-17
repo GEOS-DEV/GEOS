@@ -144,6 +144,19 @@ namespace mpm
   };
 
   /**
+   * @enum OversizedParticleTreatmentOption
+   *
+   * The actions available when a particle domain exceeds the oversized-domain
+   * diagonal threshold.
+   */
+  enum struct OversizedParticleTreatmentOption : integer
+  {
+    None,                     //!< Do not apply an oversized-particle-specific treatment.
+    ResetDeformationGradient, //!< Reset the deformation gradient/domain representation.
+    Split                     //!< Split the particle unless the rank particle-count limit requests reset fallback.
+  };
+
+  /**
    * @enum AreaIntegrationOption
    *
    * The options for nodal area integration
@@ -257,6 +270,11 @@ ENUM_STRINGS( mpm::CPDIDomainScalingTypeOption,
 ENUM_STRINGS( mpm::DomainResetTypeOption,
               "isotropicPolar",
               "vpHencky" );
+
+ENUM_STRINGS( mpm::OversizedParticleTreatmentOption,
+              "none",
+              "resetDeformationGradient",
+              "split" );
 
 ENUM_STRINGS( mpm::AreaIntegrationOption,
               "BruteForce",

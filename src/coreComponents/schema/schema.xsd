@@ -1758,6 +1758,14 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="resetDefGradForFullyDamagedParticles" type="integer" default="0" />
 		<!--resetDefGradForScaledSurfaceParticles => Flag for resetting deformation gradient of CPDI scaled surface particles-->
 		<xsd:attribute name="resetDefGradForScaledSurfaceParticles" type="integer" default="0" />
+		<!--resetDefGradForOversizedParticles => Compatibility flag for resetting deformation gradient of oversized particle domains-->
+		<xsd:attribute name="resetDefGradForOversizedParticles" type="integer" default="0" />
+		<!--oversizedParticleTreatment => Action for particles whose current domain diagonal exceeds defGradResetMaxParticleDomainToGridCellRatio-->
+		<xsd:attribute name="oversizedParticleTreatment" type="geos_SolidMechanicsMPM_OversizedParticleTreatmentOption" default="none" />
+		<!--oversizedParticleResetRankParticleCountThreshold => With oversizedParticleTreatment=split, use deformation-gradient reset only on ranks whose total particle count exceeds this value; negative disables fallback-->
+		<xsd:attribute name="oversizedParticleResetRankParticleCountThreshold" type="integer" default="-1" />
+		<!--defGradResetMaxParticleDomainToGridCellRatio => Maximum full particle-domain diagonal divided by active grid-cell diagonal before oversized-particle treatment-->
+		<xsd:attribute name="defGradResetMaxParticleDomainToGridCellRatio" type="real64" default="-1" />
 		<!--separabilityMinDamage => Damage threshold for field separability-->
 		<xsd:attribute name="separabilityMinDamage" type="real64" default="0.5" />
 		<!--setDomainTemperature => Flag that activates domain temperature interpolation from table.-->
@@ -1889,6 +1897,11 @@ When set to `all` output both convergence & iteration information to a csv.-->
 	<xsd:simpleType name="geos_SolidMechanicsMPM_OverlapCorrectionOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Off|NormalForce|SPH|Volume" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_SolidMechanicsMPM_OversizedParticleTreatmentOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|resetDeformationGradient|split" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_SolidMechanicsMPM_TimeIntegrationOption">
