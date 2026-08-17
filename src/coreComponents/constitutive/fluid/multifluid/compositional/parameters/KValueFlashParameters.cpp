@@ -28,6 +28,7 @@
 #endif
 
 #include "common/Units.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -399,7 +400,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
 
   if( !tableData.getCellsData().empty())
   {
-    std::vector< TableLayout::Column > columns;
+    stdVector< TableLayout::Column > columns;
     columns.emplace_back( TableLayout::Column().setName( "Phase" ).setValuesAlignment( TableLayout::Alignment::left ) );
     columns.emplace_back( TableLayout::Column().setName( "Pressure" ).setValuesAlignment( TableLayout::Alignment::right ) );
     columns.emplace_back( TableLayout::Column().setName( "Temperature" ).setValuesAlignment( TableLayout::Alignment::right ) );
@@ -423,8 +424,9 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
     }
 
     string const fluidName = fluid->getFullName();
-    GEOS_WARNING( GEOS_FMT( "{}: {}\n{}",
-                            fluidName, message, tableText.toString( tableData ) ));
+    GEOS_WARNING_IF( MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "{}: {}\n{}",
+                               fluidName, message, tableText.toString( tableData ) ));
 
     GEOS_THROW_IF( hasAtLeastOneNegative, "negative k-value found. ",
                    InputError, fluid->getDataContext() );

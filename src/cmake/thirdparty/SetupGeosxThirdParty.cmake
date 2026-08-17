@@ -122,6 +122,21 @@ macro(mandatory_tpl_doesnt_exist
 
 endmacro(mandatory_tpl_doesnt_exist)
 
+macro( hypredrv_install_not_found extra_detail )
+    message( FATAL_ERROR
+             "A valid hypredrive installation is required because ENABLE_HYPREDRV is ON "
+             "(this is the default when ENABLE_HYPRE is ON).\n"
+             "  ${extra_detail}\n"
+             "  ENABLE_HYPRE    = ${ENABLE_HYPRE}\n"
+             "  ENABLE_HYPREDRV = ${ENABLE_HYPREDRV}\n"
+             "  HYPREDRV_DIR    = \"${HYPREDRV_DIR}\"\n"
+             "  GEOS_TPL_DIR    = \"${GEOS_TPL_DIR}\"\n"
+             "hypredrive was not found in the current third-party library (TPL) bundle. "
+             "Update your TPLs to a version that includes hypredrive, then set HYPREDRV_DIR "
+             "to that installation (or ensure \"${GEOS_TPL_DIR}/hypredrive\" exists).\n"
+             "To build with HYPRE but without hypredrive, reconfigure with -DENABLE_HYPREDRV=OFF." )
+endmacro()
+
 
 set(thirdPartyLibs "")
 
@@ -675,6 +690,11 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_INSTALL_DIR "${HYPRE_DIR}" )
+    if( EXISTS "${HYPRE_DIR}/HYPREConfig.cmake" OR EXISTS "${HYPRE_DIR}/HYPREConfigVersion.cmake" )
+        get_filename_component( HYPRE_INSTALL_DIR "${HYPRE_DIR}/../../.." ABSOLUTE )
+    endif()
+
     set( HYPRE_DEPENDS blas lapack umpire )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS superlu_dist )
@@ -695,18 +715,18 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     endif( )
 
     find_and_import( NAME hypre
-                     INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                     LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                     INCLUDE_DIRECTORIES ${HYPRE_INSTALL_DIR}/include
+                     LIBRARY_DIRECTORIES ${HYPRE_INSTALL_DIR}/lib
                      HEADER HYPRE.h
                      LIBRARIES HYPRE
                      DEPENDS ${HYPRE_DEPENDS} )
 
     extract_version_from_header( NAME hypre
-                                 HEADER "${HYPRE_DIR}/include/HYPRE_config.h"
+                                 HEADER "${HYPRE_INSTALL_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
 
     # Extract some additional information about development version of hypre
-    file( READ ${HYPRE_DIR}/include/HYPRE_config.h header_file )
+    file( READ ${HYPRE_INSTALL_DIR}/include/HYPRE_config.h header_file )
     if( "${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"" )
         set( hypre_dev_string "${CMAKE_MATCH_1}" )
         if( "${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"" )
@@ -718,7 +738,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
     # if (NOT CMAKE_HOST_APPLE)
-    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_INSTALL_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
     # endif()
 
     # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
@@ -739,6 +759,96 @@ else()
 
     set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using HYPRE.")
+endif()
+
+################################
+# HYPREDRV
+################################
+if( ENABLE_HYPREDRV AND NOT ENABLE_HYPRE )
+    message( FATAL_ERROR "ENABLE_HYPREDRV requires ENABLE_HYPRE." )
+endif()
+
+if( ENABLE_HYPREDRV )
+    # Host-configs and -DHYPREDRV_DIR win. Otherwise look in the TPL bundle.
+    if( NOT HYPREDRV_DIR AND DEFINED GEOS_TPL_DIR AND EXISTS "${GEOS_TPL_DIR}/hypredrive" )
+        set( HYPREDRV_DIR "${GEOS_TPL_DIR}/hypredrive" CACHE PATH
+             "Path to a HYPREDRV installation prefix or package config directory" FORCE )
+    endif()
+
+    if( NOT HYPREDRV_DIR )
+        hypredrv_install_not_found( "HYPREDRV_DIR is not set." )
+    endif()
+
+    if( NOT EXISTS "${HYPREDRV_DIR}" )
+        hypredrv_install_not_found( "HYPREDRV_DIR does not exist on disk." )
+    endif()
+
+    message( STATUS "HYPREDRV_DIR = ${HYPREDRV_DIR}" )
+
+    list( PREPEND CMAKE_PREFIX_PATH "${HYPREDRV_DIR}" )
+    if( DEFINED HYPRE_DIR )
+        list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
+    endif()
+
+    find_package( HYPREDRV CONFIG QUIET
+                  PATHS ${HYPREDRV_DIR}
+                        ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/lib64/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/cmake/HYPREDRV
+                  NO_DEFAULT_PATH )
+
+    if( NOT HYPREDRV_FOUND )
+        hypredrv_install_not_found(
+            "No HYPREDRV CMake package was found under HYPREDRV_DIR (looked for HYPREDRVConfig.cmake)." )
+    endif()
+
+    blt_convert_to_system_includes( TARGET HYPREDRV::HYPREDRV )
+
+    unset( hypredrv_config_header )
+    unset( hypredrv_dev_string )
+    unset( hypredrv_dev_branch )
+    get_target_property( hypredrv_include_dirs HYPREDRV::HYPREDRV INTERFACE_INCLUDE_DIRECTORIES )
+    foreach( include_dir IN LISTS hypredrv_include_dirs )
+        if( EXISTS "${include_dir}/HYPREDRV_config.h" )
+            set( hypredrv_config_header "${include_dir}/HYPREDRV_config.h" )
+            break()
+        endif()
+    endforeach()
+
+    if( hypredrv_config_header )
+        file( READ "${hypredrv_config_header}" header_file )
+        if( "${header_file}" MATCHES "HYPREDRV_RELEASE_VERSION *\"([^\"]*)\"" )
+            set( HYPREDRV_VERSION "${CMAKE_MATCH_1}" )
+            set( HYPREDRV_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
+        endif()
+
+        # Extract additional information about development versions of hypredrive.
+        if( "${header_file}" MATCHES "HYPREDRV_DEVELOP_STRING *\"([^\"]*)\"" )
+            set( hypredrv_dev_string "${CMAKE_MATCH_1}" )
+            if( "${header_file}" MATCHES "HYPREDRV_BRANCH_NAME *\"([^\"]*)\"" )
+                set( hypredrv_dev_branch "${CMAKE_MATCH_1}" )
+            elseif( "${header_file}" MATCHES "HYPREDRV_GIT_BRANCH *\"([^\"]*)\"" )
+                set( hypredrv_dev_branch "${CMAKE_MATCH_1}" )
+            endif()
+
+            if( hypredrv_dev_branch )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" CACHE STRING "" FORCE )
+            else()
+                set( HYPREDRV_VERSION "${hypredrv_dev_string}" )
+                set( HYPREDRV_VERSION "${hypredrv_dev_string}" CACHE STRING "" FORCE )
+            endif()
+        endif()
+    endif()
+
+    if( HYPREDRV_VERSION )
+        message( " ----> HYPREDRV_VERSION = ${HYPREDRV_VERSION}" )
+    endif()
+
+    set( ENABLE_HYPREDRV ON CACHE BOOL "" FORCE )
+    set( thirdPartyLibs ${thirdPartyLibs} HYPREDRV::HYPREDRV )
+else()
+    message( STATUS "Not using HYPREDRV." )
 endif()
 
 ################################

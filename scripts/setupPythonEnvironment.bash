@@ -7,7 +7,7 @@ PYTHON_TARGET=
 BIN_DIR=
 PACKAGE_DIR=
 TMP_CLONE_DIR=
-PIP_CMD="pip --disable-pip-version-check"
+declare -a PIP_INSTALL_ARGS=(--disable-pip-version-check install --upgrade)
 PACKAGE_BRANCH=main
 
 
@@ -29,6 +29,22 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
                          "mesh-doctor"
                          "activate"
                          "python")
+
+function bootstrap_pip () {
+    local python_executable="$1"
+
+    if [[ "${GEOS_SKIP_PIP_BOOTSTRAP:-false}" == "true" ]]; then
+        echo "Skipping pip bootstrap because GEOS_SKIP_PIP_BOOTSTRAP=true."
+        return 0
+    fi
+
+    echo "Updating pip"
+    if ! "${python_executable}" -m pip install --upgrade pip setuptools wheel; then
+        echo "WARNING: pip bootstrap failed for ${python_executable}; continuing with the existing pip so package installation can report the actionable failure."
+        "${python_executable}" -m pip --version || true
+        return 0
+    fi
+}
 
 
 # Read input arguments
@@ -119,8 +135,7 @@ fi
 
 
 # Updating pip
-echo "Updating pip"
-$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel
+bootstrap_pip "$PYTHON_TARGET"
 
 # Install packages
 echo "Installing python packages..."
@@ -131,11 +146,12 @@ do
         echo "  $p"
 
         # Try installing the package
-        if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
-            INSTALL_RC=$?
+        if [[ "${VERBOSE}" == true ]]
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m pip "${PIP_INSTALL_ARGS[@]}" "${PACKAGE_DIR}/${p}")
+            INSTALL_RC=$?
+        else
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m pip "${PIP_INSTALL_ARGS[@]}" "${PACKAGE_DIR}/${p}" 2>&1)
             INSTALL_RC=$?
         fi
 
@@ -143,7 +159,12 @@ do
         then
             echo $INSTALL_MSG
 
-            if [[ $INSTALL_MSG =~ "HTTP error" ]]
+            if [[ $INSTALL_MSG == *SSLError* || $INSTALL_MSG == *"[CRYPTO]"* ]]
+            then
+                echo "The setup script failed while pip was using HTTPS."
+                echo "On FIPS-enabled hosts running non-FIPS containers, this can indicate an OpenSSL/FIPS policy mismatch."
+                echo "Check the earlier Crypto/FIPS summary in the CI log."
+            elif [[ $INSTALL_MSG =~ "HTTP error" ]]
             then
                 echo "The setup script may have failed to fetch external dependencies"
                 echo "Try re-running the \"make ats_environment\" script again on a machine that can access github"
@@ -237,4 +258,3 @@ fi
 
 
 echo "Done!"
-
