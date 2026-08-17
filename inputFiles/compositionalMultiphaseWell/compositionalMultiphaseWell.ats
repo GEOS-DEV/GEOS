@@ -41,9 +41,7 @@ decks = [
         name="dead_oil_wells_hybrid_2d",
         description=
         "Dead oil well test (2D displacement, hybrid FVM, 3-phase dead-oil, 3 wells)",
-        partitions=[# Temporarily disabled: dead_oil_wells_hybrid_2d_01
-                    # (1, 1, 1),
-                    (2, 2, 1)],
+        partitions=[(1, 1, 1), (2, 2, 1)],
         restart_step=50,
         check_step=100,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
@@ -75,9 +73,7 @@ decks = [
         name="staircase_co2_wells_hybrid_3d",
         description=
         "CO2 well test (3D staircase, unstructured mesh, hybrid FVM, 2-phase 2-component, 2 wells)",
-        partitions=[# Temporarily disabled: staircase_co2_wells_hybrid_3d_01
-                    # (1, 1, 1),
-                    (2, 2, 2)],
+        partitions=[(1, 1, 1), (2, 2, 2)],
         restart_step=0,
         check_step=17,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
@@ -89,15 +85,14 @@ decks = [
         restart_step=13,
         check_step=26,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    # Temporarily disabled; this problematic test will be fixed in a separate PR.
-    # TestDeck(
-    #     name="isothm_mass_inj_table",
-    #     description=
-    #     "Isothermal mass injection constraint testing control switching",
-    #     partitions=[(1, 1, 1), (1, 2, 1)],
-    #     restart_step=24,
-    #     check_step=28,
-    #     restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="isothm_mass_inj_table",
+        description=
+        "Isothermal mass injection constraint testing control switching",
+        partitions=[(1, 1, 1), (1, 2, 1)],
+        restart_step=24,
+        check_step=28,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="isothm_vol_inj_table",
         description=

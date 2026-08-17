@@ -90,11 +90,12 @@ vector ownership, and all higher-level GEOS solver logic remain unchanged.
 Build requirements
 ==================
 
-This feature is optional. It is available only when GEOS is configured with:
+hypredrive is enabled by default whenever GEOS is configured with ``ENABLE_HYPRE=ON``.
+CMake then requires a valid hypredrive installation, located either through ``HYPREDRV_DIR``
+or at ``${GEOS_TPL_DIR}/hypredrive``. If that installation cannot be found, configuration
+fails and asks you to update the TPL bundle.
 
-* ``ENABLE_HYPRE=ON``,
-* ``ENABLE_HYPREDRV=ON``,
-* ``HYPREDRV_DIR`` pointing to a hypredrive installation or package configuration directory.
+To build with HYPRE but without hypredrive, pass ``-DENABLE_HYPREDRV=OFF``.
 
 If GEOS is built without hypredrive support, setting ``hypredriveInputFile`` in the XML input
 is an error.
