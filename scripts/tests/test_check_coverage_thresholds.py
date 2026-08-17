@@ -358,6 +358,19 @@ class CoverageThresholdTests( unittest.TestCase ):
         self.assertIn( "Functions", markdown )
         self.assertIn( "ℹ️ Measured", markdown )
 
+    def test_lines_and_functions_thresholds_are_enforced( self ):
+        validated = coverage_gate.validate_summary( summary() )
+        markdown, passed = coverage_gate.build_markdown(
+            validated,
+            { "lines": 5001, "functions": 5001, "branches": 5000 },
+        )
+
+        self.assertFalse( passed )
+        self.assertIn( "| Lines | 1 | 1 | 2 | 50.00% | ≥ 50.01% | ❌ Fail", markdown )
+        self.assertIn(
+            "| Functions | 1 | 1 | 2 | 50.00% | ≥ 50.01% | ❌ Fail", markdown
+        )
+
     def test_markdown_golden_output( self ):
         validated = coverage_gate.validate_summary( summary() )
         markdown, passed = coverage_gate.build_markdown(
@@ -514,7 +527,10 @@ Native outcomes are instantiation-weighted: C++ template and inline-function ins
         with policy_path.open( encoding="utf-8" ) as stream:
             policy = json.load( stream )
         thresholds = coverage_gate.validate_policy( policy, "src/coreComponents" )
-        self.assertEqual( thresholds, { "branches": 5001 } )
+        self.assertEqual(
+            thresholds,
+            { "lines": 7001, "functions": 7501, "branches": 5001 },
+        )
 
 
 if __name__ == "__main__":

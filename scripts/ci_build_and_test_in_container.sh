@@ -777,12 +777,33 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   if [[ -z "${coverage_llvm_version}" ]]; then
     coverage_llvm_version=20
   fi
+  coverage_reviewer_args=(
+    --coverage-summary "${LLVM_REPORT_DIR}/coverage-summary.json"
+    --thresholds "${GEOS_SRC_DIR}/.github/coverage-thresholds.json"
+    --tests-result "$(coverage_phase_status "${coverage_ctest_status}")"
+    --tests-detail "${coverage_ctest_detail}"
+  )
+  if [[ "${coverage_pr_ran}" = true &&
+        -f "${COVERAGE_OUTPUT_DIR}/pr-coverage.json" &&
+        ! -L "${COVERAGE_OUTPUT_DIR}/pr-coverage.json" ]]; then
+    coverage_reviewer_args+=(--pr-report "${COVERAGE_OUTPUT_DIR}/pr-coverage.json")
+  fi
+  coverage_reviewer_summary_status=0
+  coverage_reviewer_summary="$(
+    python3 "${GEOS_SRC_DIR}/scripts/render_coverage_review_summary.py" \
+      "${coverage_reviewer_args[@]}"
+  )" || coverage_reviewer_summary_status=$?
+  if [[ ${coverage_reviewer_summary_status} -ne 0 ]]; then
+    coverage_reviewer_summary=$'### Reviewer summary\n\nCoverage reviewer summary unavailable; inspect the detailed reports below.'
+  fi
   {
     if [[ "${coverage_overall_status}" = PASS ]]; then
       printf '### ✅ LLVM source coverage passed\n\n'
     else
       printf '### ❌ LLVM source coverage failed\n\n'
     fi
+    printf '%s\n' "${coverage_reviewer_summary}"
+    printf '### Validation details\n\n'
     printf '| Validation | Result | Details |\n'
     printf '|---|:---:|---|\n'
     printf '| Coverage smoke suite | %s | %s |\n' \

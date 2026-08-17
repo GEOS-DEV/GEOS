@@ -163,8 +163,9 @@ Code Coverage
 
 New code contributions should maintain or improve overall code coverage. The
 dedicated Clang/LLVM CI job runs the ``coverage_smoke`` suite and enforces the
-repository-owned canonical branch floor in
-``.github/coverage-thresholds.json``. Regions, functions, lines, and the native
+repository-owned lines, functions, and canonical branch floors in
+``.github/coverage-thresholds.json``. The initial floors are 70.01% for lines,
+75.01% for functions, and 50.01% for canonical branches. Regions and the native
 instantiation-weighted branch interpretation are reported for review without
 being hard gates. The compiler-native report is published in the GitHub job
 summary and retained as a compact workflow artifact; no hosted coverage service
@@ -182,7 +183,9 @@ to exercise each one. When an artifact exists for the exact target-branch
 commit, the summary also shows the canonical project coverage change from that
 base. A missing or incompatible base artifact is reported as unavailable rather
 than substituted with a different commit. These PR-specific signals are
-advisory; the repository canonical branch floor remains the enforced policy.
+advisory; the repository coverage floors remain the enforced policy. The job's
+reviewer summary clearly separates those gates from unavailable baseline
+comparisons and uncovered changed lines.
 
 Integrated tests are not part of this focused CI coverage pass, but they should
 still be taken into account, especially for minor physical kernel changes.
