@@ -285,6 +285,16 @@ void normalizeActiveDeterminant3x3( real64 (& matrix)[3][3],
   }
 }
 
+/**
+* Checks if floating-point variable is NaN
+*/
+#include <cmath>
+
+GEOS_HOST_DEVICE
+bool isNan( const real64 & val )
+{
+   return std::isnan(val);
+}
 
 /**
  * Component priorities used by the staged MPM essential-boundary update.
@@ -5215,6 +5225,78 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
   return dtReturn;
 }
+
+// Adding helping function to dump particle data to files for debugging
+// void SolidMechanicsMPM::dumpParticleStressToFile(ParticleManager & particleManager, int const cycleNumber, std::string label)
+// {
+//   int rank = 0;
+//   MPI_Comm_rank( MPI_COMM_GEOS, &rank );
+
+//  // Write to file
+//   std::ofstream file;
+//   std::stringstream filename("");
+//   filename << label << "_pData_cycle" << cycleNumber<< "_r" << rank << ".csv";
+//   file.open( filename.str(), std::ios::out | std::ios::app );
+//   if( file.fail() )
+//   {
+//     throw std::ios_base::failure( std::strerror( errno ) );
+//   }
+//   //make sure write fails with exception if something is wrong
+//   file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+//     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+
+//     // particleStress.move( LvArray::MemorySpace::host, true );
+
+//     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+//     forAll< serialPolicy >( subRegion.size(), [&] GEOS_HOST ( localIndex const p )
+//     {
+//       file << particleID[p]
+//          << ", "
+//          << particleStress[p][0]
+//          << ", "
+//          << particleStress[p][1]
+//          << ", "
+//          << particleStress[p][2]
+//          << ", "
+//          << particleStress[p][3]
+//          << ", "
+//          << particleStress[p][4]
+//          << ", "
+//          << particleStress[p][5]
+//          << std::endl;
+//     } );
+//   } );
+//   file.close();
+// }
+
+// void SolidMechanicsMPM::checkParticlesForNan( ParticleManager & particleManager, std::string label )
+// {
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+//     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+//     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+//     // arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+//     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+
+//     arrayView2d< real64 > const particleCohesiveForce = subRegion.getField< fields::mpm::particleCohesiveForce >();
+
+//     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+//     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+//     {
+//       LvArray::tensorOps::fill< 3 >( particleCohesiveForce[p], 0.0);
+//       for( localIndex i; i < 6; ++i )
+//       {
+
+//         GEOS_ERROR_IF( isNan(particleStress[p][i]) || isNan(particleVolume[p]), label << " | pID: " << particleID[p] << " (" << p << ") has vol: " << particleVolume[p] << ", pos:" << particlePosition[p] << " and stress: " << particleStress[p]);
+//       }
+//     } );
+//   } );
+// }
 
 /**
  * @brief Resolves the domain objects used by one explicit MPM step.
@@ -27707,7 +27789,6 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
       // Tensor equations:
       //   particleVelocityGradient[p] = 0.0 component-wise.
       //   particleVelocity[p] = 0.0 component-wise.
-      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
       LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
       LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
 
