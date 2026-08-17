@@ -36,44 +36,31 @@ decks = [
     TestDeck(
         name="ALM_inclinedFault_ISG_smoke",
         description='PoroElastic ALM inclined fault with internal surface generator (elastic)',
-        partitions=(# Temporarily disabled: ALM_inclinedFault_ISG_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="ALM_inclinedFault_ESG_smoke",
         description='PoroElastic ALM inclined fault with external surface generator (elastic)',
-        partitions=(# Temporarily disabled: ALM_inclinedFault_ESG_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="ALM_inclinedFault_ISG_DruckerPrager_smoke",
         description='PoroElastic ALM inclined fault with internal surface generator (DruckerPrager plastic)',
-        partitions=(# Temporarily disabled: ALM_inclinedFault_ISG_DruckerPrager_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="ALM_inclinedFault_ESG_friction_cohesion_smoke",
         description='PoroElastic ALM inclined fault with cohesion/frictionCoeff provided in mesh (per cell variation)',
-        partitions=(# Temporarily disabled: ALM_inclinedFault_ESG_friction_cohesion_smoke_01
-                    # (1, 1, 1),
-                    (2, 2, 1),
-                    ),
+        partitions=((1, 1, 1), (2,2,1)),
         restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-
 ]
 
 generate_geos_tests(decks)
