@@ -329,6 +329,7 @@ jobs:
       GEOS_ENABLE_BOUNDS_CHECK: "OFF"
       HOST_CONFIG: /spack-generated.cmake
       LLVM_SOURCE_COVERAGE: true
+      REQUIRED_LABEL: "ci: run code coverage"
       # Instrumented compilation dominates runtime, so reserve the dedicated
       # 32-core lane while leaving the profile-heavy test concurrency bounded.
       NPROC: "32"

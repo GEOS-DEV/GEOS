@@ -170,6 +170,10 @@ being hard gates. The compiler-native report is published in the GitHub job
 summary and retained as a compact workflow artifact; no hosted coverage service
 or secret is required.
 
+Coverage is opt-in for pull requests: add the ``ci: run code coverage`` label
+to request the job. The job also runs on pushes to ``develop`` so that trusted
+baseline artifacts can be retained.
+
 For pull requests, the same job also intersects the tested merge commit's diff
 with LLVM's detailed source records. It reports coverage of changed executable
 lines, new function entry sites, and native branch outcomes, then ranks the
