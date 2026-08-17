@@ -23,6 +23,57 @@ DISPLAY_NAMES = {
     "lines": "Lines",
     "branches": "Canonical branches",
 }
+CONSOLE_METRICS = ( "lines", "functions", "branches" )
+
+
+def render_console_summary( summary: dict, thresholds: dict ) -> str:
+    """Render a plain-text table for the GitHub Actions log."""
+    rows = []
+    all_passed = True
+    for name in CONSOLE_METRICS:
+        metric = summary["metrics"][name]
+        threshold = thresholds[name]
+        passed = metric["covered"] * 10000 >= threshold * metric["total"]
+        all_passed = all_passed and passed
+        rows.append(
+            (
+                DISPLAY_NAMES[name],
+                f"{metric['percent']:.2f}%",
+                f"{metric['covered']:,} / {metric['total']:,}",
+                f"{metric['not_covered']:,}",
+                f">= {threshold / 100:.2f}%",
+                "✅ Pass" if passed else "❌ Fail",
+            )
+        )
+
+    headers = ( "Metric", "Coverage", "Covered / total", "Missed", "Requirement", "Result" )
+    widths = [
+        max( len( headers[index] ), *( len( row[index] ) for row in rows ) )
+        for index in range( len( headers ) )
+    ]
+
+    def border() -> str:
+        return "+" + "+".join( "-" * ( width + 2 ) for width in widths ) + "+"
+
+    def row( values ) -> str:
+        return "|" + "|".join(
+            f" {value:<{width}} "
+            for value, width in zip( values, widths )
+        ) + "|"
+
+    status = "✅ PASS" if all_passed else "❌ FAIL"
+    output = [
+        "",
+        "LLVM source coverage policy",
+        f"Overall result: {status}",
+        border(),
+        row( headers ),
+        border(),
+        *( row( values ) for values in rows ),
+        border(),
+        "",
+    ]
+    return "\n".join( output )
 
 
 def read_json( path: pathlib.Path, description: str ) -> dict:
@@ -159,8 +210,9 @@ def main() -> int:
     parser.add_argument( "--coverage-summary", required=True, type=pathlib.Path )
     parser.add_argument( "--thresholds", required=True, type=pathlib.Path )
     parser.add_argument( "--pr-report", type=pathlib.Path )
-    parser.add_argument( "--tests-result", required=True )
-    parser.add_argument( "--tests-detail", required=True )
+    parser.add_argument( "--console", action="store_true" )
+    parser.add_argument( "--tests-result" )
+    parser.add_argument( "--tests-detail" )
     arguments = parser.parse_args()
 
     try:
@@ -168,6 +220,11 @@ def main() -> int:
         raw_policy = read_json( arguments.thresholds, "coverage policy" )
         summary = coverage_contract.validate_summary( raw_summary )
         thresholds = coverage_contract.validate_policy( raw_policy, summary["scope"] )
+        if arguments.console:
+            print( render_console_summary( summary, thresholds ), end="" )
+            return 0
+        if arguments.tests_result is None or arguments.tests_detail is None:
+            raise ValueError( "--tests-result and --tests-detail are required" )
         report = (
             read_json( arguments.pr_report, "pull-request coverage report" )
             if arguments.pr_report is not None

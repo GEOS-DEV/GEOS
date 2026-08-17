@@ -56,6 +56,34 @@ def unavailable_report() -> dict:
 class CoverageReviewSummaryTests( unittest.TestCase ):
     thresholds = { "lines": 7001, "functions": 7501, "branches": 5001 }
 
+    def test_console_summary_is_plain_text_and_contains_enforced_metrics( self ):
+        rendered = coverage_review_summary.render_console_summary(
+            summary(), self.thresholds
+        )
+
+        self.assertIn( "LLVM source coverage policy", rendered )
+        self.assertIn( "Overall result: ✅ PASS", rendered )
+        self.assertIn( "Lines", rendered )
+        self.assertIn( "74.00%", rendered )
+        self.assertIn( "74 / 100", rendered )
+        self.assertIn( ">= 70.01%", rendered )
+        self.assertIn( "Functions", rendered )
+        self.assertIn( "Canonical branches", rendered )
+        self.assertNotIn( "|---", rendered )
+
+    def test_console_summary_marks_a_failed_threshold( self ):
+        failing_summary = summary()
+        failing_summary["metrics"]["lines"]["covered"] = 69
+        failing_summary["metrics"]["lines"]["not_covered"] = 31
+        failing_summary["metrics"]["lines"]["percent"] = 69.0
+
+        rendered = coverage_review_summary.render_console_summary(
+            failing_summary, self.thresholds
+        )
+
+        self.assertIn( "Overall result: ❌ FAIL", rendered )
+        self.assertIn( "❌ Fail", rendered )
+
     def test_summary_separates_policy_baseline_and_changed_line_signals( self ):
         rendered = coverage_review_summary.render_summary(
             summary(),

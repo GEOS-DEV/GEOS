@@ -675,6 +675,10 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     if [[ ${coverage_gate_status} -eq 0 ]]; then
       echo "LLVM coverage policy report written to ${COVERAGE_OUTPUT_DIR}/coverage-summary.md"
     fi
+    python3 "${GEOS_SRC_DIR}/scripts/render_coverage_review_summary.py" \
+      --coverage-summary "${LLVM_REPORT_DIR}/coverage-summary.json" \
+      --thresholds "${GEOS_SRC_DIR}/.github/coverage-thresholds.json" \
+      --console || echo "LLVM coverage console summary unavailable." >&2
   fi
 
   for report_file in \
