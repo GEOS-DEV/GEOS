@@ -505,6 +505,7 @@ class ComparePrCoverageTest( unittest.TestCase ):
             stderr=subprocess.PIPE,
         )
         self.assertEqual( result.returncode, 0, result.stderr )
+        self.assertEqual( result.stdout, "" )
         self.assertEqual( json.loads( output_json.read_text() )["schema_version"], 1 )
         self.assertIn( "Pull-request coverage", output_markdown.read_text() )
         self.assertLess( output_json.stat().st_size, 20_000 )

@@ -1203,7 +1203,8 @@ def main() -> int:
             write_atomic( output_json, json_text )
         if output_markdown is not None:
             write_atomic( output_markdown, markdown )
-        print( markdown, end="" )
+        else:
+            print( markdown, end="" )
         return 0
     except ( OSError, ValueError ) as error:
         print( f"PR coverage comparison error: {error}", file=sys.stderr )

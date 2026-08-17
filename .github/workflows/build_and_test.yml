@@ -514,9 +514,23 @@ jobs:
                 "${COVERAGE_ARTIFACT_DIR}/coverage-baseline-status.json"
         fi
 
+        if [[ "${CI_LLVM_SOURCE_COVERAGE}" == 'true' &&
+              -n "${COVERAGE_ARTIFACT_DIR:-}" &&
+              -d "${COVERAGE_ARTIFACT_DIR}" &&
+              ! -L "${COVERAGE_ARTIFACT_DIR}" ]]; then
+          if ! python3 scripts/render_coverage_report_html.py \
+              --artifact-dir "${COVERAGE_ARTIFACT_DIR}" \
+              --output "${COVERAGE_ARTIFACT_DIR}/index.html"; then
+            echo "LLVM source coverage HTML report could not be finalized." >&2
+            if [[ ${EXIT_STATUS} -eq 0 ]]; then
+              EXIT_STATUS=1
+            fi
+          fi
+        fi
+
         exit ${EXIT_STATUS}
 
-    - name: Validate compact LLVM coverage report
+    - name: Validate LLVM coverage HTML report
       id: validate_llvm_coverage_artifact
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE }}
       run: |
@@ -524,6 +538,11 @@ jobs:
               ! -d "${LLVM_COVERAGE_ARTIFACT_DIR}" ||
               -L "${LLVM_COVERAGE_ARTIFACT_DIR}" ]]; then
           echo "LLVM coverage artifact directory is missing or unsafe." >&2
+          exit 1
+        fi
+        if [[ ! -f "${LLVM_COVERAGE_ARTIFACT_DIR}/index.html" ||
+              -L "${LLVM_COVERAGE_ARTIFACT_DIR}/index.html" ]]; then
+          echo "LLVM coverage HTML report is missing or unsafe." >&2
           exit 1
         fi
         unsafe_link=$(find "${LLVM_COVERAGE_ARTIFACT_DIR}" -type l -print -quit)
@@ -538,7 +557,7 @@ jobs:
         fi
         while IFS= read -r artifact_file; do
           case "$(basename -- "${artifact_file}")" in
-            CMakeCache.txt|branch-summary.txt|coverage-baseline-status.json|coverage-objects.txt|coverage-status.md|coverage-summary.json|coverage-summary.md|ctest.log|llvm-summary.json|mapping-integrity.log|native-export.log|pr-coverage.json|pr-coverage.md|summary-export.log|toolchain.txt) ;;
+            CMakeCache.txt|branch-summary.txt|coverage-baseline-status.json|coverage-objects.txt|coverage-status.md|coverage-summary.json|coverage-summary.md|ctest.log|index.html|llvm-summary.json|mapping-integrity.log|native-export.log|pr-coverage.json|pr-coverage.md|summary-export.log|toolchain.txt) ;;
             *)
               echo "Unexpected LLVM coverage artifact: ${artifact_file}" >&2
               exit 1
@@ -564,7 +583,7 @@ jobs:
             printf '### ❌ Coverage results unavailable\n\n'
             printf '| Validation | Result | Details |\n'
             printf '|---|:---:|---|\n'
-            printf '| Compact report artifact | ❌ Failed | Artifact validation failed; inspect the job log |\n'
+            printf '| HTML report artifact | ❌ Failed | Artifact validation failed; inspect the job log |\n'
           } >> "${GITHUB_STEP_SUMMARY}"
           exit 0
         fi
@@ -601,27 +620,12 @@ jobs:
           fi
         fi
 
-    - name: Retain compact LLVM coverage report
+    - name: Retain LLVM coverage HTML report
       if: ${{ always() && inputs.LLVM_SOURCE_COVERAGE && steps.validate_llvm_coverage_artifact.outcome == 'success' }}
       uses: actions/upload-artifact@v4.6.2
       with:
         name: llvm-source-coverage-${{ github.run_id }}-${{ github.run_attempt }}
-        path: |
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/CMakeCache.txt
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/branch-summary.txt
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-baseline-status.json
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-objects.txt
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-status.md
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-summary.json
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/coverage-summary.md
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/ctest.log
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/llvm-summary.json
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/mapping-integrity.log
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/native-export.log
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/pr-coverage.json
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/pr-coverage.md
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/summary-export.log
-          ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/toolchain.txt
+        path: ${{ env.LLVM_COVERAGE_ARTIFACT_DIR }}/index.html
         if-no-files-found: warn
         retention-days: 7
 

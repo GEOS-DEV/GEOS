@@ -857,10 +857,11 @@ def main() -> int:
         print( f"coverage threshold error: {error}", file=sys.stderr )
         return 2
 
-    print( markdown, end="" )
     if args.markdown is not None:
         args.markdown.parent.mkdir( parents=True, exist_ok=True )
         args.markdown.write_text( markdown, encoding="utf-8" )
+    else:
+        print( markdown, end="" )
     return 0 if passed else 1
 
 

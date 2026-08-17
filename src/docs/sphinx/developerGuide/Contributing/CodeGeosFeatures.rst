@@ -168,8 +168,10 @@ repository-owned lines, functions, and canonical branch floors in
 75.01% for functions, and 50.01% for canonical branches. Regions and the native
 instantiation-weighted branch interpretation are reported for review without
 being hard gates. The compiler-native report is published in the GitHub job
-summary and retained as a compact workflow artifact; no hosted coverage service
-or secret is required.
+summary and retained as a single self-contained ``index.html`` workflow
+artifact; the page puts the reviewer summary and coverage tables first, with
+the intermediate JSON, logs, and source reports in collapsible diagnostic
+sections. No hosted coverage service or secret is required.
 
 Coverage is opt-in for pull requests: add the ``ci: run code coverage`` label
 to request the job. The job also runs on pushes to ``develop`` so that trusted

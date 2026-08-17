@@ -155,7 +155,7 @@ Usage: $0
   --cmake-cuda-architectures ...
       Optional override for CMAKE_CUDA_ARCHITECTURES.
   --coverage-output-dir /path/to/output
-      Directory where compact LLVM source-coverage artifacts are written.
+      Directory where LLVM source-coverage inputs and the HTML report are written.
   --coverage-base-sha SHA
       Exact pull-request base commit used for advisory patch coverage.
   --coverage-head-sha SHA
@@ -485,6 +485,7 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     coverage-summary.json \
     coverage-summary.md \
     ctest.log \
+    index.html \
     llvm-summary.json \
     mapping-integrity.log \
     native-export.log \
@@ -657,6 +658,9 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
     fi
     python3 "${GEOS_SRC_DIR}/scripts/compare_pr_coverage.py" \
       "${coverage_pr_args[@]}" || coverage_pr_status=$?
+    if [[ ${coverage_pr_status} -eq 0 ]]; then
+      echo "LLVM pull-request coverage report written to ${COVERAGE_OUTPUT_DIR}/pr-coverage.md"
+    fi
   fi
 
   coverage_gate_status=0
@@ -668,6 +672,9 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
       "${GEOS_SRC_DIR}/.github/coverage-thresholds.json" \
       --markdown "${COVERAGE_OUTPUT_DIR}/coverage-summary.md" \
       || coverage_gate_status=$?
+    if [[ ${coverage_gate_status} -eq 0 ]]; then
+      echo "LLVM coverage policy report written to ${COVERAGE_OUTPUT_DIR}/coverage-summary.md"
+    fi
   fi
 
   for report_file in \
@@ -831,10 +838,24 @@ if [[ "${LLVM_SOURCE_COVERAGE}" = true ]]; then
   } > "${coverage_status_tmp}"
   or_die mv -- "${coverage_status_tmp}" "${coverage_status_markdown}"
 
+  coverage_html_status=0
+  python3 "${GEOS_SRC_DIR}/scripts/render_coverage_report_html.py" \
+    --artifact-dir "${COVERAGE_OUTPUT_DIR}" \
+    --output "${COVERAGE_OUTPUT_DIR}/index.html" \
+    || coverage_html_status=$?
+  if [[ ${coverage_html_status} -eq 0 ]]; then
+    echo "LLVM source coverage HTML report written to ${COVERAGE_OUTPUT_DIR}/index.html"
+  else
+    echo "LLVM source coverage HTML report generation failed." >&2
+  fi
+
   if [[ "${coverage_overall_status}" = FAIL ]]; then
     echo "LLVM source coverage failed: ctest=${coverage_ctest_status}, " \
          "report=${coverage_report_status}, gate=${coverage_gate_status}, " \
-         "pr=${coverage_pr_status}." >&2
+         "pr=${coverage_pr_status}, html=${coverage_html_status}." >&2
+    exit 1
+  fi
+  if [[ ${coverage_html_status} -ne 0 ]]; then
     exit 1
   fi
   exit 0
