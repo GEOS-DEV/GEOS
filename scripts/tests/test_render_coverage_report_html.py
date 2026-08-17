@@ -115,7 +115,12 @@ class CoverageHtmlTests( unittest.TestCase ):
             ( artifact_dir / "mapping-integrity.log" ).write_text(
                 "mapping checks passed\n", encoding="utf-8"
             )
+            output_path = artifact_dir / "index.html"
+            output_path.write_text( "old report\n", encoding="utf-8" )
+            output_path.chmod( 0o400 )
             output = coverage_html.render_html( artifact_dir )
+            coverage_html.write_atomic( output_path, output )
+            self.assertIn( "<!doctype html>", output_path.read_text() )
 
         self.assertIn( "<!doctype html>", output )
         self.assertIn( "Enforced policy", output )

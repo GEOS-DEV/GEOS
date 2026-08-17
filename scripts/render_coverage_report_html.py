@@ -8,9 +8,11 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import pathlib
 import re
 import sys
+import tempfile
 
 
 SCRIPT_DIRECTORY = pathlib.Path( __file__ ).resolve().parent
@@ -72,6 +74,28 @@ def read_json( path: pathlib.Path ) -> dict | None:
     except json.JSONDecodeError:
         return None
     return document if isinstance( document, dict ) else None
+
+
+def write_atomic( path: pathlib.Path, contents: str ) -> None:
+    """Replace a report even when a container created the old file as root."""
+    path.parent.mkdir( parents=True, exist_ok=True )
+    if path.is_symlink():
+        raise ValueError( f"refusing to replace symbolic link: {path}" )
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
+    temporary_path = pathlib.Path( temporary_name )
+    try:
+        os.fchmod( descriptor, 0o644 )
+        with os.fdopen( descriptor, "w", encoding="utf-8" ) as stream:
+            stream.write( contents )
+            stream.flush()
+            os.fsync( stream.fileno() )
+        os.replace( temporary_path, path )
+        temporary_path = None
+    except BaseException:
+        temporary_path.unlink( missing_ok=True )
+        raise
 
 
 def validated_summary( document: dict | None ) -> dict | None:
@@ -609,10 +633,7 @@ def main() -> int:
     parser.add_argument( "--output", required=True, type=pathlib.Path )
     arguments = parser.parse_args()
     try:
-        arguments.output.parent.mkdir( parents=True, exist_ok=True )
-        arguments.output.write_text(
-            render_html( arguments.artifact_dir ), encoding="utf-8"
-        )
+        write_atomic( arguments.output, render_html( arguments.artifact_dir ) )
     except ( OSError, ValueError ) as error:
         print( f"Coverage HTML report error: {error}", file=sys.stderr )
         return 1
