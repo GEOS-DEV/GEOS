@@ -168,6 +168,7 @@ private:
   HYPREDRV_t m_hypredrive{};
   mutable HypreVector m_dummyRhs;
   mutable HypreVector m_dummySol;
+  mutable HypreVector m_residual;
   std::unique_ptr< HypreSolver > m_legacySolver;
 };
 

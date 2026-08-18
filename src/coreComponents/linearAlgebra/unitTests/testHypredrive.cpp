@@ -17,6 +17,7 @@
 
 #ifdef GEOS_USE_HYPREDRV
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 #endif
 #endif
@@ -171,6 +172,19 @@ TEST( HypredriveYaml, BuildsGeneratedFallbackForAMG )
   EXPECT_EQ( target.argument.find( "linear_system:" ), std::string::npos );
 }
 
+TEST( HypredriveYaml, AmgIluSmootherDisablesRcm )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::iluk;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_NE( target.argument.find( "ilu:" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "reordering: 0" ), std::string::npos );
+}
+
 TEST( HypredriveYaml, MapsFGSAndBGSRelaxationNames )
 {
   LinearSolverParameters params;
@@ -259,6 +273,99 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
       FAIL() << static_cast< int >( value ) << ": " << error.what();
     }
   }
+}
+
+size_t countSubstrings( std::string const & text, std::string const & token )
+{
+  size_t count = 0;
+  for( std::string::size_type pos = 0;
+       ( pos = text.find( token, pos ) ) != std::string::npos;
+       pos += token.size() )
+  {
+    ++count;
+  }
+  return count;
+}
+
+TEST( HypredriveYaml, NestedMgrAmgUsesHypreBoomerAMGCreateMaxCoarseSize )
+{
+  stdVector< string > const fieldNames = makeFieldNames();
+  array1d< int > const numComponentsPerField = makeMgrNumComponentsPerField();
+
+  {
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget(
+                   makeMgrParameters( LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics ),
+                   fieldNames,
+                   numComponentsPerField,
+                   target ) );
+    std::string::size_type const coarsest = target.argument.find( "coarsest_level:" );
+    ASSERT_NE( coarsest, std::string::npos );
+    EXPECT_NE( target.argument.substr( 0, coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_NE( target.argument.substr( coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_EQ( countSubstrings( target.argument, "max_coarse_size: 9" ), 2 );
+    EXPECT_EQ( target.argument.find( "relax_type:" ), std::string::npos );
+    EXPECT_EQ( countSubstrings( target.argument, "type: schwarz" ), 2 );
+    EXPECT_EQ( countSubstrings( target.argument, "num_levels: 0" ), 2 );
+    EXPECT_EQ( countSubstrings( target.argument, "reordering: 0" ), 2 );
+  }
+
+  {
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget(
+                   makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanics ),
+                   fieldNames,
+                   numComponentsPerField,
+                   target ) );
+    std::string::size_type const coarsest = target.argument.find( "coarsest_level:" );
+    ASSERT_NE( coarsest, std::string::npos );
+    EXPECT_NE( target.argument.substr( 0, coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_NE( target.argument.substr( coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_EQ( countSubstrings( target.argument, "max_coarse_size: 9" ), 2 );
+  }
+
+  {
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget(
+                   makeMgrParameters( LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM ),
+                   fieldNames,
+                   numComponentsPerField,
+                   target ) );
+    std::string::size_type const coarsest = target.argument.find( "coarsest_level:" );
+    ASSERT_NE( coarsest, std::string::npos );
+    EXPECT_EQ( target.argument.substr( 0, coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_NE( target.argument.substr( coarsest ).find( "max_coarse_size: 9" ), std::string::npos );
+    EXPECT_EQ( countSubstrings( target.argument, "max_coarse_size: 9" ), 1 );
+    EXPECT_EQ( target.argument.find( "relax_type:" ), std::string::npos );
+    EXPECT_EQ( countSubstrings( target.argument, "type: schwarz" ), 1 );
+    EXPECT_EQ( countSubstrings( target.argument, "num_levels: 0" ), 1 );
+    EXPECT_NE( target.argument.find( "reordering: 0" ), std::string::npos );
+  }
+}
+
+TEST( HypredriveYaml, NestedMgrIluMatchesHypreMgrType16Defaults )
+{
+  stdVector< string > const fieldNames = makeFieldNames();
+  array1d< int > const numComponentsPerField = makeMgrNumComponentsPerField();
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget(
+                 makeMgrParameters( LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM ),
+                 fieldNames,
+                 numComponentsPerField,
+                 target ) );
+
+  std::string::size_type const gRelax = target.argument.find( "g_relaxation:" );
+  ASSERT_NE( gRelax, std::string::npos );
+  std::string const fromGRelax = target.argument.substr( gRelax );
+  EXPECT_NE( fromGRelax.find( "reordering: 0" ), std::string::npos );
+  EXPECT_NE( fromGRelax.find( "max_row_nnz: 1000" ), std::string::npos );
+  EXPECT_NE( fromGRelax.find( "fill_level: 0" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "g_relaxation: ilu" ), std::string::npos );
+
+  EXPECT_NE( target.argument.find( "type: \"none\"" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "num_sweeps: 0" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "relax_type:" ), std::string::npos );
 }
 
 TEST( HypredriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
@@ -526,6 +633,150 @@ TEST( HypredriveSolverSelection, HonorsLegacyOverride )
 
   auto solver = HypreInterface::createSolver( params );
   EXPECT_NE( dynamic_cast< HypreSolver * >( solver.get() ), nullptr );
+}
+
+void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
+                                          int const numDofTags = 1 )
+{
+  struct ScopedKrylovDofLabels
+  {
+    ~ScopedKrylovDofLabels()
+    {
+      hypre::testing::clearKrylovDofLabels();
+    }
+  };
+
+  ScopedKrylovDofLabels const clearLabelsOnExit;
+
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 100, matrix );
+
+  array1d< int > labels;
+  if( numDofTags > 1 )
+  {
+    labels.resize( matrix.numLocalRows() );
+    for( localIndex i = 0; i < labels.size(); ++i )
+    {
+      labels[i] = LvArray::integerConversion< int >( i % numDofTags );
+    }
+    hypre::testing::setKrylovDofLabels( labels.toViewConst() );
+  }
+
+  HypreVector rhs;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+
+  HypreVector solHypredrive;
+  HypreVector solLegacy;
+  solHypredrive.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  solLegacy.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  solHypredrive.zero();
+  solLegacy.zero();
+
+  HypredriveSolver hypredriveSolver( params );
+  hypredriveSolver.setup( matrix );
+  hypredriveSolver.solve( rhs, solHypredrive );
+  ASSERT_TRUE( hypredriveSolver.result().success() );
+  hypredriveSolver.clear();
+
+  HypreSolver legacySolver( params );
+  legacySolver.setup( matrix );
+  legacySolver.solve( rhs, solLegacy );
+  ASSERT_TRUE( legacySolver.result().success() );
+  legacySolver.clear();
+
+  EXPECT_EQ( hypredriveSolver.result().numIterations, legacySolver.result().numIterations );
+
+  // Both solutions satisfy the same tolerance; their difference is bounded by
+  // the solve tolerance amplified by the operator conditioning.
+  HypreVector difference( solHypredrive );
+  difference.axpy( -1.0, solLegacy );
+  EXPECT_LE( difference.norm2() / solLegacy.norm2(), 1e-9 );
+
+  // Both must satisfy the requested tolerance against the true residual.
+  HypreVector residual( rhs );
+  matrix.residual( solHypredrive, rhs, residual );
+  EXPECT_LE( residual.norm2() / rhs.norm2(), 2.0 * params.krylov.relTolerance );
+}
+
+TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmg )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.relTolerance = 1e-12;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  compareHypredriveAndLegacySolutions( params );
+}
+
+TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmgWithMultipleDofTags )
+{
+  // hypredrive library mode tags dummy Krylov vectors from the dofmap. GEOS
+  // legacy GMRES must stamp the same labels so InnerProdTagged matches.
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.relTolerance = 1e-12;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  compareHypredriveAndLegacySolutions( params, 2 );
+}
+
+TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceBicgstabIlu )
+{
+  // Second solver/preconditioner combination supported by the generated-YAML path.
+  // (The 2D elasticity test operator is assembled without Dirichlet conditions and is
+  // singular, so equivalence is exercised on the Laplace operator only.)
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::bicgstab;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.krylov.relTolerance = 1e-12;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  compareHypredriveAndLegacySolutions( params );
+}
+
+TEST( HypredriveLogging, WarnsOnceWhenGeneratedYamlFallsBackToLegacy )
+{
+  // AMG with rigid-body-mode near null space is not representable in generated
+  // hypredrive YAML, so the adapter must warn once and fall back to the legacy
+  // solver, which treats an absent null space benignly.
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+  params.krylov.relTolerance = 1e-10;
+  params.logLevel = 0;
+
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 20, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  HypredriveSolver solver( params );
+
+  ScopedCoutCapture capture;
+  solver.setup( matrix );
+  solver.setup( matrix );
+  std::string const output = capture.str();
+
+  std::string const warning = "falling back to the legacy hypre solver";
+  std::string::size_type const first = output.find( warning );
+  EXPECT_NE( first, std::string::npos );
+  EXPECT_EQ( output.find( warning, first + warning.size() ), std::string::npos );
+
+  solver.solve( rhs, sol );
+  EXPECT_TRUE( solver.result().success() );
+  solver.clear();
 }
 
 TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )

@@ -38,6 +38,9 @@
 namespace geos
 {
 
+class HypreMatrix;
+class HypreVector;
+
 /**
  * @brief Container for hypre preconditioner function pointers.
  *
@@ -226,6 +229,50 @@ HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector );
+
+/**
+ * @brief Copy DoF-component labels used to tag hypre Krylov vectors.
+ * @param mat Matrix whose DofManager (when present) provides the labels.
+ * @param labels Output local DoF-component labels; emptied when none are available.
+ *
+ * Prefers `mat.dofManager()` when present. A testing override is used only when
+ * the matrix has no DofManager, so unit tests can exercise tagged GMRES without
+ * building a mesh.
+ */
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels );
+
+/**
+ * @brief Stamp DoF-component labels onto a hypre vector (`owns_tags = 0`).
+ * @param vec Vector to tag.
+ * @param labels Local DoF-component labels. The buffer must outlive any Krylov
+ *   workspace that aliases these tags (GMRES `p[]` clones the pointer at setup).
+ *
+ * Matches hypredrive library mode: skip when `num_tags <= 1`, skip on device,
+ * and do not re-assemble after SetTags. Empty ranks still set the global
+ * `num_tags` with a null tags pointer so InnerProdTagged collectives agree.
+ * Physics RHS/solution vectors stay untagged so InnerProd(b,b) matches
+ * hypredrive apply, which replaces the tagged dummy with untagged GEOS vectors.
+ */
+void applyKrylovDofTags( HypreVector const & vec,
+                         arrayView1d< int const > const & labels );
+
+namespace testing
+{
+
+/**
+ * @brief Install fallback Krylov DoF labels for unit tests without a DofManager.
+ * @param labels Local labels; copied and used by fillKrylovDofLabels when the
+ *   matrix has no DofManager and `labels.size()` matches the local row count.
+ */
+void setKrylovDofLabels( arrayView1d< int const > const & labels );
+
+/**
+ * @brief Clear fallback Krylov DoF labels installed by setKrylovDofLabels().
+ */
+void clearKrylovDofLabels();
+
+}
 
 /**
  * @brief The missing wrapper compatible with hypre solver solve signature.

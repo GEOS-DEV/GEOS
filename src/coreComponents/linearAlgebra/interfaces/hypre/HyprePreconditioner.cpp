@@ -139,6 +139,11 @@ void createAMG( LinearSolverParameters const & params,
   // Set smoother to be used (other options available, see hypre's documentation)
   // (default "gaussSeidel", i.e. local symmetric Gauss-Seidel)
 
+  // HYPRE_BoomerAMGCreate defaults the ILU extra-smoother reordering to RCM.
+  // GEOS never uses RCM on ILU (scalar ILU, MGR F/coarse ILU, and hypredrive YAML
+  // all pass 0), so pin it here even when the extra smoother is not ILU.
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetILULocalReordering( precond.ptr, 0 ) );
+
   if( params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::iluk ||
       params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::ilut )
   {
