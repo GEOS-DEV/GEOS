@@ -278,7 +278,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
-      UPLOAD_TO_GCP: false
+      UPLOAD_TO_GCP: true
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=256g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
