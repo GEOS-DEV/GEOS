@@ -322,9 +322,17 @@ void normalizeActiveDeterminant3x3( real64 (& matrix)[3][3],
 #include <cmath>
 
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 bool isNan( const real64 & val )
 {
    return std::isnan(val);
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool isFinite( real64 const value )
+{
+  return std::isfinite( value );
 }
 
 /**
@@ -16898,10 +16906,48 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
 {
   GEOS_MARK_FUNCTION;
 
+
+
+  #if defined( GEOS_USE_HIP )
+  auto hipCheckpoint = [&]( char const * const label )
+  {
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+    hipError_t const launchError = hipPeekAtLastError();
+    GEOS_ERROR_IF(
+      launchError != hipSuccess,
+      GEOS_FMT( "Rank {}: HIP launch error at '{}': {}",
+                rank,
+                label,
+                hipGetErrorString( launchError ) ) );
+
+    hipError_t const executionError = hipDeviceSynchronize();
+    GEOS_ERROR_IF(
+      executionError != hipSuccess,
+      GEOS_FMT( "Rank {}: HIP execution error at '{}': {}",
+                rank,
+                label,
+                hipGetErrorString( executionError ) ) );
+
+fprintf( stdout,
+         "[rank %d] HIP checkpoint passed: %s\n",
+         rank,
+         label );
+fflush( stdout );
+  };
+#else
+  auto hipCheckpoint = []( char const * ) {};
+#endif
+
+  // Skip when no fields were specified
   if( fieldNames.empty() )
   {
     return;
   }
+
+  std::stringstream ss;
+  ss << "syncGridFields entry, onDevice? " << syncGridOnDevice;
+  hipCheckpoint( ss.str().c_str() );
 
   // Put fields in the memory space used by pack/unpack. Device synchronization
   // keeps iterative FMPM state resident while host synchronization remains the
@@ -16911,6 +16957,8 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
     wrapper.move( syncGridOnDevice ? parallelDeviceMemorySpace : LvArray::MemorySpace::host, true );
   }
+
+  hipCheckpoint( "field move complete" );
 
   stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   if( neighbors.empty() )
@@ -16936,6 +16984,7 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                                   iComm,
                                                                   syncGridOnDevice,
                                                                   reductionDirection );
+  hipCheckpoint( "phase 1 size exchange complete" );
 
   parallelDeviceEvents packEvents;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
@@ -16945,12 +16994,39 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                syncGridOnDevice,
                                                packEvents,
                                                reductionDirection );
+  hipCheckpoint( "phase 1 asyncPack launched" );
 
+  
+#if defined( GEOS_USE_HIP )
+  hipError_t const error = hipDeviceSynchronize();
+  GEOS_ERROR_IF(
+    error != hipSuccess,
+    GEOS_FMT(
+      "Rank {}: HIP phase-one pack synchronization failed: {}",
+      MpiWrapper::commRank( MPI_COMM_GEOS ),
+      hipGetErrorString( error ) ) );
+#else
   waitAllDeviceEvents( packEvents );
+#endif
+
+  hipCheckpoint( "phase 1 pack complete" );
+
+#if defined( GEOS_USE_HIP )
+  std::fprintf(
+    stdout,
+    "[rank %d] clearing %zu completed HIP pack events\n",
+    MpiWrapper::commRank( MPI_COMM_GEOS ),
+    packEvents.size() );
+  std::fflush( stdout );
+
+  packEvents.clear();
+#endif
+
   CommunicationTools::getInstance().asyncSendRecv( neighbors,
                                                    iComm,
                                                    syncGridOnDevice,
                                                    packEvents );
+  hipCheckpoint( "phase 1 MPI transfer submitted" );
 
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
@@ -16960,6 +17036,7 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                     unpackEvents,
                                                     op,
                                                     reductionDirection );
+  hipCheckpoint( "phase 1 unpack complete" );
 
   // Phase 2: owning/master nodes -> ghosts, ordinary replacement sync.
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
@@ -16967,6 +17044,7 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                                   neighbors,
                                                                   iComm,
                                                                   syncGridOnDevice );
+  hipCheckpoint( "phase 2 size exchange complete" );
 
   parallelDeviceEvents packEvents2;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
@@ -16975,12 +17053,26 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                iComm,
                                                syncGridOnDevice,
                                                packEvents2 );
+  hipCheckpoint( "phase 2 asyncPack launched" );
 
-  waitAllDeviceEvents( packEvents2 );
+  // waitAllDeviceEvents( packEvents2 );
+  hipCheckpoint( "phase 2 pack complete" );
+
+  #if defined( GEOS_USE_HIP )
+  std::fprintf(
+    stdout,
+    "[rank %d] clearing %zu completed HIP pack events\n",
+    MpiWrapper::commRank( MPI_COMM_GEOS ),
+    packEvents.size() );
+  std::fflush( stdout );
+
+  packEvents2.clear();
+#endif
   CommunicationTools::getInstance().asyncSendRecv( neighbors,
                                                    iComm,
                                                    syncGridOnDevice,
                                                    packEvents2 );
+  hipCheckpoint( "phase 2 MPI transfer submitted" );
 
   parallelDeviceEvents unpackEvents2;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
@@ -16988,6 +17080,7 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                     iComm,
                                                     syncGridOnDevice,
                                                     unpackEvents2 );
+  hipCheckpoint( "phase 2 unpack complete" );
 }
 
 /**
@@ -28828,7 +28921,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     m_smallMass;
 
 #ifdef GEOS_USE_DEVICE
-  constexpr bool syncFMPMGridOnDevice = false; //true;
+  constexpr bool syncFMPMGridOnDevice = true; // false
 #else
   constexpr bool syncFMPMGridOnDevice = false;
 #endif
@@ -29779,18 +29872,19 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
       // Here we detect if particle velocities will overflow when squared and flag them for deletion to avoid erroring
       // out
       real64 particleSpeedSquared = 0;
+      real64 const vmaxSqrt = LvArray::math::sqrt( numeric_max / real64( numDims ) );
       for( integer d = 0; d < numDims; ++d )
       {
-        real64 const vmaxSqrt = LvArray::math::sqrt( numeric_max / real64( numDims ) );
-        if( LvArray::math::abs( particleVelocity[p][d] ) > vmaxSqrt )
+        real64 const vd = particleVelocity[p][d];
+
+        if( !isFinite( vd ) || LvArray::math::abs( vd ) > vmaxSqrt )
         {
           numParticlesVelocityOverflowed += 1;
           flaggedForDeletion = true;
           break;
-
-          real64 addSqr = particleVelocity[p][d] * particleVelocity[p][d];
-          particleSpeedSquared += addSqr;
         }
+
+        particleSpeedSquared += vd * vd;
       }
 
       if( !flaggedForDeletion && particleSpeedSquared > maxParticleVelocitySquared )
