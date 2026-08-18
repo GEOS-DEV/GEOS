@@ -121,6 +121,14 @@ void appendLine( std::ostringstream & stream,
   stream << std::string( static_cast< size_t >( indentLevel ) * 2, ' ' ) << line << '\n';
 }
 
+void appendIlUDisableRcm( std::ostringstream & stream,
+                          integer const indentLevel )
+{
+  // hypre_ILUCreate and HYPRE_BoomerAMGCreate default local reordering to RCM (1).
+  // GEOS never uses that reordering on ILU.
+  appendLine( stream, indentLevel, "reordering: 0" );
+}
+
 char const * getSolverName( LinearSolverParameters::SolverType const solverType )
 {
   using SolverType = LinearSolverParameters::SolverType;
@@ -778,6 +786,7 @@ bool buildAMGPreconditionerYaml( LinearSolverParameters const & params,
     appendLine( stream, 3, "ilu:" );
     appendLine( stream, 4, GEOS_FMT( "type: {}", hypre::getILUType( params.amg.smootherType ) ) );
     appendLine( stream, 4, GEOS_FMT( "fill_level: {}", params.ifact.fill ) );
+    appendIlUDisableRcm( stream, 4 );
     if( params.amg.smootherType == AMG::SmootherType::ilut )
     {
       appendLine( stream, 4, GEOS_FMT( "droptol: {}", params.ifact.threshold ) );
@@ -859,10 +868,7 @@ bool buildILUPreconditionerYaml( LinearSolverParameters const & params,
   {
     appendLine( stream, 2, GEOS_FMT( "droptol: {}", params.ifact.threshold ) );
   }
-  // GEOS always applies ILU without hypre's internal RCM reordering: every explicit
-  // HYPRE_ILUSetLocalReordering call on the legacy path passes 0. hypre itself defaults
-  // to RCM, and so would hypredrive if the key were left out, so emit it unconditionally.
-  appendLine( stream, 2, "reordering: 0" );
+  appendIlUDisableRcm( stream, 2 );
 
   yaml = stream.str();
   return true;
@@ -1001,6 +1007,26 @@ void appendAMGHeader( std::ostringstream & stream,
   appendLine( stream, indentLevel + 1, "tolerance: 0.0" );
   appendLine( stream, indentLevel + 1, "max_iter: 1" );
   appendLine( stream, indentLevel + 1, "print_level: 0" );
+  // HYPRE_BoomerAMGCreate uses Schwarz (6) with zero extra smoother levels.
+  // hypredrive's YAML AMG smoother defaults to ILU (5) and always writes that
+  // onto the BoomerAMG object, so nested MGR AMG must pin the Create values.
+  appendLine( stream, indentLevel + 1, "smoother:" );
+  appendLine( stream, indentLevel + 2, "type: schwarz" );
+  appendLine( stream, indentLevel + 2, "num_levels: 0" );
+  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
+  appendLine( stream, indentLevel + 2, "ilu:" );
+  appendIlUDisableRcm( stream, indentLevel + 3 );
+}
+
+void appendHypreBoomerAMGCreateMaxCoarseSize( std::ostringstream & stream,
+                                              integer const indentLevel )
+{
+  // HYPRE_BoomerAMGCreate defaults max_coarse_size to 9. hypredrive's YAML AMG
+  // defaults it to 64 and always writes that value unless the key is present,
+  // so every nested MGR AMG block that would otherwise inherit hypre's Create
+  // default must emit 9 explicitly. Leaving it out changes the first linear
+  // solve, not just later Newton drift.
+  appendLine( stream, indentLevel, "max_coarse_size: 9" );
 }
 
 void appendDisplacementAMG( std::ostringstream & stream,
@@ -1010,6 +1036,7 @@ void appendDisplacementAMG( std::ostringstream & stream,
 {
   appendAMGHeader( stream, indentLevel );
   appendLine( stream, indentLevel + 1, "coarsening:" );
+  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
   appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
   appendLine( stream, indentLevel + 2, "strong_th: 0.6" );
   appendLine( stream, indentLevel + 2, "num_functions: 3" );
@@ -1040,14 +1067,12 @@ void appendPressureAMG( std::ostringstream & stream,
 #else
   appendLine( stream, indentLevel + 2, "prolongation_type: 4" );
 #endif
-  // HYPRE_BoomerAMGCreate defaults max_coarse_size to 9, whereas
-  // HypreDrive defaults it to 64. Specify the legacy value explicitly.
   appendLine( stream, indentLevel + 1, "coarsening:" );
   if( minCoarseSize >= 0 )
   {
     appendLine( stream, indentLevel + 2, GEOS_FMT( "min_coarse_size: {}", minCoarseSize ) );
   }
-  appendLine( stream, indentLevel + 2, "max_coarse_size: 9" );
+  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   appendLine( stream, indentLevel + 2, "type: 8" );
   appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
@@ -1074,6 +1099,7 @@ void appendPressureTemperatureAMG( std::ostringstream & stream,
 #endif
   appendLine( stream, indentLevel + 2, "max_nnz_row: 16" );
   appendLine( stream, indentLevel + 1, "coarsening:" );
+  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
   appendLine( stream, indentLevel + 2, "num_functions: 2" );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   appendLine( stream, indentLevel + 2, "type: 8" );
@@ -1087,6 +1113,61 @@ void appendPressureTemperatureAMG( std::ostringstream & stream,
   appendLine( stream, indentLevel + 1, "relaxation:" );
   appendLine( stream, indentLevel + 2, "order: 1" );
 #endif
+}
+
+void appendNamedMGRRelaxation( std::ostringstream & stream,
+                               integer const indentLevel,
+                               char const * const key,
+                               char const * const typeName,
+                               HYPRE_Int const numSweeps )
+{
+  std::string const type( typeName );
+
+  // hypredrive attaches HYPRE_ILUCreate for YAML `ilu`. Match hypre MGR's
+  // built-in global smoother type 16 (par_mgr_setup.c): BJ-ILUK, fill 0,
+  // max_iter = sweep count, tol 0, no RCM, and hypre_ILUCreate's max_row_nnz
+  // of 1000. A scalar `g_relaxation: ilu` would keep hypredrive's ILU YAML
+  // defaults instead (including max_row_nnz 200).
+  if( type == "ilu" )
+  {
+    HYPRE_Int const iluMaxIter = ( numSweeps > 0 ) ? numSweeps : 1;
+    appendLine( stream, indentLevel, GEOS_FMT( "{}:", key ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_sweeps: {}", numSweeps ) );
+    appendLine( stream, indentLevel + 1, "ilu:" );
+    appendLine( stream, indentLevel + 2, "type: 0" );
+    appendLine( stream, indentLevel + 2, "fill_level: 0" );
+    appendLine( stream, indentLevel + 2, GEOS_FMT( "max_iter: {}", iluMaxIter ) );
+    appendLine( stream, indentLevel + 2, "tolerance: 0.0" );
+    appendIlUDisableRcm( stream, indentLevel + 2 );
+    appendLine( stream, indentLevel + 2, "print_level: 0" );
+    appendLine( stream, indentLevel + 2, "max_row_nnz: 1000" );
+    return;
+  }
+
+  // hypredrive defaults num_sweeps to 1 even when the type is none. Legacy
+  // setReduction forces 0 sweeps once F/G-relaxation is disabled. Quote the
+  // type so YAML 1.1 does not mangle an unquoted `none` token.
+  if( type == "none" )
+  {
+    appendLine( stream, indentLevel, GEOS_FMT( "{}:", key ) );
+    appendLine( stream, indentLevel + 1, "type: \"none\"" );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_sweeps: {}", numSweeps ) );
+    return;
+  }
+
+  // hypredrive defaults num_sweeps to 1. When GEOS uses a different sweep
+  // count, emit a mapping so the legacy HYPRE_MGRSetLevel*Iters value is
+  // preserved.
+  if( numSweeps == 1 )
+  {
+    appendLine( stream, indentLevel, GEOS_FMT( "{}: {}", key, typeName ) );
+  }
+  else
+  {
+    appendLine( stream, indentLevel, GEOS_FMT( "{}:", key ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "type: {}", typeName ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_sweeps: {}", numSweeps ) );
+  }
 }
 
 void appendAMGByFlavor( std::ostringstream & stream,
@@ -1165,6 +1246,10 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   appendLine( stream, 1, "mgr:" );
   appendLine( stream, 2, "tolerance: 0.0" );
   appendLine( stream, 2, "max_iter: 1" );
+  // Do not emit relax_type. HYPRE_MGRCreate defaults it to 0, but hypredrive's
+  // YAML validator rejects 0 (allowed names map to 3–18, default Jacobi 7).
+  // hypre's MGR setup also rewrites F-relax type 0 to 7 unless interp is 12,
+  // so omitting the key matches the effective legacy behavior.
   appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
   appendLine( stream, 2, GEOS_FMT( "non_c_to_f: {}", 1 ) );
   appendLine( stream, 2, GEOS_FMT( "nonglk_max_elmts: {}", 1 ) );
@@ -1198,6 +1283,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
                      GEOS_FMT( "Missing hypredrive AMG block description for MGR strategy {} level {}",
                                params.mgr.strategy, level ) );
       appendLine( stream, 4, "f_relaxation:" );
+      appendLine( stream, 5, GEOS_FMT( "num_sweeps: {}", strategy.m_levelFRelaxIters[level] ) );
       appendAMGByFlavor( stream, 5, *amgFlavor, params.mgr );
     }
     else
@@ -1207,7 +1293,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
       {
         return false;
       }
-      appendLine( stream, 4, GEOS_FMT( "f_relaxation: {}", fRelaxationName ) );
+      appendNamedMGRRelaxation( stream, 4, "f_relaxation", fRelaxationName, strategy.m_levelFRelaxIters[level] );
     }
 
     char const * const gRelaxationName = getGeneratedMGRGlobalSmootherName( strategy.m_levelGlobalSmootherType[level] );
@@ -1215,7 +1301,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
     {
       return false;
     }
-    appendLine( stream, 4, GEOS_FMT( "g_relaxation: {}", gRelaxationName ) );
+    appendNamedMGRRelaxation( stream, 4, "g_relaxation", gRelaxationName, strategy.m_levelGlobalSmootherIters[level] );
     appendLine( stream, 4, GEOS_FMT( "prolongation_type: {}", static_cast< HYPRE_Int >( strategy.m_levelInterpType[level] ) ) );
     appendLine( stream, 4, GEOS_FMT( "restriction_type: {}", static_cast< HYPRE_Int >( strategy.m_levelRestrictType[level] ) ) );
     appendLine( stream, 4, GEOS_FMT( "coarse_level_type: {}", static_cast< HYPRE_Int >( strategy.m_levelCoarseGridMethod[level] ) ) );
@@ -1666,6 +1752,10 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
   // hypredrive builds the global dof-label set collectively inside this call, so
   // skipping it where the local dofmap is empty leaves those ranks out of the
   // collective and the subsequent solver creation fails there.
+  //
+  // Library-mode hypredrive stamps these labels onto the dummy setup vectors.
+  // GMRES clones them into p[]. Physics rhs/sol bound at apply stay untagged,
+  // matching HypreSolver (dummy tagged at setup, rhs untagged at solve).
   checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
                                                        LvArray::integerConversion< int >( pointMarkers.size() ),
                                                        pointMarkers.data() ),
@@ -1698,8 +1788,8 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
   {
     fieldNames = dofManager->fieldNames();
     numComponentsPerField = dofManager->numComponentsPerField();
-    dofManager->getLocalDofComponentLabels( pointMarkers );
   }
+  hypre::fillKrylovDofLabels( mat, pointMarkers );
 
   hypre::hypredrive::InputArgsParseTarget parseTarget;
   if( !hypre::hypredrive::buildInputArgsParseTarget( m_params,
@@ -1734,9 +1824,14 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
     m_legacySolver.reset();
   }
 
+  // Legacy HypreSolver destroys and recreates MGR on every setup. Reusing a
+  // HYPREDRV handle across Newton steps can keep MGR/AMG/ILU bookkeeping even
+  // when YAML reuse is off, which shows up as later-solve iteration drift.
+  // AMG-only generated configs keep the handle so unit tests can assert reuse.
   bool const recreateHandle = ( m_hypredrive == nullptr ) ||
                               ( m_configurationSignature != configurationSignature ) ||
-                              ( m_structureSignature != structureSignature );
+                              ( m_structureSignature != structureSignature ) ||
+                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr );
 
   if( recreateHandle )
   {

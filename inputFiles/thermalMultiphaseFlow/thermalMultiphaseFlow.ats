@@ -14,7 +14,7 @@ decks = [
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="co2_thermal_2d_mgr",
+        name="co2_thermal_2d_iterative",
         description=
         "hypre MGR variant (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 1)),

@@ -11,7 +11,7 @@ decks = [
         check_step=683,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="ThermoPoroElastic_consolidation_mgr_smoke_fim",
+        name="ThermoPoroElastic_consolidation_iterative_smoke_fim",
         description=
         "hypre MGR variant (exercises the hypredrive path when available)",
         # The (1, 2, 1) partition is disabled pending a follow-up PR: on two ranks the
@@ -41,7 +41,7 @@ decks = [
         check_step=33,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="ThermoPoroElastic_staircase_co2_mgr_smoke",
+        name="ThermoPoroElastic_staircase_co2_iterative_smoke",
         description=
         "Thermal multiphase poromechanics staircase with hypre MGR (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 1)),

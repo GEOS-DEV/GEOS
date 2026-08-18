@@ -152,8 +152,8 @@ walsh_quarter_no_chombo = {
     "check_step": 5
 }
 
-walsh_quarter_no_chombo_mgr = {
-    "name": "walshQuarterNoChombo_mgr_smoke",
+walsh_quarter_no_chombo_iterative = {
+    "name": "walshQuarterNoChombo_iterative_smoke",
     "description":
     "Sneddon type problem with hypre MGR (exercises the hypredrive path when available)",
     "partitions": ((1, 1, 1), (2, 2, 2)),
@@ -187,7 +187,7 @@ decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
          penny_shaped_viscosity_dominated,
          penny_shaped_viscosity_dominated_poroelastic, pkn_viscosity_dominated,
          pkn_viscosity_dominated_poroelastic, sneddon, walsh_quarter_no_chombo,
-         walsh_quarter_no_chombo_mgr, kgd_toughness_leakoff_dominated,
+         walsh_quarter_no_chombo_iterative, kgd_toughness_leakoff_dominated,
          kgd_toughness_storage_dominated)
 
 # Check parameters

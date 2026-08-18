@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./thermalCompressibleWell_mgr_base.xml" />
+    <File name="./thermalCompressibleWell_iterative.xml" />
   </Included>
 
   <Mesh>

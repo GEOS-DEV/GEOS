@@ -14,7 +14,7 @@ decks = [
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="thermalCompressibleWell_mgr_smoke",
+        name="thermalCompressibleWell_iterative_smoke",
         description=
         "Thermal single-phase reservoir with wells and hypre MGR (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 1)),

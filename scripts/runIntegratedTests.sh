@@ -11,7 +11,7 @@
 #   scripts/runIntegratedTests.sh --cpus 16 --memory 128g
 #   scripts/runIntegratedTests.sh --cpus 32 --memory 256g          # match streak2
 #   scripts/runIntegratedTests.sh --baselines /path/to/baselines
-#   scripts/runIntegratedTests.sh --filter _mgr
+#   scripts/runIntegratedTests.sh --filter _iterative
 #   scripts/runIntegratedTests.sh --generateBaselines
 #
 # If --baselines is omitted, the archive named in .integrated_tests.yaml is
@@ -25,6 +25,11 @@
 # .integrated_tests.yaml into this repo's .integrated-test-baselines/. Use that
 # when the GCS download is unavailable. ATS -a rebaseline is not used: it
 # aborts the rest of an .ats file when one test has no restart output.
+#
+# After ATS, `_iterative` geosx logs are harvested to
+# .integrated-test-iterations/{hypredrive,legacy}.json. A `--force-legacy` run
+# then compares that harvest to the hypredrive JSON with exact per-solve
+# sequences (zero slack) and fails if they differ.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -54,6 +59,7 @@ CUTOFF="45m"
 BUILD_DIR_NAME="build-integrated-tests"
 PULL=1
 GENERATE_BASELINES=0
+FORCE_LEGACY=0
 CPUS_FROM_CLI=0
 MEMORY_FROM_CLI=0
 EXTRA_ATS_ARGS=()
@@ -77,6 +83,7 @@ Options:
                         tarball named in develop's .integrated_tests.yaml into
                         .integrated-test-baselines/. Cannot be used with --baselines.
   --filter EXPR         ATS name filter (tests whose name contains EXPR)
+  --force-legacy        Set GEOS_HYPREDRV_FORCE_LEGACY=1 (legacy hypre path)
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
   --build-dir NAME      Build directory name under the repo (default ${BUILD_DIR_NAME})
   --no-pull             Do not docker pull the image first
@@ -383,6 +390,7 @@ while [[ $# -gt 0 ]]; do
     --baselines)  BASELINES="$2"; shift 2;;
     --generateBaselines) GENERATE_BASELINES=1; shift;;
     --filter)     FILTER="$2"; shift 2;;
+    --force-legacy) FORCE_LEGACY=1; shift;;
     --cutoff)     CUTOFF="$2"; shift 2;;
     --build-dir)  BUILD_DIR_NAME="$2"; shift 2;;
     --no-pull)    PULL=0; shift;;
@@ -485,8 +493,13 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_ITS_GENERATE_BASELINES="${GENERATE_BASELINES}"
     --env GEOS_ITS_BASELINE_ARCHIVE="${BASELINE_ARCHIVE}"
     --env GEOS_ITS_HOST_SRC="${GEOS_SRC_DIR}"
+    --env GEOS_ITS_FORCE_LEGACY="${FORCE_LEGACY}"
     --mount "type=bind,src=${GEOS_SRC_DIR},dst=/workspace"
   )
+  if [[ "${FORCE_LEGACY}" -eq 1 ]]; then
+    docker_args+=(--env GEOS_HYPREDRV_FORCE_LEGACY=1)
+    log "Forcing legacy hypre path (GEOS_HYPREDRV_FORCE_LEGACY=1)"
+  fi
 
   if [[ "${CONTAINER_CMD}" == podman ]]; then
     # Rootless Podman under Slurm cannot create cgroup slices. Do not pass
@@ -704,6 +717,10 @@ export OMPI_MCA_hwloc_base_report_bindings=1
 log "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
 
 log "Run ${ATS_CMD[*]}"
+if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 || -n "${GEOS_HYPREDRV_FORCE_LEGACY:-}" ]]; then
+  export GEOS_HYPREDRV_FORCE_LEGACY="${GEOS_HYPREDRV_FORCE_LEGACY:-1}"
+  log "GEOS_HYPREDRV_FORCE_LEGACY=${GEOS_HYPREDRV_FORCE_LEGACY} (legacy hypre path)"
+fi
 set +e
 "${ATS_CMD[@]}"
 ATS_STATUS=$?
@@ -730,7 +747,42 @@ if [[ -x bin/geos_ats_log_check && -f integratedTests/TestResults/test_results.i
     -y /workspace/.integrated_tests.yaml || true
 fi
 
+harvest_iterative_logs() {
+  local label="$1"
+  local dest="${GEOS_SRC_DIR}/.integrated-test-iterations/${label}.json"
+  local data_dir="integratedTests/TestResults/test_data"
+  if [[ ! -d "${data_dir}" ]]; then
+    log "No ${data_dir} to harvest (${label})"
+    return 0
+  fi
+  mkdir -p "$(dirname "${dest}")"
+  python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" harvest \
+    "${data_dir}" --iterative -o "${dest}"
+}
+
+ITER_COMPARE_STATUS=0
+if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 ]]; then
+  harvest_iterative_logs legacy || true
+  HYPREDRIVE_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive.json"
+  LEGACY_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/legacy.json"
+  if [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
+    log "Comparing _iterative linear-solver iteration sequences (zero slack)"
+    python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" compare \
+      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --exact-sequence || ITER_COMPARE_STATUS=$?
+    if [[ "${ITER_COMPARE_STATUS}" -ne 0 ]]; then
+      log "hypredrive vs legacy _iterative iteration sequences do not match"
+    fi
+  else
+    log "Skipping iteration compare (need both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS})"
+  fi
+else
+  harvest_iterative_logs hypredrive || true
+fi
+
 log "ATS exit status: ${ATS_STATUS}"
 log "Results (in container): ${BUILD_DIR}/integratedTests/TestResults"
 log "Results (on host):      ${GEOS_ITS_HOST_SRC:-.}/${GEOS_ITS_BUILD_DIR:-build-integrated-tests}/integratedTests/TestResults"
+if [[ "${ITER_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
+  exit "${ITER_COMPARE_STATUS}"
+fi
 exit "${ATS_STATUS}"

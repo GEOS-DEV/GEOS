@@ -47,7 +47,7 @@ decks = [
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="ContactMechanics_TFrac_mgr_smoke",
+        name="ContactMechanics_TFrac_iterative_smoke",
         description=
         "Two intersecting fractures with hypre MGR (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 1)),
@@ -117,7 +117,7 @@ decks = [
     # linearAlgebra/interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp
     # needs tuning before this deck can be part of the suite.
     # TestDeck(
-    #     name="ALM_TFrac_mgr_smoke",
+    #     name="ALM_TFrac_iterative_smoke",
     #     description=
     #     "ALM contact with hypre MGR (exercises the hypredrive path when available)",
     #     partitions=((1, 1, 1), (2, 2, 1)),
@@ -149,7 +149,7 @@ decks = [
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="LagrangeContactBubbleStab_FixedSlip_mgr_smoke",
+        name="LagrangeContactBubbleStab_FixedSlip_iterative_smoke",
         description=
         "Bubble-stabilized Lagrange contact with hypre MGR (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 1)),

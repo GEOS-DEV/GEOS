@@ -727,12 +727,13 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_RUN_STATUS=$?
   phase_finish "${ATS_RUN_STATUS}"
 
+  HYPREDRV_BANNER_STATUS=0
+  ITER_PARITY_STATUS=0
   if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
     # On a hypredrive-enabled build the previous pass exercised the hypredrive
     # solver path. Verify it actually ran (guards against silent fallback), then
     # re-run the suite through the legacy hypre path against the same baselines,
     # so hypredrive-vs-legacy equivalence is checked within a single job.
-    HYPREDRV_BANNER_STATUS=0
     grep -rl "hypredrive input" integratedTests/TestResults > /dev/null 2>&1 || HYPREDRV_BANNER_STATUS=$?
     if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
       echo "ERROR: no 'hypredrive input' banner found in any integrated-test log; the hypredrive path was not exercised."
@@ -741,19 +742,32 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     echo "Re-running integrated tests through the legacy hypre path..."
     # Keep the hypredrive pass results; the second pass overwrites TestResults.
     cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
+    HD_HARVEST_STATUS=0
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/TestResults/test_data -o $tempdir/iterations_hypredrive.json
+            integratedTests/TestResults/test_data --iterative \
+            -o $tempdir/iterations_hypredrive.json || HD_HARVEST_STATUS=$?
     integratedTests/geos_ats.sh -a veryclean
     GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
     ATS_LEGACY_RUN_STATUS=$?
 
-    # Restart checks compare solution fields only; additionally require iteration-count
-    # parity between the two passes so solver-quality regressions cannot pass silently.
+    # Restart checks compare solution fields only. Require exact per-solve
+    # iteration sequences on every `_iterative` geosx log so a 1-iteration
+    # hypredrive drift cannot pass silently.
+    LG_HARVEST_STATUS=0
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/TestResults/test_data -o $tempdir/iterations_legacy.json
-    ITER_PARITY_STATUS=0
-    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
-            $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json || ITER_PARITY_STATUS=$?
+            integratedTests/TestResults/test_data --iterative \
+            -o $tempdir/iterations_legacy.json || LG_HARVEST_STATUS=$?
+    if [[ "${HD_HARVEST_STATUS}" -ne 0 || "${LG_HARVEST_STATUS}" -ne 0 ]]; then
+      echo "ERROR: failed to harvest _iterative linear-solver iteration counts."
+      ITER_PARITY_STATUS=1
+    else
+      echo "Comparing _iterative linear-solver iteration sequences (zero slack)..."
+      python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
+              $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
+              --exact-sequence || ITER_PARITY_STATUS=$?
+    fi
+    cp -f $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
+          integratedTests/TestResults/ 2>/dev/null || true
   fi
 
   PROCESS_LOGS_STATUS=0
@@ -801,6 +815,17 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     fi
     phase_finish "${REBASELINE_STATUS}"
     INTEGRATED_TEST_EXIT_STATUS=1
+  fi
+
+  if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
+    if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive path was not exercised (no 'hypredrive input' banner)."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
+    if [[ "${ITER_PARITY_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive vs legacy _iterative linear-solver iteration sequences do not match."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
   fi
 
   echo "Done!"

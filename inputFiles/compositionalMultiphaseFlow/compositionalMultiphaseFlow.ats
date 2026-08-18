@@ -78,7 +78,7 @@ decks = [
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="deadoil_3ph_staircase_3d_mgr",
+        name="deadoil_3ph_staircase_3d_iterative",
         description=
         "hypre MGR variant (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 2)),
@@ -94,7 +94,7 @@ decks = [
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="deadoil_3ph_staircase_hybrid_3d_mgr",
+        name="deadoil_3ph_staircase_hybrid_3d_iterative",
         description=
         "hypre MGR variant (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 2)),
@@ -110,7 +110,7 @@ decks = [
         check_step=38,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="deadoil_3ph_staircase_obl_3d_mgr",
+        name="deadoil_3ph_staircase_obl_3d_iterative",
         description=
         "hypre MGR variant (exercises the hypredrive path when available)",
         partitions=((1, 1, 1), (2, 2, 2)),

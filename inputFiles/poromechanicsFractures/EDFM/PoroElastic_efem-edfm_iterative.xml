@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./PoroElastic_efem-edfm_base_common.xml"/>
+    <File name="./PoroElastic_efem-edfm_base.xml"/>
   </Included>
 
   <Solvers

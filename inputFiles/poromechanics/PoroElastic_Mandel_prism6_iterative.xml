@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./PoroElastic_Mandel_prism6_base_hybrid_common.xml"/>
+    <File name="./PoroElastic_Mandel_prism6_base.xml"/>
   </Included>
 
   <Solvers
