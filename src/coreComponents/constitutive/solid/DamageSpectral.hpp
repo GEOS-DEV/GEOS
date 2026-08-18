@@ -268,7 +268,6 @@ public:
     smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
   }
 
-
   GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
