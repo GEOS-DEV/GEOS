@@ -541,6 +541,17 @@ ATS_WORKING_DIR="${BUILD_DIR}/ats-working"
 ATS_BASELINE_DIR="${BUILD_DIR}/ats-baselines"
 HOST_CONFIG=/spack-generated.cmake
 
+if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
+  die "NPROC must be a positive integer, got '${NPROC}'."
+fi
+
+# Open MPI refuses root launches in CI containers unless both guard variables
+# are set. Keep this separate from openmpi_args because repeated geos-ats
+# overrides replace values.
+export OMPI_ALLOW_RUN_AS_ROOT=1
+export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=${CUTOFF}"
+
 # ATS always calls collect_baselines() on run. If the named archive is already
 # marked present (.blob_name), it skips GCS. Seed that marker so a 403 does not
 # hang in google.cloud.storage retries.
@@ -619,7 +630,7 @@ or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
   -DGEOS_LA_INTERFACE:PATH=Hypre \
   -DGEOS_ENABLE_BOUNDS_CHECK=ON \
   "-DBLT_MPI_COMMAND_APPEND=--allow-run-as-root;--oversubscribe" \
-  "-DATS_ARGUMENTS:STRING=--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=${CUTOFF}" \
+  "-DATS_ARGUMENTS:STRING=${ATS_ARGUMENTS}" \
   -DPython3_EXECUTABLE="${VENV_PY}" \
   -DATS_BASELINE_DIR="${ATS_BASELINE_DIR}" \
   -DATS_WORKING_DIR="${ATS_WORKING_DIR}"
@@ -665,6 +676,32 @@ fi
 if [[ ${#EXTRA_ATS_ARGS[@]} -gt 0 ]]; then
   ATS_CMD+=("${EXTRA_ATS_ARGS[@]}")
 fi
+
+# This route configures geos-ats' Open MPI machine explicitly. Capture the
+# selected launcher's identity once, and fail before tests if an image change
+# would make the Open MPI placement environment below ineffective.
+log "Diagnostic: mpirun --version"
+MPIRUN_VERSION_STATUS=0
+MPIRUN_VERSION_OUTPUT="$(/usr/bin/mpirun --version 2>&1)" || MPIRUN_VERSION_STATUS=$?
+printf '%s\n' "${MPIRUN_VERSION_OUTPUT}"
+log "Diagnostic 'mpirun --version' exit status: ${MPIRUN_VERSION_STATUS}"
+if [[ "${MPIRUN_VERSION_STATUS}" -ne 0 ]]; then
+  die "Open MPI integrated tests require /usr/bin/mpirun --version to succeed (exit ${MPIRUN_VERSION_STATUS})."
+fi
+if [[ "${MPIRUN_VERSION_OUTPUT}" != *"Open MPI"* ]]; then
+  die "Open MPI integrated tests require /usr/bin/mpirun to identify itself as Open MPI."
+fi
+
+# ATS accounts for the rank capacity of concurrent tests but does not assign
+# disjoint CPU affinities to their independent mpirun processes. Disable each
+# launcher's local rank binding so Linux can schedule ranks across the
+# container's allowed CPU set; this policy does not guarantee exclusive cores.
+export OMPI_MCA_hwloc_base_binding_policy=none
+log "Open MPI rank binding disabled with OMPI_MCA_hwloc_base_binding_policy=${OMPI_MCA_hwloc_base_binding_policy}."
+
+# Report the resulting placement policy in each launch's retained stderr.
+export OMPI_MCA_hwloc_base_report_bindings=1
+log "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
 
 log "Run ${ATS_CMD[*]}"
 set +e
