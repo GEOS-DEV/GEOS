@@ -1187,116 +1187,32 @@ void CommunicationTools::finalizeUnpack( ObjectManagerBase & manager,
                        icomm.mpiSendBufferStatus() );
 }
 
-void CommunicationTools::finalizeUnpack(
-  MeshLevel & mesh,
-  stdVector< NeighborCommunicator > & neighbors,
-  MPI_iCommData & icomm,
-  bool const onDevice,
-  parallelDeviceEvents & events,
-  MPI_Op const op,
-  CommunicationDirection const direction )
+void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
+                                         stdVector< NeighborCommunicator > & neighbors,
+                                         MPI_iCommData & icomm,
+                                         bool onDevice,
+                                         parallelDeviceEvents & events,
+                                         MPI_Op op,
+                                         CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
-#if defined( GEOS_USE_HIP )
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-  std::fprintf(
-    stdout,
-    "[rank %d] finalizeUnpack: entering receive/unpack polling\n",
-    rank );
-  std::fflush( stdout );
-#endif
-
-  GEOS_ASYNC_WAIT(
-    6000000000,
-    10,
-    asyncUnpack(
-      mesh,
-      neighbors,
-      icomm,
-      onDevice,
-      events,
-      op,
-      direction ) );
-
-#if defined( GEOS_USE_HIP )
-  std::fprintf(
-    stdout,
-    "[rank %d] finalizeUnpack: all receives processed, "
-    "unpackEvents=%zu\n",
-    rank,
-    events.size() );
-  std::fflush( stdout );
-#endif
-
+  // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op, direction ) );
   if( onDevice )
   {
-#if defined( GEOS_USE_HIP )
-    /*
-     * Diagnostic replacement for waitAllDeviceEvents(events).
-     * All unpack kernels must complete before the receive buffers can be reused.
-     */
-    hipError_t const error = hipDeviceSynchronize();
-
-    GEOS_ERROR_IF(
-      error != hipSuccess,
-      GEOS_FMT(
-        "Rank {}: HIP device unpack failed: {}",
-        rank,
-        hipGetErrorString( error ) ) );
-
-    std::fprintf(
-      stdout,
-      "[rank %d] finalizeUnpack: HIP unpack synchronized; "
-      "clearing %zu events\n",
-      rank,
-      events.size() );
-    std::fflush( stdout );
-
-    events.clear();
-#else
     waitAllDeviceEvents( events );
-#endif
   }
 
-  MpiWrapper::waitAll(
-    icomm.size(),
-    icomm.mpiSendBufferSizeRequest(),
-    icomm.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( icomm.size(),
+                       icomm.mpiSendBufferSizeRequest(),
+                       icomm.mpiSendBufferSizeStatus() );
 
-  MpiWrapper::waitAll(
-    icomm.size(),
-    icomm.mpiSendBufferRequest(),
-    icomm.mpiSendBufferStatus() );
+  MpiWrapper::waitAll( icomm.size(),
+                       icomm.mpiSendBufferRequest(),
+                       icomm.mpiSendBufferStatus() );
+
 }
-
-// void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
-//                                          stdVector< NeighborCommunicator > & neighbors,
-//                                          MPI_iCommData & icomm,
-//                                          bool onDevice,
-//                                          parallelDeviceEvents & events,
-//                                          MPI_Op op,
-//                                          CommunicationDirection direction )
-// {
-//   GEOS_MARK_FUNCTION;
-
-//   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-//   GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op, direction ) );
-//   if( onDevice )
-//   {
-//     waitAllDeviceEvents( events );
-//   }
-
-//   MpiWrapper::waitAll( icomm.size(),
-//                        icomm.mpiSendBufferSizeRequest(),
-//                        icomm.mpiSendBufferSizeStatus() );
-
-//   MpiWrapper::waitAll( icomm.size(),
-//                        icomm.mpiSendBufferRequest(),
-//                        icomm.mpiSendBufferStatus() );
-
-// }
 
 void CommunicationTools::synchronizeUnpack( ObjectManagerBase & manager,
                                             stdVector< NeighborCommunicator > & neighbors,

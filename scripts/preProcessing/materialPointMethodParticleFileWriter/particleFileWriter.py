@@ -1946,13 +1946,13 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
 
-# just for debugging
-export AMD_SERIALIZE_KERNEL=3
-export AMD_SERIALIZE_COPY=3
-export HIP_LAUNCH_BLOCKING=1
-export AMD_LOG_LEVEL=4
-export AMD_LOG_MASK=0x20387
-ulimit -c unlimited
+## Serialization for debugging gpu
+#export AMD_SERIALIZE_KERNEL=3
+#export AMD_SERIALIZE_COPY=3
+#export HIP_LAUNCH_BLOCKING=1
+#export AMD_LOG_LEVEL=4
+#export AMD_LOG_MASK=0x20387
+#ulimit -c unlimited
 
 echo "Launching flux run command..."
 export OMP_NUM_THREADS=1

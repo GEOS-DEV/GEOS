@@ -16906,48 +16906,11 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
 {
   GEOS_MARK_FUNCTION;
 
-
-
-  #if defined( GEOS_USE_HIP )
-  auto hipCheckpoint = [&]( char const * const label )
-  {
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-    hipError_t const launchError = hipPeekAtLastError();
-    GEOS_ERROR_IF(
-      launchError != hipSuccess,
-      GEOS_FMT( "Rank {}: HIP launch error at '{}': {}",
-                rank,
-                label,
-                hipGetErrorString( launchError ) ) );
-
-    hipError_t const executionError = hipDeviceSynchronize();
-    GEOS_ERROR_IF(
-      executionError != hipSuccess,
-      GEOS_FMT( "Rank {}: HIP execution error at '{}': {}",
-                rank,
-                label,
-                hipGetErrorString( executionError ) ) );
-
-fprintf( stdout,
-         "[rank %d] HIP checkpoint passed: %s\n",
-         rank,
-         label );
-fflush( stdout );
-  };
-#else
-  auto hipCheckpoint = []( char const * ) {};
-#endif
-
   // Skip when no fields were specified
   if( fieldNames.empty() )
   {
     return;
   }
-
-  std::stringstream ss;
-  ss << "syncGridFields entry, onDevice? " << syncGridOnDevice;
-  hipCheckpoint( ss.str().c_str() );
 
   // Put fields in the memory space used by pack/unpack. Device synchronization
   // keeps iterative FMPM state resident while host synchronization remains the
@@ -16957,8 +16920,6 @@ fflush( stdout );
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
     wrapper.move( syncGridOnDevice ? parallelDeviceMemorySpace : LvArray::MemorySpace::host, true );
   }
-
-  hipCheckpoint( "field move complete" );
 
   stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   if( neighbors.empty() )
@@ -16975,8 +16936,7 @@ fflush( stdout );
   // Phase 1: ghost contributions -> owning/master nodes, with reduction op.
   // Use the explicit reverse direction instead of mutating the persistent
   // owner/ghost communication lists.
-  constexpr CommunicationDirection reductionDirection =
-    CommunicationDirection::GhostToOwner;
+  constexpr CommunicationDirection reductionDirection = CommunicationDirection::GhostToOwner;
 
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
                                                                   mesh,
@@ -16984,7 +16944,6 @@ fflush( stdout );
                                                                   iComm,
                                                                   syncGridOnDevice,
                                                                   reductionDirection );
-  hipCheckpoint( "phase 1 size exchange complete" );
 
   parallelDeviceEvents packEvents;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
@@ -16994,39 +16953,13 @@ fflush( stdout );
                                                syncGridOnDevice,
                                                packEvents,
                                                reductionDirection );
-  hipCheckpoint( "phase 1 asyncPack launched" );
 
-  
-#if defined( GEOS_USE_HIP )
-  hipError_t const error = hipDeviceSynchronize();
-  GEOS_ERROR_IF(
-    error != hipSuccess,
-    GEOS_FMT(
-      "Rank {}: HIP phase-one pack synchronization failed: {}",
-      MpiWrapper::commRank( MPI_COMM_GEOS ),
-      hipGetErrorString( error ) ) );
-#else
   waitAllDeviceEvents( packEvents );
-#endif
-
-  hipCheckpoint( "phase 1 pack complete" );
-
-#if defined( GEOS_USE_HIP )
-  std::fprintf(
-    stdout,
-    "[rank %d] clearing %zu completed HIP pack events\n",
-    MpiWrapper::commRank( MPI_COMM_GEOS ),
-    packEvents.size() );
-  std::fflush( stdout );
-
-  packEvents.clear();
-#endif
 
   CommunicationTools::getInstance().asyncSendRecv( neighbors,
                                                    iComm,
                                                    syncGridOnDevice,
                                                    packEvents );
-  hipCheckpoint( "phase 1 MPI transfer submitted" );
 
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
@@ -17036,7 +16969,6 @@ fflush( stdout );
                                                     unpackEvents,
                                                     op,
                                                     reductionDirection );
-  hipCheckpoint( "phase 1 unpack complete" );
 
   // Phase 2: owning/master nodes -> ghosts, ordinary replacement sync.
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
@@ -17044,8 +16976,7 @@ fflush( stdout );
                                                                   neighbors,
                                                                   iComm,
                                                                   syncGridOnDevice );
-  hipCheckpoint( "phase 2 size exchange complete" );
-
+  
   parallelDeviceEvents packEvents2;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
                                                mesh,
@@ -17053,26 +16984,13 @@ fflush( stdout );
                                                iComm,
                                                syncGridOnDevice,
                                                packEvents2 );
-  hipCheckpoint( "phase 2 asyncPack launched" );
+  
+  waitAllDeviceEvents( packEvents2 );
 
-  // waitAllDeviceEvents( packEvents2 );
-  hipCheckpoint( "phase 2 pack complete" );
-
-  #if defined( GEOS_USE_HIP )
-  std::fprintf(
-    stdout,
-    "[rank %d] clearing %zu completed HIP pack events\n",
-    MpiWrapper::commRank( MPI_COMM_GEOS ),
-    packEvents.size() );
-  std::fflush( stdout );
-
-  packEvents2.clear();
-#endif
   CommunicationTools::getInstance().asyncSendRecv( neighbors,
                                                    iComm,
                                                    syncGridOnDevice,
                                                    packEvents2 );
-  hipCheckpoint( "phase 2 MPI transfer submitted" );
 
   parallelDeviceEvents unpackEvents2;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
@@ -17080,8 +16998,8 @@ fflush( stdout );
                                                     iComm,
                                                     syncGridOnDevice,
                                                     unpackEvents2 );
-  hipCheckpoint( "phase 2 unpack complete" );
 }
+
 
 /**
  * @brief Replaces ghost-node copies with owner/master-node values for non-additive grid fields.

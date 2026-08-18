@@ -121,8 +121,7 @@ using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >; // RAJA::h
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
 {
-  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
-  return parallelDeviceEvent();
+  return RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
 }
 #else
 
@@ -226,9 +225,16 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
+  if(events.empty())
+  {
+    return;
+  }
+
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
   GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+
+  events.clear();
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >
