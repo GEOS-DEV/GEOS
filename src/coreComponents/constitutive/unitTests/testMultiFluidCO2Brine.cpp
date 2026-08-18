@@ -155,9 +155,12 @@ public:
 
 private:
   static void fillPhysicalProperties( CO2BrineFluid & fluid );
-  static constexpr const char * pvtGasFileName = "pvtgas.txt";
-  static constexpr const char * pvtLiquidFileName = "pvtliquid.txt";
-  static constexpr const char * pvtFlashFileName = "co2flash.txt";
+  // This fixture writes model tables into the CTest working directory before
+  // constructing the fluid. The file names stay specific to this executable so
+  // parallel CTest runs cannot overwrite tables owned by other CO2-brine tests.
+  static constexpr const char * pvtGasFileName = "testMultiFluidCO2Brine_pvtgas.txt";
+  static constexpr const char * pvtLiquidFileName = "testMultiFluidCO2Brine_pvtliquid.txt";
+  static constexpr const char * pvtFlashFileName = "testMultiFluidCO2Brine_co2flash.txt";
 };
 
 template< BrineModelType BRINE, FlashType FLASH, bool THERMAL >

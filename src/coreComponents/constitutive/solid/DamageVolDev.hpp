@@ -153,7 +153,6 @@ public:
     }
   }
 
-
   GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final

@@ -87,6 +87,30 @@ decks = [
         partitions=((1, 1, 1), (1, 2, 1)),
         restart_step=0,
         check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoDruckerPrager_1DCooling_fim_smoke",
+        description=
+        '1D thermomechanics fim problem under cooling with Drucker Prager model',
+        partitions=((1, 1, 1), (1, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElastic_1DCooling_fim_smoke",
+        description=
+        '1D thermomechanics fim problem under cooling with linear elastic isotropic model',
+        partitions=((1, 1, 1), (1, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElastic_1DCooling_sq_smoke",
+        description=
+        '1D thermomechanics sequential problem under cooling with linear elastic isotropic model',
+        partitions=((1, 1, 1), (1, 2, 1)),
+        restart_step=0,
+        check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

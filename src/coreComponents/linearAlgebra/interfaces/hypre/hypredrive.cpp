@@ -1040,12 +1040,15 @@ void appendPressureAMG( std::ostringstream & stream,
 #else
   appendLine( stream, indentLevel + 2, "prolongation_type: 4" );
 #endif
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  // HYPRE_BoomerAMGCreate defaults max_coarse_size to 9, whereas
+  // HypreDrive defaults it to 64. Specify the legacy value explicitly.
   appendLine( stream, indentLevel + 1, "coarsening:" );
   if( minCoarseSize >= 0 )
   {
     appendLine( stream, indentLevel + 2, GEOS_FMT( "min_coarse_size: {}", minCoarseSize ) );
   }
+  appendLine( stream, indentLevel + 2, "max_coarse_size: 9" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   appendLine( stream, indentLevel + 2, "type: 8" );
   appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
   appendLine( stream, indentLevel + 1, "relaxation:" );
@@ -1054,11 +1057,6 @@ void appendPressureAMG( std::ostringstream & stream,
   appendLine( stream, indentLevel + 2, "coarse_type: 18" );
   appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
 #else
-  if( minCoarseSize >= 0 )
-  {
-    appendLine( stream, indentLevel + 1, "coarsening:" );
-    appendLine( stream, indentLevel + 2, GEOS_FMT( "min_coarse_size: {}", minCoarseSize ) );
-  }
   appendLine( stream, indentLevel + 1, "relaxation:" );
   appendLine( stream, indentLevel + 2, "order: 1" );
 #endif

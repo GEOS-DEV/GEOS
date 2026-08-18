@@ -86,6 +86,7 @@ endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/hypredrive)
   set(HYPREDRV_DIR ${GEOS_TPL_DIR}/hypredrive CACHE PATH "" FORCE)
+  set(ENABLE_HYPREDRV ON CACHE BOOL "" FORCE)
 endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/scotch)
