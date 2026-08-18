@@ -163,6 +163,7 @@ jobs:
         version: '>= 363.0.0'
 
     - name: Build, test, deploy.
+      id: build_test_deploy
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -371,7 +372,22 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
-        echo "::group::Baseline and log uploads"
+        echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
+        echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
+        echo "data_exchange_dir=${DATA_EXCHANGE_DIR}" >> "${GITHUB_OUTPUT}"
+
+        exit ${EXIT_STATUS}
+
+    - name: Baseline and log uploads
+      if: ${{ always() && steps.build_test_deploy.outputs.data_basename != '' }}
+      env:
+        GEOS_BUILD_EXIT_STATUS: ${{ steps.build_test_deploy.outputs.exit_status }}
+        GEOS_DATA_BASENAME: ${{ steps.build_test_deploy.outputs.data_basename }}
+        GEOS_DATA_EXCHANGE_DIR: ${{ steps.build_test_deploy.outputs.data_exchange_dir }}
+      run: |
+        EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
+        DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
         UPLOAD_HEADER_PRINTED=false
         GCP_CREDENTIALS_STATUS="not set"
         if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
@@ -413,7 +429,6 @@ jobs:
             if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
               echo "Status: upload configuration failed"
               echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}"
-              echo "::endgroup::"
               exit 1
             fi
 
@@ -441,7 +456,6 @@ jobs:
                   echo
                   echo "Failed upload:"
                   echo "  ${UPLOAD_LABEL}: gs://${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
-                  echo "::endgroup::"
                   exit 1
                 fi
 
@@ -458,9 +472,6 @@ jobs:
         else
           echo "GCP upload disabled."
         fi
-        echo "::endgroup::"
-
-        exit ${EXIT_STATUS}
 
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
