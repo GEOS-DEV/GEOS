@@ -7,22 +7,23 @@ Thermally Induced Failure under Confined Cooling
 
 **Context**
 
-Cooling a rock that is not free to contract generates tensile stress. Where the rock is
-confined, this thermally induced stress adds to the in-situ state and can bring the material
-to failure without any change in pore pressure or external load. This mechanism drives, among
-others, thermal fracturing around cold-fluid injectors and the loss of caprock integrity
-during CO\ :sub:`2` storage.
 
-This example isolates that mechanism on a purely thermo-mechanical one-dimensional problem,
-and contrasts two constitutive choices for the same cooling history:
+When a rock cools but cannot contract, it develops tensile stress. In a confined 
+rock mass, this thermal stress combines with the existing in-situ stresses and 
+may cause the rock to fail—even when pore pressure and external loading stay constant. 
+This mechanism is responsible for thermal fracturing around cold-fluid injectors 
+and caprock damage during CO\ :sub:`2` storage, among other phenomena.
 
-- a **thermo-elastic** rock (``ElasticIsotropic``), in which the induced stress grows without
-  bound as the rock keeps cooling,
-- a **thermo-plastic** rock (``DruckerPrager``), in which the induced stress is capped by the
-  yield surface: beyond a critical cooling, the rock fails and deforms plastically.
+This example simulates thermal contraction stresses using a one-dimensional
+thermo-mechanical problem. We compare two constitutive models subjected to the same cooling history:
 
-Both cases admit a closed-form solution, so this example doubles as a verification of the
-thermo-mechanical coupling and of the Drucker-Prager return mapping under thermal loading.
+- **Thermo-elastic rock** (``ElasticIsotropic``): The induced stress increases indefinitely as the rock continues cooling.
+
+- **Thermo-plastic rock** (``DruckerPrager``): The induced stress is limited by the yield surface. Beyond a critical temperature drop, the rock fails and deforms plastically.
+
+Both cases have closed-form solutions, making this example useful for verifying 
+the thermo-mechanical coupling and the Drucker-Prager return mapping under thermal loading.
+
 
 **InputFile**
 
@@ -45,13 +46,12 @@ input files located at:
 Description of the case
 ---------------------------------------------------
 
-We consider a column of 7 m discretized with 14 elements along the ``y`` direction, and a
+We consider a seven-meter column discretized with 14 elements along the ``y`` direction, and a
 single element in the two other directions. The column is initially at a uniform temperature
-of 100 (in the units of the input file), and is cooled down to 20 following a linear ramp
-imposed over the whole domain.
+of 100 K, and is cooled down to 20 K following a linear ramp imposed over the whole domain.
 
 The mechanical boundary conditions are the essential ingredient of the problem: the two ends
-of the column (``yneg`` and ``ypos``) are both fixed along ``y``, while the ``x`` and ``z``
+of the column (``yneg`` and ``ypos``) are fixed along ``y``, while the ``x`` and ``z``
 directions are only restrained on one face and are therefore free to deform. The resulting
 state is one of **uniaxial strain along** ``y``:
 
@@ -65,7 +65,7 @@ state is one of **uniaxial strain along** ``y``:
   :end-before: <!-- SPHINX_CONSTRAINTS_END -->
 
 The cooling history is prescribed by a ``TableFunction`` applied to the temperature field.
-The first, very short plateau lets the mechanical equilibrium settle before the thermal
+A short initial temperature plateau lets the mechanical equilibrium settle before the thermal
 loading starts.
 
 .. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoMech_1DCooling_base.xml
@@ -75,7 +75,7 @@ loading starts.
 
 The pore pressure is fixed to zero and the permeability is set to a negligible value
 (:math:`10^{-100}` m\ :sup:`2`), so that no fluid flow takes place: the stress evolution is
-entirely thermo-mechanical, which keeps the interpretation unambiguous.
+entirely thermo-mechanical, like in the analytical solution.
 
 ------------------------------------------------------------------
 Constitutive models
@@ -90,7 +90,7 @@ The two cases differ **only** by the solid model. The thermo-elastic case uses a
   :start-after: <!-- SPHINX_ELASTIC_SOLID -->
   :end-before: <!-- SPHINX_ELASTIC_SOLID_END -->
 
-The thermo-plastic case keeps the same elastic properties and the same thermal expansion
+The thermo-plastic case uses the same elastic properties and thermal expansion
 coefficient, and adds a Drucker-Prager yield surface:
 
 .. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoDruckerPrager_1DCooling_fim_smoke.xml
@@ -181,21 +181,21 @@ Results
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/1DCooling/plot1DCooling.py
 
-The left panel shows the stress induced by the confined cooling. Up to
+The figure on the left shows the stress induced by the confined cooling. Up to
 :math:`-\Delta T \approx 39` K the two models are indistinguishable and follow the elastic
 line :math:`-E \alpha \Delta T` exactly. Past that threshold, the elastic rock keeps
 accumulating tensile stress and reaches 17.8 kPa at the end of the cooling, whereas the
 Drucker-Prager rock **yields** and its stress saturates at the analytical cap
 :math:`\sigma_{f}`, matching to machine precision.
 
-The middle panel explains the mechanism in the invariant plane. Because
+The figure in the middle explains the mechanism in the invariant plane. Because
 :math:`\sigma_{xx} = \sigma_{zz} = 0`, the loading path is the straight line :math:`Q = 3P`,
 whatever the amount of cooling. The elastic path simply crosses the Drucker-Prager envelope
 and keeps going, which is physically inadmissible; the elasto-plastic path stops on the
 envelope and slides along it.
 
-The right panel gives the kinematic counterpart. Up to the failure threshold the two columns
-contract identically. Past it, the roles reverse with respect to the stress plot: the
+The figure on the right shows the kinematic counterpart. Up to the failure threshold, the two columns
+contract identically. Beyond it, the roles reverse with respect to the stress plot: the
 elasto-plastic column, whose stress is now frozen, contracts **more** than the elastic one,
 reaching :math:`-32.7` against :math:`-29.7` µm. Plastic flow converts what would have been
 additional stress into additional strain. GEOS matches the analytical displacement of both
