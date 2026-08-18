@@ -141,8 +141,10 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
  * Evaluates at compile time if a fmt::formatter exists for a given type
  */
 #if __cplusplus < 202002L
+// fmt 11.2: has_formatter<T, Context>() no longer works. The second parameter
+// is now Char (not format_context), and the type-trait form is deprecated.
 template< class T >
-static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+static constexpr bool has_formatter_v = fmt::is_formattable< fmt::remove_cvref_t< T > >::value;
 #else
 template< typename T >
 concept has_formatter_v = requires ( T& v, std::format_context ctx )
