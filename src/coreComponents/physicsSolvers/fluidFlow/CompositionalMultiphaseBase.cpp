@@ -73,6 +73,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasCapPressure( false ),
   m_hasDiffusion( false ),
   m_hasDispersion( false ),
+  m_hasVelocityComputed( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
@@ -167,6 +168,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether simple accumulation form is used" );
+
+  this->registerWrapper( viewKeyStruct::hasVelocityComputedString(), &m_hasVelocityComputed ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether reconstructed velocity is computed" );
 
   this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
     setSizedFromParent( 0 ).
@@ -301,6 +308,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
       // If at least one region has a dispersion model, consider it enabled for all
       m_hasDispersion |= !getConstitutiveName< DispersionBase >( subRegion ).empty();
+      m_hasVelocityComputed += integer( m_hasDispersion );//activate velocity if dispersion is on
       GEOS_ERROR_IF( m_hasDispersion, "Dispersion is not supported yet, please remove it from this XML file" );
 
     } );
@@ -441,6 +449,18 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< flow::compAmount_n >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
+
+      if( m_hasVelocityComputed )
+      {
+
+        array1d< std::string > directions( 3 );
+        directions[0] = "x"; directions[1] = "y"; directions[2] = "z";
+        subRegion.registerField< flow::phaseVelocity >( getName()).
+          setDimLabels( 1, fluid.phaseNames() ).
+          setDimLabels( 2, directions ).
+          reference().resizeDimension< 1, 2 >( m_numPhases, directions.size() );
+      }
+
 
     } );
 
@@ -1056,6 +1076,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
       diffusionMaterial.initializeTemperatureState( temperature );
     }
+
     if( m_hasDispersion )
     {
       string const & dispersionName = subRegion.template getReference< string >( viewKeyStruct::dispersionNamesString() );
@@ -1063,7 +1084,14 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       GEOS_UNUSED_VAR( dispersionMaterial );
       // TODO: compute the phase velocities here
       //dispersionMaterial.saveConvergedVelocitySate( phaseVelovity );
+      // arrayView3d< real64 const > const phaseVelocity = subRegion.template getField< fields::flow::phaseVelocity >();
+      // if( m_useMass )
+      // dispersionMaterial.initializeVelocityState( phaseVelocity, fluid.phaseMassDensity());
+      // else
+      // dispersionMaterial.initializeVelocityState( phaseVelocity, fluid.phaseDensity());
+
     }
+
 
   } );
 }
@@ -2907,7 +2935,13 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         GEOS_UNUSED_VAR( dispersionMaterial );
         // TODO: compute the total velocity here
         //dispersionMaterial.saveConvergedVelocitySate( totalVelovity );
+        // if( m_useMass )
+        // this->saveConvergedVelocityState( velocity, fluidMaterial.phaseMassDensity() );
+        // else
+        // this->saveConvergedVelocityState( velocity, fluidMaterial.phaseDensity() );
       }
+
+
     } );
   } );
 }

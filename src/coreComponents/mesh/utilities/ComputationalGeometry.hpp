@@ -302,6 +302,197 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   return area;
 }
 
+
+
+// template< int NFACES>
+// GEOS_HOST_DEVICE
+// array2d<real64> computeVelocities_( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes, real64 const (&rotation)[3][3]) 
+// {
+//     array2d<real64> velocity;//should be rotated so that the off plane is aligned with z ?
+
+//     //check compatibility on sizes
+//     GEOS_ERROR_IF( (normals.size(1)!=fluxes.size()), GEOS_FMT("Error in parameters: normal({}) and fluxes({}) are different in sizes.", normals.size(1), fluxes.size()) );
+//     GEOS_ERROR_IF( (NFACES!=fluxes.size()), GEOS_FMT("Error in parameters: templatized size({}) and fluxes({}) are different in sizes.", NFACES, fluxes.size()) );
+
+//    //TODO dispatch as a function of dims and nfaces
+//    real64 velocity_c[2], fluxes_c[NFACES];
+//    real64 n[ NFACES ][ 2 ], ntn[ 2 ][ 2 ], ope[2][ NFACES ];
+
+//   // N is nfaces x 3 matrices of normal
+//   // (N^T N)^(-1)*N^T is the interpolant
+//   real64 a = 0., b = 0., c = 0.;
+//   for(int i=0; i<NFACES; ++i){
+
+//    n[i][0] = normals[i][0];
+//    n[i][1] = normals[i][1];
+    
+//     a += normals[i][0]*normals[i][0];
+//     b += normals[i][1]*normals[i][1];
+//     c += normals[i][0]*normals[i][1];
+    
+//     fluxes_c[i][0] = fluxes[i];
+//   }
+
+//     real64 detA = a*b - c*c;
+//     assert(LvArray::math::abs(detA) > 1e-12); // else 2D most likely
+//     // analytical inverse for symmetrical matrix
+//     // [a c ]
+//     // [. b ]
+
+//     ntn[0][0] = 1/detA * (b);
+//     ntn[1][1] = 1/detA * (a);
+//     ntn[0][1] = 1/detA * (-c);
+//     ntn[1][0] = 1/detA * (-c);
+   
+//     //from Symmatrix
+//     LvArray::tensorOps::Rij_add_AikBjk<2,NFACES>(ope, ntn, n);
+//     LvArray::tensorOps::Ri_add_AijBj<2,NFACES>(velocity_c, ope, fluxes_c);
+
+//     velocity[0][0] = velocity_c[0];
+//     velocity[0][1] = velocity_c[1];
+//     velocity[0][2] = 0.0;//off plane
+    
+//     return velocity;
+// }
+
+
+template< int NFACES, typename NORMAL_TYPE >
+GEOS_HOST_DEVICE
+array2d<real64> computeVelocities_( NORMAL_TYPE const & normals, arrayView1d< real64 const > const & fluxes) 
+{
+    array2d<real64> velocity;
+    velocity.resize(1,3);
+
+    //check compatibility on sizes
+    // GEOS_ERROR_IF( (normals.size(1)!=fluxes.size()), GEOS_FMT("Error in parameters: normal({}) and fluxes({}) are different in sizes.", normals.size(1), fluxes.size()) );
+    GEOS_ERROR_IF( (NFACES!=fluxes.size()), GEOS_FMT("Error in parameters: templatized size({}) and fluxes({}) are different in sizes.", NFACES, fluxes.size()) );
+
+   //TODO dispatch as a function of dims and nfaces
+   real64 velocity_c[3], fluxes_c[NFACES];
+   real64 n[ NFACES ][ 3 ], ntn[ 3 ][ 3 ], ope[3][ NFACES ];
+
+  // N is nfaces x 3 matrices of normal
+  // (N^T N)^(-1)*N^T is the interpolant
+  real64 a = 0., b = 0., c = 0., d = 0., e = 0., f = 0.;
+  for(int i=0; i<NFACES; ++i){
+
+   n[i][0] = normals[i][0];
+   n[i][1] = normals[i][1];
+   n[i][2] = normals[i][2];
+    
+   a += normals[i][0]*normals[i][0];
+   b += normals[i][1]*normals[i][1];
+   c += normals[i][2]*normals[i][2];
+
+   d += normals[i][0]*normals[i][1];
+   f += normals[i][0]*normals[i][2];
+   e += normals[i][1]*normals[i][2];
+
+   fluxes_c[i] = fluxes[i];
+    ope[0][i] = 0.; ope[1][i] = 0.; ope[2][i] = 0.;
+
+   std::cout << i << " : " << fluxes[i] << "==" << fluxes_c[i] << std::endl;
+  }
+
+    real64 detA = a*b*c + 2*d*e*f - b*f*f - c*d*d - a*e*e;
+    std::cout << "n : \n" 
+    << n[0][0] << " " << n[0][1] << " " << n[0][2] << "\n"
+    << n[1][0] << " " << n[1][1] << " " << n[1][2] << "\n"
+    << n[2][0] << " " << n[2][1] << " " << n[2][2] << "\n"
+    << n[3][0] << " " << n[3][1] << " " << n[3][2] << "\n"
+    << n[4][0] << " " << n[4][1] << " " << n[4][2] << "\n"
+    << n[5][0] << " " << n[5][1] << " " << n[5][2] << "\n";
+    std::cout << "determinant " << detA << "\n"; 
+
+    assert(LvArray::math::abs(detA) > 1e-12); // else 2D most likely
+    // analytical inverse for symmetrical matrix
+    // [a d f]
+    // [. b e]
+    // [. . c]
+
+    ntn[0][0] = 1/detA * (b*c-e*e);
+    ntn[1][1] = 1/detA * (a*c-f*f);
+    ntn[2][2] = 1/detA * (a*b-d*d);
+
+    ntn[0][1] = 1/detA * (d*c-e*f);
+    ntn[0][2] = 1/detA * (d*e-f*b);
+    ntn[1][2] = 1/detA * (a*e-f*d);
+
+    ntn[1][0] = 1/detA * (d*c-e*f);
+    ntn[2][0] = 1/detA * (d*e-f*b);
+    ntn[2][1] = 1/detA * (a*e-f*d);
+
+    std::cout << "ntn : \n" 
+      << ntn[0][0] << " " << ntn[0][1] << " " << ntn[0][2] << "\n"
+      << ntn[1][0] << " " << ntn[1][1] << " " << ntn[1][2] << "\n"
+      << ntn[2][0] << " " << ntn[2][1] << " " << ntn[2][2] << "\n";
+
+
+    //from Symmatrix
+    LvArray::tensorOps::Rij_add_AikBjk<3,NFACES,3>(ope, ntn, n);
+    LvArray::tensorOps::Ri_add_AijBj<3,NFACES>(velocity_c, ope, fluxes_c);
+    
+    std::cout << "ope : \n" 
+      << ope[0][0] << " " << ope[0][1] << " " << ope[0][2] << " " << ope[0][3]<< " " << ope[0][4]<< " " << ope[0][5]<< "\n"
+      << ope[1][0] << " " << ope[1][1] << " " << ope[1][2] << " " << ope[1][3]<< " " << ope[1][4]<< " " << ope[1][5]<< "\n"
+      << ope[2][0] << " " << ope[2][1] << " " << ope[2][2] << " " << ope[2][3]<< " " << ope[2][4]<< " " << ope[2][5]<< "\n";
+    
+    velocity[0][0] = velocity_c[0];
+    velocity[0][1] = velocity_c[1];
+    velocity[0][2] = velocity_c[2];
+
+    return velocity;
+}
+
+// Compute Velocity interpolations
+template< typename NORMAL_TYPE >
+array2d<real64> computeVelocity( NORMAL_TYPE const & normals, arrayView1d< real64 const > const & fluxes, ElementType& elem /*subRegion.getElementType()*/)
+{
+
+switch (elem) {
+
+  case geos::ElementType::Triangle:
+    //TODO pre-post rotate
+    GEOS_ERROR("Not Implemented Yet !");
+    break;
+    // return computeVelocities_<3>(normals,fluxes, rotation);
+  case geos::ElementType::Quadrilateral:
+  //TODO pre-post rotate
+    GEOS_ERROR("Not Implemented Yet !");
+    break;
+    // return computeVelocities_<4>(normals,fluxes, rotation);
+  case geos::ElementType::Tetrahedron:
+    return computeVelocities_<4>(normals,fluxes);
+  case geos::ElementType::Pyramid:
+  case geos::ElementType::Prism5:
+  case geos::ElementType::Wedge:
+    return computeVelocities_<5>(normals,fluxes);
+  case geos::ElementType::Hexahedron:
+  case geos::ElementType::Prism6:
+    return computeVelocities_<6>(normals,fluxes);
+  case geos::ElementType::Prism7:
+    return computeVelocities_<7>(normals,fluxes);
+  case geos::ElementType::Prism8:
+    return computeVelocities_<8>(normals,fluxes);
+  case geos::ElementType::Prism9:
+    return computeVelocities_<9>(normals,fluxes);
+  case geos::ElementType::Prism10:
+    return computeVelocities_<10>(normals,fluxes);
+  case geos::ElementType::Prism11:
+    return computeVelocities_<11>(normals,fluxes);
+    
+
+  case geos::ElementType::Polygon:
+  case geos::ElementType::Polyhedron:
+  default:
+    GEOS_ERROR("Velocities are not computed on 2D Polygons cell type");
+    break;
+
+}
+
+  return {};
+}
+
 /**
  * @brief Change the orientation of the input vector to be consistent in a global sense.
  * @tparam NORMAL_TYPE type of @p normal
