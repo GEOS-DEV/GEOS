@@ -89,11 +89,14 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     djump[0][2] = table( ei, DSLIP1 );
 
 
+
+
     traction[0][0] = table( ei, NTRAC );
     traction[0][1] = table( ei, STRAC0 );
     traction[0][2] = table( ei, STRAC1 );
 
-    kernelWrapper.updateFractureState( jump[0],
+    kernelWrapper.updateFractureState( 0, 
+                                       jump[0],
                                        traction[0],
                                        fractureState[0] );
 
@@ -146,7 +149,8 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
                                                                                                               traction.toView()
                                                                                                               );
 
-    kernelWrapper.updateFractureState( jump[0],
+    kernelWrapper.updateFractureState( 0, 
+                                       jump[0],
                                        newTraction[0],
                                        fractureState[0] );
 

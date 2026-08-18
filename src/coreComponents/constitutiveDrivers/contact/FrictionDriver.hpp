@@ -16,6 +16,7 @@
 #ifndef GEOS_CONSTITUTIVEDRIVERS_CONTACT_FRICTIONDRIVER_HPP
 #define GEOS_CONSTITUTIVEDRIVERS_CONTACT_FRICTIONDRIVER_HPP
 
+
 #include "constitutiveDrivers/ConstitutiveDriver.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 // #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
@@ -26,6 +27,113 @@ namespace constitutive
 {
 class FrictionBase;
 }
+
+namespace LUsolver{
+
+// ============================================================================
+// Minimal dense linear algebra: LU with partial pivoting
+// ============================================================================
+ 
+// In-place LU decomposition of an n x n matrix stored row-major in A
+// (A is overwritten: U in upper incl. diag, L multipliers below diag,
+// unit diagonal for L implied). piv[i] = original row that ended up at row i.
+// Returns false if the matrix is (numerically) singular.
+bool luDecompose(std::vector<double>& A, int n, std::vector<int>& piv);
+
+ 
+// Solve A x = b given the LU-factored A (from luDecompose) and its pivot.
+std::vector<double> luSolve(const std::vector<double>& LU, int n,
+                             const std::vector<int>& piv,
+                             const std::vector<double>& b);
+ 
+// Convenience: solve a SMALL fixed-size system (used for the 3x3 bubble
+// condensation) via the same LU machinery, working on a flat copy.
+template <int N>
+std::array<std::array<double,N>,N> invertSmall(const std::array<std::array<double,N>,N>& M);
+
+}
+
+namespace mimicAssembly{
+
+using IndexType = std::ptrdiff_t;
+using CRSMat = CRSMatrix< real64, IndexType, IndexType >;
+
+array2d<real64> buildD(double K, double G);
+
+// ----------------------------------------------------------------------------
+// Reference hex: trilinear shape functions and their parent-coordinate
+// derivatives at (xi, eta, zeta) in [-1,1]^3. Standard node ordering.
+// ----------------------------------------------------------------------------
+constexpr std::array<std::array<double,3>,8> refCorners = {{
+    {-1,-1,-1},{ 1,-1,-1},{ 1, 1,-1},{-1, 1,-1},
+    {-1,-1, 1},{ 1,-1, 1},{ 1, 1, 1},{-1, 1, 1}
+}};
+
+void shapeAndGrad(double xi, double eta, double zeta,
+                   std::array<double,8>& N,
+                   std::array<std::array<double,3>,8>& dNdXi);
+ 
+// Face bubble (Frigo Eq. 20a) for the face at xi_j = sign, on an axis-aligned
+// hex. faceAxis in {0,1,2} = which parent coordinate is pinned to the face;
+// faceSign = +1 or -1.
+void bubbleAndGrad(double xi, double eta, double zeta,
+                    int faceAxis, double faceSign,
+                    double& b, array1d<double>& dbdXi);
+ 
+// 2x2x2 Gauss rule
+const double gp = 1.0 / std::sqrt(3.0);
+const std::array<std::array<double,3>,8> gaussPts = {{
+    {-gp,-gp,-gp},{ gp,-gp,-gp},{ gp, gp,-gp},{-gp, gp,-gp},
+    {-gp,-gp, gp},{ gp,-gp, gp},{ gp, gp, gp},{-gp, gp, gp}
+}};
+const double gaussW = 1.0; // weight 1 each for 2-pt rule per axis
+ 
+// Voigt B-column for a generic scalar shape function's physical gradient
+array2d<real64> bColumn(double dNdx, double dNdy, double dNdz);
+
+// ----------------------------------------------------------------------------
+// Element geometry: axis-aligned unit cube, origin = (x0,y0,z0).
+// Physical gradient = parent gradient * 2/L (L=1 here) -> factor 2.
+// detJ = (L/2)^3 = 1/8.
+// ----------------------------------------------------------------------------
+struct HexElem
+{
+    double x0, y0, z0;      // corner with min x,y,z
+    std::array<int,8> node; // global node ids
+    bool hasBubble = false;
+    int bubbleId = -1;      // global bubble block index
+    int bubbleFaceAxis = 0; // which parent axis the fault face sits on
+    double bubbleFaceSign = 1.0;
+};
+ 
+// Local nodal-nodal (24x24), nodal-bubble (24x3), bubble-bubble (3x3)
+struct LocalBlocks
+{
+    static constexpr int nnodes = 24;
+    static constexpr int ncenters = 3;
+
+    array2d<real64> Kuu{nnodes,nnodes};
+    array2d<real64> Kub{nnodes,ncenters};
+    array2d<real64> Kbb{ncenters,ncenters};
+};
+ 
+LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e);
+
+// Kcond = Kuu - Kub * Kbb^-1 * Kub^T  (3x3 inverse via our own LU, small enough
+// that we go through the same generic solver rather than a closed form)
+array2d<real64> condense(const LocalBlocks& L);
+
+CRSMat assemble(const array2d<real64>& D);
+
+struct ContactState { double tN = 0.0; bool open = true; };
+
+std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, 
+        double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction );
+
+}
+
+
+
 
 class FrictionDriver : public ConstitutiveDriver
 {
@@ -67,14 +175,17 @@ private:
     constexpr static char const * contactNameString()
     { return "contact"; }
 
-    constexpr static char const * jumpFunctionString()
-    { return "jumpControl"; }
+    // constexpr static char const * jumpFunctionString()
+    // { return "jumpControl"; }
 
     constexpr static char const * dJumpFunctionString()
     { return "dJumpControl"; }
 
-    constexpr static char const * tractionFunctionString()
-    { return "tractionControl"; }
+    constexpr static char const * stressFunctionRString()
+    { return "stressControlsR"; }
+    
+    constexpr static char const * stressFunctionLString()
+    { return "stressControlsL"; }
 
     constexpr static char const * thetaString()
     { return "yTiltAngle";}
@@ -113,18 +224,20 @@ private:
     constexpr static char const * simultaneous()
     { return "simultaneous"; }
 
-
   };
 
   // Time is defined in base class
-  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NJUMP, SLIP0, SLIP1, NDJUMP, DSLIP0, DSLIP1, CC, FS, 
+  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NDJUMP, DSLIP0, DSLIP1, CC, FS, 
                   NEWTRAC, SNEWTRAC0, SNEWTRAC1, 
+                  NJUMP, SLIP0, SLIP1,
                   NTOL, TTOL, NTRACTOL,
-                  ITERPEN0, ITERPEN1, TLIM };
+                  ITERPEN0, ITERPEN1, TLIM,
+                  ITER };
 
-  string m_jumpFunctionName; ///<
+  // string m_jumpFunctionName; ///<
   string m_dJumpFunctionName; ///<
-  string m_tractionFunctionName; ///<
+  string m_stressFunctionsNamesR; ///<
+  string m_stressFunctionsNamesL; ///<
 
   real64 m_theta{0.0}; ///< x-tilt of fault
   real64 m_phi{0.0};  ///< y-tilt of fault
