@@ -5,8 +5,34 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4068 (2026-05-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
-=====================
+PR #3884 (2026-08-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3884-17320-39debdc.tar.gz>
+Total stress fix in the thermo-poromechanics model
+
+PR #4114 (2026-08-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4114-17283-3bb33cb.tar.gz>
+Stop dumping linear systems from ATS decks (`writeLinearSystem` no longer set). That flag is stored in restart files, so `perf_status_test` restartchecks need a new baseline.
+
+PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
+Fluid reset after convergence failure
+
+PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
+Well model refactor .  Integrated test update due to schema changes 
+
+PR #3836 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-17046-2e89f64.tar.gz>
+Added statistics `Group` objects for each statistics `Task` instance
+
+PR #4040 (2026-06-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4040-16993-1393f80.tar.gz>
+Move relperm driver to use new constitutive driver framework
+
+PR #3705 (2026-06-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3705-16862-2b262bf.tar.gz>
+Implement compositional enthalpy model
+
+PR #4074 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4074-16937-bf66240.tar.gz>
+Change triaxial driver to use restart for checks
+
+PR #4067 (2026-06-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4067-16928-3038f6b.tar.gz>
+Add Coulomb friction/cohesion input from vtk mesh
+
+PR #4068 (2026-06-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4068-16828-c74157c.tar.gz>
 Add MPI runs for smoke tests with surfaceGenerator
 
 PR #4062 (2026-05-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4062-16784-6d8782e.tar.gz>

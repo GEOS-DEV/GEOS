@@ -3,7 +3,7 @@
 #################################################################################
 #--------------------------------------------------------------------------------
 # SYS_TYPE: toss_4_x86_64_ib_cray
-# Compiler Spec: llvm-amdgpu@6.4.3/saipjvhhes22pxj5rnkjw46erthbkkln
+# Compiler Spec: llvm-amdgpu@6.4.3/ttoqi52mggogog43da5bbe6cdmups5s3
 # CMake executable path: /usr/tce/backend/installations/linux-rhel8-x86_64/gcc-8.3.1/cmake-3.24.2-ywx52e32uh6gkxzuyubpwkulzgdvxyh6/bin/cmake
 #--------------------------------------------------------------------------------
 
@@ -73,15 +73,15 @@ set(ROCM_PATH "/opt/rocm-6.4.3" CACHE PATH "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/chai-2025.12.0-bui2qjacbspelk7pwk3ap474padtsriy" CACHE PATH "")
+set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/chai-2025.12.0-lsam7xrrn2xoyutixbrodqfptgmxmedr" CACHE PATH "")
 
-set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/raja-2025.12.0-phw2uaei64dmmcxcle5ct3jsso262eny" CACHE PATH "")
+set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/raja-2025.12.0-seu5ffy4sb266huku6vnuhkmcaa7dxvo" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/umpire-2025.12.0-7nyetx7q5rljh7z2bcchdutu7ugkxpas" CACHE PATH "")
+set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/umpire-2025.12.0-fblzq75z5dodltuknm4y5n5fovsoukvf" CACHE PATH "")
 
-set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/camp-2025.12.0-n4t7sxktutnfffuwc2e6z2hya4dbxiti" CACHE PATH "")
+set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/camp-2025.12.0-j2avlxjynm2ox4xrchozqfx56tf2jjl4" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -89,23 +89,23 @@ set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpl
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/caliper-2.14.0-nchdbsxkkfwgrezu5azi4iaiwnjx6zy3" CACHE PATH "")
+set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/caliper-2.14.0-bztfgt3etletndi2b7yl3rxgitgbhyoz" CACHE PATH "")
 
-set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/adiak-0.4.0-x7wwsvhjq2ehtw4r7jvzjecdpcxiwfl7" CACHE PATH "")
+set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/adiak-0.4.0-vco7ybffav5qujuwixxgfxmmaffnkho3" CACHE PATH "")
 
 set(ZLIB_DIR "/usr" CACHE PATH "")
 
-set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hdf5-1.14.6-qqfx3gxy555optxhwmffsjtwuo7wpwlo" CACHE PATH "")
+set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hdf5-1.14.6-ombvlnozyrresuh7fqv5invm4yqvusfz" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/conduit-0.9.5-qqbspejhqzbjqxr7antnfuedgxehjysl" CACHE PATH "")
+set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/conduit-0.9.5-usraryaoqwgfnck5m2s3z7kjv7qxkkbi" CACHE PATH "")
 
-set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/silo-4.12.0-ale723hmqzp6vwhbqp3r7xnslpj73pww" CACHE PATH "")
+set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/silo-4.12.0-vnjbftwc546varqz44lqvwlim6eywwca" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/pugixml-1.13-yo2g6mdyjdcz3saiq6cewsmilagincwn" CACHE PATH "")
+set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/pugixml-1.13-zzs25jilf4nmsol5yrrbdfqlze4hk2oi" CACHE PATH "")
 
-set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/vtk-9.4.2-7rwq4ausmeiweksccifubmdxgb6kmgjw" CACHE PATH "")
+set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/vtk-9.4.2-zq655fcbq5bdwlj5sshzqyt2pgdg225l" CACHE PATH "")
 
-set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/fmt-11.0.2-vjwb72ugeomwqz4kcgt64id6mnkgqzhp" CACHE PATH "")
+set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/fmt-11.2.0-f2suv2dia6zrhi4ncyt44yq3yvpptoao" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -119,23 +119,25 @@ set(LAPACK_LIBRARIES /usr/lib64/liblapack.so CACHE STRING "")
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/metis-5.1.0-fah7yojtygjosrxaywxuhy6arel2a5o3" CACHE PATH "")
+set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/metis-5.1.0-e2xbrr2ghhfa6smpiehrxnzz5rv4apb3" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/parmetis-4.0.3-ztyzko3dlrcb5mfhkvxdwvgoyyq7wbl3" CACHE PATH "")
+set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/parmetis-4.0.3-qaocm7xjf636zgs7egy5wfsh7mvjncal" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/scotch-7.0.8-5t6uibtbtbfdbkisch7rgxvy44pgw6pm" CACHE PATH "")
+set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/scotch-7.0.8-4ebpprbctqec3la3h4g3vjre77lwsrot" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/superlu-dist-9.2.1-m66d72gxlkboj7tdkfmuxww2auhzraii" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/superlu-dist-9.2.1-n2grbg575iyxklxtaiszyajjqu7qba5b" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/suite-sparse-5.10.1-iwxia6d76g2r6dwnto2iajidfws2j3ts" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/suite-sparse-5.10.1-vqhne5l2mkrmzrl5ulupdvy64zlczcth" CACHE PATH "")
 
 set(ENABLE_TRILINOS OFF CACHE BOOL "")
 
-set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hypre-git.8b0093306228fef1b92384d9face7fbe5a63b460_master-jiobpmxaz3fp5dp6wt5tyqewmzv3a3q6" CACHE PATH "")
+set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hypre-git.9fbaf60dc9435e71ff5af984f1e12e2bf8be6ad8_master-tabxldomvumrv6qzsubntlg65e3viit3" CACHE PATH "")
 
 set(ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "")
 
-set(ENABLE_HYPREDRV OFF CACHE BOOL "")
+set(ENABLE_HYPREDRV ON CACHE BOOL "")
+
+set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/hypredrive-git.4eb4f1b126332844feaaf941e32ae5dc125e5bdc_master-xptsclqele2ekwezfremc3jrysyjgzxh" CACHE PATH "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
@@ -169,7 +171,7 @@ set(ENABLE_SPHINX OFF CACHE BOOL "")
 
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-b7rjjhdbf6yqcn5br6rzvsngyvb2i4ha/bin/uncrustify" CACHE PATH "")
+set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-xgy6bvgcz5pvi6bmeuwnzgmwacbgxpxn/bin/uncrustify" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # Other
@@ -177,7 +179,7 @@ set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amd
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL "")
 
-set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-05-05/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/mathpresso-geos-nolryyeptxklghofeiszkkyyhd6don35" CACHE PATH "")
+set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-17/tuolumne-llvm-amdgpu-6.4.3_tpls/llvm-amdgpu-6.4.3/mathpresso-geos-h2s2s3flqivtos7pz3nvjpmbx3gt3lmd" CACHE PATH "")
 
 set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 

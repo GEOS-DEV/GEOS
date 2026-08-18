@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_
 
 #include "FrictionBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -40,8 +41,8 @@ class CoulombFrictionUpdates : public FrictionBaseUpdates
 public:
   CoulombFrictionUpdates( real64 const & displacementJumpThreshold,
                           real64 const & shearStiffness,
-                          real64 const & cohesion,
-                          real64 const & frictionCoefficient,
+                          arrayView1d< real64 const > const & cohesion,
+                          arrayView1d< real64 const > const & frictionCoefficient,
                           arrayView2d< real64 > const & elasticSlip )
     : FrictionBaseUpdates( displacementJumpThreshold ),
     m_shearStiffness( shearStiffness ),
@@ -67,13 +68,15 @@ public:
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
+   * @param[in] k the cell index
    * @param[in] normalTraction the normal traction
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
   GEOS_HOST_DEVICE
   inline
-  virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
+  virtual real64 computeLimitTangentialTractionNorm( localIndex const k,
+                                                     real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
   GEOS_HOST_DEVICE
@@ -87,7 +90,8 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState ) const override final;
 
@@ -101,7 +105,8 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void updateTraction( arraySlice1d< real64 const > const & oldDispJump,
+  virtual void updateTraction( localIndex const k,
+                               arraySlice1d< real64 const > const & oldDispJump,
                                arraySlice1d< real64 const > const & dispJump,
                                arraySlice1d< real64 const > const & penalty,
                                arraySlice1d< real64 const > const & traction,
@@ -116,7 +121,8 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void updateTractionOnly( arraySlice1d< real64 const > const & dispJump,
+  virtual void updateTractionOnly( localIndex const k,
+                                   arraySlice1d< real64 const > const & dispJump,
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
@@ -124,7 +130,8 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void constraintCheck( arraySlice1d< real64 const > const & dispJump,
+  virtual void constraintCheck( localIndex const k,
+                                arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 integer const fractureState,
@@ -139,10 +146,10 @@ private:
   real64 m_shearStiffness;
 
   /// The cohesion for each upper level dimension (i.e. cell) of *this
-  real64 m_cohesion;
+  arrayView1d< real64 const > m_cohesion;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
+  arrayView1d< real64 const > m_frictionCoefficient;
 
   arrayView2d< real64 > m_elasticSlip;
 };
@@ -198,19 +205,21 @@ public:
     /// string/key for shear stiffness
     static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
 
-    /// string/key for cohesion
-    static constexpr char const * cohesionString() { return "cohesion"; }
-
-    /// string/key for friction coefficient
-    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-
     /// string/key for the elastic slip
     static constexpr char const * elasticSlipString() { return "elasticSlip"; }
+
+    /// string/key for the default cohesion
+    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
+
+    /// string/key for the default friction coefficient
+    static constexpr char const * defaultFrictionCoefficientString() { return "defaultFrictionCoefficient"; }
   };
 
 protected:
 
   virtual void postInputInitialization() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 
@@ -218,23 +227,30 @@ private:
   real64 m_shearStiffness;
 
   /// The cohesion for each upper level dimension (i.e. cell) of *this
-  real64 m_cohesion;
+  array1d< real64 > m_cohesion;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
+  array1d< real64 > m_frictionCoefficient;
 
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
+
+  /// Default cohesion value
+  real64 m_defaultCohesion;
+
+  /// Default friction coefficient value
+  real64 m_defaultFrictionCoefficient;
 
 };
 
 
 GEOS_HOST_DEVICE
-real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( localIndex const k,
+                                                                   real64 const & normalTraction,
                                                                    real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
-  dLimitTangentialTractionNorm_dTraction = -m_frictionCoefficient;
-  return ( m_cohesion - normalTraction * m_frictionCoefficient );
+  dLimitTangentialTractionNorm_dTraction = -m_frictionCoefficient[k];
+  return ( m_cohesion[k] - normalTraction * m_frictionCoefficient[k] );
 }
 
 
@@ -275,7 +291,7 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
       // Plastic tangential deformation
 
       real64 dLimitTau_dNormalTraction;
-      real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+      real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                                   dLimitTau_dNormalTraction );
 
       real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
@@ -298,7 +314,8 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::updateFractureState( arraySlice1d< real64 const > const & dispJump,
+inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
+                                                         arraySlice1d< real64 const > const & dispJump,
                                                          arraySlice1d< real64 const > const & tractionVector,
                                                          integer & fractureState ) const
 {
@@ -315,7 +332,7 @@ inline void CoulombFrictionUpdates::updateFractureState( arraySlice1d< real64 co
     real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
     real64 dLimitTau_dNormalTraction;
-    real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+    real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                                 dLimitTau_dNormalTraction );
 
     // Yield function (not necessary but makes it clearer)
@@ -364,7 +381,8 @@ inline void CoulombFrictionUpdates::updateElasticSlip( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const > const & oldDispJump,
+inline void CoulombFrictionUpdates::updateTraction( localIndex const k,
+                                                    arraySlice1d< real64 const > const & oldDispJump,
                                                     arraySlice1d< real64 const > const & dispJump,
                                                     arraySlice1d< real64 const > const & penalty,
                                                     arraySlice1d< real64 const > const & traction,
@@ -410,12 +428,12 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
   // Compute limit Tau
   if( fixedLimitTau )
   {
-    limitTau = computeLimitTangentialTractionNorm( traction[0],
+    limitTau = computeLimitTangentialTractionNorm( k, traction[0],
                                                    dLimitTangentialTractionNorm_dTraction );
   }
   else
   {
-    limitTau = computeLimitTangentialTractionNorm( tractionNew[0],
+    limitTau = computeLimitTangentialTractionNorm( k, tractionNew[0],
                                                    dLimitTangentialTractionNorm_dTraction );
   }
 
@@ -488,9 +506,9 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     if( !symmetric )
     {
       // Nonsymetric term
-      dTraction_dDispJump[1][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient *
+      dTraction_dDispJump[1][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient[k] *
                                   tractionTrial[1] * (psi/tractionTrialNorm - dpsi/limitTau);
-      dTraction_dDispJump[2][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient  *
+      dTraction_dDispJump[2][0] = -dTraction_dDispJump[0][0] * m_frictionCoefficient[k]  *
                                   tractionTrial[2] * (psi/tractionTrialNorm - dpsi/limitTau);
     }
 
@@ -502,7 +520,8 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 const > const & dispJump,
+inline void CoulombFrictionUpdates::updateTractionOnly( localIndex const k,
+                                                        arraySlice1d< real64 const > const & dispJump,
                                                         arraySlice1d< real64 const > const & deltaDispJump,
                                                         arraySlice1d< real64 const > const & penalty,
                                                         arraySlice1d< real64 const > const & traction,
@@ -521,7 +540,7 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( tractionNew[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionNew[0],
                                                               dLimitTangentialTractionNorm_dTraction );
 
   // Compute psi
@@ -550,7 +569,8 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const > const & dispJump,
+inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
+                                                     arraySlice1d< real64 const > const & dispJump,
                                                      arraySlice1d< real64 const > const & deltaDispJump,
                                                      arraySlice1d< real64 > const & tractionVector,
                                                      integer const fractureState,
@@ -574,7 +594,7 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
                                                               dLimitTangentialTractionNorm_dTraction );
 
   condConv = 0;
