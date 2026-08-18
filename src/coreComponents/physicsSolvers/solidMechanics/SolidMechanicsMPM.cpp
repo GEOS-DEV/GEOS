@@ -16888,67 +16888,54 @@ void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManag
 
 /**
  * @brief Synchronizes grid fields.
- *
- * Executable statements are unchanged; comments document intent where practical.
  */
 void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNames,
                                         DomainPartition & domain,
                                         NodeManager & nodeManager,
                                         MeshLevel & mesh,
-                                        MPI_Op op )
+                                        MPI_Op op,
+                                        bool const syncGridOnDevice )
 {
   GEOS_MARK_FUNCTION;
 
-  // MPM grid sync has two phases: ghost-to-owner reduction followed by
-  // owner-to-ghost replacement. Use the original physical swap of the node
-  // send/receive lists for the reduction phase. Keep this path on host for
-  // now because the MPM reduction sync needs a conservative, robust Tuolumne
-  // HIP implementation.
-  bool const syncGridOnDevice = false;
+  if( fieldNames.empty() )
+  {
+    return;
+  }
 
-  // Bring grid fields to host before host pack/unpack.  P2G may have written
-  // these fields in device kernels earlier in the step.
+  // Put fields in the memory space used by pack/unpack. Device synchronization
+  // keeps iterative FMPM state resident while host synchronization remains the
+  // conservative default for the other MPM reductions.
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( LvArray::MemorySpace::host, true );
+    wrapper.move( syncGridOnDevice ? parallelDeviceMemorySpace : LvArray::MemorySpace::host, true );
+  }
+
+  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+  if( neighbors.empty() )
+  {
+    return;
   }
 
   FieldIdentifiers fieldsToBeSynced;
   fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
 
-  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   MPI_iCommData iComm;
   iComm.resize( neighbors.size() );
 
-  auto swapNodeSyncLists = [&]()
-  {
-    for( NeighborCommunicator const & neighbor : neighbors )
-    {
-      int const neighborRank = neighbor.neighborRank();
-
-      array1d< localIndex > & nodeGhostsToReceive =
-        nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
-
-      array1d< localIndex > & nodeGhostsToSend =
-        nodeManager.getNeighborData( neighborRank ).ghostsToSend();
-
-      array1d< localIndex > temp = nodeGhostsToSend;
-      nodeGhostsToSend = nodeGhostsToReceive;
-      nodeGhostsToReceive = temp;
-    }
-  };
-
   // Phase 1: ghost contributions -> owning/master nodes, with reduction op.
-  // The temporary physical swap makes the ordinary GEOS owner-to-ghost sync
-  // pack ghostsToReceive and unpack into ghostsToSend.
-  swapNodeSyncLists();
+  // Use the explicit reverse direction instead of mutating the persistent
+  // owner/ghost communication lists.
+  constexpr CommunicationDirection reductionDirection =
+    CommunicationDirection::GhostToOwner;
 
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
                                                                   mesh,
                                                                   neighbors,
                                                                   iComm,
-                                                                  syncGridOnDevice );
+                                                                  syncGridOnDevice,
+                                                                  reductionDirection );
 
   parallelDeviceEvents packEvents;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
@@ -16956,7 +16943,8 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                neighbors,
                                                iComm,
                                                syncGridOnDevice,
-                                               packEvents );
+                                               packEvents,
+                                               reductionDirection );
 
   waitAllDeviceEvents( packEvents );
   CommunicationTools::getInstance().asyncSendRecv( neighbors,
@@ -16970,10 +16958,8 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                     iComm,
                                                     syncGridOnDevice,
                                                     unpackEvents,
-                                                    op );
-
-  // Restore the canonical GEOS node sync lists.
-  swapNodeSyncLists();
+                                                    op,
+                                                    reductionDirection );
 
   // Phase 2: owning/master nodes -> ghosts, ordinary replacement sync.
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
@@ -25421,7 +25407,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   {
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      for( int component = 0; component < 3; ++component )
+      for( integer component = 0; component < 3; ++component )
       {
         targetKind[g][fieldIndex][component] = mpmBCTargetNone;
         targetCount[g][fieldIndex][component] = 0;
@@ -25436,7 +25422,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   // Impose BCs on each face while gathering reaction forces and rigid-event wall penetration.
   real64 localFaceReactions[6] = {};
   real64 localMaxBoundaryPenetration = 0.0;
-  for( int face = 0; face < 6; ++face )
+  for( integer face = 0; face < 6; ++face )
   {
     int const boundaryType = boundaryConditionTypes[face];
     if( boundaryType == static_cast< int >( mpm::BoundaryConditionOption::Outflow ) )
@@ -28768,37 +28754,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-#ifdef GEOS_USE_DEVICE
-  // Tuolumne/HIP FMPM host fallback v76:
-  // FMPM uses local scratch LvArray arrays and repeated grid-particle-grid
-  // correction loops. Until the full FMPM scratch/state path is made device
-  // resident, run this update on host inside the HIP build. This is a
-  // correctness fallback, not a performance implementation.
-  auto const moveFMPMNodeFieldToHost = [&]( char const * const fieldName )
-  {
-    if( nodeManager.hasWrapper( fieldName ) )
-    {
-      nodeManager.getWrapperBase( fieldName ).move( LvArray::MemorySpace::host, true );
-    }
-  };
-
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridDamageGradientString() );
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridMassString() );
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridUncontactedVelocityString() );
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridVelocityString() );
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridVPlusString() );
-  moveFMPMNodeFieldToHost( viewKeyStruct::gridContactForceString() );
-  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( LvArray::MemorySpace::host, true );
-
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    subRegion.forWrappers( []( WrapperBase & wrapper )
-    {
-      wrapper.move( LvArray::MemorySpace::host, true );
-    } );
-  } );
-#endif
-
   /*
    * ---------------------------------------------------------------------------
    * FMPM particle update overview
@@ -28831,9 +28786,10 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
    * each order applies only the difference between the current target impulse
    * and that cumulative impulse.
    *
-   * The CPU path uses the effective/coalesced mapping arrays populated by
-   * populateMappingArraysForActiveParticles. The device path keeps the existing
-   * on-the-fly shape-function computation.
+   * Both host and device paths reuse the effective/coalesced mapping arrays
+   * populated by populateMappingArraysForActiveParticles(). Reusing those maps
+   * avoids recomputing shape functions in every FMPM order and reduces the CPDI
+   * scatter count by combining duplicate mapped nodes for each particle.
    */
 
   GEOS_ERROR_IF( m_updateOrder < 1,
@@ -28857,73 +28813,75 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   // Solver constants.
   // ---------------------------------------------------------------------------
 
-  int const damageFieldPartitioning =
-    m_damageFieldPartitioning;
-
-  int const numContactGroups =
-    m_numContactGroups;
-
-  int const numDims =
+  integer const numDims =
     m_numDims;
 
-  int const numVectorComponents = 3;
+  integer const numVectorComponents = 3;
 
-  int const numVelocityFields =
+  integer const numVelocityFields =
     m_numVelocityFields;
 
-  int const updateOrder =
+  integer const updateOrder =
     m_updateOrder;
 
   real64 const smallMass =
     m_smallMass;
 
-#ifndef GEOS_USE_DEVICE
-  GEOS_UNUSED_VAR( damageFieldPartitioning );
-  GEOS_UNUSED_VAR( numContactGroups );
+#ifdef GEOS_USE_DEVICE
+  constexpr bool syncFMPMGridOnDevice = false; //true;
+#else
+  constexpr bool syncFMPMGridOnDevice = false;
 #endif
-
-  // ---------------------------------------------------------------------------
-  // Data needed by the device/on-the-fly mapping path.
-  // ---------------------------------------------------------------------------
-
-  real64 hEl[3] = {};
-  // Tensor equation: hEl = m_hEl.
-  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-
-  localIndex nEl[3] = {};
-  // Tensor equation: nEl = m_nEl.
-  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
-
-  real64 xLocalMin[3] = {};
-  // Tensor equation: xLocalMin = m_xLocalMin.
-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-  arrayView3d< localIndex const > const ijkMap =
-    m_ijkMap;
 
   // ---------------------------------------------------------------------------
   // Grid fields.
   // ---------------------------------------------------------------------------
 
-  arrayView2d< real64 const > const gridDamageGradient =
-    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
   arrayView2d< real64 const > const gridMass =
     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
-    nodeManager.referencePosition();
   arrayView3d< real64 const > const gridUncontactedVelocity =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() );
   arrayView3d< real64 const > const gridVelocity =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+
+#ifdef GEOS_USE_DEVICE
+  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move(
+    parallelDeviceMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridUncontactedVelocityString() ).move(
+    parallelDeviceMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridVelocityString() ).move(
+    parallelDeviceMemorySpace, true );
+
+  if( updateOrder > 1 )
+  {
+    nodeManager.getWrapperBase( viewKeyStruct::gridVPlusString() ).move(
+      parallelDeviceMemorySpace, true );
+  }
+
+  if( useIncrementalMaterialContact )
+  {
+    nodeManager.getWrapperBase( viewKeyStruct::gridContactForceString() ).move(
+      parallelDeviceMemorySpace, true );
+  }
+#endif
+
   arrayView3d< real64 > const gridVPlus =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVPlusString() );
 
-#ifndef GEOS_USE_DEVICE
-  GEOS_UNUSED_VAR( gridDamageGradient );
-  GEOS_UNUSED_VAR( gridPosition );
-  GEOS_UNUSED_VAR( hEl );
-  GEOS_UNUSED_VAR( ijkMap );
-  GEOS_UNUSED_VAR( nEl );
-  GEOS_UNUSED_VAR( xLocalMin );
+#ifdef GEOS_USE_DEVICE
+  // The effective maps are reused by every recursive projection and by the
+  // final particle update. Establish device residency once instead of issuing
+  // memory-manager moves inside every FMPM order.
+  localIndex mapSubRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & )
+  {
+    m_numEffectiveMappedNodes[mapSubRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_effectiveMappedFields[mapSubRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_effectiveMappedNodes[mapSubRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_effectiveShapeFunctionValues[mapSubRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_effectiveShapeFunctionGradientValues[mapSubRegionIndex].move( parallelDeviceMemorySpace, true );
+    ++mapSubRegionIndex;
+  } );
 #endif
 
   /*
@@ -28937,7 +28895,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   // FMPM state arrays.
   // ---------------------------------------------------------------------------
 
-  int const numNodes =
+  localIndex const numNodes =
     nodeManager.size();
 
   /*
@@ -28962,7 +28920,9 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   arrayView3d< real64 > const contactMomentumNetView = contactMomentumNet.toView();
   arrayView3d< real64 > const contactMomentumTargetView = contactMomentumTarget.toView();
   arrayView3d< real64 > const vFmpmView = vFmpm.toView();
+  arrayView3d< real64 const > const vFmpmConstView = vFmpm.toViewConst();
   arrayView3d< real64 > const vPrevView = vPrev.toView();
+  arrayView3d< real64 const > const vPrevConstView = vPrev.toViewConst();
   arrayView3d< real64 > const vUncorrectedTotalView = vUncorrectedTotal.toView();
   arrayView3d< real64 const > const vUncorrectedTotalConstView = vUncorrectedTotal.toViewConst();
 
@@ -28972,36 +28932,40 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
    * velocity after the same essential boundary constraints. Their difference,
    * multiplied by nodal mass, is the first-order cumulative contact impulse.
    */
-  for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+  forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
   {
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
       for( localIndex i = 0; i < numVectorComponents; ++i )
       {
-        contactMomentumTarget[n][fieldIndex][i] = 0.0;
+        contactMomentumTargetView[n][fieldIndex][i] = 0.0;
 
-        vFmpm[n][fieldIndex][i] =
+        vFmpmView[n][fieldIndex][i] =
           gridVelocity[n][fieldIndex][i];
 
-        vPrev[n][fieldIndex][i] =
+        vPrevView[n][fieldIndex][i] =
           gridVelocity[n][fieldIndex][i];
 
-        vUncorrectedTotal[n][fieldIndex][i] =
+        vUncorrectedTotalView[n][fieldIndex][i] =
           gridUncontactedVelocity[n][fieldIndex][i];
 
-        contactMomentumNet[n][fieldIndex][i] =
+        contactMomentumNetView[n][fieldIndex][i] =
           useIncrementalMaterialContact ?
           gridMass[n][fieldIndex] * ( gridVelocity[n][fieldIndex][i] - gridUncontactedVelocity[n][fieldIndex][i] ) :
           0.0;
       }
     }
-  }
+  } );
 
   // ---------------------------------------------------------------------------
   // FMPM order iterations.
   // ---------------------------------------------------------------------------
 
-  for( int order = 2; order <= updateOrder; ++order )
+  for( integer order = 2; order <= updateOrder; ++order )
   {
     /*
      * Compute one FMPM correction order. gridVPlus is used as vNext, the
@@ -29009,48 +28973,29 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
      */
     // Zero the grid projection accumulator:
     //   gridVPlus = vNext = 0.
-    for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+    forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
     {
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numVectorComponents; ++i )
         {
-          gridVPlus[n][fieldIndex][i] =
-            0.0;
+          gridVPlus[n][fieldIndex][i] = 0.0;
         }
       }
-    }
+    } );
 
     localIndex subRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-      // -----------------------------------------------------------------------
-      // Particle fields.
-      // -----------------------------------------------------------------------
-
-      arrayView1d< int const > const particleGroup =
-        subRegion.getParticleGroup();
       arrayView1d< real64 const > const particleMass =
         subRegion.getField< fields::mpm::particleMass >();
-      arrayView2d< real64 const > const particleDamageGradient =
-        subRegion.getField< fields::mpm::particleDamageGradient >();
-      arrayView2d< real64 > const particlePosition =
-        subRegion.getParticleCenter();
-      arrayView2d< real64 const > const particleSurfaceNormal =
-        subRegion.getParticleSurfaceNormal();
-      arrayView3d< real64 const > const particleRVectors =
-        subRegion.getParticleRVectors();
-
-      localIndex const numberOfMappedNodesPerParticle =
-        8 * subRegion.numberOfVerticesPerParticle();
 
       SortedArrayView< localIndex const > const activeParticleIndices =
         subRegion.activeParticleIndices();
-
-      ParticleType const particleType =
-        subRegion.getParticleType();
-
-#ifndef GEOS_USE_DEVICE
 
       arrayView1d< localIndex const > const numEffectiveMappedNodes =
         m_numEffectiveMappedNodes[subRegionIndex];
@@ -29060,51 +29005,17 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
         m_effectiveMappedNodes[subRegionIndex];
       arrayView2d< real64 const > const effectiveShapeFunctionValues =
         m_effectiveShapeFunctionValues[subRegionIndex];
-
-      GEOS_UNUSED_VAR( numberOfMappedNodesPerParticle );
-      GEOS_UNUSED_VAR( particleDamageGradient );
-      GEOS_UNUSED_VAR( particleGroup );
-      GEOS_UNUSED_VAR( particlePosition );
-      GEOS_UNUSED_VAR( particleRVectors );
-      GEOS_UNUSED_VAR( particleSurfaceNormal );
-      GEOS_UNUSED_VAR( particleType );
-
+#ifdef GEOS_USE_DEVICE
+      forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
 #endif
-
-      forAll< serialPolicy >( activeParticleIndices.size(),
-        [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p =
           activeParticleIndices[pp];
 
-#ifdef GEOS_USE_DEVICE
-
-        localIndex mappedNodesForParticle[64] = {};
-        real64 shapeFunctionValuesForParticle[64] = {};
-        real64 shapeFunctionGradientValuesForParticle[64][3] = {};
-
-        mapNodesAndComputeShapeFunctionsForSingleParticle(
-          ijkMap,
-          xLocalMin,
-          hEl,
-          nEl,
-          particleType,
-          particlePosition[p],
-          particleRVectors[p],
-          gridPosition,
-          mappedNodesForParticle,
-          shapeFunctionValuesForParticle,
-          shapeFunctionGradientValuesForParticle );
-
-        localIndex const numberOfEffectiveMappedNodesPerParticle =
-          numberOfMappedNodesPerParticle;
-
-#else
-
         localIndex const numberOfEffectiveMappedNodesPerParticle =
           numEffectiveMappedNodes[pp];
-
-#endif
 
         real64 vPrevAtParticle[3] = {};
 
@@ -29119,23 +29030,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
              g < numberOfEffectiveMappedNodesPerParticle;
              ++g )
         {
-#ifdef GEOS_USE_DEVICE
-          localIndex const mappedNode =
-            mappedNodesForParticle[g];
-
-          real64 const shapeFunctionValue =
-            shapeFunctionValuesForParticle[g];
-
-          localIndex const fieldIndex =
-            damageFieldPartitioning == 1 ?
-            partitionField( numContactGroups,
-                            damageFieldPartitioning,
-                            particleGroup[p],
-                            particleDamageGradient[p],
-                            particleSurfaceNormal[p],
-                            gridDamageGradient[mappedNode] ) :
-            particleGroup[p];
-#else
           localIndex const mappedNode =
             effectiveMappedNodes[pp][g];
 
@@ -29144,12 +29038,11 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
           localIndex const fieldIndex =
             effectiveMappedFields[pp][g];
-#endif
 
           for( localIndex i = 0; i < numVectorComponents; ++i )
           {
             vPrevAtParticle[i] +=
-              shapeFunctionValue * vPrev[mappedNode][fieldIndex][i];
+              shapeFunctionValue * vPrevConstView[mappedNode][fieldIndex][i];
           }
         }
 
@@ -29164,23 +29057,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
              g < numberOfEffectiveMappedNodesPerParticle;
              ++g )
         {
-#ifdef GEOS_USE_DEVICE
-          localIndex const mappedNode =
-            mappedNodesForParticle[g];
-
-          real64 const shapeFunctionValue =
-            shapeFunctionValuesForParticle[g];
-
-          localIndex const fieldIndex =
-            damageFieldPartitioning == 1 ?
-            partitionField( numContactGroups,
-                            damageFieldPartitioning,
-                            particleGroup[p],
-                            particleDamageGradient[p],
-                            particleSurfaceNormal[p],
-                            gridDamageGradient[mappedNode] ) :
-            particleGroup[p];
-#else
           localIndex const mappedNode =
             effectiveMappedNodes[pp][g];
 
@@ -29189,7 +29065,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
           localIndex const fieldIndex =
             effectiveMappedFields[pp][g];
-#endif
 
           if( gridMass[mappedNode][fieldIndex] > smallMass )
           {
@@ -29198,16 +29073,9 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
             for( localIndex i = 0; i < numVectorComponents; ++i )
             {
-              #ifdef GEOS_USE_DEVICE
-              // FMPM host fallback v76: the loop is serialPolicy, so use a
-              // direct host accumulation rather than a device atomic policy.
-              gridVPlus[mappedNode][fieldIndex][i] +=
-                massShapeOverGridMass * vPrevAtParticle[i];
-#else
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridVPlus[mappedNode][fieldIndex][i],
                                massShapeOverGridMass * vPrevAtParticle[i] );
-#endif
             }
           }
         }
@@ -29220,7 +29088,8 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
                     domain,
                     nodeManager,
                     mesh,
-                    MPI_SUM );
+                    MPI_SUM,
+                    syncFMPMGridOnDevice );
 
     /*
      * Apply the FMPM correction operator A = I - S+S to the previous
@@ -29229,17 +29098,21 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
      */
     // Form the next FMPM increment:
     //   vPrev = vPrev - vNext.
-    for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+    forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
     {
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numVectorComponents; ++i )
         {
-          vPrev[n][fieldIndex][i] -=
-            gridVPlus[n][fieldIndex][i];
+          vPrevView[n][fieldIndex][i] -= gridVPlus[n][fieldIndex][i];
         }
       }
-    }
+    } );
+
     /*
      * Preserve prescribed/symmetric velocity components after each FMPM
      * increment. The first-order gridVelocity already has the full essential BC
@@ -29257,17 +29130,20 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
        */
       // Track the total uncorrected FMPM velocity before the Net contact correction:
       //   v_uncorrected_total += Delta v_uncorrected.
-      for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+      forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+      forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
       {
         for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
         {
           for( localIndex i = 0; i < numVectorComponents; ++i )
           {
-            vUncorrectedTotal[n][fieldIndex][i] +=
-              vPrev[n][fieldIndex][i];
+            vUncorrectedTotalView[n][fieldIndex][i] += vPrevConstView[n][fieldIndex][i];
           }
         }
-      }
+      } );
 
       copyConstrainedFMPMBoundaryVelocity( nodeManager,
                                           vUncorrectedTotalView,
@@ -29286,16 +29162,20 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
     // Accumulate the corrected increment:
     //   vFmpm = vFmpm + vPrev.
-    for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+    forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
     {
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numVectorComponents; ++i )
         {
-          vFmpm[n][fieldIndex][i] += vPrev[n][fieldIndex][i];
+          vFmpmView[n][fieldIndex][i] += vPrevConstView[n][fieldIndex][i];
         }
       }
-    }
+    } );
   }
 
   /*
@@ -29317,17 +29197,21 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
      *
      *   F_contact = J_contact / dt.
      */
-    for( localIndex n = 0; n < numNodes; ++n )
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const n )
+#else
+    forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const n )
+#endif
     {
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           gridContactForce[n][fieldIndex][i] =
-            contactMomentumNet[n][fieldIndex][i] / dt;
+            contactMomentumNetView[n][fieldIndex][i] / dt;
         }
       }
-    }
+    } );
   }
 
   // ---------------------------------------------------------------------------
@@ -29347,31 +29231,15 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< int const > const particleGroup =
-      subRegion.getParticleGroup();
-    arrayView2d< real64 const > const particleDamageGradient =
-      subRegion.getField< fields::mpm::particleDamageGradient >();
     arrayView2d< real64 > const particlePosition =
       subRegion.getParticleCenter();
-    arrayView2d< real64 const > const particleSurfaceNormal =
-      subRegion.getParticleSurfaceNormal();
     arrayView2d< real64 > const particleVelocity =
       subRegion.getParticleVelocity();
-    arrayView3d< real64 const > const particleRVectors =
-      subRegion.getParticleRVectors();
     arrayView3d< real64 > const particleVelocityGradient =
       subRegion.getField< fields::mpm::particleVelocityGradient >();
 
-    localIndex const numberOfMappedNodesPerParticle =
-      8 * subRegion.numberOfVerticesPerParticle();
-
     SortedArrayView< localIndex const > const activeParticleIndices =
       subRegion.activeParticleIndices();
-
-    ParticleType const particleType =
-      subRegion.getParticleType();
-
-#ifndef GEOS_USE_DEVICE
 
     arrayView1d< localIndex const > const numEffectiveMappedNodes =
       m_numEffectiveMappedNodes[subRegionIndex];
@@ -29384,49 +29252,17 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
       m_effectiveShapeFunctionGradientValues[subRegionIndex];
 
-    GEOS_UNUSED_VAR( numberOfMappedNodesPerParticle );
-    GEOS_UNUSED_VAR( particleDamageGradient );
-    GEOS_UNUSED_VAR( particleGroup );
-    GEOS_UNUSED_VAR( particleRVectors );
-    GEOS_UNUSED_VAR( particleSurfaceNormal );
-    GEOS_UNUSED_VAR( particleType );
-
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
 #endif
-
-    forAll< serialPolicy >( activeParticleIndices.size(),
-      [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p =
         activeParticleIndices[pp];
 
-#ifdef GEOS_USE_DEVICE
-
-      localIndex mappedNodesForParticle[64] = {};
-      real64 shapeFunctionValuesForParticle[64] = {};
-      real64 shapeFunctionGradientValuesForParticle[64][3] = {};
-
-      mapNodesAndComputeShapeFunctionsForSingleParticle(
-        ijkMap,
-        xLocalMin,
-        hEl,
-        nEl,
-        particleType,
-        particlePosition[p],
-        particleRVectors[p],
-        gridPosition,
-        mappedNodesForParticle,
-        shapeFunctionValuesForParticle,
-        shapeFunctionGradientValuesForParticle );
-
-      localIndex const numberOfEffectiveMappedNodesPerParticle =
-        numberOfMappedNodesPerParticle;
-
-#else
-
       localIndex const numberOfEffectiveMappedNodesPerParticle =
         numEffectiveMappedNodes[pp];
-
-#endif
 
       for( localIndex i = 0; i < numDims; ++i )
       {
@@ -29442,32 +29278,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
       for( localIndex g = 0; g < numberOfEffectiveMappedNodesPerParticle; ++g )
       {
-#ifdef GEOS_USE_DEVICE
-        localIndex const mappedNode =
-          mappedNodesForParticle[g];
-
-        real64 const shapeFunctionValue =
-          shapeFunctionValuesForParticle[g];
-
-        real64 const grad0 =
-          shapeFunctionGradientValuesForParticle[g][0];
-
-        real64 const grad1 =
-          shapeFunctionGradientValuesForParticle[g][1];
-
-        real64 const grad2 =
-          shapeFunctionGradientValuesForParticle[g][2];
-
-        localIndex const fieldIndex =
-          damageFieldPartitioning == 1 ?
-          partitionField( numContactGroups,
-                          damageFieldPartitioning,
-                          particleGroup[p],
-                          particleDamageGradient[p],
-                          particleSurfaceNormal[p],
-                          gridDamageGradient[mappedNode] ) :
-          particleGroup[p];
-#else
         localIndex const mappedNode =
           effectiveMappedNodes[pp][g];
 
@@ -29485,12 +29295,11 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
         localIndex const fieldIndex =
           effectiveMappedFields[pp][g];
-#endif
 
         for( localIndex i = 0; i < numDims; ++i )
         {
           real64 const vFmpmI =
-            vFmpm[mappedNode][fieldIndex][i];
+            vFmpmConstView[mappedNode][fieldIndex][i];
 
           particlePosition[p][i] +=
             0.5 * dt * shapeFunctionValue * vFmpmI;
@@ -29525,19 +29334,6 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
     ++subRegionIndex;
   } );
-
-#ifdef GEOS_USE_DEVICE
-  // Tuolumne/HIP FMPM host fallback v76: return particle data to device.
-  // Later explicit-step phases still use HIP kernels.
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    subRegion.forWrappers( []( WrapperBase & wrapper )
-    {
-      wrapper.move( parallelDeviceMemorySpace, true );
-    } );
-  } );
-#endif
-
 }
 
 /**
@@ -29600,19 +29396,19 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-#ifdef GEOS_USE_DEVICE
-    // The current F update is host-serial.  Make the endpoint L and all updated
-    // particle fields host-current before forming views; FLIP/PIC may have
-    // produced particleVelocityGradient on the device.
-    subRegion.getWrapperBase( fields::mpm::particleDeformationGradient::key() ).move(
-      LvArray::MemorySpace::host, true );
-    subRegion.getWrapperBase( fields::mpm::particleFDot::key() ).move(
-      LvArray::MemorySpace::host, true );
-    subRegion.getWrapperBase( fields::mpm::particleVelocityGradient::key() ).move(
-      LvArray::MemorySpace::host, true );
-    subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
-      LvArray::MemorySpace::host, true );
-#endif
+// #ifdef GEOS_USE_DEVICE
+//     // The current F update is host-serial.  Make the endpoint L and all updated
+//     // particle fields host-current before forming views; FLIP/PIC may have
+//     // produced particleVelocityGradient on the device.
+//     subRegion.getWrapperBase( fields::mpm::particleDeformationGradient::key() ).move(
+//       LvArray::MemorySpace::host, true );
+//     subRegion.getWrapperBase( fields::mpm::particleFDot::key() ).move(
+//       LvArray::MemorySpace::host, true );
+//     subRegion.getWrapperBase( fields::mpm::particleVelocityGradient::key() ).move(
+//       LvArray::MemorySpace::host, true );
+//     subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
+//       LvArray::MemorySpace::host, true );
+// #endif
 
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
@@ -29947,7 +29743,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
-#ifdef
+#ifdef GEOS_USE_DEVICE
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
 #else
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )

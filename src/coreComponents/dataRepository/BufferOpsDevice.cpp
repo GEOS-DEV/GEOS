@@ -224,15 +224,39 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   parallelDeviceStream stream;
   if( op == MPI_SUM )
   {
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    if constexpr( std::is_arithmetic< T >::value )
     {
-      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+      events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
       {
-        value += *threadBuffer;
-        ++threadBuffer;
-      } );
-    } ) );
+        T const * threadBuffer = &devBuffer[ ii * sliceSize ];
+        LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &value, *threadBuffer );
+          ++threadBuffer;
+        } );
+      } ) );
+    }
+    else if constexpr( std::is_same< typename std::remove_cv< T >::type, R1Tensor >::value )
+    {
+      events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+      {
+        T const * threadBuffer = &devBuffer[ ii * sliceSize ];
+        LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+        {
+          for( localIndex component = 0; component < 3; ++component )
+          {
+            RAJA::atomicAdd( parallelDeviceAtomic{},
+                             &value[component],
+                             ( *threadBuffer )[component] );
+          }
+          ++threadBuffer;
+        } );
+      } ) );
+    }
+    else
+    {
+      GEOS_ERROR( "MPI_SUM device unpack requires arithmetic or R1Tensor values." );
+    }
   }
   else if( op == MPI_REPLACE )
   {

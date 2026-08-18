@@ -259,6 +259,69 @@ TEST( testPacking, testPackByIndexDevice )
   }
 }
 
+TEST( testPacking, testUnpackByIndexDeviceSum )
+{
+  constexpr localIndex size = 4;
+  constexpr localIndex packCount = 6;
+
+  array1d< real64 > values( size );
+  array1d< real64 > accumulated( size );
+  array1d< localIndex > indices( packCount );
+
+  values[0] = 1.0;
+  values[1] = 2.0;
+  values[2] = 3.0;
+  values[3] = 4.0;
+
+  accumulated[0] = 10.0;
+  accumulated[1] = 20.0;
+  accumulated[2] = 30.0;
+  accumulated[3] = 40.0;
+
+  indices[0] = 0;
+  indices[1] = 0;
+  indices[2] = 1;
+  indices[3] = 1;
+  indices[4] = 1;
+  indices[5] = 3;
+
+  buffer_unit_type * nullBuffer = nullptr;
+  parallelDeviceEvents packEvents;
+  localIndex const bufferSize =
+    bufferOps::PackByIndexDevice< false >( nullBuffer,
+                                           values.toViewConst(),
+                                           indices.toViewConst(),
+                                           packEvents );
+
+  buffer_type bufferStorage( bufferSize );
+  buffer_unit_type * buffer = bufferStorage.data();
+  localIndex const packedSize =
+    bufferOps::PackByIndexDevice< true >( buffer,
+                                          values.toViewConst(),
+                                          indices.toViewConst(),
+                                          packEvents );
+  EXPECT_EQ( packedSize, bufferSize );
+  waitAllDeviceEvents( packEvents );
+
+  accumulated.move( parallelDeviceMemorySpace, true );
+  buffer_unit_type const * packedBuffer = bufferStorage.data();
+  parallelDeviceEvents unpackEvents;
+  localIndex const unpackedSize =
+    bufferOps::UnpackByIndexDevice( packedBuffer,
+                                    accumulated.toView(),
+                                    indices.toViewConst(),
+                                    unpackEvents,
+                                    MPI_SUM );
+  EXPECT_EQ( unpackedSize, packedSize );
+  waitAllDeviceEvents( unpackEvents );
+
+  accumulated.move( hostMemorySpace );
+  EXPECT_DOUBLE_EQ( accumulated[0], 12.0 );
+  EXPECT_DOUBLE_EQ( accumulated[1], 26.0 );
+  EXPECT_DOUBLE_EQ( accumulated[2], 30.0 );
+  EXPECT_DOUBLE_EQ( accumulated[3], 44.0 );
+}
+
 
 int main( int ac, char * av[] )
 {

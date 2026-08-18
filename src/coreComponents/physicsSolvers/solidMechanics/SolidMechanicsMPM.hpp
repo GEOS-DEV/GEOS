@@ -279,7 +279,8 @@ public:
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
-                       MPI_Op op );
+                       MPI_Op op,
+                       bool syncGridOnDevice = false );
 
   void replaceGridFieldsOwnerToGhost( stdVector< std::string > const & fieldNames,
                                       DomainPartition & domain,
@@ -1383,7 +1384,7 @@ protected:
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable;
   // Deprecated compatibility input; the fixed-L exponential uses internal scaling and squaring.
-  int m_FSubcycles;
+  integer m_FSubcycles;
   int m_flagParticlesWithBadMappingArraysForDeletion;
   array2d< real64 > m_fTable;
   mpm::InterpolationOption m_fTableInterpType;
@@ -1424,12 +1425,12 @@ protected:
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
-  int m_numContactFlags;
-  int m_numContactGroups;
-  int m_numDims;
+  integer m_numContactFlags;
+  integer m_numContactGroups;
+  integer m_numDims;
   stdVector< array1d< localIndex > > m_numEffectiveMappedNodes;
-  int m_numSurfaceIntegrationPoints;
-  int m_numVelocityFields;
+  integer m_numSurfaceIntegrationPoints;
+  integer m_numVelocityFields;
   mpm::OverlapCorrectionOption m_overlapCorrection;
   real64 m_overlapThreshold1;
   real64 m_overlapThreshold2;
@@ -1565,7 +1566,7 @@ protected:
   real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
   mpm::UpdateMethodOption m_updateMethod;
-  int m_updateOrder;
+  integer m_updateOrder;
   int m_useCrackTipDetection;
   int m_useEvents;                   // Events flag
   int m_useInternalForceAsFaceReaction;
