@@ -267,9 +267,7 @@ void TableData::addRow( Args const &... args )
 {
   stdVector< CellData > cells;
   ( [&] {
-    static_assert( is_formattable_v< decltype(args) > ||
-                   isCellType< std::decay_t< decltype(args) > >,
-                   "Argument passed in addRow cannot be converted to string nor a CellType" );
+    static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {
       cells.push_back( { args, string() } );
     }
@@ -299,8 +297,7 @@ void TableData::addRow( Args const &... args )
 template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
-  static_assert( is_formattable_v< decltype(value) >,
-                 "Argument passed in addCell cannot be converted to string" );
+  static_assert( has_formatter_v< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   m_columnValues.insert( columnValue );
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
