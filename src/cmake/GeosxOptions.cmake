@@ -64,7 +64,6 @@ else()
 endif()
 option( ENABLE_HYPREDRV "Enables HYPREDRV (ON by default when ENABLE_HYPRE is ON)" ${GEOS_HYPREDRV_DEFAULT} )
 unset( GEOS_HYPREDRV_DEFAULT )
-option( GEOS_REQUIRE_HYPREDRV "Fail configuration instead of silently disabling HYPREDRV when it cannot be used" OFF )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
