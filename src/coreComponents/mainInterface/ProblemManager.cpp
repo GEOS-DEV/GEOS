@@ -302,7 +302,7 @@ void ProblemManager::problemSetup()
   initialize();
 
 #ifdef GEOS_USE_HYPREDRV
-  logHypredriveInputs( *m_physicsSolverManager, getManager< DomainPartition >() );
+  logHypredriveInputs( getManager< PhysicsSolverManager >(), getManager< DomainPartition >() );
 #endif
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
