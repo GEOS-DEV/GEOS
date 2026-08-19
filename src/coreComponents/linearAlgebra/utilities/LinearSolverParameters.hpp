@@ -333,8 +333,7 @@ struct LinearSolverParameters
     StrategyType strategy = StrategyType::invalid;    ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false;               ///< Apply a separate displacement component (SDC) filter before AMG construction
     integer areWellsShut = false;                     ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the
-                                                      ///< well
-                                                      ///< block
+                                                      ///< well block
   }
   mgr;                                                ///< Multigrid reduction (MGR) parameters
 
