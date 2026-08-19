@@ -214,6 +214,8 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
+  updateNumDofPerElement();
+
   std::string const & regionName = subRegion.getName();
   std::string addrWithMask( regionName );
   std::size_t pos = addrWithMask.find( "UniqueSubRegion" );
@@ -240,6 +242,64 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
       enableThermalEffects( true );
     }
   }
+}
+
+void WellControls::updateNumDofPerElement()
+{
+  m_numDofPerWellElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
+  ++m_numDofPerWellElement; // Extra well connection-rate DOF.
+  m_numDofPerResElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
+}
+
+void WellControls::shutDownWell( WellElementSubRegion & subRegion,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs,
+                                 bool const shutClosedElementsOnly,
+                                 bool const resetControlState )
+{
+  string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
+
+  arrayView1d< globalIndex const > const & wellElemDofNumber =
+    subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
+  arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
+  arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+  arrayView1d< real64 > const connRate = subRegion.getField< fields::well::connectionRate >();
+
+  localIndex const rankOffset = dofManager.rankOffset();
+  integer const numDofPerWellElement = m_numDofPerWellElement;
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    if( wellElemGhostRank[ei] < 0 &&
+        ( !shutClosedElementsOnly || elemStatus[ei] == WellElementSubRegion::WellElemStatus::CLOSED ) )
+    {
+      connRate[ei] = 0.0;
+      globalIndex const dofIndex = wellElemDofNumber[ei];
+      localIndex const localRow = dofIndex - rankOffset;
+
+      real64 const unity = 1.0;
+      for( integer i = 0; i < numDofPerWellElement; ++i )
+      {
+        globalIndex const rindex = localRow + i;
+        globalIndex const cindex = dofIndex + i;
+        localMatrix.template addToRow< serialAtomic >( rindex,
+                                                       &cindex,
+                                                       &unity,
+                                                       1 );
+        localRhs[rindex] = 0.0;
+      }
+    }
+  } );
+
+  if( resetControlState )
+  {
+    resetShutInControlState();
+  }
+}
+
+void WellControls::resetShutInControlState()
+{
+  getReference< real64 >( viewKeyStruct::currentBHPString() ) = 0.0;
 }
 
 void WellControls::postInputInitialization()
