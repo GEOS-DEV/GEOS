@@ -96,7 +96,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = geos::dataRepository::ProblemRepository::get( *self->group ).getManager< geos::DomainPartition >();
+  geos::DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *self->group );
 
   try
   {

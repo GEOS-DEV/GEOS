@@ -247,12 +247,12 @@ void ConstitutiveDriver::allocateTable( integer const numColumns,
 
 ConstitutiveManager & ConstitutiveDriver::getConstitutiveManager()
 {
-  return ProblemRepository::get( *this ).getManager< ConstitutiveManager >();
+  return ProblemRepository::getManager< ConstitutiveManager >( *this );
 }
 
 ConstitutiveManager const & ConstitutiveDriver::getConstitutiveManager() const
 {
-  return ProblemRepository::get( *this ).getManager< ConstitutiveManager >();
+  return ProblemRepository::getManager< ConstitutiveManager >( *this );
 }
 
 } /* namespace geos */

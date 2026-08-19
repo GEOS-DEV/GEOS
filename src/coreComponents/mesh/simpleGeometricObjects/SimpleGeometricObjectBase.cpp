@@ -50,7 +50,7 @@ void SimpleGeometricObjectBase::postInputInitialization()
   {
     // determine m_epsilon
     m_epsilon = std::numeric_limits< real64 >::max();
-    DomainPartition & domain = dataRepository::ProblemRepository::get( *this ).getManager< DomainPartition >();
+    DomainPartition & domain = dataRepository::ProblemRepository::getManager< DomainPartition >( *this );
     domain.forMeshBodies( [&]( MeshBody const & meshBody )
     {
       m_epsilon = std::min( m_epsilon, 1e-6 * meshBody.getGlobalLengthScale() );

@@ -71,7 +71,7 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  DomainPartition const & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition const & domain = ProblemRepository::getManager< DomainPartition >( *this );
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )

@@ -73,7 +73,7 @@ void FluxApproximationBase::initializePreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -114,7 +114,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  DomainPartition & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   for( auto const & [meshBodyName, meshBodyRegions] : m_targetRegions )

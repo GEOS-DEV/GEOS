@@ -215,8 +215,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
 void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
 
-
-  DomainPartition const & domain = ProblemRepository::get( *this ).getManager< DomainPartition >();
+  DomainPartition const & domain = ProblemRepository::getManager< DomainPartition >( *this );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   setConstitutiveNames ( subRegion );
   if( m_referenceFluidModelName.empty() )

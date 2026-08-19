@@ -167,7 +167,8 @@ public:
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
-    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    using namespace dataRepository;
+    DomainPartition & domain = ProblemRepository::template getManager< DomainPartition >( *this );
 
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))

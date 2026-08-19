@@ -405,7 +405,7 @@ void WaveSolverBase::postInputInitialization()
                  "Invalid number of physical coordinates for the receivers",
                  InputError, getDataContext() );
 
-  EventManager const & event = ProblemRepository::get( *this ).getManager< EventManager >();
+  EventManager const & event = ProblemRepository::getManager< EventManager >( *this );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
 
   if( m_dtSeismoTrace > 0 )
