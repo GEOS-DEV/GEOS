@@ -59,7 +59,7 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
-  registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
+  registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
@@ -109,21 +109,24 @@ void FieldSpecification::postInputInitialization()
   { // both conditions work together
     GEOS_THROW_IF( !m_functionNames.empty() &&
                    m_functionNames.size() != 1 &&
-                   m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
+                   m_functionNames.size() != static_cast< string_array::size_type >( m_scale.size() ),
                    GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
                               "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
                               viewKeyStruct::functionNamesString(), m_functionNames.size(),
+                              viewKeyStruct::scaleString(), m_scale.size(),
+                              viewKeyStruct::functionNamesString(), viewKeyStruct::scaleString() ),
+                   InputError, getDataContext() );
+
                               viewKeyStruct::scalesString(), m_scales.size(),
                               viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
                    InputError,
                    getDataContext() );
 
-    GEOS_THROW_IF( m_component != -1 && m_scales.size() > 1,
+    GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                               viewKeyStruct::componentString(),
-                              viewKeyStruct::scalesString() ),
-                   InputError,
-                   getDataContext() );
+                              viewKeyStruct::scaleString() ),
+                   InputError, getDataContext() );
   }
 }
 
@@ -157,7 +160,7 @@ void FieldSpecification::validateNumArrayComp( localIndex numComp )
     }
   };
 
-  expand( m_scales, viewKeyStruct::scalesString() );
+  expand( m_scale, viewKeyStruct::scaleString() );
   if( !m_functionNames.empty() )
   {
     expand( m_functionNames, viewKeyStruct::functionNamesString() );

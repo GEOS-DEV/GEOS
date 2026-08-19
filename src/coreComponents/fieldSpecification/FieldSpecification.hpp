@@ -130,7 +130,7 @@ public:
     /// @return The key for direction
     constexpr static char const * directionString() { return "direction"; }
     /// @return The key for scale
-    constexpr static char const * scalesString() { return "scale"; }
+    constexpr static char const * scaleString() { return "scale"; }
     /// @return The key for functionName
     constexpr static char const * functionNamesString() { return "functionName"; }
     /// @return The key for initialCondition
@@ -224,21 +224,10 @@ public:
 
   /**
    * Accessor
-   * @return first entry of m_scales, or 0 if m_scales is empty
-   *
-   * @note Legacy scalar accessor.
-   *       Use getScales() to access the full list of scales when using non-scalar
-   *       field specifications (eg. scales="{ 1, 2, 3 }")
+   * @return const m_scale
    */
-  real64 getScale() const
-  { return m_scales.empty() ? 0.0 : m_scales.front(); }
-
-  /**
-   * Accessor
-   * @return const m_scales
-   */
-  arrayView1d< real64 const > getScales() const
-  { return m_scales.toViewConst(); }
+  arrayView1d< real64 const > getScale() const
+  { return m_scale.toViewConst(); }
 
   /**
    * Mutator
@@ -260,8 +249,8 @@ public:
    */
   void setScale( real64 const & scale )
   {
-    m_scales.resize( 1 );
-    m_scales[ 0 ] = scale;
+    m_scale.resize( 1 );
+    m_scale[ 0 ] = scale;
   }
 
   /**
@@ -269,14 +258,14 @@ public:
    * @brief Set the per-component scale factors
    * @param[in] scales The tensor-valued scale
    */
-  void setScales( array1d< real64 > const & scales )
-  { m_scales = scales; }
+  void setScale( array1d< real64 > const & scale )
+  { m_scale = scale; }
 
   /**
    * Mutator
    * @brief Set the per-component function names
    * @param[in] functionNames The per-component function names. Must either be empty,
-   *                          have a single entry, or be sized exactly as @p m_scales
+   *                          have a single entry, or be sized exactly as @p m_scale
    */
   void setFunctionNames( string_array const & functionNames )
   { m_functionNames = functionNames; }
@@ -311,16 +300,16 @@ public:
   { return *(m_meshObjectPaths.get()); }
 
   /**
-   * @brief Validate that the size of @p m_scales and @p m_functionNames correspond to the
+   * @brief Validate that the size of @p m_scale and @p m_functionNames correspond to the
    *        size of the targeted field or expand them by duplicating values if possible.
    *
-   * Validate that @p m_scales has the same size as the targeted field.
-   * If @p m_scales as a single value and the targeted field expect multiple, @p m_scales will
+   * Validate that @p m_scale has the same size as the targeted field.
+   * If @p m_scale as a single value and the targeted field expect multiple, @p m_scale will
    * be resized to the size of the field and its values be duplicated.
-   * Else, if there is a size mismatch and @p m_scales has more than one value, it throws.
+   * Else, if there is a size mismatch and @p m_scale has more than one value, it throws.
    * (The same applies for @p m_functionNames)
    *
-   * @note This method can mutate the FieldSpecification by resizing its @p m_scales and
+   * @note This method can mutate the FieldSpecification by resizing its @p m_scale and
    *       its @p m_functionNames arrays
    */
   void validateNumArrayComp( localIndex numComp );
@@ -359,7 +348,7 @@ private:
   string_array m_functionNames;
 
   /// Scale factor(s) to use on the value of the boundary condition.
-  array1d< real64 > m_scales;
+  array1d< real64 > m_scale;
 
   /// Time after which the bc is allowed to be applied
   real64 m_beginTime;

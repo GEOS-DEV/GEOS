@@ -399,19 +399,14 @@ private:
 template< typename LAMBDA >
 void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LAMBDA && lambda )
 {
-  if( fs.getComponent() == -1 && !fs.getScales().empty() )
+  size_t const compNb = fs.getScale().size();
+  for( localIndex comp = 0; comp < compNb; ++comp )
   {
-    for( localIndex comp = 0; comp < fs.getScales().size(); ++comp )
-    {
-      string const emptyFunctionName;
-      string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ]
+    // unsafe accesses since we validated everything in postInputInitialization() and validateNumArrayComp()
+    string const emptyFunctionName;
+    string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ]
                                                                      : emptyFunctionName;
-      lambda( comp, fs.getScales()[ comp ], functionName );
-    }
-  }
-  else
-  {
-    lambda( fs.getComponent(), fs.getScale(), fs.getFunctionName() );
+    lambda( comp, fs.getScale()[ comp ], functionName );
   }
 }
 
