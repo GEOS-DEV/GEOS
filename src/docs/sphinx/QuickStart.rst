@@ -182,7 +182,7 @@ See the previous section for tips on ensuring your SSH is working properly.
 Previous versions also included the PVTPackage which is no longer required.
 This may cause the ``git submodule update`` command to fail.
 In that case, run ``git submodule deinit integratedTests`` and/or ``git submodule deinit src/coreComponents/constitutive/PVTPackage`` before ``git submodule update``.
-This submodule is not required for building GEOS.
+These submodules are not required for building GEOS.
 
 .. code-block:: sh
 

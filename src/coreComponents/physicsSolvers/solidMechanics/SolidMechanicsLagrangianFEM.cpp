@@ -50,6 +50,7 @@
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -1002,6 +1003,16 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       solidMechanics::arrayView2dLayoutStrain avgPlasticStrain = subRegion.getField< solidMechanics::averagePlasticStrain >();
       solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
 
+      arrayView1d< real64 const > const temperature =
+        subRegion.hasField< fields::flow::temperature >()
+        ? subRegion.getField< fields::flow::temperature >().toViewConst()
+        : arrayView1d< real64 const >{};
+
+      arrayView1d< real64 const > const temperature_n =
+        subRegion.hasField< fields::flow::temperature_n >()
+        ? subRegion.getField< fields::flow::temperature_n >().toViewConst()
+        : arrayView1d< real64 const >{};
+
       constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
       {
         using SOLID_TYPE = TYPEOFREF( solidModel );
@@ -1021,7 +1032,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                 avgStrain,
                                                                                                                                 avgPlasticStrain,
                                                                                                                                 stress,
-                                                                                                                                avgStress );
+                                                                                                                                avgStress,
+                                                                                                                                temperature,
+                                                                                                                                temperature_n );
         } );
 
 

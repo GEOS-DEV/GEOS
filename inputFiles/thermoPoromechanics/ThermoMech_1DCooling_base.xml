@@ -1,0 +1,116 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, thermalCond }"/>
+  </ElementRegions>
+
+  <FieldSpecifications>      
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="fixPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      scale="100.0"/>
+
+    <FieldSpecification
+      name="fixTemperature"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="temperature"
+      functionName="timeFunction"
+      scale="1.0"/>
+  
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 1e-10, 100.0 }"
+      values="{ 100.0, 100.0, 20.0 }"/>
+  </Functions>
+
+  <Tasks>
+
+    <PackCollection
+      name="stressCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="averageStress"/>
+    <PackCollection
+      name="displacementCollection"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"/>
+    
+  </Tasks>
+  
+  <Outputs>
+    <VTK
+      name="thermoPoroVTKOutput"
+      plotFileRoot="thermoPoro_1DCool"/>
+
+    <TimeHistory
+      name="stressHistoryOutput"
+      sources="{ /Tasks/stressCollection }"
+      filename="stressHistory"/>
+    <TimeHistory
+      name="displacementHistoryOutput"
+      sources="{ /Tasks/displacementCollection }"
+      filename="displacementHistory"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

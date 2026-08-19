@@ -9,7 +9,6 @@
       discretization="TPFA"
       targetRegions="{ Domain }"
       logLevel="3"
-      writeLinearSystem="2"
       temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
