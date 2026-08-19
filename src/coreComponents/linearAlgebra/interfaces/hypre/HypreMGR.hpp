@@ -240,12 +240,12 @@ protected:
     {
       GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
       GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
-                                                            hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout ) ) );
+                                                           hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout ) ) );
     }
 
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
-                                                          hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
+                                                         hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr,
                                                        hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, bubbleCoarse ? 1 : 2 ) );

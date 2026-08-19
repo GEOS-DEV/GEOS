@@ -306,9 +306,11 @@ struct LinearSolverParameters
       singlePhasePoromechanicsEmbeddedFractures,      ///< single phase poromechanics with FV embedded fractures
       singlePhasePoromechanicsConformingFractures,    ///< single phase poromechanics with conforming fractures
       singlePhasePoromechanicsConformingFracturesALM, ///< single phase poromechanics with conforming fractures for ALM
-      singlePhasePoromechanicsConformingFracturesALMReservoirFVM, ///< single phase poromechanics with conforming fractures for ALM, with wells
+      singlePhasePoromechanicsConformingFracturesALMReservoirFVM, ///< single phase poromechanics with conforming fractures for ALM, with
+                                                                  ///< wells
       singlePhasePoromechanicsReservoirFVM,           ///< single phase poromechanics with finite volume single phase flow with wells
-      thermalSinglePhasePoromechanicsReservoirFVM,    ///< thermal single phase poromechanics with finite volume single phase flow with wells
+      thermalSinglePhasePoromechanicsReservoirFVM,    ///< thermal single phase poromechanics with finite volume single phase flow with
+                                                      ///< wells
       compositionalMultiphaseFVM,                     ///< finite volume compositional multiphase flow
       compositionalMultiphaseHybridFVM,               ///< hybrid finite volume compositional multiphase flow
       compositionalMultiphaseReservoirFVM,            ///< finite volume compositional multiphase flow with wells
@@ -318,7 +320,8 @@ struct LinearSolverParameters
       thermalCompositionalMultiphaseFVM,              ///< finite volume thermal compositional multiphase flow
       thermalCompositionalMultiphaseReservoirFVM,     ///< finite volume thermal compositional multiphase flow
       multiphasePoromechanics,                        ///< multiphase poromechanics with finite volume compositional multiphase flow
-      multiphasePoromechanicsReservoirFVM,            ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
+      multiphasePoromechanicsReservoirFVM,            ///< multiphase poromechanics with finite volume compositional multiphase flow with
+                                                      ///< wells
       thermalMultiphasePoromechanics,                 ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                                  ///< hydrofracture
       lagrangianContactMechanics,                     ///< Lagrangian contact mechanics
@@ -329,7 +332,8 @@ struct LinearSolverParameters
 
     StrategyType strategy = StrategyType::invalid;    ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false;               ///< Apply a separate displacement component (SDC) filter before AMG construction
-    integer areWellsShut = false;                     ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the well
+    integer areWellsShut = false;                     ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the
+                                                      ///< well
                                                       ///< block
   }
   mgr;                                                ///< Multigrid reduction (MGR) parameters

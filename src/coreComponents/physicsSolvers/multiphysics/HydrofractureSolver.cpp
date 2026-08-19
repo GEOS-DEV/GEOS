@@ -1123,8 +1123,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
   if( numRows > 0 )
   {
     derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                      numRows,
-                                                                                      rowCapacities.data() );
+                                                                                     numRows,
+                                                                                     rowCapacities.data() );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

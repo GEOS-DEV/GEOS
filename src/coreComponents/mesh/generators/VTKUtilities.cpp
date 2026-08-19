@@ -1014,7 +1014,7 @@ struct VTKPointCoordinateHash
     std::size_t hash = 0;
     for( real64 const coordinate: point )
     {
-      hash ^= std::hash< real64 >{}( coordinate ) + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+      hash ^= std::hash< real64 >{} ( coordinate ) + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
     }
     return hash;
   }

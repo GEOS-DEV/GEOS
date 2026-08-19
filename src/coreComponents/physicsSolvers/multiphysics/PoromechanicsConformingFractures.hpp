@@ -413,8 +413,8 @@ protected:
       if( numRows > 0 )
       {
         derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                          numCol,
-                                                                                          rowCapacities.data() );
+                                                                                         numCol,
+                                                                                         rowCapacities.data() );
       }
 
       fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
@@ -433,8 +433,8 @@ protected:
               for( integer ic = 0; ic < numComp; ++ic )
               {
                 derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic,
-                                                                  sei[iconn][k1],
-                                                                  0.0 );
+                                                                 sei[iconn][k1],
+                                                                 0.0 );
               }
             }
           }

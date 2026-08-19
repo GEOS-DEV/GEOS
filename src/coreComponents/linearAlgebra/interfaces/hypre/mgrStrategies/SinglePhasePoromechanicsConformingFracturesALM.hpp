@@ -171,7 +171,7 @@ public:
     // leaves the bubble displacement block for the inner coarse AMG solve.
     HYPRE_Int const numDisplacementLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
     HYPRE_Int const pressureLabel = numDisplacementLabels +
-                                     LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+                                    LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
     for( HYPRE_Int label = pressureLabel; label < m_numBlocks; ++label )
     {
       m_labels[0].push_back( label );

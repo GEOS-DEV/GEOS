@@ -292,7 +292,7 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
   EXPECT_NE( target.argument.find( "num_levels: 3" ), std::string::npos );
   EXPECT_NE( target.argument.find( "cycle: v(1,0)" ), std::string::npos );
   EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2, "
-                                  "totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
+                                   "totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
              std::string::npos );
   EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2]" ),
              std::string::npos );
