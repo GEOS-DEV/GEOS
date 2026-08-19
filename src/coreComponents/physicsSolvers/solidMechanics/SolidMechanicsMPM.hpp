@@ -1040,6 +1040,10 @@ public:
 
   void deleteBadParticles( ParticleManager & particleManager );
 
+  // void dumpParticleStressToFile(ParticleManager & particleManager, int const cycleNumber, std::string label);
+
+  // void checkParticlesForNan( ParticleManager & particleManager, std::string label );
+
   void printProfilingResults();
 
   void computeSurfaceFlags( ParticleManager & particleManager );
