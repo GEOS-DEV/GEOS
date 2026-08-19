@@ -117,10 +117,9 @@ void FieldSpecification::postInputInitialization()
                               viewKeyStruct::functionNamesString(), viewKeyStruct::scaleString() ),
                    InputError, getDataContext() );
 
-                              viewKeyStruct::scalesString(), m_scales.size(),
-                              viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
-                   InputError,
-                   getDataContext() );
+    GEOS_THROW_IF_LT( m_scale.size(), 1,
+                      "Scale must have a number of component of either one or the field dimensions count.",
+                      InputError, getDataContext() );
 
     GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
