@@ -54,18 +54,18 @@ set( dataRepository_headers
 # Specify all sources
 #
 set( dataRepository_sources
-      BufferOpsDevice.cpp
-      ConduitRestart.cpp
-      ExecutableGroup.cpp
-      Group.cpp
-      ProblemRepository.cpp
-      Utilities.cpp
-      WrapperBase.cpp
-      xmlWrapper.cpp
-      DataContext.cpp
-      GroupContext.cpp
-      LogLevelsRegistry.cpp
-      WrapperContext.cpp )
+     BufferOpsDevice.cpp
+     ConduitRestart.cpp
+     ExecutableGroup.cpp
+     Group.cpp
+     ProblemRepository.cpp
+     Utilities.cpp
+     WrapperBase.cpp
+     xmlWrapper.cpp
+     DataContext.cpp
+     GroupContext.cpp
+     LogLevelsRegistry.cpp
+     WrapperContext.cpp )
 
 set( dependencyList ${parallelDeps} codingUtilities )
 
