@@ -211,8 +211,8 @@ private:
    * @param pattern the sparsity pattern
    */
   void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
-                                                DofManager const & dofManager,
-                                                SparsityPatternView< globalIndex > const & pattern ) const;
+                                               DofManager const & dofManager,
+                                               SparsityPatternView< globalIndex > const & pattern ) const;
 
   /**
    * @Brief assemble the contribution of matrix cell pressure on bubble DOFs
@@ -224,10 +224,10 @@ private:
    * @param localRhs the local system right-hand side vector
    */
   void assembleMatrixPressureBubbleContribution( real64 const dt,
-                                                  DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs );
+                                                 DomainPartition & domain,
+                                                 DofManager const & dofManager,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief Set up the Dflux_dApertureMatrix object

@@ -45,13 +45,13 @@ template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class AssembleForceResidualDerivativeWrtPressure :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                FE_TYPE >
+                                                                               FE_TYPE >
 {
 
 public:
   /// Alias for the base class
   using Base = solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                      FE_TYPE >;
+                                                                                     FE_TYPE >;
 
   /// Number of nodes per element
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
@@ -77,20 +77,20 @@ public:
    * @brief Constructor
    */
   AssembleForceResidualDerivativeWrtPressure( NodeManager const & nodeManager,
-                                               EdgeManager const & edgeManager,
-                                               FaceManager const & faceManager,
-                                               localIndex const targetRegionIndex,
-                                               FaceElementSubRegion & elementSubRegion,
-                                               FE_TYPE const & finiteElementSpace,
-                                               CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                               arrayView1d< globalIndex const > const uDofNumber,
-                                               arrayView1d< globalIndex const > const bDofNumber,
-                                               globalIndex const rankOffset,
-                                               CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                               arrayView1d< real64 > const inputRhs,
-                                               real64 const inputDt,
-                                               arrayView1d< localIndex const > const & faceElementList,
-                                               arrayView1d< globalIndex const > const & pressureDofNumber ):
+                                              EdgeManager const & edgeManager,
+                                              FaceManager const & faceManager,
+                                              localIndex const targetRegionIndex,
+                                              FaceElementSubRegion & elementSubRegion,
+                                              FE_TYPE const & finiteElementSpace,
+                                              CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                              arrayView1d< globalIndex const > const uDofNumber,
+                                              arrayView1d< globalIndex const > const bDofNumber,
+                                              globalIndex const rankOffset,
+                                              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                              arrayView1d< real64 > const inputRhs,
+                                              real64 const inputDt,
+                                              arrayView1d< localIndex const > const & faceElementList,
+                                              arrayView1d< globalIndex const > const & pressureDofNumber ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -119,9 +119,9 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dispEqnRowIndices{},
-      bEqnRowIndices{},
-      pressureColIndex( 0 ),
+                                       dispEqnRowIndices{},
+                                       bEqnRowIndices{},
+                                       pressureColIndex( 0 ),
       unitNormal{},
       localRu{},
       localRb{},
@@ -304,13 +304,13 @@ template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class AssembleFluidMassResidualDerivativeWrtDisplacement :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                FE_TYPE >
+                                                                               FE_TYPE >
 {
 
 public:
   /// Alias for the base class
   using Base = solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                      FE_TYPE >;
+                                                                                     FE_TYPE >;
 
   /// Number of nodes per element
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
@@ -336,22 +336,22 @@ public:
    * @brief Constructor
    */
   AssembleFluidMassResidualDerivativeWrtDisplacement( NodeManager const & nodeManager,
-                                                       EdgeManager const & edgeManager,
-                                                       FaceManager const & faceManager,
-                                                       localIndex const targetRegionIndex,
-                                                       FaceElementSubRegion & elementSubRegion,
-                                                       FE_TYPE const & finiteElementSpace,
-                                                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                                       arrayView1d< globalIndex const > const uDofNumber,
-                                                       arrayView1d< globalIndex const > const bDofNumber,
-                                                       globalIndex const rankOffset,
-                                                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                                       arrayView1d< real64 > const inputRhs,
-                                                       real64 const inputDt,
-                                                       arrayView1d< localIndex const > const & faceElementList,
-                                                       arrayView1d< globalIndex const > const & pressureDofNumber,
-                                                       arrayView1d< real64 const > const & density,
-                                                       arrayView1d< integer const > const & fractureState ):
+                                                      EdgeManager const & edgeManager,
+                                                      FaceManager const & faceManager,
+                                                      localIndex const targetRegionIndex,
+                                                      FaceElementSubRegion & elementSubRegion,
+                                                      FE_TYPE const & finiteElementSpace,
+                                                      CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                                      arrayView1d< globalIndex const > const uDofNumber,
+                                                      arrayView1d< globalIndex const > const bDofNumber,
+                                                      globalIndex const rankOffset,
+                                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                                      arrayView1d< real64 > const inputRhs,
+                                                      real64 const inputDt,
+                                                      arrayView1d< localIndex const > const & faceElementList,
+                                                      arrayView1d< globalIndex const > const & pressureDofNumber,
+                                                      arrayView1d< real64 const > const & density,
+                                                      arrayView1d< integer const > const & fractureState ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -381,9 +381,9 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dispColIndices{},
-      bColIndices{},
-      pressureRowIndex( 0 ),
+                                       dispColIndices{},
+                                       bColIndices{},
+                                       pressureRowIndex( 0 ),
       unitNormal{},
       dRpdU{},
       dRpdB{}
@@ -493,15 +493,15 @@ public:
     {
       // Add dRp/dU
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                               stack.dispColIndices,
-                                                                               stack.dRpdU,
-                                                                               numUdofs );
+                                                                              stack.dispColIndices,
+                                                                              stack.dRpdU,
+                                                                              numUdofs );
 
       // Add dRp/dB
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                               stack.bColIndices,
-                                                                               stack.dRpdB,
-                                                                               numBdofs );
+                                                                              stack.bColIndices,
+                                                                              stack.dRpdB,
+                                                                              numBdofs );
     }
 
     return 0.0;
@@ -553,13 +553,13 @@ template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ComputeApertureDerivatives :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                FE_TYPE >
+                                                                               FE_TYPE >
 {
 
 public:
   /// Alias for the base class
   using Base = solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                      FE_TYPE >;
+                                                                                     FE_TYPE >;
 
   /// Number of nodes per element
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
@@ -585,21 +585,21 @@ public:
    * @brief Constructor
    */
   ComputeApertureDerivatives( NodeManager const & nodeManager,
-                               EdgeManager const & edgeManager,
-                               FaceManager const & faceManager,
-                               localIndex const targetRegionIndex,
-                               FaceElementSubRegion & elementSubRegion,
-                               FE_TYPE const & finiteElementSpace,
-                               CONSTITUTIVE_TYPE & inputConstitutiveType,
-                               arrayView1d< globalIndex const > const uDofNumber,
-                               arrayView1d< globalIndex const > const bDofNumber,
-                               globalIndex const rankOffset,
-                               CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                               arrayView1d< real64 > const inputRhs,
-                               real64 const inputDt,
-                               arrayView1d< localIndex const > const & faceElementList,
-                               arrayView2d< real64 > const & dAperturedU,
-                               arrayView2d< real64 > const & dAperturedB ):
+                              EdgeManager const & edgeManager,
+                              FaceManager const & faceManager,
+                              localIndex const targetRegionIndex,
+                              FaceElementSubRegion & elementSubRegion,
+                              FE_TYPE const & finiteElementSpace,
+                              CONSTITUTIVE_TYPE & inputConstitutiveType,
+                              arrayView1d< globalIndex const > const uDofNumber,
+                              arrayView1d< globalIndex const > const bDofNumber,
+                              globalIndex const rankOffset,
+                              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                              arrayView1d< real64 > const inputRhs,
+                              real64 const inputDt,
+                              arrayView1d< localIndex const > const & faceElementList,
+                              arrayView2d< real64 > const & dAperturedU,
+                              arrayView2d< real64 > const & dAperturedB ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -629,9 +629,9 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      unitNormal{},
-      localDAperturedU{},
-      localDAperturedB{}
+                                       unitNormal{},
+                                       localDAperturedU{},
+                                       localDAperturedB{}
     {}
 
     /// Unit normal from rotation matrix
@@ -1119,14 +1119,14 @@ protected:
 
 /// The factory used to construct MatrixPressureBubbleKernels.
 using MatrixPressureBubbleFactory = finiteElement::KernelFactory< MatrixPressureBubbleKernels,
-                                                                   arrayView1d< globalIndex const > const,
-                                                                   arrayView1d< globalIndex const > const,
-                                                                   globalIndex const,
-                                                                   CRSMatrixView< real64, globalIndex const > const,
-                                                                   arrayView1d< real64 > const,
-                                                                   real64 const,
-                                                                   string const,
-                                                                   string const >;
+                                                                  arrayView1d< globalIndex const > const,
+                                                                  arrayView1d< globalIndex const > const,
+                                                                  globalIndex const,
+                                                                  CRSMatrixView< real64, globalIndex const > const,
+                                                                  arrayView1d< real64 > const,
+                                                                  real64 const,
+                                                                  string const,
+                                                                  string const >;
 
 } // namespace poromechanicsMatrixBubbleKernels
 
