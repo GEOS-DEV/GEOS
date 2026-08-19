@@ -59,6 +59,15 @@ state is one of **uniaxial strain along** ``y``:
 
    \varepsilon_{yy} = 0, \qquad \sigma_{xx} = \sigma_{zz} = 0
 
+.. _thermoMech1DCoolingSketchFig:
+.. figure:: fixed_1d_bar_cooling_3d_view.png
+   :align: center
+   :width: 350
+   :figclass: align-center
+
+   Sketch of the confined column: both ends are fixed along ``y``, while ``x`` and ``z`` are
+   restrained on a single face each and remain free to deform.
+
 .. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoMech_1DCooling_base.xml
   :language: xml
   :start-after: <!-- SPHINX_CONSTRAINTS -->
