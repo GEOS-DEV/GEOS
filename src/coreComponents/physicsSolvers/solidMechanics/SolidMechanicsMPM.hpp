@@ -1074,7 +1074,8 @@ public:
 
   void resolveParticleSubdivisionDefault( ParticleManager & particleManager );
 
-  void subdivideParticles( ParticleManager & particleManager );
+  bool subdivideParticles( ParticleManager & particleManager,
+                           localIndex const rankParticleCountForSplitDecision );
 
   void resizeMappingArrays( ParticleManager & particleManager );
 
@@ -1541,8 +1542,10 @@ protected:
   real64 m_stressControlSolverDampingRatio;
   array2d< real64 > m_stressTable;
   mpm::InterpolationOption m_stressTableInterpType;
+  int m_applyVelocityGradientWhenSplittingParticles;
   int m_subdivideParticles; // -1 automatic, 0 disabled, 1 enabled.
   int m_subdivideParticlesAutomatic; // True after resolving the automatic subdivision default.
+  localIndex m_subdivisionRankParticleCountAtStepStart;
   int m_surfaceDetection;
   int m_surfaceHealing;
   real64 m_surfaceNormalAndPositionDamageThreshold;

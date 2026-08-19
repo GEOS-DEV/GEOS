@@ -103,7 +103,7 @@ localIndex countRankParticles( ParticleManager & particleManager )
   localIndex rankParticleCount = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    rankParticleCount += subRegion.size();
+    rankParticleCount += subRegion.activeParticleIndices().size();
   } );
   return rankParticleCount;
 }
@@ -1854,8 +1854,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlSolverDampingRatio( 5.0e-2 ),
   m_stressTable(),
   m_stressTableInterpType( mpm::InterpolationOption::Linear ),
+  m_applyVelocityGradientWhenSplittingParticles( 1 ),
   m_subdivideParticles( -1 ),
   m_subdivideParticlesAutomatic( 0 ),
+  m_subdivisionRankParticleCountAtStepStart( 0 ),
   m_surfaceDetection( 0 ),
   m_surfaceHealing( false ),
   m_surfaceNormalAndPositionDamageThreshold( 0.9999 ),
@@ -2669,9 +2671,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_oversizedParticleResetRankParticleCountThreshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Rank-local total particle-count threshold for oversizedParticleTreatment=\"split\". "
-                    "Oversized particles are split while the rank count is less than or equal to this value, and deformation-gradient reset is used only "
-                    "on ranks whose count exceeds it. A negative value disables the reset fallback." );
+    setDescription( "Rank-local active master-particle count threshold for oversizedParticleTreatment=\"split\". "
+                    "Oversized particles are split while the start-of-step rank count is less than or equal to this value, and deformation-gradient reset "
+                    "is used only on ranks whose count exceeds it. A negative value disables the reset fallback." );
 
   registerWrapper( "defGradResetMaxParticleDomainToGridCellRatio", &m_defGradResetMaxParticleDomainToGridCellRatio ).
     setApplyDefaultValue( m_defGradResetMaxParticleDomainToGridCellRatio ).
@@ -2963,6 +2965,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setApplyDefaultValue( m_stressTableInterpType ).
     setDescription( "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
+
+  registerWrapper( "applyVelocityGradientWhenSplittingParticles", &m_applyVelocityGradientWhenSplittingParticles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_applyVelocityGradientWhenSplittingParticles ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for assigning split-particle velocities with the parent velocity gradient: v_child = v_parent + L_parent * dx_child." );
 
   registerWrapper( "subdivideParticles", &m_subdivideParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3275,6 +3283,9 @@ void SolidMechanicsMPM::postInputInitialization()
                  "maxSingleFieldStateFractionForSeparability must be <= 1. Use a negative value to disable it." );
   GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
                  "thinFeatureDFGThreshold must be non-negative." );
+  GEOS_ERROR_IF( m_applyVelocityGradientWhenSplittingParticles < 0 ||
+                 m_applyVelocityGradientWhenSplittingParticles > 1,
+                 "applyVelocityGradientWhenSplittingParticles must be 0 or 1." );
   GEOS_ERROR_IF( m_subdivideParticles < -1 || m_subdivideParticles > 1,
                  "subdivideParticles must be -1 (automatic), 0 (disabled), or 1 (enabled)." );
   GEOS_ERROR_IF( m_oversizedParticleResetRankParticleCountThreshold < -1,
@@ -5363,21 +5374,14 @@ void SolidMechanicsMPM::prepareParticleTopologyForExplicitStep( real64 const dt,
   {
     resolveParticleSubdivisionDefault( particleManager );
   }
-  bool const splitOversizedParticles =
-    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
-                                         m_oversizedParticleTreatment ) ==
-    mpm::OversizedParticleTreatmentOption::Split &&
-    m_defGradResetMaxParticleDomainToGridCellRatio > 0.0;
-  if( m_subdivideParticles == 1 || splitOversizedParticles )
-  {
-    subdivideParticles( particleManager );
-  }
   particleManager.updateMaps();
   if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 && m_needsNeighborList == 1 )
   {
     performExplicitStepParticleGhosting( domain, particleManager, partition );
   }
   setActiveParticleIndices( particleManager );
+  m_subdivisionRankParticleCountAtStepStart =
+    countRankParticles( particleManager );
   if( hasPeriodicBoundary( periodic ) )
   {
     correctGhostParticleCentersAcrossPeriodicBoundaries( particleManager, partition );
@@ -6328,6 +6332,22 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
   if( m_cpdiDomainScaling == 1 )
   {
     cpdiDomainScaling( particleManager );
+  }
+  bool const splitOversizedParticles =
+    effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
+                                         m_oversizedParticleTreatment ) ==
+    mpm::OversizedParticleTreatmentOption::Split &&
+    m_defGradResetMaxParticleDomainToGridCellRatio > 0.0;
+  if( m_subdivideParticles == 1 || splitOversizedParticles )
+  {
+    bool const subdividedParticles =
+      subdivideParticles( particleManager,
+                          m_subdivisionRankParticleCountAtStepStart );
+    if( subdividedParticles )
+    {
+      particleManager.updateMaps();
+      setActiveParticleIndices( particleManager );
+    }
   }
   flagOutOfRangeParticles( particleManager, partition );
   deleteBadParticles( particleManager );
@@ -11922,11 +11942,15 @@ void SolidMechanicsMPM::resolveParticleSubdivisionDefault( ParticleManager & par
 /**
  * @brief Subdivides particles using VP-Hencky feasibility or the legacy length criterion.
  */
-void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
+bool SolidMechanicsMPM::subdivideParticles(
+  ParticleManager & particleManager,
+  localIndex const rankParticleCountForSplitDecision )
 {
   GEOS_MARK_FUNCTION;
 
   int const numDims = m_numDims;
+  int const applyVelocityGradientWhenSplittingParticles =
+    m_applyVelocityGradientWhenSplittingParticles;
   int const automaticSubdivision = m_subdivideParticlesAutomatic;
   bool const useVPHenckyCPDIScaling =
     m_cpdiDomainScaling == 1 &&
@@ -11937,12 +11961,11 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
   mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment =
     effectiveOversizedParticleTreatment( m_resetDefGradForOversizedParticles,
                                          m_oversizedParticleTreatment );
-  localIndex const rankParticleCount = countRankParticles( particleManager );
   bool const oversizedResetFallbackOnThisRank =
     oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
     exceedsOversizedParticleResetRankThreshold(
       m_oversizedParticleResetRankParticleCountThreshold,
-      rankParticleCount );
+      rankParticleCountForSplitDecision );
   bool const splitOversizedParticles =
     oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
     !oversizedResetFallbackOnThisRank;
@@ -11984,6 +12007,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
   {
     arrayView1d< int > const particleSubdivideFlag =
       subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    arrayView1d< int const > const particleDeleteFlag =
+      subRegion.getField< fields::mpm::particleDeleteFlag >();
     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
     arrayView1d< int const > const particleCohesiveZoneFlag =
@@ -12000,6 +12025,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 const > const particleRVectors =
       subRegion.getParticleRVectors();
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
 
     arrayView1d< int const > particleDomainScaledFlag;
     if( m_cpdiDomainScaling == 1 )
@@ -12028,11 +12055,19 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       m_resetDefGradForScaledSurfaceParticles;
     RAJA::ReduceSum< parallelDeviceReduce, int > subRegionNumNewParticles( 0 );
 
-    // There should be no ghost particles at this point in the explicit step.
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       maxParticleIDRank.max( particleID[p] );
       particleSubdivideFlag[p] = 0;
+    } );
+
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      if( particleDeleteFlag[p] != 0 )
+      {
+        return;
+      }
 
       real64 rawRVectors[3][3] = {};
       if( useVPHenckyCPDIScaling || useVPHenckyReset )
@@ -12226,7 +12261,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
 
   if( totalNewParticles == 0 )
   {
-    return;
+    return false;
   }
 
   subRegionIndex = 0;
@@ -12476,6 +12511,30 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       }, fieldWrapper );
     } );
 
+    if( applyVelocityGradientWhenSplittingParticles == 1 )
+    {
+      arrayView2d< real64 > const particleVelocity =
+        subRegion.getParticleVelocity();
+      arrayView3d< real64 const > const particleVelocityGradient =
+        subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+      forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
+      {
+        if( subdivisionMemberView[p] == 0 )
+        {
+          return;
+        }
+
+        real64 velocityCorrection[3] = {};
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
+          velocityCorrection,
+          particleVelocityGradient[p],
+          subdivisionCurrentCenterOffsetView[p] );
+        LvArray::tensorOps::add< 3 >( particleVelocity[p],
+                                      velocityCorrection );
+      } );
+    }
+
     arrayView1d< integer const > const particleSurfaceFlag =
       subRegion.getParticleSurfaceFlag();
     arrayView2d< real64 > const particleSurfacePosition =
@@ -12568,11 +12627,12 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     ++subRegionIndex;
   } );
 
-  GEOS_LOG_RANK_IF(
+  GEOS_LOG_RANK_0_IF(
     totalNewParticles > 0,
     "Generated " << totalNewParticles
                  << " particles while subdividing domains that could not satisfy "
                  << "the requested volume and maximum-diagonal constraints." );
+  return true;
 }
 
 /**
@@ -31063,6 +31123,10 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
   // trying to
   // map to nodes that don't exist, we may need to revisit.
 
+  RAJA::ReduceSum< parallelDeviceReduce, int > numReportedOutOfRangeSinglePointParticles( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numReportedOutOfRangeBSplineParticles( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numReportedOutOfRangeCPDIParticles( 0 );
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
 
@@ -31109,7 +31173,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
               if ( ( m_boundaryConditionTypes[2*i] != 0 && particlePosition[p][i] < globalMin[i] + tolerance[i] ) ||
                    ( m_boundaryConditionTypes[2*i + 1] != 0 && particlePosition[p][i] > globalMax[i] - tolerance[i] ) )
                    {
-                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle");
+                    numReportedOutOfRangeSinglePointParticles += 1;
                    }
               break;
             }
@@ -31141,7 +31205,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
               if ( ( m_boundaryConditionTypes[2*i] != 0 && particlePosition[p][i] < bsplineGlobalMin[i] + tolerance[i] ) ||
                    ( m_boundaryConditionTypes[2*i + 1] != 0 && particlePosition[p][i] > bsplineGlobalMax[i] - tolerance[i] ) )
                    {
-                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range SinglePointBSpline Particle");
+                    numReportedOutOfRangeBSplineParticles += 1;
                    }
               break;
             }
@@ -31176,7 +31240,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
                 if ( ( m_boundaryConditionTypes[2*i] != 0 && cornerPositionComponent < globalMin[i] + tolerance[i] ) ||
                    ( m_boundaryConditionTypes[2*i + 1] != 0 && cornerPositionComponent > globalMax[i] - tolerance[i] ) )
                    {
-                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle CPDI Domain Corner");
+                    numReportedOutOfRangeCPDIParticles += 1;
                    }
 
                 particleDeleteFlag[p] = 1;
@@ -31198,6 +31262,25 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
         }
     }
   } );
+
+  int const globalReportedOutOfRangeSinglePointParticles =
+    MpiWrapper::sum( numReportedOutOfRangeSinglePointParticles.get() );
+  int const globalReportedOutOfRangeBSplineParticles =
+    MpiWrapper::sum( numReportedOutOfRangeBSplineParticles.get() );
+  int const globalReportedOutOfRangeCPDIParticles =
+    MpiWrapper::sum( numReportedOutOfRangeCPDIParticles.get() );
+  int const globalReportedOutOfRangeParticles =
+    globalReportedOutOfRangeSinglePointParticles +
+    globalReportedOutOfRangeBSplineParticles +
+    globalReportedOutOfRangeCPDIParticles;
+
+  GEOS_LOG_RANK_0_IF(
+    globalReportedOutOfRangeParticles > 0,
+    "Set delete flags for " << globalReportedOutOfRangeParticles
+                            << " out-of-range MPM particle(s) at non-outflow domain boundaries"
+                            << " (singlePoint=" << globalReportedOutOfRangeSinglePointParticles
+                            << ", singlePointBSpline=" << globalReportedOutOfRangeBSplineParticles
+                            << ", CPDI=" << globalReportedOutOfRangeCPDIParticles << ")." );
 }
 
 /**
@@ -31210,6 +31293,7 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
   GEOS_MARK_FUNCTION;
 
   int size = 0;
+  integer localDeletedParticles = 0;
   // Cases covered:
   // 1.) Particles that map outside the domain (including buffer cells)
   // 2.) Particles with unacceptable Jacobian (<0.1 or >10)
@@ -31231,14 +31315,19 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
       {
         if( particleDeleteFlag[p] == 1 )
         {
-          GEOS_LOG_RANK("Erasing particle with particle delete flag set");
           indicesToErase.insert( p );
         }
       } );
+    localDeletedParticles += static_cast< integer >( indicesToErase.size() );
     subRegion.erase( indicesToErase );
     subRegion.setActiveParticleIndices();
     size = subRegion.activeParticleIndices().size();
   } );
+
+  integer const globalDeletedParticles = MpiWrapper::sum( localDeletedParticles );
+  GEOS_LOG_RANK_0_IF( globalDeletedParticles > 0,
+                      "Erased " << globalDeletedParticles
+                                << " particle(s) with particle delete flag set." );
 
   // particleManager.getRegion< ParticleRegion >( "ParticleRegion1" ).resize( size ) ;
 }
