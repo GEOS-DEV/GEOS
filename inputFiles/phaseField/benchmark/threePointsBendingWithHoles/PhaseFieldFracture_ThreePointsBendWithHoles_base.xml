@@ -1,65 +1,85 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <PhaseFieldFracture
-      name="PhaseFieldSolve"
-      solidSolverName="SolidMechSolve"
-      damageSolverName="DamageSolve"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        couplingType="Sequential"
-        lineSearchAction="None"
-        subcycling="0"/>
-    </PhaseFieldFracture>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="loadPointDisplacement"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="4.0e-3"
+      functionName="loadRamp"
+      setNames="{ load_line_full_thickness }"/>
 
-    <SolidMechanicsLagrangianFEM
-      name="SolidMechSolve"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        lineSearchAction="None"
-        newtonTol="1.0e-5"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1e-5"
-        preconditionerType="amg"/>
-    </SolidMechanicsLagrangianFEM>
+    <FieldSpecification
+      name="yConstraints"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line, support_right_line }"/>
 
-    <PhaseFieldDamageFEM
-      name="DamageSolve"
-      discretization="FE1"
-      timeIntegrationOption="SteadyState"
-      irreversibilityFlag="1"
-      damageUpperBound="0.95"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        lineSearchAction="None"
-        newtonTol="1.0e-8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"/>
-    </PhaseFieldDamageFEM>
+    <FieldSpecification
+      name="xConstraints"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line }"/>
 
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Region1 }"
-      initialRockToughness="0"
-      mpiCommOrder="1"/>
-  </Solvers>
+    <FieldSpecification
+      name="zConstraints"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ midPlane }"/>
 
-  <Mesh>
-    <VTKMesh
-      name="ThreePointsBendWithHoles"
-      file="mesh/threePointsBendingWithHoles.vtu"
-      nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_shared_face_nodes }"/>
-  </Mesh>
+    <FieldSpecification
+      name="contactDamageGuard"
+      fieldName="damage"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_damage_guard, support_right_damage_guard, load_damage_guard }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ starter_notch_shared_face_nodes }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ starter_notch_shared_face_nodes }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Geometry>
+    <Box
+      name="midPlane"
+      xMin="{ -100.0, -100.0, -0.001 }"
+      xMax="{ 100.0, 100.0, 0.001 }"/>
+
+    <Box
+      name="support_left_damage_guard"
+      xMin="{ 0.50, -0.02, -0.051 }"
+      xMax="{ 1.50, 0.60, 0.051 }"/>
+
+    <Box
+      name="support_right_damage_guard"
+      xMin="{ 18.50, -0.02, -0.051 }"
+      xMax="{ 19.50, 0.60, 0.051 }"/>
+
+    <Box
+      name="load_damage_guard"
+      xMin="{ 9.50, 7.40, -0.051 }"
+      xMax="{ 10.50, 8.02, 0.051 }"/>
+  </Geometry>
 
   <NumericalMethods>
     <FiniteElements>

@@ -1,59 +1,69 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <PhaseFieldFracture
-      name="PhaseFieldSolve"
-      solidSolverName="SolidMechSolve"
-      damageSolverName="DamageSolve"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        couplingType="Sequential"
-        lineSearchAction="None"
-        subcycling="0"/>
-    </PhaseFieldFracture>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="loadPointDisplacement"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="1.0e-4"
+      functionName="loadRamp"
+      setNames="{ load_line_full_thickness }"/>
 
-    <SolidMechanicsLagrangianFEM
-      name="SolidMechSolve"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        lineSearchAction="None"
-        newtonTol="1.0e-5"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1e-5"
-        preconditionerType="amg"/>
-    </SolidMechanicsLagrangianFEM>
+    <FieldSpecification
+      name="yConstraints"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line, support_right_line }"/>
 
-    <PhaseFieldDamageFEM
-      name="DamageSolve"
-      discretization="FE1"
-      timeIntegrationOption="SteadyState"
-      irreversibilityFlag="1"
-      damageUpperBound="0.95"
-      logLevel="1"
-      targetRegions="{ Region1 }">
-      <NonlinearSolverParameters
-        newtonMaxIter="200"
-        lineSearchAction="None"
-        newtonTol="1.0e-8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"/>
-    </PhaseFieldDamageFEM>
-  </Solvers>
+    <FieldSpecification
+      name="xConstraints"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_line }"/>
 
-  <Mesh>
-    <VTKMesh
-      name="ThreePointsBending"
-      file="mesh/threePointsBendingSingleNotch.vtu"
-      nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_flank_nodes }"/>
-  </Mesh>
+    <FieldSpecification
+      name="zConstraints"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ midPlane }"/>
+
+    <FieldSpecification
+      name="contactDamageGuard"
+      fieldName="damage"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ support_left_damage_guard, support_right_damage_guard, load_damage_guard }"/>
+  </FieldSpecifications>
+
+  <Geometry>
+    <Box
+      name="midPlane"
+      xMin="{ -100.0, -100.0, -0.001 }"
+      xMax="{ 100.0, 100.0, 0.001 }"/>
+
+    <Box
+      name="support_left_damage_guard"
+      xMin="{ -0.25, -0.02, -0.051 }"
+      xMax="{ 0.25, 0.20, 0.051 }"/>
+
+    <Box
+      name="support_right_damage_guard"
+      xMin="{ 7.75, -0.02, -0.051 }"
+      xMax="{ 8.25, 0.20, 0.051 }"/>
+
+    <Box
+      name="load_damage_guard"
+      xMin="{ 3.75, 1.95, -0.051 }"
+      xMax="{ 4.25, 2.02, 0.051 }"/>
+  </Geometry>
 
   <NumericalMethods>
     <FiniteElements>

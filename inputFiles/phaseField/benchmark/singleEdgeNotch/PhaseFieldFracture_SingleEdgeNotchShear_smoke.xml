@@ -2,39 +2,39 @@
 
 <Problem>
   <Included>
-    <File name="./PhaseFieldFracture_SingleEdgeNotch_base.xml"/>
+    <File name="./PhaseFieldFracture_SingleEdgeNotch_base_direct.xml"/>
   </Included>
 
   <Mesh>
     <InternalMesh
-      name="SingleEdgeNotchTension"
+      name="SingleEdgeNotchShear"
       elementTypes="{ C3D8 }"
       xCoords="{ 0.0, 0.45, 0.5, 1.0 }"
-      yCoords="{ 0.0, 0.45, 0.5, 0.55, 1.0 }"
+      yCoords="{ 0.0, 0.5, 0.55, 1.0 }"
       zCoords="{ -0.005, 0.005 }"
-      nx="{ 50, 50, 500 }"
-      ny="{ 30, 50, 50, 30 }"
+      nx="{ 10, 3, 30 }"
+      ny="{ 30, 3, 6 }"
       nz="{ 1 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="topTensionDisplacement"
+      name="topShearDisplacement"
       fieldName="totalDisplacement"
-      component="1"
+      component="0"
       objectPath="nodeManager"
       scale="1.0e-5"
       functionName="loadRamp"
       setNames="{ ypos }"/>
 
     <FieldSpecification
-      name="bottomYConstraint"
+      name="YConstraint"
       fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{ yneg }"/>
+      setNames="{ ypos, yneg, xneg, xpos }"/>
 
     <FieldSpecification
       name="bottomXConstraint"
@@ -77,38 +77,33 @@
   </Geometry>
 
   <Events
-    maxTime="700.0">
+    maxTime="1500.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="50"
-      target="/Outputs/SingleEdgeNotchTension_VTKOutput"/>
+      timeFrequency="500"
+      targetExactTimestep="1"
+      target="/Outputs/SingleEdgeNotchShear_VTKOutput"/>
 
     <PeriodicEvent
-      name="solverApplication0"
-      endTime="500.0"
-      maxEventDt="1.0"
-      target="/Solvers/PhaseFieldSolve"/>
-
-    <PeriodicEvent
-      name="solverApplication1"
-      beginTime="500.0"
-      maxEventDt="0.1"
+      name="solverApplication"
+      maxEventDt="100.0"
       target="/Solvers/PhaseFieldSolve"/>
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="500"
+      timeFrequency="750"
+      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 
   <Outputs>
     <VTK
-      name="SingleEdgeNotchTension_VTKOutput"
-      plotFileRoot="singleEdgeNotchTension"/>
+      name="SingleEdgeNotchShear_VTKOutput"
+      plotFileRoot="singleEdgeNotchShear"/>
 
     <Restart
       name="restartOutput"/>
