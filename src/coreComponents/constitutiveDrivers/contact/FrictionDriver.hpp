@@ -90,7 +90,8 @@ const double gaussW = 1.0; // weight 1 each for 2-pt rule per axis
  
 // Voigt B-column for a generic scalar shape function's physical gradient
 array2d<real64> bColumn(double dNdx, double dNdy, double dNdz);
-
+array2d<real64> computeJacobian(const std::array<array1d<real64>,8>& coords,
+                      const std::array<std::array<double,3>,8>& dNdXi);
 // ----------------------------------------------------------------------------
 // Element geometry: axis-aligned unit cube, origin = (x0,y0,z0).
 // Physical gradient = parent gradient * 2/L (L=1 here) -> factor 2.
@@ -98,7 +99,10 @@ array2d<real64> bColumn(double dNdx, double dNdy, double dNdz);
 // ----------------------------------------------------------------------------
 struct HexElem
 {
-    double x0, y0, z0;      // corner with min x,y,z
+    // double x0, y0, z0;      // corner with min x,y,z
+    std::array<array1d<real64>,8> coords;   // PHYSICAL corner coordinates (arbitrary,
+                                  // not assumed axis-aligned or unit-length)
+
     std::array<int,8> node; // global node ids
     bool hasBubble = false;
     int bubbleId = -1;      // global bubble block index
@@ -118,14 +122,14 @@ struct LocalBlocks
 };
  
 LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e);
-
+struct ContactState { double tN = 0.0; bool open = true; double theta = 0.; double phi = 0.; };
+void setElement(const ContactState&  contact, HexElem& elemA, HexElem& elemB, array2d<real64>& RR );
 // Kcond = Kuu - Kub * Kbb^-1 * Kub^T  (3x3 inverse via our own LU, small enough
 // that we go through the same generic solver rather than a closed form)
 array2d<real64> condense(const LocalBlocks& L);
 
 CRSMat assemble(const array2d<real64>& D);
 
-struct ContactState { double tN = 0.0; bool open = true; };
 
 std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, 
         double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction );

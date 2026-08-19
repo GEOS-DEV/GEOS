@@ -159,7 +159,7 @@ void bubbleAndGrad(double xi, double eta, double zeta,
  
     b = linear * q0 * q1;
  
-    array1d<real64> grad{};
+    array1d<real64> grad{3};
     grad[faceAxis]  = dlinear * q0 * q1;
     grad[other[0]]  = linear * (-2.0 * c[other[0]]) * q1;
     grad[other[1]]  = linear * q0 * (-2.0 * c[other[1]]);
@@ -179,13 +179,25 @@ array2d<real64> bColumn(double dNdx, double dNdy, double dNdz)
     return Bc;
 }
 
+array2d<real64> computeJacobian(const std::array<array1d<real64>,8>& coords,
+                      const std::array<std::array<double,3>,8>& dNdXi)
+{
+    array2d<real64> J{3,3}; J.zero();
+    for (int a=0;a<8;++a)
+    {
+        array1d<real64> dN{3}; dN[0] = dNdXi[a][0]; dN[1] = dNdXi[a][1]; dN[2] = dNdXi[a][2];
+        LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( J, coords[a], dN ); // J += coords[a] (x) dNdXi[a]
+    }
+    return J;
+}
+ 
+
 LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e)
 {
     LocalBlocks L;
     L.Kuu.zero(); L.Kub.zero(); L.Kbb.zero();
  
-    const double scale = 2.0;      // dPhysical/dParent for unit-length edges
-    const double detJ  = 1.0/8.0;
+    double detJ  = 0.;
     const double w = 1.0;
  
     for (const auto& gpt : gaussPts)
@@ -194,17 +206,25 @@ LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e)
         std::array<double,8> N;
         std::array<std::array<double,3>,8> dNdXi;
         shapeAndGrad(xi, eta, zeta, N, dNdXi);//TODO use GEOS's function as in H1_TriangleFace_Lagrange1_Gauss.hpp
+
         array2d<real64> mat(3,3); mat.zero();
         array2d<real64> mat36(6,3); mat36.zero();
- 
         array2d<real64> Ba[8];
         // L.Kuu.resize(L.nnodes,L.nnodes);
         // L.Kbb.resize(L.ncenters,L.ncenters);
         // L.Kub.resize(L.nnodes,L.ncenters);
 
+        array2d<real64> J = computeJacobian(e.coords, dNdXi), invJ{3,3};
+        detJ = LvArray::tensorOps::invert<3>(invJ,J);
+ 
         for (int a=0;a<8;++a){
             Ba[a].resize(6,3);
-            Ba[a] = bColumn(dNdXi[a][0]*scale, dNdXi[a][1]*scale, dNdXi[a][2]*scale);}
+            array1d<real64> g{3};
+            array1d<real64> dN{3};
+            dN[0] = dNdXi[a][0]; dN[1] = dNdXi[a][1]; dN[2] = dNdXi[a][2];
+            LvArray::tensorOps::Ri_eq_AijBj<3,3>(g, invJ, dN);
+            Ba[a] = bColumn(g[0],g[1],g[2]);
+          }
  
         for (int a=0;a<8;++a)
             for (int b=0;b<8;++b){
@@ -220,14 +240,18 @@ LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e)
                 LvArray::tensorOps::scale<3,3>(mat, w*gaussW*detJ);
                 for (int i=0; i<3; ++i)
                     for (int j=0; j<3; ++j)
-                        L.Kuu[3*a + i][3*b + j ]+=mat[i][j];
+                        L.Kuu[3*a + i][3*b + j ] += mat[i][j];
             }
  
         if (e.hasBubble)
         {
             double bub; array1d<real64> dbdXi;
             bubbleAndGrad(xi,eta,zeta, e.bubbleFaceAxis, e.bubbleFaceSign, bub, dbdXi);
-            auto Bb = bColumn(dbdXi[0]*scale, dbdXi[1]*scale, dbdXi[2]*scale);
+            array1d<real64> gb{3};
+            array1d<real64> db{3};
+            db[0] = dbdXi[0]; db[1] = dbdXi[1]; db[2] = dbdXi[2];
+            LvArray::tensorOps::Ri_eq_AjiBj<3,3>(gb, invJ, db);
+            auto Bb = bColumn(gb[0],gb[1],gb[2]);
  
             for (int a=0;a<8;++a){
                 // L.Kub.block<3,3>(3*a,0) += gaussW*detJ * (Ba[a].transpose()*D*Bb);
@@ -242,7 +266,7 @@ LocalBlocks integrateElement(const array2d<real64>& D, const HexElem& e)
                 LvArray::tensorOps::scale<3,3>(mat, w*gaussW*detJ);
                 for (int i=0; i<3; ++i)
                     for (int j=0; j<3; ++j)
-                        L.Kuu[3*a + i][ j ]+=mat[i][j];
+                        L.Kuu[3*a + i][ j ] += mat[i][j];
             }
 
 
@@ -284,14 +308,14 @@ array2d<real64> condense(const LocalBlocks& L)
     array2d<real64> Kcond(24,24), mat(24,24), mat243(24,3);
     LvArray::tensorOps::copy<L.nnodes,L.nnodes>(Kcond,L.Kuu);
     // Eigen::Matrix<double,24,24> Kcond = L.Kuu - L.Kub * KbbInv * L.Kub.transpose();
-    //TODO (test - test - test)
+    //TODO (recheck formula)
     #if TEST_PBQ
-    LvArray::tensorOps::Rij_eq_PkiBklPlj<L.nnodes,L.ncenters>(mat,L.Kub,KbbInv);
-    LvArray::tensorOps::scaledAdd<L.nnodes, L.nnodes>(Kcond,mat,-1);
+    LvArray::tensorOps::Rij_eq_PikBklQjl<L.nnodes,L.ncenters>(mat, L.Kub, KbbInv, L.Kub);
+    LvArray::tensorOps::scaledAdd<L.nnodes, L.nnodes>(Kcond, mat, -1);
     #else// main road
     LvArray::tensorOps::Rij_eq_AikBkj<L.nnodes,L.ncenters,L.ncenters>(mat243, L.Kub, KbbInv);
-    LvArray::tensorOps::Rij_eq_AikBkj<L.nnodes,L.nnodes,L.ncenters>(mat,mat243,L.Kub);
-    LvArray::tensorOps::scaledAdd<L.nnodes,L.nnodes>(Kcond,mat,-1);
+    LvArray::tensorOps::Rij_eq_AikBjk<L.nnodes,L.nnodes,L.ncenters>(mat, mat243, L.Kub);
+    LvArray::tensorOps::scaledAdd<L.nnodes,L.nnodes>(Kcond, mat, -1);
     #endif
 
     // for (int r=0;r<24;++r)
@@ -306,19 +330,12 @@ array2d<real64> condense(const LocalBlocks& L)
     return Kcond;
 }
 
-CRSMat assemble(const array2d<real64>& D)
+CRSMat assemble(const array2d<real64>& D, const ContactState& contact)
 {
+    array2d<real64> R{3,3};
     HexElem elemA, elemB;
-    elemA.x0=0; elemA.y0=0; elemA.z0=0;
-    elemA.node = {0,1,2,3,4,5,6,7};
-    elemA.hasBubble = true; elemA.bubbleId = 0;
-    elemA.bubbleFaceAxis = 0; elemA.bubbleFaceSign = +1.0; // xi=+1 face -> x=1
- 
-    elemB.x0=1; elemB.y0=0; elemB.z0=0;
-    elemB.node = {8,9,10,11,12,13,14,15};
-    elemB.hasBubble = true; elemB.bubbleId = 1;
-    elemB.bubbleFaceAxis = 0; elemB.bubbleFaceSign = -1.0; // xi=-1 face -> x=1
- 
+    setElement(contact, elemA,elemB,R);
+
     const int nNodes = 16, nDof = nNodes*3;
  
     // ---------------- assemble & condense each element ---------------
@@ -383,19 +400,79 @@ CRSMat assemble(const array2d<real64>& D)
     return Kelastic;
 };
 
-std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction )
-    {
-        //prep -- duplicate (pass element A and B ?)
-        HexElem elemA, elemB;
-        elemA.x0=0; elemA.y0=0; elemA.z0=0;
+void setElement(const ContactState& contact, HexElem& elemA, HexElem& elemB, array2d<real64>& RR )
+{
+  // elemA.x0=0; elemA.y0=0; elemA.z0=0;
         elemA.node = {0,1,2,3,4,5,6,7};
         elemA.hasBubble = true; elemA.bubbleId = 0;
         elemA.bubbleFaceAxis = 0; elemA.bubbleFaceSign = +1.0; // xi=+1 face -> x=1
     
-        elemB.x0=1; elemB.y0=0; elemB.z0=0;
+  // elemB.x0=1; elemB.y0=0; elemB.z0=0;
         elemB.node = {8,9,10,11,12,13,14,15};
         elemB.hasBubble = true; elemB.bubbleId = 1;
         elemB.bubbleFaceAxis = 0; elemB.bubbleFaceSign = -1.0; // xi=-1 face -> x=1
+    
+
+    //rotations and geometry
+    auto rotZ = [](double a){ array2d<real64> R; R.zero(); R[0][0]=cos(a);R[0][1]=-sin(a);R[0][2]=0;
+                               R[1][0]=sin(a);R[1][1]=cos(a); R[1][2]=0;
+                               R[2][0]=0;     R[2][1]=0;      R[2][2]=1; return R; };
+    auto rotY = [](double a){ array2d<real64> R; R.zero(); R[0][0]=cos(a); R[0][1]=0;R[0][2]=sin(a);
+                               R[1][0]=0;      R[1][1]=1;R[1][2]=0;
+                               R[2][0]=-sin(a);R[2][1]=0;R[2][2]=cos(a); return R; };   
+
+
+    //setters
+    LvArray::tensorOps::Rij_eq_AikBkj<3,3,3>(RR,rotY(contact.theta),rotZ(contact.phi));
+    auto unitCubeCorner = [&](array1d<real64> origin, int localIndex)
+    {
+        array1d<real64> c; c.zero();
+        c[0] = origin[0] + 0.5*(1+refCorners[localIndex][0]);
+        c[1] = origin[1] + 0.5*(1+refCorners[localIndex][1]);
+        c[2] = origin[2] + 0.5*(1+refCorners[localIndex][2]);
+        array1d<real64> res{3};
+        LvArray::tensorOps::Ri_eq_AijBj<3,3>(res, RR, c);
+        return res;
+    };
+    
+    array1d<real64> e0, e1;
+    e0.zero(); e1.zero(); e1[0] = 1.;
+    for (int a=0;a<8;++a) elemA.coords[a] = unitCubeCorner(e0, a);
+    for (int a=0;a<8;++a) elemB.coords[a] = unitCubeCorner(e1, a);
+
+}
+
+std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction )
+    {
+        //prep -- duplicate (pass element A and B ?)
+        HexElem elemA, elemB;
+        array2d<real64> R{3,3};
+        setElement(contact, elemA,elemB, R);
+                               
+ // ---------------- fault normal DERIVED from geometry --------------------
+    // Two edge vectors of the (planar, quad) fault face, physical corners
+    // taken directly from elemA's rotated coordinates -- no assumption
+    // about which global axis the fault points along.
+    array1d<real64> nf{3}; nf[0] = R[0][0]; nf[1] = R[1][0]; nf[2] = R[2][0];
+
+    // Orient outward from "-" element into "+" element: check against the
+    // vector between element centroids and flip if pointing the wrong way.
+    array1d<real64> centroidA, centroidB;
+    centroidA.zero(); centroidB.zero();
+    for (int a=0;a<8;++a) 
+      for (int c=0;c<3;++c) 
+      { centroidA[c]+=elemA.coords[a][c]/8.0; centroidB[c]+=elemB.coords[a][c]/8.0; }
+
+    array1d<real64> aToB{3}; aToB.zero(); 
+    aToB[0] = centroidB[0]-centroidA[0]; aToB[1] = centroidB[1]-centroidA[1]; aToB[2] = centroidB[2]-centroidA[2];
+
+    if (LvArray::tensorOps::AiBi<3>(nf, aToB) < 0.0) { LvArray::tensorOps::scale<3>(nf,-1); }
+ 
+    std::cout << std::fixed << std::setprecision(6);
+    std::cout << "Derived fault normal: (" << nf[0] << ", " << nf[1] << ", " << nf[2] << ")\n"
+              << "Expected (rotated x-axis): (" << R[0][0] << ", " << R[1][0] << ", " << R[2][0] << ")\n\n";
+ 
+
 
         // const int nNodes = 16, nDof = nNodes*3;
         const auto nDof = Kelastic.numRows();
@@ -438,7 +515,7 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
         {
             double jumpAvg[3] = {0.,0.,0.};
             for (int i=0;i<4;++i) for(int c=0; c<3; ++c) jumpAvg[c] += (u[faceDofPlus[i][c]] - u[faceDofMinus[i][c]])/4;
-            double gN = LvArray::tensorOps::AiBi(jumpAvg,fault.nf);
+            double gN = LvArray::tensorOps::AiBi<3>(jumpAvg,nf);
  
             ContactState trial = updateNormalTraction(tNold, gN, epsN);
  
@@ -455,10 +532,12 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
                 for (int j=0;j<nDof;++j) s += Kdense[i*nDof+j]*u[j];
                 r[i]=s;
             }
+
             for (int i=0;i<4;++i)
+              for (int c=0;c<3;++c)
             {
-                r[faceDofPlus[i]]  += faceWeight*trial.tN*fault.nf[c];
-                r[faceDofMinus[i]] -= faceWeight*trial.tN*fault.nf[c];
+                r[faceDofPlus[i][c]]  += faceWeight*trial.tN*nf[c];
+                r[faceDofMinus[i][c]] -= faceWeight*trial.tN*nf[c];
             }
  
             // Jacobian = Kglobal + contact tangent (if closed)
@@ -473,10 +552,10 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
                     {
                         int pi=faceDofPlus[i][a],  pj=faceDofPlus[j][b];
                         int mi=faceDofMinus[i][a], mj=faceDofMinus[j][b];
-                        J[pi*nDof+pj] += kc * fault.nf[a] * fault.nf[b];
-                        J[pi*nDof+mj] -= kc* fault.nf[a] * fault.nf[b];
-                        J[mi*nDof+pj] -= kc* fault.nf[a] * fault.nf[b];
-                        J[mi*nDof+mj] += kc* fault.nf[a] * fault.nf[b];
+                        J[pi*nDof+pj] += kc * nf[a] * nf[b];
+                        J[pi*nDof+mj] -= kc* nf[a] * nf[b];
+                        J[mi*nDof+pj] -= kc* nf[a] * nf[b];
+                        J[mi*nDof+mj] += kc* nf[a] * nf[b];
                     }
             }
 
@@ -484,7 +563,10 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
             std::array<int,4> fixedLocal  = {0,3,4,7};
             std::array<int,4> drivenLocal = {1,2,5,6};
             std::vector<IndexType> fixedDofs, drivenDofsX, drivenDofsYZ;
-            for (int ln : fixedLocal) for (int c=0;c<3;++c) fixedDofs.push_back(3*elemA.node[ln]+c);
+            for (int ln : fixedLocal) 
+              for(int c=0;c<3;++c) 
+                fixedDofs.push_back(3*elemA.node[ln]+c);
+            
             for (int ln : drivenLocal)
             {
                 drivenDofsX.push_back(3*elemB.node[ln]+0);
