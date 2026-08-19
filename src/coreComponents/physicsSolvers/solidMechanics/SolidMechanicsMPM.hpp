@@ -1308,11 +1308,11 @@ public:
 
 protected:
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                  xmlWrapper::xmlNode & targetNode );
+                                  xmlWrapper::xmlNode & targetNode ) override;
 
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & targetNodePos );
+                                  xmlWrapper::xmlNodePos const & targetNodePos ) override;
 
   virtual void postInputInitialization() override final;
 
@@ -1406,8 +1406,8 @@ protected:
   stdVector< array2d< integer > > m_mappedFields;
   stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
                                                     // # of particles, # of nodes a particle on the subregion maps to}
-  int m_maxLRIterations;
-  int m_maxNodalNeighbors;
+  integer m_maxLRIterations;
+  integer m_maxNodalNeighbors;
   real64 m_maxParticleJacobian;
   real64 m_maxParticleVelocity;
   real64 m_maxParticleVelocitySquared;
@@ -1415,7 +1415,7 @@ protected:
   int m_needsNeighborList;
   int m_needsNodalNeighborList;
   real64 m_neighborRadius;
-  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
+  array1d< integer > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   real64 m_nextBoxAverageWriteTime;
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
