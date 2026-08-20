@@ -161,10 +161,36 @@ Unit testing is not about testing every single line of code (an unrealistic goal
 Code Coverage
 ^^^^^^^^^^^^^
 
-**Code coverage should never decrease.** New code contributions must maintain or improve overall code coverage.
-Use Codecov to report untested code paths.
+New code contributions should maintain or improve overall code coverage. The
+dedicated Clang/LLVM CI job runs the ``coverage_smoke`` suite and enforces the
+repository-owned lines, functions, and canonical branch floors in
+``.github/coverage-thresholds.json``. The initial floors are 70.01% for lines,
+75.01% for functions, and 50.01% for canonical branches. Regions and the native
+instantiation-weighted branch interpretation are reported for review without
+being hard gates. The compiler-native report is published in the GitHub job
+summary and retained as a single self-contained ``index.html`` workflow
+artifact; the page puts the reviewer summary and coverage tables first, with
+the intermediate JSON, logs, and source reports in collapsible diagnostic
+sections. No hosted coverage service or secret is required.
 
-Currently, Codecov does not cover integrated tests execution but they should be taken into account, especially for minor physical kernel changes.
+Coverage is opt-in for pull requests: add the ``ci: run code coverage`` label
+to request the job. The job also runs on pushes to ``develop`` so that trusted
+baseline artifacts can be retained.
+
+For pull requests, the same job also intersects the tested merge commit's diff
+with LLVM's detailed source records. It reports coverage of changed executable
+lines, new function entry sites, and native branch outcomes, then ranks the
+changed locations with the largest misses and suggests the kind of case needed
+to exercise each one. When an artifact exists for the exact target-branch
+commit, the summary also shows the canonical project coverage change from that
+base. A missing or incompatible base artifact is reported as unavailable rather
+than substituted with a different commit. These PR-specific signals are
+advisory; the repository coverage floors remain the enforced policy. The job's
+reviewer summary clearly separates those gates from unavailable baseline
+comparisons and uncovered changed lines.
+
+Integrated tests are not part of this focused CI coverage pass, but they should
+still be taken into account, especially for minor physical kernel changes.
 
 Integrated Tests & Examples  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

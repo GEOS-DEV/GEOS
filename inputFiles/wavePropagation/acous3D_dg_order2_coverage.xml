@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Solvers>
+    <AcousticDG
+      name="acousticSolverDG"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      sourceCoordinates="{ { 53, 53, 53 } }"
+      timeSourceFrequency="2"
+      receiverCoordinates="{ { 50, 50, 50 } }"
+      outputSeismoTrace="0"
+      timestepStabilityLimit="0"
+      cflFactor="0.95"
+      dtSeismoTrace="0.01"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D4 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <Events
+    maxTime="0.01"
+    maxCycle="1">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.01"
+      targetExactStartStop="0"
+      targetExactTimestep="0"
+      target="/Solvers/acousticSolverDG"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="2"
+        formulation="DG"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ * }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="cellVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/cb"
+      fieldName="acousticVelocity"
+      scale="1500"
+      setNames="{ all }"/>
+    <FieldSpecification
+      name="cellDensity"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/cb"
+      fieldName="acousticDensity"
+      scale="1"
+      setNames="{ all }"/>
+  </FieldSpecifications>
+
+</Problem>

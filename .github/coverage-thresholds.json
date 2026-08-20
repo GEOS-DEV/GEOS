@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "scope": "src/coreComponents",
+  "minimum_basis_points": {
+    "lines": 7001,
+    "functions": 7501,
+    "branches": 5001
+  }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 4, 476 }"
+      yCoords="{ 4, 476 }"
+      zCoords="{ 0, 28 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 3 }"
+      cellBlockNames="{ DEFAULT_HEX }"/>
+  </Mesh>
+
+  <Events maxTime="1.5e7"/>
+</Problem>

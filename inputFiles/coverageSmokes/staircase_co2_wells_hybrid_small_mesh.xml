@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      file="staircase3d_tet_coverage.vtu"
+      fieldsToImport="{ FluidComposition, PERM, PORO }"
+      fieldNamesInGEOS="{ globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity }"
+      partitionRefinement="1"
+      logLevel="2"/>
+  </Mesh>
+
+  <Events
+    maxTime="2.5e5"
+    maxCycle="16">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.5e5"
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2.5e5"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

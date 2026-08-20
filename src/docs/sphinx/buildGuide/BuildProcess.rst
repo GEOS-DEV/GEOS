@@ -72,7 +72,7 @@ Option                          Default   Explanation
 ``ENABLE_DOCS``                 ``ON``    Build documentation (Sphinx and Doxygen)
 ``ENABLE_WARNINGS_AS_ERRORS``   ``ON``    Treat all warnings as errors
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
-``ENABLE_COV``                  ``OFF``   Enables code coverage
+``ENABLE_COVERAGE``             ``OFF``   Enables BLT's legacy gcov-compatible coverage backend
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
@@ -81,3 +81,10 @@ Option                          Default   Explanation
 ``GEOS_PARALLEL_LINK_JOBS``               Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_INSTALL_SCHEMA``         ``ON``    Enables schema generation and installation
 =============================== ========= ==============================================================================
+
+For compiler-native Clang source coverage, configure a CPU shared-library build
+with ``GEOS_ENABLE_LLVM_SOURCE_COVERAGE=ON``. The option rejects BLT's legacy
+``ENABLE_COVERAGE`` mode if a host configuration enables it, because the two
+options select different and incompatible profile formats. The CI wrapper
+exposes only the LLVM choice; ``scripts/llvm_source_branch_coverage.sh``
+generates the production report from the resulting raw profiles.

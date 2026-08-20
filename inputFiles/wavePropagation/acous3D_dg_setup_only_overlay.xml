@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<!-- Ordered overlay: apply last to initialize the DG solver without taking a timestep. -->
+<Problem>
+
+  <Events
+    maxTime="0.01"
+    maxCycle="0"/>
+
+</Problem>

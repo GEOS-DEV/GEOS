@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <VTKMesh
+      name="SyntheticMesh"
+      file="synthetic_thermal_coverage.vtu"/>
+  </Mesh>
+</Problem>

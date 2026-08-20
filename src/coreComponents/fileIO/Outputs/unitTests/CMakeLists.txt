@@ -3,6 +3,10 @@
 set( gtest_outputs_tests
      testMemoryStats.cpp )
 
+if( ENABLE_VTK )
+  list( APPEND gtest_outputs_tests testVTKPolyDataWriter.cpp )
+endif()
+
 # Link against mainInterface to resolve basicSetup and ProblemManager symbols
 set( dependencyList mainInterface gtest ${parallelDeps} )
 

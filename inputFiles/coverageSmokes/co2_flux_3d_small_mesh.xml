@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 3, 12, 15, 18, 21, 27, 30 }"
+      yCoords="{ 0, 21, 27, 30 }"
+      zCoords="{ 0, 10, 15, 18, 21, 24, 27, 30 }"
+      nx="{ 1, 1, 1, 1, 1, 1, 1 }"
+      ny="{ 1, 1, 1 }"
+      nz="{ 1, 1, 1, 1, 1, 1, 1 }"
+      cellBlockNames="{ cellBlock }"/>
+  </Mesh>
+</Problem>

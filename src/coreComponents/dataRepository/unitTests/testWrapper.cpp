@@ -14,15 +14,371 @@
  */
 
 // Source includes
+#include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
+#include "LvArray/src/system.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
+// System includes
+#include <cstdlib>
+#include <stdexcept>
+#include <tuple>
+
 using namespace geos;
 using namespace dataRepository;
+
+namespace
+{
+
+class ScopedThrowingLvArrayErrorHandler
+{
+public:
+  ScopedThrowingLvArrayErrorHandler()
+  {
+    LvArray::system::setErrorHandler( []()
+    {
+      throw std::runtime_error( "Expected WrapperStandardArrays error" );
+    } );
+  }
+
+  ~ScopedThrowingLvArrayErrorHandler() noexcept
+  {
+    LvArray::system::setErrorHandler( []()
+    {
+      std::abort();
+    } );
+  }
+
+  ScopedThrowingLvArrayErrorHandler( ScopedThrowingLvArrayErrorHandler const & ) = delete;
+  ScopedThrowingLvArrayErrorHandler & operator=( ScopedThrowingLvArrayErrorHandler const & ) = delete;
+};
+
+template< typename ... ARRAY_TYPES >
+void testStandardArrayVirtualInterface( camp::list< ARRAY_TYPES ... > )
+{
+  ScopedThrowingLvArrayErrorHandler const scopedErrorHandler;
+
+  // Keep the arrays outside the Group so both the registered wrappers and their clones are
+  // non-owning. This makes it safe to exercise clone() without sharing ownership of the data.
+  std::tuple< ARRAY_TYPES ... > storage;
+  conduit::Node rootNode;
+  Group group( "Problem", rootNode );
+
+  localIndex wrapperIndex = 0;
+  std::apply( [&]( auto & ... value )
+  {
+    ( group.registerWrapper( "standardArray" + std::to_string( wrapperIndex++ ), &value ), ... );
+  }, storage );
+
+  xmlWrapper::xmlDocument emptyDocument;
+  xmlWrapper::xmlNodePos const noPosition( emptyDocument,
+                                           "",
+                                           xmlWrapper::xmlDocument::npos,
+                                           xmlWrapper::xmlDocument::npos,
+                                           xmlWrapper::xmlDocument::npos );
+  xmlWrapper::xmlNode const emptyNode;
+
+  string_array const dimLabels = { "first", "second" };
+  array1d< localIndex > packIndices( 1 );
+  packIndices[0] = 0;
+  parallelDeviceEvents events;
+  localIndex numWrappersTested = 0;
+
+  group.forWrappers( [&]( WrapperBase & wrapper )
+  {
+    ++numWrappersTested;
+
+    EXPECT_FALSE( wrapper.getName().empty() );
+    EXPECT_FALSE( wrapper.getPath().empty() );
+    EXPECT_EQ( &wrapper.getParent(), &group );
+    EXPECT_FALSE( wrapper.getSuccessfulReadFromInput() );
+    EXPECT_FALSE( wrapper.processInputFile( emptyNode, noPosition ) );
+
+    int const numDims = wrapper.numArrayDims();
+    ASSERT_GT( numDims, 0 );
+    stdVector< localIndex > const dims( numDims, 2 );
+    wrapper.resize( numDims, dims.data() );
+
+    EXPECT_GT( wrapper.size(), 0 );
+    EXPECT_NE( wrapper.voidPointer(), nullptr );
+    EXPECT_GT( wrapper.elementByteSize(), 0 );
+    EXPECT_GT( wrapper.bytesAllocated(), 0 );
+
+    wrapper.resize( 3 );
+    wrapper.resize( numDims, dims.data() );
+    wrapper.reserve( 3 );
+    EXPECT_GT( wrapper.capacity(), 0 );
+
+    // These validation failures occur before Array dimensions or storage are modified.
+    EXPECT_THROW( wrapper.resize( numDims + 1, dims.data() ), std::runtime_error );
+    EXPECT_THROW( wrapper.resize( localIndex( -1 ) ), std::runtime_error );
+    EXPECT_THROW( wrapper.move( static_cast< LvArray::MemorySpace >( -1 ), false ), std::runtime_error );
+
+    for( integer dim = 0; dim < numDims; ++dim )
+    {
+      EXPECT_EQ( &wrapper.setDimLabels( dim, dimLabels ), &wrapper );
+      Span< string const > const labels = wrapper.getDimLabels( dim );
+      ASSERT_EQ( labels.size(), dimLabels.size() );
+      EXPECT_EQ( labels[0], dimLabels[0] );
+      EXPECT_EQ( labels[1], dimLabels[1] );
+    }
+
+    EXPECT_THROW( wrapper.setDimLabels( -1, dimLabels ), std::runtime_error );
+    EXPECT_THROW( wrapper.setDimLabels( numDims, dimLabels ), std::runtime_error );
+    EXPECT_THROW( wrapper.getDimLabels( -1 ), std::runtime_error );
+    EXPECT_THROW( wrapper.getDimLabels( numDims ), std::runtime_error );
+
+    stdVector< string > const invalidComponentNames( wrapper.numArrayComp() + 1, "invalid" );
+    conduit::Node invalidFields;
+    conduit::Node invalidMCArray;
+    EXPECT_THROW( wrapper.addBlueprintField( invalidFields,
+                                             wrapper.getName(),
+                                             "topology",
+                                             invalidComponentNames ),
+                  std::runtime_error );
+    EXPECT_THROW( wrapper.populateMCArray( invalidMCArray, invalidComponentNames ), std::runtime_error );
+
+    wrapper.resize( 0 );
+    conduit::Node emptyFields;
+    conduit::Node emptyMCArray;
+    EXPECT_THROW( wrapper.addBlueprintField( emptyFields, wrapper.getName(), "topology" ), std::runtime_error );
+    EXPECT_THROW( wrapper.populateMCArray( emptyMCArray ), std::runtime_error );
+    wrapper.resize( numDims, dims.data() );
+
+    // Restrict dispatch to the production type catalog so the test does not introduce unrelated
+    // Wrapper<T> types solely for coverage.
+    EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+    {
+      using ArrayType = camp::first< decltype( typeTuple ) >;
+      using ValueType = typename ArrayType::ValueType;
+
+      Wrapper< ArrayType > & typedWrapper = Wrapper< ArrayType >::cast( wrapper );
+      WrapperBase const & constBase = wrapper;
+      EXPECT_EQ( &Wrapper< ArrayType >::cast( constBase ), &typedWrapper );
+
+      ValueType const defaultValue = ValueType( 1 );
+      typedWrapper.setDefaultValue( defaultValue );
+      typedWrapper.setApplyDefaultValue( defaultValue );
+      EXPECT_EQ( typedWrapper.getDefaultValue(), defaultValue );
+      EXPECT_TRUE( typedWrapper.hasDefaultValue() );
+
+      typedWrapper.setSizedFromParent( 1 );
+      typedWrapper.setRestartFlags( RestartFlags::WRITE_AND_READ );
+      typedWrapper.setPlotLevel( PlotLevel::LEVEL_1 );
+      typedWrapper.setInputFlag( InputFlags::OPTIONAL );
+      typedWrapper.setDescription( "standard array" );
+      typedWrapper.appendDescription( " wrapper" );
+      typedWrapper.setRegisteringObjects( "testWrapper" );
+      typedWrapper.setRTTypeName( typedWrapper.getRTTypeName() );
+      typedWrapper.setName();
+
+      EXPECT_EQ( typedWrapper.getDescription(), "standard array wrapper" );
+      EXPECT_EQ( typedWrapper.getRegisteringObjects().count( "testWrapper" ), 1 );
+      EXPECT_EQ( typedWrapper.referenceAsView().size(), typedWrapper.reference().size() );
+
+      ArrayType & array = typedWrapper.reference();
+      for( localIndex valueIndex = 0; valueIndex < array.size(); ++valueIndex )
+      {
+        array.data()[valueIndex] = static_cast< ValueType >( valueIndex + 2 );
+      }
+    }, wrapper ) );
+
+    EXPECT_FALSE( wrapper.getDefaultValueString().empty() );
+    static_cast< void >( wrapper.getTypeRegex() );
+    EXPECT_TRUE( wrapper.isPackable( false ) );
+    static_cast< void >( wrapper.isPackable( true ) );
+
+    HistoryMetadata const history = wrapper.getHistoryMetadata( 1 );
+    EXPECT_EQ( history.getName(), wrapper.getName() );
+    EXPECT_GT( history.getRank(), 0 );
+    EXPECT_GT( history.size(), 0 );
+
+    conduit::Node fields;
+    wrapper.addBlueprintField( fields, wrapper.getName(), "topology" );
+    EXPECT_GT( fields.number_of_children(), 0 );
+
+    conduit::Node mcArray;
+    wrapper.populateMCArray( mcArray );
+    EXPECT_GT( mcArray.number_of_children(), 0 );
+
+    std::unique_ptr< WrapperBase > average =
+      wrapper.averageOverSecondDim( wrapper.getName() + "Average", group );
+    ASSERT_NE( average, nullptr );
+    EXPECT_GT( average->size(), 0 );
+
+    std::unique_ptr< WrapperBase > clone = wrapper.clone( wrapper.getName() + "Clone", group );
+    ASSERT_NE( clone, nullptr );
+    EXPECT_TRUE( clone->getTypeId() == wrapper.getTypeId() );
+    EXPECT_EQ( clone->voidPointer(), wrapper.voidPointer() );
+    EXPECT_EQ( clone->bytesAllocated(), 0 );
+    EXPECT_THROW( clone->copyWrapper( wrapper ), std::runtime_error );
+
+    for( bool const withMetadata : { false, true } )
+    {
+      buffer_unit_type * unusedBuffer = nullptr;
+      localIndex const packedSize = wrapper.pack< false >( unusedBuffer, withMetadata, false, events );
+      ASSERT_GT( packedSize, 0 );
+
+      buffer_type packed( packedSize );
+      buffer_unit_type * packBuffer = packed.data();
+      EXPECT_EQ( wrapper.pack< true >( packBuffer, withMetadata, false, events ), packedSize );
+      EXPECT_EQ( packBuffer, packed.data() + packedSize );
+
+      if( withMetadata )
+      {
+        buffer_unit_type const * mismatchedBuffer = packed.data();
+        EXPECT_THROW( clone->unpack( mismatchedBuffer, true, false, events ), std::runtime_error );
+      }
+
+      EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+      {
+        using ArrayType = camp::first< decltype( typeTuple ) >;
+        using ValueType = typename ArrayType::ValueType;
+        ArrayType & array = Wrapper< ArrayType >::cast( wrapper ).reference();
+        for( localIndex valueIndex = 0; valueIndex < array.size(); ++valueIndex )
+        {
+          array.data()[valueIndex] = ValueType( 0 );
+        }
+      }, wrapper ) );
+
+      buffer_unit_type const * unpackBuffer = packed.data();
+      EXPECT_EQ( wrapper.unpack( unpackBuffer, withMetadata, false, events ), packedSize );
+      EXPECT_EQ( unpackBuffer, packed.data() + packedSize );
+
+      EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+      {
+        using ArrayType = camp::first< decltype( typeTuple ) >;
+        using ValueType = typename ArrayType::ValueType;
+        ArrayType const & array = Wrapper< ArrayType >::cast( wrapper ).reference();
+        for( localIndex valueIndex = 0; valueIndex < array.size(); ++valueIndex )
+        {
+          EXPECT_EQ( array.data()[valueIndex], static_cast< ValueType >( valueIndex + 2 ) );
+        }
+      }, wrapper ) );
+
+      unusedBuffer = nullptr;
+      localIndex const indexedPackedSize =
+        wrapper.packByIndex< false >( unusedBuffer, packIndices.toViewConst(), withMetadata, false, events );
+      ASSERT_GT( indexedPackedSize, 0 );
+
+      buffer_type indexedPacked( indexedPackedSize );
+      packBuffer = indexedPacked.data();
+      EXPECT_EQ( wrapper.packByIndex< true >( packBuffer,
+                                              packIndices.toViewConst(),
+                                              withMetadata,
+                                              false,
+                                              events ),
+                 indexedPackedSize );
+      EXPECT_EQ( packBuffer, indexedPacked.data() + indexedPackedSize );
+
+      if( withMetadata )
+      {
+        buffer_unit_type const * mismatchedBuffer = indexedPacked.data();
+        EXPECT_THROW( clone->unpackByIndex( mismatchedBuffer,
+                                            packIndices.toViewConst(),
+                                            true,
+                                            false,
+                                            events,
+                                            MPI_REPLACE ),
+                      std::runtime_error );
+      }
+
+      EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+      {
+        using ArrayType = camp::first< decltype( typeTuple ) >;
+        using ValueType = typename ArrayType::ValueType;
+        ArrayType & array = Wrapper< ArrayType >::cast( wrapper ).reference();
+        LvArray::forValuesInSliceWithIndices( array[0], [&]( auto & value, auto const ... )
+        {
+          value = ValueType( 0 );
+        } );
+      }, wrapper ) );
+
+      unpackBuffer = indexedPacked.data();
+      EXPECT_EQ( wrapper.unpackByIndex( unpackBuffer,
+                                        packIndices.toViewConst(),
+                                        withMetadata,
+                                        false,
+                                        events,
+                                        MPI_REPLACE ),
+                 indexedPackedSize );
+      EXPECT_EQ( unpackBuffer, indexedPacked.data() + indexedPackedSize );
+
+      EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+      {
+        using ArrayType = camp::first< decltype( typeTuple ) >;
+        using ValueType = typename ArrayType::ValueType;
+        ArrayType const & array = Wrapper< ArrayType >::cast( wrapper ).reference();
+        for( localIndex valueIndex = 0; valueIndex < array.size(); ++valueIndex )
+        {
+          EXPECT_EQ( array.data()[valueIndex], static_cast< ValueType >( valueIndex + 2 ) );
+        }
+      }, wrapper ) );
+    }
+
+    wrapper.copy( 0, 1 );
+    EXPECT_TRUE( types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto typeTuple )
+    {
+      using ArrayType = camp::first< decltype( typeTuple ) >;
+      ArrayType const & array = Wrapper< ArrayType >::cast( wrapper ).reference();
+      LvArray::forValuesInSliceWithIndices( array[0], [&]( auto const & expectedValue, auto const ... indices )
+      {
+        EXPECT_EQ( array( 1, indices ... ), expectedValue );
+      } );
+    }, wrapper ) );
+    wrapper.move( hostMemorySpace, false );
+    wrapper.move( hostMemorySpace, true );
+
+    wrapper.setRestartFlags( RestartFlags::NO_WRITE );
+    wrapper.registerToWrite();
+    wrapper.finishWriting();
+    wrapper.setRestartFlags( RestartFlags::WRITE );
+    wrapper.registerToWrite();
+    wrapper.finishWriting();
+    EXPECT_FALSE( wrapper.loadFromConduit() );
+
+    stdVector< camp::idx_t > invalidMetadata( numDims + 1, 0 );
+    conduit::DataType const invalidMetadataType( conduitTypeInfo< camp::idx_t >::id,
+                                                 invalidMetadata.size() );
+    wrapper.setRestartFlags( RestartFlags::WRITE_AND_READ );
+
+    wrapper.registerToWrite();
+    group.getConduitNode()[wrapper.getName()]["__permutation__"].set( invalidMetadataType,
+                                                                      invalidMetadata.data() );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    camp::idx_t * const permutation =
+      group.getConduitNode()[wrapper.getName()]["__permutation__"].value();
+    permutation[0] = numDims;
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    group.getConduitNode()[wrapper.getName()]["__dimensions__"].set( invalidMetadataType,
+                                                                     invalidMetadata.data() );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    buffer_unit_type invalidValue = 0;
+    conduit::DataType const invalidValueType( conduitTypeInfo< buffer_unit_type >::id, 1 );
+    group.getConduitNode()[wrapper.getName()]["__values__"].set( invalidValueType, &invalidValue );
+    EXPECT_THROW( wrapper.loadFromConduit(), std::runtime_error );
+
+    wrapper.registerToWrite();
+    wrapper.finishWriting();
+
+    EXPECT_THROW( wrapper.erase( std::set< localIndex >{} ), std::runtime_error );
+    wrapper.erase( { 0 } );
+  } );
+
+  EXPECT_EQ( numWrappersTested, sizeof...( ARRAY_TYPES ) );
+}
+
+} // namespace
 
 template< typename T >
 class WrapperSetGet : public ::testing::Test
@@ -337,4 +693,9 @@ TEST_F( WrapperLimitsTest, Array2dValidateEmpty )
   w.setLimits( 0.0, 1.0, wrapperLimits::LimitsMode::Error );
 
   EXPECT_NO_THROW( w.validateLimits() );
+}
+
+TEST( WrapperStandardArrays, VirtualInterface )
+{
+  testStandardArrayVirtualInterface( types::StandardArrays{} );
 }

@@ -519,7 +519,7 @@ void MeshLevel::writeCellDataCoarse( stdVector< string > const & fieldNames, int
       dims[0] = dstField.size( 0 );
       dstField.resize( ArrayType::NDIM, dims.data );
 
-      forAll< parallelHostPolicy >( dstField.size(), [=, dstField = dstField.toView()]( localIndex const ic )
+      forAll< parallelHostPolicy >( dstField.size( 0 ), [=, dstField = dstField.toView()]( localIndex const ic )
       {
         LvArray::forValuesInSliceWithIndices( dstField[ ic ],
                                               [&]( auto & dstVal, auto const ... indices )

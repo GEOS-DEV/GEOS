@@ -259,6 +259,210 @@ TEST( testPacking, testPackByIndexDevice )
   }
 }
 
+#define CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, NDIM, PERMUTATION ) \
+  { \
+    using ArrayType = Array< TYPE, NDIM, PERMUTATION >; \
+    localIndex dimensions[NDIM]; \
+    for( localIndex dimension = 0; dimension < NDIM; ++dimension ) \
+    { \
+      dimensions[dimension] = 2; \
+    } \
+    ArrayType source; \
+    source.resize( NDIM, dimensions ); \
+    for( localIndex valueIndex = 0; valueIndex < source.size(); ++valueIndex ) \
+    { \
+      source.data()[valueIndex] = static_cast< double >( valueIndex + 1 ); \
+    } \
+    \
+    buffer_unit_type * nullBuffer = nullptr; \
+    parallelDeviceEvents sizeEvents; \
+    localIndex const fullCalculatedSize = \
+      bufferOps::PackDevice< false >( nullBuffer, source.toViewConst(), sizeEvents ); \
+    EXPECT_EQ( nullBuffer, nullptr ); \
+    EXPECT_GT( fullCalculatedSize, 0 ); \
+    \
+    buffer_type fullBuffer( fullCalculatedSize ); \
+    buffer_unit_type * fullWriteBuffer = fullBuffer.data(); \
+    parallelDeviceEvents fullPackEvents; \
+    localIndex const fullPackedSize = \
+      bufferOps::PackDevice< true >( fullWriteBuffer, source.toViewConst(), fullPackEvents ); \
+    EXPECT_EQ( fullPackedSize, fullCalculatedSize ); \
+    EXPECT_EQ( fullWriteBuffer, fullBuffer.data() + fullPackedSize ); \
+    waitAllDeviceEvents( fullPackEvents ); \
+    \
+    ArrayType fullDestination; \
+    fullDestination.resize( NDIM, dimensions ); \
+    buffer_unit_type const * fullReadBuffer = fullBuffer.data(); \
+    parallelDeviceEvents fullUnpackEvents; \
+    localIndex const fullUnpackedSize = \
+      bufferOps::UnpackDevice( fullReadBuffer, fullDestination.toView(), fullUnpackEvents ); \
+    EXPECT_EQ( fullUnpackedSize, fullPackedSize ); \
+    EXPECT_EQ( fullReadBuffer, fullBuffer.data() + fullUnpackedSize ); \
+    waitAllDeviceEvents( fullUnpackEvents ); \
+    source.move( hostMemorySpace ); \
+    fullDestination.move( hostMemorySpace ); \
+    for( localIndex valueIndex = 0; valueIndex < source.size(); ++valueIndex ) \
+    { \
+      EXPECT_EQ( fullDestination.data()[valueIndex], source.data()[valueIndex] ); \
+    } \
+    \
+    array1d< localIndex > indices( dimensions[0] ); \
+    for( localIndex index = 0; index < indices.size(); ++index ) \
+    { \
+      indices[index] = index; \
+    } \
+    nullBuffer = nullptr; \
+    parallelDeviceEvents indexedSizeEvents; \
+    localIndex const indexedCalculatedSize = bufferOps::PackByIndexDevice< false >( \
+      nullBuffer, source.toViewConst(), indices.toViewConst(), indexedSizeEvents ); \
+    EXPECT_EQ( nullBuffer, nullptr ); \
+    EXPECT_GT( indexedCalculatedSize, 0 ); \
+    \
+    buffer_type indexedBuffer( indexedCalculatedSize ); \
+    buffer_unit_type * indexedWriteBuffer = indexedBuffer.data(); \
+    parallelDeviceEvents indexedPackEvents; \
+    localIndex const indexedPackedSize = bufferOps::PackByIndexDevice< true >( \
+      indexedWriteBuffer, source.toViewConst(), indices.toViewConst(), indexedPackEvents ); \
+    EXPECT_EQ( indexedPackedSize, indexedCalculatedSize ); \
+    localIndex const indexedWrittenSize = indexedWriteBuffer - indexedBuffer.data(); \
+    EXPECT_LE( indexedWrittenSize, indexedPackedSize ); \
+    EXPECT_LT( indexedPackedSize - indexedWrittenSize, static_cast< localIndex >( sizeof( TYPE ) ) ); \
+    waitAllDeviceEvents( indexedPackEvents ); \
+    \
+    ArrayType replaceDestination; \
+    replaceDestination.resize( NDIM, dimensions ); \
+    for( localIndex valueIndex = 0; valueIndex < replaceDestination.size(); ++valueIndex ) \
+    { \
+      replaceDestination.data()[valueIndex] = -1.0; \
+    } \
+    buffer_unit_type const * replaceReadBuffer = indexedBuffer.data(); \
+    parallelDeviceEvents replaceEvents; \
+    localIndex const replaceSize = bufferOps::UnpackByIndexDevice( \
+      replaceReadBuffer, replaceDestination.toView(), indices.toViewConst(), replaceEvents, MPI_REPLACE ); \
+    EXPECT_EQ( replaceSize, indexedPackedSize ); \
+    localIndex const replaceReadSize = replaceReadBuffer - indexedBuffer.data(); \
+    EXPECT_LE( replaceReadSize, replaceSize ); \
+    EXPECT_LT( replaceSize - replaceReadSize, static_cast< localIndex >( sizeof( TYPE ) ) ); \
+    waitAllDeviceEvents( replaceEvents ); \
+    replaceDestination.move( hostMemorySpace ); \
+    source.move( hostMemorySpace ); \
+    for( localIndex valueIndex = 0; valueIndex < source.size(); ++valueIndex ) \
+    { \
+      EXPECT_EQ( replaceDestination.data()[valueIndex], source.data()[valueIndex] ); \
+    } \
+    \
+    ArrayType sumDestination; \
+    sumDestination.resize( NDIM, dimensions ); \
+    for( localIndex valueIndex = 0; valueIndex < sumDestination.size(); ++valueIndex ) \
+    { \
+      sumDestination.data()[valueIndex] = 2.0; \
+    } \
+    buffer_unit_type const * sumReadBuffer = indexedBuffer.data(); \
+    parallelDeviceEvents sumEvents; \
+    localIndex const sumSize = bufferOps::UnpackByIndexDevice( \
+      sumReadBuffer, sumDestination.toView(), indices.toViewConst(), sumEvents, MPI_SUM ); \
+    EXPECT_EQ( sumSize, indexedPackedSize ); \
+    localIndex const sumReadSize = sumReadBuffer - indexedBuffer.data(); \
+    EXPECT_LE( sumReadSize, sumSize ); \
+    EXPECT_LT( sumSize - sumReadSize, static_cast< localIndex >( sizeof( TYPE ) ) ); \
+    waitAllDeviceEvents( sumEvents ); \
+    sumDestination.move( hostMemorySpace ); \
+    source.move( hostMemorySpace ); \
+    for( localIndex valueIndex = 0; valueIndex < source.size(); ++valueIndex ) \
+    { \
+      TYPE expected = source.data()[valueIndex]; \
+      expected += 2.0; \
+      EXPECT_EQ( sumDestination.data()[valueIndex], expected ); \
+    } \
+    \
+    ArrayType maxIncomingDestination; \
+    maxIncomingDestination.resize( NDIM, dimensions ); \
+    for( localIndex valueIndex = 0; valueIndex < maxIncomingDestination.size(); ++valueIndex ) \
+    { \
+      maxIncomingDestination.data()[valueIndex] = 0.0; \
+    } \
+    buffer_unit_type const * maxIncomingReadBuffer = indexedBuffer.data(); \
+    parallelDeviceEvents maxIncomingEvents; \
+    localIndex const maxIncomingSize = bufferOps::UnpackByIndexDevice( \
+      maxIncomingReadBuffer, maxIncomingDestination.toView(), indices.toViewConst(), maxIncomingEvents, MPI_MAX ); \
+    EXPECT_EQ( maxIncomingSize, indexedPackedSize ); \
+    localIndex const maxIncomingReadSize = maxIncomingReadBuffer - indexedBuffer.data(); \
+    EXPECT_LE( maxIncomingReadSize, maxIncomingSize ); \
+    EXPECT_LT( maxIncomingSize - maxIncomingReadSize, static_cast< localIndex >( sizeof( TYPE ) ) ); \
+    waitAllDeviceEvents( maxIncomingEvents ); \
+    maxIncomingDestination.move( hostMemorySpace ); \
+    source.move( hostMemorySpace ); \
+    for( localIndex valueIndex = 0; valueIndex < source.size(); ++valueIndex ) \
+    { \
+      EXPECT_EQ( maxIncomingDestination.data()[valueIndex], source.data()[valueIndex] ); \
+    } \
+    \
+    ArrayType maxExistingDestination; \
+    maxExistingDestination.resize( NDIM, dimensions ); \
+    for( localIndex valueIndex = 0; valueIndex < maxExistingDestination.size(); ++valueIndex ) \
+    { \
+      maxExistingDestination.data()[valueIndex] = 1000.0; \
+    } \
+    buffer_unit_type const * maxExistingReadBuffer = indexedBuffer.data(); \
+    parallelDeviceEvents maxExistingEvents; \
+    localIndex const maxExistingSize = bufferOps::UnpackByIndexDevice( \
+      maxExistingReadBuffer, maxExistingDestination.toView(), indices.toViewConst(), maxExistingEvents, MPI_MAX ); \
+    EXPECT_EQ( maxExistingSize, indexedPackedSize ); \
+    localIndex const maxExistingReadSize = maxExistingReadBuffer - indexedBuffer.data(); \
+    EXPECT_LE( maxExistingReadSize, maxExistingSize ); \
+    EXPECT_LT( maxExistingSize - maxExistingReadSize, static_cast< localIndex >( sizeof( TYPE ) ) ); \
+    waitAllDeviceEvents( maxExistingEvents ); \
+    maxExistingDestination.move( hostMemorySpace ); \
+    for( localIndex valueIndex = 0; valueIndex < maxExistingDestination.size(); ++valueIndex ) \
+    { \
+      TYPE expected; \
+      expected = 1000.0; \
+      EXPECT_EQ( maxExistingDestination.data()[valueIndex], expected ); \
+    } \
+  }
+
+#define CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_2D( TYPE ) \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 1, RAJA::PERM_I ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 2, RAJA::PERM_JI ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 2, RAJA::PERM_IJ )
+
+#define CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( TYPE ) \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_2D( TYPE ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 3, RAJA::PERM_JKI ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 3, RAJA::PERM_IKJ ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 3, RAJA::PERM_IJK )
+
+#define CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_4D( TYPE ) \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( TYPE ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 4, RAJA::PERM_JKLI ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 4, RAJA::PERM_IKLJ ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 4, RAJA::PERM_IJLK ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 4, RAJA::PERM_IJKL )
+
+#define CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_5D( TYPE ) \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_4D( TYPE ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 5, RAJA::PERM_JKLMI ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 5, RAJA::PERM_IKLMJ ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 5, RAJA::PERM_IJLMK ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 5, RAJA::PERM_IJKML ); \
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS( TYPE, 5, RAJA::PERM_IJKLM )
+
+TEST( testPacking, testExplicitDeviceInstantiationMatrix )
+{
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( int );
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( long int );
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( long long int );
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_5D( real32 );
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_5D( real64 );
+  CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D( R1Tensor );
+}
+
+#undef CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_5D
+#undef CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_4D
+#undef CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_3D
+#undef CHECK_EXPLICIT_DEVICE_BUFFER_OPS_UP_TO_2D
+#undef CHECK_EXPLICIT_DEVICE_BUFFER_OPS
+
 
 int main( int ac, char * av[] )
 {

@@ -31,3 +31,11 @@ else()
                  COMMAND ${test_name} )
 endif()
 endforeach()
+
+set( test_name testMultiscaleMeshLevelDataTransfer )
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test_name}.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
