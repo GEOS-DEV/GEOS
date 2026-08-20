@@ -171,12 +171,15 @@ void Damage< BASE >::saveConvergedState() const
 
   arrayView2d< real64 const > newDamage = m_newDamage;
   arrayView2d< real64 > oldDamage = m_oldDamage;
+  arrayView2d< real64 const > crackDrivingForce = m_crackDrivingForce;
+  arrayView2d< real64 > oldCrackDrivingForce = m_oldCrackDrivingForce;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
       oldDamage( k, q ) = newDamage( k, q );
+      oldCrackDrivingForce( k, q ) = crackDrivingForce( k, q );
     }
   } );
 }
