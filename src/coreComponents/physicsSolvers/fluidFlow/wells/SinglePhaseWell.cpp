@@ -130,8 +130,7 @@ SinglePhaseWell::~SinglePhaseWell() = default;
 
 void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
-  updateNumDofPerElement();
-  WellControls::registerDataOnMesh( subRegion );
+  WellControls::registerWellDataOnMesh( subRegion );
   setConstitutiveNames ( subRegion );
 
   if( m_referenceFluidModelName.empty() )
@@ -162,9 +161,6 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
       reference().resizeDimension< 1, 2 >( 2, 2 );
     perforationData.registerField< well::gravityCoefficient >( getName() );
   }
-
-  registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
-  registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
 
   // write rates output header
   if( m_writeCSV > 0 && subRegion.isLocallyOwned())
