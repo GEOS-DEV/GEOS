@@ -31,11 +31,17 @@ jobs:
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
 
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          draft_status="${{ github.event.pull_request.draft }}"
+          PR_JSON=$(curl --fail --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+          draft_status=$(jq -r '.draft' <<< "${PR_JSON}")
 
           echo "Draft status of PR is ${draft_status}."
           if [[ "${draft_status}" == "true" ]]; then
@@ -282,7 +288,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
-      UPLOAD_TO_GCP: false
+      UPLOAD_TO_GCP: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=256g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"

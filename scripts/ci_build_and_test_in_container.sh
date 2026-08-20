@@ -171,8 +171,8 @@ Usage: $0
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypredrv
-      One of ON or OFF (default is OFF). Build geos with hypredrive.
-      Overrides the TPL image host-config, which may set ENABLE_HYPREDRV ON.
+      One of ON or OFF (default is ON). Build geos with hypredrive.
+      This flag overrides the TPL image host-config.
   --enable-hypre-device
       One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
   --enable-trilinos
@@ -225,7 +225,7 @@ BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 ENABLE_HYPRE=ON
-ENABLE_HYPREDRV=OFF
+ENABLE_HYPREDRV=ON
 ENABLE_HYPRE_DEVICE=CPU
 GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
