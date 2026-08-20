@@ -51,16 +51,17 @@ single element in the two other directions. The column is initially at a uniform
 of 100 K, and is cooled down to 20 K following a linear ramp imposed over the whole domain.
 
 The mechanical boundary conditions are the essential ingredient of the problem: the two ends
-of the column (``yneg`` and ``ypos``) are fixed along ``y``, while the ``x`` and ``z``
-directions are only restrained on one face and are therefore free to deform. The resulting
-state is one of **uniaxial strain along** ``y``:
+of the column (``yneg`` and ``ypos``) are fixed along ``y``, so the axial strain is prevented
+(ε_yy = 0), while the `x` and `z` directions are only restrained on one face each and are
+therefore free to deform. The lateral faces being traction-free, σ_xx = σ_zz = 0, and the only
+non-zero stress component is σ_yy.
 
 .. math::
 
    \varepsilon_{yy} = 0, \qquad \sigma_{xx} = \sigma_{zz} = 0
 
 .. _thermoMech1DCoolingSketchFig:
-.. figure:: fixed_1d_bar_cooling_3d_view.png
+.. figure:: xz_cross_section_uniaxial_stress.png
    :align: center
    :width: 350
    :figclass: align-center
@@ -111,8 +112,7 @@ coefficient, and adds a Drucker-Prager yield surface:
 Analytical solution
 ------------------------------------------------------------------
 
-**Thermo-elastic response.** Under uniaxial strain, the only non-zero stress component is
-:math:`\sigma_{yy}`, and the thermo-elastic constitutive law reduces to
+**Thermo-elastic response.** In this uniaxial stress state (σ_xx = σ_zz = 0), the axial strain is blocked (ε_yy = 0) and the thermo-elastic constitutive law reduces to
 
 .. math::
 
