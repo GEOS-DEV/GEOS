@@ -1,0 +1,366 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <SinglePhasePoromechanics
+      name="thermoPoroSolver"
+      solidSolverName="solidMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ rock }">
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        maxAllowedResidualNorm="1e19"
+        newtonMaxIter="100"
+        maxTimeStepCuts="10"
+        newtonTol="1e-8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="solidMechSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ rock }">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-4"/>
+    </SolidMechanicsLagrangianFEM>
+   
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0"
+      isThermal="1"
+      targetRegions="{ rock }">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-4"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ * }"
+      materialList="{ fluid, rock, rockThermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <PorousDruckerPrager
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <!-- SPHINX_PoroElasticProperties -->
+    <BiotPorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      defaultGrainBulkModulus="1e20"/>
+    <!-- SPHINX_PoroElasticPropertiesEnd -->
+
+    <!-- SPHINX_HeatCapacityProperties -->
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="4.56e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+    <!-- SPHINX_HeatCapacityPropertiesEnd -->
+
+    <!-- SPHINX_PermeabilityProperties -->
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-20, 1.0e-20, 1.0e-20 }"/>
+    <!-- SPHINX_PermeabilityPropertiesEnd -->
+
+    <!-- SPHINX_ThermalProperties -->
+    <SinglePhaseThermalConductivity
+      name="rockThermalCond"
+      defaultThermalConductivityComponents="{ 2.65, 2.65, 2.65 }"/>
+    <!-- SPHINX_ThermalPropertiesEnd -->
+
+    <!-- SPHINX_FluidProperties -->
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="3.7e-4"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="4.187e3"
+      referenceInternalEnergy="0.001"/>
+    <!-- SPHINX_FluidPropertiesEnd -->
+
+	<!-- SPHINX_ThermoElasticProperties -->
+    <DruckerPrager
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultYoungModulus="17.2e9"
+      defaultPoissonRatio="0.38"
+      defaultCohesion="30e6"
+      defaultFrictionAngle="60.0"
+      defaultDilationAngle="5.0"
+      defaultHardeningRate="0.0"
+      defaultDrainedLinearTEC="1.6e-5"/>
+    <!-- SPHINX_ThermoElasticPropertiesEnd -->
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <!-- SPHINX_FixedFarFieldBC -->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ all }"/>
+    <!-- SPHINX_FixedFarFieldBCEnd -->
+
+    <FieldSpecification
+      name="initialSigma_x_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="-10000000.0"/>
+    <FieldSpecification
+      name="initialSigma_y_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="-13900000.0"/>
+    <FieldSpecification
+      name="initialSigma_z_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="-25100000.0"/>
+
+    <!-- SPHINX_PorePressureBC -->
+
+    <FieldSpecification
+      name="initialPressureFix"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      beginTime="-1e10"
+      endTime="0.1"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="farfieldPressure"
+      setNames="{ xneg, xpos, yneg, ypos }"       
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="innerPressure0"
+      setNames="{ well_face }"     
+      objectPath="faceManager"
+      endTime="0.1"
+      fieldName="pressure"
+      scale="26.1e6"/>
+
+    <FieldSpecification
+      name="innerPressure1"
+      setNames="{ well_face }"     
+      objectPath="faceManager"
+      beginTime="0.1"
+      fieldName="pressure"
+      scale="28.1e6"/>
+    <!-- SPHINX_PorePressureBCEnd -->
+
+    <!-- SPHINX_TemperatureBC -->
+    <FieldSpecification
+      name="initialTemperatureFix"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      beginTime="-1e10"
+      endTime="0.1"
+      fieldName="temperature"
+      scale="100.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="100"/>
+
+    <FieldSpecification
+      name="farfieldTemperature"
+      setNames="{ xneg, xpos, yneg, ypos }"       
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="100"/>
+
+    <FieldSpecification
+      name="innerTemperature0"
+      setNames="{ well_face }"     
+      objectPath="faceManager"
+      fieldName="temperature"
+      endTime="0.1"
+      scale="100.0"/>
+
+    <FieldSpecification
+      name="innerTemperature1"
+      setNames="{ well_face }"     
+      objectPath="faceManager"
+      fieldName="temperature"
+      functionName="tempTable"
+      beginTime="0.1"
+      scale="1.0"/>
+    <!-- SPHINX_TemperatureBCEnd -->
+
+    <!-- SPHINX_ZeroInnerTractionBC -->
+    <Traction
+      name="innerTraction0"
+      objectPath="faceManager"
+      tractionType="normal"
+      endTime="0.1"
+      scale="-26.1e6"
+      setNames="{ well_face }"/>
+
+    <Traction
+      name="innerTraction1"
+      objectPath="faceManager"
+      tractionType="normal"
+      beginTime="0.1"
+      scale="-28.1e6"
+      setNames="{ well_face }"/>
+    <!-- SPHINX_ZeroInnerTractionBCEnd -->
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="tempTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 18000 }"
+      values="{ 100, 20 }"/>
+  </Functions>
+
+  <Tasks>
+    <!-- SPHINX_TemperatureCollection -->
+    <PackCollection
+      name="temperatureCollection_rock"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="temperature"/>
+    <!-- SPHINX_TemperatureCollectionEnd -->
+
+    <!-- SPHINX_PressureCollection -->
+    <PackCollection
+      name="pressureCollection_rock"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="pressure"/>
+    <!-- SPHINX_PressureCollectionEnd -->
+
+    <!-- SPHINX_SolidStressCollection -->
+    <PackCollection
+      name="stressCollection_rock"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="rockSolid_stress"/>
+    <!-- SPHINX_SolidStressCollectionEnd -->
+
+    <!-- SPHINX_BulkdModulusCollection -->
+    <PackCollection
+      name="bulkModCollection_rock"
+      objectPath="ElementRegions/rock/hexahedra"
+      fieldName="rockSolid_bulkModulus"/>
+    <!-- SPHINX_BulkModulusCollectionEnd -->
+
+  </Tasks>
+
+  <Outputs>
+    <!-- SPHINX_TemperatureTimeHistory -->
+    <TimeHistory
+      name="temperatureHistoryOutput_rock"
+      sources="{ /Tasks/temperatureCollection_rock }"
+      filename="temperatureHistory_rock"/>
+    <!-- SPHINX_TemperatureTimeHistoryEnd -->
+
+    <TimeHistory
+      name="pressureHistoryOutput_rock"
+      sources="{ /Tasks/pressureCollection_rock }"
+      filename="pressureHistory_rock"/>
+
+    <!-- SPHINX_SolidStressTimeHistory -->
+    <TimeHistory
+      name="stressHistoryOutput_rock"
+      sources="{ /Tasks/stressCollection_rock }"
+      filename="stressHistory_rock"/>
+    <!-- SPHINX_SolidStressTimeHistoryEnd -->
+
+    <!-- SPHINX_BulkModulusTimeHistory -->
+    <TimeHistory
+      name="bulkModHistoryOutput_rock"
+      sources="{ /Tasks/bulkModCollection_rock }"
+      filename="bulkModHistory_rock"/>
+    <!-- SPHINX_BulkModulusTimeHistoryEnd -->
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

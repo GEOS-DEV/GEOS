@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./UncasedThermoPoroPlasticWellbore_base.xml" />
+  </Included>
+
+  <!-- SPHINX_WellboreMesh -->
+  <Mesh>
+    <VTKMesh 
+      name="mesh"
+      file="/p/lustre2/fei2/Q-Fibre/UncasedWell/meshes/uncasedWellbore_L=20m_Ncirc=200_Nr=200_intNodeset.vtu"
+      nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, well_face }"/>
+  </Mesh>
+  <!-- SPHINX_WellboreMeshEnd -->
+
+  <Events
+    minTime="-1e10"
+    maxTime="18000">
+
+    <PeriodicEvent
+      name="bulkModHistoryCollection_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Tasks/bulkModCollection_rock"/>
+    <PeriodicEvent
+      name="bulkModTimeHistoryOutput_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Outputs/bulkModHistoryOutput_rock"/>
+    
+    <PeriodicEvent
+      name="stressHistoryCollection_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Tasks/stressCollection_rock"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Outputs/stressHistoryOutput_rock"/>
+
+    <PeriodicEvent
+      name="temperatureHistoryCollection_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Tasks/temperatureCollection_rock"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Outputs/temperatureHistoryOutput_rock"/>
+
+    <PeriodicEvent
+      name="pressureHistoryCollection_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Tasks/pressureCollection_rock"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput_rock"
+      beginTime="0.0"
+      endTime="18000"
+      forceDt="400"
+      target="/Outputs/pressureHistoryOutput_rock"/>
+
+    <PeriodicEvent
+      name="outputs"
+      beginTime="0.0"
+      cycleFrequency="4"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent 
+      beginTime="-1.0e5" 
+      name="solverPreEquilibrationStep"
+      target="/Solvers/thermoPoroSolver"
+      forceDt="1.0e5" />
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="0.1"
+      forceDt="0.1"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="0.1"
+      maxEventDt="100"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

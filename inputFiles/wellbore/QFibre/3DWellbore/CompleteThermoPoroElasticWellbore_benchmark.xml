@@ -1,0 +1,219 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./CompleteThermoPoroElasticWellbore_base.xml" />
+  </Included>
+
+  <!-- SPHINX_WellboreMesh -->
+  <Mesh>
+    <VTKMesh 
+      name="mesh"
+      regionAttribute="CASING-CEMENT-SEAL-RESERVOIR"
+      file="../meshes/completeWellbore_Dseal=4m_Dres=1m_Ncirc=80_Nr=80_Ndseal=40_Ndres=10_intNodeset.vtu"
+      nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, well_face_seal, well_face_reservoir }"/>
+  </Mesh>
+  <!-- SPHINX_WellboreMeshEnd -->
+
+  <Geometry>
+    <Cylinder
+      name="reservoir_innerFace"
+      firstFaceCenter="{ 0.0, 0.0,  1.01 }"
+      secondFaceCenter="{ 0.0, 0.0, -0.01}"
+      outerRadius="0.101"
+      innerRadius="0.099"
+    />
+  </Geometry>
+
+  <Events
+    minTime="-1e10"
+    maxTime="1e5">
+
+    <PeriodicEvent
+      name="stressHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_casing"/>
+    <PeriodicEvent
+      name="stressHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_cement"/>
+    <PeriodicEvent
+      name="stressHistoryCollection_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_seal"/>
+    <PeriodicEvent
+      name="stressHistoryCollection_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/stressCollection_reservoir"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_seal"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/stressHistoryOutput_reservoir"/>
+
+    <PeriodicEvent
+      name="strainHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/strainCollection_casing"/>
+    <PeriodicEvent
+      name="strainHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/strainCollection_cement"/>
+    <PeriodicEvent
+      name="strainHistoryCollection_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/strainCollection_seal"/>
+    <PeriodicEvent
+      name="strainHistoryCollection_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/strainCollection_reservoir"/>
+    <PeriodicEvent
+      name="strainTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/strainHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="strainTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/strainHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="strainTimeHistoryOutput_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/strainHistoryOutput_seal"/>
+    <PeriodicEvent
+      name="strainTimeHistoryOutput_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/strainHistoryOutput_reservoir"/>
+
+    <PeriodicEvent
+      name="temperatureHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_casing"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_cement"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_seal"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/temperatureCollection_reservoir"/>
+
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_seal"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/temperatureHistoryOutput_reservoir"/>
+
+    <PeriodicEvent
+      name="pressureHistoryCollection_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/pressureCollection_casing"/>
+    <PeriodicEvent
+      name="pressureHistoryCollection_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/pressureCollection_cement"/>
+    <PeriodicEvent
+      name="pressureHistoryCollection_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/pressureCollection_seal"/>
+    <PeriodicEvent
+      name="pressureHistoryCollection_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Tasks/pressureCollection_reservoir"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput_casing"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/pressureHistoryOutput_casing"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput_cement"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/pressureHistoryOutput_cement"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput_seal"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/pressureHistoryOutput_seal"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput_reservoir"
+      endTime="1e5"
+      forceDt="1e4"
+      target="/Outputs/pressureHistoryOutput_reservoir"/>
+
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="2"
+      target="/Outputs/vtkOutput"/>
+    
+    <SoloEvent 
+      beginTime="-1e10" 
+      name="singlephasePoromechanicsPreEquilibrationStep"
+      target="/Tasks/singlephasePoromechanicsPreEquilibrationStep"
+      targetTime="-1e10" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1e3"
+      target="/Solvers/thermoPoroElasticSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>
