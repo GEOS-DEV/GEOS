@@ -882,11 +882,11 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
                                                    localMatrix,
                                                    localRhs );
     }
-    shutDownWell( subRegion, dofManager, localMatrix, localRhs, true, false );
+    shutClosedSegments( subRegion, dofManager, localMatrix, localRhs );
   }
   else
   {
-    shutDownWell( subRegion, dofManager, localMatrix, localRhs, false, true );
+    shutEntireWell( subRegion, dofManager, localMatrix, localRhs );
   }
 }
 

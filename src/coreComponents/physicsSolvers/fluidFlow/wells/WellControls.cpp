@@ -251,14 +251,18 @@ void WellControls::updateNumDofPerElement()
   m_numDofPerResElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
 }
 
-void WellControls::shutDownWell( WellElementSubRegion & subRegion,
-                                 DofManager const & dofManager,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                 arrayView1d< real64 > const & localRhs,
-                                 bool const shutClosedElementsOnly,
-                                 bool const resetControlState )
+namespace
 {
-  string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
+
+void shutDownWell( WellElementSubRegion & subRegion,
+                   DofManager const & dofManager,
+                   string const & wellElementDofName,
+                   integer const numDofPerWellElement,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs,
+                   bool const shutClosedElementsOnly )
+{
+  string const wellElemDofKey = dofManager.getKey( wellElementDofName );
 
   arrayView1d< globalIndex const > const & wellElemDofNumber =
     subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
@@ -267,7 +271,6 @@ void WellControls::shutDownWell( WellElementSubRegion & subRegion,
   arrayView1d< real64 > const connRate = subRegion.getField< fields::well::connectionRate >();
 
   localIndex const rankOffset = dofManager.rankOffset();
-  integer const numDofPerWellElement = m_numDofPerWellElement;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     if( wellElemGhostRank[ei] < 0 &&
@@ -290,11 +293,37 @@ void WellControls::shutDownWell( WellElementSubRegion & subRegion,
       }
     }
   } );
+}
 
-  if( resetControlState )
-  {
-    resetShutInControlState();
-  }
+}
+
+void WellControls::shutClosedSegments( WellElementSubRegion & subRegion,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
+{
+  shutDownWell( subRegion,
+                dofManager,
+                wellElementDofName(),
+                m_numDofPerWellElement,
+                localMatrix,
+                localRhs,
+                true );
+}
+
+void WellControls::shutEntireWell( WellElementSubRegion & subRegion,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
+{
+  shutDownWell( subRegion,
+                dofManager,
+                wellElementDofName(),
+                m_numDofPerWellElement,
+                localMatrix,
+                localRhs,
+                false );
+  resetShutInControlState();
 }
 
 void WellControls::resetShutInControlState()

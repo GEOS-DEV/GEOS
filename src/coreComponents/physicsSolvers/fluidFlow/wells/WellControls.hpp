@@ -845,12 +845,15 @@ protected:
 
   void updateNumDofPerElement();
 
-  void shutDownWell( WellElementSubRegion & subRegion,
-                     DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs,
-                     bool shutClosedElementsOnly,
-                     bool resetControlState );
+  void shutClosedSegments( WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
+
+  void shutEntireWell( WellElementSubRegion & subRegion,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
 
   virtual void resetShutInControlState();
 
