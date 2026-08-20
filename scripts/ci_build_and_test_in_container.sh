@@ -198,6 +198,7 @@ Usage: $0
   --sccache-credentials credentials.json
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
+      Check C++ style (uncrustify) and XML formatting (format_xml).
   --test-documentation
   -h | --help
 EOF
@@ -494,7 +495,14 @@ or_die cd ${GEOS_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
-  or_die ctest --output-on-failure -R "testUncrustifyCheck"
+  # Ubuntu 24.04 system Python is PEP 668-managed. geosx_python_tools then
+  # creates a venv, which needs the stdlib venv/ensurepip modules.
+  if ! python3 -c "import venv, ensurepip" >/dev/null 2>&1; then
+    or_die apt-get update
+    or_die apt-get install -y python3-venv
+  fi
+  or_die cmake --build . --target geosx_python_tools
+  or_die ctest --output-on-failure -R "testUncrustifyCheck|testXmlFormatCheck"
   exit 0
 fi
 
@@ -547,9 +555,9 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   export OMP_NUM_THREADS=1
   echo "Running unit tests with OMP_NUM_THREADS=${OMP_NUM_THREADS}."
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testXmlFormatCheck"
   fi
 fi
 

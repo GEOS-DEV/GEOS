@@ -245,8 +245,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-message(WARNING "Temporarily changing the geosPythonBranch to feature/remove-dndx-detj")
-set(GEOS_PYTHON_PACKAGES_BRANCH "feature/remove-dndx-detj" CACHE STRING "" FORCE)
+message(WARNING "Temporarily changing the geosPythonBranch to feature/paludettomag1/compact-xml-leaves")
+set(GEOS_PYTHON_PACKAGES_BRANCH "feature/paludettomag1/compact-xml-leaves" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )
@@ -282,6 +282,8 @@ if ( Python3_EXECUTABLE )
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
+    # setupPythonEnvironment.bash installs into a build-tree venv when the
+    # target interpreter is PEP 668 externally-managed (Ubuntu 24.04+).
     add_custom_command( OUTPUT ${GEOS_PYTHON_TOOLS_BINS}
                         COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
@@ -299,11 +301,29 @@ if ( Python3_EXECUTABLE )
                        DEPENDS geosx_python_tools
                      )
 
+    # Format / check XML with the existing Python format_xml tool.
+    # Walk the filesystem (-a), not git (-g): the CI container often cannot
+    # use the mounted checkout as root (safe.directory), and a git listing
+    # failure must not look like a clean pass.
+    # This is not a replacement for geosx_validate_all_xml_files (schema validation).
     add_custom_target( geosx_format_all_xml_files
-                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -a ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS geosx_python_tools
                      )
+
+    add_custom_target( geosx_check_xml_files
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash --check -a ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx_python_tools
+                     )
+
+    set_property( TARGET geosx_check_xml_files PROPERTY EXCLUDE_FROM_ALL TRUE )
+    set_property( TARGET geosx_check_xml_files PROPERTY EXCLUDE_FROM_DEFAULT_BUILD TRUE )
+
+    add_test( NAME testXmlFormatCheck
+              COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash --check -a ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+              WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
 else()
     message(WARNING "Building the GEOSX python tools requires Python >= 3.6.")

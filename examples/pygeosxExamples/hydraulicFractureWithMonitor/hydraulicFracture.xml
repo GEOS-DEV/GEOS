@@ -16,15 +16,11 @@
   <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS_END -->
   <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS -->
   <Outputs>
-    <Python
-      name="pythonOutput"/>
+    <Python name="pythonOutput"/>
   </Outputs>
 
   <Events>
-    <PeriodicEvent
-      name="python"
-      cycleFrequency="10"
-      target="/Outputs/pythonOutput"/>
+    <PeriodicEvent name="python" cycleFrequency="10" target="/Outputs/pythonOutput"/>
   </Events>
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS_END -->

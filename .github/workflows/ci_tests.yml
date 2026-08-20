@@ -103,7 +103,7 @@ jobs:
       fail-fast : false
       matrix:
         include:
-        # Validates the code-style using uncrustify
+        # Validates C++ style (uncrustify) and XML formatting (format_xml)
         - name: Check code style
           BUILD_AND_TEST_ARGS: --test-code-style
         # Validates that the documentation generated using doxygen has no hole.

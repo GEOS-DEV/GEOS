@@ -15,9 +15,6 @@
   </Mesh>
 
   <Geometry>
-    <Box
-      name="perf"
-      xMin="{ 0, 0, 0 }"
-      xMax="{ 1, 1, 1 }"/>
+    <Box name="perf" xMin="{ 0, 0, 0 }" xMax="{ 1, 1, 1 }"/>
   </Geometry>
 </Problem>

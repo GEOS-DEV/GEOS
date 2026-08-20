@@ -8,11 +8,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6"/>
+      <LinearSolverParameters solverType="gmres" krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianFEM>
   </Solvers>
 
@@ -35,10 +32,7 @@
     maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0e-5"
-      target="/Solvers/lagsolve"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0e-5" target="/Solvers/lagsolve"/>
 
     <PeriodicEvent
       name="silo"
@@ -49,17 +43,12 @@
 
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
+      <FiniteElementSpace name="FE1" order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+    <CellElementRegion name="Region2" cellBlocks="{ * }" materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -97,11 +86,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
-      plotLevel="3"/>
+    <Silo name="siloOutput" plotLevel="3"/>
 
-    <Restart
-      name="restartOutput"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 </Problem>
