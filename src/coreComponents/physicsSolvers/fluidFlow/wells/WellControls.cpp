@@ -246,9 +246,10 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 
 void WellControls::updateNumDofPerElement()
 {
-  m_numDofPerWellElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
+  localIndex const numFlowComponents = numFluidComponents();
+  m_numDofPerWellElement = isThermal() ? numFlowComponents + 2 : numFlowComponents + 1;
   ++m_numDofPerWellElement; // Extra well connection-rate DOF.
-  m_numDofPerResElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
+  m_numDofPerResElement = isThermal() ? numFlowComponents + 2 : numFlowComponents + 1;
 }
 
 namespace
