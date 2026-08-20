@@ -63,7 +63,7 @@ non-zero stress component is σ_yy.
 .. _thermoMech1DCoolingSketchFig:
 .. figure:: xz_cross_section_uniaxial_stress.png
    :align: center
-   :width: 350
+   :width: 500
    :figclass: align-center
 
    Sketch of the confined column: both ends are fixed along ``y``, while ``x`` and ``z`` are
