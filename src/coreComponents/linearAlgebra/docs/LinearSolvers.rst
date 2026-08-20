@@ -90,11 +90,12 @@ vector ownership, and all higher-level GEOS solver logic remain unchanged.
 Build requirements
 ==================
 
-This feature is optional. It is available only when GEOS is configured with:
+hypredrive is enabled by default whenever GEOS is configured with ``ENABLE_HYPRE=ON``.
+CMake then requires a valid hypredrive installation, located either through ``HYPREDRV_DIR``
+or at ``${GEOS_TPL_DIR}/hypredrive``. If that installation cannot be found, configuration
+fails and asks you to update the TPL bundle.
 
-* ``ENABLE_HYPRE=ON``,
-* ``ENABLE_HYPREDRV=ON``,
-* ``HYPREDRV_DIR`` pointing to a hypredrive installation or package configuration directory.
+To build with HYPRE but without hypredrive, pass ``-DENABLE_HYPREDRV=OFF``.
 
 If GEOS is built without hypredrive support, setting ``hypredriveInputFile`` in the XML input
 is an error.
@@ -305,14 +306,14 @@ This section provides a brief description of the available preconditioners.
 * **ILUK**: incomplete LU factorization with fill level k of the original matrix: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCILU.html>`__,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILU.html>`__.
 
 * **ILUT**: a dual threshold incomplete LU factorization: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - not yet available through PETSc interface,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILUT.html>`__.
 

@@ -20,6 +20,26 @@ else()
 endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
+# Configure the arguments used by generated build-system test targets before
+# BLT enables CTest. Users who need full control can still define
+# CMAKE_CTEST_ARGUMENTS directly from their host-config or CMake command line.
+set( GEOS_CTEST_PARALLEL_LEVEL "AUTO" CACHE STRING
+     "CTest parallel level for generated test targets. Use AUTO for CTest's default level, OFF for serial execution, or a nonnegative integer." )
+set_property( CACHE GEOS_CTEST_PARALLEL_LEVEL PROPERTY STRINGS AUTO OFF 0 1 2 4 8 16 )
+if( NOT DEFINED CMAKE_CTEST_ARGUMENTS )
+  string( TOUPPER "${GEOS_CTEST_PARALLEL_LEVEL}" _geos_ctest_parallel_level )
+  if( _geos_ctest_parallel_level STREQUAL "AUTO" )
+    set( CMAKE_CTEST_ARGUMENTS "--parallel" )
+  elseif( _geos_ctest_parallel_level STREQUAL "OFF" )
+    set( CMAKE_CTEST_ARGUMENTS "" )
+  elseif( GEOS_CTEST_PARALLEL_LEVEL MATCHES "^[0-9]+$" )
+    set( CMAKE_CTEST_ARGUMENTS "--parallel" "${GEOS_CTEST_PARALLEL_LEVEL}" )
+  else()
+    message( FATAL_ERROR "GEOS_CTEST_PARALLEL_LEVEL must be AUTO, OFF, or a nonnegative integer." )
+  endif()
+  unset( _geos_ctest_parallel_level )
+endif()
+
 # populated by `geos_add_test` (private list of all geos tests, keep in sync with the macro definition)
 set_property( GLOBAL PROPERTY geos_tests_exe_list )
 
@@ -372,6 +392,6 @@ endif()
 # the following adds a `build_test` CMake target such that running `$ make build_test test`
 # builds the unit tests before running them
 get_property( tmp GLOBAL PROPERTY geos_tests_exe_list )
-add_custom_target( build_test COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${tmp} )
+add_custom_target( build_test COMMAND ${CMAKE_CTEST_COMMAND} ${CMAKE_CTEST_ARGUMENTS} DEPENDS ${tmp} )
 
 message( DEBUG "geos_tests: ${tmp} " )
