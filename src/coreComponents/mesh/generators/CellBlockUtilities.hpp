@@ -20,6 +20,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geos
 {
@@ -104,6 +105,8 @@ template< typename POLICY, typename T, typename COMP = std::equal_to<> >
 array1d< localIndex >
 computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COMP && comp = {} )
 {
+  GEOS_MARK_FUNCTION;
+
   localIndex const numNodes = sortedLists.size();
   array1d< localIndex > uniqueValueOffsets( numNodes + 1 );
 

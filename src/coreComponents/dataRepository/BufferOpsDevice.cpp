@@ -15,6 +15,19 @@
 
 #include "BufferOpsDevice.hpp"
 
+// Define a dedicated policy for packing operations.
+#if defined( GEOS_USE_CUDA ) || defined( GEOS_USE_HIP )
+  // When using GPU, use the parallelDevicePolicy (default block size)
+  using packingPolicy = parallelDevicePolicy;
+#elif defined( GEOS_USE_OPENMP )
+  // When on host with OpenMP, use static schedule with a chunk size of 256
+  using packingPolicy = RAJA::omp_for_static_exec< 256 >;
+#else
+  // Otherwise, use the serial execution policy
+  using packingPolicy = serialPolicy;
+#endif
+
+
 namespace geos
 {
 
@@ -31,7 +44,10 @@ PackPointerDataDevice( buffer_unit_type * & buffer,
   localIndex const sizeOfPackedChars = length * sizeof( T );
   if( DO_PACKING )
   {
-    memcpy( buffer, var, length * sizeof( T ) );
+    for( localIndex ii = 0; ii < length; ++ii )
+    {
+      reinterpret_cast< T* >( buffer )[ ii ] = var[ ii ];
+    }
     buffer += length * sizeof( T );
   }
   return sizeOfPackedChars;
@@ -47,7 +63,7 @@ PackPointerDevice( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = sizeof( localIndex );
   if( DO_PACKING )
   {
-    memcpy( buffer, &length, sizeof( localIndex ) );
+    *reinterpret_cast< localIndex* >( buffer ) = length;
     buffer += sizeof( localIndex );
   }
   sizeOfPackedChars += PackPointerDataDevice< DO_PACKING >( buffer, var, length );
@@ -62,8 +78,10 @@ UnpackPointerDataDevice( buffer_unit_type const * & buffer,
                          localIndex const expectedLength )
 {
   localIndex sizeOfUnpackedChars = expectedLength * sizeof(T);
-  memcpy( var, buffer, expectedLength * sizeof(T) );
-  buffer += expectedLength * sizeof(T);
+  for( localIndex ii = 0; ii < expectedLength; ++ii )
+  {
+    var[ ii ] = reinterpret_cast< T const* >( buffer )[ ii ];
+  }  buffer += expectedLength * sizeof(T);
   return sizeOfUnpackedChars;
 }
 
@@ -76,7 +94,7 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
 {
   localIndex length = 0;
   localIndex sizeOfUnpackedChars = sizeof( localIndex );
-  memcpy( &length, buffer, sizeof( localIndex ) );
+  length = *reinterpret_cast< const localIndex* >( buffer );
   buffer += sizeof( localIndex );
   GEOS_ASSERT_EQ( length, expectedLength );
   GEOS_DEBUG_VAR( expectedLength );
@@ -93,8 +111,8 @@ PackDataDevice( buffer_unit_type * & buffer,
   if( DO_PACKING )
   {
 //    parallelDeviceStream stream;
-//    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
-    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
+//    events.emplace_back( forAll< packingPolicy >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+    forAll< packingPolicy >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
     {
       reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
     } );
@@ -126,8 +144,8 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
                   parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
   // parallelDeviceStream stream;
-  // events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
-  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
+  // events.emplace_back( forAll< packingPolicy >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+  forAll< packingPolicy >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
   {
     var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
   } );
@@ -168,7 +186,7 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
   {
     T * devBuffer = reinterpret_cast< T * >( buffer );
     parallelDeviceStream stream;
-    events.emplace_back( forAll< parallelDevicePolicy< > >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< packingPolicy >( stream, numIndices, [&] GEOS_DEVICE ( localIndex const ii )
     {
       T * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&] GEOS_DEVICE ( T const & value )
@@ -223,7 +241,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   parallelDeviceStream stream;
   if( op == MPI_SUM )
   {
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< packingPolicy >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
@@ -235,7 +253,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   }
   else if( op == MPI_REPLACE )
   {
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< packingPolicy >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
@@ -247,7 +265,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   }
   else if( op == MPI_MAX )
   {
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< packingPolicy >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       int count = 0;
