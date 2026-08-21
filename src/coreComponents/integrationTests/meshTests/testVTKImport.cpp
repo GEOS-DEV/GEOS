@@ -68,7 +68,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
     </Mesh>
   )xml";
   string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, useGlobalIdsStr,
-                                    fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
+                                            fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.loadString( meshNode );

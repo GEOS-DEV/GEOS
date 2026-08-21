@@ -370,8 +370,8 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
           globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT_RUNTIME( bcLogMessage,
-                                                    this->getName(), time_n+dt, FieldSpecification::catalogName(),
-                                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                            this->getName(), time_n+dt, FieldSpecification::catalogName(),
+                                                            fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                           fs );
 
           // Specify the bc value of the field

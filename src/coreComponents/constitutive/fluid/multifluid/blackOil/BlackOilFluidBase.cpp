@@ -256,7 +256,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
     } catch( SimulationError const & ex )
     {
       string const exceptionMsg = GEOS_FMT_RUNTIME( errorMsg, getCatalogName(), getDataContext(),
-                                            "formation volume factor", iph );
+                                                    "formation volume factor", iph );
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
@@ -269,7 +269,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
     } catch( SimulationError const & ex )
     {
       string const exceptionMsg = GEOS_FMT_RUNTIME( errorMsg, getCatalogName(), getDataContext(),
-                                            "viscosity", iph );
+                                                    "viscosity", iph );
 
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )

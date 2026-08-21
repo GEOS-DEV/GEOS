@@ -361,23 +361,23 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
 
     GEOS_THROW_IF( !isZero ( imbibitionPhaseMaxVolFraction - drainagePhaseMaxVolFraction ),
                    GEOS_FMT_RUNTIME( string( "the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
-                             drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
+                                     + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
+                                     + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
+                                     drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( !isZero ( imbibitionPhaseRelPermMaxEndPoint - drainagePhaseRelPermMaxEndPoint ),
                    GEOS_FMT_RUNTIME( string( "the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
-                             + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
-                             drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
+                                     + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
+                                     + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
+                                     drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( imbibitionPhaseMinVolFraction < drainagePhaseMinVolFraction,
                    GEOS_FMT_RUNTIME( string( "the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
-                             + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
-                             drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
+                                     + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
+                                     + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
+                                     drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
                    InputError, getDataContext() );
 
   }
