@@ -1107,7 +1107,7 @@ void FlowSolverBase::applyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
+      GEOS_LOG_RANK_0( GEOS_FMT_RUNTIME( logMessage,
                                  getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                  setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }

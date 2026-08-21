@@ -820,7 +820,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
@@ -1094,7 +1094,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
@@ -1140,7 +1140,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );

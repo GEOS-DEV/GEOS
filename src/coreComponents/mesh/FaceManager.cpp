@@ -198,13 +198,13 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       {
         if( faceIndex != -1 )
         {
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
 
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
 
           m_toElements.m_toElementRegion( faceIndex, 1 ) = er;
           m_toElements.m_toElementSubRegion( faceIndex, 1 ) = esr;

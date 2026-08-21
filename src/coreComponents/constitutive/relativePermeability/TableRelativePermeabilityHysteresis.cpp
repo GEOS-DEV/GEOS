@@ -314,7 +314,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
 
   m_phaseMinVolumeFraction[ipWetting] = drainagePhaseMinVolFraction;
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing wetting relperm curve with {(smin,krmin), (simax,krimax), (sdmax,krdmax)} : {({},{}),({},{}),({},{})}",
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing wetting relperm curve with {{(smin,krmin), (simax,krimax), (sdmax,krdmax)}} : {{({},{}),({},{}),({},{})}}",
                                                   m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue,
                                                   m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
                                                   m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue
@@ -360,21 +360,21 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
                                            imbibitionPhaseRelPermMaxEndPoint );
 
     GEOS_THROW_IF( !isZero ( imbibitionPhaseMaxVolFraction - drainagePhaseMaxVolFraction ),
-                   GEOS_FMT( string( "the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
+                   GEOS_FMT_RUNTIME( string( "the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
                              + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
                              + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
                              drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( !isZero ( imbibitionPhaseRelPermMaxEndPoint - drainagePhaseRelPermMaxEndPoint ),
-                   GEOS_FMT( string( "the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
+                   GEOS_FMT_RUNTIME( string( "the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
                              + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
                              + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
                              drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( imbibitionPhaseMinVolFraction < drainagePhaseMinVolFraction,
-                   GEOS_FMT( string( "the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
+                   GEOS_FMT_RUNTIME( string( "the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
                              + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
                              + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
                              drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
@@ -388,7 +388,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
 
   m_phaseMinVolumeFraction[ipNonWetting] = drainagePhaseMinVolFraction;
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing non-wetting relperm curve with {(sdmin,krdmin), (simin,krimin), (smax,krmax)} : {({},{}),({},{}),({},{})}",
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing non-wetting relperm curve with {{(sdmin,krdmin), (simin,krimin), (smax,krmax)}} : {{({},{}),({},{}),({},{})}}",
                                                   m_nonWettingCurve.m_criticalDrainagePhaseVolFraction, m_nonWettingCurve.m_criticalDrainageValue,
                                                   m_nonWettingCurve.m_criticalImbibitionPhaseVolFraction, m_nonWettingCurve.m_criticalImbibitionValue,
                                                   m_nonWettingCurve.m_extremumPhaseVolFraction, m_nonWettingCurve.m_extremumValue

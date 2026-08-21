@@ -497,7 +497,7 @@ void fixNeighborMappingsInconsistency( GEOS_MAYBE_UNUSED string const & fracture
         }
         else
         {
-          GEOS_ERROR_IF( !matchStraight, GEOS_FMT( mappingInconsistency, fractureName ) );
+          GEOS_ERROR_IF( !matchStraight, GEOS_FMT_RUNTIME( mappingInconsistency, fractureName ) );
         }
       }
     }
