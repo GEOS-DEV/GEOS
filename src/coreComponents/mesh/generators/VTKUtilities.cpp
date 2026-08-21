@@ -444,17 +444,38 @@ loadMesh( Path const & filePath,
 
         // Looking for the _first_ block that matches the requested name.
         // No check is performed to validate that there is not name duplication.
+        stdVector< string > deferredBlockNames;
+        stdVector< vtkSmartPointer< vtkDataSet > > deferredMeshes;
         for( unsigned int i = 0; i < multiBlockDataSet->GetNumberOfBlocks(); ++i )
         {
-          string const dataSetName = multiBlockDataSet->GetMetaData( i )->Get( multiBlockDataSet->NAME() );
-          if( dataSetName == blockName )
+          vtkInformation * metadata = multiBlockDataSet->GetMetaData( i );
+          vtkDataObject * block = multiBlockDataSet->GetBlock( i );
+          bool const hasName = metadata != nullptr && metadata->Has( multiBlockDataSet->NAME() );
+          if( hasName )
           {
-            vtkDataObject * block = multiBlockDataSet->GetBlock( i );
-            if( block->IsA( "vtkDataSet" ) )
+            string const dataSetName = metadata->Get( multiBlockDataSet->NAME() );
+            if( dataSetName == blockName && block != nullptr && block->IsA( "vtkDataSet" ) )
             {
-              vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
-              return mesh;
+              return vtkDataSet::SafeDownCast( block );
             }
+            if( block == nullptr )
+            {
+              deferredBlockNames.emplace_back( dataSetName );
+            }
+          }
+          if( block != nullptr && block->IsA( "vtkDataSet" ) && !hasName )
+          {
+            deferredMeshes.emplace_back( vtkDataSet::SafeDownCast( block ) );
+          }
+        }
+
+        // VTK 9.7 stores names and external datasets in separate entries. Pair
+        // the named, empty entries with the non-empty dataset entries in order.
+        for( std::size_t i = 0; i < deferredBlockNames.size(); ++i )
+        {
+          if( deferredBlockNames[i] == blockName && i < deferredMeshes.size() )
+          {
+            return deferredMeshes[i];
           }
         }
         GEOS_ERROR( GEOS_FMT( "Could not find mesh \"{}\" in multi-block vtk file \"{}\".\n{}",
