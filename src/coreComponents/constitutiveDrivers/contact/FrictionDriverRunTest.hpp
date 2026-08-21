@@ -60,22 +60,42 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   real64 shearModuli[2]{m_shearModulus[0], m_shearModulus[1]};
   real64 bulkModuli[2]{m_bulkModulus[0], m_bulkModulus[1]};
 
+  // mimicAssembly only models a single homogeneous material for its two-hex
+  // mock geometry -- average the two neighboring cells' moduli.
+  array2d<real64> const D = mimicAssembly::buildD(
+      0.5*(bulkModuli[0]+bulkModuli[1]),
+      0.5*(shearModuli[0]+shearModuli[1]) );
+
+  // Persistent contact state carried across rows. theta/phi are fixed
+  // geometry inputs, so Kelastic only needs to be built once.
+  mimicAssembly::ContactState contact{
+      table( 0, NTRAC ),   // initial normal traction guess
+      true,                                     // start unconstrained
+      m_theta * M_PI/180.0,
+      m_phi   * M_PI/180.0 };
+
+  mimicAssembly::CRSMat const Kelastic = mimicAssembly::assemble( D, contact );
+
+  real64 cumulativeImposedUx = 0.0;   // running sum of table(ei,NDJUMP)
+
   //TODO computeTolerance eleme to Elem
   typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
   integer const numRows = m_table.size( 0 );
-  forAll< parallelDevicePolicy<> >( numRows,
-                                    [&friction, &table, &kernelWrapper,
-                                     &ghostRank,
-                                     //  &normalDisplacementTol, &normalTractionTol, &slidingTol,
-                                     &normalDispTolFac, &normalTracTolFac, &slidingTolFac,
-                                     &iterPenNFac, &iterPenTFac,
-                                     &area, &volumes, &bulkModuli, &shearModuli,
-                                     &cos_phi, &sin_phi, &cos_theta, &sin_theta,
-                                     &slidingCheckTol, &isSimultaneous,
-                                     &jump, &djump,
-                                     &fractureState, &traction ]
-                                    GEOS_HOST_DEVICE ( integer const ei )
+  // forAll< parallelDevicePolicy<> >( numRows,
+  //                                   [&friction, &table, &kernelWrapper,
+  //                                    &ghostRank,
+  //                                    //  &normalDisplacementTol, &normalTractionTol, &slidingTol,
+  //                                    &normalDispTolFac, &normalTracTolFac, &slidingTolFac,
+  //                                    &iterPenNFac, &iterPenTFac,
+  //                                    &area, &volumes, &bulkModuli, &shearModuli,
+  //                                    &cos_phi, &sin_phi, &cos_theta, &sin_theta,
+  //                                    &slidingCheckTol, &isSimultaneous,
+  //                                    &jump, &djump,
+  //                                    &fractureState, &traction ]
+  //                                   GEOS_HOST_DEVICE ( integer const ei )
+  
+  for(integer ei=0; ei<numRows;ei+=20)
   {
 
     GEOS_LOG_RANK( "[debug] Table Evaluation" );
@@ -87,9 +107,6 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     djump[0][0] = table( ei, NDJUMP );
     djump[0][1] = table( ei, DSLIP0 );
     djump[0][2] = table( ei, DSLIP1 );
-
-
-
 
     traction[0][0] = table( ei, NTRAC );
     traction[0][1] = table( ei, STRAC0 );
@@ -116,7 +133,7 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
                                                                        rotationMatrix,
                                                                        normalDispTolFac,
                                                                        normalTracTolFac,
-                                                                       slidingTol,
+                                                                       slidingTolFac,
                                                                        iterPenNFac,
                                                                        iterPenTFac,
                                                                        normalDispTol,
@@ -133,6 +150,9 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
     array1d< real64 > const a_normalDisplacementTol( 1 ); a_normalDisplacementTol[0]=normalDispTol;//normalDispTol should scale as 1/E
     array1d< real64 > const a_normalTractionTol( 1 ); a_normalTractionTol[0]=normalTractionTol;
     array1d< real64 > const a_slidingTol( 1 ); a_slidingTol[0]=slidingTol;
+
+
+    
 
     auto [newTraction, condCov] = SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck( 1,
                                                                                                               friction,
@@ -154,23 +174,67 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
                                        newTraction[0],
                                        fractureState[0] );
 
-    table( ei, CC ) = condCov[0];
-    table( ei, FS ) = fractureState[0];
-    table( ei, NEWTRAC ) = newTraction[0][0];
-    table( ei, SNEWTRAC0 ) = newTraction[0][1];
-    table( ei, SNEWTRAC1 ) = newTraction[0][2];
 
 
-    table( ei, NTOL ) = normalDispTol;
-    table( ei, TTOL ) = slidingTol;
-    table( ei, NTRACTOL ) = normalTractionTol;
 
-    table( ei, ITERPEN0 ) = iterPen[0][0];
-    table( ei, ITERPEN1 ) = iterPen[0][1];
+    cumulativeImposedUx += table( ei, DISP );
 
-  } );
+  // Bridges solveStep's Newton iterate (tNold, gN) to the actual configured
+  // friction model, reusing the same call as the primary update above. Built
+  // fresh each row: captures this row's tolerance/iterPen locals by reference.
+  std::function< mimicAssembly::ContactState(double,double,double) > updateNormalTraction =
+    [&]( double tNold, double gN, double /*epsNArg*/ ) -> mimicAssembly::ContactState
+  {
+    jump[0][0] = gN;         jump[0][1] = 0.0;                    jump[0][2] = 0.0;
+    traction[0][0] = tNold;  traction[0][1] = table( ei, STRAC0 ); traction[0][2] = table( ei, STRAC1 );
+
+    kernelWrapper.updateFractureState( 0, jump[0], traction[0], fractureState[0] );
+
+    std::tie(newTraction, condCov) = SolidMechanicsAugmentedLagrangianContact::updateTractionAndConstraintCheck(
+        1, friction, isSimultaneous, slidingCheckTol,
+        a_normalDisplacementTol, a_normalTractionTol, a_slidingTol,
+        iterPen, jump, djump, ghostRank, fractureState.toView(), traction.toView() );
+
+    kernelWrapper.updateFractureState( 0, jump[0], newTraction[0], fractureState[0] );
+
+    return mimicAssembly::ContactState{
+        newTraction[0][0],
+        fractureState[0] == fields::contact::FractureState::Open,
+        contact.theta, contact.phi };
+  };
+
+  // epsN: reuse this row's normal iterative penalty (already folds in
+  // area/volume/moduli scaling via computeTolerancePerFace) so the FEM
+  // Newton loop's contact tangent stays consistent with the table-driven path.
+  const auto stepResult =
+      mimicAssembly::solveStep( cumulativeImposedUx, contact, Kelastic, iterativePen[0], updateNormalTraction );
+
+  for(const auto& step : stepResult ){
+  table( ei, FEMNTRAC )      = contact.tN;
+  table( ei, FEMGN )         = step.gN;
+  table( ei, FEMNEWTONITER ) = step.newtonIterations;
+  table( ei, FEMCONVERGED )  = step.converged ? 1.0 : 0.0;
+      
+  //old cols
+  table( ei, CC ) = condCov[0];
+  table( ei, FS ) = fractureState[0];
+  table( ei, NEWTRAC ) = newTraction[0][0];
+  table( ei, SNEWTRAC0 ) = newTraction[0][1];
+  table( ei, SNEWTRAC1 ) = newTraction[0][2];
+
+
+  table( ei, NTOL ) = normalDispTol;
+  table( ei, TTOL ) = slidingTol;
+  table( ei, NTRACTOL ) = normalTractionTol;
+
+  table( ei, ITERPEN0 ) = iterPen[0][0];
+  table( ei, ITERPEN1 ) = iterPen[0][1];
+
+  }
+  // } ); //TODO restore once forAll<>
 }
+}//function
+}//namespace
 
-}
 
 #endif //GEOS_FRICTIONDRIVERRUNTEST_HPP_

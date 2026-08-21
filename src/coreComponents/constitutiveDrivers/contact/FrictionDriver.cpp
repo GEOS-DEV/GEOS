@@ -23,7 +23,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-#define TEST_PBQ 1
+#define TEST_PBQ 0
 
 namespace geos
 {
@@ -442,8 +442,9 @@ void setElement(const ContactState& contact, HexElem& elemA, HexElem& elemB, arr
 
 }
 
-std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction )
+std::vector<SolverStepResult> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction )
     {
+        std::vector<SolverStepResult> results;
         //prep -- duplicate (pass element A and B ?)
         HexElem elemA, elemB;
         array2d<real64> R{3,3};
@@ -488,7 +489,7 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
         }
         std::array<std::array<IndexType,3>,4> faceDofMinus, faceDofPlus;
         for (int i=0;i<4;++i)
-        for (int c=0;i<3;++c)
+        for (int c=0;c<3;++c)
         {
             faceDofMinus[i][c] = 3*faceGlobalMinus[i]+c;
             faceDofPlus[i][c]  = 3*faceGlobalPlus[i]+c;
@@ -513,11 +514,15 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
 
         for (int newtonIt = 0; newtonIt < 20; ++newtonIt)
         {
+            ContactState trial;
+            double gN = 0.;
+            {
             double jumpAvg[3] = {0.,0.,0.};
             for (int i=0;i<4;++i) for(int c=0; c<3; ++c) jumpAvg[c] += (u[faceDofPlus[i][c]] - u[faceDofMinus[i][c]])/4;
-            double gN = LvArray::tensorOps::AiBi<3>(jumpAvg,nf);
+            gN = LvArray::tensorOps::AiBi<3>(jumpAvg,nf);
+            trial = updateNormalTraction(tNold, gN, epsN);
+            }
  
-            ContactState trial = updateNormalTraction(tNold, gN, epsN);
  
             // residual r = K_elastic*u + contact virtual work (tangent is
             // NOT part of this -- residual uses ONLY the elastic operator,
@@ -606,9 +611,19 @@ std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat co
             for (int i=0;i<nDof;++i) { u[i]+=du[i]; duNorm += du[i]*du[i]; }
             contact.tN = trial.tN; contact.open = trial.open;
  
-            if (std::sqrt(duNorm) < 1e-12) break;
+            if (std::sqrt(duNorm) < 1e-12){
+            double jumpAvg[3] = {0.,0.,0.};
+            for (int i=0;i<4;++i) for(int c=0; c<3; ++c) jumpAvg[c] += (u[faceDofPlus[i][c]] - u[faceDofMinus[i][c]])/4;
+            gN = LvArray::tensorOps::AiBi<3>(jumpAvg,nf);
+            results.emplace_back(u, gN, newtonIt, (std::sqrt(duNorm) < 1e-12));
+            break;
+            }
+            else{
+            results.emplace_back(u, gN, newtonIt, (std::sqrt(duNorm) < 1e-12));
+            }
         }
-        return u;
+
+        return results;
     };
 
 };//end mimicAssembly
@@ -630,9 +645,9 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of sample step to take in both jumps and traction increments" );
 
-  // registerWrapper( viewKeyStruct::jumpFunctionString(), &m_jumpFunctionName ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Name of the input function representing jump function along world x-axis" );
+  registerWrapper( viewKeyStruct::displacementFunctionString(), &m_dispFunctionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the input function representing displacement function along world x-axis" );
 
   registerWrapper( viewKeyStruct::dJumpFunctionString(), &m_dJumpFunctionName ).//should be derive from convergence history
     setInputFlag( InputFlags::REQUIRED ).
@@ -708,9 +723,9 @@ void FrictionDriver::postInputInitialization()
 
   // Check that the functions exist
   FunctionManager & functionManager = FunctionManager::getInstance();
-  // GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_jumpFunctionName ),
-  //                GEOS_FMT( "Jump function with name '{}' not found", m_jumpFunctionName ),
-  //                getWrapperDataContext( viewKeyStruct::jumpFunctionString() ) );
+  GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_dispFunctionName ),
+                 GEOS_FMT( "Jump function with name '{}' not found", m_dispFunctionName ),
+                 getWrapperDataContext( viewKeyStruct::displacementFunctionString() ) );
 
   GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_dJumpFunctionName ),
                  GEOS_FMT( "dJump function with name '{}' not found", m_dJumpFunctionName ),
@@ -729,18 +744,18 @@ void FrictionDriver::postInputInitialization()
   integer const numCols = static_cast< integer >(columnNames.size());
 
   // initialize functions
-  // TableFunction & jumpFunction = functionManager.getGroup< TableFunction >( m_jumpFunctionName );
+  TableFunction & dispFunction = functionManager.getGroup< TableFunction >( m_dispFunctionName );
   TableFunction & dJumpFunction = functionManager.getGroup< TableFunction >( m_dJumpFunctionName );
   // TableFunction & tractionFunction = functionManager.getGroup< TableFunction >( m_tractionFunctionName );
 
-  // jumpFunction.initializeFunction();
+  dispFunction.initializeFunction();
   dJumpFunction.initializeFunction();
   // tractionFunction.initializeFunction();
 
   // // TODO: Maybe we should take the maximum extent of jumpFunction and tractionFunction
   ArrayOfArraysView< real64 > coordinates = dJumpFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1] * 20;
 
   // Allocate the data
   allocateTable( numCols, minTime, maxTime );
@@ -800,7 +815,11 @@ void FrictionDriver::getColumnNames( string_array & columnNames ) const
   columnNames.emplace_back( "derived traction tol, normal" );
   columnNames.emplace_back( "iterative penalty, normal" );
   columnNames.emplace_back( "iterative penalty, tangent" );
-  columnNames.emplace_back( "iteration" );
+columnNames.emplace_back( "mimicAssembly FEM solve, converged normal traction" );
+columnNames.emplace_back( "mimicAssembly FEM solve, converged normal displacement jump" );
+columnNames.emplace_back( "mimicAssembly FEM solve, Newton iteration count" );
+columnNames.emplace_back( "mimicAssembly FEM solve, converged flag (1=converged, 0=not converged)" );
+columnNames.emplace_back( "iteration" );
 
 
   if( dynamic_cast< CoulombFriction const * >(&getFriction()) != nullptr )
@@ -814,22 +833,22 @@ void FrictionDriver::initializeTable()
   integer const numRows = m_table.size( 0 );
 
   FunctionManager & functionManager = FunctionManager::getInstance();
-  // TableFunction const & jumpFunction = functionManager.getGroup< TableFunction >( m_jumpFunctionName );
+  TableFunction const & dispFunction = functionManager.getGroup< TableFunction >( m_dispFunctionName );
   TableFunction const & dJumpFunction = functionManager.getGroup< TableFunction >( m_dJumpFunctionName );
 
   TableFunction const & tractionFunctionR00 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//should be Voigt full from stress
   TableFunction const & tractionFunctionR11 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//1
   TableFunction const & tractionFunctionR22 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//2
-  TableFunction const & tractionFunctionR21 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//3
-  TableFunction const & tractionFunctionR02 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//4
-  TableFunction const & tractionFunctionR01 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//5
+  // TableFunction const & tractionFunctionR21 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//3
+  // TableFunction const & tractionFunctionR02 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//4
+  // TableFunction const & tractionFunctionR01 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesR );//5
   //
   TableFunction const & tractionFunctionL00 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
   TableFunction const & tractionFunctionL11 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
   TableFunction const & tractionFunctionL22 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
-  TableFunction const & tractionFunctionL21 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
-  TableFunction const & tractionFunctionL02 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
-  TableFunction const & tractionFunctionL01 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
+  // TableFunction const & tractionFunctionL21 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
+  // TableFunction const & tractionFunctionL02 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
+  // TableFunction const & tractionFunctionL01 = functionManager.getGroup< TableFunction >( m_stressFunctionsNamesL );
 
   real64 const cos_theta = cos( m_theta * M_PI/180.0 );
   real64 const sin_theta = sin( m_theta * M_PI/180.0 );
@@ -837,28 +856,32 @@ void FrictionDriver::initializeTable()
   real64 const cos_phi = cos( m_phi * M_PI/180.0 );
   real64 const sin_phi = sin( m_phi * M_PI/180.0 );
 
-  for( integer index = 0; index < numRows; ++index )
+  for( integer index = 0; index < numRows; index+=20 )
   {
-    real64 const time = m_table( index, TIME );
+    std::cerr << " index: " << index << "/" << numRows << std::endl;
+    real64 const time = m_table( index, TIME )/20;
+    std::cerr << " time: " << time << std::endl;
+
 
     real64 const leftStress[6]{ tractionFunctionR00.evaluate(&time),
                                 tractionFunctionR11.evaluate(&time), 
-                                tractionFunctionR22.evaluate(&time), 
-                                tractionFunctionR21.evaluate(&time), 
-                                tractionFunctionR02.evaluate(&time), 
-                                tractionFunctionR01.evaluate(&time), 
+                                tractionFunctionR22.evaluate(&time),
+                                0.,// tractionFunctionR21.evaluate(&time), 
+                                0.,// tractionFunctionR02.evaluate(&time), 
+                                0.// tractionFunctionR01.evaluate(&time)
                               };//should be full 6-Voigt
-
+    
     real64 const rightStress[6]{ tractionFunctionL00.evaluate(&time),
                                 tractionFunctionL11.evaluate(&time), 
                                 tractionFunctionL22.evaluate(&time), 
-                                tractionFunctionL21.evaluate(&time), 
-                                tractionFunctionL02.evaluate(&time), 
-                                tractionFunctionL01.evaluate(&time), 
+                                0.,// tractionFunctionL21.evaluate(&time), 
+                                0.,// tractionFunctionL02.evaluate(&time), 
+                                0.// tractionFunctionL01.evaluate(&time)
                               };//should be full 6-Voigt
     
     real64 const n[3]{cos_theta,sin_theta*sin_phi,-cos_theta*sin_phi};
 
+      m_table( index, DISP ) = dispFunction.evaluate(&time);
     //rotate and project stress
     for(const auto& sigma : {leftStress, rightStress }){
       
@@ -896,7 +919,7 @@ void FrictionDriver::initializeTable()
   {
     real64 const cohesion = coulombFriction->getCohesion();
     real64 const frictionCoeff = coulombFriction->getFrictionCoeff();
-    for( integer index = 0; index < numRows; ++index )
+    for( integer index = 0; index < numRows; index+=20 )
     {
       real64 const normal_traction = m_table( index, NTRAC );
       m_table( index, TLIM ) = cohesion - normal_traction * frictionCoeff;
