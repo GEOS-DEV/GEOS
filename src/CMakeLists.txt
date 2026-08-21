@@ -54,7 +54,7 @@ set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 # conversion that Clang 22 diagnoses as -Wcharacter-conversion. Keep GEOS'
 # warnings-as-errors policy intact while limiting the compatibility flag to
 # the third-party test target.
-if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 22 )
   foreach( _geos_gtest_target gtest gtest_main gmock gmock_main )
     if( TARGET ${_geos_gtest_target} )
       target_compile_options( ${_geos_gtest_target} PRIVATE -Wno-error=character-conversion )
