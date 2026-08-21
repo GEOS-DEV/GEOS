@@ -1,8 +1,12 @@
 
 cmake_minimum_required( VERSION 3.24 )
 
-# At the moment we are manually passing the cuda arch flag.
-cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
+# CUDA architectures are supplied by the host configuration or CI.
+cmake_policy(SET CMP0104 NEW)
+# BLT 0.6.2 still uses FindCUDA while configuring its CUDA targets.
+if(POLICY CMP0146)
+  cmake_policy(SET CMP0146 OLD)
+endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
@@ -257,7 +261,7 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-message(WARNING "Temporarily changing the geosPythonBranch to feature/remove-dndx-detj")
+message(STATUS "Using geosPythonPackages branch feature/remove-dndx-detj")
 set(GEOS_PYTHON_PACKAGES_BRANCH "feature/remove-dndx-detj" CACHE STRING "" FORCE)
 
 
@@ -333,14 +337,12 @@ endif()
 
 if ( ENABLE_ATS )
     if (NOT DEFINED ATS_WORKING_DIR)
-        message( WARNING "ATS_WORKING_DIR is not defined (required for integrated testing system)" )
-        message( WARNING "Defaulting to ${CMAKE_BINARY_DIR}/integratedTests/workingDir" )
+        message( STATUS "ATS_WORKING_DIR is not defined; defaulting to ${CMAKE_BINARY_DIR}/integratedTests/workingDir" )
         set( ATS_WORKING_DIR "${CMAKE_BINARY_DIR}/integratedTests/workingDir" CACHE PATH "")
     endif()
 
     if (NOT DEFINED ATS_BASELINE_DIR)
-        message( WARNING "ATS_BASELINE_DIR is not defined (required for integrated testing system)" )
-        message( WARNING "Defaulting to ${CMAKE_SOURCE_DIR}/../integratedTests" )
+        message( STATUS "ATS_BASELINE_DIR is not defined; defaulting to ${CMAKE_SOURCE_DIR}/../integratedTests" )
         set( ATS_BASELINE_DIR "${CMAKE_SOURCE_DIR}/../integratedTests" CACHE PATH "")
     endif()
 
