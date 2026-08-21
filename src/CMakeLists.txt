@@ -50,6 +50,18 @@ option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 
+# BLT's bundled GoogleTest currently uses an implicit char8_t-to-char32_t
+# conversion that Clang 22 diagnoses as -Wcharacter-conversion. Keep GEOS'
+# warnings-as-errors policy intact while limiting the compatibility flag to
+# the third-party test target.
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+  foreach( _geos_gtest_target gtest gtest_main gmock gmock_main )
+    if( TARGET ${_geos_gtest_target} )
+      target_compile_options( ${_geos_gtest_target} PRIVATE -Wno-error=character-conversion )
+    endif()
+  endforeach()
+endif()
+
 # use, i.e. don't skip the full RPATH for the build tree
 set( CMAKE_SKIP_BUILD_RPATH FALSE )
 

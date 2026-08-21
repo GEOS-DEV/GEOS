@@ -601,7 +601,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    forAll< parallelHostPolicy >( targetSet.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];

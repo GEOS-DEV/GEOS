@@ -53,7 +53,7 @@ struct ElasticMatricesSEM
                        arrayView1d< real32 > const mass )
 
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
 
         // only the eight corners of the mesh cell are needed to compute the Jacobian
@@ -123,7 +123,7 @@ struct ElasticMatricesSEM
                           arrayView1d< real32 > const dampingy,
                           arrayView1d< real32 > const dampingz )
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
         for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
         {

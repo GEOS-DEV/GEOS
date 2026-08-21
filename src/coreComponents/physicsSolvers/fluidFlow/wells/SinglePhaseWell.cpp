@@ -890,7 +890,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
     arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
@@ -924,7 +924,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
     arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
