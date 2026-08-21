@@ -1853,7 +1853,7 @@ redistributeByKdTree( vtkDataSet & mesh )
     localBounds.GetBounds( correctedBounds );
     correctedBoundsPtr = correctedBounds;
   }
-  std::vector< vtkBoundingBox > const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
+  auto const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
     &mesh, MpiWrapper::commSize(), true, controller, correctedBoundsPtr );
   rdsf->SetUseExplicitCuts( true );
   rdsf->SetExplicitCuts( cuts );
