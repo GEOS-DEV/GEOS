@@ -25,12 +25,12 @@
   <Constitutive>  
     <Coulomb
       name="fractureContact0"
-      cohesion="0.0e6"
-      frictionCoefficient="0.01"/>
+      defaultCohesion="0.0e6"
+      defaultFrictionCoefficient="0.01"/>
     <Coulomb
       name="fractureContact1"
-      cohesion="1.0e6"
-      frictionCoefficient="0.01"/>
+      defaultCohesion="1.0e6"
+      defaultFrictionCoefficient="0.01"/>
 
   </Constitutive>
 
@@ -49,10 +49,15 @@
       voxelFile="tables/djumps.geos"/>
 
     <TableFunction
-      name="tFunction"
+      name="sLFunction"
       inputVarNames="{ time }"
       coordinateFiles="{ tables/time.geos }"
       voxelFile="tables/tractions.geos"/>
+    <TableFunction
+      name="sRFunction"
+      inputVarNames="{ time }"
+      coordinateFiles="{ tables/time.geos }"
+      voxelFile="tables/constant.geos"/>
   </Functions>
   <!-- SPHINX_FUNCTION_END -->
 </Problem>

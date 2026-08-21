@@ -128,11 +128,21 @@ void setElement(const ContactState&  contact, HexElem& elemA, HexElem& elemB, ar
 // that we go through the same generic solver rather than a closed form)
 array2d<real64> condense(const LocalBlocks& L);
 
-CRSMat assemble(const array2d<real64>& D);
+CRSMat assemble(const array2d<real64>& D, const ContactState& contact);
 
+struct SolverStepResult
+{
+    SolverStepResult(std::vector<double>& u_,double gN_, int newtonIterations_, bool converged_):
+    u(u_),gN(gN_),newtonIterations(newtonIterations_),converged(converged_){};
+    std::vector<double> u;
+    double gN = 0.;
+    int newtonIterations = 0;
+    bool converged = false; 
+};
 
-std::vector<double> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, 
-        double epsN, std::function<ContactState(double,double,double)>& updateNormalTraction );
+std::vector<SolverStepResult> solveStep(double imposedUx, ContactState& contact, CRSMat const & Kelastic, 
+        double epsN, int kMaxNewton, std::function<ContactState(double,double,double)>& updateNormalTraction);
+
 
 }
 
@@ -179,11 +189,11 @@ private:
     constexpr static char const * contactNameString()
     { return "contact"; }
 
-    // constexpr static char const * jumpFunctionString()
-    // { return "jumpControl"; }
+    constexpr static char const * displacementFunctionString()
+    { return "dispControl"; }
 
-    constexpr static char const * dJumpFunctionString()
-    { return "dJumpControl"; }
+    // constexpr static char const * dJumpFunctionString()
+    // { return "dJumpControl"; }
 
     constexpr static char const * stressFunctionRString()
     { return "stressControlsR"; }
@@ -228,18 +238,29 @@ private:
     constexpr static char const * simultaneous()
     { return "simultaneous"; }
 
+    constexpr static char const * maxNewtonIterString()
+    { return "maxNewtonIter"; }
+
   };
 
   // Time is defined in base class
-  enum columnKeys { NTRAC=1, STRAC0, STRAC1, NDJUMP, DSLIP0, DSLIP1, CC, FS, 
-                  NEWTRAC, SNEWTRAC0, SNEWTRAC1, 
-                  NJUMP, SLIP0, SLIP1,
-                  NTOL, TTOL, NTRACTOL,
-                  ITERPEN0, ITERPEN1, TLIM,
-                  ITER };
+//   enum columnKeys { NTRAC=1, STRAC0, STRAC1, NDJUMP, DSLIP0, DSLIP1, CC, FS, 
+//                   NEWTRAC, SNEWTRAC0, SNEWTRAC1, 
+//                   NJUMP, SLIP0, SLIP1,
+//                   NTOL, TTOL, NTRACTOL,
+//                   ITERPEN0, ITERPEN1, TLIM,
+//                   ITER };
+enum columnKeys { NTRAC=1, STRAC0, STRAC1, DISP, NDJUMP, DSLIP0, DSLIP1, CC, FS,
+                NEWTRAC, SNEWTRAC0, SNEWTRAC1,
+                NJUMP, SLIP0, SLIP1,
+                NTOL, TTOL, NTRACTOL,
+                ITERPEN0, ITERPEN1,
+                FEMNTRAC, FEMGN, FEMNEWTONITER, FEMCONVERGED,   // NEW
+                TLIM,
+                ITER };
 
-  // string m_jumpFunctionName; ///<
-  string m_dJumpFunctionName; ///<
+  string m_dispFunctionName; ///<
+  // string m_dJumpFunctionName; ///<
   string m_stressFunctionsNamesR; ///<
   string m_stressFunctionsNamesL; ///<
 
@@ -259,7 +280,8 @@ private:
   array1d< real64 > m_shearModulus{};
   array1d< real64 > m_bulkModulus{};
 
-  integer m_isSimultaneous{1};
+   integer m_isSimultaneous{1};
+   integer m_maxNewtonIter{20};              ///< Maximum Newton iterations
 
   string m_frictionName;               ///< frictionType identifier
 };
