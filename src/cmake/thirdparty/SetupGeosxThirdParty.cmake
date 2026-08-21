@@ -952,6 +952,18 @@ if(DEFINED VTK_DIR)
         set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs} )
+
+        # VTK 9.7's bundled diy coroutine header emits a deliberate #warning
+        # when _FORTIFY_SOURCE is enabled. GEOS treats warnings as errors, so
+        # keep that third-party diagnostic from breaking VTK-dependent sources
+        # while preserving -Werror for GEOS code.
+        if( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
+            set_property(TARGET ${targetName}
+                         APPEND PROPERTY INTERFACE_COMPILE_OPTIONS
+                         "$<$<COMPILE_LANGUAGE:CXX>:-Wno-error=cpp>"
+                         "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-Wno-error=cpp>"
+                         "$<$<COMPILE_LANGUAGE:HIP>:-Wno-error=cpp>" )
+        endif()
     endforeach()
 
     set(ENABLE_VTK ON CACHE BOOL "")
