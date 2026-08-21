@@ -35,6 +35,10 @@
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
 #include <vtkVersionMacros.h>
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+#include <vtkCellCenters.h>
+#include <vtkDIYKdTreeUtilities.h>
+#endif
 #if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 5, 0 )
 #include <vtkCellTypeUtilities.h>
 #else
@@ -1812,6 +1816,48 @@ redistributeByKdTree( vtkDataSet & mesh )
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
+  vtkSmartPointer< vtkMultiProcessController > controller = getController();
+  rdsf->SetController( controller );
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+  // VTK 9.7 computes its cuts from dataset bounds but balances cell centers.
+  // Some valid GEOS meshes have cell centers outside those bounds, which makes
+  // VTK's DIY KdTree abort while building its local histogram. Extend VTK's
+  // normal inflated domain to include those centers before generating cuts.
+  vtkNew< vtkCellCenters > cellCenters;
+  cellCenters->SetInputData( &mesh );
+  cellCenters->Update();
+  double cellCenterBounds[6];
+  cellCenters->GetOutput()->GetBounds( cellCenterBounds );
+  vtkBoundingBox localBounds;
+  localBounds.AddBounds( mesh.GetBounds() );
+  if( localBounds.IsValid() )
+  {
+    double constexpr boundingBoxLengthTolerance = 0.01;
+    double constexpr boundingBoxInflationRatio = 0.01;
+    double const xInflate = localBounds.GetLength( 0 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 0 );
+    double const yInflate = localBounds.GetLength( 1 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 1 );
+    double const zInflate = localBounds.GetLength( 2 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 2 );
+    localBounds.Inflate( xInflate, yInflate, zInflate );
+  }
+  localBounds.AddBounds( cellCenterBounds );
+  double correctedBounds[6];
+  double const * correctedBoundsPtr = nullptr;
+  if( localBounds.IsValid() )
+  {
+    localBounds.GetBounds( correctedBounds );
+    correctedBoundsPtr = correctedBounds;
+  }
+  std::vector< vtkBoundingBox > const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
+    &mesh, MpiWrapper::commSize(), true, controller, correctedBoundsPtr );
+  rdsf->SetUseExplicitCuts( true );
+  rdsf->SetExplicitCuts( cuts );
+#endif
   {
     // vtkRedistributeDataSetFilter uses VTK's XML writer internally to
     // serialize datasets exchanged by DIY. The writer may raise floating-point

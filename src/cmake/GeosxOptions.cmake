@@ -151,7 +151,7 @@ option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" O
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
 if( NOT BLT_CXX_STD STREQUAL c++20 )
-    MESSAGE( FATAL_ERROR "c++20 is NOT enabled. GEOSX requires c++20" )
+    MESSAGE( FATAL_ERROR "c++20 is NOT enabled. GEOS requires c++20" )
 endif( NOT BLT_CXX_STD STREQUAL c++20 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )

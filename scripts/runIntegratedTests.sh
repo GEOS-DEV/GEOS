@@ -76,7 +76,7 @@ Options:
                         and hdf5 artifact the run produced, and pack the
                         tarball named in develop's .integrated_tests.yaml into
                         .integrated-test-baselines/. Cannot be used with --baselines.
-  --filter EXPR         ATS name filter (tests whose name contains EXPR)
+  --filter EXPR         ATS label filter (tests whose label contains EXPR)
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
   --build-dir NAME      Build directory name under the repo (default ${BUILD_DIR_NAME})
   --no-pull             Do not docker pull the image first
@@ -671,7 +671,7 @@ else
   log "Using mounted baselines at /tmp/geos/baselines"
 fi
 if [[ -n "${FILTER}" ]]; then
-  ATS_CMD+=(-f "${FILTER}")
+  ATS_CMD+=(--ats filter "label.find('${FILTER}') >= 0")
 fi
 if [[ ${#EXTRA_ATS_ARGS[@]} -gt 0 ]]; then
   ATS_CMD+=("${EXTRA_ATS_ARGS[@]}")

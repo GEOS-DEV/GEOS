@@ -267,10 +267,9 @@ if( ENABLE_VTK )
 
     # GCC 12 incorrectly diagnoses a use-after-free in VTK's header-only DIY
     # reduction implementation when the all-to-all calls in this source are
-    # inlined. Keep the warning visible, but do not make this third-party
-    # false positive fail the build.
+    # inlined. Suppress this third-party false positive for this source only.
     if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
-        set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES COMPILE_OPTIONS "-Wno-error=use-after-free" )
+        set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES COMPILE_OPTIONS "-Wno-use-after-free" )
     endif()
 endif()
 
