@@ -19,8 +19,7 @@
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
-#include "logger/ErrorHandling.hpp"
-#include "logger/ExternalErrorHandler.hpp"
+#include "logger/ErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
@@ -68,73 +67,13 @@ void setupLogger()
   logger::InitializeLogger();
 #endif
 
-  { // setup error handling (using LvArray helper system functions)
+  {
+    ErrorHandler defaultErrorHandler;
+    defaultErrorHandler.setLogger( &ErrorLogger::global() );
+    defaultErrorHandler.enableExternalErrorPipeDeviation( true );
+    defaultErrorHandler.setProgramAborter( abortGeos );
 
-    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
-
-    ///// set external error handling behaviour /////
-    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
-                                                           string_view detectionLocation )
-    {
-      // Filter out INFO level messages from external libraries (e.g., VTK)
-      // ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
-      if( ExternalErrorHandler::isNotAnErrorMsg( errorMsg ) )
-      {
-        // Just print the message without error formatting
-        GEOS_LOG( errorMsg );
-        return;
-      }
-      else
-      {
-        std::string const stackHistory = LvArray::system::stackTrace( true );
-        DiagnosticMsg diagnosticMsg;
-        ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                                         MsgType::Error, errorMsg,
-                                                                         ::geos::logger::internal::g_rank )
-                                               .addCallStackInfo( stackHistory )
-                                               .addDetectionLocation( detectionLocation )
-                                               .getDiagnosticMsg() );
-
-        // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
-      }
-    } );
-
-    ///// set signal handling behaviour /////
-    LvArray::system::setSignalHandling( []( int const signal )
-    {
-      // Disable signal handling to prevent catching exit signal (infinite loop)
-      LvArray::system::setSignalHandling( nullptr );
-
-      // first of all, external error can await to be output, we must output them
-      ExternalErrorHandler::instance().flush( "before signal error output" );
-
-      // error message output
-      std::string const stackHistory = LvArray::system::stackTrace( true );
-      DiagnosticMsg diagnosticMsg;
-      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                                       MsgType::ExternalError, "",
-                                                                       ::geos::logger::internal::g_rank )
-                                             .addSignal( signal )
-                                             .addCallStackInfo( stackHistory )
-                                             .getDiagnosticMsg() );
-
-      // call program termination
-      LvArray::system::callErrorHandler();
-    } );
-
-    ///// set Post-Handled Error behaviour /////
-    LvArray::system::setErrorHandler( []()
-    {
-  #if defined( GEOS_USE_MPI )
-      int mpi = 0;
-      MPI_Initialized( &mpi );
-      if( mpi )
-      {
-        MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-      }
-  #endif
-      std::abort();
-    } );
+    ErrorHandler::setupErrorHandlingStrategy( std::move( defaultErrorHandler ) );
   }
 }
 
@@ -337,6 +276,19 @@ void cleanupEnvironment( bool inError )
   finalizeLogger();
   finalizeCaliper();
   finalizeMPI( inError );
+}
+
+void abortGeos()
+{
+  #if defined( GEOS_USE_MPI )
+  int mpi = 0;
+  MPI_Initialized( &mpi );
+  if( mpi )
+  {
+    MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+  }
+  #endif
+  std::abort();
 }
 
 } // namespace geos

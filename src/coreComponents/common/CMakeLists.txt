@@ -41,7 +41,8 @@ set( common_headers
      MemoryInfos.hpp
      logger/GeosExceptions.hpp
      logger/Logger.hpp
-     logger/ErrorHandling.hpp
+     logger/ErrorHandler.hpp
+     logger/ErrorLogger.hpp
      logger/ExternalErrorHandler.hpp
      MpiWrapper.hpp
      Path.hpp
@@ -80,7 +81,8 @@ set( common_sources
      format/StringUtilities.cpp
      logger/GeosExceptions.cpp
      logger/Logger.cpp
-     logger/ErrorHandling.cpp
+     logger/ErrorHandler.cpp
+     logger/ErrorLogger.cpp
      logger/ExternalErrorHandler.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp

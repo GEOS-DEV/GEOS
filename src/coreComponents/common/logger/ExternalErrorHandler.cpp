@@ -14,7 +14,7 @@
  */
 
 /**
- * @file ErrorHandling.cpp
+ * @file ErrorHandler.cpp
  */
 
 #include "ExternalErrorHandler.hpp"
