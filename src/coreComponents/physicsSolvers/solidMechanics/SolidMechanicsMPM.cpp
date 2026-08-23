@@ -1500,27 +1500,27 @@ bool deformationGradientFromParticleDomains(
 
 void moveTracerSearchDataToHost( ParticleSubRegion & subRegion )
 {
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleIDString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleCenterString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleIDString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleCenterString() ).move( hostMemorySpace, true );
 }
 
 void moveTracerOutputDataToHost( ParticleSubRegion & subRegion,
                                  bool const needInternalEnergy )
 {
   moveTracerSearchDataToHost( subRegion );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVelocityString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleDamageString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particlePorosityString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleTemperatureString() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( fields::mpm::particleMass::key() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( fields::mpm::particleDensity::key() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( fields::mpm::particlePlasticStrain::key() ).move( LvArray::MemorySpace::host, true );
-  subRegion.getWrapperBase( fields::mpm::particleStress::key() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVelocityString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleDamageString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particlePorosityString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleTemperatureString() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( fields::mpm::particleMass::key() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( fields::mpm::particleDensity::key() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( fields::mpm::particlePlasticStrain::key() ).move( hostMemorySpace, true );
+  subRegion.getWrapperBase( fields::mpm::particleStress::key() ).move( hostMemorySpace, true );
   if( needInternalEnergy )
   {
-    subRegion.getWrapperBase( fields::mpm::particleInternalEnergy::key() ).move( LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( fields::mpm::particleInternalEnergy::key() ).move( hostMemorySpace, true );
   }
 }
 
@@ -5197,9 +5197,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {
 #ifdef GEOS_USE_DEVICE
       subRegion.getWrapperBase( fields::mpm::particleReferenceVolume::key() ).move(
-        LvArray::MemorySpace::host, true );
+        hostMemorySpace, true );
       subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
-        LvArray::MemorySpace::host, true );
+        hostMemorySpace, true );
 #endif
 
       arrayView1d< real64 > const particleReferenceVolume =
@@ -5337,7 +5337,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 //     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
 //     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
-//     // particleStress.move( LvArray::MemorySpace::host, true );
+//     // particleStress.move( hostMemorySpace, true );
 
 //     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 //     forAll< serialPolicy >( subRegion.size(), [&] GEOS_HOST ( localIndex const p )
@@ -6483,7 +6483,7 @@ void SolidMechanicsMPM::moveParticleWrappersToHost( ParticleManager & particleMa
   {
     subRegion.forWrappers( [&]( WrapperBase & wrapper )
     {
-      wrapper.move( LvArray::MemorySpace::host, true );
+      wrapper.move( hostMemorySpace, true );
     } );
   } );
 }
@@ -6860,8 +6860,8 @@ void SolidMechanicsMPM::computeActiveGridFieldsForExplicitStep( DomainPartition 
 
   // Keep this host-resident because syncGridFields currently uses host pack/unpack
   // for MPM reduction syncs on Tuolumne.
-  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( LvArray::MemorySpace::host, true );
-  nodeManager.getWrapperBase( viewKeyStruct::gridActiveString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( hostMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridActiveString() ).move( hostMemorySpace, true );
 
   arrayView2d< real64 const > const gridMass =
     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
@@ -7032,7 +7032,7 @@ void SolidMechanicsMPM::repartitionParticlesForExplicitStep( DomainPartition & d
   {
     subRegion.forWrappers( [&]( WrapperBase & wrapper )
     {
-      wrapper.move( LvArray::MemorySpace::host, true );
+      wrapper.move( hostMemorySpace, true );
     } );
     partition.repartitionMasterParticles( domain, subRegion );
     subRegion.setActiveParticleIndices();
@@ -12752,6 +12752,8 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   // Time this function
   real64 tStart = MPI_Wtime();
 
+  localIndex const numberOfSubRegions = m_numberOfSubRegions;
+
   // Expand bin limits by neighbor radius to account for the buffer zone of ghost particles outside the patch limits
   real64 neighborRadius = m_neighborRadius;
   real64 neighborRadiusSquared = neighborRadius * neighborRadius;
@@ -12772,7 +12774,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   GEOS_ERROR_IF( nbins <= 0,
                "Invalid MPM neighbor-list bin count." );
 
-GEOS_ERROR_IF( nbins > 1000000000,
+  GEOS_ERROR_IF( nbins > 1000000000,
                "MPM neighbor-list bin count is too large. Check neighborRadius and binSizeMultiplier." );
 
   real64 dx = ( xmax - xmin ) / nxbins,
@@ -12783,85 +12785,71 @@ GEOS_ERROR_IF( nbins > 1000000000,
   localIndex totalNumberOfBins = nbins * m_numberOfSubRegions;
 
   // Initializes array with totalNumberOfBins inner arrays and default sizes 0 (first dimension is the bins, second are
-  // particles indices
-  // per bin)
+  // particles indices per bin)
   ArrayOfArrays< localIndex > bins( totalNumberOfBins, 0 );
 
   // Precompute number of particles in each bin and resize the bins arrayOfArrays
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+  GEOS_LOG_RANK("Precompute number of particles in each bin and resize the bins arrayOfArrays");
+#endif
 
   // ParticleSubRegions are not access in gpu kernels so we must make copies of all relevant fields
   // such as the particle centers for neighbor checking
   array2d< real64 > allParticleCenters( totalNumberOfParticles, 3 );
-
-  // TODO: We create a view here, but we may want to have views with different access restrictions (e.g. const)
-  // separately in each step
-  arrayView2d< real64 > const allParticleCentersView = allParticleCenters.toView();
-
   array1d< localIndex > subRegionSizes( m_numberOfSubRegions );
   array1d< localIndex > regionIndicesOfSubRegions( m_numberOfSubRegions );
   array1d< localIndex > subRegionIndicesInRegions( m_numberOfSubRegions );
 
-  // logAndProfile( "Count bin sizes..." );
-  // GEOS_LOG_LEVEL_BY_RANK(2, "Count bin sizes..." );
+  // Just precautionary (make sure they are on host to start)
+  allParticleCenters.move( parallelDeviceMemorySpace, true );
+  subRegionSizes.move( hostMemorySpace, true );
+  regionIndicesOfSubRegions.move( hostMemorySpace, true );
+  subRegionIndicesInRegions.move( hostMemorySpace, true );
 
+  // Create views for capture by kernel
+  arrayView2d< real64 > const allParticleCentersView = allParticleCenters.toView();
   arrayView1d< localIndex > const regionIndicesOfSubRegionsView = regionIndicesOfSubRegions.toView();
   arrayView1d< localIndex > const subRegionIndicesInRegionsView = subRegionIndicesInRegions.toView();
   arrayView1d< localIndex > const subRegionSizesView = subRegionSizes.toView();
+
   localIndex particleIndexOffset = 0;
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // arrayView1d< int const > const particleRank = subRegion.getParticleRank();
-
-    RAJA::MultiReduceSum< serialMultiReduce, localIndex > binSizeReduction( nbins, 0 );
+    RAJA::MultiReduceSum< parallelDeviceMultiReduce, localIndex > binSizeReduction( nbins, 0 );
 
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< int const > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
 
-    // GEOS_LOG_RANK("binSizeReductionView.size(): " << binSizeReductionView.size() << ", nbins: " << nbins << ", xmin: {"<< xmin << ", " <<
-    // ymin << ", " << zmin << "}"  << ", xmax: {"<< xmax << ", " << ymax << ", " << zmax << "}");
-    // GEOS_LOG_RANK("nbins: " << nbins << ", xmin: {"<< xmin << ", " << ymin << ", " << zmin << "}"  << ", xmax: {"<< xmax << ", " << ymax
-    // << ", " << zmax << "}");
-
-    // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    // SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
-
-    // When compiling on ruby running with sequential reduction policy, race condition in bin size counting causes
-    // memory issue
-    // Fix add export OMP_NUM_THREADS=1 before srun, need to check compilation variables to ensure GEOS_USE_OPENMP is
-    // disabled on ruby
-    // forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+#else
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )
+#endif
+    {
+      if( particleDeleteFlag[p] != 0 )
       {
-        if( particleDeleteFlag[p] != 0 )
-        {
-          return;
-        }
+        return;
+      }
 
-        // Particle bin ijk indices
-        localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
-        localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
-        localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
-        localIndex binIndex = i + j * nxbins + k * nxbins * nybins;
+      // Particle bin ijk indices
+      localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
+      localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
+      localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+      localIndex binIndex = i + j * nxbins + k * nxbins * nybins;
 
-        binSizeReduction[binIndex] += 1;
-        // if( binIndex > nbins )
-        // {
-        //   GEOS_LOG_LEVEL_BY_RANK(2, "binIndex: " << binIndex << ", i,j,k: " << i << ", " << j << ", " <<  k <<  ", nbins: " << nbins <<
-        // ", p: " << p << ", pos: {" << particlePosition[p][0] << ", "  << particlePosition[p][1] << ", " <<
-        // particlePosition[p][2] << "}"
-        // << ", pRank: " << particleRank[p] << ", active: " << activeParticleIndices.contains(p) << ", inactive:" <<
-        // inactiveParticleIndices.contains(p) );
-        // }
+      binSizeReduction[binIndex] += 1;
 
-        // Copy particle data for neighbor search later
-        // Tensor equation: allParticleCentersView[particleIndexOffset + p] = particlePosition[p].
-        LvArray::tensorOps::copy< 3 >( allParticleCentersView[particleIndexOffset + p], particlePosition[p] );
-      } );
+      // Copy particle data for neighbor search later
+      // Tensor equation: allParticleCentersView[particleIndexOffset + p] = particlePosition[p].
+      LvArray::tensorOps::copy< 3 >( allParticleCentersView[particleIndexOffset + p], particlePosition[p] );
+    } );
+    
     particleIndexOffset += subRegion.size();
 
     // Not sure this would be worth doing in parallel (also resizing is not done on device)
-    for( int b = 0; b < nbins; ++b )
+    for( localIndex b = 0; b < nbins; ++b )
     {
       bins.resizeArray( subRegionIndex * nbins + b,
                         binSizeReduction[b].get() );
@@ -12873,37 +12861,53 @@ GEOS_ERROR_IF( nbins > 1000000000,
     subRegionIndicesInRegionsView[subRegionIndex] = subRegion.getIndexInParent();
     subRegionSizesView[subRegionIndex] = subRegion.size();
     ++subRegionIndex;
-
-    allParticleCentersView.move( LvArray::MemorySpace::host ); // Must move the particle center data back from device explicitly
   } );
 
   // Populate bins with particle data
 
-  // Stored the current count of particles per bin during population
-  array1d< localIndex > binCount( totalNumberOfBins );
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+  GEOS_LOG_RANK("Populating bins with particle data");
+#endif
 
-  // Initialize bin count to zero
+array1d< int > binError( 1 );
+binError[0] = 0;
+
+#ifdef GEOS_USE_DEVICE
+  binError.move( parallelDeviceMemorySpace, true );
+#endif
+
+arrayView1d< int > const binErrorView =
+  binError.toView();
+
+  // Stored the current count of particles per bin during population (initialize to 0)
+  array1d< localIndex > binCount( totalNumberOfBins );
   for( localIndex b = 0; b < totalNumberOfBins; ++b )
   {
     binCount[b] = 0;
   }
 
+#ifdef GEOS_USE_DEVICE
+    bins.move( parallelDeviceMemorySpace, true );
+    binCount.move( parallelDeviceMemorySpace, true );
+    subRegionSizes.move(parallelDeviceMemorySpace, true );
+#endif
+
+  arrayView1d< localIndex > const binCountView = binCount.toView();
   ArrayOfArraysView< localIndex > binsView = bins.toView();
+  arrayView1d< localIndex const > const subRegionSizesDeviceView = subRegionSizes.toViewConst();
 
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< localIndex > const binCountView = binCount.toView();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< int const > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
-    // Running this in parallel threading over particles would result in race condition during particle index assignment
-    // to bins
-    // We could introduce atomics, but it's unclear whether there would be any substantial performance improvement,
-    // should still test
-    // Alternatively we could thread over bins, but it may be faster to just compute in serial since each bin would have
-    // to check all
-    // particles in subregion
-    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+
+#ifdef GEOS_USE_DEVICE
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+#else
+    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )
+#endif
     {
       if( particleDeleteFlag[p] != 0 )
       {
@@ -12916,17 +12920,61 @@ GEOS_ERROR_IF( nbins > 1000000000,
       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
       localIndex binIndex = nbins * subRegionIndex + i + j * nxbins + k * nxbins * nybins;
 
-      binsView[binIndex][binCountView[binIndex]] = p;
-      ++binCountView[binIndex];
-    } );
+      localIndex const slot = RAJA::atomicAdd( parallelDeviceAtomic{},
+                                               &binCountView[binIndex],
+                                               localIndex( 1 ) );
+      
+      // Bounds checking
+      localIndex const rowSize = binsView.sizeOfArray( binIndex );
+      if( slot < 0 || slot >= rowSize )
+      {
+        RAJA::atomicMax(
+          parallelDeviceAtomic{},
+          &binErrorView[0],
+          2 );
+        return;
+      }
 
-    binsView.move( LvArray::MemorySpace::host );
-    binCountView.move( LvArray::MemorySpace::host );
+      // Store particle index in bin
+      binsView[binIndex][slot] = p;
+    } );
 
     ++subRegionIndex;
   } );
 
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+#endif
+
+  binError.move( hostMemorySpace, true );
+
+  GEOS_ERROR_IF(
+    binError[0] != 0,
+    "GPU particle bin construction encountered an invalid particle "
+    "position or exceeded an allocated bin capacity." );
+
+  binCount.move( hostMemorySpace, true );
+
+  for( localIndex binIndex = 0;
+      binIndex < totalNumberOfBins;
+      ++binIndex )
+  {
+    GEOS_ERROR_IF(
+      binCount[binIndex] != bins.sizeOfArray( binIndex ),
+      "GPU particle-bin count and fill passes disagree for bin "
+      << binIndex << ": allocated "
+      << bins.sizeOfArray( binIndex )
+      << " but populated "
+      << binCount[binIndex] );
+  }
+
   // Precompute number of neighbors for each particles
+  
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+  GEOS_LOG_RANK("Precompute number of neighbors for each particles");
+#endif
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get 'this' particle's location
@@ -12937,9 +12985,15 @@ GEOS_ERROR_IF( nbins > 1000000000,
 
     // Create an array to store neighbor counts for all particles
     array1d< localIndex > neighborCounts( subRegionAActiveParticleIndices.size());
+    neighborCounts.move( parallelDeviceMemorySpace, true );
     arrayView1d< localIndex > const neighborCountsView = neighborCounts.toView();
 
+#ifdef GEOS_USE_DEVICE
+    subRegionAActiveParticleIndices.move( parallelDeviceMemorySpace );
     forAll< parallelDevicePolicy<> >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+    forAll< serialPolicy >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
     {
       // Locating neighbors of particle with index a
       localIndex a = subRegionAActiveParticleIndices[pp];
@@ -12952,19 +13006,19 @@ GEOS_ERROR_IF( nbins > 1000000000,
       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
-      // Adjust bin ijk indices if necessary
-      imin = LvArray::math::max( imin, 0 );
-      imax = LvArray::math::min( imax, nxbins-1 );
-      jmin = LvArray::math::max( jmin, 0 );
-      jmax = LvArray::math::min( jmax, nybins-1 );
-      kmin = LvArray::math::max( kmin, 0 );
-      kmax = LvArray::math::min( kmax, nzbins-1 );
+      // // Adjust bin ijk indices if necessary
+      // imin = LvArray::math::max( imin, 0 );
+      // imax = LvArray::math::min( imax, nxbins-1 );
+      // jmin = LvArray::math::max( jmin, 0 );
+      // jmax = LvArray::math::min( jmax, nybins-1 );
+      // kmin = LvArray::math::max( kmin, 0 );
+      // kmax = LvArray::math::min( kmax, nzbins-1 );
 
-      neighborCountsView[pp] = 0; //Think this might have been a bug leading to seg fault when a index was greated than size of
+      neighborCountsView[pp] = 0; // Think this might have been a bug leading to seg fault when a index was greated than size of
                                   // neighborCountsView (e.g. active particle indices size)
       localIndex particleIndexOffset2 = 0;
       // Loop all over subRegions
-      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < m_numberOfSubRegions; ++subRegionIndex2 )
+      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < numberOfSubRegions; ++subRegionIndex2 )
       {
         // Loop over bins
         for( localIndex iBin=imin; iBin<=imax; ++iBin )
@@ -12994,24 +13048,63 @@ GEOS_ERROR_IF( nbins > 1000000000,
             }
           }
         }
-        particleIndexOffset2 += subRegionSizesView[subRegionIndex2];
+        particleIndexOffset2 += subRegionSizesDeviceView[subRegionIndex2];
       }
     } );
 
+#ifdef GEOS_USE_DEVICE
+    // parallelDeviceSync();
+#endif
+
     // Must explicitly move array back to host
-    subRegionSizesView.move( LvArray::MemorySpace::host );
-    neighborCountsView.move( LvArray::MemorySpace::host );
+    neighborCounts.move( hostMemorySpace );
 
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
-    neighborList.freeOnDevice(); // just being careful
+
+#ifdef GEOS_USE_DEVICE
+  // The previous relation may have been consumed by device kernels elsewhere
+  // in the explicit step. Ensure those accesses are finished before discarding
+  // its device allocations.
+  // parallelDeviceSync();
+
+  // The relation is being rebuilt completely. Discard its old device
+  // allocations so the new host-side ragged layout receives fresh device
+  // offsets, sizes, capacities, and value storage.
+  neighborList.freeOnDevice();
+#endif
+
     neighborList.resizeFromCapacities( neighborCounts ); // Resize inner arrays from neighborCounts
   } );
+
+#ifdef GEOS_USE_DEVICE
+  allParticleCenters.move( parallelDeviceMemorySpace, true );
+  regionIndicesOfSubRegions.move( parallelDeviceMemorySpace, true );
+  subRegionIndicesInRegions.move( parallelDeviceMemorySpace, true );
+#endif
+
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+  GEOS_LOG_RANK("Populate neighborlist with particle data");
+#endif
+
+  // Create views for capture by kernel
+  arrayView2d< real64 const > const allParticleCentersDeviceView = allParticleCenters.toViewConst();
+  arrayView1d< localIndex const > const regionIndicesOfSubRegionsDeviceView = regionIndicesOfSubRegions.toViewConst();
+  arrayView1d< localIndex const > const subRegionIndicesInRegionsDeviceView = subRegionIndicesInRegions.toViewConst();
 
   // Perform neighbor search over appropriate bins (populate neighborlist with particle data)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get neighbor list views
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
+
+#ifdef GEOS_USE_DEVICE
+    neighborList.m_numParticles.move( parallelDeviceMemorySpace, true );
+    neighborList.m_toParticleRegion.move( parallelDeviceMemorySpace, true );
+    neighborList.m_toParticleSubRegion.move( parallelDeviceMemorySpace, true );
+    neighborList.m_toParticleIndex.move( parallelDeviceMemorySpace, true );
+#endif
+
     // arrayView1d< localIndex const > const & numParticles = neighborList.m_numParticles.toViewConst();
     ArrayOfArraysView< localIndex > neighborRegions = neighborList.m_toParticleRegion.toView();
     ArrayOfArraysView< localIndex > neighborSubRegions = neighborList.m_toParticleSubRegion.toView();
@@ -13020,9 +13113,19 @@ GEOS_ERROR_IF( nbins > 1000000000,
     // Get 'this' particle's location
     arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
 
+#ifdef GEOS_USE_DEVICE
+  // parallelDeviceSync();
+  GEOS_LOG_RANK("Find neighbors of 'this' particle");
+#endif
+    
     // Find neighbors of 'this' particle
     SortedArrayView< localIndex const > const subRegionAActiveParticleIndices = subRegionA.activeParticleIndices();
+#ifdef GEOS_USE_DEVICE
+    subRegionAActiveParticleIndices.move( parallelDeviceMemorySpace );
     forAll< parallelDevicePolicy<> >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+    forAll< serialPolicy >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
     {
       localIndex a = subRegionAActiveParticleIndices[pp];
 
@@ -13034,18 +13137,18 @@ GEOS_ERROR_IF( nbins > 1000000000,
       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
-      // Adjust bin ijk indices if necessary
-      imin = LvArray::math::max( imin, 0 );
-      imax = LvArray::math::min( imax, nxbins-1 );
-      jmin = LvArray::math::max( jmin, 0 );
-      jmax = LvArray::math::min( jmax, nybins-1 );
-      kmin = LvArray::math::max( kmin, 0 );
-      kmax = LvArray::math::min( kmax, nzbins-1 );
+      // // Adjust bin ijk indices if necessary
+      // imin = LvArray::math::max( imin, 0 );
+      // imax = LvArray::math::min( imax, nxbins-1 );
+      // jmin = LvArray::math::max( jmin, 0 );
+      // jmax = LvArray::math::min( jmax, nybins-1 );
+      // kmin = LvArray::math::max( kmin, 0 );
+      // kmax = LvArray::math::min( kmax, nzbins-1 );
 
       // Inner subregion loop
       localIndex neighborCount = 0;
       localIndex particleIndexOffset3 = 0;
-      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < m_numberOfSubRegions; ++subRegionIndex2 )
+      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < numberOfSubRegions; ++subRegionIndex2 )
       {
         // Loop over bins
         for( localIndex iBin=imin; iBin<=imax; ++iBin )
@@ -13064,34 +13167,443 @@ GEOS_ERROR_IF( nbins > 1000000000,
                 //   xBA = allParticleCentersView[particleIndexOffset3 + b] - xA[a].
                 //   condition: ||allParticleCentersView[particleIndexOffset3 + b] - xA[a]||^2 <=
                 //   neighborRadiusSquared.
-                LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersView[particleIndexOffset3 + b] );
+                LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersDeviceView[particleIndexOffset3 + b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
                 if( LvArray::tensorOps::l2NormSquared< 3 >( xBA ) <= neighborRadiusSquared )
                 {
-                  neighborRegions[pp][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex2];
-                  neighborSubRegions[pp][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex2];
+                  neighborRegions[pp][neighborCount] = regionIndicesOfSubRegionsDeviceView[subRegionIndex2];
+                  neighborSubRegions[pp][neighborCount] = subRegionIndicesInRegionsDeviceView[subRegionIndex2];
                   neighborIndices[pp][neighborCount] = b;
-                  // neighborRegions[a][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex2];
-                  // neighborSubRegions[a][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex2];
-                  // neighborIndices[a][neighborCount] = b;
                   ++neighborCount;
                 }
               }
             }
           }
         }
-        particleIndexOffset3 += subRegionSizesView[subRegionIndex2];
+        particleIndexOffset3 += subRegionSizesDeviceView[subRegionIndex2];
       }
     } );
-
-    // TODO: Do these need to be here if I do not need to print these to console for debugging?
-    neighborRegions.move( LvArray::MemorySpace::host );
-    neighborSubRegions.move( LvArray::MemorySpace::host );
-    neighborIndices.move( LvArray::MemorySpace::host );
   } );
+
+#ifdef GEOS_USE_DEVICE
+    // parallelDeviceSync();
+    GEOS_LOG_RANK("End of computeNeighborList");
+#endif
 
   return( MPI_Wtime() - tStart );
 }
+
+// /**
+//  * @brief Builds particle neighbor lists with device-parallel spatial binning.
+//  *
+//  * Particle bin counts, bin population, neighbor counting, and relation filling
+//  * execute with parallelDevicePolicy. Ragged-array capacity allocation remains a
+//  * host metadata operation between the two device passes.
+//  */
+// real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager )
+// {
+//   GEOS_MARK_FUNCTION;
+
+//   real64 const tStart = MPI_Wtime();
+
+//   real64 const neighborRadius = m_neighborRadius;
+//   real64 const neighborRadiusSquared = neighborRadius * neighborRadius;
+//   real64 const binWidth = m_binSizeMultiplier * neighborRadius;
+
+//   GEOS_ERROR_IF( !( neighborRadius > 0.0 ),
+//                  "MPM neighborRadius must be positive before constructing particle neighbor lists." );
+//   GEOS_ERROR_IF( !( binWidth > 0.0 ),
+//                  "MPM neighbor-list bin width must be positive. Check neighborRadius and binSizeMultiplier." );
+//   localIndex const numberOfSubRegions = m_numberOfSubRegions;
+//   GEOS_ERROR_IF( numberOfSubRegions <= 0,
+//                  "MPM neighbor-list construction requires at least one particle subregion." );
+
+//   // Expand the local owned patch by one neighbor radius so ghost particles in
+//   // the communication buffer are included in the binning domain.
+//   real64 const xmin = m_xLocalMinNoGhost[0] - neighborRadius;
+//   real64 const xmax = m_xLocalMaxNoGhost[0] + neighborRadius;
+//   real64 const ymin = m_xLocalMinNoGhost[1] - neighborRadius;
+//   real64 const ymax = m_xLocalMaxNoGhost[1] + neighborRadius;
+//   real64 const zmin = m_xLocalMinNoGhost[2] - neighborRadius;
+//   real64 const zmax = m_xLocalMaxNoGhost[2] + neighborRadius;
+
+//   localIndex const nxbins = LvArray::math::ceil( ( xmax - xmin ) / binWidth );
+//   localIndex const nybins = LvArray::math::ceil( ( ymax - ymin ) / binWidth );
+//   localIndex const nzbins = m_planeStrain ? 1 :
+//                             LvArray::math::ceil( ( zmax - zmin ) / binWidth );
+//   localIndex const nbins = nxbins * nybins * nzbins;
+
+//   GEOS_ERROR_IF( nxbins <= 0 || nybins <= 0 || nzbins <= 0 || nbins <= 0,
+//                  "Invalid MPM neighbor-list bin count." );
+//   GEOS_ERROR_IF( nbins > 1000000000,
+//                  "MPM neighbor-list bin count is too large. Check neighborRadius and binSizeMultiplier." );
+//   GEOS_ERROR_IF( nbins > std::numeric_limits< localIndex >::max() / numberOfSubRegions,
+//                  "MPM neighbor-list total bin count overflows localIndex." );
+
+//   real64 const dx = ( xmax - xmin ) / nxbins;
+//   real64 const dy = ( ymax - ymin ) / nybins;
+//   real64 const dz = ( zmax - zmin ) / nzbins;
+//   localIndex const totalNumberOfBins = nbins * numberOfSubRegions;
+
+//   /*
+//    * Particle-subregion objects cannot be dereferenced in a device kernel. Store
+//    * the region/subregion identifiers once and use the ParticleManager nested
+//    * position view for candidate-position access during the search.
+//    */
+//   array1d< localIndex > regionIndicesOfSubRegions( numberOfSubRegions );
+//   array1d< localIndex > subRegionIndicesInRegions( numberOfSubRegions );
+
+//   localIndex subRegionIndex = 0;
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+// #ifdef GEOS_USE_DEVICE
+//     // Periodic ghost correction and particle management may have left these
+//     // wrappers host-current immediately before neighbor-list construction.
+//     subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleCenterString() ).move(
+//       parallelDeviceMemorySpace, true );
+//     subRegion.getWrapperBase( fields::mpm::particleDeleteFlag::key() ).move(
+//       parallelDeviceMemorySpace, true );
+// #endif
+
+//     ParticleRegion & region =
+//       dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+//     regionIndicesOfSubRegions[subRegionIndex] = region.getIndexInParent();
+//     subRegionIndicesInRegions[subRegionIndex] = subRegion.getIndexInParent();
+//     ++subRegionIndex;
+//   } );
+
+//   GEOS_ERROR_IF( subRegionIndex != numberOfSubRegions,
+//                  "MPM particle-subregion count changed during neighbor-list construction." );
+
+//   regionIndicesOfSubRegions.move( parallelDeviceMemorySpace, true );
+//   subRegionIndicesInRegions.move( parallelDeviceMemorySpace, true );
+
+//   arrayView1d< localIndex const > const regionIndicesOfSubRegionsView =
+//     regionIndicesOfSubRegions.toViewConst();
+//   arrayView1d< localIndex const > const subRegionIndicesInRegionsView =
+//     subRegionIndicesInRegions.toViewConst();
+
+//   ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor =
+//     particleManager.constructArrayViewAccessor< real64, 2 >(
+//       ParticleSubRegion::viewKeyStruct::particleCenterString() );
+//   ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particlePositionView =
+//     particlePositionAccessor.toNestedViewConst();
+
+//   // ---------------------------------------------------------------------------
+//   // Pass 1: count particles in each subregion-local spatial bin on the device.
+//   // ---------------------------------------------------------------------------
+//   array1d< localIndex > binSizes( totalNumberOfBins );
+//   binSizes.move( parallelDeviceMemorySpace, true );
+//   arrayView1d< localIndex > const binSizesView = binSizes.toView();
+
+//   forAll< parallelDevicePolicy<> >( totalNumberOfBins,
+//                                     [=] GEOS_HOST_DEVICE ( localIndex const binIndex )
+//   {
+//     binSizesView[binIndex] = 0;
+//   } );
+
+//   subRegionIndex = 0;
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     localIndex const currentSubRegionIndex = subRegionIndex;
+//     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+//     arrayView1d< int const > const particleDeleteFlag =
+//       subRegion.getField< fields::mpm::particleDeleteFlag >();
+
+//     forAll< parallelDevicePolicy<> >( subRegion.size(),
+//                                       [=] GEOS_HOST_DEVICE ( localIndex const p )
+//     {
+//       if( particleDeleteFlag[p] != 0 )
+//       {
+//         return;
+//       }
+
+//       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
+//       localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
+//       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+
+//       // The expanded bin domain should contain every valid local/ghost
+//       // particle. Clamp roundoff-level excursions at the upper/lower faces to
+//       // prevent an invalid bin access.
+//       i = LvArray::math::min( LvArray::math::max( i, localIndex( 0 ) ), nxbins - 1 );
+//       j = LvArray::math::min( LvArray::math::max( j, localIndex( 0 ) ), nybins - 1 );
+//       k = LvArray::math::min( LvArray::math::max( k, localIndex( 0 ) ), nzbins - 1 );
+
+//       localIndex const binIndex = currentSubRegionIndex * nbins +
+//                                   i + j * nxbins + k * nxbins * nybins;
+//       RAJA::atomicAdd( parallelDeviceAtomic{},
+//                        &binSizesView[binIndex],
+//                        localIndex( 1 ) );
+//     } );
+
+//     ++subRegionIndex;
+//   } );
+
+//   /*
+//    * LvArray ragged-array allocation is a host-side metadata operation. Copy only
+//    * the O(number of bins) capacity array to host; all particle-scale work stays
+//    * on the device.
+//    */
+//   binSizes.move( hostMemorySpace, true );
+
+//   ArrayOfArrays< localIndex > bins;
+//   bins.resizeFromCapacities< serialPolicy >( totalNumberOfBins, binSizes.data() );
+//   for( localIndex binIndex = 0; binIndex < totalNumberOfBins; ++binIndex )
+//   {
+//     bins.resizeArray( binIndex, binSizes[binIndex] );
+//   }
+
+//   ArrayOfArraysView< localIndex > binsView = bins.toView();
+//   binsView.move( parallelDeviceMemorySpace );
+
+//   // ---------------------------------------------------------------------------
+//   // Pass 2: populate bins in parallel. Atomic cursors reserve unique slots.
+//   // ---------------------------------------------------------------------------
+//   array1d< localIndex > binFillCounts( totalNumberOfBins );
+//   binFillCounts.move( parallelDeviceMemorySpace, true );
+//   arrayView1d< localIndex > const binFillCountsView = binFillCounts.toView();
+
+//   forAll< parallelDevicePolicy<> >( totalNumberOfBins,
+//                                     [=] GEOS_HOST_DEVICE ( localIndex const binIndex )
+//   {
+//     binFillCountsView[binIndex] = 0;
+//   } );
+
+//   subRegionIndex = 0;
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     localIndex const currentSubRegionIndex = subRegionIndex;
+//     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+//     arrayView1d< int const > const particleDeleteFlag =
+//       subRegion.getField< fields::mpm::particleDeleteFlag >();
+
+//     forAll< parallelDevicePolicy<> >( subRegion.size(),
+//                                       [=] GEOS_HOST_DEVICE ( localIndex const p )
+//     {
+//       if( particleDeleteFlag[p] != 0 )
+//       {
+//         return;
+//       }
+
+//       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
+//       localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
+//       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+//       i = LvArray::math::min( LvArray::math::max( i, localIndex( 0 ) ), nxbins - 1 );
+//       j = LvArray::math::min( LvArray::math::max( j, localIndex( 0 ) ), nybins - 1 );
+//       k = LvArray::math::min( LvArray::math::max( k, localIndex( 0 ) ), nzbins - 1 );
+
+//       localIndex const binIndex = currentSubRegionIndex * nbins +
+//                                   i + j * nxbins + k * nxbins * nybins;
+//       localIndex const slot = RAJA::atomicAdd( parallelDeviceAtomic{},
+//                                                 &binFillCountsView[binIndex],
+//                                                 localIndex( 1 ) );
+//       binsView[binIndex][slot] = p;
+//     } );
+
+//     ++subRegionIndex;
+//   } );
+
+//   /*
+//    * Atomic slot reservation does not define insertion order. Sort each bin by
+//    * local particle index so the final neighbor order matches the former serial
+//    * construction: subregion order, bin order, then ascending particle index.
+//    */
+//   forAll< parallelDevicePolicy<> >( totalNumberOfBins,
+//                                     [=] GEOS_HOST_DEVICE ( localIndex const binIndex )
+//   {
+//     auto bin = binsView[binIndex];
+//     if( bin.size() > 1 )
+//     {
+//       LvArray::sortedArrayManipulation::makeSorted( bin.begin(), bin.end() );
+//     }
+//   } );
+
+//   ArrayOfArraysView< localIndex const > const binsConstView = bins.toViewConst();
+
+//   // ---------------------------------------------------------------------------
+//   // Pass 3: count neighbors for each active particle on the device, then use
+//   // the counts to allocate the persistent ragged neighbor relation.
+//   // ---------------------------------------------------------------------------
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
+//   {
+//     arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
+//     SortedArrayView< localIndex const > const activeParticleIndices =
+//       subRegionA.activeParticleIndices();
+
+//     array1d< localIndex > neighborCounts( activeParticleIndices.size() );
+//     neighborCounts.move( parallelDeviceMemorySpace, true );
+//     arrayView1d< localIndex > const neighborCountsView = neighborCounts.toView();
+
+//     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+//                                       [=] GEOS_HOST_DEVICE ( localIndex const pp )
+//     {
+//       localIndex const a = activeParticleIndices[pp];
+
+//       localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
+//       localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
+//       localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
+//       localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
+//       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
+//       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
+
+//       imin = LvArray::math::max( imin, localIndex( 0 ) );
+//       imax = LvArray::math::min( imax, nxbins - 1 );
+//       jmin = LvArray::math::max( jmin, localIndex( 0 ) );
+//       jmax = LvArray::math::min( jmax, nybins - 1 );
+//       kmin = LvArray::math::max( kmin, localIndex( 0 ) );
+//       kmax = LvArray::math::min( kmax, nzbins - 1 );
+
+//       localIndex neighborCount = 0;
+//       for( localIndex candidateSubRegion = 0;
+//            candidateSubRegion < numberOfSubRegions;
+//            ++candidateSubRegion )
+//       {
+//         localIndex const candidateRegion =
+//           regionIndicesOfSubRegionsView[candidateSubRegion];
+//         localIndex const candidateSubRegionInRegion =
+//           subRegionIndicesInRegionsView[candidateSubRegion];
+
+//         for( localIndex iBin = imin; iBin <= imax; ++iBin )
+//         {
+//           for( localIndex jBin = jmin; jBin <= jmax; ++jBin )
+//           {
+//             for( localIndex kBin = kmin; kBin <= kmax; ++kBin )
+//             {
+//               localIndex const binIndex = candidateSubRegion * nbins +
+//                                           iBin + jBin * nxbins +
+//                                           kBin * nxbins * nybins;
+
+//               for( localIndex bb = 0;
+//                    bb < binsConstView.sizeOfArray( binIndex );
+//                    ++bb )
+//               {
+//                 localIndex const b = binsConstView[binIndex][bb];
+//                 real64 xBA[3] = {};
+//                 LvArray::tensorOps::copy< 3 >(
+//                   xBA,
+//                   particlePositionView[candidateRegion][candidateSubRegionInRegion][b] );
+//                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
+//                 if( LvArray::tensorOps::l2NormSquared< 3 >( xBA ) <=
+//                     neighborRadiusSquared )
+//                 {
+//                   ++neighborCount;
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+
+//       neighborCountsView[pp] = neighborCount;
+//     } );
+
+//     neighborCounts.move( hostMemorySpace, true );
+
+//     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
+//     neighborList.freeOnDevice();
+//     neighborList.resizeFromCapacities( neighborCounts );
+//   } );
+
+//   // ---------------------------------------------------------------------------
+//   // Pass 4: populate the persistent particle neighbor relations on the device.
+//   // ---------------------------------------------------------------------------
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
+//   {
+//     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
+
+//     // resizeFromCapacities is host-side. Establish device allocations before
+//     // forming the views captured by the fill kernel.
+//     neighborList.m_numParticles.move( parallelDeviceMemorySpace, true );
+
+//     ArrayOfArraysView< localIndex > neighborRegionsMove =
+//       neighborList.m_toParticleRegion.toView();
+//     ArrayOfArraysView< localIndex > neighborSubRegionsMove =
+//       neighborList.m_toParticleSubRegion.toView();
+//     ArrayOfArraysView< localIndex > neighborIndicesMove =
+//       neighborList.m_toParticleIndex.toView();
+//     neighborRegionsMove.move( parallelDeviceMemorySpace );
+//     neighborSubRegionsMove.move( parallelDeviceMemorySpace );
+//     neighborIndicesMove.move( parallelDeviceMemorySpace );
+
+//     ArrayOfArraysView< localIndex > const neighborRegions =
+//       neighborList.m_toParticleRegion.toView();
+//     ArrayOfArraysView< localIndex > const neighborSubRegions =
+//       neighborList.m_toParticleSubRegion.toView();
+//     ArrayOfArraysView< localIndex > const neighborIndices =
+//       neighborList.m_toParticleIndex.toView();
+
+//     arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
+//     SortedArrayView< localIndex const > const activeParticleIndices =
+//       subRegionA.activeParticleIndices();
+
+//     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+//                                       [=] GEOS_HOST_DEVICE ( localIndex const pp )
+//     {
+//       localIndex const a = activeParticleIndices[pp];
+
+//       localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
+//       localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
+//       localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
+//       localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
+//       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
+//       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
+
+//       imin = LvArray::math::max( imin, localIndex( 0 ) );
+//       imax = LvArray::math::min( imax, nxbins - 1 );
+//       jmin = LvArray::math::max( jmin, localIndex( 0 ) );
+//       jmax = LvArray::math::min( jmax, nybins - 1 );
+//       kmin = LvArray::math::max( kmin, localIndex( 0 ) );
+//       kmax = LvArray::math::min( kmax, nzbins - 1 );
+
+//       localIndex neighborCount = 0;
+//       for( localIndex candidateSubRegion = 0;
+//            candidateSubRegion < numberOfSubRegions;
+//            ++candidateSubRegion )
+//       {
+//         localIndex const candidateRegion =
+//           regionIndicesOfSubRegionsView[candidateSubRegion];
+//         localIndex const candidateSubRegionInRegion =
+//           subRegionIndicesInRegionsView[candidateSubRegion];
+
+//         for( localIndex iBin = imin; iBin <= imax; ++iBin )
+//         {
+//           for( localIndex jBin = jmin; jBin <= jmax; ++jBin )
+//           {
+//             for( localIndex kBin = kmin; kBin <= kmax; ++kBin )
+//             {
+//               localIndex const binIndex = candidateSubRegion * nbins +
+//                                           iBin + jBin * nxbins +
+//                                           kBin * nxbins * nybins;
+
+//               for( localIndex bb = 0;
+//                    bb < binsConstView.sizeOfArray( binIndex );
+//                    ++bb )
+//               {
+//                 localIndex const b = binsConstView[binIndex][bb];
+//                 real64 xBA[3] = {};
+//                 LvArray::tensorOps::copy< 3 >(
+//                   xBA,
+//                   particlePositionView[candidateRegion][candidateSubRegionInRegion][b] );
+//                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
+//                 if( LvArray::tensorOps::l2NormSquared< 3 >( xBA ) <=
+//                     neighborRadiusSquared )
+//                 {
+//                   neighborRegions[pp][neighborCount] = candidateRegion;
+//                   neighborSubRegions[pp][neighborCount] =
+//                     candidateSubRegionInRegion;
+//                   neighborIndices[pp][neighborCount] = b;
+//                   ++neighborCount;
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     } );
+//   } );
+
+//   return MPI_Wtime() - tStart;
+// }
 
 /**
  * @brief Optimizes bin sort.
@@ -13270,7 +13782,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
   GEOS_MARK_FUNCTION;
 
   int const planeStrain = m_planeStrain;
-  int const numDims = m_numDims;
+  integer const numDims = m_numDims;
   int const disableSurfaceNormalsAndPositionsOnCPDIScaling =
     m_disableSurfaceNormalsAndPositionsOnCPDIScaling;
   mpm::CPDIDomainScalingTypeOption const cpdiDomainScalingType =
@@ -13327,10 +13839,10 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
       real64 minAxis = DBL_MAX;
       if( planeStrain == 1 )
       {
-        for( int sign1 = -1; sign1 <= 1; sign1 += 2 )
+        for( integer sign1 = -1; sign1 <= 1; sign1 += 2 )
         {
           real64 corner[3] = {};
-          for( int i = 0; i < 3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
             corner[i] = rawRVectors[0][i] + sign1 * rawRVectors[1][i];
           }
@@ -13341,16 +13853,16 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
       }
       else
       {
-        int const signs[4][3] = {
+        integer const signs[4][3] = {
           { 1, 1, 1 },
           { 1, -1, 1 },
           { -1, 1, 1 },
           { -1, -1, 1 }
         };
-        for( int c = 0; c < 4; ++c )
+        for( integer c = 0; c < 4; ++c )
         {
           real64 corner[3] = {};
-          for( int i = 0; i < 3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
             corner[i] =
               signs[c][0] * rawRVectors[0][i] +
@@ -13402,13 +13914,13 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
         if( planeStrain == 1 )
         {
           real64 l[2][3] = {};
-          for( int i = 0; i < 3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
             l[0][i] = r1[i] + r2[i];
             l[1][i] = r1[i] - r2[i];
           }
 
-          for( int i = 0; i < 2; ++i )
+          for( integer i = 0; i < 2; ++i )
           {
             real64 const length = LvArray::tensorOps::l2Norm< 3 >( l[i] );
             if( length > homelHalfCornerLimit )
@@ -13421,7 +13933,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
 
           if( scaled )
           {
-            for( int i = 0; i < 3; ++i )
+            for( integer i = 0; i < 3; ++i )
             {
               r1[i] = 0.5 * ( l[0][i] + l[1][i] );
               r2[i] = 0.5 * ( l[0][i] - l[1][i] );
@@ -13431,7 +13943,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
         else
         {
           real64 l[4][3] = {};
-          for( int i = 0; i < 3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
             l[0][i] = r1[i] + r2[i] + r3[i];
             l[1][i] = r1[i] - r2[i] + r3[i];
@@ -13439,7 +13951,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
             l[3][i] = r3[i] - r1[i] - r2[i];
           }
 
-          for( int i = 0; i < 4; ++i )
+          for( integer i = 0; i < 4; ++i )
           {
             real64 const length = LvArray::tensorOps::l2Norm< 3 >( l[i] );
             if( length > homelHalfCornerLimit )
@@ -13452,7 +13964,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
 
           if( scaled )
           {
-            for( int i = 0; i < 3; ++i )
+            for( integer i = 0; i < 3; ++i )
             {
               r1[i] = 0.25 *
                       ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
@@ -13815,7 +14327,7 @@ bool SolidMechanicsMPM::flagParticlesWithBadMappingArraysAndCompactActiveOrdinal
       return;
     }
 
-    badMappingRows[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    badMappingRows[subRegionIndex].move( hostMemorySpace, true );
     arrayView1d< int const > const badMappingRowsView = badMappingRows[subRegionIndex].toViewConst();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
@@ -13843,7 +14355,7 @@ bool SolidMechanicsMPM::flagParticlesWithBadMappingArraysAndCompactActiveOrdinal
     }
 
     arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
-    particleDeleteFlag.move( LvArray::MemorySpace::host );
+    particleDeleteFlag.move( hostMemorySpace );
 
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
     {
@@ -13908,13 +14420,13 @@ void SolidMechanicsMPM::compactActiveOrdinalMappingArrays( localIndex const subR
 
   // Field maps are populated after this helper runs, so resizing them is
   // sufficient and avoids reading uninitialized field-map rows during compaction.
-  m_mappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_shapeFunctionGradientValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_shapeFunctionValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_effectiveShapeFunctionGradientValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_effectiveShapeFunctionValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
-  m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
+  m_mappedNodes[subRegionIndex].move( hostMemorySpace, true );
+  m_shapeFunctionGradientValues[subRegionIndex].move( hostMemorySpace, true );
+  m_shapeFunctionValues[subRegionIndex].move( hostMemorySpace, true );
+  m_effectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+  m_effectiveShapeFunctionGradientValues[subRegionIndex].move( hostMemorySpace, true );
+  m_effectiveShapeFunctionValues[subRegionIndex].move( hostMemorySpace, true );
+  m_numEffectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
 
   arrayView2d< localIndex > const mappedNodes = m_mappedNodes[subRegionIndex];
   arrayView3d< real64 > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
@@ -13963,13 +14475,13 @@ void SolidMechanicsMPM::compactActiveOrdinalMappingArrays( localIndex const subR
                    "MPM cannot compact active-ordinal particle-grid map rows without also compacting an already-built "
                    "particle neighbor list of the same active-ordinal size." );
 
-    neighborList.m_numParticles.move( LvArray::MemorySpace::host, true );
+    neighborList.m_numParticles.move( hostMemorySpace, true );
     ArrayOfArraysView< localIndex > oldNeighborRegionsHost = neighborList.m_toParticleRegion.toView();
     ArrayOfArraysView< localIndex > oldNeighborSubRegionsHost = neighborList.m_toParticleSubRegion.toView();
     ArrayOfArraysView< localIndex > oldNeighborIndicesHost = neighborList.m_toParticleIndex.toView();
-    oldNeighborRegionsHost.move( LvArray::MemorySpace::host );
-    oldNeighborSubRegionsHost.move( LvArray::MemorySpace::host );
-    oldNeighborIndicesHost.move( LvArray::MemorySpace::host );
+    oldNeighborRegionsHost.move( hostMemorySpace );
+    oldNeighborSubRegionsHost.move( hostMemorySpace );
+    oldNeighborIndicesHost.move( hostMemorySpace );
 
     arrayView1d< localIndex const > const oldNumNeighbors = neighborList.m_numParticles.toViewConst();
     ArrayOfArraysView< localIndex const > const oldNeighborRegions = neighborList.m_toParticleRegion.toViewConst();
@@ -16012,6 +16524,13 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     // Get neighbor list
     OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
 
+// #ifdef GEOS_USE_DEVICE
+//     m_needsNeighborList.m_numParticles.move( parallelDeviceMemorySpace, true );
+//     m_needsNeighborList.m_toParticleRegion.move( parallelDeviceMemorySpace, true );
+//     m_needsNeighborList.m_toParticleSubRegion.move( parallelDeviceMemorySpace, true );
+//     m_needsNeighborList.m_toParticleIndex.move( parallelDeviceMemorySpace, true );
+// #endif
+
     // Get const views for array of arrays
     arrayView1d< localIndex const > const numNeighborsAll = neighborList.m_numParticles.toViewConst();
     ArrayOfArraysView< localIndex const > const neighborRegions = neighborList.m_toParticleRegion.toViewConst();
@@ -16058,17 +16577,17 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
       LvArray::tensorOps::copy< 3 >( particleDamageGradient[p], grad );
     } );
 
-    // Required to avoid invalid pointer error of nested arrayViews
-    particleVolumeView.move( LvArray::MemorySpace::host );
-    particlePositionView.move( LvArray::MemorySpace::host );
-    particleDamageView.move( LvArray::MemorySpace::host );
-    particleSurfaceFlagView.move( LvArray::MemorySpace::host );
-    particleCohesiveZoneFlagView.move( LvArray::MemorySpace::host );
+    // // Required to avoid invalid pointer error of nested arrayViews
+    // particleVolumeView.move( hostMemorySpace );
+    // particlePositionView.move( hostMemorySpace );
+    // particleDamageView.move( hostMemorySpace );
+    // particleSurfaceFlagView.move( hostMemorySpace );
+    // particleCohesiveZoneFlagView.move( hostMemorySpace );
 
-    numNeighborsAll.move( LvArray::MemorySpace::host );
-    neighborRegions.move( LvArray::MemorySpace::host );
-    neighborSubRegions.move( LvArray::MemorySpace::host );
-    neighborIndices.move( LvArray::MemorySpace::host );
+    // numNeighborsAll.move( hostMemorySpace );
+    // neighborRegions.move( hostMemorySpace );
+    // neighborSubRegions.move( hostMemorySpace );
+    // neighborIndices.move( hostMemorySpace );
   } );
 }
 
@@ -16918,7 +17437,7 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( syncGridOnDevice ? parallelDeviceMemorySpace : LvArray::MemorySpace::host, true );
+    wrapper.move( syncGridOnDevice ? parallelDeviceMemorySpace : hostMemorySpace, true );
   }
 
   stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
@@ -17031,7 +17550,7 @@ void SolidMechanicsMPM::replaceGridFieldsOwnerToGhost( stdVector< std::string > 
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( LvArray::MemorySpace::host, true );
+    wrapper.move( hostMemorySpace, true );
   }
 
   FieldIdentifiers fieldsToBeSynced;
@@ -19502,8 +20021,8 @@ void SolidMechanicsMPM::computePartitionedSurfaceTensionForces( ParticleManager 
   arrayView2d< real64 const > const surfaceTensionPairs =
     m_surfaceTensionPairs.toViewConst();
 
-  nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( LvArray::MemorySpace::host, true );
-  nodeManager.getWrapperBase( viewKeyStruct::gridSurfaceTensionForceString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( hostMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridSurfaceTensionForceString() ).move( hostMemorySpace, true );
 
   arrayView2d< real64 const > const gridMaterialVolume =
     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
@@ -19572,10 +20091,10 @@ void SolidMechanicsMPM::computePartitionedSurfaceTensionForces( ParticleManager 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-    m_effectiveMappedFields[subRegionIndex].move( LvArray::MemorySpace::host, true );
-    m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-    m_effectiveShapeFunctionGradientValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    m_numEffectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveMappedFields[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveShapeFunctionGradientValues[subRegionIndex].move( hostMemorySpace, true );
 
     arrayView1d< int const > const particleGroup =
       subRegion.getParticleGroup();
@@ -21560,8 +22079,8 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormalsAndPositions( NodeManager & n
     }
   } );
 
-  // gridSurfaceNormal.move( LvArray::MemorySpace::host );
-  // gridSurfacePosition.move( LvArray::MemorySpace::host );
+  // gridSurfaceNormal.move( hostMemorySpace );
+  // gridSurfacePosition.move( hostMemorySpace );
 }
 
 /**
@@ -24654,7 +25173,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
   // }
 
   // Uses maximum bulk modulus ( lowest effective PID gains ) of all materials
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maximumBulkModulusReduce( 1.0 ); // -DBL_MAX );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maximumBulkModulusReduce( 0.0 );
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -26185,9 +26704,9 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
 
   real64 const coordinateTolerance = 1.0e-8 * LvArray::math::max( LvArray::math::abs( profileLength ), m_hEl[direction] );
 
-  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( LvArray::MemorySpace::host, true );
-  nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( LvArray::MemorySpace::host, true );
-  nodeManager.getWrapperBase( viewKeyStruct::gridMomentumString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( hostMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( hostMemorySpace, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMomentumString() ).move( hostMemorySpace, true );
 
   arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
@@ -26246,9 +26765,9 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-    m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
-    m_effectiveShapeFunctionValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    m_numEffectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveShapeFunctionValues[subRegionIndex].move( hostMemorySpace, true );
 
     arrayView1d< localIndex const > const numEffectiveMappedNodes =
       m_numEffectiveMappedNodes[subRegionIndex];
@@ -29188,8 +29707,8 @@ void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt,
       }
     } );   // particle loop
 
-    particlePosition.move( LvArray::MemorySpace::host );
-    particleVelocityGradient.move( LvArray::MemorySpace::host );
+    particlePosition.move( hostMemorySpace );
+    particleVelocityGradient.move( hostMemorySpace );
 
   } ); // subregion loop
 }
@@ -29211,13 +29730,13 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 //     // particle fields host-current before forming views; FLIP/PIC may have
 //     // produced particleVelocityGradient on the device.
 //     subRegion.getWrapperBase( fields::mpm::particleDeformationGradient::key() ).move(
-//       LvArray::MemorySpace::host, true );
+//       hostMemorySpace, true );
 //     subRegion.getWrapperBase( fields::mpm::particleFDot::key() ).move(
-//       LvArray::MemorySpace::host, true );
+//       hostMemorySpace, true );
 //     subRegion.getWrapperBase( fields::mpm::particleVelocityGradient::key() ).move(
-//       LvArray::MemorySpace::host, true );
+//       hostMemorySpace, true );
 //     subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
-//       LvArray::MemorySpace::host, true );
+//       hostMemorySpace, true );
 // #endif
 
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
@@ -30912,7 +31431,7 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
     // Move everything into the host memory space
     subRegion.forWrappers( [&]( WrapperBase & wrapper )
     {
-      wrapper.move( LvArray::MemorySpace::host, true );
+      wrapper.move( hostMemorySpace, true );
     } );
 
     // Get relevant particle arrays
@@ -31060,7 +31579,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
 #ifdef GEOS_USE_DEVICE
     subRegion.getWrapperBase( fields::mpm::particleDomainResetFlag::key() ).move(
-      LvArray::MemorySpace::host, true );
+      hostMemorySpace, true );
 #endif
     arrayView1d< int > const particleDomainResetFlag =
       subRegion.getField< fields::mpm::particleDomainResetFlag >();
