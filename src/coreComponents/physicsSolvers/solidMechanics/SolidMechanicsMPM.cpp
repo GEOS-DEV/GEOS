@@ -4951,7 +4951,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
-
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 01. Resolve step managers.
@@ -5615,7 +5614,7 @@ void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 cons
   {
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      for( int i = 0; i < 3; ++i )
+      for( integer i = 0; i < 3; ++i )
       {
         gridUncontactedVelocity[g][fieldIndex][i] = gridVelocity[g][fieldIndex][i];
       }
@@ -12789,8 +12788,8 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   ArrayOfArrays< localIndex > bins( totalNumberOfBins, 0 );
 
   // Precompute number of particles in each bin and resize the bins arrayOfArrays
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
+#ifdef MPM_DEBUG_GPU
+  parallelDeviceSync();
   GEOS_LOG_RANK("Precompute number of particles in each bin and resize the bins arrayOfArrays");
 #endif
 
@@ -12863,22 +12862,16 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
     ++subRegionIndex;
   } );
 
-  // Populate bins with particle data
-
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
+#ifdef MPM_DEBUG_GPU
+  parallelDeviceSync();
   GEOS_LOG_RANK("Populating bins with particle data");
-#endif
 
-array1d< int > binError( 1 );
-binError[0] = 0;
-
-#ifdef GEOS_USE_DEVICE
+  // Change this to RAJA reduction
+  array1d< int > binError( 1 );
+  binError[0] = 0;
   binError.move( parallelDeviceMemorySpace, true );
+  arrayView1d< int > const binErrorView = binError.toView();
 #endif
-
-arrayView1d< int > const binErrorView =
-  binError.toView();
 
   // Stored the current count of particles per bin during population (initialize to 0)
   array1d< localIndex > binCount( totalNumberOfBins );
@@ -12897,6 +12890,7 @@ arrayView1d< int > const binErrorView =
   ArrayOfArraysView< localIndex > binsView = bins.toView();
   arrayView1d< localIndex const > const subRegionSizesDeviceView = subRegionSizes.toViewConst();
 
+  // Populate bins with particle data
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -12925,6 +12919,7 @@ arrayView1d< int > const binErrorView =
                                                localIndex( 1 ) );
       
       // Bounds checking
+#ifdef MPM_DEBUG_GPU
       localIndex const rowSize = binsView.sizeOfArray( binIndex );
       if( slot < 0 || slot >= rowSize )
       {
@@ -12934,6 +12929,7 @@ arrayView1d< int > const binErrorView =
           2 );
         return;
       }
+#endif
 
       // Store particle index in bin
       binsView[binIndex][slot] = p;
@@ -12942,18 +12938,15 @@ arrayView1d< int > const binErrorView =
     ++subRegionIndex;
   } );
 
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
-#endif
+binCount.move( hostMemorySpace, true );
 
+#ifdef MPM_DEBUG_GPU
   binError.move( hostMemorySpace, true );
 
   GEOS_ERROR_IF(
     binError[0] != 0,
     "GPU particle bin construction encountered an invalid particle "
     "position or exceeded an allocated bin capacity." );
-
-  binCount.move( hostMemorySpace, true );
 
   for( localIndex binIndex = 0;
       binIndex < totalNumberOfBins;
@@ -12968,15 +12961,24 @@ arrayView1d< int > const binErrorView =
       << binCount[binIndex] );
   }
 
-  // Precompute number of neighbors for each particles
-  
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
+  parallelDeviceSync();
   GEOS_LOG_RANK("Precompute number of neighbors for each particles");
 #endif
 
+  // Precompute number of neighbors for each particles
+  subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
+
+#ifdef MPM_DEBUG_GPU
+    RAJA::ReduceSum< parallelDeviceReduce, int > iLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > jLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > kLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > iUpperError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > jUpperError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > kUpperError( 0 );
+#endif
+
     // Get 'this' particle's location
     arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
 
@@ -13006,13 +13008,32 @@ arrayView1d< int > const binErrorView =
       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
-      // // Adjust bin ijk indices if necessary
-      // imin = LvArray::math::max( imin, 0 );
-      // imax = LvArray::math::min( imax, nxbins-1 );
-      // jmin = LvArray::math::max( jmin, 0 );
-      // jmax = LvArray::math::min( jmax, nybins-1 );
-      // kmin = LvArray::math::max( kmin, 0 );
-      // kmax = LvArray::math::min( kmax, nzbins-1 );
+#ifdef MPM_DEBUG_GPU
+      if( imin < 0 )
+      {
+        iLowerError += 1;
+      }
+      if( jmin < 0 )
+      {
+        jLowerError += 1;
+      }
+      if( kmin < 0 )
+      {
+        kLowerError += 1;
+      }
+      if( imax > nxbins-1 )
+      {
+        iUpperError += 1;
+      }
+      if( jmax > nybins-1 )
+      {
+        jUpperError += 1;
+      }
+      if( kmax > nzbins-1 )
+      {
+        kUpperError += 1;
+      }
+#endif
 
       neighborCountsView[pp] = 0; // Think this might have been a bug leading to seg fault when a index was greated than size of
                                   // neighborCountsView (e.g. active particle indices size)
@@ -13052,8 +13073,13 @@ arrayView1d< int > const binErrorView =
       }
     } );
 
-#ifdef GEOS_USE_DEVICE
-    // parallelDeviceSync();
+#ifdef MPM_DEBUG_GPU
+      GEOS_ERROR_IF(iLowerError.get() > 0 ||
+                    jLowerError.get() > 0 ||
+                    kLowerError.get() > 0 ||
+                    iUpperError.get() > 0 ||
+                    jUpperError.get() > 0 ||
+                    kUpperError.get() > 0, "Detected particles out of binning range in computeNeighborList on subRegion " << subRegionIndex << ", lower boundary = {" << iLowerError.get() << "," << jLowerError.get() << "," << kLowerError.get() << "} and upper boundary = {" << iUpperError.get() << "," << jUpperError.get() << "," << kUpperError.get() << "}" );
 #endif
 
     // Must explicitly move array back to host
@@ -13062,18 +13088,21 @@ arrayView1d< int > const binErrorView =
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
 
 #ifdef GEOS_USE_DEVICE
-  // The previous relation may have been consumed by device kernels elsewhere
-  // in the explicit step. Ensure those accesses are finished before discarding
-  // its device allocations.
-  // parallelDeviceSync();
+    parallelDeviceSync();
+    // The previous relation may have been consumed by device kernels elsewhere
+    // in the explicit step. Ensure those accesses are finished before discarding
+    // its device allocations.
+    // parallelDeviceSync();
 
-  // The relation is being rebuilt completely. Discard its old device
-  // allocations so the new host-side ragged layout receives fresh device
-  // offsets, sizes, capacities, and value storage.
-  neighborList.freeOnDevice();
+    // The relation is being rebuilt completely. Discard its old device
+    // allocations so the new host-side ragged layout receives fresh device
+    // offsets, sizes, capacities, and value storage.
+    neighborList.freeOnDevice();
 #endif
 
     neighborList.resizeFromCapacities( neighborCounts ); // Resize inner arrays from neighborCounts
+
+    ++subRegionIndex;
   } );
 
 #ifdef GEOS_USE_DEVICE
@@ -13082,8 +13111,8 @@ arrayView1d< int > const binErrorView =
   subRegionIndicesInRegions.move( parallelDeviceMemorySpace, true );
 #endif
 
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
+#ifdef MPM_DEBUG_GPU
+  parallelDeviceSync();
   GEOS_LOG_RANK("Populate neighborlist with particle data");
 #endif
 
@@ -13093,8 +13122,18 @@ arrayView1d< int > const binErrorView =
   arrayView1d< localIndex const > const subRegionIndicesInRegionsDeviceView = subRegionIndicesInRegions.toViewConst();
 
   // Perform neighbor search over appropriate bins (populate neighborlist with particle data)
+  subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
+#ifdef MPM_DEBUG_GPU
+    RAJA::ReduceSum< parallelDeviceReduce, int > iLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > jLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > kLowerError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > iUpperError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > jUpperError( 0 );
+    RAJA::ReduceSum< parallelDeviceReduce, int > kUpperError( 0 );
+#endif
+
     // Get neighbor list views
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
 
@@ -13113,9 +13152,9 @@ arrayView1d< int > const binErrorView =
     // Get 'this' particle's location
     arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
 
-#ifdef GEOS_USE_DEVICE
-  // parallelDeviceSync();
-  GEOS_LOG_RANK("Find neighbors of 'this' particle");
+#ifdef MPM_DEBUG_GPU
+   parallelDeviceSync();
+   GEOS_LOG_RANK("Find neighbors of 'this' particle");
 #endif
     
     // Find neighbors of 'this' particle
@@ -13137,13 +13176,33 @@ arrayView1d< int > const binErrorView =
       localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
       localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
-      // // Adjust bin ijk indices if necessary
-      // imin = LvArray::math::max( imin, 0 );
-      // imax = LvArray::math::min( imax, nxbins-1 );
-      // jmin = LvArray::math::max( jmin, 0 );
-      // jmax = LvArray::math::min( jmax, nybins-1 );
-      // kmin = LvArray::math::max( kmin, 0 );
-      // kmax = LvArray::math::min( kmax, nzbins-1 );
+
+#ifdef MPM_DEBUG_GPU
+      if( imin < 0 )
+      {
+        iLowerError += 1;
+      }
+      if( jmin < 0 )
+      {
+        jLowerError += 1;
+      }
+      if( kmin < 0 )
+      {
+        kLowerError += 1;
+      }
+      if( imax > nxbins-1 )
+      {
+        iUpperError += 1;
+      }
+      if( jmax > nybins-1 )
+      {
+        jUpperError += 1;
+      }
+      if( kmax > nzbins-1 )
+      {
+        kUpperError += 1;
+      }
+#endif
 
       // Inner subregion loop
       localIndex neighborCount = 0;
@@ -13183,13 +13242,19 @@ arrayView1d< int > const binErrorView =
         particleIndexOffset3 += subRegionSizesDeviceView[subRegionIndex2];
       }
     } );
-  } );
 
-#ifdef GEOS_USE_DEVICE
-    // parallelDeviceSync();
-    GEOS_LOG_RANK("End of computeNeighborList");
+#ifdef MPM_DEBUG_GPU
+      GEOS_ERROR_IF(iLowerError.get() > 0 ||
+                    jLowerError.get() > 0 ||
+                    kLowerError.get() > 0 ||
+                    iUpperError.get() > 0 ||
+                    jUpperError.get() > 0 ||
+                    kUpperError.get() > 0, "Detected particles out of binning range in computeNeighborList on subRegion " << subRegionIndex << ", lower boundary = {" << iLowerError.get() << "," << jLowerError.get() << "," << kLowerError.get() << "} and upper boundary = {" << iUpperError.get() << "," << jUpperError.get() << "," << kUpperError.get() << "}" );
 #endif
 
+    ++subRegionIndex;
+  } );
+  
   return( MPI_Wtime() - tStart );
 }
 
@@ -22093,7 +22158,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-  localIndex const numDims = m_numDims;
+  integer const numDims = m_numDims;
   localIndex numVelocityFields = m_numVelocityFields;
 
   // Grid fields
@@ -22114,8 +22179,6 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
 
   localIndex const numNodes = nodeManager.size();
 
-  // RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > internalForce(3, 0.0);
-  // forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
 #ifdef GEOS_USE_DEVICE
   forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
 #else
