@@ -28446,6 +28446,25 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
 
+// #ifdef GEOS_USE_DEVICE
+//   // The post-BC owner-to-ghost synchronization is host based. Restore the
+//   // final kinematic grid fields before constructing device views.
+//   nodeManager.getWrapperBase(
+//     viewKeyStruct::gridVelocityString() ).move(
+//       parallelDeviceMemorySpace, true );
+
+//   nodeManager.getWrapperBase(
+//     viewKeyStruct::gridAccelerationString() ).move(
+//       parallelDeviceMemorySpace, true );
+
+//   if( m_overlapCorrection == mpm::OverlapCorrectionOption::Volume )
+//   {
+//     nodeManager.getWrapperBase(
+//       viewKeyStruct::gridMaterialVolumeString() ).move(
+//         parallelDeviceMemorySpace, true );
+//   }
+// #endif
+
   // Grid fields
   arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
@@ -28477,10 +28496,31 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
     integer const numContactGroups = m_numContactGroups;
     ParticleType const particleType = subRegion.getParticleType();
 
+// #ifdef GEOS_USE_DEVICE
+//     // computeParticleFieldMappings() writes m_mappedFields on the host.
+//     // Migrate every raw mapping array consumed by PIC.
+//     m_mappedNodes[subRegionIndex].move(
+//       parallelDeviceMemorySpace, true );
+
+//     m_mappedFields[subRegionIndex].move(
+//       parallelDeviceMemorySpace, true );
+
+//     m_shapeFunctionValues[subRegionIndex].move(
+//       parallelDeviceMemorySpace, true );
+
+//     m_shapeFunctionGradientValues[subRegionIndex].move(
+//       parallelDeviceMemorySpace, true );
+// #endif
+
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
     arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
     arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
     arrayView2d< integer const > const mappedFields = m_mappedFields[subRegionIndex];
+
+
+#ifdef MPM_DEBUG_GPU
+  parallelDeviceSync();
+#endif
 
     GEOS_UNUSED_VAR( particleType );
     GEOS_UNUSED_VAR( particleRVectors );
@@ -30496,7 +30536,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
                                                         // integrated test that checks this
     {
       arrayView1d< real64 > const lengthScale = constitutiveModel.getReference< array1d< real64 > >( "lengthScale" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         lengthScale[p] = LvArray::math::pow( particleVolume[p], 1.0 / 3.0 );
@@ -30518,7 +30562,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       {
         arrayView2d< real64 > const constitutiveMaterialDirection =
           constitutiveModel.getReference< array2d< real64 > >( "materialDirection" );
-        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
         {
           localIndex const p = activeParticleIndices[pp];
           // Vector-valued constitutive material directions use the first basis vector
@@ -30530,7 +30578,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       {
         arrayView3d< real64 > const constitutiveMaterialDirection =
           constitutiveModel.getReference< array3d< real64 > >( "materialDirection" );
-        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
         {
           localIndex const p = activeParticleIndices[pp];
           // Tensor equation: constitutiveMaterialDirection[p] = particleMaterialDirection[p].
@@ -30548,7 +30600,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView3d< real64 > const constitutiveDeformationGradient = constitutiveModel.getReference< array3d< real64 > >( "deformationGradient" );
       arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         // Tensor equation: constitutiveDeformationGradient[p] = particleDeformationGradient[p].
@@ -30560,7 +30616,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView3d< real64 > const constitutiveVelocityGradient = constitutiveModel.getReference< array3d< real64 > >( "velocityGradient" );
       arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         // Tensor equation: constitutiveVelocityGradient[p] = particleVelocityGradient[p].
@@ -30572,7 +30632,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView1d< real64 > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
       arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveTemperature[p] = particleTemperature[p];
@@ -30583,7 +30647,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView1d< real64 > const constitutiveTemperatureRate = constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
       arrayView1d< real64 const > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveTemperatureRate[p] = particleTemperatureRate[p];
@@ -30595,7 +30663,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     //   arrayView1d< real64 const > const particleInternalEnergy = subRegion.getField< fields::mpm::internalEnergy >();
     //   arrayView1d< real64 > const constitutiveInternalEnergy = constitutiveModel.getReference< array1d< real64 > >(
     // "internalEnergy" );
-    //   forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+// #ifdef GEOS_USE_DEVICE
+//         forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+// #else
+//         forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+// #endif
     //   {
     //     localIndex const p = activeParticleIndices[pp];
     //     constitutiveInternalEnergy[p] = particleInternalEnergy[p];
@@ -30613,7 +30685,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView1d< real64 > const constitutiveCrackTipDistance = constitutiveModel.getReference< array1d< real64 > >( crackTipDistanceKey );
       arrayView1d< real64 const > const particleCrackTipDistance = subRegion.getField< fields::mpm::particleCrackTipDistance >();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveCrackTipDistance[p] = particleCrackTipDistance[p];
@@ -30623,7 +30699,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if( constitutiveModel.hasWrapper( "volume" ) )
     {
       arrayView1d< real64 > const constitutiveVolume = constitutiveModel.getReference< array1d< real64 > >( "volume" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveVolume[p] = particleVolume[p];
@@ -30634,7 +30714,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView1d< real64 const > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
       arrayView2d< real64 > const constitutiveDensity = constitutiveModel.getReference< array2d< real64 > >( "density" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveDensity[p][0] = particleDensity[p];
@@ -30644,7 +30728,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if( constitutiveModel.hasWrapper( "jacobian" ) )
     {
       arrayView2d< real64 > const constitutiveJacobian = constitutiveModel.getReference< array2d< real64 > >( "jacobian" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveJacobian[p][0] =
@@ -30656,7 +30744,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     {
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
       arrayView2d< real64 > const constitutiveDamage = constitutiveModel.getReference< array2d< real64 > >( "damage" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifdef GEOS_USE_DEVICE
+        forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+#endif
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveDamage[p][0] = particleDamage[p];
