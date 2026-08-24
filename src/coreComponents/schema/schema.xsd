@@ -1585,7 +1585,7 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
-		<!--scaleSet => (no description available)-->
+		<!--scaleSet => Optional per-face scale values (multiplied by "scale").-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
