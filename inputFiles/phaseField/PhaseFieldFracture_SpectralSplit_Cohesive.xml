@@ -42,7 +42,9 @@
       defaultShearModulus="8.077e4"
       lengthScale="0.25"
       defaultCriticalFractureEnergy="54.0"
-      criticalStrainEnergy="14.88"/>
+      criticalStrainEnergy="14.88"
+      fractureModelType="Cohesive"
+      localDissipationOption="Linear"/>
   </Constitutive>
 
   <Outputs>

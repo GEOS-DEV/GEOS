@@ -30,6 +30,7 @@
       defaultCriticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       fractureModelType="Nucleation"
+      localDissipationOption="Linear"
       degradationLowerLimit="1e-6"
       defaultTensileStrength="5.5"
       defaultCompressiveStrength="40.0"

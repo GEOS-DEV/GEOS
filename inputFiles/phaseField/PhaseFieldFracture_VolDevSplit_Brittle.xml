@@ -43,6 +43,7 @@
       lengthScale="0.25"
       defaultCriticalFractureEnergy="54.0"
       criticalStrainEnergy="0"
+      fractureModelType="Brittle"
       localDissipationOption="Quadratic"/>
   </Constitutive>
 

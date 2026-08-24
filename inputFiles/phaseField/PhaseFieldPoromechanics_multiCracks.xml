@@ -138,6 +138,8 @@
       lengthScale="0.5"
       defaultCriticalFractureEnergy="12e-3"
       criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"
       degradationLowerLimit="1e-6"/>
 
     <BiotPorosity

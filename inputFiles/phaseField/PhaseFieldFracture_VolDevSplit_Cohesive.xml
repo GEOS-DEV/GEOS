@@ -43,7 +43,8 @@
       lengthScale="0.25"
       defaultCriticalFractureEnergy="54.0"
       criticalStrainEnergy="14.88"
-      fractureModelType="Cohesive"/>
+      fractureModelType="Cohesive"
+      localDissipationOption="Linear"/>
   </Constitutive>
 
   <Outputs>
