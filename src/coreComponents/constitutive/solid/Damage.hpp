@@ -293,7 +293,6 @@ public:
     stiffness.scaleParams( factor );
   }
 
-
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
 
