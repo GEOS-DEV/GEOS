@@ -769,7 +769,7 @@ void FrictionDriver::postInputInitialization()
   // // TODO: Maybe we should take the maximum extent of jumpFunction and tractionFunction
   ArrayOfArraysView< real64 > coordinates = dispFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1] * 20;
 
   // Allocate the data
   allocateTable( numCols, minTime, maxTime );
@@ -879,7 +879,10 @@ void FrictionDriver::initializeTable()
 
   for( integer index = 0; index < numRows; index+=m_maxNewtonIter )
   {
-    real64 const time = m_table( index, TIME );
+    std::cerr << " index: " << index << "/" << numRows << std::endl;
+    real64 const time = m_table( index, TIME )/20;
+    std::cerr << " time: " << time << std::endl;
+
 
     real64 const leftStress[6] = { tractionFunctionR00.evaluate(&time),
                                 tractionFunctionR00.evaluate(&time), 

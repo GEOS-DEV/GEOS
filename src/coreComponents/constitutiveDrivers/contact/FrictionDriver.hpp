@@ -144,6 +144,7 @@ std::vector<SolverStepResult> solveStep(double imposedUx, ContactState& contact,
         double epsN, int kMaxNewton, std::function<ContactState(double,double,double)>& updateNormalTraction);
 
 
+
 }
 
 
