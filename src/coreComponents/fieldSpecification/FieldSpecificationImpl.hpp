@@ -399,7 +399,7 @@ private:
 template< typename LAMBDA >
 void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LAMBDA && lambda )
 {
-  size_t const compNb = fs.getScale().size();
+  localIndex const compNb = fs.getScale().size();
   for( localIndex comp = 0; comp < compNb; ++comp )
   {
     // unsafe accesses since we validated everything in postInputInitialization() and validateNumArrayComp()
