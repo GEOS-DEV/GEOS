@@ -225,21 +225,16 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
   // name for volume rate could be improved if for singlephase runs, a phase name is used
   // tag for future cleanup
-  if( numFluidComponents() == 0 )
-  {
-    registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
-  }
-  else
+  registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
+  if( numFluidComponents() > 0 )
   {
     registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
-
     registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
       setSizedFromParent( 0 ).
       reference().resizeDimension< 0 >( m_numPhases );
+    registerWrapper< real64 >( viewKeyStruct::massDensityString() );
+    registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
   }
-  registerWrapper< real64 >( viewKeyStruct::massDensityString() );
-
-  registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
 
   // If estimator is used including thermal effects set during constraint evaluation
   // otherwise they are always included
