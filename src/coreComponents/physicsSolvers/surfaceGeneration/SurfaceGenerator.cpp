@@ -469,7 +469,7 @@ void SurfaceGenerator::postRestartInitialization()
 
 real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                     const int cycleNumber,
                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -591,6 +591,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       DiffusionBase & diffusionModel = getConstitutiveModel< DiffusionBase >( fractureSubRegion, diffusionModelName );
       arrayView1d< real64 const > const temperature = fractureSubRegion.template getField< flow::temperature >();
       diffusionModel.initializeTemperatureState( temperature );
+    }
+
+    if( cycleNumber == 0 && time_n + dt <= 0 )
+    {
+      // Initial fracture elements are created after ProblemManager::applyInitialConditions() has run,
+      // so re-apply initial conditions here. The dt guard excludes calls from the resolve loop (dt>0).
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+      fsManager.applyInitialConditions( meshLevel );
     }
   } );
 

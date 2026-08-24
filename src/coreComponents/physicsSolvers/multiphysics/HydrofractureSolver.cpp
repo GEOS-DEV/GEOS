@@ -95,6 +95,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setMGRStrategy()
   if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
     return;
 
+  // the hydrofracture strategy assumes 4 dof labels (ux, uy, uz, p); thermal adds a 5th (T)
+  GEOS_ERROR_IF( this->m_isThermal,
+                 GEOS_FMT( "{}: MGR strategy is not implemented for thermal hydrofracture, use a direct solver",
+                           this->getName() ) );
+
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -299,6 +304,8 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
                                          flow::pressure_n::key(),
+                                         flow::temperature::key(),
+                                         flow::temperature_n::key(),
                                          fields::elementAperture::key() },
                                        { m_surfaceGenerator->getFractureRegionName() } );
 
@@ -540,6 +547,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingNNZ( Do
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
+  // number of flow dofs per fracture element: 1 (pressure) or 2 (pressure, temperature) if thermal
+  integer const numFlowDof = flowSolver()->numberOfDofsPerCell();
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
@@ -564,18 +574,22 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingNNZ( Do
       for( localIndex k0=0; k0<numFluxElems; ++k0 )
       {
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
-        globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
-        if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+        for( integer idof=0; idof<numFlowDof; ++idof )
         {
-          for( localIndex k1=0; k1<numFluxElems; ++k1 )
+          globalIndex const rowNumber = activeFlowDOF + idof - rankOffset;
+
+          if( rowNumber >= 0 && rowNumber < rowLengths.size() )
           {
-            // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
-            // so we only add the coupling with the nodal displacements of the neighbours.
-            if( k1 != k0 )
+            for( localIndex k1=0; k1<numFluxElems; ++k1 )
             {
-              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-              rowLengths[rowNumber] += 3*numNodesPerElement;
+              // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+              // so we only add the coupling with the nodal displacements of the neighbours.
+              if( k1 != k0 )
+              {
+                localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+                rowLengths[rowNumber] += 3*numNodesPerElement;
+              }
             }
           }
         }
@@ -603,6 +617,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 
+  // number of flow dofs per fracture element: must stay in lockstep with addFluxApertureCouplingNNZ
+  integer const numFlowDof = flowSolver()->numberOfDofsPerCell();
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
@@ -628,24 +645,27 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
       {
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
 
-        globalIndex const rowIndex = activeFlowDOF - rankOffset;
-
-        if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+        for( integer idof=0; idof<numFlowDof; ++idof )
         {
-          for( localIndex k1=0; k1<numFluxElems; ++k1 )
-          {
-            // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
-            // so we only add the coupling with the nodal displacements of the neighbours.
-            if( k1 != k0 )
-            {
-              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+          globalIndex const rowIndex = activeFlowDOF + idof - rankOffset;
 
-              for( localIndex a=0; a<numNodesPerElement; ++a )
+          if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+          {
+            for( localIndex k1=0; k1<numFluxElems; ++k1 )
+            {
+              // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+              // so we only add the coupling with the nodal displacements of the neighbours.
+              if( k1 != k0 )
               {
-                for( int d=0; d<3; ++d )
+                localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+
+                for( localIndex a=0; a<numNodesPerElement; ++a )
                 {
-                  globalIndex const colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
-                  pattern.insertNonZero( rowIndex, colIndex );
+                  for( int d=0; d<3; ++d )
+                  {
+                    globalIndex const colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
+                    pattern.insertNonZero( rowIndex, colIndex );
+                  }
                 }
               }
             }
@@ -937,6 +957,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
 
       arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens = fluid.density();
+      arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const intEnergy = fluid.internalEnergy();
 
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
@@ -953,7 +974,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
         using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
         typename HydraulicApertureModelType::KernelWrapper hydraulicApertureWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
-        hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
+        hydrofractureSolverKernels::FluidResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             hydraulicApertureWrapper,
@@ -967,6 +988,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
+                                            this->m_isThermal,
+                                            intEnergy,
                                             dFluxResidual_dNormalJump,
                                             localMatrix );
 
@@ -1008,6 +1031,14 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
     {
       // update fluid model
       flowSolver()->updateFluidState( subRegion );
+      if( this->m_isThermal )
+      {
+        // update the rock internal energy and thermal conductivity, then the total energy
+        // (updateEnergy reads porosity, fluid internal energy and rock internal energy, so it must come last)
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+        flowSolver()->updateThermalConductivity( subRegion );
+        flowSolver()->updateEnergy( subRegion );
+      }
     } );
   } );
 }
@@ -1155,6 +1186,14 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
 
         arrayView1d< real64 > const fluidPressure_n = subRegion.getField< flow::pressure_n >();
         arrayView1d< real64 > const fluidPressure = subRegion.getField< flow::pressure >();
+        arrayView1d< real64 > const fluidTemperature_n = subRegion.getField< flow::temperature_n >();
+        arrayView1d< real64 > const fluidTemperature = subRegion.getField< flow::temperature >();
+        // energy_n is only registered when the flow solver is thermal
+        arrayView1d< real64 > energy_n;
+        if( this->m_isThermal )
+        {
+          energy_n = subRegion.getField< flow::energy_n >();
+        }
         string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
@@ -1180,6 +1219,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
           localIndex const newElemIndex = newFractureElements[k];
           real64 initialPressure = 1.0e99;
           real64 initialAperture = 1.0e99;
+          real64 initialTemperature = 1.0e99;
+          real64 initialEnergy_n = 1.0e99;
   #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           apertureF[newElemIndex] = aperture[newElemIndex];
   #endif
@@ -1209,14 +1250,37 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
               {
                 initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
                 initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
+                if( this->m_isThermal )
+                {
+                  initialTemperature = std::min( initialTemperature, fluidTemperature_n[fractureElementIndex] );
+                  initialEnergy_n = std::min( initialEnergy_n, energy_n[fractureElementIndex] );
+                }
               }
             }
           }
+          // if no pre-existing neighbour was found (initial fracture at t=0), keep the current value,
+          // i.e. the initial conditions re-applied by the SurfaceGenerator
+          if( this->m_isThermal )
+          {
+            if( initialTemperature < 1.0e98 )
+            {
+              fluidTemperature[newElemIndex] = initialTemperature;
+            }
+            fluidTemperature_n[newElemIndex] = fluidTemperature[newElemIndex];
+          }
           if( m_newFractureInitializationType == InitializationType::Pressure )
           {
-            fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
+            if( initialPressure < 1.0e98 )
+            {
+              fluidPressure[newElemIndex] = initialPressure;
+            }
             fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
             massCreated[newElemIndex] = defaultDensity * defaultAperture * elementArea[newElemIndex];
+            if( this->m_isThermal && initialEnergy_n < 1.0e98 )
+            {
+              // seed the previous-time energy so the first energy residual is not a spike
+              energy_n[newElemIndex] = initialEnergy_n;
+            }
           }
           else if( m_newFractureInitializationType == InitializationType::Displacement )
           {
@@ -1251,6 +1315,12 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
           GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator,
                                  GEOS_FMT( "New elem index = {:4d} , init aper = {:4.2e}, init press = {:4.2e} ",
                                            newElemIndex, aperture[newElemIndex], fluidPressure[newElemIndex] ) );
+          if( this->m_isThermal )
+          {
+            GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator,
+                                   GEOS_FMT( "New elem index = {:4d} , init temp = {:4.2e} ",
+                                             newElemIndex, fluidTemperature[newElemIndex] ) );
+          }
         } );
 
         if( m_newFractureInitializationType == InitializationType::Displacement )
