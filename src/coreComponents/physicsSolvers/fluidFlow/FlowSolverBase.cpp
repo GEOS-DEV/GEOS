@@ -1109,7 +1109,7 @@ void FlowSolverBase::applyFieldValue( real64 const & time_n,
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
                                  getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+                                 setName, targetGroup.getName(), fs.getScalarScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field

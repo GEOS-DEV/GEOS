@@ -935,7 +935,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                  setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ),
                                         fs );
       }
 

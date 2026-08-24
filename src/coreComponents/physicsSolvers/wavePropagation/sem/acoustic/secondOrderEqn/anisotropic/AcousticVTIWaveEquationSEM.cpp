@@ -489,7 +489,7 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real64 const value = bc.getScale();
+      real64 const value = bc.getScalarScale();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {

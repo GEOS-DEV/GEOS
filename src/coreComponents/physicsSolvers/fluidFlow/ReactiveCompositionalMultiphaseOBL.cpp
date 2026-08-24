@@ -822,7 +822,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                  setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1096,7 +1096,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                  setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1142,7 +1142,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                  setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ),
                                         fs );
       }
 

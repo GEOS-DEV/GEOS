@@ -389,7 +389,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real64 const value = bc.getScale();
+      real64 const value = bc.getScalarScale();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {

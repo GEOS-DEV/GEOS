@@ -60,7 +60,9 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
   registerWrapper( viewKeyStruct::scaleSetString(), &m_scaleSet ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 );
+    setSizedFromParent( 0 ).
+    setDescription( GEOS_FMT( "Optional per-face scale values (multiplied by \"{}\").",
+                              viewKeyStruct::scaleString() ) );
 
   registerWrapper( viewKeyStruct::nodalScaleFlagString(), &m_nodalScaleFlag ).
     setApplyDefaultValue( 0 ).
@@ -79,6 +81,8 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 void TractionBoundaryCondition::postInputInitialization()
 {
   FieldSpecification::postInputInitialization();
+
+   GEOS_ERROR_IF_NE_MSG( getScale().size(), 1, "The global scale is expected to be only one component.", getDataContext() );
 
   if( m_tractionType == TractionType::vector )
   {
@@ -344,14 +348,14 @@ void TractionBoundaryCondition::launch( real64 const time,
 
   if( functionName.empty() )
   {
-    tractionMagnitude0 = this->getScale();
+    tractionMagnitude0 = this->getScalarScale();
   }
   else
   {
     FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
     if( function.isFunctionOfTime() == 2 )
     {
-      tractionMagnitude0 = this->getScale() * function.evaluate( &time );
+      tractionMagnitude0 = this->getScalarScale() * function.evaluate( &time );
     }
     else
     {

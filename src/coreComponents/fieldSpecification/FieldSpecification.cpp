@@ -117,9 +117,9 @@ void FieldSpecification::postInputInitialization()
                               viewKeyStruct::functionNamesString(), viewKeyStruct::scaleString() ),
                    InputError, getDataContext() );
 
-    GEOS_THROW_IF_LT( m_scale.size(), 1,
-                      "Scale must have a number of component of either one or the field dimensions count.",
-                      InputError, getDataContext() );
+    GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
+                          "Scale must have a number of component of either one or the field dimensions count.",
+                          InputError, getDataContext() );
 
     GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
@@ -127,6 +127,19 @@ void FieldSpecification::postInputInitialization()
                               viewKeyStruct::scaleString() ),
                    InputError, getDataContext() );
   }
+}
+
+real64 FieldSpecification::getScalarScale() const
+{
+  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
+                        "Scale attribute empty.",
+                        InputError, getDataContext() );
+
+  GEOS_THROW_IF_GT_MSG( m_scale.size(), 1,
+                        "A scalar (single-component) scale is required here; this field specification defines more than one scale component.",
+                        InputError, getDataContext() );
+
+  return m_scale[ 0 ];
 }
 
 void FieldSpecification::validateNumArrayComp( localIndex numComp )

@@ -222,12 +222,19 @@ public:
   int initialCondition() const
   { return m_initialCondition; }
 
-  /**
-   * Accessor
-   * @return const m_scale
-   */
-  arrayView1d< real64 const > getScale() const
-  { return m_scale.toViewConst(); }
+   /**
+    * Accessor
+    * @return const m_scale
+    */
+   arrayView1d< real64 const > getScale() const
+   { return m_scale.toViewConst(); }
+
+   /**
+    * @brief Safe scalar accessor for the scale.
+    * @return the entry of m_scale
+    * @note Throws if @p m_scale does not have exactly one component.
+    */
+   real64 getScalarScale() const;
 
   /**
    * Mutator
@@ -240,22 +247,12 @@ public:
    * Mutator
    * @param[in] objectPath The path for the object
    */
-  void setObjectPath( string const & objectPath )
-  { m_objectPath = objectPath; }
+   void setObjectPath( string const & objectPath )
+   { m_objectPath = objectPath; }
 
-  /**
-   * Mutator
-   * @param[in] scale Scaling factor
-   */
-  void setScale( real64 const & scale )
-  {
-    m_scale.resize( 1 );
-    m_scale[ 0 ] = scale;
-  }
-
-  /**
-   * Mutator
-   * @brief Set the per-component scale factors
+   /**
+    * Mutator
+    * @brief Set the per-component scale factors
    * @param[in] scales The tensor-valued scale
    */
   void setScale( array1d< real64 > const & scale )

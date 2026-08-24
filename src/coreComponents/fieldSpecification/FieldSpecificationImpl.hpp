@@ -710,7 +710,7 @@ FieldSpecificationImpl::
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationImpl::
-  computeRhsContribution( FieldSpecification const & fs,
+  computeRhsContribution( GEOS_MAYBE_UNUSED FieldSpecification const & fs,
                           integer const component,
                           real64 const scale,
                           string const & functionName,
@@ -812,7 +812,7 @@ FieldSpecificationImpl::
 {
   computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( fs,
                                                       ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0,
-                                                      fs.getScale(),
+                                                      fs.getScalarScale(),
                                                       fs.getFunctionName(),
                                                       targetSet,
                                                       time,

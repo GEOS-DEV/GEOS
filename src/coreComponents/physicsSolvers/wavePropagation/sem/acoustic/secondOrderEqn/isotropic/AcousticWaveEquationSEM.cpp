@@ -647,7 +647,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real32 const value = static_cast< real32 >( bc.getScale() );
+      real32 const value = static_cast< real32 >( bc.getScalarScale() );
       ApplyFreeSurfaceBCKernel::launch< EXEC_POLICY >( targetSet,
                                                        faceToNodeMap,
                                                        freeSurfaceFaceIndicator,
