@@ -18,6 +18,8 @@
 
 #include <type_traits>
 #include <optional>
+#include <sstream>
+#include <string>
 
 #if __cplusplus < 202002L
 #define GEOS_USE_FMT
