@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Run the GEOS integrated tests in the same Docker image as streak2 CI:
-#   geosx/ubuntu24.04-gcc12:<GEOS_TPL_TAG>
-# where GEOS_TPL_TAG comes from .devcontainer/devcontainer.json.
+# Run the GEOS integrated tests in the same Docker image as streak2 CI. The
+# repository and tag are read from .devcontainer/Dockerfile and
+# .devcontainer/devcontainer.json, respectively.
 #
 # Hypredrive is enabled for these integrated-test runs.
 #
@@ -13,6 +13,7 @@
 #   scripts/runIntegratedTests.sh --baselines /path/to/baselines
 #   scripts/runIntegratedTests.sh --filter _iterative
 #   scripts/runIntegratedTests.sh --generateBaselines
+#   scripts/runIntegratedTests.sh --asan-ubsan --cpus 8 --no-pull
 #
 # If --baselines is omitted, the archive named in .integrated_tests.yaml is
 # downloaded from GCS (public, ~1.5 GB) into .integrated-test-baselines/.
@@ -34,6 +35,12 @@
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
 #
+# --asan-ubsan builds GEOS with AddressSanitizer and UndefinedBehaviorSanitizer
+# and runs the complete integrated-test suite. TPLs are taken from the image
+# when /spack-generated.cmake is present. If the image has no TPL host-config,
+# pass --tpl-source-dir pointing at the geos-tpl superbuild; its build and
+# install trees are created below /tmp.
+#
 # This script requires a native Linux host. The CI image is linux/amd64 and
 # will not run on macOS (including Docker Desktop, Colima, and OrbStack).
 #
@@ -53,6 +60,8 @@ GEOS_SRC_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CPUS="${GEOS_ITS_CPUS:-8}"
 MEMORY="${GEOS_ITS_MEMORY:-32g}"
 NPROC=""
+ATS_MAX_TESTS="${GEOS_ITS_ATS_MAX_TESTS:-}"
+OMP_THREADS="${GEOS_ITS_OMP_THREADS:-}"
 BASELINES=""
 FILTER=""
 CUTOFF="45m"
@@ -60,6 +69,9 @@ BUILD_DIR_NAME="build-integrated-tests"
 PULL=1
 GENERATE_BASELINES=0
 FORCE_LEGACY=0
+SANITIZERS="${GEOS_ITS_SANITIZERS:-0}"
+TPL_HOST_CONFIG_PATH="${GEOS_ITS_TPL_HOST_CONFIG:-}"
+TPL_SOURCE_PATH="${GEOS_ITS_TPL_SOURCE_DIR:-}"
 CPUS_FROM_CLI=0
 MEMORY_FROM_CLI=0
 EXTRA_ATS_ARGS=()
@@ -69,12 +81,14 @@ usage()
   sed -n '2,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   cat <<EOF
 Options:
-  --cpus N              ATS max ranks (and Docker CPU limit). Default ${CPUS}.
+  --cpus N              Docker CPU limit and maximum MPI ranks per test. Default ${CPUS}.
                         Under rootless Podman/Slurm the CPU cgroup limit is ignored.
   --memory SIZE         Docker memory limit, e.g. 32g, 128g, 256g (default ${MEMORY}).
                         Under rootless Podman/Slurm this cgroup limit is ignored.
                         A bare number is treated as gigabytes (380 -> 380g).
   --nproc N             Compile parallelism (default: same as --cpus)
+  --ats-max-tests N     Maximum concurrent ATS test jobs (default: --nproc).
+                        MPI rank capacity is unchanged.
   --baselines DIR       Host directory of ATS baseline tarballs (mounted read-only).
                         If omitted, download the archive from .integrated_tests.yaml.
                         If the download fails, continue without baseline comparison.
@@ -84,8 +98,15 @@ Options:
                         .integrated-test-baselines/. Cannot be used with --baselines.
   --filter EXPR         ATS name filter (tests whose name contains EXPR)
   --force-legacy        Set GEOS_HYPREDRV_FORCE_LEGACY=1 (legacy hypre path)
+  --asan-ubsan          Build with ASan+UBSan and run the full test suite.
+                        Sanitizer build directories are always below /tmp.
+  --tpl-host-config FILE
+                        Use this TPL host-config if the Docker image has none.
+  --tpl-source-dir DIR  Build TPLs from this geos-tpl superbuild if the image
+                        has no TPL host-config. Build/install paths use /tmp.
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
-  --build-dir NAME      Build directory name under the repo (default ${BUILD_DIR_NAME})
+  --build-dir NAME      GEOS build directory (under the repo normally; under
+                        /tmp when --asan-ubsan is used; default ${BUILD_DIR_NAME})
   --no-pull             Do not docker pull the image first
   -h, --help            Show this help
 EOF
@@ -132,6 +153,24 @@ read_tpl_tag()
   else
     sed -n 's/.*"GEOS_TPL_TAG": *"\([^"]*\)".*/\1/p' "${json}" | head -n1
   fi
+}
+
+read_tpl_image_repository()
+{
+  local dockerfile repository
+  if [[ -n "${GEOS_ITS_IMAGE_REPOSITORY:-}" ]]; then
+    printf '%s\n' "${GEOS_ITS_IMAGE_REPOSITORY}"
+    return 0
+  fi
+
+  dockerfile="${GEOS_SRC_DIR}/.devcontainer/Dockerfile"
+  repository=""
+  if [[ -f "${dockerfile}" ]]; then
+    repository="$(sed -n \
+      's/^[[:space:]]*FROM[[:space:]]\+\(docker\.io\/\)\?\([^:[:space:]]*\):.*/\2/p' \
+      "${dockerfile}" | head -n1)"
+  fi
+  printf '%s\n' "${repository:-geosx/ubuntu24.04-gcc13}"
 }
 
 # Download the public GCS baseline tarball named in .integrated_tests.yaml.
@@ -387,10 +426,14 @@ while [[ $# -gt 0 ]]; do
     --cpus)       CPUS_FROM_CLI=1; CPUS="$2"; shift 2;;
     --memory)     MEMORY_FROM_CLI=1; MEMORY="$2"; shift 2;;
     --nproc)      NPROC="$2"; shift 2;;
+    --ats-max-tests) ATS_MAX_TESTS="$2"; shift 2;;
     --baselines)  BASELINES="$2"; shift 2;;
     --generateBaselines) GENERATE_BASELINES=1; shift;;
     --filter)     FILTER="$2"; shift 2;;
     --force-legacy) FORCE_LEGACY=1; shift;;
+    --asan-ubsan|--build-asan-ubsan|--build-sanitizers) SANITIZERS=1; shift;;
+    --tpl-host-config) TPL_HOST_CONFIG_PATH="$2"; shift 2;;
+    --tpl-source-dir) TPL_SOURCE_PATH="$2"; shift 2;;
     --cutoff)     CUTOFF="$2"; shift 2;;
     --build-dir)  BUILD_DIR_NAME="$2"; shift 2;;
     --no-pull)    PULL=0; shift;;
@@ -408,12 +451,35 @@ fi
 [[ -n "${NPROC}" ]] || NPROC="${CPUS}"
 normalize_memory
 
+if [[ -z "${ATS_MAX_TESTS}" ]]; then
+  ATS_MAX_TESTS="${NPROC}"
+fi
+
+if ! [[ "${ATS_MAX_TESTS}" =~ ^[1-9][0-9]*$ ]]; then
+  die "ATS_MAX_TESTS must be a positive integer, got '${ATS_MAX_TESTS}'."
+fi
+
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  [[ -z "${FILTER}" ]] || die "--asan-ubsan always runs the full integrated-test suite; omit --filter"
+  [[ ${#EXTRA_ATS_ARGS[@]} -eq 0 ]] || die "--asan-ubsan does not accept forwarded ATS filters; it runs the full suite"
+  [[ "${GENERATE_BASELINES}" -eq 0 ]] || die "--asan-ubsan cannot be combined with --generateBaselines"
+
+  SANITIZER_ROOT="${GEOS_ITS_SANITIZER_ROOT:-/tmp/geos-integrated-tests-asan-ubsan-${USER:-$(id -u)}}"
+  [[ "${SANITIZER_ROOT}" == /tmp/* ]] \
+    || die "GEOS_ITS_SANITIZER_ROOT must be below /tmp (got ${SANITIZER_ROOT})"
+  if [[ "${BUILD_DIR_NAME}" == "build-integrated-tests" ]]; then
+    BUILD_DIR_NAME="${SANITIZER_ROOT}/geos-build"
+  fi
+  [[ "${BUILD_DIR_NAME}" == /tmp/* ]] \
+    || die "--build-dir must be below /tmp when --asan-ubsan is used (got ${BUILD_DIR_NAME})"
+fi
+
 # ---------------------------------------------------------------------------
 # Host: launch the streak2 CI image
 # ---------------------------------------------------------------------------
 if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
   if [[ "$(uname -s)" == Darwin ]]; then
-    die "This script requires a native Linux host. The geosx/ubuntu24.04-gcc12 image is linux/amd64 and is not supported on macOS."
+    die "This script requires a native Linux host. The configured TPL image is linux/amd64 and is not supported on macOS."
   fi
 
   CONTAINER_CMD=""
@@ -450,7 +516,16 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
   fi
 
   TPL_TAG="$(read_tpl_tag)"
-  IMAGE="geosx/ubuntu24.04-gcc12:${TPL_TAG}"
+  IMAGE_REPOSITORY="$(read_tpl_image_repository)"
+  IMAGE="${IMAGE_REPOSITORY}:${TPL_TAG}"
+
+  if [[ "${SANITIZERS}" -eq 1 ]]; then
+    [[ -z "${TPL_HOST_CONFIG_PATH}" || -f "${TPL_HOST_CONFIG_PATH}" ]] \
+      || die "TPL host-config not found: ${TPL_HOST_CONFIG_PATH}"
+    [[ -z "${TPL_SOURCE_PATH}" || -d "${TPL_SOURCE_PATH}" ]] \
+      || die "TPL source directory not found: ${TPL_SOURCE_PATH}"
+    mkdir -p "${SANITIZER_ROOT}" "${BUILD_DIR_NAME}"
+  fi
 
   log "Image:   ${IMAGE}  (streak2 integrated_tests)"
   log "Runtime: ${CONTAINER_CMD}"
@@ -486,6 +561,8 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_IN_CONTAINER=1
     --env GEOS_ITS_CPUS="${CPUS}"
     --env GEOS_ITS_NPROC="${NPROC}"
+    --env GEOS_ITS_ATS_MAX_TESTS="${ATS_MAX_TESTS}"
+    --env GEOS_ITS_OMP_THREADS="${OMP_THREADS}"
     --env GEOS_ITS_CUTOFF="${CUTOFF}"
     --env GEOS_ITS_FILTER="${FILTER}"
     --env GEOS_ITS_BUILD_DIR="${BUILD_DIR_NAME}"
@@ -494,11 +571,36 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_ITS_BASELINE_ARCHIVE="${BASELINE_ARCHIVE}"
     --env GEOS_ITS_HOST_SRC="${GEOS_SRC_DIR}"
     --env GEOS_ITS_FORCE_LEGACY="${FORCE_LEGACY}"
+    --env GEOS_ITS_SANITIZERS="${SANITIZERS}"
     --mount "type=bind,src=${GEOS_SRC_DIR},dst=/workspace"
   )
   if [[ "${FORCE_LEGACY}" -eq 1 ]]; then
     docker_args+=(--env GEOS_HYPREDRV_FORCE_LEGACY=1)
     log "Forcing legacy hypre path (GEOS_HYPREDRV_FORCE_LEGACY=1)"
+  fi
+
+  if [[ "${SANITIZERS}" -eq 1 ]]; then
+    docker_args+=(--env GEOS_ITS_SANITIZER_ROOT="${SANITIZER_ROOT}")
+    docker_args+=(--cap-add=SYS_PTRACE --security-opt=seccomp=unconfined)
+    docker_args+=(--mount "type=bind,src=${SANITIZER_ROOT},dst=${SANITIZER_ROOT}")
+    case "${BUILD_DIR_NAME}" in
+      "${SANITIZER_ROOT}"/*) ;;
+      *) docker_args+=(--mount "type=bind,src=${BUILD_DIR_NAME},dst=${BUILD_DIR_NAME}") ;;
+    esac
+    if [[ -n "${TPL_HOST_CONFIG_PATH}" ]]; then
+      TPL_HOST_CONFIG_PATH="$(resolve_path "${TPL_HOST_CONFIG_PATH}")"
+      docker_args+=(
+        --env GEOS_ITS_TPL_HOST_CONFIG=/tmp/geos-its-tpl-host-config.cmake
+        --mount "type=bind,src=${TPL_HOST_CONFIG_PATH},dst=/tmp/geos-its-tpl-host-config.cmake,readonly"
+      )
+    fi
+    if [[ -n "${TPL_SOURCE_PATH}" ]]; then
+      TPL_SOURCE_PATH="$(resolve_path "${TPL_SOURCE_PATH}")"
+      docker_args+=(
+        --env GEOS_ITS_TPL_SOURCE_DIR=/tmp/geos-its-tpl-source
+        --mount "type=bind,src=${TPL_SOURCE_PATH},dst=/tmp/geos-its-tpl-source,readonly"
+      )
+    fi
   fi
 
   if [[ "${CONTAINER_CMD}" == podman ]]; then
@@ -545,17 +647,36 @@ fi
 # Container: configure, build, run ATS (HypreDrive enabled)
 # ---------------------------------------------------------------------------
 NPROC="${GEOS_ITS_NPROC:-8}"
+ATS_MAX_TESTS="${GEOS_ITS_ATS_MAX_TESTS:-${ATS_MAX_TESTS}}"
 CUTOFF="${GEOS_ITS_CUTOFF:-45m}"
 FILTER="${GEOS_ITS_FILTER:-}"
-BUILD_DIR="/workspace/${GEOS_ITS_BUILD_DIR:-build-integrated-tests}"
+SANITIZERS="${GEOS_ITS_SANITIZERS:-${SANITIZERS}}"
+SANITIZER_ROOT="${GEOS_ITS_SANITIZER_ROOT:-/tmp/geos-integrated-tests-asan-ubsan-${USER:-$(id -u)}}"
+TPL_SOURCE_PATH="${GEOS_ITS_TPL_SOURCE_DIR:-${TPL_SOURCE_PATH}}"
+OMP_THREADS="${GEOS_ITS_OMP_THREADS:-${OMP_THREADS}}"
+if [[ "${GEOS_ITS_BUILD_DIR:-build-integrated-tests}" == /* ]]; then
+  BUILD_DIR="${GEOS_ITS_BUILD_DIR}"
+else
+  BUILD_DIR="/workspace/${GEOS_ITS_BUILD_DIR:-build-integrated-tests}"
+fi
 VENV_DIR="${BUILD_DIR}/ats-venv"
 VENV_PY="${VENV_DIR}/bin/python3"
 ATS_WORKING_DIR="${BUILD_DIR}/ats-working"
 ATS_BASELINE_DIR="${BUILD_DIR}/ats-baselines"
-HOST_CONFIG=/spack-generated.cmake
+HOST_CONFIG="${GEOS_ITS_TPL_HOST_CONFIG:-/spack-generated.cmake}"
+
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  [[ "${SANITIZER_ROOT}" == /tmp/* ]] \
+    || die "GEOS_ITS_SANITIZER_ROOT must be below /tmp (got ${SANITIZER_ROOT})"
+  [[ "${BUILD_DIR}" == /tmp/* ]] \
+    || die "GEOS_ITS_BUILD_DIR must be below /tmp when sanitizers are enabled (got ${BUILD_DIR})"
+fi
 
 if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
   die "NPROC must be a positive integer, got '${NPROC}'."
+fi
+if ! [[ "${ATS_MAX_TESTS}" =~ ^[1-9][0-9]*$ ]]; then
+  die "ATS_MAX_TESTS must be a positive integer, got '${ATS_MAX_TESTS}'."
 fi
 
 # Open MPI refuses root launches in CI containers unless both guard variables
@@ -564,6 +685,7 @@ fi
 export OMPI_ALLOW_RUN_AS_ROOT=1
 export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=${CUTOFF}"
+log "ATS concurrent test jobs: ${ATS_MAX_TESTS} (MPI rank capacity: ${NPROC})"
 
 # ATS always calls collect_baselines() on run. If the named archive is already
 # marked present (.blob_name), it skips GCS. Seed that marker so a 403 does not
@@ -623,6 +745,138 @@ or_die()
   fi
 }
 
+SANITIZER_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+SANITIZER_LINK_FLAGS="-fsanitize=address,undefined"
+SANITIZER_CMAKE_ARGS=()
+
+# Build a complete sanitizer-compatible TPL stack when the runtime image does
+# not provide its generated host-config. The geos-tpl Spack driver is used here
+# because the CMake superbuild does not provide hypredrive. The source checkout
+# is mounted read-only; every generated Spack, build, and install path is below
+# SANITIZER_ROOT (/tmp).
+build_sanitized_tpls()
+{
+  local tpl_root="${SANITIZER_ROOT}/tpls"
+  local tpl_build="${tpl_root}/build"
+  local tpl_install="${tpl_root}/install"
+  local spack_env_file="${tpl_root}/spack-sanitizers.yaml"
+  local gcc_version target os_name mpi_version
+  local candidate
+  local -a tpl_spec
+
+  [[ -n "${TPL_SOURCE_PATH}" ]] \
+    || die "${HOST_CONFIG} is not available; pass --tpl-source-dir PATH to a geos-tpl checkout"
+  [[ -x "${TPL_SOURCE_PATH}/build.sh" ]] \
+    || die "TPL source must contain an executable build.sh: ${TPL_SOURCE_PATH}"
+
+  mkdir -p "${tpl_root}" "${tpl_build}" "${tpl_install}"
+  command -v gcc >/dev/null 2>&1 || die "gcc is required to build sanitizer TPLs"
+  gcc_version="$(gcc -dumpfullversion -dumpversion 2>/dev/null || true)"
+  [[ -n "${gcc_version}" ]] || gcc_version="$(gcc -dumpversion)"
+  target="$(gcc -dumpmachine | sed 's/-.*//')"
+  os_name="linux"
+  if [[ -r /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    os_name="${ID:-linux}${VERSION_ID:-}"
+  fi
+  [[ -x /usr/bin/mpirun ]] || die "Open MPI (/usr/bin/mpirun) is required to build sanitizer TPLs"
+  mpi_version="$(/usr/bin/mpirun --version 2>/dev/null | awk '/Open MPI/{print $NF; exit}')"
+  [[ -n "${mpi_version}" ]] || die "could not determine the Open MPI version in the image"
+
+  # Supplying an environment file prevents uberenv from copying a generated
+  # spack.yaml into the read-only source checkout and records sanitizer flags
+  # in Spack's compiler configuration. Those flags are then present in the
+  # generated GEOS host-config as well as in the TPL builds.
+  cat > "${spack_env_file}" <<EOF
+spack:
+  view: false
+  compilers:
+  - compiler:
+      spec: gcc@${gcc_version}
+      paths:
+        cc: /usr/bin/gcc
+        cxx: /usr/bin/g++
+        f77: /usr/bin/gfortran
+        fc: /usr/bin/gfortran
+      flags:
+        cflags: ${SANITIZER_FLAGS}
+        cxxflags: ${SANITIZER_FLAGS}
+        fflags: ${SANITIZER_FLAGS}
+        ldflags: ${SANITIZER_LINK_FLAGS}
+      operating_system: ${os_name}
+      target: ${target}
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  packages:
+    all:
+      target: [${target}]
+    mpi:
+      require:
+      - openmpi
+    openmpi:
+      buildable: false
+      externals:
+      - spec: openmpi@${mpi_version}
+        prefix: /usr
+EOF
+
+  tpl_spec=(
+    "~docs +hypre +hypredrive +vtk +caliper +shared +openmp ~trilinos ~petsc ~pygeosx %gcc ^vtk generator=ninja"
+  )
+  log "TPL image host-config missing; building sanitizer TPLs under ${tpl_root}"
+  export CFLAGS="${SANITIZER_FLAGS}${CFLAGS:+ ${CFLAGS}}"
+  export CXXFLAGS="${SANITIZER_FLAGS}${CXXFLAGS:+ ${CXXFLAGS}}"
+  export FFLAGS="${SANITIZER_FLAGS}${FFLAGS:+ ${FFLAGS}}"
+  export LDFLAGS="${SANITIZER_LINK_FLAGS}${LDFLAGS:+ ${LDFLAGS}}"
+  or_die "${TPL_SOURCE_PATH}/build.sh" z5tux \
+    --no-modules --spack --build-type RelWithDebInfo \
+    --build-dir "${tpl_build}" --install-dir "${tpl_install}" \
+    --jobs "${NPROC}" --top-jobs 1 --spec "${tpl_spec[0]}" \
+    --log "${tpl_root}/build.log" -- \
+    --spack-env-file "${spack_env_file}"
+
+  HOST_CONFIG=""
+  while IFS= read -r -d '' candidate; do
+    if grep -q 'HYPREDRV_DIR' "${candidate}" && grep -q 'ENABLE_HYPREDRV' "${candidate}"; then
+      HOST_CONFIG="${candidate}"
+      break
+    fi
+  done < <(find -L "${tpl_root}" -type f -name '*.cmake' -print0)
+  [[ -n "${HOST_CONFIG}" ]] \
+    || die "sanitizer TPL build completed without a GEOS host-config containing HYPREDRV_DIR"
+  log "Sanitizer TPL host-config: ${HOST_CONFIG}"
+}
+
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  if [[ ! -f "${HOST_CONFIG}" ]]; then
+    build_sanitized_tpls
+  fi
+  [[ -f "${HOST_CONFIG}" ]] \
+    || die "TPL host-config not found: ${HOST_CONFIG}; pass --tpl-host-config or --tpl-source-dir"
+  SANITIZER_CMAKE_ARGS=(
+    "-DCMAKE_C_FLAGS:STRING=${SANITIZER_FLAGS}"
+    "-DCMAKE_CXX_FLAGS:STRING=${SANITIZER_FLAGS}"
+    "-DCMAKE_EXE_LINKER_FLAGS:STRING=${SANITIZER_LINK_FLAGS}"
+    "-DCMAKE_SHARED_LINKER_FLAGS:STRING=${SANITIZER_LINK_FLAGS}"
+    "-DENABLE_WARNINGS_AS_ERRORS:BOOL=OFF"
+  )
+  export ASAN_OPTIONS="${ASAN_OPTIONS:-abort_on_error=1:detect_leaks=0:print_summary=1:halt_on_error=1:log_path=${SANITIZER_ROOT}/asan}"
+  # UBSan recovers so all tests in the full suite can run. The report scanner
+  # below still turns any UBSan diagnostic into a failing sanitizer run.
+  export UBSAN_OPTIONS="${UBSAN_OPTIONS:-halt_on_error=0:print_stacktrace=1:log_path=${SANITIZER_ROOT}/ubsan}"
+  OMP_THREADS="${OMP_THREADS:-1}"
+  if ! [[ "${OMP_THREADS}" =~ ^[1-9][0-9]*$ ]]; then
+    die "GEOS_ITS_OMP_THREADS must be a positive integer, got '${OMP_THREADS}'."
+  fi
+  export OMP_NUM_THREADS="${OMP_THREADS}"
+  export OMP_DYNAMIC=FALSE
+  log "Sanitizers: ASAN_OPTIONS=${ASAN_OPTIONS}"
+  log "Sanitizers: UBSAN_OPTIONS=${UBSAN_OPTIONS}"
+  log "Sanitizers: OMP_NUM_THREADS=${OMP_NUM_THREADS}"
+fi
+
 log "Create ATS virtualenv"
 if [[ ! -x "${VENV_PY}" ]]; then
   or_die python3 -m venv --system-site-packages "${VENV_DIR}"
@@ -632,9 +886,13 @@ git config --global --add safe.directory /workspace 2>/dev/null || true
 "${VENV_PY}" -m pip install --disable-pip-version-check --upgrade matplotlib || true
 
 log "Configure (ENABLE_HYPREDRV=ON)"
+BUILD_TYPE=Release
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  BUILD_TYPE=RelWithDebInfo
+fi
 or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
   -C "${HOST_CONFIG}" \
-  -DCMAKE_BUILD_TYPE=Release \
+  "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" \
   -DGEOS_INSTALL_SCHEMA=ON \
   -DENABLE_HYPRE=ON \
   -DENABLE_HYPREDRV=ON \
@@ -646,7 +904,8 @@ or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
   "-DATS_ARGUMENTS:STRING=${ATS_ARGUMENTS}" \
   -DPython3_EXECUTABLE="${VENV_PY}" \
   -DATS_BASELINE_DIR="${ATS_BASELINE_DIR}" \
-  -DATS_WORKING_DIR="${ATS_WORKING_DIR}"
+  -DATS_WORKING_DIR="${ATS_WORKING_DIR}" \
+  "${SANITIZER_CMAKE_ARGS[@]}"
 
 ENABLE_HYPREDRV_VAL="$(sed -n 's/^ENABLE_HYPREDRV:[^=]*=//p' "${BUILD_DIR}/CMakeCache.txt" | head -n1)"
 log "CMake ENABLE_HYPREDRV=${ENABLE_HYPREDRV_VAL}"
@@ -661,6 +920,15 @@ log "Build geosx"
 or_die cmake --build "${BUILD_DIR}" --target geosx --parallel "${NPROC}"
 log "Build ats_environment"
 or_die cmake --build "${BUILD_DIR}" --target ats_environment --parallel "${NPROC}"
+
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  # The sanitizer report must describe this invocation only. These paths are
+  # generated below /tmp and are not source or baseline data.
+  log "Clear previous sanitizer ATS outputs"
+  rm -rf -- "${ATS_WORKING_DIR}" "${BUILD_DIR}/integratedTests/TestResults"
+  rm -f -- "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/ubsan.* \
+    "${SANITIZER_ROOT}/sanitizer-reports.txt" "${SANITIZER_ROOT}/sanitizer-reports.txt.tmp"
+fi
 
 cd "${BUILD_DIR}"
 ATS_CMD=(integratedTests/geos_ats.sh)
@@ -716,6 +984,12 @@ log "Open MPI rank binding disabled with OMPI_MCA_hwloc_base_binding_policy=${OM
 export OMPI_MCA_hwloc_base_report_bindings=1
 log "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
 
+if [[ "${ATS_MAX_TESTS}" -lt "${NPROC}" ]]; then
+  export GEOS_ITS_ATS_MAX_TESTS="${ATS_MAX_TESTS}"
+  export PYTHONPATH="${GEOS_SRC_DIR}/scripts${PYTHONPATH:+:${PYTHONPATH}}"
+  log "ATS concurrency patch enabled via ${GEOS_SRC_DIR}/scripts/sitecustomize.py"
+fi
+
 log "Run ${ATS_CMD[*]}"
 if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 || -n "${GEOS_HYPREDRV_FORCE_LEGACY:-}" ]]; then
   export GEOS_HYPREDRV_FORCE_LEGACY="${GEOS_HYPREDRV_FORCE_LEGACY:-1}"
@@ -745,6 +1019,34 @@ if [[ -x bin/geos_ats_log_check && -f integratedTests/TestResults/test_results.i
   log "geos_ats_log_check"
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini \
     -y /workspace/.integrated_tests.yaml || true
+fi
+
+SANITIZER_REPORT_STATUS=0
+if [[ "${SANITIZERS}" -eq 1 ]]; then
+  sanitizer_report="${SANITIZER_ROOT}/sanitizer-reports.txt"
+  sanitizer_report_tmp="${sanitizer_report}.tmp"
+  : > "${sanitizer_report_tmp}"
+  for sanitizer_input in integratedTests/TestResults "${ATS_WORKING_DIR}"; do
+    if [[ -e "${sanitizer_input}" ]]; then
+      grep -R -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|runtime error:' \
+        "${sanitizer_input}" >> "${sanitizer_report_tmp}" || true
+    fi
+  done
+  for sanitizer_input in "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/ubsan.*; do
+    if [[ -f "${sanitizer_input}" ]]; then
+      grep -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|runtime error:' \
+        "${sanitizer_input}" >> "${sanitizer_report_tmp}" || true
+    fi
+  done
+  sort -u "${sanitizer_report_tmp}" -o "${sanitizer_report_tmp}"
+  mv "${sanitizer_report_tmp}" "${sanitizer_report}"
+  if [[ -s "${sanitizer_report}" ]]; then
+    SANITIZER_REPORT_STATUS=1
+    log "Sanitizer diagnostics found; full report: ${sanitizer_report}"
+    sed -n '1,160p' "${sanitizer_report}"
+  else
+    log "No ASan/UBSan diagnostics found; report: ${sanitizer_report}"
+  fi
 fi
 
 harvest_iterative_logs() {
@@ -781,7 +1083,15 @@ fi
 
 log "ATS exit status: ${ATS_STATUS}"
 log "Results (in container): ${BUILD_DIR}/integratedTests/TestResults"
-log "Results (on host):      ${GEOS_ITS_HOST_SRC:-.}/${GEOS_ITS_BUILD_DIR:-build-integrated-tests}/integratedTests/TestResults"
+if [[ "${GEOS_ITS_BUILD_DIR:-build-integrated-tests}" == /* ]]; then
+  RESULTS_ON_HOST="${GEOS_ITS_BUILD_DIR}/integratedTests/TestResults"
+else
+  RESULTS_ON_HOST="${GEOS_ITS_HOST_SRC:-.}/${GEOS_ITS_BUILD_DIR:-build-integrated-tests}/integratedTests/TestResults"
+fi
+log "Results (on host):      ${RESULTS_ON_HOST}"
+if [[ "${SANITIZER_REPORT_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
+  exit "${SANITIZER_REPORT_STATUS}"
+fi
 if [[ "${ITER_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
   exit "${ITER_COMPARE_STATUS}"
 fi
