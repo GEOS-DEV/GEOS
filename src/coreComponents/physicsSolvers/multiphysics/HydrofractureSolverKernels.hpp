@@ -299,29 +299,39 @@ struct FluidResidualDerivativeAssemblyKernel
 //
       if( useQuasiNewton == 0 ) // when Quasi Newton is not enabled - add flux derivatives
       {
-        localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( ei );
-        arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( ei );
-        arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( ei );
+        // for single phase flow an element owns one flow equation, or two when thermal, and it owns
+        // that many consecutive rows of both dFluxResidual_dNormalJump and the system matrix
+        integer const numFlowEqn = isThermal ? 2 : 1;
 
-        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+        for( integer ie = 0; ie < numFlowEqn; ++ie )
         {
-          computeFluxDerivative( kfe2,
-                                 numNodesPerFace,
-                                 columns,
-                                 values,
-                                 elemsToFaces,
-                                 faceToNodeMap,
-                                 dispDofNumber,
-                                 Nbar,
-                                 nodeDOF,
-                                 dRdU );
+          localIndex const fluxRow = ei * numFlowEqn + ie;
+          globalIndex const fluxRowNumber = rowNumber + ie;
 
-          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+          localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( fluxRow );
+          arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( fluxRow );
+          arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( fluxRow );
+
+          for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
           {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
+            computeFluxDerivative( kfe2,
+                                   numNodesPerFace,
+                                   columns,
+                                   values,
+                                   elemsToFaces,
+                                   faceToNodeMap,
+                                   dispDofNumber,
+                                   Nbar,
+                                   nodeDOF,
+                                   dRdU );
+
+            if( fluxRowNumber >= 0 && fluxRowNumber < localMatrix.numRows() )
+            {
+              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fluxRowNumber,
+                                                                                nodeDOF,
+                                                                                dRdU.data(),
+                                                                                2 * numNodesPerFace * 3 );
+            }
           }
         }
       }

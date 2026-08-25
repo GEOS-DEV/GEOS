@@ -1105,8 +1105,14 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
 
+  // number of rows a fracture element occupies in the flow block: the mass balance equation, plus the
+  // energy balance equation when thermal
+  integer const numFlowDof = flowSolver()->numberOfDofsPerCell();
+
   // Count the fracture rows and accumulate their capacities in one traversal.
   stdVector< localIndex > rowCapacities;
+  // number of columns (derivatives) = number of fracture elements
+  localIndex numCol = 0;
   localIndex numMeshTargets = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
@@ -1127,7 +1133,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
     {
       numMeshRows += elementSubRegion.size();
     } );
-    rowCapacities.resize( rowCapacities.size() + numMeshRows, 0 );
+    numCol = numMeshRows;
+    // number of rows (equations) = number of fracture elements * number of flow equations
+    rowCapacities.resize( rowCapacities.size() + numMeshRows * numFlowDof, 0 );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -1138,23 +1146,26 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 
         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
         {
-          GEOS_ERROR_IF_GE_MSG( sei[iconn][k0],
+          GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numFlowDof + numFlowDof - 1,
                                 LvArray::integerConversion< localIndex >( rowCapacities.size() ),
                                 "Surface stencil index exceeds the fracture derivative matrix size." );
-          rowCapacities[sei[iconn][k0]] += numFluxElems;
+          for( integer idof = 0; idof < numFlowDof; ++idof )
+          {
+            rowCapacities[sei[iconn][k0] * numFlowDof + idof] += numFluxElems;
+          }
         }
       }
     } );
   } );
 
   localIndex const numRows = LvArray::integerConversion< localIndex >( rowCapacities.size() );
-  derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+  derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCol );
   derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
 
   if( numRows > 0 )
   {
     derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                     numRows,
+                                                                                     numCol,
                                                                                      rowCapacities.data() );
   }
 
@@ -1170,11 +1181,16 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
         {
-          GEOS_ERROR_IF_GE_MSG( sei[iconn][k0], numRows,
+          GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numFlowDof + numFlowDof - 1, numRows,
                                 "Surface stencil index exceeds the fracture derivative matrix size." );
           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
-            derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+            for( integer idof = 0; idof < numFlowDof; ++idof )
+            {
+              derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numFlowDof + idof,
+                                                               sei[iconn][k1],
+                                                               0.0 );
+            }
           }
         }
       }
