@@ -39,7 +39,8 @@
 # and runs the complete integrated-test suite. TPLs are taken from the image
 # when /spack-generated.cmake is present. If the image has no TPL host-config,
 # pass --tpl-source-dir pointing at the geos-tpl superbuild; its build and
-# install trees are created below /tmp.
+# install trees are created below the sanitizer root. The default sanitizer
+# root and build directory are under /tmp, but both can be overridden.
 #
 # This script requires a native Linux host. The CI image is linux/amd64 and
 # will not run on macOS (including Docker Desktop, Colima, and OrbStack).
@@ -99,14 +100,18 @@ Options:
   --filter EXPR         ATS name filter (tests whose name contains EXPR)
   --force-legacy        Set GEOS_HYPREDRV_FORCE_LEGACY=1 (legacy hypre path)
   --asan-ubsan          Build with ASan+UBSan and run the full test suite.
-                        Sanitizer build directories are always below /tmp.
+                        The default sanitizer root/build directory is below
+                        /tmp; set GEOS_ITS_SANITIZER_ROOT or --build-dir to
+                        use another location.
   --tpl-host-config FILE
                         Use this TPL host-config if the Docker image has none.
   --tpl-source-dir DIR  Build TPLs from this geos-tpl superbuild if the image
-                        has no TPL host-config. Build/install paths use /tmp.
+                        has no TPL host-config. Build/install paths use the
+                        sanitizer root.
   --cutoff TIME         ATS cutoff (default ${CUTOFF})
   --build-dir NAME      GEOS build directory (under the repo normally; under
-                        /tmp when --asan-ubsan is used; default ${BUILD_DIR_NAME})
+                        the sanitizer root by default for --asan-ubsan; an
+                        absolute path may be used (default ${BUILD_DIR_NAME})
   --no-pull             Do not docker pull the image first
   -h, --help            Show this help
 EOF
@@ -465,13 +470,16 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   [[ "${GENERATE_BASELINES}" -eq 0 ]] || die "--asan-ubsan cannot be combined with --generateBaselines"
 
   SANITIZER_ROOT="${GEOS_ITS_SANITIZER_ROOT:-/tmp/geos-integrated-tests-asan-ubsan-${USER:-$(id -u)}}"
-  [[ "${SANITIZER_ROOT}" == /tmp/* ]] \
-    || die "GEOS_ITS_SANITIZER_ROOT must be below /tmp (got ${SANITIZER_ROOT})"
+  if [[ "${SANITIZER_ROOT}" != /* ]]; then
+    SANITIZER_ROOT="${GEOS_SRC_DIR}/${SANITIZER_ROOT}"
+  fi
+  SANITIZER_ROOT="$(resolve_path "${SANITIZER_ROOT}")"
   if [[ "${BUILD_DIR_NAME}" == "build-integrated-tests" ]]; then
     BUILD_DIR_NAME="${SANITIZER_ROOT}/geos-build"
+  elif [[ "${BUILD_DIR_NAME}" != /* ]]; then
+    BUILD_DIR_NAME="${GEOS_SRC_DIR}/${BUILD_DIR_NAME}"
   fi
-  [[ "${BUILD_DIR_NAME}" == /tmp/* ]] \
-    || die "--build-dir must be below /tmp when --asan-ubsan is used (got ${BUILD_DIR_NAME})"
+  BUILD_DIR_NAME="$(resolve_path "${BUILD_DIR_NAME}")"
 fi
 
 # ---------------------------------------------------------------------------
@@ -666,10 +674,9 @@ ATS_BASELINE_DIR="${BUILD_DIR}/ats-baselines"
 HOST_CONFIG="${GEOS_ITS_TPL_HOST_CONFIG:-/spack-generated.cmake}"
 
 if [[ "${SANITIZERS}" -eq 1 ]]; then
-  [[ "${SANITIZER_ROOT}" == /tmp/* ]] \
-    || die "GEOS_ITS_SANITIZER_ROOT must be below /tmp (got ${SANITIZER_ROOT})"
-  [[ "${BUILD_DIR}" == /tmp/* ]] \
-    || die "GEOS_ITS_BUILD_DIR must be below /tmp when sanitizers are enabled (got ${BUILD_DIR})"
+  if [[ "${SANITIZER_ROOT}" != /* ]]; then
+    SANITIZER_ROOT="/workspace/${SANITIZER_ROOT}"
+  fi
 fi
 
 if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
@@ -753,7 +760,7 @@ SANITIZER_CMAKE_ARGS=()
 # not provide its generated host-config. The geos-tpl Spack driver is used here
 # because the CMake superbuild does not provide hypredrive. The source checkout
 # is mounted read-only; every generated Spack, build, and install path is below
-# SANITIZER_ROOT (/tmp).
+# the configurable SANITIZER_ROOT (which defaults to /tmp for this script).
 build_sanitized_tpls()
 {
   local tpl_root="${SANITIZER_ROOT}/tpls"
@@ -923,7 +930,8 @@ or_die cmake --build "${BUILD_DIR}" --target ats_environment --parallel "${NPROC
 
 if [[ "${SANITIZERS}" -eq 1 ]]; then
   # The sanitizer report must describe this invocation only. These paths are
-  # generated below /tmp and are not source or baseline data.
+  # generated below the configurable sanitizer root and are not source or
+  # baseline data.
   log "Clear previous sanitizer ATS outputs"
   rm -rf -- "${ATS_WORKING_DIR}" "${BUILD_DIR}/integratedTests/TestResults"
   rm -f -- "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/ubsan.* \
