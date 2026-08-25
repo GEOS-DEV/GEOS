@@ -156,6 +156,7 @@ set( constitutive_headers
      permeability/PressurePermeability.hpp
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
+     permeability/StrainDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.hpp
@@ -307,6 +308,7 @@ set( constitutive_sources
      permeability/PressurePermeability.cpp
      permeability/ProppantPermeability.cpp
      permeability/SlipDependentPermeability.cpp
+     permeability/StrainDependentPermeability.cpp
      permeability/WillisRichardsPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.cpp
