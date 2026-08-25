@@ -3302,6 +3302,14 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ),
+                 GEOS_FMT( "VTK field '{}' has {} tuples, but {} cells were requested during import",
+                           vtkArray->GetName(), vtkArray->GetNumberOfTuples(), cellIds.size() ) );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( wrapper.size() ),
+                 GEOS_FMT( "Destination wrapper for VTK field '{}' has {} entries, but {} cells were requested during import",
+                           vtkArray->GetName(), wrapper.size(), cellIds.size() ) );
+
   using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
   types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
@@ -3334,7 +3342,12 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
 void importRegularField( vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  stdVector< vtkIdType > cellIds( wrapper.size() );
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+
+  // The destination may contain ghost entries in addition to the local VTK cells.
+  // Import only the tuples present in the VTK array; ghost entries are populated by
+  // the subsequent field synchronization.
+  stdVector< vtkIdType > cellIds( static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ) );
   std::iota( cellIds.begin(), cellIds.end(), 0 );
   return importRegularField( cellIds, vtkArray, wrapper );
 }
