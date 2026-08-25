@@ -103,7 +103,7 @@ jobs:
       # frozen at the time the workflow was first triggered, so labels
       # added after that first run are invisible to re-runs. The curl
       # call below always returns current state, which is required for
-      # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
+      # CI re-runs to pick up newly added labels (e.g. "ci: run device
       # builds"). Do not replace with github.event.pull_request.labels.
       # The Authorization header is required for private repos/forks;
       # GITHUB_TOKEN is provided automatically to every workflow run.

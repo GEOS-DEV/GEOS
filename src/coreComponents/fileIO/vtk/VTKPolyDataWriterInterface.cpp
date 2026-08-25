@@ -32,6 +32,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkThreshold.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkVersionMacros.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkAggregateDataSetFilter.h>
 // System includes
@@ -308,7 +309,9 @@ getWell( WellElementSubRegion const & subRegion,
   localIndex const numPoints = subRegion.size() > 0 ? subRegion.size() + 1 : 0;
   points->SetNumberOfPoints( numPoints );
   auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
+#if VTK_VERSION_NUMBER < VTK_VERSION_CHECK( 9, 6, 0 )
   cellsArray->SetNumberOfCells( subRegion.size() );
+#endif
   localIndex const numberOfNodesPerElement = subRegion.numNodesPerElement();
   GEOS_ERROR_IF_NE( numberOfNodesPerElement, 2 );
   stdVector< vtkIdType > connectivity( numberOfNodesPerElement );
@@ -358,7 +361,9 @@ getSurface( FaceElementSubRegion const & subRegion,
   auto & faceToNodes = faceManager.nodeList();
 
   auto cellArray = vtkSmartPointer< vtkCellArray >::New();
+#if VTK_VERSION_NUMBER < VTK_VERSION_CHECK( 9, 6, 0 )
   cellArray->SetNumberOfCells( subRegion.size() );
+#endif
   stdVector< int > cellTypes;
   cellTypes.reserve( subRegion.size() );
 
@@ -599,7 +604,9 @@ static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+#if VTK_VERSION_NUMBER < VTK_VERSION_CHECK( 9, 6, 0 )
   cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
+#endif
   stdVector< int > cellType;
   cellType.reserve( region.getNumberOfParticles< ParticleRegion >() );
 

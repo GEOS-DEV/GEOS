@@ -684,7 +684,7 @@ else
   log "Using mounted baselines at /tmp/geos/baselines"
 fi
 if [[ -n "${FILTER}" ]]; then
-  ATS_CMD+=(-f "${FILTER}")
+  ATS_CMD+=(--ats filter "label.find('${FILTER}') >= 0")
 fi
 if [[ ${#EXTRA_ATS_ARGS[@]} -gt 0 ]]; then
   ATS_CMD+=("${EXTRA_ATS_ARGS[@]}")

@@ -188,7 +188,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND tplDependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre umpire::umpire )
 
     if( ENABLE_HYPREDRV )
         list( APPEND linearAlgebra_headers
@@ -256,4 +256,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( utilities/unitTests )
 endif( )
-
