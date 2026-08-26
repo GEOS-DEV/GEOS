@@ -1854,9 +1854,20 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
   // hypre builds the preconditioner (benign FPEs occur, e.g. in MGR interpolation setup).
   LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
+  if( m_linearSolverCreated )
+  {
+    // HYPREDRV_LinearSolverCreate does not replace an existing solver and
+    // preconditioner. Destroy them before rebuilding a reused handle so
+    // repeated setup cycles do not retain Hypre/MGR/ILU allocations.
+    checkHypredriveCall( HYPREDRV_LinearSolverDestroy( m_hypredrive ),
+                         "HYPREDRV_LinearSolverDestroy" );
+    m_linearSolverCreated = false;
+  }
+
   checkHypredriveCall( HYPREDRV_AnnotateBegin( m_hypredrive, "system", -1 ),
                        "HYPREDRV_AnnotateBegin" );
   checkHypredriveCall( HYPREDRV_LinearSolverCreate( m_hypredrive ), "HYPREDRV_LinearSolverCreate" );
+  m_linearSolverCreated = true;
   checkHypredriveCall( HYPREDRV_LinearSolverSetup( m_hypredrive ), "HYPREDRV_LinearSolverSetup" );
   checkHypredriveCall( HYPREDRV_AnnotateEnd( m_hypredrive, "system", -1 ),
                        "HYPREDRV_AnnotateEnd" );
@@ -2052,6 +2063,12 @@ void HypredriveSolver::destroyHypredrive()
 {
   if( m_hypredrive != nullptr )
   {
+    if( m_linearSolverCreated )
+    {
+      checkHypredriveCall( HYPREDRV_LinearSolverDestroy( m_hypredrive ),
+                           "HYPREDRV_LinearSolverDestroy" );
+      m_linearSolverCreated = false;
+    }
     checkHypredriveCall( HYPREDRV_Destroy( &m_hypredrive ), "HYPREDRV_Destroy" );
     m_hypredrive = nullptr;
   }

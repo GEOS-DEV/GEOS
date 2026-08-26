@@ -798,6 +798,9 @@ build_sanitized_tpls()
   cat > "${spack_env_file}" <<EOF
 spack:
   view: false
+  repos:
+    geos_sanitizer:
+      destination: /workspace/scripts/sanitizer_spack_repo
   compilers:
   - compiler:
       spec: gcc@${gcc_version}
@@ -869,10 +872,27 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
     "-DCMAKE_SHARED_LINKER_FLAGS:STRING=${SANITIZER_LINK_FLAGS}"
     "-DENABLE_WARNINGS_AS_ERRORS:BOOL=OFF"
   )
-  export ASAN_OPTIONS="${ASAN_OPTIONS:-abort_on_error=1:detect_leaks=0:print_summary=1:halt_on_error=1:log_path=${SANITIZER_ROOT}/asan}"
+
+  append_sanitizer_options()
+  {
+    local existing="$1" required="$2"
+    if [[ -n "${existing}" ]]; then
+      printf '%s:%s' "${existing}" "${required}"
+    else
+      printf '%s' "${required}"
+    fi
+  }
+
+  # Append the required settings after caller-provided options so leak
+  # detection and the report locations cannot be disabled accidentally.
+  export ASAN_OPTIONS="$(append_sanitizer_options "${ASAN_OPTIONS:-}" "abort_on_error=1:detect_leaks=1:leak_check_at_exit=1:fast_unwind_on_malloc=0:print_summary=1:halt_on_error=1:log_path=${SANITIZER_ROOT}/asan")"
+  # LeakSanitizer is enabled explicitly as well as through ASAN_OPTIONS. Keep
+  # its reports separate so leak findings remain visible in the final report.
+  export LSAN_OPTIONS="$(append_sanitizer_options "${LSAN_OPTIONS:-}" "detect_leaks=1:leak_check_at_exit=1:fast_unwind_on_malloc=0:print_suppressions=0:suppressions=/workspace/scripts/lsan.supp:log_path=${SANITIZER_ROOT}/lsan")"
   # UBSan recovers so all tests in the full suite can run. The report scanner
-  # below still turns any UBSan diagnostic into a failing sanitizer run.
-  export UBSAN_OPTIONS="${UBSAN_OPTIONS:-halt_on_error=0:print_stacktrace=1:log_path=${SANITIZER_ROOT}/ubsan}"
+  # below still turns any UBSan or LeakSanitizer diagnostic into a failing
+  # sanitizer run.
+  export UBSAN_OPTIONS="$(append_sanitizer_options "${UBSAN_OPTIONS:-}" "halt_on_error=0:print_stacktrace=1:log_path=${SANITIZER_ROOT}/ubsan")"
   OMP_THREADS="${OMP_THREADS:-1}"
   if ! [[ "${OMP_THREADS}" =~ ^[1-9][0-9]*$ ]]; then
     die "GEOS_ITS_OMP_THREADS must be a positive integer, got '${OMP_THREADS}'."
@@ -880,6 +900,7 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   export OMP_NUM_THREADS="${OMP_THREADS}"
   export OMP_DYNAMIC=FALSE
   log "Sanitizers: ASAN_OPTIONS=${ASAN_OPTIONS}"
+  log "Sanitizers: LSAN_OPTIONS=${LSAN_OPTIONS}"
   log "Sanitizers: UBSAN_OPTIONS=${UBSAN_OPTIONS}"
   log "Sanitizers: OMP_NUM_THREADS=${OMP_NUM_THREADS}"
 fi
@@ -934,7 +955,7 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   # baseline data.
   log "Clear previous sanitizer ATS outputs"
   rm -rf -- "${ATS_WORKING_DIR}" "${BUILD_DIR}/integratedTests/TestResults"
-  rm -f -- "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/ubsan.* \
+  rm -f -- "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/lsan.* "${SANITIZER_ROOT}"/ubsan.* \
     "${SANITIZER_ROOT}/sanitizer-reports.txt" "${SANITIZER_ROOT}/sanitizer-reports.txt.tmp"
 fi
 
@@ -1036,13 +1057,13 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   : > "${sanitizer_report_tmp}"
   for sanitizer_input in integratedTests/TestResults "${ATS_WORKING_DIR}"; do
     if [[ -e "${sanitizer_input}" ]]; then
-      grep -R -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|runtime error:' \
+      grep -R -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|LeakSanitizer|runtime error:|detected memory leaks|SUMMARY:.*(leak|leaked)|Direct leak:|Indirect leak:' \
         "${sanitizer_input}" >> "${sanitizer_report_tmp}" || true
     fi
   done
-  for sanitizer_input in "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/ubsan.*; do
+  for sanitizer_input in "${SANITIZER_ROOT}"/asan.* "${SANITIZER_ROOT}"/lsan.* "${SANITIZER_ROOT}"/ubsan.*; do
     if [[ -f "${sanitizer_input}" ]]; then
-      grep -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|runtime error:' \
+      grep -n -I -E 'AddressSanitizer|UndefinedBehaviorSanitizer|LeakSanitizer|runtime error:|detected memory leaks|SUMMARY:.*(leak|leaked)|Direct leak:|Indirect leak:' \
         "${sanitizer_input}" >> "${sanitizer_report_tmp}" || true
     fi
   done
@@ -1053,7 +1074,7 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
     log "Sanitizer diagnostics found; full report: ${sanitizer_report}"
     sed -n '1,160p' "${sanitizer_report}"
   else
-    log "No ASan/UBSan diagnostics found; report: ${sanitizer_report}"
+    log "No ASan/UBSan/LSan diagnostics found; report: ${sanitizer_report}"
   fi
 fi
 
