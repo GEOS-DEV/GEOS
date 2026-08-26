@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3777 (2026-08-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3777-17413-0a5f007.tar.gz>
+Move CO2 Brine parameters to xml
+
 PR #3884 (2026-08-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3884-17320-39debdc.tar.gz>
 Total stress fix in the thermo-poromechanics model
 
