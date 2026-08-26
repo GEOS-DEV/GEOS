@@ -1755,9 +1755,9 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
   // skipping it where the local dofmap is empty leaves those ranks out of the
   // collective and the subsequent solver creation fails there.
   //
-  // Library-mode hypredrive stamps these labels onto the dummy setup vectors.
-  // GMRES clones them into p[]. Physics rhs/sol bound at apply stay untagged,
-  // matching HypreSolver (dummy tagged at setup, rhs untagged at solve).
+  // Library-mode hypredrive uses these labels to configure its MGR hierarchy.
+  // The legacy HypreSolver path deliberately keeps its setup dummy untagged because
+  // its solve receives caller-owned rhs and solution vectors.
   checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
                                                        LvArray::integerConversion< int >( pointMarkers.size() ),
                                                        pointMarkers.data() ),

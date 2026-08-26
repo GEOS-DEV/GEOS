@@ -713,8 +713,8 @@ TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmg )
 
 TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmgWithMultipleDofTags )
 {
-  // hypredrive library mode tags dummy Krylov vectors from the dofmap. GEOS
-  // legacy GMRES must stamp the same labels so InnerProdTagged matches.
+  // hypredrive library mode exercises a tagged dofmap. The legacy solver uses
+  // untagged caller-owned vectors and should still produce the same solution.
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
