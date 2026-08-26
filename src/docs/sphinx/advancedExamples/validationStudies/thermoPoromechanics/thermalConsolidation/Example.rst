@@ -8,7 +8,7 @@ Thermoporoelastic Consolidation
 **Context**
 
 Thermoporoelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
-In this example, we use the GEOS coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
+In this example, we use the GEOS coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <https://engineeringmechanics.cn/article/id/3369>`__ 
 
 **InputFile**
 
@@ -187,19 +187,30 @@ On the top surface, we impose the traction boundary condition and the non-isothe
 Inspecting results
 ---------------------------------
 
-We request an output of the displacements, pressure, and temperature using the **TimeHistory** feature of GEOS. 
-The figures below compare the results from GEOS (dashed line) and the corresponding analytical solution (solid line) as a function of time at different locations of the slab.
-We obtain a very good match, confirming that GEOS can accurately capture the thermo-poromechanical coupling on this example. The first figure illustrates this good agreement for the pressure evolution. 
+  We request an output of the displacements, pressure, temperature, and stress using the
+  **TimeHistory** feature of GEOS.
+  The figure below compares the results from GEOS (open circles) with the corresponding
+  analytical solution (solid lines) as a function of time at different locations along the slab.
+  We obtain a very good match for all four quantities, confirming that GEOS accurately captures
+  the thermo-poromechanical coupling on this example.
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationPressureFigure.py
+  - The top-left panel shows the excellent agreement for the **pore pressure** evolution:
+    the initial thermally- and mechanically-induced overpressure gradually dissipates as the
+    fluid drains through the top surface.
+  - The top-right panel confirms the good match for the **temperature**, which diffuses from
+    the heated top boundary into the column.
+  - The bottom-left panel shows that GEOS also reproduces the **vertical displacement**
+    (settlement), including the characteristic non-monotonic response (thermal expansion
+    followed by consolidation).
+  - The bottom-right panel compares the **total stress**. By equilibrium, the total vertical
+    stress remains equal to the applied surface load at all times and depths
+    (:math:`\sigma_{yy} = -F`), which GEOS recovers exactly. The total horizontal stress
+    :math:`\sigma_{xx} = \sigma_{zz}` follows the uniaxial-strain thermo-poroelastic relation
+    :math:`\sigma_{xx} = -(\lambda/M)\,F - (2G/M)\,(3K\alpha_s\,\Delta T + b\,p)`
+    (with :math:`M = K + 4G/3` the oedometric modulus), exhibiting the transient overshoot
+    driven by the coupled pressure and thermal fields.   
 
-The second figure confirms the good match with the analytical solution for the temperature.
-	  
-.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationTemperatureFigure.py
-
-The third figure shows that GEOS is also able to match the vertical displacement (settlement) analytical solution.  
-	  
-.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationDisplacementFigure.py
+  .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/plotTests_tutorial_THM.py
 
 ------------------------------------------------------------------
 To go further
