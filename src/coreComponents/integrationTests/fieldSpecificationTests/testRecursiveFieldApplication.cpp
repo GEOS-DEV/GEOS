@@ -48,8 +48,7 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpec.initialCondition( true );
   fieldSpec.addSetName( "all" );
 
-  array1d< real64 > scaleValue;
-  scaleValue.resize( 1 );
+  array1d< real64 > scaleValue{ 1 };
   scaleValue[ 0 ] = value;
   fieldSpec.setScale( scaleValue );
 

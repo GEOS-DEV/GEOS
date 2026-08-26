@@ -181,11 +181,17 @@ public:
   { return m_fieldName; }
 
   /**
+   * @return Whether a specific component axis is targeted, i.e. the component is not unset (not -1).
+   */
+  bool isTargetingComponent() const
+  { return m_component != -1; }
+
+  /**
    * Accessing the considered component.
    * @return The component axis or a special value.
+   * @note Throws if the scale is non-scalar (more than one component).
    */
-  virtual int getComponent() const
-  { return m_component; }
+  virtual int getComponent() const;
 
   /**
    * Accessor

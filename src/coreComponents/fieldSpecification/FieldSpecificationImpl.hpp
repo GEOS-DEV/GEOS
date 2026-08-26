@@ -400,13 +400,22 @@ template< typename LAMBDA >
 void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LAMBDA && lambda )
 {
   localIndex const compNb = fs.getScale().size();
-  for( localIndex comp = 0; comp < compNb; ++comp )
+  string const empty;
+  if( fs.isTargetingComponent()) // multi-component
   {
-    // unsafe accesses since we validated everything in postInputInitialization() and validateNumArrayComp()
-    string const emptyFunctionName;
-    string const & functionName = (!fs.getFunctionNames().empty()) ? fs.getFunctionNames()[ comp ]
-                                                                     : emptyFunctionName;
-    lambda( comp, fs.getScale()[ comp ], functionName );
+    lambda( fs.getComponent(),
+            fs.getScalarScale(),
+            !fs.getFunctionNames().empty() ? fs.getFunctionNames().front() : empty );
+
+  }
+  else
+  {
+    for( localIndex comp = 0; comp < compNb; ++comp )
+    {
+      lambda( comp,
+              fs.getScale()[ comp ],
+              !fs.getFunctionNames().empty() ? fs.getFunctionNames()[ comp ] : empty );
+    }
   }
 }
 
@@ -811,7 +820,7 @@ FieldSpecificationImpl::
                           LAMBDA && lambda )
 {
   computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( fs,
-                                                      ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0,
+                                                      ( fs.isTargetingComponent() ) ? fs.getComponent() : 0,
                                                       fs.getScalarScale(),
                                                       fs.getFunctionName(),
                                                       targetSet,

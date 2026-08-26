@@ -108,6 +108,10 @@ FieldSpecification::getCatalog()
 
 void FieldSpecification::postInputInitialization()
 {
+  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
+                        "Scale must have a number of component of either one or the field dimensions count.",
+                        InputError, getDataContext() );
+
   { // both conditions work together
     GEOS_THROW_IF( !m_functionNames.empty() &&
                    m_functionNames.size() != 1 &&
@@ -119,11 +123,7 @@ void FieldSpecification::postInputInitialization()
                               viewKeyStruct::functionNamesString(), viewKeyStruct::scaleString() ),
                    InputError, getDataContext() );
 
-    GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
-                          "Scale must have a number of component of either one or the field dimensions count.",
-                          InputError, getDataContext() );
-
-    GEOS_THROW_IF( m_component != -1 && m_scale.size() > 1,
+    GEOS_THROW_IF( isTargetingComponent() && m_scale.size() > 1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                               viewKeyStruct::componentString(),
                               viewKeyStruct::scaleString() ),
@@ -133,20 +133,22 @@ void FieldSpecification::postInputInitialization()
 
 real64 FieldSpecification::getScalarScale() const
 {
-  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
-                        "Scale attribute empty.",
-                        InputError, getDataContext() );
-
+  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1, "Scale attribute is empty.", InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( m_scale.size(), 1,
                         "A scalar (single-component) scale is required here; this field specification defines more than one scale component.",
                         InputError, getDataContext() );
-
   return m_scale[ 0 ];
+}
+
+int FieldSpecification::getComponent() const
+{
+  GEOS_THROW_IF( !isTargetingComponent(), "Component attribute is not set.", InputError, getDataContext() );
+  return m_component;
 }
 
 void FieldSpecification::validateNumArrayComp( localIndex numComp )
 {
-  if( m_component != -1 )
+  if( isTargetingComponent() )
   {
     return;
   }
