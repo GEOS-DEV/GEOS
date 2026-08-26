@@ -151,6 +151,7 @@ set( constitutive_headers
      permeability/DamagePermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
+     permeability/BartonBandisPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
      permeability/PressurePermeability.hpp
@@ -303,6 +304,7 @@ set( constitutive_sources
      permeability/DamagePermeability.cpp
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
+     permeability/BartonBandisPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/PressurePermeability.cpp
      permeability/ProppantPermeability.cpp

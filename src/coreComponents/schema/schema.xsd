@@ -222,16 +222,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
-				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
-					<xsd:selector xpath="CompositeFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
-					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -663,6 +655,10 @@
 					<xsd:selector xpath="BartonBandis" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveBartonBandisPermeabilityUniqueName">
+					<xsd:selector xpath="BartonBandisPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBiotPorosityUniqueName">
 					<xsd:selector xpath="BiotPorosity" />
 					<xsd:field xpath="@name" />
@@ -737,6 +733,10 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
 					<xsd:selector xpath="CompressibleSinglePhaseFluid" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompressibleSolidBartonBandisPermeabilityUniqueName">
+					<xsd:selector xpath="CompressibleSolidBartonBandisPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSolidCarmanKozenyPermeabilityUniqueName">
@@ -1616,43 +1616,15 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType">
-		<!--expression => Composite math expression-->
-		<xsd:attribute name="expression" type="string" default="" />
-		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="{}" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
 		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SymbolicFunctionType">
-		<!--expression => Symbolic math expression-->
-		<xsd:attribute name="expression" type="string" use="required" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7014,6 +6986,7 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
+			<xsd:element name="BartonBandisPermeability" type="BartonBandisPermeabilityType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -7033,6 +7006,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompositionalTwoPhaseKValueFluidLohrenzBrayClark" type="CompositionalTwoPhaseKValueFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseKValueFluidPhillipsBrine" type="CompositionalTwoPhaseKValueFluidPhillipsBrineType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="CompressibleSolidBartonBandisPermeability" type="CompressibleSolidBartonBandisPermeabilityType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
@@ -7127,6 +7101,24 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
 		<!--referenceNormalStress =>  Reference normal stress.-->
 		<xsd:attribute name="referenceNormalStress" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BartonBandisPermeabilityType">
+		<!--biotCoefficient => Biot coefficient.-->
+		<xsd:attribute name="biotCoefficient" type="real64" use="required" />
+		<!--normalStiffness => Normal stiffness: Kni.-->
+		<xsd:attribute name="normalStiffness" type="real64" use="required" />
+		<!--poissonRatio => Poisson ratio.-->
+		<xsd:attribute name="poissonRatio" type="real64" use="required" />
+		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
+		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
+		<!--referencePressure => Reference pressure: p_0.-->
+		<xsd:attribute name="referencePressure" type="real64" use="required" />
+		<!--referenceTotalStress => Total stress at reference state: sigmaT_0.-->
+		<xsd:attribute name="referenceTotalStress" type="R1Tensor" use="required" />
+		<!--transversalPermeability => Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. -->
+		<xsd:attribute name="transversalPermeability" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7713,6 +7705,18 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 			<xsd:pattern value=".*[\[\]`$].*|exponential|linear|quadratic" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="CompressibleSolidBartonBandisPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />

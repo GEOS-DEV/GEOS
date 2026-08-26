@@ -351,15 +351,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType" />
 	<xsd:complexType name="MultivariableTableFunctionType" />
-	<xsd:complexType name="SymbolicFunctionType" />
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1645,6 +1641,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
+			<xsd:element name="BartonBandisPermeability" type="BartonBandisPermeabilityType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -1664,6 +1661,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompositionalTwoPhaseKValueFluidLohrenzBrayClark" type="CompositionalTwoPhaseKValueFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseKValueFluidPhillipsBrine" type="CompositionalTwoPhaseKValueFluidPhillipsBrineType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="CompressibleSolidBartonBandisPermeability" type="CompressibleSolidBartonBandisPermeabilityType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
@@ -1754,6 +1752,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BartonBandisType" />
+	<xsd:complexType name="BartonBandisPermeabilityType">
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
 		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
 		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />
@@ -2450,6 +2454,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="CompressibleSolidBartonBandisPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType" />
