@@ -167,6 +167,7 @@ private:
   bool m_reportedGeneratedYamlFailure = false;
   size_t m_hypredriveGeneration = 0;
   HYPREDRV_t m_hypredrive{};
+  bool m_linearSolverCreated = false;
   mutable HypreVector m_dummyRhs;
   mutable HypreVector m_dummySol;
   mutable HypreVector m_residual;
