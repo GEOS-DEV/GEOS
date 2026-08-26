@@ -20,7 +20,8 @@ namespace geos
 using namespace dataRepository;
 
 FieldSpecification::FieldSpecification( string const & name, Group * parent ):
-  Group( name, parent )
+  Group( name, parent ),
+  m_scale( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -60,10 +61,11 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
     setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
-    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." ).
     setSizedFromParent( 0 ).
-    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." );
+    setApplyDefaultValue( { 1.0 } ).
+    resize( 1 ); // manual resize as setApplyDefaultValue() currently does not resize
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
