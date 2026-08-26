@@ -413,14 +413,12 @@ configure_openssl_for_non_fips_ubuntu_container
 print_crypto_diagnostics
 
 # Always pass the requested state so a host-config cannot silently enable
-# hypredrive when the CI job requested OFF. GEOS_REQUIRE_HYPREDRV turns the silent
-# "ENABLE_HYPREDRV forced OFF because HYPREDRV_DIR is missing" downgrade into a
-# configuration error, so a CI job cannot silently test the legacy path instead.
+# hypredrive when the CI job requested OFF. Do not pass -DHYPREDRV_DIR:
+# TPL images install hypredrive under a compiler-prefixed hashed path, which
+# /spack-generated.cmake already sets. ${GEOSX_TPL_DIR}/hypredrive does not
+# exist and would override that host-config value (CMake -D wins over -C
+# set(... CACHE ...) without FORCE).
 HYPREDRV_CMAKE_ARGS=(-DENABLE_HYPREDRV=${ENABLE_HYPREDRV})
-if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
-  HYPREDRV_CMAKE_ARGS+=(-DHYPREDRV_DIR=${GEOSX_TPL_DIR}/hypredrive
-                        -DGEOS_REQUIRE_HYPREDRV=ON)
-fi
 if [[ "${USE_SCCACHE}" == true ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
