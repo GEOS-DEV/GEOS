@@ -33,57 +33,71 @@
       logLevel="1"
       useMass="1"/>
       <!-- SPHINX_SOLVER_MP_END -->
-
-      <!-- SPHINX_SOLVER_WELL -->
-    <CompositionalMultiphaseWell
+    <!-- SPHINX_SOLVER_WELL -->
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls"
         logLevel="1"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="-3000"
-        targetBHP="1e8"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        targetTotalRateTableName="totalRateTable"
-        injectionTemperature="353.15"
-        injectionStream="{ 1.0, 0.0 }"/>
-      <WellControls
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="-3000"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="totalRateTable"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="353.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="MAX_MASS_INJ"
         logLevel="1"
         type="injector"
-        control="massRate"
-        referenceElevation="-3000"
-        targetBHP="1e8"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        targetMassRate="15"
-        injectionTemperature="353.15"
-        injectionStream="{ 1.0, 0.0 }"/>
-      <WellControls
+        control="massRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="-3000"/>
+        <InjectionMassRateConstraint
+          name="maxmassrateinj"
+          massRate="15"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="353.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="MAX_MASS_INJ_TABLE"
         logLevel="1"
         type="injector"
-        control="massRate"
-        referenceElevation="-3000"
-        targetBHP="1e8"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-	targetMassRateTableName="totalMassTable"
-        injectionTemperature="353.15"
-        injectionStream="{ 1.0, 0.0 }"/>
-    </CompositionalMultiphaseWell>
-      <!-- SPHINX_SOLVER_WELL_END -->
+        control="massRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="-3000"/>
+        <InjectionMassRateConstraint
+          name="maxmassrateinj"
+          constraintScheduleTableName="totalMassTable"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="353.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+     <!-- SPHINX_SOLVER_WELL_END -->
   </Solvers>
 
     <!-- SPHINX_ER -->
@@ -98,11 +112,11 @@
       materialList="{ fluid }"/>
   </ElementRegions>
     <!-- SPHINX_ER_END -->
- 
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA" />
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -128,13 +142,16 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
+
     <NullModel
       name="nullSolid"/>
+
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"
       referencePressure="1.0e7"
       compressibility="4.5e-10"/>
+
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
@@ -144,9 +161,8 @@
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
-      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
-                                            gasRelativePermeabilityTable }"/>
-      <!-- SPHINX_RELPERM_END -->
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
+   <!-- SPHINX_RELPERM_END -->
 
    <!-- SPHINX_CAP -->
     <TableCapillaryPressure
@@ -158,15 +174,14 @@
 
   <FieldSpecifications>
       <!-- SPHINX_HYDROSTATIC -->
-   <HydrostaticEquilibrium
+    <HydrostaticEquilibrium
       name="equil"
       objectPath="ElementRegions"
       datumElevation="-3000"
       datumPressure="3.0e7"
       initialPhaseName="water"
       componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
-                                                initWaterCompFracTable }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
     <!-- SPHINX_HYDROSTATIC_END -->
 
@@ -176,28 +191,31 @@
     <FieldSpecification
       name="bcPressure"
       objectPath="faceManager"
-      setNames="{3}"
+      setNames="{ 3 }"
       fieldName="pressure"
       functionName="pressureFunction"
       scale="1"/>
+
     <FieldSpecification
       name="bcTemperature"
       objectPath="faceManager"
-      setNames="{3}"
+      setNames="{ 3 }"
       fieldName="temperature"
       functionName="temperatureFunction"
       scale="1"/>
+
     <FieldSpecification
       name="bcCompositionCO2"
       objectPath="faceManager"
-      setNames="{3}"
+      setNames="{ 3 }"
       fieldName="globalCompFraction"
       component="0"
       scale="0.000001"/>
+
     <FieldSpecification
       name="bcCompositionWater"
       objectPath="faceManager"
-      setNames="{3}"
+      setNames="{ 3 }"
       fieldName="globalCompFraction"
       component="1"
       scale="0.999999"/>
@@ -209,11 +227,13 @@
       name="initCO2CompFracTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 0.000001, 0.000001 }"/>
+
     <TableFunction
       name="initWaterCompFracTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 0.999999, 0.999999 }"/>
-   <TableFunction
+
+    <TableFunction
       name="initTempTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 380.296, 358.334 }"/>
@@ -222,43 +242,43 @@
       name="waterRelativePermeabilityTable"
       coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"
       voxelFile="tables/relPerm_water.txt"/>
+
     <TableFunction
       name="gasRelativePermeabilityTable"
       coordinateFiles="{ tables/phaseVolumeFraction_gas.txt }"
-      voxelFile="tables/relPerm_gas.txt"/>      
+      voxelFile="tables/relPerm_gas.txt"/>
 
-   <TableFunction
+    <TableFunction
       name="waterCapillaryPressureTable"
       coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"
-      voxelFile="tables/capPres_water.txt"/>  
+      voxelFile="tables/capPres_water.txt"/>
 
-    <TableFunction 
+    <TableFunction
       name="temperatureFunction"
       inputVarNames="{ faceCenter }"
-      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos }"
       voxelFile="fc_tables/temperature.geos"
-      interpolation="linear" />
+      interpolation="linear"/>
 
-    <TableFunction 
+    <TableFunction
       name="pressureFunction"
       inputVarNames="{ faceCenter }"
-      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos }"
       voxelFile="fc_tables/pressure.geos"
-      interpolation="linear" /> 
+      interpolation="linear"/>
 
     <TableFunction
       name="totalRateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 7.7198e8, 1.544e9}"
-      values="{ 8.02849025 , 0, 0}" 
+      inputVarNames="{ time }"
+      coordinates="{ 0, 7.7198e8, 1.544e9 }"
+      values="{ 8.02849025 , 0, 0 }"
       interpolation="lower"/>
 
     <TableFunction
       name="totalMassTable"
-      inputVarNames="{time}"
-      coordinates="{0, 7.7198e8, 1.544e9}"
-      values="{ 15 , 0, 0}" 
+      inputVarNames="{ time }"
+      coordinates="{ 0, 7.7198e8, 1.544e9 }"
+      values="{ 15 , 0, 0 }"
       interpolation="lower"/>
   </Functions>
-  
 </Problem>

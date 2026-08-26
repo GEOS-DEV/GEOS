@@ -27,27 +27,32 @@
       logLevel="1"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="-3000"
-        targetBHP="1e8"
         enableCrossflow="0"
-        useSurfaceConditions="1"            
-        surfacePressure="101325"  
-        surfaceTemperature="288.71" 
-        targetTotalRateTableName="totalRateTable"
-        injectionTemperature="353.15"
-        injectionStream="{ 1.0, 0.0 }"/>
-    </CompositionalMultiphaseWell>
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="288.71"
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="-3000"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="totalRateTable"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="353.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
-  
+
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
@@ -58,11 +63,11 @@
       name="wellRegion"
       materialList="{ fluid }"/>
   </ElementRegions>
- 
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA" />
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -85,13 +90,16 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
+
     <NullModel
       name="nullSolid"/>
+
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"
       referencePressure="1.0e7"
       compressibility="4.5e-10"/>
+
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
@@ -100,11 +108,10 @@
     <TableRelativePermeabilityHysteresis
       name="relperm"
       phaseNames="{ gas, water }"
-      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
-                                                    drainageGasRelativePermeabilityTable }"
-      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
+      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable, drainageGasRelativePermeabilityTable }"
+      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"
       imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
-    
+
     <TableCapillaryPressure
       name="cappres"
       phaseNames="{ gas, water }"
@@ -112,17 +119,16 @@
   </Constitutive>
 
   <FieldSpecifications>
-   <HydrostaticEquilibrium
+    <HydrostaticEquilibrium
       name="equil"
       objectPath="ElementRegions"
       datumElevation="-3000"
       datumPressure="3.0e7"
       initialPhaseName="water"
       componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
-                                                initWaterCompFracTable }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
-   
+
 <!-- bc ComponentFrac -->
 <!-- bc Pressure +tables -->
     <!-- SPHINX_BC -->
@@ -133,6 +139,7 @@
       fieldName="pressure"
       functionName="pressureFunction"
       scale="1"/>
+
     <FieldSpecification
       name="bcTemperature"
       objectPath="faceManager"
@@ -140,6 +147,7 @@
       fieldName="temperature"
       functionName="temperatureFunction"
       scale="1"/>
+
     <FieldSpecification
       name="bcCompositionCO2"
       objectPath="faceManager"
@@ -147,6 +155,7 @@
       fieldName="globalCompFraction"
       component="0"
       scale="0.000001"/>
+
     <FieldSpecification
       name="bcCompositionWater"
       objectPath="faceManager"
@@ -162,59 +171,62 @@
       name="initCO2CompFracTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 0.000001, 0.000001 }"/>
+
     <TableFunction
       name="initWaterCompFracTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 0.999999, 0.999999 }"/>
+
     <TableFunction
       name="initTempTable"
       coordinates="{ -3238.2, -2506.13 }"
       values="{ 380.296, 358.334 }"/>
 
-   <TableFunction
+    <TableFunction
       name="waterCapillaryPressureTable"
       coordinateFiles="{ tables/phaseVolumeFraction_water.txt }"
-      voxelFile="tables/capPres_water.txt"/>  
+      voxelFile="tables/capPres_water.txt"/>
 
-    <TableFunction 
+    <TableFunction
       name="temperatureFunction"
       inputVarNames="{ faceCenter }"
-      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos }"
       voxelFile="fc_tables/temperature.geos"
-      interpolation="linear" />
+      interpolation="linear"/>
 
-    <TableFunction 
+    <TableFunction
       name="pressureFunction"
       inputVarNames="{ faceCenter }"
-      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos}"
+      coordinateFiles="{ fc_tables/xlin.geos, fc_tables/ylin.geos, fc_tables/zlin.geos }"
       voxelFile="fc_tables/pressure.geos"
-      interpolation="linear" /> 
+      interpolation="linear"/>
 
     <TableFunction
       name="totalRateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 7.7198e8, 1.544e9}"
-      values="{ 8.02849025, 0, 0}"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 7.7198e8, 1.544e9 }"
+      values="{ 8.02849025, 0, 0 }"
       interpolation="lower"/>
 
   <!-- Problem 3.2 is hysteresis -->
-      <TableFunction
+    <TableFunction
       name="drainageWaterRelativePermeabilityTable"
       coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
       voxelFile="tables/drainageRelPerm_water.txt"/>
+
     <TableFunction
       name="drainageGasRelativePermeabilityTable"
       coordinateFiles="{ tables/drainagePhaseVolFraction_gas.txt }"
       voxelFile="tables/drainageRelPerm_gas.txt"/>
+
     <TableFunction
       name="imbibitionWaterRelativePermeabilityTable"
       coordinateFiles="{ tables/imbibitionPhaseVolFraction_water.txt }"
       voxelFile="tables/imbibitionRelPerm_water.txt"/>
+
     <TableFunction
       name="imbibitionGasRelativePermeabilityTable"
       coordinateFiles="{ tables/imbibitionPhaseVolFraction_gas.txt }"
       voxelFile="tables/imbibitionRelPerm_gas.txt"/>
-
   </Functions>
-  
 </Problem>
