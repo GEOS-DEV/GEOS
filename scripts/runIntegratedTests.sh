@@ -757,10 +757,12 @@ SANITIZER_LINK_FLAGS="-fsanitize=address,undefined"
 SANITIZER_CMAKE_ARGS=()
 
 # Build a complete sanitizer-compatible TPL stack when the runtime image does
-# not provide its generated host-config. The geos-tpl Spack driver is used here
-# because the CMake superbuild does not provide hypredrive. The source checkout
-# is mounted read-only; every generated Spack, build, and install path is below
-# the configurable SANITIZER_ROOT (which defaults to /tmp for this script).
+# not provide its generated host-config. The sanitizer path uses the geos-tpl
+# Spack driver because it needs Spack to generate a GEOS host-config carrying
+# sanitizer flags; the legacy CMake superbuild also provides Hypredrive for
+# non-Spack TPL builds. The source checkout is mounted read-only; every
+# generated Spack, build, and install path is below the configurable
+# SANITIZER_ROOT (which defaults to /tmp for this script).
 build_sanitized_tpls()
 {
   local tpl_root="${SANITIZER_ROOT}/tpls"
@@ -833,7 +835,7 @@ spack:
 EOF
 
   tpl_spec=(
-    "~docs +hypre +hypredrive +vtk +caliper +shared +openmp ~trilinos ~petsc ~pygeosx %gcc ^vtk generator=ninja"
+    "~docs +hypre +hypredrive +vtk +caliper +shared +openmp ~trilinos ~petsc ~pygeosx %gcc ^hypre@3.2.0 ^vtk generator=ninja"
   )
   log "TPL image host-config missing; building sanitizer TPLs under ${tpl_root}"
   export CFLAGS="${SANITIZER_FLAGS}${CFLAGS:+ ${CFLAGS}}"
