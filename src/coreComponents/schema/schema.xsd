@@ -1363,7 +1363,7 @@ When set to "error", output a throw.
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1402,7 +1402,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1436,7 +1436,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1480,7 +1480,7 @@ When set to "error", output a throw.
 		<!--phaseContacts => Phase contacts' elevations [m]-->
 		<xsd:attribute name="phaseContacts" type="real64_array" default="{0}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1509,7 +1509,7 @@ When set to "error", output a throw.
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1552,7 +1552,7 @@ When set to "error", output a throw.
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Multiplier(s) of the functionName value(s). If no functionName is provided, value(s) are used directly.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1584,7 +1584,7 @@ When set to "error", output a throw.
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64_array" default="{0}" />
+		<xsd:attribute name="scale" type="real64_array" default="{1}" />
 		<!--scaleSet => Optional per-face scale values (multiplied by "scale").-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
