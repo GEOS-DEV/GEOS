@@ -174,7 +174,7 @@ resetDefGradForScaledSurfaceParticles = 0
 \index{CPDI!particle splitting}
 \index{VP-Hencky feasibility}
 
-Particle splitting is a conservative topology change used when the requested particle-domain measure and the neighbor-radius diagonal constraint cannot both be satisfied.  It is called during topology preparation, after events and before particle maps, ghosts, and active-particle indices are refreshed.  The input is tri-state:
+Particle splitting is a conservative topology change used when the requested particle-domain measure and the neighbor-radius diagonal constraint cannot both be satisfied.  The subdivision default and oversized-count decision are prepared after events, particle maps, ghosts, and active-particle indices have been refreshed.  The actual topology change is applied later in the explicit-step cleanup stage, after any grid resize and CPDI domain scaling and before out-of-range deletion, repartitioning, and deformation-gradient reset; when children are created, particle maps and active-particle indices are refreshed again.  The input is tri-state:
 \begin{description}
   \item[\texttt{subdivideParticles=-1}] use the conditional default;
   \item[\texttt{subdivideParticles=0}] disable subdivision;

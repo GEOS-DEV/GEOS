@@ -18,7 +18,7 @@
   \item B-spline, \hyperpage{77}
     \subitem cubic, \hyperpage{78}
   \item B-spline MPM
-    \subitem PFW example, \hyperpage{146}
+    \subitem PFW example, \hyperpage{147}
   \item background grid, \hyperpage{7}, \hyperpage{127}
   \item background stress, \hyperpage{28}, \hyperpage{30}
   \item bcTable, \hyperpage{88}, \hyperpage{150}
@@ -143,6 +143,7 @@
     \subitem neighbor list, \hyperpage{12}
   \item damageFieldPartitioning, \hyperpage{108}
   \item Dane, \hyperpage{4}
+  \item defGradResetMaxParticleDomainToGridCellRatio, \hyperpage{123}
   \item deformation gradient, \hyperpage{8}, \hyperpage{23}
     \subitem reset, \hyperpage{38}, \hyperpage{119}
     \subitem transform, \hyperpage{39}
@@ -157,7 +158,7 @@
     \subitem partitioning, \hyperpage{108}
     \subitem PFW example, \hyperpage{145}
   \item DFGAndVolumeIntegration, \hyperpage{113}
-  \item diagnostics, \hyperpage{152}
+  \item diagnostics, \hyperpage{153}
   \item \texttt{difference}, \hyperpage{135}
   \item directionalOverlapCorrection, \hyperpage{116}
   \item distanceToCrackTip, \hyperpage{72}
@@ -189,7 +190,7 @@
     \subitem TemperatureProfile, \hyperpage{38}
     \subitem TemperatureRamp, \hyperpage{39}
     \subitem TransformParticles, \hyperpage{39}
-  \item example cases, \hyperpage{208}
+  \item example cases, \hyperpage{209}
   \item examples, \hyperpage{176}
   \item examples suite, \hyperpage{6}
   \item explicit dynamic MPM, \hyperpage{8}
@@ -200,7 +201,7 @@
   \indexspace
 
   \item F-table
-    \subitem event controls, \hyperpage{163}
+    \subitem event controls, \hyperpage{164}
   \item field painters
     \subitem PFW, \hyperpage{138}
   \item FLIP, \hyperpage{22}, \hyperpage{77}, \hyperpage{84}
@@ -208,7 +209,7 @@
     \subitem deformation-gradient reset, \hyperpage{121}
   \item FMPM, \hyperpage{22}, \hyperpage{77}, \hyperpage{85}
     \subitem boundary conditions, \hyperpage{97}
-    \subitem PFW example, \hyperpage{146}
+    \subitem PFW example, \hyperpage{147}
   \item fracture, \hyperpage{29}
   \item friction
     \subitem PFW example, \hyperpage{144}
@@ -218,15 +219,15 @@
   \item Ftable, \hyperpage{21}, \hyperpage{32}, \hyperpage{87}
     \subitem interpolation, \hyperpage{90}
     \subitem PFW, \hyperpage{150}
-  \item fTable, \hyperpage{150}
-  \item fTableInterpType, \hyperpage{150}
+  \item fTable, \hyperpage{151}
+  \item fTableInterpType, \hyperpage{151}
   \item full mass matrix, \hyperpage{85}
 
   \indexspace
 
   \item gas model, \hyperpage{70}
   \item Geomechanics model, \hyperpage{63}
-  \item geometry catalogue, \hyperpage{205}
+  \item geometry catalogue, \hyperpage{206}
   \item Geometry objects, \hyperpage{129}
   \item geometry objects
     \subitem analytic primitives, \hyperpage{131}
@@ -317,7 +318,7 @@
   \indexspace
 
   \item HaltEvent
-    \subitem PFW restart workflow, \hyperpage{172}
+    \subitem PFW restart workflow, \hyperpage{173}
   \item healing
     \subitem crystal, \hyperpage{31}
     \subitem polymer, \hyperpage{37}
@@ -360,7 +361,7 @@
     \subitem starter, \hyperpage{i}
   \item manufactured solution, \hyperpage{43}
     \subitem PFW example, \hyperpage{148}
-  \item material catalogue, \hyperpage{205}
+  \item material catalogue, \hyperpage{206}
   \item material direction, \hyperpage{139}
   \item Material Point Method, \hyperpage{7}
     \subitem history, \hyperpage{1}
@@ -381,23 +382,23 @@
   \item momentum balance, \hyperpage{8}
   \item MPM constitutive dispatch, \hyperpage{41}
   \item MPMEvents, \hyperpage{26}
-    \subitem \texttt  {Anneal}, \hyperpage{161}
+    \subitem \texttt  {Anneal}, \hyperpage{162}
     \subitem \texttt  {BodyForceUpdate}, \hyperpage{162}
     \subitem \texttt  {BoreholePressure}, \hyperpage{162}
     \subitem catalogue, \hyperpage{192}
     \subitem \texttt  {CohesiveZone}, \hyperpage{162}
     \subitem \texttt  {ConfiningPressure}, \hyperpage{163}
     \subitem \texttt  {CrystalHeal}, \hyperpage{163}
-    \subitem \texttt  {DeformationUpdate}, \hyperpage{163}
+    \subitem \texttt  {DeformationUpdate}, \hyperpage{164}
     \subitem endTime, \hyperpage{26}
-    \subitem \texttt  {FrictionCoefficientSwap}, \hyperpage{165}
+    \subitem \texttt  {FrictionCoefficientSwap}, \hyperpage{166}
     \subitem \texttt  {Heal}, \hyperpage{166}
     \subitem \texttt  {InitializeStress}, \hyperpage{166}
-    \subitem \texttt  {InsertPeriodicContactSurfaces}, \hyperpage{166}
+    \subitem \texttt  {InsertPeriodicContactSurfaces}, \hyperpage{167}
     \subitem isComplete, \hyperpage{26}
     \subitem \texttt  {MachineSample}, \hyperpage{167}
     \subitem \texttt  {MaterialSwap}, \hyperpage{167}
-    \subitem \texttt  {PolymerHeal}, \hyperpage{167}
+    \subitem \texttt  {PolymerHeal}, \hyperpage{168}
     \subitem \texttt  {ResetDeformationGradient}, \hyperpage{168}
     \subitem \texttt  {RigidBodyMPM}, \hyperpage{164}
     \subitem startTime, \hyperpage{26}
@@ -420,8 +421,8 @@
     \subitem \texttt  {endTemperature}, \hyperpage{168}
     \subitem \texttt  {endTime}, \hyperpage{161}
     \subitem \texttt  {filletRadius}, \hyperpage{167}
-    \subitem \texttt  {frictionCoefficient}, \hyperpage{165}
-    \subitem \texttt  {frictionCoefficientTable}, \hyperpage{165}
+    \subitem \texttt  {frictionCoefficient}, \hyperpage{166}
+    \subitem \texttt  {frictionCoefficientTable}, \hyperpage{166}
     \subitem \texttt  {gaugeLength}, \hyperpage{167}
     \subitem \texttt  {gaugeRadius}, \hyperpage{167}
     \subitem \texttt  {healType}, \hyperpage{163}
@@ -429,7 +430,7 @@
     \subitem \texttt  {maxContactPenetration}, \hyperpage{164}
     \subitem \texttt  {maxJammingStress}, \hyperpage{164}
     \subitem \texttt  {normalsAndPositionsMethod}, \hyperpage{162}
-    \subitem \texttt  {prescribedFTable}, \hyperpage{163}
+    \subitem \texttt  {prescribedFTable}, \hyperpage{164}
     \subitem \texttt  {pressure}, \hyperpage{166}
     \subitem \texttt  {regionNames}, \hyperpage{162}
     \subitem \texttt  {sampleType}, \hyperpage{167}
@@ -437,8 +438,8 @@
     \subitem \texttt  {startPressure}, \hyperpage{162}
     \subitem \texttt  {startTemperature}, \hyperpage{168}
     \subitem \texttt  {startTime}, \hyperpage{161}
-    \subitem \texttt  {stressControl}, \hyperpage{163}
-    \subitem \texttt  {targetRegion}, \hyperpage{161}
+    \subitem \texttt  {stressControl}, \hyperpage{164}
+    \subitem \texttt  {targetRegion}, \hyperpage{162}
 
   \indexspace
 
@@ -458,6 +459,9 @@
   \item overlapCorrection, \hyperpage{116}
   \item overlapThreshold1, \hyperpage{116}
   \item overlapThreshold2, \hyperpage{116}
+  \item oversizedParticleResetRankParticleCountThreshold, 
+		\hyperpage{123}
+  \item oversizedParticleTreatment, \hyperpage{123}
 
   \indexspace
 
@@ -470,7 +474,7 @@
   \item particle deletion, \hyperpage{35}, \hyperpage{119}
   \item particle domain, \hyperpage{80}
   \item particle file, \hyperpage{125}
-  \item particle file format, \hyperpage{203}
+  \item particle file format, \hyperpage{204}
   \item particle mapping, \hyperpage{77}
     \subitem B-spline, \hyperpage{78}
     \subitem CPDI, \hyperpage{80}
@@ -495,12 +499,12 @@
   \item particleDeleteFlag, \hyperpage{120}
   \item ParticleFileWriter, \hyperpage{125}
     \subitem geometry objects, \hyperpage{129}
-    \subitem parameters, \hyperpage{198}
+    \subitem parameters, \hyperpage{199}
     \subitem purpose, \hyperpage{125}
     \subitem running, \hyperpage{5}
     \subitem solver controls, \hyperpage{142}
   \item particleGroup, \hyperpage{108}
-  \item ParticleMesh, \hyperpage{203}
+  \item ParticleMesh, \hyperpage{204}
   \item particles, \hyperpage{7}
   \item particles per partition, \hyperpage{127}
   \item particleSubdivideFlag, \hyperpage{123}
@@ -509,7 +513,7 @@
   \item periodic boundaries, \hyperpage{35}, \hyperpage{98}
     \subitem PFW, \hyperpage{151}
     \subitem PFW grid, \hyperpage{127}
-  \item periodic contact surfaces, \hyperpage{166}
+  \item periodic contact surfaces, \hyperpage{167}
   \item PFW
     \subitem event controls, \hyperpage{161}
   \item PFW check script, \hyperpage{172}
@@ -519,9 +523,9 @@
     \subitem automatic restart, \hyperpage{172}
     \subitem diagnostic Silo output, \hyperpage{159}
     \subitem diagnostic VTK output, \hyperpage{159}
-    \subitem manual restart, \hyperpage{171}
-    \subitem minimal Silo output, \hyperpage{158}
-    \subitem minimal VTK output, \hyperpage{158}
+    \subitem manual restart, \hyperpage{172}
+    \subitem minimal Silo output, \hyperpage{159}
+    \subitem minimal VTK output, \hyperpage{159}
     \subitem MPM events, \hyperpage{161}
     \subitem restart interval, \hyperpage{171}
     \subitem sequential events, \hyperpage{169}
@@ -540,18 +544,21 @@
 		\hyperpage{147}
     \subitem \texttt  {cohesiveLaw}, \hyperpage{142}, \hyperpage{147}
     \subitem \texttt  {contactGapCorrection}, \hyperpage{142}, 
-		\hyperpage{144}, \hyperpage{146}
+		\hyperpage{144}, \hyperpage{147}
     \subitem \texttt  {contactNormalExponent}, \hyperpage{142}, 
 		\hyperpage{144}
     \subitem \texttt  {contactNormalType}, \hyperpage{142}, 
 		\hyperpage{144}
-    \subitem \texttt  {cpdiDomainScaling}, \hyperpage{142--146}
+    \subitem \texttt  {cpdiDomainScaling}, \hyperpage{142--145}, 
+		\hyperpage{147}
     \subitem \texttt  {cpdiDomainScalingType}, \hyperpage{142}, 
 		\hyperpage{144}
     \subitem \texttt  {crackTipDetectionThreshold}, \hyperpage{142}, 
 		\hyperpage{146}
     \subitem \texttt  {damageFieldPartitioning}, \hyperpage{142, 143}, 
-		\hyperpage{145, 146}
+		\hyperpage{145--147}
+    \subitem \texttt  {defGradResetMaxParticleDomainToGridCellRatio}, 
+		\hyperpage{142}, \hyperpage{144}
     \subitem \texttt  {disableSurfaceNormalsAndPositionsOnCPDIScaling}, 
 		\hyperpage{145}
     \subitem \texttt  {domainResetType}, \hyperpage{142}, 
@@ -562,7 +569,7 @@
     \subitem \texttt  {explicitSurfaceNormalInfluence}, \hyperpage{142}, 
 		\hyperpage{144}, \hyperpage{147}
     \subitem \texttt  {frictionCoefficient}, \hyperpage{142--144}, 
-		\hyperpage{146}
+		\hyperpage{147}
     \subitem \texttt  {frictionCoefficientRuleOfMixtures}, 
 		\hyperpage{142}, \hyperpage{144}
     \subitem \texttt  {frictionCoefficientTable}, \hyperpage{142}, 
@@ -574,17 +581,19 @@
     \subitem \texttt{gridFieldNames}, \hyperpage{157}
     \subitem \texttt  {initialDt}, \hyperpage{142}
     \subitem \texttt  {lastRestartBufferInSeconds}, \hyperpage{170}, 
-		\hyperpage{172}
-    \subitem \texttt  {logLevel}, \hyperpage{142}, \hyperpage{148}
-    \subitem \texttt  {LRtolerance}, \hyperpage{142}, \hyperpage{146}
+		\hyperpage{173}
+    \subitem \texttt  {logLevel}, \hyperpage{142}, \hyperpage{149}
+    \subitem \texttt  {LRtolerance}, \hyperpage{142}, \hyperpage{147}
     \subitem \texttt  {maxLRIterations}, \hyperpage{142}, 
-		\hyperpage{146}
+		\hyperpage{147}
     \subitem \texttt  {maxParticleJacobian}, \hyperpage{142}, 
-		\hyperpage{148}
+		\hyperpage{149}
     \subitem \texttt  {maxParticleVelocity}, \hyperpage{142}, 
-		\hyperpage{148}
+		\hyperpage{149}
+    \subitem \texttt  {maxSingleFieldStateFractionForSeparability}, 
+		\hyperpage{142}, \hyperpage{145}
     \subitem \texttt  {minParticleJacobian}, \hyperpage{142}, 
-		\hyperpage{148}
+		\hyperpage{149}
     \subitem \texttt  {mpmEventsString}, \hyperpage{142}, 
 		\hyperpage{147}, \hyperpage{161}
     \subitem \texttt  {mSubmitJobs}, \hyperpage{170}
@@ -594,8 +603,12 @@
     \subitem neighborRadius, \hyperpage{12}
     \subitem \texttt  {neighborRadius}, \hyperpage{148}
     \subitem \texttt  {normalAndPositionMethod}, \hyperpage{142}, 
-		\hyperpage{146}
+		\hyperpage{147}
     \subitem \texttt{outputType}, \hyperpage{157}
+    \subitem \texttt  {oversizedParticleResetRankParticleCountThreshold}, 
+		\hyperpage{142}, \hyperpage{144}
+    \subitem \texttt  {oversizedParticleTreatment}, \hyperpage{142}, 
+		\hyperpage{144}
     \subitem \texttt  {particleFileFields}, \hyperpage{142--147}
     \subitem \texttt  {plotGridFields}, \hyperpage{148}
     \subitem \texttt{plotGridFields}, \hyperpage{157}
@@ -618,6 +631,8 @@
     \subitem \texttt  {resetDefGradForFullyDamagedParticles}, 
 		\hyperpage{142}, \hyperpage{144, 145}
     \subitem \texttt  {resetDefGradForMeltedParticles}, \hyperpage{144}
+    \subitem \texttt  {resetDefGradForOversizedParticles}, 
+		\hyperpage{142}
     \subitem \texttt  {restartCycleNum}, \hyperpage{170}
     \subitem \texttt  {restartInterval}, \hyperpage{142}, 
 		\hyperpage{170}
@@ -643,11 +658,9 @@
     \subitem \texttt  {tracerOutputPrefix}, \hyperpage{155}
     \subitem \texttt  {tracerVariables}, \hyperpage{155}
     \subitem \texttt  {tracerWriteInterval}, \hyperpage{155}
-    \subitem \texttt  {treatFullyDamagedAsSingleField}, \hyperpage{142}, 
-		\hyperpage{145}
     \subitem \texttt  {updateMethod}, \hyperpage{142, 143}, 
-		\hyperpage{146}
-    \subitem \texttt  {updateOrder}, \hyperpage{142}, \hyperpage{146}
+		\hyperpage{147}
+    \subitem \texttt  {updateOrder}, \hyperpage{142}, \hyperpage{147}
     \subitem \texttt  {useAPIC}, \hyperpage{148}
     \subitem \texttt  {useCrackTipDetection}, \hyperpage{142}, 
 		\hyperpage{146}
@@ -671,10 +684,10 @@
   \item porosity, \hyperpage{72}
     \subitem geomechanics, \hyperpage{63}
   \item post-processing, \hyperpage{174}
-  \item post-processing scripts, \hyperpage{215}
+  \item post-processing scripts, \hyperpage{217}
   \item ppc, \hyperpage{128}
   \item prescribedBcTable, \hyperpage{150}
-  \item prescribedBoundaryFTable, \hyperpage{90}, \hyperpage{150}
+  \item prescribedBoundaryFTable, \hyperpage{90}, \hyperpage{151}
   \item prescribedBoundaryTransverseVelocities, \hyperpage{90}, 
 		\hyperpage{151}
   \item prescribedFTable, \hyperpage{90}, \hyperpage{151}
@@ -693,17 +706,18 @@
     \subitem PFW, \hyperpage{127}
   \item resetDefGradForFullyDamagedParticles, \hyperpage{121}
   \item resetDefGradForMeltedParticles, \hyperpage{121}
+  \item resetDefGradForOversizedParticles, \hyperpage{123}
   \item resetDefGradForScaledSurfaceParticles, \hyperpage{121}
   \item ResetDeformationGradient, \hyperpage{121}
   \item restart
     \subitem checklist, \hyperpage{173}
-    \subitem manual continuation, \hyperpage{171}
+    \subitem manual continuation, \hyperpage{172}
   \item restart controls
     \subitem PFW, \hyperpage{170}
   \item restart files, \hyperpage{170}
   \item restart interval, \hyperpage{171}
   \item robustness controls, \hyperpage{119}
-    \subitem PFW, \hyperpage{148}
+    \subitem PFW, \hyperpage{149}
   \item runClean, \hyperpage{5}
 
   \indexspace
@@ -717,7 +731,7 @@
   \item shape functions, \hyperpage{14}
   \item Silo, \hyperpage{157}
     \subitem PFW controls, \hyperpage{158}
-  \item Silo grid fields, \hyperpage{198}
+  \item Silo grid fields, \hyperpage{199}
   \item single-field contact
     \subitem PFW example, \hyperpage{143}
   \item SinglePoint, \hyperpage{78}
@@ -765,14 +779,14 @@
     \subitem PFW, \hyperpage{150}
   \item stress control, \hyperpage{21}, \hyperpage{32}, \hyperpage{87}
     \subitem adaptive-seek, \hyperpage{94}
-    \subitem event controls, \hyperpage{163}
+    \subitem event controls, \hyperpage{164}
     \subitem internal algorithm, \hyperpage{93}
     \subitem material-point driver, \hyperpage{74}
   \item stressControl, \hyperpage{152}
   \item stressControlAdaptiveSeek, \hyperpage{94}
   \item stressTable, \hyperpage{93}, \hyperpage{152}
   \item subdivideParticles, \hyperpage{123}
-  \item suite cases, \hyperpage{208}
+  \item suite cases, \hyperpage{209}
   \item suite reports, \hyperpage{176}
   \item surface flags, \hyperpage{33}, \hyperpage{35}
     \subitem PFW, \hyperpage{131}
@@ -816,10 +830,10 @@
   \indexspace
 
   \item validation, \hyperpage{176}
-  \item validation cases, \hyperpage{208}
+  \item validation cases, \hyperpage{209}
   \item validation suite, \hyperpage{6}
   \item verification, \hyperpage{176}
-  \item verification cases, \hyperpage{208}
+  \item verification cases, \hyperpage{209}
   \item verification suite, \hyperpage{6}
   \item VisIt, \hyperpage{157}, \hyperpage{174}
     \subitem PFW controls, \hyperpage{158}
@@ -834,7 +848,7 @@
   \indexspace
 
   \item wall time
-    \subitem restart buffer, \hyperpage{172}
+    \subitem restart buffer, \hyperpage{173}
   \item weak discontinuity, \hyperpage{103}
     \subitem mixed-cell stress error, \hyperpage{103}
   \item weak trace projection, \hyperpage{103}

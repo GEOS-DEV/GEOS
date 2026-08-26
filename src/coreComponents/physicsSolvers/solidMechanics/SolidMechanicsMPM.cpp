@@ -317,17 +317,6 @@ void normalizeActiveDeterminant3x3( real64 (& matrix)[3][3],
 }
 
 /**
-* Checks if floating-point variable is NaN
-*/
-#include <cmath>
-
-GEOS_HOST_DEVICE
-bool isNan( const real64 & val )
-{
-   return std::isnan(val);
-}
-
-/**
  * Component priorities used by the staged MPM essential-boundary update.
  *
  * Boundary conditions are assembled into temporary targets before any grid field
@@ -1893,6 +1882,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_useNodePosForArea( 0 ),
   m_useReferenceVectorsForParticleUpdate( 0 ),
   m_useSurfacePositionForContact( 0 ),
+  m_weakDiscontinuityInsertion( mpm::WeakDiscontinuityInsertionOption::Off ),
   m_weakInterfaceTraceGapStabilization( 0.0 ),
   m_weakInterfaceTraceMaxGapCorrectionVelocity( 0.0 ),
   m_weakInterfaceTraceMinWeight( 1.0e-12 ),
@@ -3090,6 +3080,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for to use particle mapped surface positions in contact calculations" );
 
+  registerWrapper( "weakDiscontinuityInsertion", &m_weakDiscontinuityInsertion ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakDiscontinuityInsertion ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Weak-discontinuity insertion mode for non-contact velocity-field partitioning. Options are:\n* " +
+                    EnumStrings< mpm::WeakDiscontinuityInsertionOption >::concat( "\n* " ) );
+
   registerWrapper( "weakInterfaceTraceGapStabilization", &m_weakInterfaceTraceGapStabilization ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceGapStabilization ).
@@ -4190,7 +4187,27 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Dominant nodal interface mechanism: 0 none, 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without active trace." );
+        setDescription( "Dominant nodal interface mechanism: 0 none, 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without active trace, 6 material weak discontinuity." );
+
+      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Material weak-discontinuity classifier: 1 when exactly two material types map to this node/contact group." );
+
+      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakOverflowString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Material weak-discontinuity classifier: 1 when more than two material types map to this node/contact group." );
+
+      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Lower material id observed by the material weak-discontinuity classifier for each node/contact group, or -1 when none." );
+
+      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Upper material id observed by the material weak-discontinuity classifier for each node/contact group, or -1 when none." );
 
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalForceString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -4826,8 +4843,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   }
 
-  // Specified number of damage flags.
-  m_numContactFlags = m_damageFieldPartitioning == 1 ? 2 : 1;
+  // Number of side flags per contact group. Damage-field partitioning and the
+  // material weak-discontinuity classifier both need an A/B field layout. The
+  // material mode is only a partitioning mechanism; interaction between those
+  // fields is handled later by contact, CZ, weak-trace projection, or left
+  // uncoupled if none of those mechanisms applies.
+  bool const insertMaterialWeakDiscontinuities =
+    m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material;
+  m_numContactFlags = ( m_damageFieldPartitioning == 1 || insertMaterialWeakDiscontinuities ) ? 2 : 1;
 
   // Total number of velocity fields. Continuum DFG contact uses contactGroup x contactFlag.
   // RigidBodyMPM events reserve maxGridFields fields for color partitioning; the last field is the weighted-overflow field.
@@ -4884,6 +4907,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakOverflowString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalForceString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceTangentialForceString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalVelocityJumpString() ).resize( numNodes, m_numVelocityFields );
@@ -5547,6 +5574,19 @@ void SolidMechanicsMPM::updateDamageAndSurfaceFieldsForExplicitStep( DomainParti
                                       particleManager,
                                       nodeManager,
                                       mesh );
+  }
+  if( m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material &&
+      m_damageFieldPartitioning != 1 &&
+      m_rigidBodyMode != 1 )
+  {
+    // Material weak insertion is a cheap same-step pre-P2G classification. It
+    // deliberately runs only when strong DFG partitioning is absent, so a
+    // fracture/contact surface that creates DFG fields dominates this weaker
+    // material-id split.
+    classifyMaterialWeakInterfaceNodes( domain,
+                                        particleManager,
+                                        nodeManager,
+                                        mesh );
   }
   computeParticleFieldMappings( domain,
                                 particleManager,
@@ -9923,6 +9963,10 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).setDimLabels( 1, fieldLabels );
+  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() ).setDimLabels( 1, fieldLabels );
+  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakOverflowString() ).setDimLabels( 1, fieldLabels );
+  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() ).setDimLabels( 1, fieldLabels );
+  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).setDimLabels( 1, axesLabels );
@@ -10034,6 +10078,10 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString(),
       viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString(),
       viewKeyStruct::gridInterfaceMechanismString(),
+      viewKeyStruct::gridMaterialWeakActiveString(),
+      viewKeyStruct::gridMaterialWeakOverflowString(),
+      viewKeyStruct::gridMaterialWeakPrimaryMaterialString(),
+      viewKeyStruct::gridMaterialWeakSecondaryMaterialString(),
       viewKeyStruct::gridInterfaceNormalForceString(),
       viewKeyStruct::gridInterfaceTangentialForceString(),
       viewKeyStruct::gridInterfaceNormalVelocityJumpString(),
@@ -10213,6 +10261,22 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array2d< int > >(
       viewKeyStruct::gridInterfaceMechanismString() );
 
+  arrayView2d< int > const gridMaterialWeakActive =
+    nodeManager.getReference< array2d< int > >(
+      viewKeyStruct::gridMaterialWeakActiveString() );
+
+  arrayView2d< int > const gridMaterialWeakOverflow =
+    nodeManager.getReference< array2d< int > >(
+      viewKeyStruct::gridMaterialWeakOverflowString() );
+
+  arrayView2d< int > const gridMaterialWeakPrimaryMaterial =
+    nodeManager.getReference< array2d< int > >(
+      viewKeyStruct::gridMaterialWeakPrimaryMaterialString() );
+
+  arrayView2d< int > const gridMaterialWeakSecondaryMaterial =
+    nodeManager.getReference< array2d< int > >(
+      viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
+
   arrayView2d< real64 > const gridInterfaceNormalForce =
     nodeManager.getReference< array2d< real64 > >(
       viewKeyStruct::gridInterfaceNormalForceString() );
@@ -10341,6 +10405,10 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridWeakInterfaceTraceAnchorWeight[g][fieldIndex] = 0.0;
       gridWeakInterfaceTraceSupportWeight[g][fieldIndex] = 0.0;
       gridInterfaceMechanism[g][fieldIndex] = 0;
+      gridMaterialWeakActive[g][fieldIndex] = 0;
+      gridMaterialWeakOverflow[g][fieldIndex] = 0;
+      gridMaterialWeakPrimaryMaterial[g][fieldIndex] = -1;
+      gridMaterialWeakSecondaryMaterial[g][fieldIndex] = -1;
       gridInterfaceNormalForce[g][fieldIndex] = 0.0;
       gridInterfaceTangentialForce[g][fieldIndex] = 0.0;
       gridInterfaceNormalVelocityJump[g][fieldIndex] = 0.0;
@@ -16660,7 +16728,230 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
 }
 
 /**
- * @brief Assigns each particle-node contribution to a DFG velocity field.
+ * @brief Classifies same-step material weak-discontinuity nodes.
+ *
+ * The classifier answers one narrow question for each grid node and contact
+ * group: did exactly two material ids contribute to this node during the
+ * current particle-grid mapping? If yes, the node gets a material weak A/B
+ * split. If no material, one material, or more than two materials contribute,
+ * the node remains single-field for this mechanism.
+ *
+ * This pass intentionally does not infer a normal, apply contact, or apply a
+ * tie/projection force. It only writes the nodal material classifier fields that
+ * computeParticleFieldMappings() uses to decide which velocity field receives a
+ * particle contribution. Strong DFG partitioning bypasses this classifier.
+ */
+void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & domain,
+                                                            ParticleManager & particleManager,
+                                                            NodeManager & nodeManager,
+                                                            MeshLevel & mesh )
+{
+  GEOS_MARK_FUNCTION;
+
+  if( m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Material ||
+      m_damageFieldPartitioning == 1 ||
+      m_rigidBodyMode == 1 )
+  {
+    return;
+  }
+
+  int const numContactGroups = m_numContactGroups;
+  int const numVelocityFields = m_numVelocityFields;
+  int const noMaterial = -1;
+  int const encodedNoMaterial = std::numeric_limits< int >::min();
+
+  // This routine currently runs on host because it consumes the effective
+  // particle-node maps before the main P2G pass and uses a pair of global
+  // reductions to make the classifier consistent across partition boundaries.
+  stdVector< std::string > const classifierFields =
+  {
+    viewKeyStruct::gridMaterialWeakActiveString(),
+    viewKeyStruct::gridMaterialWeakOverflowString(),
+    viewKeyStruct::gridMaterialWeakPrimaryMaterialString(),
+    viewKeyStruct::gridMaterialWeakSecondaryMaterialString(),
+    viewKeyStruct::gridInterfaceMechanismString()
+  };
+  for( string const & name : classifierFields )
+  {
+    nodeManager.getWrapperBase( name ).move( LvArray::MemorySpace::host, true );
+  }
+
+  arrayView2d< int > const gridMaterialWeakActive =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() );
+  arrayView2d< int > const gridMaterialWeakOverflow =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakOverflowString() );
+  arrayView2d< int > const gridMaterialWeakPrimaryMaterial =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() );
+  arrayView2d< int > const gridMaterialWeakSecondaryMaterial =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
+  arrayView2d< int > const gridInterfaceMechanism =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() );
+
+  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      gridMaterialWeakActive[g][fieldIndex] = 0;
+      gridMaterialWeakOverflow[g][fieldIndex] = 0;
+      gridMaterialWeakPrimaryMaterial[g][fieldIndex] = encodedNoMaterial;
+      gridMaterialWeakSecondaryMaterial[g][fieldIndex] = noMaterial;
+    }
+  } );
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.getWrapperBase( ParticleSubRegionBase::viewKeyStruct::particleGroupString() ).move( LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( LvArray::MemorySpace::host, true );
+    m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
+
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< int const > const particleMaterialType = subRegion.getField< fields::mpm::particleMaterialType >();
+    arrayView1d< localIndex const > const numEffectiveMappedNodes = m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[subRegionIndex];
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      int const pGroup = particleGroup[p];
+      int const pMaterial = particleMaterialType[p];
+      if( pGroup < 0 || pGroup >= numContactGroups || pMaterial < 0 )
+      {
+        return;
+      }
+
+      // Store max(material id) directly. Store min(material id) as
+      // max(-material - 1), so both extrema can be synchronized with MPI_MAX.
+      // The -1 keeps material 0 distinct from the no-material sentinel.
+      int const encodedMaterialForMin = -pMaterial - 1;
+      for( localIndex g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+      {
+        localIndex const mappedNode = effectiveMappedNodes[pp][g];
+        gridMaterialWeakPrimaryMaterial[mappedNode][pGroup] =
+          std::max( gridMaterialWeakPrimaryMaterial[mappedNode][pGroup], encodedMaterialForMin );
+        gridMaterialWeakSecondaryMaterial[mappedNode][pGroup] =
+          std::max( gridMaterialWeakSecondaryMaterial[mappedNode][pGroup], pMaterial );
+      }
+    } );
+
+    ++subRegionIndex;
+  } );
+
+  syncGridFields( { viewKeyStruct::gridMaterialWeakPrimaryMaterialString(),
+                    viewKeyStruct::gridMaterialWeakSecondaryMaterialString() },
+                  domain,
+                  nodeManager,
+                  mesh,
+                  MPI_MAX );
+
+  // After the min/max pass, every rank agrees on the two extreme material ids
+  // seen at each shared node/contact group. A second pass detects a third
+  // material id by checking whether any contributing particle is neither
+  // extreme. Those overflow nodes stay single-field for material weak insertion.
+  subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< int const > const particleMaterialType = subRegion.getField< fields::mpm::particleMaterialType >();
+    arrayView1d< localIndex const > const numEffectiveMappedNodes = m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[subRegionIndex];
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      int const pGroup = particleGroup[p];
+      int const pMaterial = particleMaterialType[p];
+      if( pGroup < 0 || pGroup >= numContactGroups || pMaterial < 0 )
+      {
+        return;
+      }
+
+      for( localIndex g = 0; g < numEffectiveMappedNodes[pp]; ++g )
+      {
+        localIndex const mappedNode = effectiveMappedNodes[pp][g];
+        int const encodedMinMaterial = gridMaterialWeakPrimaryMaterial[mappedNode][pGroup];
+        int const maxMaterial = gridMaterialWeakSecondaryMaterial[mappedNode][pGroup];
+        if( encodedMinMaterial == encodedNoMaterial || maxMaterial == noMaterial )
+        {
+          continue;
+        }
+        int const minMaterial = -encodedMinMaterial - 1;
+        if( pMaterial != minMaterial && pMaterial != maxMaterial )
+        {
+          gridMaterialWeakOverflow[mappedNode][pGroup] = 1;
+        }
+      }
+    } );
+
+    ++subRegionIndex;
+  } );
+
+  syncGridFields( { viewKeyStruct::gridMaterialWeakOverflowString() },
+                  domain,
+                  nodeManager,
+                  mesh,
+                  MPI_MAX );
+
+  // Expand the per-contact-group classifier into both side fields. The lower
+  // material id maps to side 0 by default; computeParticleFieldMappings()
+  // explicitly redirects only the upper material id to side 1. Three-or-more
+  // material nodes are marked overflow and left inactive so they remain
+  // single-field unless another mechanism, such as DFG, has already taken over.
+  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
+  {
+    for( localIndex groupIndex = 0; groupIndex < numContactGroups; ++groupIndex )
+    {
+      int const encodedMinMaterial = gridMaterialWeakPrimaryMaterial[g][groupIndex];
+      int const maxMaterial = gridMaterialWeakSecondaryMaterial[g][groupIndex];
+      int const minMaterial =
+        encodedMinMaterial == encodedNoMaterial ? noMaterial : -encodedMinMaterial - 1;
+      int const overflow = gridMaterialWeakOverflow[g][groupIndex] != 0 ? 1 : 0;
+      int const active =
+        minMaterial != noMaterial &&
+        maxMaterial != noMaterial &&
+        minMaterial != maxMaterial &&
+        overflow == 0 ? 1 : 0;
+
+      for( localIndex sideIndex = 0; sideIndex < 2; ++sideIndex )
+      {
+        localIndex const fieldIndex = sideIndex * numContactGroups + groupIndex;
+        if( fieldIndex >= numVelocityFields )
+        {
+          continue;
+        }
+        gridMaterialWeakActive[g][fieldIndex] = active;
+        gridMaterialWeakOverflow[g][fieldIndex] = overflow;
+        gridMaterialWeakPrimaryMaterial[g][fieldIndex] = minMaterial;
+        gridMaterialWeakSecondaryMaterial[g][fieldIndex] = maxMaterial;
+        if( active == 1 )
+        {
+          // Mechanism code 6 is only a classifier diagnostic. It does not mean a
+          // force has been applied or that the split fields have been tied.
+          gridInterfaceMechanism[g][fieldIndex] = 6;
+        }
+      }
+    }
+    for( localIndex fieldIndex = 2 * numContactGroups; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      gridMaterialWeakActive[g][fieldIndex] = 0;
+      gridMaterialWeakOverflow[g][fieldIndex] = 0;
+      gridMaterialWeakPrimaryMaterial[g][fieldIndex] = noMaterial;
+      gridMaterialWeakSecondaryMaterial[g][fieldIndex] = noMaterial;
+    }
+  } );
+}
+
+/**
+ * @brief Assigns each particle-node contribution to its nodal velocity field.
+ *
+ * The base mapping is the standard contact-group x DFG-side layout. When DFG is
+ * off and material weak insertion classified a node/contact group as exactly
+ * two-material, this routine overrides the side only for the secondary material
+ * id. The material override reuses the same two-field layout as DFG, but does
+ * not imply contact or bonding by itself.
  */
 void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
                                                       ParticleManager & particleManager,
@@ -16671,6 +16962,12 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
 
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
+  // Strong DFG partitioning owns the A/B side decision when it is enabled. The
+  // material classifier is therefore only allowed to override the side when DFG
+  // is disabled, which avoids mixing two incompatible side definitions.
+  int const materialWeakFieldPartitioning =
+    ( m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material &&
+      damageFieldPartitioning != 1 ) ? 1 : 0;
 
   if( m_rigidBodyMode == 1 )
   {
@@ -16686,6 +16983,10 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
 
   // Grid fields
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+  arrayView2d< int const > const gridMaterialWeakActive =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() );
+  arrayView2d< int const > const gridMaterialWeakSecondaryMaterial =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -16698,6 +16999,7 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
 
     // Particle fields
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< int const > const particleMaterialType = subRegion.getField< fields::mpm::particleMaterialType >();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
 
@@ -16711,24 +17013,49 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
       {
         localIndex const mappedNode = mappedNodes[pp][g];
 
-        mappedFields[pp][g] = partitionField( numContactGroups,
-                                              damageFieldPartitioning,
-                                              particleGroup[p],
-                                              particleDamageGradient[p],
-                                              particleSurfaceNormal[p],
-                                              gridDamageGradient[mappedNode] );
+        int const pGroup = particleGroup[p];
+        localIndex fieldIndex = partitionField( numContactGroups,
+                                                damageFieldPartitioning,
+                                                pGroup,
+                                                particleDamageGradient[p],
+                                                particleSurfaceNormal[p],
+                                                gridDamageGradient[mappedNode] );
+        // Material weak insertion is node-local. Only nodes classified as
+        // exactly two-material for this contact group get a side-1 material
+        // field; all other particle-node contributions keep the base field.
+        if( materialWeakFieldPartitioning == 1 &&
+            pGroup >= 0 &&
+            pGroup < numContactGroups &&
+            gridMaterialWeakActive[mappedNode][pGroup] == 1 &&
+            particleMaterialType[p] == gridMaterialWeakSecondaryMaterial[mappedNode][pGroup] )
+        {
+          fieldIndex = numContactGroups + pGroup;
+        }
+        mappedFields[pp][g] = fieldIndex;
       }
 
       for( integer g = 0; g < numEffectiveMappedNodes[pp]; ++g )
       {
         localIndex const mappedNode = effectiveMappedNodes[pp][g];
 
-        effectiveMappedFields[pp][g] = partitionField( numContactGroups,
-                                                       damageFieldPartitioning,
-                                                       particleGroup[p],
-                                                       particleDamageGradient[p],
-                                                       particleSurfaceNormal[p],
-                                                       gridDamageGradient[mappedNode] );
+        int const pGroup = particleGroup[p];
+        localIndex fieldIndex = partitionField( numContactGroups,
+                                                damageFieldPartitioning,
+                                                pGroup,
+                                                particleDamageGradient[p],
+                                                particleSurfaceNormal[p],
+                                                gridDamageGradient[mappedNode] );
+        // Keep the effective/coalesced mapping consistent with the raw mapping
+        // above; the main P2G scatter uses effectiveMappedFields.
+        if( materialWeakFieldPartitioning == 1 &&
+            pGroup >= 0 &&
+            pGroup < numContactGroups &&
+            gridMaterialWeakActive[mappedNode][pGroup] == 1 &&
+            particleMaterialType[p] == gridMaterialWeakSecondaryMaterial[mappedNode][pGroup] )
+        {
+          fieldIndex = numContactGroups + pGroup;
+        }
+        effectiveMappedFields[pp][g] = fieldIndex;
       }
     } );
 
@@ -16739,6 +17066,12 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
 
 /**
  * @brief Chooses the DFG side from the sign of the mapping normal against the grid damage gradient.
+ *
+ * When damageFieldPartitioning is off, this helper always returns the contact
+ * group field. The material weak override is intentionally outside this helper
+ * because it is keyed by nodal material-id classification, not by a geometric
+ * normal. WeakDiscontinuity surface flags can supply an explicit normal for DFG
+ * mapping, but the flag itself is not treated as damage by markSurfaceAsDamage().
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -21704,12 +22037,13 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
 /**
  * @brief Applies the prescribed-surface weak-interface trace projection.
  *
- * This first implementation is intentionally narrow: it uses existing contact-group
- * fields and the already-mapped gridSurfacePosition/gridSurfaceFieldMass data to
- * define a trace point for each active nodal field pair.  The trace support uses
- * the trilinear background grid basis evaluated at that point, which is sufficient
- * for the current prescribed-surface, multi-group workflow and keeps the change
- * independent of cohesive-zone state.
+ * This projection is a post-contact correction between already-existing nodal
+ * fields. It does not create velocity fields and does not use CZ state. The
+ * current implementation is deliberately local:
+ * - the field pair comes from the contact-group/DFG-style field layout,
+ * - the trace point comes from mapped gridSurfacePosition/gridSurfaceFieldMass,
+ * - the projection support is the trilinear grid-cell basis around that trace point,
+ * - repeated iterations reduce the residual slip/opening in a Jacobi-like way.
  */
 void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                                                              DomainPartition & domain,
@@ -21720,6 +22054,9 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
 
   for( int iter = 0; iter < m_weakInterfaceTraceProjectionIterations; ++iter )
   {
+    // Forces and activation diagnostics are per projection iteration. Clearing
+    // them here means the final output describes the last correction that was
+    // actually applied, not an accumulation of stale per-iteration flags.
     zeroWeakInterfaceTraceProjectionFields( nodeManager );
 
     computeWeakInterfaceTraceProjectionForces( dt,
@@ -21740,6 +22077,13 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   updateInterfaceMechanismDiagnostics( nodeManager );
 }
 
+/**
+ * @brief Clears transient weak-trace projection fields before each projection iteration.
+ *
+ * These arrays describe the current projection iteration only. Persistent
+ * quantities, such as the mapped surface position and grid velocity fields, are
+ * not reset here.
+ */
 void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -21784,6 +22128,20 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
   } );
 }
 
+/**
+ * @brief Forms the weak-trace correction force for each eligible nodal field pair.
+ *
+ * For every owned grid node and candidate field pair, this routine:
+ * 1. filters by weakInterfaceTracePairs, if a pair list was supplied,
+ * 2. requires both fields to be active and to carry mapped surface-position mass,
+ * 3. constructs a trace point from the mass-weighted mapped surface positions,
+ * 4. interpolates both field velocities to that trace point,
+ * 5. applies a balanced impulse that reduces vA - vB plus optional gap correction.
+ *
+ * The result is stored as gridWeakInterfaceTraceForce and later applied by
+ * applyWeakInterfaceTraceProjectionForces(). The force is synchronized with
+ * MPI_SUM before application because support nodes can live on neighboring ranks.
+ */
 void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const dt,
                                                                    NodeManager & nodeManager )
 {
@@ -21844,6 +22202,8 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   int constexpr traceSkipActive = 10;
   GEOS_UNUSED_VAR( traceSkipNone );
 
+  // Skip reasons are diagnostic, not control inputs. They identify the first
+  // failed eligibility test for the candidate pair at the anchor node.
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     if( gridGhostRank[g] >= 0 )
@@ -21859,6 +22219,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
     {
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
+        // With an empty weakInterfaceTracePairs list, every field pair is a
+        // candidate. Otherwise the stored pairs are interpreted as contact-group
+        // ids, so side fields for the same group pair are all considered.
         bool weakTracePair = true;
         if( numWeakInterfaceTracePairs > 0 )
         {
@@ -21893,6 +22256,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         real64 const spmA = gridSurfaceFieldMass[g][A];
         real64 const spmB = gridSurfaceFieldMass[g][B];
         real64 const spmAB = spmA + spmB;
+        // gridSurfacePosition is meaningful only for fields with mapped weak or
+        // surface particles carrying nonzero surface normals. If either side is
+        // missing this data, the trace location is not defined at this anchor.
         if( spmA <= smallMass || spmB <= smallMass || spmAB <= smallMass )
         {
           gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
@@ -21903,6 +22269,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         real64 sGamma[3] = {};
         real64 jump[3] = {};
         real64 xGamma[3] = {};
+        // sGamma is stored relative to the anchor grid node because the same
+        // value is reused later to recompute post-projection jump diagnostics.
+        // jump is the signed difference between the two mapped trace locations.
         for( int i = 0; i < 3; ++i )
         {
           sGamma[i] = ( spmA * gridSurfacePosition[g][A][i] +
@@ -21927,6 +22296,8 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         }
         if( planeStrain == 1 )
         {
+          // Plane strain has one interior cell layer in z. Clamp z into that
+          // layer before evaluating the same 3D trilinear support used elsewhere.
           baseIJK[2] = LvArray::math::max( 0, LvArray::math::min( baseIJK[2], static_cast< int >( nEl[2] - 1 ) ) );
           inGrid = inGrid && nEl[2] > 0;
         }
@@ -21968,6 +22339,8 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
             anchorWeight += traceWeights[q];
           }
         }
+        // The anchor node must participate in the trace support. This suppresses
+        // anchors whose mapped trace point lies effectively in a neighboring cell.
         if( anchorWeight <= minTraceWeight )
         {
           gridWeakInterfaceTraceAnchorWeight[g][A] = anchorWeight;
@@ -21992,6 +22365,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
             weightB += N;
           }
         }
+        // Require enough active basis support on both fields. Without this,
+        // interpolation would collapse onto one side and the impulse would act
+        // like an extrapolated boundary condition.
         if( weightA <= minTraceWeight || weightB <= minTraceWeight )
         {
           gridWeakInterfaceTraceSupportWeight[g][A] = weightA;
@@ -22009,6 +22385,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         real64 vA[3] = {};
         real64 vB[3] = {};
         real64 inverseEffectiveMass = 0.0;
+        // Interpolate each side's velocity to xGamma using normalized weights
+        // over the active support for that field. The same normalized weights
+        // define the effective mass of the projected trace degree of freedom.
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
@@ -22051,6 +22430,10 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         {
           LvArray::tensorOps::scale< 3 >( gapCorrection, maxGapCorrectionVelocity / gapCorrectionNorm );
         }
+        // Residual is the trace velocity jump to remove. A positive
+        // gapStabilization adds beta * displacementJump / dt, which damps an
+        // accumulated opening/overlap in the same impulse solve. projectionScale
+        // under-relaxes the correction when needed.
         for( int i = 0; i < numDims; ++i )
         {
           residual[i] = vA[i] - vB[i] + gapCorrection[i];
@@ -22072,6 +22455,8 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
             real64 const NA = N / weightA;
             for( int i = 0; i < numDims; ++i )
             {
+              // Store as a force so the standard grid acceleration, momentum,
+              // dVelocity, and velocity updates can consume it consistently.
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridWeakInterfaceTraceForce[I][A][i],
                                NA * impulse[i] / dt );
@@ -22093,7 +22478,13 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   } );
 }
 
-
+/**
+ * @brief Recomputes weak-trace velocity jump diagnostics after applying projection forces.
+ *
+ * computeWeakInterfaceTraceProjectionForces() stores the pre-correction
+ * residual used to form the impulse. This helper repeats the same interpolation
+ * after the force application so plots can show the remaining jump.
+ */
 void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -22120,6 +22511,9 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( Nod
   arrayView3d< real64 const > const gridWeakInterfaceTracePoint = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
   arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
 
+  // Re-evaluate the same trace interpolation after applying forces. This gives
+  // diagnostics of the residual jump actually left by the current projection
+  // iteration, instead of the pre-correction residual used to form the impulse.
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     for( localIndex A = 0; A < numVelocityFields - 1; ++A )
@@ -22235,6 +22629,13 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( Nod
   } );
 }
 
+/**
+ * @brief Applies weak-trace projection forces to nodal momentum and velocity.
+ *
+ * The projection force is constructed as an equal-and-opposite pairwise impulse
+ * divided by dt. Applying it through the standard nodal update fields keeps
+ * acceleration, dVelocity, momentum, and velocity diagnostics consistent.
+ */
 void SolidMechanicsMPM::applyWeakInterfaceTraceProjectionForces( real64 const dt,
                                                                  NodeManager & nodeManager )
 {
@@ -22251,6 +22652,9 @@ void SolidMechanicsMPM::applyWeakInterfaceTraceProjectionForces( real64 const dt
   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
   arrayView3d< real64 const > const gridWeakInterfaceTraceForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
 
+  // Apply the already-synchronized weak trace force like any other nodal force.
+  // Momentum is updated unconditionally; acceleration/dVelocity/velocity are
+  // only meaningful on active fields with valid mass.
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
@@ -22270,6 +22674,15 @@ void SolidMechanicsMPM::applyWeakInterfaceTraceProjectionForces( real64 const dt
   } );
 }
 
+/**
+ * @brief Reduces pairwise interface activity to one diagnostic record per grid field.
+ *
+ * The solver can have several interface mechanisms touching the same nodal
+ * field in a step. This routine assigns a dominant mechanism code and projects
+ * force, velocity jump, and displacement jump into normal/tangential magnitudes
+ * for plotting. It is diagnostic only; the physics has already been applied by
+ * contact, CZ, or weak-trace routines before this function is called.
+ */
 void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -22346,6 +22759,16 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         real64 const contactForceMagB2 = LvArray::tensorOps::l2NormSquared< 3 >( gridContactForce[g][B] );
         real64 const contactForceMag2 = contactForceMagA2 + contactForceMagB2;
 
+        // Mechanism codes:
+        // 1 cohesive zone
+        // 2 ordinary nodal contact
+        // 3 weak-trace anchor node with an active projection
+        // 4 weak-trace support node receiving force from a nearby anchor
+        // 5 ordinary contact suppressed for a selected trace pair, but no active trace
+        // 6 material weak classifier, set earlier before this dynamic diagnostic
+        //
+        // Code 6 is intentionally low priority here because it marks a
+        // partitioning decision, not a force-carrying interaction.
         bool const weakAnchor =
           activeA && activeB &&
           gridWeakInterfaceTraceActive[g][A] != 0 &&
@@ -22422,6 +22845,10 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           mechanism == 2 ? 2 :
           mechanism == 5 ? 1 : 0;
 
+        // Pick a normal for scalar diagnostics. Surface normals are preferred,
+        // then CZ area vectors, then the weak-trace surface-position jump. If no
+        // direction is available, normal components stay zero and tangential
+        // components reduce to vector magnitudes.
         real64 nA[3] = {};
         LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
         real64 normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
@@ -22829,6 +23256,11 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
             }
           }
 
+          // Weak-trace projection can be configured to own selected group
+          // pairs. In that mode ordinary nodal contact is skipped before the
+          // DFG separability test below. This keeps the trace projection from
+          // fighting the contact law, but also means "strong contact first,
+          // weak only if not separable" is not the current ordering.
           bool weakTracePair = rigidBodyMode == 0 && enableWeakInterfaceTraceProjection == 1;
           if( weakTracePair && numWeakInterfaceTracePairs > 0 )
           {

@@ -79,6 +79,7 @@ pfw["frictionCoefficient"] = 0.0
 pfw["contactNormalType"] = "Aligned"
 pfw["useSurfacePositionForContact"] = 1
 pfw["damageFieldPartitioning"] = 0
+pfw["weakDiscontinuityInsertion"] = "off"
 pfw["cpdiDomainScaling"] = 0
 pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC")
 pfw["outputType"] = "silo"
@@ -108,6 +109,10 @@ pfw["gridFieldNames"] = [
     "gridWeakInterfaceTraceVelocityJumpPost",
     "gridWeakInterfaceTraceForce",
     "gridInterfaceMechanism",
+    "gridMaterialWeakActive",
+    "gridMaterialWeakOverflow",
+    "gridMaterialWeakPrimaryMaterial",
+    "gridMaterialWeakSecondaryMaterial",
     "gridInterfaceNormalForce",
     "gridInterfaceTangentialForce",
     "gridInterfaceNormalVelocityJump",
@@ -155,6 +160,10 @@ elif VARIANT == "falseElasticCZ":
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
     pfw["damageFieldPartitioning"] = 1
     pfw["useEvents"] = 1
+elif VARIANT == "materialWeak":
+    pfw["enableContact"] = 0
+    pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["weakDiscontinuityInsertion"] = "material"
 else:
     pfw["enableContact"] = 0
     pfw["enableWeakInterfaceTraceProjection"] = 0
@@ -239,6 +248,8 @@ elif VARIANT == "falseElasticCZ":
     pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.Cohesive, trace_groups=False, cz_tag=0)
 elif VARIANT == "traceContactGroups":
     pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=True)
+elif VARIANT == "materialWeak":
+    pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
 else:
     # Placeholders currently run as single-field unless explicitly dispatched for
     # development.  Their rows are still reported by the folder postprocessor.
@@ -289,6 +300,7 @@ pfw_expected = {
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
+    "weak_discontinuity_insertion": pfw.get("weakDiscontinuityInsertion", "off"),
     "explicit_surface_normal_influence": pfw.get("explicitSurfaceNormalInfluence", 0.0),
     "tracer_labels": tracer_labels,
 }

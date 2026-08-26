@@ -145,6 +145,8 @@ public:
     static constexpr char const * gridRigidBodyFieldKeyString() { return "gridRigidBodyFieldKey"; }
     static constexpr char const * gridRigidBodyFieldColorString() { return "gridRigidBodyFieldColor"; }
     static constexpr char const * gridRigidBodyFieldContactGroupString() { return "gridRigidBodyFieldContactGroup"; }
+    // Weak trace projection diagnostics. These fields live on the regular grid
+    // velocity fields; they do not allocate a separate trace mesh or CZ object.
     static constexpr char const * gridWeakInterfaceTraceActiveString() { return "gridWeakInterfaceTraceActive"; }
     static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
     static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
@@ -162,6 +164,12 @@ public:
     static constexpr char const * gridInterfaceTangentialVelocityJumpString() { return "gridInterfaceTangentialVelocityJump"; }
     static constexpr char const * gridInterfaceNormalDisplacementJumpString() { return "gridInterfaceNormalDisplacementJump"; }
     static constexpr char const * gridInterfaceTangentialDisplacementJumpString() { return "gridInterfaceTangentialDisplacementJump"; }
+    // Material weak insertion diagnostics. These classify where the same-step
+    // material-id split created two velocity fields; they are not contact flags.
+    static constexpr char const * gridMaterialWeakActiveString() { return "gridMaterialWeakActive"; }
+    static constexpr char const * gridMaterialWeakOverflowString() { return "gridMaterialWeakOverflow"; }
+    static constexpr char const * gridMaterialWeakPrimaryMaterialString() { return "gridMaterialWeakPrimaryMaterial"; }
+    static constexpr char const * gridMaterialWeakSecondaryMaterialString() { return "gridMaterialWeakSecondaryMaterial"; }
 
     // Cohesive zone
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
@@ -533,21 +541,50 @@ public:
                              ParticleManager & particleManager,
                              NodeManager & nodeManager );
 
+  /**
+   * @brief Enforces the prescribed weak-interface trace projection on nodal velocity fields.
+   *
+   * This projection is run after ordinary grid dynamics/contact. It uses the
+   * already-mapped weak/surface position fields to find a local trace point and
+   * applies a balanced impulse that reduces the velocity jump between selected
+   * field pairs. It does not create new fields; field creation must already have
+   * happened through contact-group, DFG, or material weak partitioning.
+   */
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
                                             NodeManager & nodeManager,
                                             MeshLevel & mesh );
 
+  /**
+   * @brief Clears per-iteration weak-trace force, status, and jump diagnostics.
+   */
   void zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager );
 
+  /**
+   * @brief Computes weak-trace projection forces for eligible nodal field pairs.
+   *
+   * Pair eligibility is controlled by weakInterfaceTracePairs plus nodal support
+   * tests: both fields must be active, both must have mapped surface position
+   * mass, the weighted trace point must remain in the grid, and that trace point
+   * must have enough basis support on both fields.
+   */
   void computeWeakInterfaceTraceProjectionForces( real64 const dt,
                                                   NodeManager & nodeManager );
 
+  /**
+   * @brief Applies the accumulated weak-trace projection force to grid state.
+   */
   void applyWeakInterfaceTraceProjectionForces( real64 const dt,
                                                 NodeManager & nodeManager );
 
+  /**
+   * @brief Recomputes the trace velocity jump after applying the projection impulse.
+   */
   void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
 
+  /**
+   * @brief Populates diagnostic mechanism/force/jump fields for active interfaces.
+   */
   void updateInterfaceMechanismDiagnostics( NodeManager & nodeManager );
 
   /**
@@ -789,6 +826,19 @@ public:
                                          ParticleManager & particleManager,
                                          NodeManager & nodeManager,
                                          MeshLevel & mesh );
+
+  /**
+   * @brief Classifies nodes where material weak insertion should split one contact group into two fields.
+   *
+   * This is a same-step, pre-P2G classifier. A node/contact group becomes
+   * material-weak only when exactly two material ids map to it; one material and
+   * three-or-more materials stay single-field. Strong DFG partitioning has
+   * precedence and bypasses this material classifier.
+   */
+  void classifyMaterialWeakInterfaceNodes( DomainPartition & domain,
+                                           ParticleManager & particleManager,
+                                           NodeManager & nodeManager,
+                                           MeshLevel & mesh );
 
   void computeParticleFieldMappings( DomainPartition & domain,
                                      ParticleManager & particleManager,
@@ -1575,6 +1625,7 @@ protected:
   int m_useNodePosForArea;
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
+  mpm::WeakDiscontinuityInsertionOption m_weakDiscontinuityInsertion;
   real64 m_weakInterfaceTraceGapStabilization;
   real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
   real64 m_weakInterfaceTraceMinWeight;

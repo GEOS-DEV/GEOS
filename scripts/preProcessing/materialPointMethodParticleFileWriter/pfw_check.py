@@ -4,8 +4,6 @@ from __future__ import division
 from __future__ import unicode_literals
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree # nearest neighbor search with KDTree
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
 import time
 import datetime                               # used for date stamp
 import os                                     # operating sys commands, pwd, etc.
@@ -174,12 +172,18 @@ if needsRestart:
   nq = 16
   restartFile = ""
   while (restartFile == "" and nq > 5):
-    restartFile = subprocess.Popen('ls -dtr *_restart_'+'?'*nq+' | tail -1',shell=True,stdout=subprocess.PIPE).communicate()[0]
+    restartCandidates = []
+    for candidate in os.listdir(PWD):
+      if not re.match(r".*_restart_[0-9]{%d}(\.root)?$" % nq, candidate):
+        continue
+      if candidate.endswith(".sh"):
+        continue
+      restartBase = candidate[:-5] if candidate.endswith(".root") else candidate
+      if os.path.isdir(restartBase) and os.path.isfile(restartBase + ".root"):
+        restartCandidates.append(restartBase)
+    restartCandidates.sort(key=lambda path: os.path.getmtime(path + ".root"))
+    restartFile = restartCandidates[-1].encode("UTF8") if restartCandidates else b""
     if ( len(restartFile) == 0 ):
-      nq = nq - 1
-      restartFile = ""
-    elif ( str(restartFile, 'UTF8')[-5]=="."):
-      print("skipping ",str(restartFile, 'UTF8'))
       nq = nq - 1
       restartFile = ""
 
@@ -234,4 +238,3 @@ python3 pfw_check.py {inputFile}  {jobID}
   file.close()
   
   subprocess.call(["sbatch",fileName], cwd=PWD)
-

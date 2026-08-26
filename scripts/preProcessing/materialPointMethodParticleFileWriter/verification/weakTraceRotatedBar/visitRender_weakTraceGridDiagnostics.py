@@ -6,7 +6,11 @@ from pathlib import Path
 
 
 SCALAR_QUANTITY_FIELDS = {
-    "mechanism": ("gridInterfaceMechanism", False, 0.0, 5.0),
+    "mechanism": ("gridInterfaceMechanism", False, 0.0, 6.0),
+    "materialWeakActive": ("gridMaterialWeakActive", False, 0.0, 1.0),
+    "materialWeakOverflow": ("gridMaterialWeakOverflow", False, 0.0, 1.0),
+    "materialWeakPrimary": ("gridMaterialWeakPrimaryMaterial", False, 0.0, None),
+    "materialWeakSecondary": ("gridMaterialWeakSecondaryMaterial", False, 0.0, None),
     "normalForce": ("gridInterfaceNormalForce", True, None, None),
     "tangentialForce": ("gridInterfaceTangentialForce", True, None, None),
     "normalVelocityJump": ("gridInterfaceNormalVelocityJump", True, None, None),

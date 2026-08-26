@@ -25,6 +25,7 @@ VARIANT_LABELS = {
     "singleField": "single-field baseline",
     "falseElasticCZ": "false-elastic CZ reference",
     "traceContactGroups": "trace projection, contact groups",
+    "materialWeak": "material weak discontinuity",
     "dfgSurfaceFlags": "DFG surface flags placeholder",
     "stressResidualPartition": "stress-residual partition placeholder",
 }
@@ -55,6 +56,7 @@ INTERFACE_MECHANISM_LABELS = {
     3: "weak_trace_anchor",
     4: "weak_trace_support",
     5: "contact_suppressed_trace_inactive",
+    6: "material_weak_discontinuity",
 }
 NODAL_INTERFACE_FIELDS = [
     "gridInterfaceNormalForce",
@@ -94,7 +96,7 @@ def find_manifest(source_dir: Path, output_dir: Path, case_id: str) -> dict:
                 jobs = json.loads(jobs_path.read_text())
             except Exception:
                 jobs = {}
-        subcases.append({"name": name, "label": label, "case_id": f"{case_id}__{name}", "case_name": f"weakTraceRotatedBar_{name}", "jobs": jobs, "placeholder": name not in {"singleField", "falseElasticCZ", "traceContactGroups"}})
+        subcases.append({"name": name, "label": label, "case_id": f"{case_id}__{name}", "case_name": f"weakTraceRotatedBar_{name}", "jobs": jobs, "placeholder": name not in {"singleField", "falseElasticCZ", "traceContactGroups", "materialWeak"}})
     return {"case_id": case_id, "subcases": subcases}
 
 
@@ -556,6 +558,7 @@ def solver_attributes(run_dir: Path | None) -> dict:
         if solver is None:
             return {}
         keys = [
+            "weakDiscontinuityInsertion",
             "explicitSurfaceNormalInfluence",
             "weakInterfaceTraceProjectionScale",
             "weakInterfaceTraceProjectionIterations",
@@ -780,6 +783,10 @@ def render_visit(args, subcases: list[dict], output_dir: Path, analytic: dict):
     ]
     grid_render_specs = [
         ("mechanism", "final", "grid_mechanism_final", "all"),
+        ("materialWeakActive", "final", "grid_material_weak_active_final", "all"),
+        ("materialWeakOverflow", "final", "grid_material_weak_overflow_final", "all"),
+        ("materialWeakPrimary", "final", "grid_material_weak_primary_final", "all"),
+        ("materialWeakSecondary", "final", "grid_material_weak_secondary_final", "all"),
         ("normalForce", "final", "grid_normal_force_final", "all"),
         ("normalVelocityJump", "final", "grid_normal_velocity_jump_final", "all"),
         ("normalDisplacementJump", "final", "grid_normal_displacement_jump_final", "all"),
@@ -966,8 +973,8 @@ def main() -> int:
             compact_float(s.get("interfaceMeanAbsTangentialSlipChange")) + r" \\"
         )
     tex.append(r"\bottomrule\end{tabular}}")
-    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, and 5 contact suppressed without an active trace.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart.")
-    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ \\\midrule")
+    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without an active trace, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart.")
+    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ \\\midrule")
     for s in summaries:
         tex.append(
             latex_escape(s.get("label", s.get("variant", ""))) + " & " +
@@ -976,6 +983,7 @@ def main() -> int:
             compact_int(s.get("nodalMechanism_3_weak_trace_anchor_count")) + " & " +
             compact_int(s.get("nodalMechanism_4_weak_trace_support_count")) + " & " +
             compact_int(s.get("nodalMechanism_5_contact_suppressed_trace_inactive_count")) + " & " +
+            compact_int(s.get("nodalMechanism_6_material_weak_discontinuity_count")) + " & " +
             compact_float(s.get("nodal_gridInterfaceNormalForce_p95Abs")) + " & " +
             compact_float(s.get("nodal_gridInterfaceNormalForce_maxAbs")) + " & " +
             compact_float(s.get("nodal_gridInterfaceNormalVelocityJump_p95Abs")) + r" \\"

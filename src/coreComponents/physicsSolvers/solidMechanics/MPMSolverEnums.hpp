@@ -79,7 +79,23 @@ namespace mpm
     Surface = 2,
     Cohesive = 3,
     DamagedCohesive = 4,
+    // Prescribed geometry for weak-interface trace projection. This flag should
+    // not be interpreted as a damaged/free/contact surface by DFG partitioning.
     WeakDiscontinuity = 5
+  };
+
+  /**
+   * @enum WeakDiscontinuityInsertionOption
+   *
+   * Controls weak-discontinuity velocity-field insertion that is not driven by
+   * the usual damage-gradient/strong-interface partitioning.
+   */
+  enum struct WeakDiscontinuityInsertionOption : integer
+  {
+    /// Do not create extra weak-discontinuity fields beyond ordinary DFG/contact fields.
+    Off,
+    /// Split a node/contact group into two fields only when exactly two material ids map there.
+    Material
   };
 
   /**
@@ -244,6 +260,10 @@ ENUM_STRINGS( mpm::SurfaceFlag,
               "Cohesive",
               "DamagedCohesive",
               "WeakDiscontinuity" );
+
+ENUM_STRINGS( mpm::WeakDiscontinuityInsertionOption,
+              "off",
+              "material" );
 
 ENUM_STRINGS( mpm::InterpolationOption,
               "Linear",

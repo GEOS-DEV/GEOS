@@ -89,6 +89,10 @@ _PFW_SILO_ALL_GRID_FIELDS = [
   "gridWeakInterfaceTraceVelocityJump",
   "gridWeakInterfaceTraceVelocityJumpPost",
   "gridInterfaceMechanism",
+  "gridMaterialWeakActive",
+  "gridMaterialWeakOverflow",
+  "gridMaterialWeakPrimaryMaterial",
+  "gridMaterialWeakSecondaryMaterial",
   "gridInterfaceNormalForce",
   "gridInterfaceTangentialForce",
   "gridInterfaceNormalVelocityJump",
@@ -782,6 +786,7 @@ parameters = {
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.
                'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
+               'weakDiscontinuityInsertion': ( None, True ),  # MPM: weak-discontinuity insertion mode: off or material.
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
                'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
