@@ -20,7 +20,7 @@
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-#ifdef GEOS_USE_HYPRE
+#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #endif
@@ -96,7 +96,7 @@ LinearSolverParameters params_CG_AMG()
   return parameters;
 }
 
-#ifdef GEOS_USE_HYPRE
+#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TEST( HypreSolver, KeepsSetupDummyUntagged )
 {
   struct KrylovDofLabelsGuard
