@@ -145,31 +145,12 @@
       scale="5e6"/>
 
     <FieldSpecification
-      name="permx_wall"
-      component="0"
+      name="perm_wall"
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="rockPerm_permeability"
-      scale="2.0e-22"/>
-
-    <FieldSpecification
-      name="permy_wall"
-      component="1"
-      initialCondition="1"
-      setNames="{ wall1, wall2 }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPerm_permeability"
-      scale="2.0e-22"/>
-
-    <FieldSpecification
-      name="permz_wall"
-      component="2"
-      initialCondition="1"
-      setNames="{ wall1, wall2 }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPerm_permeability"
-      scale="2.0e-22"/>
+      scale="{ 2.0e-22, 2.0e-22, 2.0e-22 }"/>
 
     <SourceFlux
       name="sourceTerm"

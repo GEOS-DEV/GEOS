@@ -371,7 +371,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( bcLogMessage,
                                                     this->getName(), time_n+dt, FieldSpecification::catalogName(),
-                                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                                    fs.getName(), setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ),
                                           fs );
 
           // Specify the bc value of the field

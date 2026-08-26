@@ -20,7 +20,8 @@ namespace geos
 using namespace dataRepository;
 
 FieldSpecification::FieldSpecification( string const & name, Group * parent ):
-  Group( name, parent )
+  Group( name, parent ),
+  m_scale( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -54,20 +55,17 @@ FieldSpecification::FieldSpecification( string const & name, Group * parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Direction to apply boundary condition to." );
 
-  registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of function that specifies variation of the boundary condition." );
-
-  registerWrapper( viewKeyStruct::bcApplicationTableNameString(), &m_bcApplicationFunctionName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of table that specifies the on/off application of the boundary condition." );
+    setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
-    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Apply a scaling factor for the value of the boundary condition." );
+    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( { 1.0 } ).
+    resize( 1 ); // manual resize as setApplyDefaultValue() currently does not resize
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
@@ -108,6 +106,82 @@ FieldSpecification::getCatalog()
 }
 
 
+void FieldSpecification::postInputInitialization()
+{
+  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1,
+                        "Scale must have a number of component of either one or the field dimensions count.",
+                        InputError, getDataContext() );
+
+  { // both conditions work together
+    GEOS_THROW_IF( !m_functionNames.empty() &&
+                   m_functionNames.size() != 1 &&
+                   m_functionNames.size() != static_cast< string_array::size_type >( m_scale.size() ),
+                   GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
+                              "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
+                              viewKeyStruct::functionNamesString(), m_functionNames.size(),
+                              viewKeyStruct::scaleString(), m_scale.size(),
+                              viewKeyStruct::functionNamesString(), viewKeyStruct::scaleString() ),
+                   InputError, getDataContext() );
+
+    GEOS_THROW_IF( isTargetingComponent() && m_scale.size() > 1,
+                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
+                              viewKeyStruct::componentString(),
+                              viewKeyStruct::scaleString() ),
+                   InputError, getDataContext() );
+  }
+}
+
+real64 FieldSpecification::getScalarScale() const
+{
+  GEOS_THROW_IF_LT_MSG( m_scale.size(), 1, "Scale attribute is empty.", InputError, getDataContext() );
+  GEOS_THROW_IF_GT_MSG( m_scale.size(), 1,
+                        "A scalar (single-component) scale is required here; this field specification defines more than one scale component.",
+                        InputError, getDataContext() );
+  return m_scale[ 0 ];
+}
+
+int FieldSpecification::getComponent() const
+{
+  GEOS_THROW_IF( !isTargetingComponent(), "Component attribute is not set.", InputError, getDataContext() );
+  return m_component;
+}
+
+void FieldSpecification::validateNumArrayComp( localIndex numComp )
+{
+  if( isTargetingComponent() )
+  {
+    return;
+  }
+
+  auto expand = [&]( auto & values, string_view attributeName )
+  {
+    GEOS_THROW_IF( values.size() > 1 && static_cast< localIndex >( values.size() ) != numComp,
+                   GEOS_FMT ( "'{}' has {} entries but the target field '{}' has {} components. "
+                              "'{}' must either have a single entry (applied to every components) "
+                              "or exactly have {} entries.",
+                              attributeName, values.size(), m_fieldName, numComp,
+                              attributeName, numComp ),
+                   InputError,
+                   getDataContext() );
+
+    // "Broadcast"/duplicate values
+    if( values.size() == 1 && numComp > 1 )
+    {
+      auto const value = values[ 0 ];
+      values.resize( numComp );
+      for( localIndex i = 0; i < numComp; ++i )
+      {
+        values[ i ] = value;
+      }
+    }
+  };
+
+  expand( m_scale, viewKeyStruct::scaleString() );
+  if( !m_functionNames.empty() )
+  {
+    expand( m_functionNames, viewKeyStruct::functionNamesString() );
+  }
+}
 
 void FieldSpecification::setMeshObjectPath( Group const & meshBodies )
 {

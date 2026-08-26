@@ -183,7 +183,7 @@ public:
    * @brief function to validate the application of boundary conditions
    * @param mesh the MeshLevel object
    */
-  void validateBoundaryConditions( MeshLevel & mesh ) const;
+  void validateBoundaryConditions( MeshLevel & mesh );
 
 
   /**

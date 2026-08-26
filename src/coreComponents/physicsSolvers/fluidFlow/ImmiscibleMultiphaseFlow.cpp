@@ -948,7 +948,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   setName, subRegion.getName(), fs.getScalarScale(), numTargetElems ) );
       }
 
       if( targetSet.size() == 0 )

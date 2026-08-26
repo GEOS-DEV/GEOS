@@ -136,7 +136,12 @@ void stringToInputVariable( stdVector< std::string > & array, string const & val
 {
   validateString( value, regex );
   array1d< std::string > tmp;
-  LvArray::input::stringToArray( tmp, string( stringutilities::trimSpaces( value ) ) );
+  string valueTrimmed{ stringutilities::trimSpaces( value ) };
+  if( !valueTrimmed.empty() && valueTrimmed.front() != '{' )
+  {
+    valueTrimmed = "{ " + valueTrimmed + " }";
+  }
+  LvArray::input::stringToArray( tmp, valueTrimmed );
 
   array.resize( tmp.size() );
   for( localIndex i = 0; i < tmp.size(); ++i )

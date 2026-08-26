@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "dataRepository/xmlWrapper.hpp"
+#include "codingUtilities/RTTypes.hpp"
 #include "common/format/EnumStrings.hpp"
 
 using namespace geos;
@@ -443,6 +444,10 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
       GroupNameTest( groupNameRefArrayRegex, "{path/to/resource*}" ),
       GroupNameTest( groupNameRefArrayRegex, "{[arrayElement]}" ),
       GroupNameTest( groupNameRefArrayRegex, "{name1,name2,name3}" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, " groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "name.with-special_chars" ),
+      GroupNameTest( groupNameRefArrayRegex, "path/to/resource*" ),
     };
     for( GroupNameTest const & input : workingInputs )
     {
@@ -475,7 +480,6 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
       GroupNameTest( groupNameRefArrayRegex, "{test\tname}" ),
       GroupNameTest( groupNameRefArrayRegex, "{test\nname}" ),
       GroupNameTest( groupNameRefArrayRegex, "{test\rname}" ),
-      GroupNameTest( groupNameRefArrayRegex, "groupName" ),
       GroupNameTest( groupNameRefArrayRegex, "{groupName" ),
       GroupNameTest( groupNameRefArrayRegex, "groupName}" ),
       GroupNameTest( groupNameRefArrayRegex, "{groupName}} " ),
@@ -491,6 +495,9 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
       GroupNameTest( groupNameRefArrayRegex, "{valuewith,,commas }" ),
       GroupNameTest( groupNameRefArrayRegex, "{ value with , commas }" ),
       GroupNameTest( groupNameRefArrayRegex, "{{groupname}}" ),
+      GroupNameTest( groupNameRefArrayRegex, "group name" ),
+      GroupNameTest( groupNameRefArrayRegex, "group,name" ),
+      GroupNameTest( groupNameRefArrayRegex, "group;name" ),
     };
     for( GroupNameTest const & input : erroneousInputs )
     {
@@ -498,6 +505,53 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
                     InputError ) << "Parsing input '"<< input.m_valueToTest
                                  << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
     }
+  }
+}
+
+TEST( testXmlWrapper, testUnbracketedSingleValueFor1dArrays )
+{
+  {
+    array1d< real64 > array;
+    EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( array, "1.5",
+                                                        rtTypes::getTypeRegex< array1d< real64 > >() ) );
+    ASSERT_EQ( array.size(), 1 );
+    EXPECT_DOUBLE_EQ( array[0], 1.5 );
+  }
+  {
+    array1d< real64 > array;
+    EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( array, "  -2.3e-4   ",
+                                                        rtTypes::getTypeRegex< array1d< real64 > >() ) );
+    ASSERT_EQ( array.size(), 1 );
+    EXPECT_DOUBLE_EQ( array[0], -2.3e-4 );
+  }
+  {
+    array1d< integer > array;
+    EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( array, "42",
+                                                        rtTypes::getTypeRegex< array1d< integer > >() ) );
+    ASSERT_EQ( array.size(), 1 );
+    EXPECT_EQ( array[0], 42 );
+  }
+  {
+    array1d< real64 > array;
+    EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( array, "{ 1, 2, 3 }",
+                                                        rtTypes::getTypeRegex< array1d< real64 > >() ) );
+    ASSERT_EQ( array.size(), 3 );
+    EXPECT_DOUBLE_EQ( array[0], 1.0 );
+    EXPECT_DOUBLE_EQ( array[1], 2.0 );
+    EXPECT_DOUBLE_EQ( array[2], 3.0 );
+  }
+  {
+    stdVector< std::string > array;
+    Regex const & arrayRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRefArray );
+    EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( array, "myRegion",
+                                                        arrayRegex ) );
+    ASSERT_EQ( array.size(), 1 );
+    EXPECT_EQ( array[0], "myRegion" );
+  }
+  {
+    array2d< real64 > array;
+    EXPECT_ANY_THROW( xmlWrapper::stringToInputVariable( array, "1.5",
+                                                         rtTypes::getTypeRegex< array1d< real64 > >() ) );
   }
 }
 

@@ -68,12 +68,12 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
+void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh )
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
-  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification const & fs )
+  this->forSubGroups< FieldSpecification >( [&] ( FieldSpecification & fs )
   {
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
@@ -127,6 +127,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                                                                      // the faceManager...
       {
         isFieldNameFound = 1;
+      }
+
+      if( targetGroup.hasWrapper( fieldName ) )
+      {
+        localIndex numElem = targetGroup.getWrapperBase( fieldName ).numArrayComp();
+        fs.validateNumArrayComp( numElem );
       }
 
       if( targetSet.size() > 0 )

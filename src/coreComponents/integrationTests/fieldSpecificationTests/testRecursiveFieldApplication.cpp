@@ -45,9 +45,12 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpec.setFieldName( fieldName );
   fieldSpec.setObjectPath( objectPath );
   fieldSpec.setMeshObjectPath( domain.getMeshBodies() );
-  fieldSpec.setScale( value );
   fieldSpec.initialCondition( true );
   fieldSpec.addSetName( "all" );
+
+  array1d< real64 > scaleValue{ 1 };
+  scaleValue[ 0 ] = value;
+  fieldSpec.setScale( scaleValue );
 
   fieldSpecificationManager.apply( 0.,
                                    domain.getMeshBody( 0 ).getBaseDiscretization(),
