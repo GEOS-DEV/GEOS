@@ -145,9 +145,9 @@ void ConstitutiveDriver::outputToFile() const
 
   integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
   file << std::scientific << std::setprecision( precision );
-  integer const width =  precision+7;
+  integer const width =  precision+7+1;//spacing for minus sign
 
-  for( integer step = 0; step <= m_numSteps; ++step )
+  for( integer step = 0; step < m_table.size(0); ++step )
   {
     file << std::setw( width ) << m_table( step, 0 );
     for( integer col = 1; col < numColumns; ++col )
@@ -213,7 +213,7 @@ void ConstitutiveDriver::outputToConsole() const
   TableData tableData;
 
   stdVector< TableData::CellData > tableRow( numColumns );
-  for( integer step = 0; step <= m_numSteps; ++step )
+  for( integer step = 0; step < m_table.size(0); ++step )
   {
     for( integer col = 0; col < numColumns; ++col )
     {

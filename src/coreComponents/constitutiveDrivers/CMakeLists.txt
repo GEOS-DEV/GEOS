@@ -29,12 +29,16 @@ set( constitutiveDrivers_headers
      relativePermeability/RelpermDriver.hpp
      relativePermeability/RelpermDriverRunTest.hpp
      solid/TriaxialDriver.hpp
+     contact/FrictionDriver.hpp
+     contact/FrictionDriverRunTest.hpp
    )
 #
 # Specify all sources
 #
 set( constitutiveDrivers_sources
      ConstitutiveDriver.cpp
+     contact/FrictionDriver.cpp
+     contact/FrictionDriverRunTest.cpp
      fluid/multiFluid/PVTDriver.cpp
      fluid/multiFluid/constant/PVTDriverRunTestInvariantImmiscibleFluid.cpp
      fluid/multiFluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp

@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_TASK -->
+  <Tasks>
+    <FrictionDriver
+      name="frictionDriver"
+      friction="fractureContact0"
+      dispControl="jFunction"
+      dJumpControl="djFunction"
+      stressControlsL="sLFunction"
+      stressControlsR="sRFunction"
+      yTiltAngle="0"
+      zTiltAngle="0"
+      steps="1"
+      simultaneous="1"
+      tolJumpN="1e-1"
+      tolJumpT="1e-5"
+      tolNormalTrac="1e-1"
+      iterPenNFac="10"
+      iterPenTFac="1"
+      faceArea="1"
+      neighborsVolume="{1,1}"
+      neighborsShear="{1e9,1e9}"
+      neighborsBulk="{1e7,1e7}"
+      output="frictionDriver_Coulomb.txt" />
+  </Tasks>
+
+  <Included>
+    <File name="./frictionDriver_base.xml"/>
+  </Included>
+</Problem>

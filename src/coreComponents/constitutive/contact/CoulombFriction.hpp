@@ -189,6 +189,15 @@ public:
    */
   KernelWrapper createKernelUpdates() const;
 
+  // TODO (jafranc) make sure it is only helpers for FrictionDriver
+  /// getting cohesion value
+  real64 getCohesion() const
+  { return m_cohesion[0]; }
+
+  /// getting friction coeff
+  real64 getFrictionCoeff() const
+  { return m_frictionCoefficient[0]; }
+
   /**
    * @struct Set of "char const *" and keys for data specified in this class.
    */
