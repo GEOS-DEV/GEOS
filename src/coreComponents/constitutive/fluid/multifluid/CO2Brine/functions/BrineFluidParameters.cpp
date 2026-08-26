@@ -108,7 +108,7 @@ void BrineFluidParameters::registerOnFluid( MultiFluidBase * fluid )
     fluid->registerWrapper( viewKeyStruct::ezrokhiDensityCoefficientsString(), &m_ezrokhiDensityCoefficients ).
       setInputFlag( InputFlags::OPTIONAL ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setDescription( "Ezrokhi correlation coefficients for brine density." );
+      setDescription( "Ezrokhi correlation coefficients for brine density (see :ref:`CO2-EOS` for details)." );
   }
 
   if constexpr ( EZROKHI_VISCOSITY )
@@ -116,7 +116,7 @@ void BrineFluidParameters::registerOnFluid( MultiFluidBase * fluid )
     fluid->registerWrapper( viewKeyStruct::ezrokhiViscosityCoefficientsString(), &m_ezrokhiViscosityCoefficients ).
       setInputFlag( InputFlags::OPTIONAL ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setDescription( "Ezrokhi correlation coefficients for brine viscosity." );
+      setDescription( "Ezrokhi correlation coefficients for brine viscosity (see :ref:`CO2-EOS` for details)." );
   }
 }
 
@@ -209,10 +209,10 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
   {
     if( m_ezrokhiDensityCoefficients.empty())
     {
-      for( integer ic = 0; ic < 3; ic++ )
-      {
-        m_ezrokhiDensityCoefficients.emplace_back( 0.0 );
-      }
+      // Default values for Ezrokhi density coefficients
+      m_ezrokhiDensityCoefficients.emplace_back( 0.1003 );
+      m_ezrokhiDensityCoefficients.emplace_back( -2.2991e-5 );
+      m_ezrokhiDensityCoefficients.emplace_back( -2.3658e-6 );
     }
     GEOS_THROW_IF_NE_MSG( m_ezrokhiDensityCoefficients.size(), 3,
                           GEOS_FMT( "{}: invalid number of Ezrokhi density coefficients provided in {}. "
@@ -224,10 +224,10 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
   {
     if( m_ezrokhiViscosityCoefficients.empty())
     {
-      for( integer ic = 0; ic < 3; ic++ )
-      {
-        m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
-      }
+      // Default to zero Ezrokhi viscosity coefficients
+      m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
+      m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
+      m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
     }
     GEOS_THROW_IF_NE_MSG( m_ezrokhiViscosityCoefficients.size(), 3,
                           GEOS_FMT( "{}: invalid number of Ezrokhi viscosity coefficients provided in {}. "

@@ -7254,9 +7254,9 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--ezrokhiDensityCoefficients => Ezrokhi correlation coefficients for brine density.-->
+		<!--ezrokhiDensityCoefficients => Ezrokhi correlation coefficients for brine density (see :ref:`CO2-EOS` for details).-->
 		<xsd:attribute name="ezrokhiDensityCoefficients" type="real64_array" default="{0}" />
-		<!--ezrokhiViscosityCoefficients => Ezrokhi correlation coefficients for brine viscosity.-->
+		<!--ezrokhiViscosityCoefficients => Ezrokhi correlation coefficients for brine viscosity (see :ref:`CO2-EOS` for details).-->
 		<xsd:attribute name="ezrokhiViscosityCoefficients" type="real64_array" default="{0}" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
@@ -7306,9 +7306,9 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--ezrokhiDensityCoefficients => Ezrokhi correlation coefficients for brine density.-->
+		<!--ezrokhiDensityCoefficients => Ezrokhi correlation coefficients for brine density (see :ref:`CO2-EOS` for details).-->
 		<xsd:attribute name="ezrokhiDensityCoefficients" type="real64_array" default="{0}" />
-		<!--ezrokhiViscosityCoefficients => Ezrokhi correlation coefficients for brine viscosity.-->
+		<!--ezrokhiViscosityCoefficients => Ezrokhi correlation coefficients for brine viscosity (see :ref:`CO2-EOS` for details).-->
 		<xsd:attribute name="ezrokhiViscosityCoefficients" type="real64_array" default="{0}" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level

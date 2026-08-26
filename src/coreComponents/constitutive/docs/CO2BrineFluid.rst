@@ -349,7 +349,9 @@ Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` 
 where :math:`a_0, a_1, a_2` are correlation coefficients defined by the user, while :math:`x_{CO2,\ell}` is the fraction of the CO2 component in brine, computed from molar fractions as
 
 .. math::
-   x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}},
+   x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}}.
+
+The default density correlation coefficients are :math:`a_0=0.1003`, :math:`a_1=-2.2991e-5` and :math:`a_2=-2.3658e-6`.
 
 Pure water density is computed according to:
 
@@ -365,7 +367,7 @@ Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`
    log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) x_{CO2,\ell} \\
    B(T) &= b_0 + b_1T +  b_2T^2,
 
-where :math:`b_0, b_1, b_2` are correlation coefficients defined by the user.
+where :math:`b_0, b_1, b_2` are correlation coefficients defined by the user. The default values of :math:`b_0`, :math:`b_1` and :math:`b_2` are :math:`0` which means that unless they are specified, the viscosity will not depend on the dissolved CO2.
 
 Mass fraction of the CO2 component in brine :math:`x_{CO2,\ell}` is computed exactly as in the density calculation. The dependency of pure water viscosity on pressure is ignored, and it is approximated as saturated pure water viscosity:
 
