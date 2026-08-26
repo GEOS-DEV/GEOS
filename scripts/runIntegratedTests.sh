@@ -981,7 +981,9 @@ else
   log "Using mounted baselines at /tmp/geos/baselines"
 fi
 if [[ -n "${FILTER}" ]]; then
-  ATS_CMD+=(-f "${FILTER}")
+  # geos_ats uses -f for "allow failed tests".  Pass the requested test-name
+  # expression through to ATS' own --filter option instead.
+  ATS_CMD+=(--ats "filter=\"${FILTER}\" in SELF.name")
 fi
 if [[ ${#EXTRA_ATS_ARGS[@]} -gt 0 ]]; then
   ATS_CMD+=("${EXTRA_ATS_ARGS[@]}")
