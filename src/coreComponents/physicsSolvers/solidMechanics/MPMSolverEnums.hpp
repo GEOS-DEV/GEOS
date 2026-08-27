@@ -99,6 +99,20 @@ namespace mpm
   };
 
   /**
+   * @enum WeakInterfaceTraceGeometryOption
+   *
+   * Controls how weak-interface trace projection obtains the local interface
+   * point and normal after a weak-discontinuity field pair has been selected.
+   */
+  enum struct WeakInterfaceTraceGeometryOption : integer
+  {
+    /// Use mapped surface normal/position fields supplied by weak-surface particles.
+    Surface,
+    /// Infer the local material interface by logistic regression on neighboring particle material ids.
+    MaterialLogisticRegression
+  };
+
+  /**
    * @enum InterpolationOption
    *
    * The options for interpolating tables
@@ -264,6 +278,10 @@ ENUM_STRINGS( mpm::SurfaceFlag,
 ENUM_STRINGS( mpm::WeakDiscontinuityInsertionOption,
               "off",
               "material" );
+
+ENUM_STRINGS( mpm::WeakInterfaceTraceGeometryOption,
+              "surface",
+              "materialLogisticRegression" );
 
 ENUM_STRINGS( mpm::InterpolationOption,
               "Linear",

@@ -39,7 +39,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups materialWeak)
+ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups materialWeak materialWeakSurface)
 PLACEHOLDER_VARIANTS=(dfgSurfaceFlags stressResidualPartition)
 
 selected_variants=()
@@ -114,7 +114,8 @@ labels = {
     "singleField": "single-field baseline",
     "falseElasticCZ": "false-elastic CZ reference",
     "traceContactGroups": "trace projection, contact groups",
-    "materialWeak": "material weak discontinuity",
+    "materialWeak": "material weak discontinuity, material LR geometry",
+    "materialWeakSurface": "material weak discontinuity, surface geometry",
     "dfgSurfaceFlags": "DFG surface flags placeholder",
     "stressResidualPartition": "stress-residual partition placeholder",
 }

@@ -788,6 +788,10 @@ parameters = {
                'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
                'weakDiscontinuityInsertion': ( None, True ),  # MPM: weak-discontinuity insertion mode: off or material.
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
+               'weakInterfaceTraceGeometry': ( None, True ),  # MPM: trace geometry source: surface or materialLogisticRegression.
+               'weakInterfaceTraceMaterialLRMaxMisfitFraction': ( None, True ),  # MPM: max wrong-side fraction for material-LR weak-interface insertion.
+               'weakInterfaceTraceMaterialLRMinMeanMargin': ( None, True ),  # MPM: min normalized mean margin for material-LR weak-interface insertion.
+               'weakInterfaceTraceMaterialLRMinParticlesPerSide': ( None, True ),  # MPM: min neighboring particles per material side for material-LR weak-interface insertion.
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
                'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
                'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.

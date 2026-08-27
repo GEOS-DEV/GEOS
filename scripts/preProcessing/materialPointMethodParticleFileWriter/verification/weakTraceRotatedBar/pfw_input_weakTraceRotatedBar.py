@@ -80,6 +80,7 @@ pfw["contactNormalType"] = "Aligned"
 pfw["useSurfacePositionForContact"] = 1
 pfw["damageFieldPartitioning"] = 0
 pfw["weakDiscontinuityInsertion"] = "off"
+pfw["weakInterfaceTraceGeometry"] = "surface"
 pfw["cpdiDomainScaling"] = 0
 pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC")
 pfw["outputType"] = "silo"
@@ -160,10 +161,24 @@ elif VARIANT == "falseElasticCZ":
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
     pfw["damageFieldPartitioning"] = 1
     pfw["useEvents"] = 1
-elif VARIANT == "materialWeak":
+elif VARIANT in ("materialWeak", "materialWeakSurface"):
     pfw["enableContact"] = 0
-    pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["enableWeakInterfaceTraceProjection"] = 1
     pfw["weakDiscontinuityInsertion"] = "material"
+    default_trace_geometry = "surface" if VARIANT == "materialWeakSurface" else "materialLogisticRegression"
+    pfw["weakInterfaceTraceGeometry"] = os.environ.get("WEAK_TRACE_GEOMETRY", default_trace_geometry)
+    if pfw["weakInterfaceTraceGeometry"] == "surface":
+        pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+    if pfw["weakInterfaceTraceGeometry"] == "materialLogisticRegression":
+        pfw["weakInterfaceTraceMaterialLRMaxMisfitFraction"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MAX_MISFIT_FRACTION", "0.05"))
+        pfw["weakInterfaceTraceMaterialLRMinMeanMargin"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_MEAN_MARGIN", "0.0"))
+        pfw["weakInterfaceTraceMaterialLRMinParticlesPerSide"] = int(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_PARTICLES_PER_SIDE", "2"))
+    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
+    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
+    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+    pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
+    pfw["weakInterfaceTraceSuppressNodalContact"] = 0
 else:
     pfw["enableContact"] = 0
     pfw["enableWeakInterfaceTraceProjection"] = 0
@@ -250,6 +265,8 @@ elif VARIANT == "traceContactGroups":
     pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=True)
 elif VARIANT == "materialWeak":
     pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
+elif VARIANT == "materialWeakSurface":
+    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=False)
 else:
     # Placeholders currently run as single-field unless explicitly dispatched for
     # development.  Their rows are still reported by the folder postprocessor.
@@ -301,6 +318,10 @@ pfw_expected = {
     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
     "weak_discontinuity_insertion": pfw.get("weakDiscontinuityInsertion", "off"),
+    "weak_interface_trace_geometry": pfw.get("weakInterfaceTraceGeometry", "surface"),
+    "material_lr_max_misfit_fraction": pfw.get("weakInterfaceTraceMaterialLRMaxMisfitFraction", None),
+    "material_lr_min_mean_margin": pfw.get("weakInterfaceTraceMaterialLRMinMeanMargin", None),
+    "material_lr_min_particles_per_side": pfw.get("weakInterfaceTraceMaterialLRMinParticlesPerSide", None),
     "explicit_surface_normal_influence": pfw.get("explicitSurfaceNormalInfluence", 0.0),
     "tracer_labels": tracer_labels,
 }

@@ -25,7 +25,8 @@ VARIANT_LABELS = {
     "singleField": "single-field baseline",
     "falseElasticCZ": "false-elastic CZ reference",
     "traceContactGroups": "trace projection, contact groups",
-    "materialWeak": "material weak discontinuity",
+    "materialWeak": "material weak discontinuity, material LR geometry",
+    "materialWeakSurface": "material weak discontinuity, surface geometry",
     "dfgSurfaceFlags": "DFG surface flags placeholder",
     "stressResidualPartition": "stress-residual partition placeholder",
 }
@@ -96,7 +97,7 @@ def find_manifest(source_dir: Path, output_dir: Path, case_id: str) -> dict:
                 jobs = json.loads(jobs_path.read_text())
             except Exception:
                 jobs = {}
-        subcases.append({"name": name, "label": label, "case_id": f"{case_id}__{name}", "case_name": f"weakTraceRotatedBar_{name}", "jobs": jobs, "placeholder": name not in {"singleField", "falseElasticCZ", "traceContactGroups", "materialWeak"}})
+        subcases.append({"name": name, "label": label, "case_id": f"{case_id}__{name}", "case_name": f"weakTraceRotatedBar_{name}", "jobs": jobs, "placeholder": name not in {"singleField", "falseElasticCZ", "traceContactGroups", "materialWeak", "materialWeakSurface"}})
     return {"case_id": case_id, "subcases": subcases}
 
 
@@ -559,6 +560,10 @@ def solver_attributes(run_dir: Path | None) -> dict:
             return {}
         keys = [
             "weakDiscontinuityInsertion",
+            "weakInterfaceTraceGeometry",
+            "weakInterfaceTraceMaterialLRMaxMisfitFraction",
+            "weakInterfaceTraceMaterialLRMinMeanMargin",
+            "weakInterfaceTraceMaterialLRMinParticlesPerSide",
             "explicitSurfaceNormalInfluence",
             "weakInterfaceTraceProjectionScale",
             "weakInterfaceTraceProjectionIterations",
@@ -973,8 +978,8 @@ def main() -> int:
             compact_float(s.get("interfaceMeanAbsTangentialSlipChange")) + r" \\"
         )
     tex.append(r"\bottomrule\end{tabular}}")
-    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without an active trace, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart.")
-    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ \\\midrule")
+    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without an active trace, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart; material weak entries report passive A/B jumps and no applied force.")
+    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ & p95 $|[\![u_n]\!]|$ & p95 $|[\![u_t]\!]|$ \\\midrule")
     for s in summaries:
         tex.append(
             latex_escape(s.get("label", s.get("variant", ""))) + " & " +
@@ -986,7 +991,9 @@ def main() -> int:
             compact_int(s.get("nodalMechanism_6_material_weak_discontinuity_count")) + " & " +
             compact_float(s.get("nodal_gridInterfaceNormalForce_p95Abs")) + " & " +
             compact_float(s.get("nodal_gridInterfaceNormalForce_maxAbs")) + " & " +
-            compact_float(s.get("nodal_gridInterfaceNormalVelocityJump_p95Abs")) + r" \\"
+            compact_float(s.get("nodal_gridInterfaceNormalVelocityJump_p95Abs")) + " & " +
+            compact_float(s.get("nodal_gridInterfaceNormalDisplacementJump_p95Abs")) + " & " +
+            compact_float(s.get("nodal_gridInterfaceTangentialDisplacementJump_p95Abs")) + r" \\"
         )
     tex.append(r"\bottomrule\end{tabular}}")
     trace_summary = next((s for s in summaries if s.get("variant") == "traceContactGroups"), None)

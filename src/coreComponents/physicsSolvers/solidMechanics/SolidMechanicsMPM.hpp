@@ -552,6 +552,7 @@ public:
    */
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
+                                            ParticleManager & particleManager,
                                             NodeManager & nodeManager,
                                             MeshLevel & mesh );
 
@@ -563,12 +564,13 @@ public:
   /**
    * @brief Computes weak-trace projection forces for eligible nodal field pairs.
    *
-   * Pair eligibility is controlled by weakInterfaceTracePairs plus nodal support
-   * tests: both fields must be active, both must have mapped surface position
-   * mass, the weighted trace point must remain in the grid, and that trace point
-   * must have enough basis support on both fields.
+   * Prescribed weak-surface pairs are controlled by weakInterfaceTracePairs.
+   * Material-weak pairs are controlled by the material classifier. Both paths
+   * require active fields, a trace point in the grid, and enough basis support on
+   * both fields.
    */
   void computeWeakInterfaceTraceProjectionForces( real64 const dt,
+                                                  ParticleManager & particleManager,
                                                   NodeManager & nodeManager );
 
   /**
@@ -1014,6 +1016,48 @@ public:
                            real64 ( &normal0 )[3],
                            real64 ( &normal )[3],
                            real64 ( &surfacePosition )[3] );
+
+  static GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  int materialLogisticRegression( int const & planeStrain,
+                                  int const & maxLRIterations,
+                                  real64 const & LRtolerance,
+                                  real64 const (&hEl)[3],
+                                  localIndex const & materialGroup,
+                                  int const & materialA,
+                                  int const & materialB,
+                                  localIndex const & numNeighboringParticles,
+                                  arraySlice1d< localIndex const > const neighborRegions,
+                                  arraySlice1d< localIndex const > const neighborSubRegions,
+                                  arraySlice1d< localIndex const > const neighborIndices,
+                                  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                                  ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialType,
+                                  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                                  arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
+                                  real64 ( &normal0 )[3],
+                                  real64 ( &normal )[3],
+                                  real64 ( &surfacePosition )[3] );
+
+  static GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  int materialLogisticRegressionQuality( int const & planeStrain,
+                                         real64 const (&hEl)[3],
+                                         localIndex const & materialGroup,
+                                         int const & materialA,
+                                         int const & materialB,
+                                         localIndex const & numNeighboringParticles,
+                                         arraySlice1d< localIndex const > const neighborRegions,
+                                         arraySlice1d< localIndex const > const neighborSubRegions,
+                                         arraySlice1d< localIndex const > const neighborIndices,
+                                         ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                                         ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialType,
+                                         ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                                         arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
+                                         real64 const ( &normal )[3],
+                                         real64 const ( &surfacePosition )[3],
+                                         int const & minParticlesPerSide,
+                                         real64 const & maxMisfitFraction,
+                                         real64 const & minMeanMargin );
 
   void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
                                                  NodeManager & nodeManager );
@@ -1626,7 +1670,11 @@ protected:
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
   mpm::WeakDiscontinuityInsertionOption m_weakDiscontinuityInsertion;
+  mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
   real64 m_weakInterfaceTraceGapStabilization;
+  real64 m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
+  real64 m_weakInterfaceTraceMaterialLRMinMeanMargin;
+  int m_weakInterfaceTraceMaterialLRMinParticlesPerSide;
   real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
   real64 m_weakInterfaceTraceMinWeight;
   array2d< int > m_weakInterfaceTracePairs;

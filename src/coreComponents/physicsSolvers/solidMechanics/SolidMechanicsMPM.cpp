@@ -1883,7 +1883,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_useReferenceVectorsForParticleUpdate( 0 ),
   m_useSurfacePositionForContact( 0 ),
   m_weakDiscontinuityInsertion( mpm::WeakDiscontinuityInsertionOption::Off ),
+  m_weakInterfaceTraceGeometry( mpm::WeakInterfaceTraceGeometryOption::Surface ),
   m_weakInterfaceTraceGapStabilization( 0.0 ),
+  m_weakInterfaceTraceMaterialLRMaxMisfitFraction( 0.05 ),
+  m_weakInterfaceTraceMaterialLRMinMeanMargin( 0.0 ),
+  m_weakInterfaceTraceMaterialLRMinParticlesPerSide( 2 ),
   m_weakInterfaceTraceMaxGapCorrectionVelocity( 0.0 ),
   m_weakInterfaceTraceMinWeight( 1.0e-12 ),
   m_weakInterfaceTracePairs(),
@@ -2173,7 +2177,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_enableWeakInterfaceTraceProjection ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Enable prescribed-surface weak-interface trace projection between selected contact groups." );
+    setDescription( "Enable weak-interface trace projection between selected contact-group or material-weak field pairs." );
 
   registerWrapper( "enablePrescribedBoundaryTransverseVelocities", &m_enablePrescribedBoundaryTransverseVelocities ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3087,11 +3091,36 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Weak-discontinuity insertion mode for non-contact velocity-field partitioning. Options are:\n* " +
                     EnumStrings< mpm::WeakDiscontinuityInsertionOption >::concat( "\n* " ) );
 
+  registerWrapper( "weakInterfaceTraceGeometry", &m_weakInterfaceTraceGeometry ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceGeometry ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Geometry source for weak-interface trace projection. Options are:\n* " +
+                    EnumStrings< mpm::WeakInterfaceTraceGeometryOption >::concat( "\n* " ) );
+
   registerWrapper( "weakInterfaceTraceGapStabilization", &m_weakInterfaceTraceGapStabilization ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceGapStabilization ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Optional beta stabilization on the prescribed weak-interface trace gap." );
+
+  registerWrapper( "weakInterfaceTraceMaterialLRMaxMisfitFraction", &m_weakInterfaceTraceMaterialLRMaxMisfitFraction ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMaterialLRMaxMisfitFraction ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum fraction of neighboring material-labeled particles allowed on the wrong side of the fitted material-LR weak-interface plane." );
+
+  registerWrapper( "weakInterfaceTraceMaterialLRMinMeanMargin", &m_weakInterfaceTraceMaterialLRMinMeanMargin ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMaterialLRMinMeanMargin ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum mean signed particle distance from the fitted material-LR weak-interface plane, normalized by the active grid-cell diagonal." );
+
+  registerWrapper( "weakInterfaceTraceMaterialLRMinParticlesPerSide", &m_weakInterfaceTraceMaterialLRMinParticlesPerSide ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMaterialLRMinParticlesPerSide ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum number of neighboring particles from each material required before material-LR weak-interface insertion is allowed." );
 
   registerWrapper( "weakInterfaceTraceMaxGapCorrectionVelocity", &m_weakInterfaceTraceMaxGapCorrectionVelocity ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3369,10 +3398,20 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfaceTraceMinWeight must be positive." );
     GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization < 0.0,
                    "weakInterfaceTraceGapStabilization must be non-negative." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMaterialLRMaxMisfitFraction < 0.0 ||
+                   m_weakInterfaceTraceMaterialLRMaxMisfitFraction > 1.0,
+                   "weakInterfaceTraceMaterialLRMaxMisfitFraction must be in [0, 1]." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMaterialLRMinMeanMargin < 0.0,
+                   "weakInterfaceTraceMaterialLRMinMeanMargin must be non-negative." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMaterialLRMinParticlesPerSide < 1,
+                   "weakInterfaceTraceMaterialLRMinParticlesPerSide must be at least one." );
     GEOS_ERROR_IF( m_weakInterfaceTraceMaxGapCorrectionVelocity < 0.0,
                    "weakInterfaceTraceMaxGapCorrectionVelocity must be non-negative." );
     GEOS_ERROR_IF( m_weakInterfaceTracePairs.size( 0 ) > 0 && m_weakInterfaceTracePairs.size( 1 ) != 2,
                    "weakInterfaceTracePairs must have two columns: groupA, groupB." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceGeometry == mpm::WeakInterfaceTraceGeometryOption::MaterialLogisticRegression &&
+                   m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Material,
+                   "weakInterfaceTraceGeometry=materialLogisticRegression requires weakDiscontinuityInsertion=material." );
     GEOS_ERROR_IF( m_updateMethod == mpm::UpdateMethodOption::FMPM && m_updateOrder > 1,
                    "Weak-interface trace projection is currently supported for FLIP/PIC/XPIC and first-order FMPM only." );
   }
@@ -4232,12 +4271,12 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalDisplacementJumpString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic cohesive-zone displacement jump component normal to the mapped interface for each grid field pair." );
+        setDescription( "Diagnostic displacement jump component normal to the mapped interface for each grid field pair." );
 
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridInterfaceTangentialDisplacementJumpString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic cohesive-zone displacement jump magnitude tangent to the mapped interface for each grid field pair." );
+        setDescription( "Diagnostic displacement jump magnitude tangent to the mapped interface for each grid field pair." );
 
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridDamageString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -5180,9 +5219,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
      */
     enforceWeakInterfaceTraceProjection( dt,
                                          domain,
+                                         particleManager,
                                          nodeManager,
                                          mesh );
   }
+  /*
+   * Refresh the reduced interface diagnostics after all optional grid interface
+   * mechanisms have had a chance to run. This is also the only place where a
+   * material-weak-only run, which is a classifier without contact or trace
+   * forces, can record its passive A/B jumps.
+   */
+  updateInterfaceMechanismDiagnostics( nodeManager );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -6674,6 +6721,9 @@ void SolidMechanicsMPM::updateNodalNeighborListRequirement()
 {
   m_needsNodalNeighborList = m_computeParticleSurfaceNormalsAndPositions == 1 ||
                              m_contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression ||
+                             ( m_enableWeakInterfaceTraceProjection == 1 &&
+                               m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material &&
+                               m_weakInterfaceTraceGeometry == mpm::WeakInterfaceTraceGeometryOption::MaterialLogisticRegression ) ||
                              m_areaIntegrationMethod == mpm::AreaIntegrationOption::Mesh;
 }
 
@@ -9265,6 +9315,299 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     GEOS_LOG_RANK( "Logistic regression did not converge! Using last iteration value." );
 #endif
   }
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+int SolidMechanicsMPM::materialLogisticRegression( int const & planeStrain,
+                                                   int const & maxLRIterations,
+                                                   real64 const & LRtolerance,
+                                                   real64 const (&hEl)[3],
+                                                   localIndex const & materialGroup,
+                                                   int const & materialA,
+                                                   int const & materialB,
+                                                   localIndex const & numNeighboringParticles,
+                                                   arraySlice1d< localIndex const > const neighborRegions,
+                                                   arraySlice1d< localIndex const > const neighborSubRegions,
+                                                   arraySlice1d< localIndex const > const neighborIndices,
+                                                   ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                                                   ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialType,
+                                                   ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                                                   arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
+                                                   real64 (& normal0)[3],
+                                                   real64 (& normal)[3],
+                                                   real64 (& surfacePosition)[3] )
+{
+  real64 const lambda = 1e-7 * LvArray::math::square( ( hEl[0] + hEl[1] + hEl[2] ) / 3 );
+  real64 const w_p = 1.0;
+
+  real64 phi[4] = { normal0[0], normal0[1], planeStrain == 1 ? 0.0 : normal0[2], 0.0 };
+  real64 n_old[3] = {};
+  real64 s_old[3] = {};
+  LvArray::tensorOps::copy< 3 >( n_old, normal0 );
+
+  bool converged = false;
+  bool errored = false;
+  for( localIndex iter = 0; iter < maxLRIterations; ++iter )
+  {
+    real64 mat[4][4] = {};
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      for( localIndex j = 0; j < 4; ++j )
+      {
+        mat[i][j] = lambda * ( i == j && i < 3 );
+        for( localIndex n = 0; n < numNeighboringParticles; ++n )
+        {
+          localIndex const regionIndex = neighborRegions[n];
+          localIndex const subRegionIndex = neighborSubRegions[n];
+          localIndex const particleIndex = neighborIndices[n];
+          if( particleGroup[regionIndex][subRegionIndex][particleIndex] != materialGroup )
+          {
+            continue;
+          }
+          int const material = particleMaterialType[regionIndex][subRegionIndex][particleIndex];
+          if( material != materialA && material != materialB )
+          {
+            continue;
+          }
+
+          real64 x_p[4] = {};
+          x_p[0] = particlePosition[regionIndex][subRegionIndex][particleIndex][0] - gridPosition[0];
+          x_p[1] = particlePosition[regionIndex][subRegionIndex][particleIndex][1] - gridPosition[1];
+          x_p[2] = planeStrain == 1 ? 0.0 :
+                   particlePosition[regionIndex][subRegionIndex][particleIndex][2] - gridPosition[2];
+          x_p[3] = 1.0;
+          real64 const exp_x_phi = LvArray::math::exp( -LvArray::tensorOps::AiBi< 4 >( x_p, phi ) );
+          real64 const psi_sqr = LvArray::math::square( 2.0 * exp_x_phi / LvArray::math::square( 1.0 + exp_x_phi ) );
+          mat[i][j] += psi_sqr * w_p * x_p[i] * x_p[j];
+        }
+      }
+    }
+
+    real64 matInv[4][4] = {};
+    real64 const matDet = LvArray::tensorOps::determinant< 4 >( mat );
+    if( isZero( matDet, 1e-16 ) )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
+    LvArray::tensorOps::invert< 4 >( matInv, mat );
+
+    real64 vec[4] = {};
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      vec[i] = -lambda * ( i < 3 ) * phi[i];
+      for( localIndex n = 0; n < numNeighboringParticles; ++n )
+      {
+        localIndex const regionIndex = neighborRegions[n];
+        localIndex const subRegionIndex = neighborSubRegions[n];
+        localIndex const particleIndex = neighborIndices[n];
+        if( particleGroup[regionIndex][subRegionIndex][particleIndex] != materialGroup )
+        {
+          continue;
+        }
+        int const material = particleMaterialType[regionIndex][subRegionIndex][particleIndex];
+        if( material != materialA && material != materialB )
+        {
+          continue;
+        }
+
+        real64 x_p[4] = {};
+        x_p[0] = particlePosition[regionIndex][subRegionIndex][particleIndex][0] - gridPosition[0];
+        x_p[1] = particlePosition[regionIndex][subRegionIndex][particleIndex][1] - gridPosition[1];
+        x_p[2] = planeStrain == 1 ? 0.0 :
+                 particlePosition[regionIndex][subRegionIndex][particleIndex][2] - gridPosition[2];
+        x_p[3] = 1.0;
+
+        real64 const c_p = material == materialA ? -1.0 : 1.0;
+        real64 const exp_x_phi = LvArray::math::exp( -LvArray::tensorOps::AiBi< 4 >( x_p, phi ) );
+        real64 const psi = 2.0 * exp_x_phi / LvArray::math::square( 1.0 + exp_x_phi );
+        vec[i] += psi * w_p * ( c_p - ( 2.0 / ( 1.0 + exp_x_phi ) - 1.0 ) ) * x_p[i];
+      }
+    }
+
+    real64 dphi[4] = {};
+    LvArray::tensorOps::Ri_eq_AijBj< 4, 4 >( dphi, matInv, vec );
+    LvArray::tensorOps::add< 4 >( phi, dphi );
+
+    real64 n_new[3] = { phi[0], phi[1], planeStrain == 1 ? 0.0 : phi[2] };
+    real64 newNorm = LvArray::tensorOps::l2Norm< 3 >( n_new );
+    if( newNorm > 1e-25 )
+    {
+      LvArray::tensorOps::scale< 3 >( n_new, 1.0 / newNorm );
+    }
+    else
+    {
+#if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
+      GEOS_LOG_RANK( "Material logistic regression produced a zero normal." );
+#endif
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
+
+    real64 const surfaceOffset = ( -LvArray::math::log( 1.0 / 3.0 ) - phi[3] ) / newNorm;
+    real64 s_new[3] = {};
+    LvArray::tensorOps::scaledCopy< 3 >( s_new, n_new, surfaceOffset );
+
+    real64 diff[3] = {};
+    LvArray::tensorOps::copy< 3 >( diff, s_new );
+    LvArray::tensorOps::subtract< 3 >( diff, s_old );
+    real64 ds = LvArray::tensorOps::l2Norm< 3 >( diff );
+    if( planeStrain == 1 )
+    {
+      ds /= LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] );
+    }
+    else
+    {
+      ds /= LvArray::tensorOps::l2Norm< 3 >( hEl );
+    }
+
+    if( ds < LRtolerance )
+    {
+      converged = true;
+    }
+
+    if( converged || iter == maxLRIterations - 1 )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_new );
+      LvArray::tensorOps::copy< 3 >( normal, n_new );
+      break;
+    }
+
+    LvArray::tensorOps::copy< 3 >( n_old, n_new );
+    LvArray::tensorOps::copy< 3 >( s_old, s_new );
+  }
+
+  if( !converged && !errored )
+  {
+#if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
+    GEOS_LOG_RANK( "Material logistic regression did not converge! Using last iteration value." );
+#endif
+  }
+
+  return errored ? 0 : 1;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+int SolidMechanicsMPM::materialLogisticRegressionQuality( int const & planeStrain,
+                                                          real64 const (&hEl)[3],
+                                                          localIndex const & materialGroup,
+                                                          int const & materialA,
+                                                          int const & materialB,
+                                                          localIndex const & numNeighboringParticles,
+                                                          arraySlice1d< localIndex const > const neighborRegions,
+                                                          arraySlice1d< localIndex const > const neighborSubRegions,
+                                                          arraySlice1d< localIndex const > const neighborIndices,
+                                                          ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                                                          ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialType,
+                                                          ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                                                          arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
+                                                          real64 const (& normal)[3],
+                                                          real64 const (& surfacePosition)[3],
+                                                          int const & minParticlesPerSide,
+                                                          real64 const & maxMisfitFraction,
+                                                          real64 const & minMeanMargin )
+{
+  real64 const hNorm =
+    planeStrain == 1
+    ? LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] )
+    : LvArray::tensorOps::l2Norm< 3 >( hEl );
+  if( hNorm <= 0.0 )
+  {
+    return 0;
+  }
+
+  // The trace projection is anchored at the node being classified. If the LR
+  // surface point is outside the node's one-cell support, the later projection
+  // would reject the anchor after the fields were already split. Reject it here
+  // so the node stays single-field in that case.
+  for( int d = 0; d < 3; ++d )
+  {
+    if( planeStrain == 1 && d == 2 )
+    {
+      continue;
+    }
+    if( LvArray::math::abs( surfacePosition[d] ) > hEl[d] * ( 1.0 + 1.0e-12 ) )
+    {
+      return 0;
+    }
+  }
+
+  localIndex countA = 0;
+  localIndex countB = 0;
+  localIndex wrongSideCount = 0;
+  real64 meanMargin = 0.0;
+
+  for( localIndex n = 0; n < numNeighboringParticles; ++n )
+  {
+    localIndex const regionIndex = neighborRegions[n];
+    localIndex const subRegionIndex = neighborSubRegions[n];
+    localIndex const particleIndex = neighborIndices[n];
+    if( particleGroup[regionIndex][subRegionIndex][particleIndex] != materialGroup )
+    {
+      continue;
+    }
+    int const material = particleMaterialType[regionIndex][subRegionIndex][particleIndex];
+    if( material != materialA && material != materialB )
+    {
+      continue;
+    }
+
+    if( material == materialA )
+    {
+      ++countA;
+    }
+    else
+    {
+      ++countB;
+    }
+
+    real64 xRelative[3] = {};
+    for( int d = 0; d < 3; ++d )
+    {
+      xRelative[d] = particlePosition[regionIndex][subRegionIndex][particleIndex][d] -
+                     gridPosition[d] -
+                     surfacePosition[d];
+    }
+    if( planeStrain == 1 )
+    {
+      xRelative[2] = 0.0;
+    }
+
+    // materialLogisticRegression is initialized with the normal from materialA
+    // centroid to materialB centroid and uses labels -1/+1 for A/B. A good fit
+    // should therefore place materialA at negative signed distance and materialB
+    // at positive signed distance from the fitted trace point.
+    real64 const signedDistance =
+      ( material == materialB ? 1.0 : -1.0 ) *
+      LvArray::tensorOps::AiBi< 3 >( xRelative, normal );
+    real64 const normalizedMargin = signedDistance / hNorm;
+    if( normalizedMargin < 0.0 )
+    {
+      ++wrongSideCount;
+    }
+    meanMargin += normalizedMargin;
+  }
+
+  localIndex const totalCount = countA + countB;
+  if( countA < minParticlesPerSide ||
+      countB < minParticlesPerSide ||
+      totalCount == 0 )
+  {
+    return 0;
+  }
+
+  real64 const wrongSideFraction =
+    static_cast< real64 >( wrongSideCount ) / static_cast< real64 >( totalCount );
+  meanMargin /= static_cast< real64 >( totalCount );
+
+  return wrongSideFraction <= maxMisfitFraction &&
+         meanMargin >= minMeanMargin ? 1 : 0;
 }
 
 /**
@@ -16736,10 +17079,12 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
  * split. If no material, one material, or more than two materials contribute,
  * the node remains single-field for this mechanism.
  *
- * This pass intentionally does not infer a normal, apply contact, or apply a
- * tie/projection force. It only writes the nodal material classifier fields that
- * computeParticleFieldMappings() uses to decide which velocity field receives a
- * particle contribution. Strong DFG partitioning bypasses this classifier.
+ * This pass does not apply contact or a tie/projection force. It only writes the
+ * nodal material classifier fields that computeParticleFieldMappings() uses to
+ * decide which velocity field receives a particle contribution. When the weak
+ * trace is configured to use material-label logistic regression, the same pass
+ * also rejects nodes where the local point cloud does not define a clean two
+ * material interface. Strong DFG partitioning bypasses this classifier.
  */
 void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & domain,
                                                             ParticleManager & particleManager,
@@ -16757,8 +17102,18 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
+  int const planeStrain = m_planeStrain;
+  int const materialWeakLRGate =
+    m_weakInterfaceTraceGeometry == mpm::WeakInterfaceTraceGeometryOption::MaterialLogisticRegression ? 1 : 0;
+  int const maxLRIterations = m_maxLRIterations;
+  real64 const LRtolerance = m_LRtolerance;
+  real64 const maxLRMisfitFraction = m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
+  real64 const minLRMeanMargin = m_weakInterfaceTraceMaterialLRMinMeanMargin;
+  int const minLRParticlesPerSide = m_weakInterfaceTraceMaterialLRMinParticlesPerSide;
   int const noMaterial = -1;
   int const encodedNoMaterial = std::numeric_limits< int >::min();
+  real64 hEl[3] = {};
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 
   // This routine currently runs on host because it consumes the effective
   // particle-node maps before the main P2G pass and uses a pair of global
@@ -16786,6 +17141,39 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
   arrayView2d< int > const gridInterfaceMechanism =
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() );
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.getWrapperBase( ParticleSubRegionBase::viewKeyStruct::particleGroupString() ).move( LvArray::MemorySpace::host, true );
+    subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( LvArray::MemorySpace::host, true );
+    if( materialWeakLRGate == 1 )
+    {
+      subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleCenterString() ).move( LvArray::MemorySpace::host, true );
+    }
+  } );
+
+  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > const particleGroupAccessor =
+    particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > const particleMaterialTypeAccessor =
+    particleManager.constructArrayViewAccessor< int, 1 >( fields::mpm::particleMaterialType::key() );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > const particlePositionAccessor =
+    particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > const particleGroupView =
+    particleGroupAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView1d< int const > > const particleMaterialTypeView =
+    particleMaterialTypeAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particlePositionView =
+    particlePositionAccessor.toNestedViewConst();
+  arrayView1d< localIndex const > const numNeighborsAll =
+    m_nodalNeighborList.m_numParticles.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborRegions =
+    m_nodalNeighborList.m_toParticleRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborSubRegions =
+    m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborIndices =
+    m_nodalNeighborList.m_toParticleIndex.toViewConst();
 
   forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
   {
@@ -16801,8 +17189,6 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    subRegion.getWrapperBase( ParticleSubRegionBase::viewKeyStruct::particleGroupString() ).move( LvArray::MemorySpace::host, true );
-    subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( LvArray::MemorySpace::host, true );
     m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
     m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
 
@@ -16909,11 +17295,115 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
       int const minMaterial =
         encodedMinMaterial == encodedNoMaterial ? noMaterial : -encodedMinMaterial - 1;
       int const overflow = gridMaterialWeakOverflow[g][groupIndex] != 0 ? 1 : 0;
-      int const active =
+      int active =
         minMaterial != noMaterial &&
         maxMaterial != noMaterial &&
         minMaterial != maxMaterial &&
         overflow == 0 ? 1 : 0;
+
+      if( active == 1 && materialWeakLRGate == 1 )
+      {
+        localIndex countMin = 0;
+        localIndex countMax = 0;
+        real64 centroidMin[3] = {};
+        real64 centroidMax[3] = {};
+        for( localIndex n = 0; n < numNeighborsAll[g]; ++n )
+        {
+          localIndex const regionIndex = neighborRegions[g][n];
+          localIndex const neighborSubRegionIndex = neighborSubRegions[g][n];
+          localIndex const particleIndex = neighborIndices[g][n];
+          if( particleGroupView[regionIndex][neighborSubRegionIndex][particleIndex] != groupIndex )
+          {
+            continue;
+          }
+          int const material = particleMaterialTypeView[regionIndex][neighborSubRegionIndex][particleIndex];
+          if( material == minMaterial )
+          {
+            ++countMin;
+            LvArray::tensorOps::add< 3 >( centroidMin,
+                                          particlePositionView[regionIndex][neighborSubRegionIndex][particleIndex] );
+          }
+          else if( material == maxMaterial )
+          {
+            ++countMax;
+            LvArray::tensorOps::add< 3 >( centroidMax,
+                                          particlePositionView[regionIndex][neighborSubRegionIndex][particleIndex] );
+          }
+        }
+
+        active = 0;
+        if( countMin >= minLRParticlesPerSide &&
+            countMax >= minLRParticlesPerSide )
+        {
+          LvArray::tensorOps::scale< 3 >( centroidMin, 1.0 / static_cast< real64 >( countMin ) );
+          LvArray::tensorOps::scale< 3 >( centroidMax, 1.0 / static_cast< real64 >( countMax ) );
+
+          real64 normal0[3] = {};
+          LvArray::tensorOps::copy< 3 >( normal0, centroidMax );
+          LvArray::tensorOps::subtract< 3 >( normal0, centroidMin );
+          if( planeStrain == 1 )
+          {
+            normal0[2] = 0.0;
+          }
+
+          real64 const normal0Norm = LvArray::tensorOps::l2Norm< 3 >( normal0 );
+          if( normal0Norm > 1.0e-20 )
+          {
+            LvArray::tensorOps::scale< 3 >( normal0, 1.0 / normal0Norm );
+
+            real64 normal[3] = {};
+            real64 surfacePosition[3] = {};
+            int const lrFitOk =
+              materialLogisticRegression( planeStrain,
+                                          maxLRIterations,
+                                          LRtolerance,
+                                          hEl,
+                                          groupIndex,
+                                          minMaterial,
+                                          maxMaterial,
+                                          numNeighborsAll[g],
+                                          neighborRegions[g],
+                                          neighborSubRegions[g],
+                                          neighborIndices[g],
+                                          particleGroupView,
+                                          particleMaterialTypeView,
+                                          particlePositionView,
+                                          gridPosition[g],
+                                          normal0,
+                                          normal,
+                                          surfacePosition );
+            if( planeStrain == 1 )
+            {
+              normal[2] = 0.0;
+              surfacePosition[2] = 0.0;
+            }
+            real64 const normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
+            if( lrFitOk == 1 && normalNorm > 1.0e-20 )
+            {
+              LvArray::tensorOps::scale< 3 >( normal, 1.0 / normalNorm );
+              active =
+                materialLogisticRegressionQuality( planeStrain,
+                                                   hEl,
+                                                   groupIndex,
+                                                   minMaterial,
+                                                   maxMaterial,
+                                                   numNeighborsAll[g],
+                                                   neighborRegions[g],
+                                                   neighborSubRegions[g],
+                                                   neighborIndices[g],
+                                                   particleGroupView,
+                                                   particleMaterialTypeView,
+                                                   particlePositionView,
+                                                   gridPosition[g],
+                                                   normal,
+                                                   surfacePosition,
+                                                   minLRParticlesPerSide,
+                                                   maxLRMisfitFraction,
+                                                   minLRMeanMargin );
+            }
+          }
+        }
+      }
 
       for( localIndex sideIndex = 0; sideIndex < 2; ++sideIndex )
       {
@@ -22041,12 +22531,14 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
  * fields. It does not create velocity fields and does not use CZ state. The
  * current implementation is deliberately local:
  * - the field pair comes from the contact-group/DFG-style field layout,
- * - the trace point comes from mapped gridSurfacePosition/gridSurfaceFieldMass,
+ * - prescribed weak-surface pairs use mapped gridSurfacePosition/gridSurfaceFieldMass,
+ * - material-weak pairs use either mapped surface geometry or material-label LR,
  * - the projection support is the trilinear grid-cell basis around that trace point,
  * - repeated iterations reduce the residual slip/opening in a Jacobi-like way.
  */
 void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                                                              DomainPartition & domain,
+                                                             ParticleManager & particleManager,
                                                              NodeManager & nodeManager,
                                                              MeshLevel & mesh )
 {
@@ -22060,6 +22552,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     zeroWeakInterfaceTraceProjectionFields( nodeManager );
 
     computeWeakInterfaceTraceProjectionForces( dt,
+                                               particleManager,
                                                nodeManager );
 
     syncGridFields( { viewKeyStruct::gridWeakInterfaceTraceForceString() },
@@ -22132,9 +22625,10 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
  * @brief Forms the weak-trace correction force for each eligible nodal field pair.
  *
  * For every owned grid node and candidate field pair, this routine:
- * 1. filters by weakInterfaceTracePairs, if a pair list was supplied,
- * 2. requires both fields to be active and to carry mapped surface-position mass,
- * 3. constructs a trace point from the mass-weighted mapped surface positions,
+ * 1. selects prescribed weak-surface pairs from weakInterfaceTracePairs or
+ *    material-weak A/B pairs from the material classifier,
+ * 2. requires both fields to be active and to carry trace geometry,
+ * 3. constructs a trace point from surface positions or a material-label LR fit,
  * 4. interpolates both field velocities to that trace point,
  * 5. applies a balanced impulse that reduces vA - vB plus optional gap correction.
  *
@@ -22143,6 +22637,7 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
  * MPI_SUM before application because support nodes can live on neighboring ranks.
  */
 void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const dt,
+                                                                   ParticleManager & particleManager,
                                                                    NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -22156,6 +22651,11 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
   int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
+  int const materialWeakTraceProjection =
+    m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material ? 1 : 0;
+  mpm::WeakInterfaceTraceGeometryOption const weakInterfaceTraceGeometry = m_weakInterfaceTraceGeometry;
+  int const maxLRIterations = m_maxLRIterations;
+  real64 const LRtolerance = m_LRtolerance;
   real64 const smallMass = m_smallMass;
   real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
   real64 const projectionScale = m_weakInterfaceTraceProjectionScale;
@@ -22177,9 +22677,13 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
-  GEOS_UNUSED_VAR( gridMaterialVolume );
+  arrayView3d< real64 const > const gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
+  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
   arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+  arrayView2d< int const > const gridMaterialWeakActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() );
+  arrayView2d< int const > const gridMaterialWeakPrimaryMaterial = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() );
+  arrayView2d< int const > const gridMaterialWeakSecondaryMaterial = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
   arrayView2d< int > const gridWeakInterfaceTraceActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
   arrayView2d< int > const gridWeakInterfaceTraceSkipReason = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
   arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
@@ -22188,6 +22692,23 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
   arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
   arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
   arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
+
+  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor =
+    particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleMaterialTypeAccessor =
+    particleManager.constructArrayViewAccessor< int, 1 >( fields::mpm::particleMaterialType::key() );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor =
+    particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroupView =
+    particleGroupAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialTypeView =
+    particleMaterialTypeAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView =
+    particlePositionAccessor.toNestedViewConst();
+  arrayView1d< localIndex const > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
 
   int constexpr traceSkipNone = 0;
   int constexpr traceSkipGhostNode = 1;
@@ -22219,13 +22740,27 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
     {
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
-        // With an empty weakInterfaceTracePairs list, every field pair is a
-        // candidate. Otherwise the stored pairs are interpreted as contact-group
-        // ids, so side fields for the same group pair are all considered.
-        bool weakTracePair = true;
-        if( numWeakInterfaceTracePairs > 0 )
+        bool const materialWeakPair =
+          materialWeakTraceProjection == 1 &&
+          numContactGroups > 0 &&
+          A % numContactGroups == B % numContactGroups &&
+          A / numContactGroups < 2 &&
+          B / numContactGroups < 2 &&
+          A / numContactGroups != B / numContactGroups &&
+          gridMaterialWeakActive[g][A] != 0 &&
+          gridMaterialWeakActive[g][B] != 0;
+
+        // With an empty weakInterfaceTracePairs list, every prescribed-surface
+        // field pair is a candidate. Material-weak A/B fields are always eligible
+        // when the classifier marked the node; there is no separate surface flag
+        // or contact-group pair to consult.
+        bool weakTracePair = materialWeakPair;
+        if( !weakTracePair && numWeakInterfaceTracePairs == 0 )
         {
-          weakTracePair = false;
+          weakTracePair = true;
+        }
+        else if( !weakTracePair )
+        {
           int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
           int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
           for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
@@ -22253,35 +22788,147 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
           continue;
         }
 
-        real64 const spmA = gridSurfaceFieldMass[g][A];
-        real64 const spmB = gridSurfaceFieldMass[g][B];
-        real64 const spmAB = spmA + spmB;
-        // gridSurfacePosition is meaningful only for fields with mapped weak or
-        // surface particles carrying nonzero surface normals. If either side is
-        // missing this data, the trace location is not defined at this anchor.
-        if( spmA <= smallMass || spmB <= smallMass || spmAB <= smallMass )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
-          continue;
-        }
-
         real64 sGamma[3] = {};
         real64 jump[3] = {};
+        real64 gapJump[3] = {};
         real64 xGamma[3] = {};
-        // sGamma is stored relative to the anchor grid node because the same
-        // value is reused later to recompute post-projection jump diagnostics.
-        // jump is the signed difference between the two mapped trace locations.
-        for( int i = 0; i < 3; ++i )
+        bool const materialWeakUseMaterialLR =
+          materialWeakPair &&
+          weakInterfaceTraceGeometry == mpm::WeakInterfaceTraceGeometryOption::MaterialLogisticRegression;
+
+        if( materialWeakUseMaterialLR )
         {
-          sGamma[i] = ( spmA * gridSurfacePosition[g][A][i] +
-                        spmB * gridSurfacePosition[g][B][i] ) / spmAB;
-          jump[i] = gridSurfacePosition[g][A][i] - gridSurfacePosition[g][B][i];
-          xGamma[i] = gridPosition[g][i] + sGamma[i];
-          gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
-          gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
-          gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
-          gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
+          real64 const volA = gridMaterialVolume[g][A];
+          real64 const volB = gridMaterialVolume[g][B];
+          if( volA <= 0.0 || volB <= 0.0 )
+          {
+            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+            continue;
+          }
+
+          int const primaryMaterial = gridMaterialWeakPrimaryMaterial[g][A];
+          int const secondaryMaterial = gridMaterialWeakSecondaryMaterial[g][A];
+          int const sideA = A / numContactGroups;
+          int const sideB = B / numContactGroups;
+          int const materialA = sideA == 0 ? primaryMaterial : secondaryMaterial;
+          int const materialB = sideB == 0 ? primaryMaterial : secondaryMaterial;
+          if( materialA < 0 || materialB < 0 || materialA == materialB )
+          {
+            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+            continue;
+          }
+
+          real64 normal0[3] = {};
+          for( int i = 0; i < 3; ++i )
+          {
+            normal0[i] = gridCenterOfVolume[g][B][i] - gridCenterOfVolume[g][A][i];
+          }
+          if( planeStrain == 1 )
+          {
+            normal0[2] = 0.0;
+          }
+          real64 const normal0Norm = LvArray::tensorOps::l2Norm< 3 >( normal0 );
+          if( normal0Norm <= 1.0e-20 )
+          {
+            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+            continue;
+          }
+          LvArray::tensorOps::scale< 3 >( normal0, 1.0 / normal0Norm );
+
+          real64 normal[3] = {};
+          int const lrFitOk =
+            materialLogisticRegression( planeStrain,
+                                        maxLRIterations,
+                                        LRtolerance,
+                                        hEl,
+                                        A % numContactGroups,
+                                        materialA,
+                                        materialB,
+                                        numNeighborsAll[g],
+                                        neighborRegions[g],
+                                        neighborSubRegions[g],
+                                        neighborIndices[g],
+                                        particleGroupView,
+                                        particleMaterialTypeView,
+                                        particlePositionView,
+                                        gridPosition[g],
+                                        normal0,
+                                        normal,
+                                        sGamma );
+          if( lrFitOk == 0 )
+          {
+            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+            continue;
+          }
+
+          real64 normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
+          if( planeStrain == 1 )
+          {
+            normal[2] = 0.0;
+            normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
+          }
+          if( normalNorm <= 1.0e-20 )
+          {
+            LvArray::tensorOps::copy< 3 >( normal, normal0 );
+          }
+          else
+          {
+            LvArray::tensorOps::scale< 3 >( normal, 1.0 / normalNorm );
+          }
+
+          // No prescribed surface is required in material-LR mode. The fit gives
+          // the local trace point and normal from material labels. The centroid
+          // difference is only a geometric diagnostic, and gap stabilization is
+          // intentionally disabled for this path because it is not an accumulated
+          // opening.
+          for( int i = 0; i < 3; ++i )
+          {
+            real64 const xA = gridCenterOfVolume[g][A][i];
+            real64 const xB = gridCenterOfVolume[g][B][i];
+            xGamma[i] = gridPosition[g][i] + sGamma[i];
+            jump[i] = xA - xB;
+            gridSurfaceNormal[g][A][i] = normal[i];
+            gridSurfaceNormal[g][B][i] = -normal[i];
+            gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
+            gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
+            gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
+            gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
+          }
+        }
+        else
+        {
+          real64 const spmA = gridSurfaceFieldMass[g][A];
+          real64 const spmB = gridSurfaceFieldMass[g][B];
+          real64 const spmAB = spmA + spmB;
+          // gridSurfacePosition is meaningful only for fields with mapped weak or
+          // surface particles carrying nonzero surface normals. If either side is
+          // missing this data, the trace location is not defined at this anchor.
+          if( spmA <= smallMass || spmB <= smallMass || spmAB <= smallMass )
+          {
+            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+            continue;
+          }
+
+          // sGamma is stored relative to the anchor grid node because the same
+          // value is reused later to recompute post-projection jump diagnostics.
+          // jump is the signed difference between the two mapped trace locations.
+          for( int i = 0; i < 3; ++i )
+          {
+            sGamma[i] = ( spmA * gridSurfacePosition[g][A][i] +
+                          spmB * gridSurfacePosition[g][B][i] ) / spmAB;
+            jump[i] = gridSurfacePosition[g][A][i] - gridSurfacePosition[g][B][i];
+            gapJump[i] = jump[i];
+            xGamma[i] = gridPosition[g][i] + sGamma[i];
+            gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
+            gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
+            gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
+            gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
+          }
         }
 
         int baseIJK[3] = {};
@@ -22423,7 +23070,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         real64 gapCorrection[3] = {};
         for( int i = 0; i < numDims; ++i )
         {
-          gapCorrection[i] = gapStabilization * jump[i] / dt;
+          gapCorrection[i] = gapStabilization * gapJump[i] / dt;
         }
         real64 const gapCorrectionNorm = LvArray::tensorOps::l2Norm< 3 >( gapCorrection );
         if( maxGapCorrectionVelocity > 0.0 && gapCorrectionNorm > maxGapCorrectionVelocity )
@@ -22681,13 +23328,16 @@ void SolidMechanicsMPM::applyWeakInterfaceTraceProjectionForces( real64 const dt
  * field in a step. This routine assigns a dominant mechanism code and projects
  * force, velocity jump, and displacement jump into normal/tangential magnitudes
  * for plotting. It is diagnostic only; the physics has already been applied by
- * contact, CZ, or weak-trace routines before this function is called.
+ * contact, CZ, or weak-trace routines before this function is called. Material
+ * weak-discontinuity nodes are classifier-only, so this routine reports their
+ * passive A/B velocity and displacement jumps without inventing a force.
  */
 void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
 
   localIndex const numVelocityFields = m_numVelocityFields;
+  localIndex const numContactGroups = m_numContactGroups;
   real64 const smallValue = LvArray::math::max( 1.0e-30, m_smallMass * 1.0e-12 );
 
   arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
@@ -22703,6 +23353,8 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() );
   arrayView3d< real64 const > const gridContactForce =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+  arrayView3d< real64 const > const gridCenterOfMass =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
   arrayView3d< real64 const > const gridDisplacement =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDisplacementString() );
   arrayView3d< real64 const > const gridSurfaceNormal =
@@ -22713,6 +23365,8 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
   arrayView2d< int const > const gridWeakInterfaceTraceContactSuppressed =
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
+  arrayView2d< int const > const gridMaterialWeakActive =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() );
   arrayView3d< real64 const > const gridWeakInterfaceTraceForce =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
   arrayView3d< real64 const > const gridWeakInterfaceTraceSurfaceJump =
@@ -22765,9 +23419,11 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         // 3 weak-trace anchor node with an active projection
         // 4 weak-trace support node receiving force from a nearby anchor
         // 5 ordinary contact suppressed for a selected trace pair, but no active trace
-        // 6 material weak classifier, set earlier before this dynamic diagnostic
+        // 6 material weak classifier, set earlier before this dynamic diagnostic.
+        //   Code 6 is not a force law. It reports passive jumps between the two
+        //   material fields so a traction-free material split is visible in output.
         //
-        // Code 6 is intentionally low priority here because it marks a
+        // Code 6 is intentionally the lowest nonzero priority because it marks a
         // partitioning decision, not a force-carrying interaction.
         bool const weakAnchor =
           activeA && activeB &&
@@ -22788,6 +23444,15 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           gridWeakInterfaceTraceContactSuppressed[g][A] != 0 &&
           gridWeakInterfaceTraceContactSuppressed[g][B] != 0 &&
           !weakAnchor && !weakSupport;
+        bool const materialWeakPair =
+          activeA && activeB &&
+          numContactGroups > 0 &&
+          A % numContactGroups == B % numContactGroups &&
+          A / numContactGroups < 2 &&
+          B / numContactGroups < 2 &&
+          A / numContactGroups != B / numContactGroups &&
+          gridMaterialWeakActive[g][A] != 0 &&
+          gridMaterialWeakActive[g][B] != 0;
 
         int mechanism = 0;
         if( weakAnchor )
@@ -22809,6 +23474,10 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         else if( suppressedInactive )
         {
           mechanism = 5;
+        }
+        else if( materialWeakPair )
+        {
+          mechanism = 6;
         }
 
         if( mechanism == 0 )
@@ -22833,22 +23502,30 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           updateA = contactForceMagA2 > smallValue;
           updateB = contactForceMagB2 > smallValue;
         }
+        else if( mechanism == 6 )
+        {
+          updateA = true;
+          updateB = true;
+        }
         if( !updateA && !updateB )
         {
           continue;
         }
 
         int const mechanismPriority =
-          mechanism == 3 ? 5 :
-          mechanism == 4 ? 4 :
-          mechanism == 1 ? 3 :
-          mechanism == 2 ? 2 :
-          mechanism == 5 ? 1 : 0;
+          mechanism == 3 ? 6 :
+          mechanism == 4 ? 5 :
+          mechanism == 1 ? 4 :
+          mechanism == 2 ? 3 :
+          mechanism == 5 ? 2 :
+          mechanism == 6 ? 1 : 0;
 
         // Pick a normal for scalar diagnostics. Surface normals are preferred,
-        // then CZ area vectors, then the weak-trace surface-position jump. If no
-        // direction is available, normal components stay zero and tangential
-        // components reduce to vector magnitudes.
+        // then CZ area vectors, then the weak-trace surface-position jump. A
+        // material weak split usually has no internal surface flag, so fall back
+        // to the line joining the two field centers of mass. If no direction is
+        // available, normal components stay zero and tangential components reduce
+        // to vector magnitudes.
         real64 nA[3] = {};
         LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
         real64 normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
@@ -22870,6 +23547,12 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         if( normalNorm <= 1.0e-20 )
         {
           LvArray::tensorOps::copy< 3 >( nA, gridWeakInterfaceTraceSurfaceJump[g][A] );
+          normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
+        }
+        if( normalNorm <= 1.0e-20 && mechanism == 6 )
+        {
+          LvArray::tensorOps::copy< 3 >( nA, gridCenterOfMass[g][B] );
+          LvArray::tensorOps::subtract< 3 >( nA, gridCenterOfMass[g][A] );
           normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
         }
         bool const haveNormal = normalNorm > 1.0e-20;
@@ -22915,7 +23598,7 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         {
           LvArray::tensorOps::copy< 3 >( displacementJump, gridWeakInterfaceTraceSurfaceJump[g][A] );
         }
-        else if( mechanism == 1 && activeA && activeB )
+        else if( ( mechanism == 1 || mechanism == 6 ) && activeA && activeB )
         {
           LvArray::tensorOps::copy< 3 >( displacementJump, gridDisplacement[g][A] );
           LvArray::tensorOps::subtract< 3 >( displacementJump, gridDisplacement[g][B] );
@@ -22943,11 +23626,12 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           LvArray::math::max( 0.0, LvArray::tensorOps::l2NormSquared< 3 >( displacementJump ) - displacementNormal * displacementNormal ) );
 
         int const currentPriorityA =
-          gridInterfaceMechanism[g][A] == 3 ? 5 :
-          gridInterfaceMechanism[g][A] == 4 ? 4 :
-          gridInterfaceMechanism[g][A] == 1 ? 3 :
-          gridInterfaceMechanism[g][A] == 2 ? 2 :
-          gridInterfaceMechanism[g][A] == 5 ? 1 : 0;
+          gridInterfaceMechanism[g][A] == 3 ? 6 :
+          gridInterfaceMechanism[g][A] == 4 ? 5 :
+          gridInterfaceMechanism[g][A] == 1 ? 4 :
+          gridInterfaceMechanism[g][A] == 2 ? 3 :
+          gridInterfaceMechanism[g][A] == 5 ? 2 :
+          gridInterfaceMechanism[g][A] == 6 ? 1 : 0;
         if( updateA && mechanismPriority >= currentPriorityA )
         {
           gridInterfaceMechanism[g][A] = mechanism;
@@ -22960,11 +23644,12 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         }
 
         int const currentPriorityB =
-          gridInterfaceMechanism[g][B] == 3 ? 5 :
-          gridInterfaceMechanism[g][B] == 4 ? 4 :
-          gridInterfaceMechanism[g][B] == 1 ? 3 :
-          gridInterfaceMechanism[g][B] == 2 ? 2 :
-          gridInterfaceMechanism[g][B] == 5 ? 1 : 0;
+          gridInterfaceMechanism[g][B] == 3 ? 6 :
+          gridInterfaceMechanism[g][B] == 4 ? 5 :
+          gridInterfaceMechanism[g][B] == 1 ? 4 :
+          gridInterfaceMechanism[g][B] == 2 ? 3 :
+          gridInterfaceMechanism[g][B] == 5 ? 2 :
+          gridInterfaceMechanism[g][B] == 6 ? 1 : 0;
         if( updateB && mechanismPriority >= currentPriorityB )
         {
           gridInterfaceMechanism[g][B] = mechanism;
