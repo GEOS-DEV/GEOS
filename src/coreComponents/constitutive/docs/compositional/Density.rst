@@ -11,7 +11,7 @@ The compositional density model first calculates the uncorrected molar volume, :
 .. math::
     v_{EOS} = \frac{Z R T}{P}
 
-To improve the accuracy of liquid phase densities, a Peneloux volume shift s described by Péneloux et al. (1982). correction is applied. The corrected molar volume, :math:`v`, is calculated by subtracting a composition-weighted sum of component-specific dimensional volume shifts, :math:`c_i`, from the EOS molar volume:
+To improve the accuracy of liquid phase densities, a Peneloux volume shift as described by Péneloux et al. (1982), correction is applied. The corrected molar volume, :math:`v`, is calculated by subtracting a composition-weighted sum of component-specific dimensional volume shifts, :math:`c_i`, from the EOS molar volume:
 
 .. math::
     v = v_{EOS} - \sum_{i=1}^{N_c} x_i c_i

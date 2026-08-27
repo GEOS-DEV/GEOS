@@ -53,7 +53,7 @@ The flash algorithm:
 2. Solve for V: The Rachford-Rice equation is solved for the vapour fraction :math:`V` (using successive substitution, followed by Newton iterations).
 3. Compute compositions: The corresponding liquid (:math:`x_i`) and vapour (:math:`y_i`) mole fractions are computed.
 4. Evaluate EoS: These compositions are used to calculate the component fugacities :math:`\phi_{iL}` and :math:`\phi_{iV}` via the Equation of State.
-5. Check convergence: Convergence is reached when :math:`\sum_{i=1}^{N_c} (\phi_{iL} - \phi_{iV})^2 < \epsilon`.
+5. Check convergence: Convergence is reached when :math:`\sum_{i=1}^{N_c} (\ln \phi_{iL} - \ln \phi_{iV})^2 < \epsilon`.
 6. Update K-values: If not converged, the algorithm employs successive substitution iterations, constantly updating the K-values using fugacity coefficients derived from the EoS:
 
 .. math::
