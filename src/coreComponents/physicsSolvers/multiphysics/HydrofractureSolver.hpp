@@ -134,9 +134,9 @@ public:
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
-  void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
+  void assembleForceResidualDerivativeWrtPressureAndTemperature( DomainPartition & domain,
+                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                 arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix );
@@ -177,6 +177,8 @@ public:
     constexpr static char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
 
     constexpr static char const * leakoffConstString() {return "leakoffCoefficient"; }
+
+    constexpr static char const * matrixTemperatureString() {return "matrixTemperature"; }
 
     constexpr static char const * fractureCreationTimeString() {return "fractureCreationTime"; }
 
@@ -264,6 +266,10 @@ private:
 
   // analytical leakoff coefficient
   real64 m_leakoffCoefficient;
+
+  // constant matrix temperature, used to compute the thermal stress acting on the fracture faces when
+  // the matrix is not poroelastic
+  real64 m_matrixTemperature;
 };
 
 ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::InitializationType,

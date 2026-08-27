@@ -593,10 +593,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       diffusionModel.initializeTemperatureState( temperature );
     }
 
-    if( cycleNumber == 0 && time_n + dt <= 0 )
+    if( !m_appliedInitialConditionsToFracture && cycleNumber == 0 )
     {
-      // Initial fracture elements are created after ProblemManager::applyInitialConditions() has run,
-      // so re-apply initial conditions here. The dt guard excludes calls from the resolve loop (dt>0).
+      // The initial fracture elements do not exist yet when ProblemManager::applyInitialConditions()
+      // runs, so they never receive their initial conditions. Re-apply them here. This must happen
+      // exactly once: the fracture is generated again from the resolve loop of the coupled solver,
+      // at which point re-applying would overwrite the solution.
+      m_appliedInitialConditionsToFracture = true;
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
       fsManager.applyInitialConditions( meshLevel );
     }
