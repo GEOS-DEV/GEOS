@@ -351,6 +351,7 @@ public:
                                                                NodeManager & nodeManager );
 
   void updateGridDynamicsAndContactForExplicitStep( real64 const dt,
+                                                    int const cycleNumber,
                                                     ParticleManager & particleManager,
                                                     NodeManager & nodeManager );
 
@@ -390,10 +391,12 @@ public:
 
   void updateParticleKinematicsForExplicitStep( real64 const dt,
                                                 real64 const time_n,
+                                                int const cycleNumber,
                                                 ParticleManager & particleManager,
                                                 SpatialPartition & partition );
 
   void updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
+    int const cycleNumber,
                                                          ParticleManager & particleManager );
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
@@ -1041,7 +1044,10 @@ public:
 
   void deleteBadParticles( ParticleManager & particleManager );
 
-  // void dumpParticleStressToFile(ParticleManager & particleManager, int const cycleNumber, std::string label);
+  void dumpMappingDataToFile( ParticleManager & particleManager, int const cycleNumbder, std::string label);
+  void dumpGridDataToFile(NodeManager & nodeManager, int const cycleNumber, std::string label);
+  void dumpModelDataToFile(ParticleManager & particleManager, int const cycleNumbder, std::string label);
+  void dumpParticleDataToFile(ParticleManager & particleManager, int const cycleNumber, std::string label);
 
   // void checkParticlesForNan( ParticleManager & particleManager, std::string label );
 
@@ -1565,6 +1571,7 @@ protected:
   string_array m_tracerVariables;
   real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
+  mpm::GridToParticleMappingOption m_gridToParticleMapping;
   mpm::UpdateMethodOption m_updateMethod;
   integer m_updateOrder;
   int m_useCrackTipDetection;

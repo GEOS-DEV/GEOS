@@ -781,6 +781,7 @@ parameters = {
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.
+               'gridToParticleMapping': (None, True), # Determines shape function computations at runtime.
                'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
                'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
@@ -1946,13 +1947,13 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
 
-## Serialization for debugging gpu
-#export AMD_SERIALIZE_KERNEL=3
-#export AMD_SERIALIZE_COPY=3
-#export HIP_LAUNCH_BLOCKING=1
-#export AMD_LOG_LEVEL=4
-#export AMD_LOG_MASK=0x20387
-#ulimit -c unlimited
+# # Serialization for debugging gpu
+# export AMD_SERIALIZE_KERNEL=3
+# export AMD_SERIALIZE_COPY=3
+# export HIP_LAUNCH_BLOCKING=1
+# export AMD_LOG_LEVEL=4
+# export AMD_LOG_MASK=0x20387
+# ulimit -c unlimited
 
 echo "Launching flux run command..."
 export OMP_NUM_THREADS=1

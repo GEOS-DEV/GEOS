@@ -2425,6 +2425,10 @@ class Geometry:
     return _defaultMatDir
 
   @abstractmethod
+  def getDamage(self, pt):
+    return _defaultDamage
+
+  @abstractmethod
   def xMin(self):
     return -np.inf
 
