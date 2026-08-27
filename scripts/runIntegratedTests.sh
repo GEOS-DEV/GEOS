@@ -920,7 +920,7 @@ BUILD_TYPE=Release
 if [[ "${SANITIZERS}" -eq 1 ]]; then
   BUILD_TYPE=RelWithDebInfo
 fi
-or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
+or_die cmake -S "${GEOS_SRC_DIR}/src" -B "${BUILD_DIR}" -G Ninja \
   -C "${HOST_CONFIG}" \
   "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" \
   -DGEOS_INSTALL_SCHEMA=ON \
