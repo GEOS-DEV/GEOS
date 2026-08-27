@@ -728,9 +728,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                          GEOS_FMT( faceBcLogMessage,
-                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                            this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                            setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -764,9 +764,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
-                                                                                 this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                                                 setName, targetGroup.getName(), numTargetFaces ),
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                                                         this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                         setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -786,7 +786,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
       } );
 
-      GEOS_ERROR_IF( pressureSets != temperatureSets, GEOS_FMT( incompleteBCLogmessage, this->getName(), time_n + dt ) );
+      GEOS_ERROR_IF( pressureSets != temperatureSets, GEOS_FMT_RUNTIME( incompleteBCLogmessage, this->getName(), time_n + dt ) );
 
       // Take BCs defined for "temperature" field and apply values to "faceTemperature"
       for( auto const & setName : temperatureSets )
@@ -836,9 +836,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                          GEOS_FMT( faceBcLogMessage,
-                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                            this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                            setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 

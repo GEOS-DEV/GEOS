@@ -891,9 +891,8 @@ void validateSuperCellGraph(
         isolated++;
         if( isolated <= 5 )
         {
-          pmet_idx_t globalId = localStart + i;
           GEOS_LOG_RANK( GEOS_FMT( "WARNING: Super-cell {} (global {}) has no neighbors (isolated)",
-                                   i, globalId ) );
+                                   i, localStart + i ) );
         }
       }
     }
