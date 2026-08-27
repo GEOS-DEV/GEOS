@@ -56,7 +56,14 @@ option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
-option( ENABLE_HYPREDRV "Enables HYPREDRV" OFF )
+# hypredrive is ON by default whenever HYPRE is enabled. Pass -DENABLE_HYPREDRV=OFF to disable.
+if( ENABLE_HYPRE )
+  set( GEOS_HYPREDRV_DEFAULT ON )
+else()
+  set( GEOS_HYPREDRV_DEFAULT OFF )
+endif()
+option( ENABLE_HYPREDRV "Enables HYPREDRV (ON by default when ENABLE_HYPRE is ON)" ${GEOS_HYPREDRV_DEFAULT} )
+unset( GEOS_HYPREDRV_DEFAULT )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
@@ -169,9 +176,14 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOS_NINJA_FLAGS
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+# clang-22 reports google-benchmark's use of __COUNTER__ inside a #if directive as a
+# C2y extension. The check keeps the flag off compilers that do not know it, where
+# an unrecognized -Wno-* would itself become an error under ENABLE_WARNINGS_AS_ERRORS.
+CHECK_CXX_COMPILER_FLAG("-Wc2y-extensions" CXX_C2Y_EXTENSIONS)
 if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
                                 FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                      $<$<AND:$<BOOL:${CXX_C2Y_EXTENSIONS}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-c2y-extensions>
                                 )
 endif()
 
