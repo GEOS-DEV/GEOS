@@ -227,28 +227,28 @@ template<>
 string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
-  CellLayoutRows headerCellsLayout;
-  CellLayoutRows dataCellsLayout;
-  CellLayoutRows errorCellsLayout;
+  CellLayoutRows headerRows;
+  CellLayoutRows dataRows;
+  CellLayoutRows errorRows;
   size_t tableTotalWidth = 0;
 
   initalizeTableGrids( m_tableLayout, tableData,
-                       headerCellsLayout, dataCellsLayout, errorCellsLayout,
+                       headerRows, dataRows, errorRows,
                        tableTotalWidth, nullptr );
 
   string const sepLine = string( tableTotalWidth, m_horizontalLine );
-  outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, sepLine );
-  outputTableData( tableOutput, m_tableLayout, dataCellsLayout );
-  outputTableFooter( tableOutput, m_tableLayout, errorCellsLayout, sepLine, !dataCellsLayout.empty() );
+  outputTableHeader( tableOutput, m_tableLayout, headerRows, sepLine );
+  outputTableData( tableOutput, m_tableLayout, dataRows );
+  outputTableFooter( tableOutput, m_tableLayout, errorRows, sepLine, !dataRows.empty() );
 
   return tableOutput.str();
 }
 
 void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableLayout,
                                               TableData const & tableInputData,
-                                              CellLayoutRows & headerCellsLayout,
-                                              CellLayoutRows & dataCellsLayout,
-                                              CellLayoutRows & errorCellsLayout,
+                                              CellLayoutRows & headerRows,
+                                              CellLayoutRows & dataRows,
+                                              CellLayoutRows & errorRows,
                                               size_t & tableTotalWidth,
                                               ColumnWidthModifier columnWidthModifier ) const
 {
@@ -261,30 +261,30 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
   stdVector< size_t > columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
 
-  populateTitleCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
+  populateTitleCellsLayout( tableLayout, headerRows, nbVisibleColumns );
   if( hasColumnLayout )
   {
-    populateHeaderCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
-    populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
+    populateHeaderCellsLayout( tableLayout, headerRows, nbVisibleColumns );
+    populateDataCellsLayout( tableLayout, dataRows, inputDataValues, nbVisibleColumns );
   }
   else
   {
-    populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
+    populateDataCellsLayout( tableLayout, dataRows, inputDataValues );
   }
 
   if( getErrorsList().hasErrors() || tableInputData.getErrorsList().hasErrors())
   {
-    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData.getErrorsList() );
+    populateErrorCellsLayout( tableLayout, errorRows, tableInputData.getErrorsList() );
   }
 
-  stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
-  stretchColumnsByCellsWidth( columnsWidth, dataCellsLayout );
-  stretchColumnsByCellsWidth( columnsWidth, errorCellsLayout );
+  stretchColumnsByCellsWidth( columnsWidth, headerRows );
+  stretchColumnsByCellsWidth( columnsWidth, dataRows );
+  stretchColumnsByCellsWidth( columnsWidth, errorRows );
 
   // only after all cells that are not merge, we can process the merged cells.
-  stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
-  stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
-  stretchColumnsByMergedCellsWidth( columnsWidth, errorCellsLayout, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, headerRows, tableLayout, false );
+  stretchColumnsByMergedCellsWidth( columnsWidth, dataRows, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, errorRows, tableLayout, true );
 
   if( columnWidthModifier )
     columnWidthModifier( columnsWidth );
@@ -298,9 +298,9 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   }
 
   // we can now propagate the columns width width to all cells
-  applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
-  applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
-  applyColumnsWidth( columnsWidth, errorCellsLayout, tableLayout );
+  applyColumnsWidth( columnsWidth, headerRows, tableLayout );
+  applyColumnsWidth( columnsWidth, dataRows, tableLayout );
+  applyColumnsWidth( columnsWidth, errorRows, tableLayout );
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,

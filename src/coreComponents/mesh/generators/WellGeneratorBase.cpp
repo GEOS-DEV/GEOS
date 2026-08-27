@@ -141,7 +141,6 @@ void WellGeneratorBase::generateWellGeometry( )
   if( isLogLevelActive< logInfo::GenerateWell >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
-    logPerforationTable();
   }
 }
 
@@ -567,20 +566,6 @@ void WellGeneratorBase::logInternalWell() const
 
   TableTextFormatter const wellFormatter( wellLayout );
   GEOS_LOG_RANK_0( wellFormatter.toString( wellData ));
-}
-
-void WellGeneratorBase::logPerforationTable() const
-{
-  TableData dataPerforation;
-  for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
-  {
-    dataPerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
-  }
-
-  TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", getName()),
-                                        { "Perforation no.", "Coordinates", "Well element no." } );
-  TableTextFormatter const logPerforation( layoutPerforation );
-  GEOS_LOG_RANK_0( logPerforation.toString( dataPerforation ));
 }
 
 }
