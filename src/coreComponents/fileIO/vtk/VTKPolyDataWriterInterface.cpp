@@ -603,7 +603,7 @@ using ParticleData = std::pair< stdVector< int >, vtkSmartPointer< vtkCellArray 
 static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
-  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
 #if VTK_VERSION_NUMBER < VTK_VERSION_CHECK( 9, 6, 0 )
   cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
 #endif

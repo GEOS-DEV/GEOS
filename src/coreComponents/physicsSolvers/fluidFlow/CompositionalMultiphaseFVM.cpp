@@ -1439,9 +1439,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                                  setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
+                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                          getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                                          setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
                                         bc );
       }
 

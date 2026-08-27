@@ -171,10 +171,13 @@ private:
   bool m_timestepScopeActive = false;
   bool m_newtonScopeActive = false;
   arrayView1d< HypreVector const > m_nearNullKernel;
+  bool m_reportedGeneratedYamlFailure = false;
   size_t m_hypredriveGeneration = 0;
   HYPREDRV_t m_hypredrive{};
+  bool m_linearSolverCreated = false;
   mutable HypreVector m_dummyRhs;
   mutable HypreVector m_dummySol;
+  mutable HypreVector m_residual;
   std::unique_ptr< HypreSolver > m_legacySolver;
 };
 

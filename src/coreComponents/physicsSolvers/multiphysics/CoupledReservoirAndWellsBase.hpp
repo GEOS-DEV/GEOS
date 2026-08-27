@@ -354,7 +354,7 @@ private:
           GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
           GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
 
-          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=, this] ( localIndex const iperf )
           {
             GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
             GEOS_LOG_RANK( GEOS_FMT( "{}: perforation at ({},{},{}), perforated element center = ({},{},{}), transmissibility = {} [{}]",

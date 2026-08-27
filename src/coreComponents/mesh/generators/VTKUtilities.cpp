@@ -34,8 +34,15 @@
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
-#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+#include <vtkVersionMacros.h>
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+#include <vtkCellCenters.h>
+#include <vtkDIYKdTreeUtilities.h>
+#endif
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 5, 0 )
 #include <vtkCellTypeUtilities.h>
+#else
+#include <vtkCellTypes.h>
 #endif
 #include <vtkDataArray.h>
 #include <vtkDataSetReader.h>
@@ -71,7 +78,6 @@
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkAppendFilter.h>
-#include <vtkVersionMacros.h>
 
 #ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
@@ -440,17 +446,38 @@ loadMesh( Path const & filePath,
 
         // Looking for the _first_ block that matches the requested name.
         // No check is performed to validate that there is not name duplication.
+        stdVector< string > deferredBlockNames;
+        stdVector< vtkSmartPointer< vtkDataSet > > deferredMeshes;
         for( unsigned int i = 0; i < multiBlockDataSet->GetNumberOfBlocks(); ++i )
         {
-          string const dataSetName = multiBlockDataSet->GetMetaData( i )->Get( multiBlockDataSet->NAME() );
-          if( dataSetName == blockName )
+          vtkInformation * metadata = multiBlockDataSet->GetMetaData( i );
+          vtkDataObject * block = multiBlockDataSet->GetBlock( i );
+          bool const hasName = metadata != nullptr && metadata->Has( multiBlockDataSet->NAME() );
+          if( hasName )
           {
-            vtkDataObject * block = multiBlockDataSet->GetBlock( i );
-            if( block->IsA( "vtkDataSet" ) )
+            string const dataSetName = metadata->Get( multiBlockDataSet->NAME() );
+            if( dataSetName == blockName && block != nullptr && block->IsA( "vtkDataSet" ) )
             {
-              vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
-              return mesh;
+              return vtkDataSet::SafeDownCast( block );
             }
+            if( block == nullptr )
+            {
+              deferredBlockNames.emplace_back( dataSetName );
+            }
+          }
+          if( block != nullptr && block->IsA( "vtkDataSet" ) && !hasName )
+          {
+            deferredMeshes.emplace_back( vtkDataSet::SafeDownCast( block ) );
+          }
+        }
+
+        // VTK 9.7 stores names and external datasets in separate entries. Pair
+        // the named, empty entries with the non-empty dataset entries in order.
+        for( std::size_t i = 0; i < deferredBlockNames.size(); ++i )
+        {
+          if( deferredBlockNames[i] == blockName && i < deferredMeshes.size() )
+          {
+            return deferredMeshes[i];
           }
         }
         GEOS_ERROR( GEOS_FMT( "Could not find mesh \"{}\" in multi-block vtk file \"{}\".\n{}",
@@ -986,7 +1013,7 @@ static void classifyCellsByDimension( vtkDataSet & mesh,
   // Single pass: classify and populate
   for( vtkIdType i = 0; i < numCells; ++i )
   {
-#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 5, 0 )
     int const dim = vtkCellTypeUtilities::GetDimension( mesh.GetCellType( i ) );
 #else
     int const dim = vtkCellTypes::GetDimension( mesh.GetCellType( i ) );
@@ -1977,6 +2004,48 @@ redistributeByKdTree( vtkDataSet & mesh )
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
+  vtkSmartPointer< vtkMultiProcessController > controller = getController();
+  rdsf->SetController( controller );
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+  // VTK 9.7 computes its cuts from dataset bounds but balances cell centers.
+  // Some valid GEOS meshes have cell centers outside those bounds, which makes
+  // VTK's DIY KdTree abort while building its local histogram. Extend VTK's
+  // normal inflated domain to include those centers before generating cuts.
+  vtkNew< vtkCellCenters > cellCenters;
+  cellCenters->SetInputData( &mesh );
+  cellCenters->Update();
+  double cellCenterBounds[6];
+  cellCenters->GetOutput()->GetBounds( cellCenterBounds );
+  vtkBoundingBox localBounds;
+  localBounds.AddBounds( mesh.GetBounds() );
+  if( localBounds.IsValid() )
+  {
+    double constexpr boundingBoxLengthTolerance = 0.01;
+    double constexpr boundingBoxInflationRatio = 0.01;
+    double const xInflate = localBounds.GetLength( 0 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 0 );
+    double const yInflate = localBounds.GetLength( 1 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 1 );
+    double const zInflate = localBounds.GetLength( 2 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 2 );
+    localBounds.Inflate( xInflate, yInflate, zInflate );
+  }
+  localBounds.AddBounds( cellCenterBounds );
+  double correctedBounds[6];
+  double const * correctedBoundsPtr = nullptr;
+  if( localBounds.IsValid() )
+  {
+    localBounds.GetBounds( correctedBounds );
+    correctedBoundsPtr = correctedBounds;
+  }
+  auto const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
+    &mesh, MpiWrapper::commSize(), true, controller, correctedBoundsPtr );
+  rdsf->SetUseExplicitCuts( true );
+  rdsf->SetExplicitCuts( cuts );
+#endif
   {
     // vtkRedistributeDataSetFilter uses VTK's XML writer internally to
     // serialize datasets exchanged by DIY. The writer may raise floating-point
@@ -3400,6 +3469,14 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ),
+                 GEOS_FMT( "VTK field '{}' has {} tuples, but {} cells were requested during import",
+                           vtkArray->GetName(), vtkArray->GetNumberOfTuples(), cellIds.size() ) );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( wrapper.size() ),
+                 GEOS_FMT( "Destination wrapper for VTK field '{}' has {} entries, but {} cells were requested during import",
+                           vtkArray->GetName(), wrapper.size(), cellIds.size() ) );
+
   using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
   types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
@@ -3432,7 +3509,12 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
 void importRegularField( vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  stdVector< vtkIdType > cellIds( wrapper.size() );
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+
+  // The destination may contain ghost entries in addition to the local VTK cells.
+  // Import only the tuples present in the VTK array; ghost entries are populated by
+  // the subsequent field synchronization.
+  stdVector< vtkIdType > cellIds( static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ) );
   std::iota( cellIds.begin(), cellIds.end(), 0 );
   return importRegularField( cellIds, vtkArray, wrapper );
 }

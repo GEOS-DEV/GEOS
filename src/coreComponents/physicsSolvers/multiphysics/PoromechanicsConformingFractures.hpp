@@ -529,7 +529,7 @@ protected:
       arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+      forAll< serialPolicy >( subRegion.size(), [=, this]( localIndex const kfe )
       {
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
