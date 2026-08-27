@@ -22,6 +22,7 @@
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
@@ -261,6 +262,46 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 
   GEOS_LOG_RANK_0_IF( m_useQuasiNewton, GEOS_FMT( "{}: activated Quasi-Newton", this->getName()));
+}
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
+{
+  Base::initializePostInitialConditionsPreSubGroups();
+
+  if( !this->m_isThermal )
+  {
+    return;
+  }
+
+  // Fluid enthalpy excludes referenceInternalEnergy, so fluid entering a fracture element carries that much
+  // too little energy per unit mass, which spuriously cools the newly generated fracture elements.
+  // For now, require the fluid models to use a negligible referenceInternalEnergy in thermal hydrofracture
+  // simulations; the enthalpy calculation will be fixed in a separate PR.
+  real64 constexpr maxAllowableReferenceInternalEnergy = 1.0e-3;
+  string const referenceInternalEnergyKey = ThermalCompressibleSinglePhaseFluid::viewKeyStruct::referenceInternalEnergyString();
+
+  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+
+  mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  {
+    string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+
+    if( !fluid.hasWrapper( referenceInternalEnergyKey ) )
+    {
+      return;
+    }
+    real64 const referenceInternalEnergy = fluid.template getReference< real64 >( referenceInternalEnergyKey );
+
+    GEOS_THROW_IF( LvArray::math::abs( referenceInternalEnergy ) > maxAllowableReferenceInternalEnergy,
+                   GEOS_FMT( "{}: fluid model {} sets {} to {:g}, which must not exceed {:g} in a thermal "
+                             "hydrofracture simulation, otherwise the fluid filling a fracture element cools it.",
+                             this->getName(), fluidName, referenceInternalEnergyKey,
+                             referenceInternalEnergy, maxAllowableReferenceInternalEnergy ),
+                   InputError );
+  } );
 }
 
 template< typename POROMECHANICS_SOLVER >
