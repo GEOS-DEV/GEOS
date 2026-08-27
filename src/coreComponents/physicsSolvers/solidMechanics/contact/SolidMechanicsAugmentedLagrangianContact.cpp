@@ -110,7 +110,7 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag to use anisotropic scaling in tolerances and penalties computations" );
-  
+
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
 
@@ -1961,10 +1961,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
       elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
-    
+
     ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
-      // Get the coordinates for all nodes
+    // Get the coordinates for all nodes
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -2024,33 +2024,33 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               real64 const M = K + 4.0 / 3.0 * G;
 
               real64 bbox[3]{};
-              
-              if(m_isAnisotropic)
+
+              if( m_isAnisotropic )
               {
                 NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
                 localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
 
                 real64 maxSize[3];
                 real64 minSize[3];
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-                minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-              }
-
-              for( localIndex a = 1; a < numNodesPerElem; ++a )
-              {
                 for( localIndex j = 0; j < 3; ++j )
                 {
-                  maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                  minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                  maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+                  minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
                 }
-              }
 
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                bbox[j] = maxSize[j] - minSize[j];
-              }
+                for( localIndex a = 1; a < numNodesPerElem; ++a )
+                {
+                  for( localIndex j = 0; j < 3; ++j )
+                  {
+                    maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                    minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                  }
+                }
+
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  bbox[j] = maxSize[j] - minSize[j];
+                }
 
 
               }
@@ -2058,14 +2058,14 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               // For anisotropic factor: XYZ-aligned bbox length
               // For tetrahedra (triangle faces): charLength = edge = (6*sqrt(2)*V)^(1/3)
               // For hexahedra (quadrilateral faces): charLength = (V)^(1/3)
-              real64 const charLength = m_isAnisotropic ? bbox[0] : ( isTriangle 
+              real64 const charLength = m_isAnisotropic ? bbox[0] : ( isTriangle
                   ? pow( 6 * std::sqrt( 2 ) * volume, 1.0 / 3.0 )
                   : pow( volume, 1.0 / 3.0 ) );
 
               // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
               for( localIndex j = 0; j < 3; ++j )
               {
-                
+
                 //TODO (jafranc) once stabilized, get rid of this ugly ternary
                 stiffDiagApprox[ i ][ j ] = m_isAnisotropic ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / bbox[j] / bbox[j]
                 : ( isTriangle

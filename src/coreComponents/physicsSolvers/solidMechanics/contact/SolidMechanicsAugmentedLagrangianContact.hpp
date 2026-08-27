@@ -301,7 +301,7 @@ private:
     constexpr static char const * tolNormalTracFacString() { return "tolNormalTrac"; }
 
     constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
-    
+
     constexpr static char const * anisotropicString() { return "anisotropic"; }
 
   };
