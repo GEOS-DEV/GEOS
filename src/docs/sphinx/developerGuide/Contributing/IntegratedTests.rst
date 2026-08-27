@@ -170,7 +170,7 @@ For a system with 32 cores/node, an appropriate run command might look like:
 
 
 .. note::
-  In this example, the path given by `openmpi_install` should include `bin/mpirun`. 
+  In this example, the path given by `openmpi_install` should include `bin/mpirun`.
 
 
 .. note::
@@ -242,7 +242,7 @@ Using the serial beam bending test as an example, key output files include:
 * *totalDisplacement_trace.png* : A figure displaying the results of the curve check step.
 * *beamBending.geos.out* : Contains the standard output for only the geos run step.
 * *beamBending_restart_000000010.restartcheck* which holds all of the standard output for only the *restartcheck* step.
-* *beamBending_restart_000000010.0.diff.hdf5* which mimmics the hierarchy of the restart file and has links to the 
+* *beamBending_restart_000000010.0.diff.hdf5* which mimmics the hierarchy of the restart file and has links to the
 
 See :ref:`Restart Check <restart-check>` and :ref:`Curve Check <curve-check>` for further details on the test checks and output files.
 
@@ -252,7 +252,7 @@ See :ref:`Restart Check <restart-check>` and :ref:`Curve Check <curve-check>` fo
 Restart Check
 =================================
 
-This check compares a restart file output at the end of a run against a baseline. 
+This check compares a restart file output at the end of a run against a baseline.
 The python script that evaluates the diff is included in the `geos_ats` package, and is located here: *integratedTests/scripts/geos_ats_package/geos_ats/helpers/restart_check.py*.
 The script compares the two restart files and writes out a *.restart_check* file with the results, as well as exiting with an error code if the files compare differently.
 This script takes two positional arguments and a number of optional keyword arguments:
@@ -429,7 +429,7 @@ The following errors would indicate that values were not found in time history f
   Value not found in target file: value
   Set not found in target file: setname
   Could not find location string for parameter: value, search...
-  
+
 
 The following error would indicate that a given curve exceeded its tolerance compared to script-generated values:
 
@@ -461,7 +461,7 @@ This file begins by defining a set of common parameters, which are used later:
   :end-before: # Integrated Test Docs End Parameters
 
 
-It then enters over the requested partitioning schemes: 
+It then enters over the requested partitioning schemes:
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/sedov.ats
   :language: python
@@ -499,7 +499,7 @@ Using the sedov example, after creating *sedov.ats* the directory should look li
     - sedov.xml
 
 
-These changes will be reflected in the new baselines after triggering the manual rebaseline step. 
+These changes will be reflected in the new baselines after triggering the manual rebaseline step.
 
 
 .. _rebaselining-tests:
@@ -601,7 +601,7 @@ To add coverage for a new MGR strategy:
 
 
 Tips
-=======
+-----
 
 
 **Parallel Tests**: On some development machines geosxats won't run parallel tests by default (e.g. on an linux laptop or workstation), and as a result many baselines will be skipped.

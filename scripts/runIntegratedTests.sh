@@ -592,7 +592,7 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     docker_args+=(--cap-add=SYS_PTRACE --security-opt=seccomp=unconfined)
     docker_args+=(--mount "type=bind,src=${SANITIZER_ROOT},dst=${SANITIZER_ROOT}")
     case "${BUILD_DIR_NAME}" in
-      "${SANITIZER_ROOT}"/*) ;;
+      "${SANITIZER_ROOT}"|"${SANITIZER_ROOT}"/*) ;;
       *) docker_args+=(--mount "type=bind,src=${BUILD_DIR_NAME},dst=${BUILD_DIR_NAME}") ;;
     esac
     if [[ -n "${TPL_HOST_CONFIG_PATH}" ]]; then
@@ -759,7 +759,7 @@ SANITIZER_CMAKE_ARGS=()
 # Build a complete sanitizer-compatible TPL stack when the runtime image does
 # not provide its generated host-config. The sanitizer path uses the geos-tpl
 # Spack driver because it needs Spack to generate a GEOS host-config carrying
-# sanitizer flags; the legacy CMake superbuild also provides Hypredrive for
+# sanitizer flags. The legacy CMake superbuild also provides Hypredrive for
 # non-Spack TPL builds. The source checkout is mounted read-only; every
 # generated Spack, build, and install path is below the configurable
 # SANITIZER_ROOT (which defaults to /tmp for this script).
@@ -983,7 +983,9 @@ else
   log "Using mounted baselines at /tmp/geos/baselines"
 fi
 if [[ -n "${FILTER}" ]]; then
-  ATS_CMD+=(--ats filter "label.find('${FILTER}') >= 0")
+  # geos_ats uses -f for "allow failed tests".  Pass the requested test-name
+  # expression through to ATS' own --filter option instead.
+  ATS_CMD+=(--ats "filter=\"${FILTER}\" in SELF.name")
 fi
 if [[ ${#EXTRA_ATS_ARGS[@]} -gt 0 ]]; then
   ATS_CMD+=("${EXTRA_ATS_ARGS[@]}")
