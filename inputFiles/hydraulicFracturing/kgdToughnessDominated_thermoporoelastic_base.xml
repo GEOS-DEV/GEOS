@@ -72,7 +72,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, fractureFilling, fractureContact, hApertureModel, thermalCond }"/>
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel, fractureThermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -80,13 +80,14 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="1.0e-6"
+      referenceViscosity="1.0e-6"
       referencePressure="0.0"
-      referenceTemperature="350.0"
+      referenceTemperature="0.0"
       compressibility="5e-10"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       specificHeatCapacity="4.2e3"
-      referenceInternalEnergy="1.0"/>
+      referenceInternalEnergy="0.001"/>
 
     <PorousElasticIsotropic
       name="porousRock"
@@ -101,7 +102,7 @@
       defaultDensity="2700"
       defaultYoungModulus="30.0e9"
       defaultPoissonRatio="0.25"
-      defaultDrainedLinearTEC="1.0e-5"/>
+      defaultDrainedLinearTEC="3.0e-5"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -115,12 +116,18 @@
     <SolidInternalEnergy
       name="rockInternalEnergy"
       referenceVolumetricHeatCapacity="2.16e6"
-      referenceTemperature="350.0"
+      referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
 
     <SinglePhaseThermalConductivity
       name="thermalCond"
       defaultThermalConductivityComponents="{ 3.0, 3.0, 3.0 }"/>
+
+    <!-- Conduction along the fracture, enhanced so that the cold front spreads over several metres
+         instead of the first two elements. -->
+    <SinglePhaseThermalConductivity
+      name="fractureThermalCond"
+      defaultThermalConductivityComponents="{ 3.0e6, 3.0e6, 3.0e6 }"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"

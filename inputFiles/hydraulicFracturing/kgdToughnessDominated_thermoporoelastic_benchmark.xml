@@ -9,14 +9,14 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
-      xCoords="{ -100, 0, 100 }"
+      xCoords="{ -100, -2, -0.4, 0, 0.4, 2, 100 }"
       yCoords="{ 0, 50 }"
       zCoords="{ 0, 1 }"
-      nx="{ 30, 30 }"
+      nx="{ 14, 12, 16, 16, 12, 14 }"
       ny="{ 100 }"
       nz="{ 2 }"
-      xBias="{ 0.5, -0.5 }"
-      cellBlockNames="{cb1}"/>
+      xBias="{ 0.6, 0.5, 0.5, -0.5, -0.5, -0.6 }"
+      cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6 }"/>
   </Mesh>
 
   <Geometry>
