@@ -4,7 +4,7 @@ Immiscible water flash
 The immiscible water flash is an efficient three-phase equilibrium model designed for systems containing an aqueous phase alongside hydrocarbon liquid and vapour phases. Instead of solving a fully coupled three-phase equation of state problem, this model vastly simplifies the phase split by assuming water forms a strictly pure aqueous phase and is completely immiscible in the hydrocarbon phases, while hydrocarbons are entirely insoluble in the aqueous phase.
 
 .. note::
-    When using the immiscibile water flash, the water component still needs to be explicitly specified as one of the components with the name ``H2O``.
+    When using the immiscible water flash, the water component still needs to be explicitly specified as one of the components with the name ``H2O``.
 
 Methodology
 ~~~~~~~~~~~

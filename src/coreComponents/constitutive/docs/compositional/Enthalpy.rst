@@ -64,7 +64,7 @@ Because all inputs must be provided in molar units, if a user's specific heat ca
 Implementing the Michaelides Model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The the Michaelides (1981) enthalpy model which is used for the CO2-brine model (:ref:`CO2-EOS`) can be implemented using the polynomial framework by setting specific values for the water component. 
+The Michaelides (1981) enthalpy model which is used for the CO2-brine model (:ref:`CO2-EOS`) can be implemented using the polynomial framework by setting specific values for the water component. 
 
 The rational function :math:`Y(m)` below serves as a universal algebraic template to compute the required simulator inputs as a function of the salt molality :math:`m` [mol/kg]. Because the underlying thermodynamic derivations rely on fixed mixing rules and molecular weights, the calculation for every target parameter condenses into this single functional form:
 
