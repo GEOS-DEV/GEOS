@@ -163,6 +163,7 @@ jobs:
         version: '>= 363.0.0'
 
     - name: Build, test, deploy.
+      id: build_test_deploy
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -188,6 +189,11 @@ jobs:
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          echo "::group::Baseline and log uploads"
+          echo "Status: configuration error"
+          echo "Google Cloud configuration: bucket=not set, project=${GCP_PROJECT:-not set}"
+          echo "No files were uploaded."
+          echo "::endgroup::"
           echo "::error::UPLOAD_TO_GCP=true requires GCP_BUCKET to be set."
           exit 1
         fi
@@ -366,6 +372,28 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
+        echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
+        echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
+        echo "data_exchange_dir=${DATA_EXCHANGE_DIR}" >> "${GITHUB_OUTPUT}"
+
+        exit ${EXIT_STATUS}
+
+    - name: Baseline and log uploads
+      if: ${{ always() && steps.build_test_deploy.outputs.data_basename != '' }}
+      env:
+        GEOS_BUILD_EXIT_STATUS: ${{ steps.build_test_deploy.outputs.exit_status }}
+        GEOS_DATA_BASENAME: ${{ steps.build_test_deploy.outputs.data_basename }}
+        GEOS_DATA_EXCHANGE_DIR: ${{ steps.build_test_deploy.outputs.data_exchange_dir }}
+      run: |
+        EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
+        DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
+        UPLOAD_HEADER_PRINTED=false
+        GCP_CREDENTIALS_STATUS="not set"
+        if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+          GCP_CREDENTIALS_STATUS=configured
+        fi
+
         if [[ -n "${DATA_BASENAME}" ]]; then
           if [ -f "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" ]; then
             echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
@@ -398,7 +426,11 @@ jobs:
 
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+            if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
+              echo "Status: upload configuration failed"
+              echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}"
+              exit 1
+            fi
 
             for file in \
               "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
@@ -406,16 +438,40 @@ jobs:
               "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
             do
               if [ -f "${file}" ]; then
-                CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/
-                echo "Uploaded https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                case "$(basename "${file}")" in
+                  baseline_*)
+                    UPLOAD_LABEL=baselines
+                    ;;
+                  test_logs_*)
+                    UPLOAD_LABEL=logs
+                    ;;
+                  *)
+                    UPLOAD_LABEL=artifact
+                    ;;
+                esac
+
+                if ! CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/; then
+                  echo "Status: upload failed"
+                  echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}, access=publicRead"
+                  echo
+                  echo "Failed upload:"
+                  echo "  ${UPLOAD_LABEL}: gs://${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                  exit 1
+                fi
+
+                if [[ "${UPLOAD_HEADER_PRINTED}" != "true" ]]; then
+                  echo
+                  echo "Users can download uploaded files at:"
+                  UPLOAD_HEADER_PRINTED=true
+                fi
+                echo "  ${UPLOAD_LABEL}:"
+                echo "    https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
               fi
             done
           fi
         else
           echo "GCP upload disabled."
         fi
-
-        exit ${EXIT_STATUS}
 
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
