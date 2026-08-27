@@ -242,21 +242,6 @@ HYPRE_Int dummySetup( HYPRE_Solver,
 void fillKrylovDofLabels( HypreMatrix const & mat,
                           array1d< int > & labels );
 
-/**
- * @brief Stamp DoF-component labels onto a hypre vector (`owns_tags = 0`).
- * @param vec Vector to tag.
- * @param labels Local DoF-component labels. The buffer must outlive any Krylov
- *   workspace that aliases these tags (GMRES `p[]` clones the pointer at setup).
- *
- * Matches hypredrive library mode: skip when `num_tags <= 1`, skip on device,
- * and do not re-assemble after SetTags. Empty ranks still set the global
- * `num_tags` with a null tags pointer so InnerProdTagged collectives agree.
- * Physics RHS/solution vectors stay untagged so InnerProd(b,b) matches
- * hypredrive apply, which replaces the tagged dummy with untagged GEOS vectors.
- */
-void applyKrylovDofTags( HypreVector const & vec,
-                         arrayView1d< int const > const & labels );
-
 namespace testing
 {
 

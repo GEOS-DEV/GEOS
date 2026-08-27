@@ -94,8 +94,6 @@ private:
   /// Pointers to hypre functions for the krylov solver
   std::unique_ptr< HypreSolverWrapper > m_solver;
 
-  /// DoF-component labels aliased into hypre Krylov workspace (`owns_tags = 0`).
-  array1d< int > m_krylovDofTags;
 };
 
 } // end geos namespace

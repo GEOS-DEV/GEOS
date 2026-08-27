@@ -27,8 +27,6 @@
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
-#include <HYPRE_IJ_mv.h>
-
 #include <algorithm>
 #include <numeric>
 
@@ -60,54 +58,6 @@ void fillKrylovDofLabels( HypreMatrix const & mat,
       labels[i] = s_testingKrylovDofLabels[i];
     }
   }
-}
-
-void applyKrylovDofTags( HypreVector const & vec,
-                         arrayView1d< int const > const & labels )
-{
-  if( !vec.ready() )
-  {
-    return;
-  }
-
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  // hypredrive skips tagging under device execution; keep both paths untagged.
-  GEOS_UNUSED_VAR( labels );
-  return;
-#else
-  static_assert( sizeof( int ) == sizeof( HYPRE_Int ),
-                 "Krylov DoF labels are stored as int to match HYPREDRV_LinearSystemSetDofmap" );
-
-  if( labels.size() > 0 )
-  {
-    GEOS_LAI_ASSERT_EQ( labels.size(), vec.localSize() );
-  }
-
-  int localMax = -1;
-  for( localIndex i = 0; i < labels.size(); ++i )
-  {
-    localMax = std::max( localMax, labels[i] );
-  }
-  int const globalMax = MpiWrapper::max( localMax, vec.comm() );
-  HYPRE_Int const numTags = LvArray::integerConversion< HYPRE_Int >( globalMax + 1 );
-  if( numTags <= 1 )
-  {
-    return;
-  }
-
-  // Ranks with no local rows still have to set the same num_tags. InnerProdTagged
-  // Allreduces num_tags+1 values and MPI_ERR_TRUNCATE if any rank stays at the
-  // default num_tags == 1. hypre accepts tags == nullptr on empty ranks.
-  if( labels.size() == 0 )
-  {
-    GEOS_LAI_ASSERT_EQ( vec.localSize(), 0 );
-  }
-
-  HYPRE_Int * const tags = ( labels.size() > 0 )
-                           ? const_cast< HYPRE_Int * >( reinterpret_cast< HYPRE_Int const * >( labels.data() ) )
-                           : nullptr;
-  GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorSetTags( vec.unwrappedIJ(), 0, numTags, tags ) );
-#endif
 }
 
 namespace testing

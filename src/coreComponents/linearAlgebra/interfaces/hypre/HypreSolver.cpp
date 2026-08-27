@@ -213,13 +213,10 @@ void HypreSolver::setup( HypreMatrix const & mat )
                                               m_precond.unwrapped().ptr ) );
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup).
-  // Tag the dummy before GMRES setup so p[] clones the same DoF-component labels
-  // hypredrive stamps onto its dummy vectors. Physics rhs/sol stay untagged:
-  // InnerProd(b,b) then matches hypredrive apply, which binds untagged GEOS vectors.
-  hypre::fillKrylovDofLabels( mat, m_krylovDofTags );
+  // Keep the dummy untagged: the solve receives caller-owned rhs/solution vectors, and
+  // hypre's tagged inner-product path requires all Krylov vectors to have matching tags.
   HypreVector dummy;
   dummy.create( mat.numLocalRows(), mat.comm() );
-  hypre::applyKrylovDofTags( dummy, m_krylovDofTags.toViewConst() );
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                          mat.unwrapped(),
                                          dummy.unwrapped(),
@@ -303,7 +300,6 @@ void HypreSolver::clear()
     m_solver = nullptr;
   }
   m_solver.reset();
-  m_krylovDofTags.clear();
 }
 
 } // end geos namespace
