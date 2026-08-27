@@ -64,13 +64,15 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
+
     string const & discretizationName = damageSolver()->getDiscretizationName();
 
     arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, nodalDamage]
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, xNodes, nodalDamage]
                                                                 ( localIndex const,
                                                                 CellElementSubRegion & elementSubRegion )
     {
@@ -78,12 +80,13 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
       constitutive::SolidBase &
       solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-      ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, xNodes, nodalDamage]( auto & damageModel )
       {
         using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
         typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
         arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
+        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad;
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
@@ -95,7 +98,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
           DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
 
-          interpolationKernel.interpolateDamage( elemToNodes, nodalDamage, damageFieldOnMaterial );
+          interpolationKernel.interpolateDamageAndGradient( elemToNodes, xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial );
         } );
       } );
     } );

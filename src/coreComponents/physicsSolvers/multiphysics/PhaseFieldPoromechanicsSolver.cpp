@@ -94,7 +94,7 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
           {
             using FE_TYPE = TYPEOFREF( finiteElement );
 
-            DamageAndDamageGradientInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
+            DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
 
             interpolationKernel.interpolateDamageAndGradient( elemToNodes, xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial );
           } );
