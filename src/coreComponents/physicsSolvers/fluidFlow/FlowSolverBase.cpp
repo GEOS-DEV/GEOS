@@ -654,7 +654,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion, this] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
     if( m_isFixedStressPoromechanicsUpdate )
@@ -1107,9 +1107,9 @@ void FlowSolverBase::applyFieldValue( real64 const & time_n,
     if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+      GEOS_LOG_RANK_0( GEOS_FMT_RUNTIME( logMessage,
+                                         getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                         setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field
