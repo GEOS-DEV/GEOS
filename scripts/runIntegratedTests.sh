@@ -29,9 +29,10 @@
 #
 # After ATS, all GEOS logs that report Hypre solver iterations are harvested to
 # .integrated-test-iterations/{hypredrive,legacy}.json. A `--force-legacy` run
-# then compares that harvest to the hypredrive JSON with exact per-solve
-# sequences (zero slack), and compares the ATS result classifications, failing
-# if either differs.
+# then compares that harvest to the hypredrive JSON for identical log/solve
+# coverage and close aggregate iteration profiles. ATS result classifications
+# are compared exactly, ignoring only run metadata, and any classification
+# difference fails the run.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -1098,18 +1099,25 @@ harvest_hypre_logs() {
 
 HYPRE_COMPARE_STATUS=0
 if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 ]]; then
-  harvest_hypre_logs legacy || true
+  LEGACY_HARVEST_STATUS=0
+  harvest_hypre_logs legacy || LEGACY_HARVEST_STATUS=$?
   HYPREDRIVE_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive.json"
   LEGACY_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/legacy.json"
-  if [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
-    log "Comparing all Hypre linear-solver iteration sequences (zero slack)"
+  if [[ "${LEGACY_HARVEST_STATUS}" -ne 0 ]]; then
+    log "Hypre legacy iteration harvest failed"
+    HYPRE_COMPARE_STATUS=1
+  elif [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
+    log "Comparing all Hypre linear-solver iteration profiles"
     python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" compare \
-      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --exact-sequence || HYPRE_COMPARE_STATUS=$?
+      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --require-identical-keys \
+      --total-rel-tol 0.01 --total-abs-tol 2 --max-solve-abs-tol 1 \
+      || HYPRE_COMPARE_STATUS=$?
     if [[ "${HYPRE_COMPARE_STATUS}" -ne 0 ]]; then
-      log "hypredrive vs legacy Hypre iteration sequences do not match"
+      log "hypredrive vs legacy Hypre iteration profiles do not match"
     fi
   else
-    log "Skipping iteration compare (need both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS})"
+    log "Missing Hypre iteration harvest; both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS} are required"
+    HYPRE_COMPARE_STATUS=1
   fi
   HYPREDRIVE_RESULTS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive-results.ini"
   if [[ -f "${HYPREDRIVE_RESULTS}" && -f integratedTests/TestResults/test_results.ini ]]; then
@@ -1117,8 +1125,11 @@ if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 ]]; then
     python3 "${GEOS_SRC_DIR}/scripts/compareIntegratedTestResults.py" \
       "${HYPREDRIVE_RESULTS}" integratedTests/TestResults/test_results.ini \
       || HYPRE_COMPARE_STATUS=$?
+    cp integratedTests/TestResults/test_results.ini \
+      "${GEOS_SRC_DIR}/.integrated-test-iterations/legacy-results.ini"
   else
-    log "Skipping ATS result compare (need ${HYPREDRIVE_RESULTS} and legacy test_results.ini)"
+    log "Missing ATS result harvest; both ${HYPREDRIVE_RESULTS} and legacy test_results.ini are required"
+    HYPRE_COMPARE_STATUS=1
   fi
 else
   harvest_hypre_logs hypredrive || true

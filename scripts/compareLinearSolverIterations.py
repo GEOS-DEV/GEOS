@@ -161,6 +161,8 @@ def compareExact( first, second, key ):
 def compareSlack( first, second, key, args ):
     marks = []
     a, b = first[ key ], second[ key ]
+    if a[ "numSolves" ] != b[ "numSolves" ]:
+        marks.append( f"solve counts differ ({a[ 'numSolves' ]} vs {b[ 'numSolves' ]})" )
     totalA, totalB = a[ "totalIterations" ], b[ "totalIterations" ]
     relDiff = abs( totalA - totalB ) / max( 1.0, float( max( totalA, totalB ) ) )
     if relDiff > args.total_rel_tol and abs( totalA - totalB ) > args.total_abs_tol:
@@ -268,6 +270,24 @@ class CompareLinearSolverIterationsTests( unittest.TestCase ):
                           "numFailedSolves": 0 } }
         marks = compareExact( first, second, "t" )
         self.assertTrue( any( "solve 2: 8 vs 9" in m for m in marks ) )
+
+    def testSlackCompareDetectsSolveCountDrift( self ):
+        class Args:
+            total_rel_tol = 0.1
+            total_abs_tol = 5
+            max_solve_abs_tol = 5
+        first = { "t": { "iterations": [ 8, 8 ],
+                         "numSolves": 2,
+                         "totalIterations": 16,
+                         "maxIterations": 8,
+                         "numFailedSolves": 0 } }
+        second = { "t": { "iterations": [ 8 ],
+                          "numSolves": 1,
+                          "totalIterations": 8,
+                          "maxIterations": 8,
+                          "numFailedSolves": 0 } }
+        marks = compareSlack( first, second, "t", Args )
+        self.assertTrue( any( "solve counts differ" in m for m in marks ) )
 
 
 def selftest( _args ):

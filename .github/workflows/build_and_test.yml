@@ -391,6 +391,7 @@ jobs:
       run: |
         EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
         DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_BASENAME_WE=${DATA_BASENAME%%.*}
         DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
         UPLOAD_HEADER_PRINTED=false
         GCP_CREDENTIALS_STATUS="not set"
@@ -403,8 +404,8 @@ jobs:
             echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
           fi
 
-          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" ]; then
-            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
           fi
 
           if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
@@ -413,8 +414,8 @@ jobs:
             mkdir -p "${TARGET_DIR}"
 
             for file in \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
                 cp "${file}" "${TARGET_DIR}"
@@ -423,7 +424,7 @@ jobs:
             done
           fi
 
-          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" ]; then
+          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" ]; then
             echo "No new baseline archive was generated."
           fi
         fi
@@ -437,8 +438,8 @@ jobs:
 
             for file in \
               "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
                 case "$(basename "${file}")" in
