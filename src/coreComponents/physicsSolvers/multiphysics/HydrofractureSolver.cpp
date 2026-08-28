@@ -1100,10 +1100,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
-      typename SurfaceElementStencil::IndexContainerViewConstType const sei = stencil.getElementIndices();
       for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize( iconn );
       {
         localIndex const numFluxElems = stencil.stencilSize( iconn );
         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
