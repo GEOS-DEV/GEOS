@@ -45,6 +45,6 @@ class DPAnalyticalSolution:
         _, _, eps_x = self.compute_stress(deltaTemp)
 
         disp_y = 0
-        disp_x = esp_x*1
+        disp_x = eps_x*1
 
         return disp_x, disp_y
