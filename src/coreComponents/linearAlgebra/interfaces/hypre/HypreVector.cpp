@@ -315,8 +315,8 @@ void HypreVector::print( std::ostream & os ) const
   int const numProcs = MpiWrapper::commSize( comm() );
   char str[77];
 
-  constexpr char const lineFormat[] = "{:>11}{:>18}{:>28.16e}\n";
-  constexpr char const headFormat[] = "{:>11}{:>18}{:>28}\n";
+  static constexpr char const lineFormat[] = "{:>11}{:>18}{:>28.16e}\n";
+  static constexpr char const headFormat[] = "{:>11}{:>18}{:>28}\n";
 
   if( myRank == 0 )
   {
