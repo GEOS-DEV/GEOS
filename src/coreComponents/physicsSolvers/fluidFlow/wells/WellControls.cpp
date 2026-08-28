@@ -72,6 +72,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_regionAveragePressure( -1 ),
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
+  m_thermalEffectsEnabled( false ),
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
