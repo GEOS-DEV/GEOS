@@ -66,7 +66,7 @@ void BrineFluidParameters::registerOnFluid( MultiFluidBase * fluid )
                               "{0} into a set of evenly spaced values. If a positive is givem, it defines the "
                               "spacing between generated points across the full range from the first to the "
                               "last input value. If zero or a negative number is given then the points in {0} "
-                              " are left as is.", viewKeyStruct::pressureIntervalString() )).
+                              " are left as is.", viewKeyStruct::pressureCoordinatesString() )).
     setDefaultValue( m_pressureInterval );
 
   fluid->registerWrapper( viewKeyStruct::temperatureCoordinatesString(), &m_temperatureCoordinates ).
@@ -81,7 +81,7 @@ void BrineFluidParameters::registerOnFluid( MultiFluidBase * fluid )
                               "{0} into a set of evenly spaced values. If a positive is givem, it defines the "
                               "spacing between generated points across the full range from the first to the "
                               "last input value. If zero or a negative number is given then the points in {0} "
-                              " are left as is.", viewKeyStruct::temperatureIntervalString() )).
+                              " are left as is.", viewKeyStruct::temperatureCoordinatesString() )).
     setDefaultValue( m_temperatureInterval );
 
   fluid->registerWrapper( viewKeyStruct::waterCompressibilityString(), &m_waterCompressibility ).
@@ -148,20 +148,20 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
 
   // Water compressibility must be positive
   GEOS_THROW_IF_LT_MSG( m_waterCompressibility, MultiFluidConstants::epsilon,
-                        GEOS_FMT( "{}: invalid water compressibility {}. "
-                                  "Value must be positive", fullName, viewKeyStruct::waterCompressibilityString() ),
+                        GEOS_FMT( "{}: invalid water compressibility {} provided in {}. Value must be positive",
+                                  fullName, m_waterCompressibility, viewKeyStruct::waterCompressibilityString() ),
                         InputError );
 
   // Salinity must not be negative
   GEOS_THROW_IF_LT_MSG( m_salinity, 0.0,
-                        GEOS_FMT( "{}: invalid salinity {}. "
-                                  "Value must not be negative", fullName, viewKeyStruct::salinityString() ),
+                        GEOS_FMT( "{}: invalid salinity {} provided in {}. Value must not be negative",
+                                  fullName, m_salinity, viewKeyStruct::salinityString() ),
                         InputError );
 
   // Flash tolerance must be positive
   GEOS_THROW_IF_LT_MSG( m_tolerance, MultiFluidConstants::epsilon,
-                        GEOS_FMT( "{}: invalid flash tolerance {}. "
-                                  "Value must be positive", fullName, viewKeyStruct::toleranceString() ),
+                        GEOS_FMT( "{}: invalid flash tolerance {} provided in {}. Value must be positive",
+                                  fullName, m_tolerance, viewKeyStruct::toleranceString() ),
                         InputError );
 
   // Coordinates values must be at least 2
@@ -201,7 +201,7 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
   GEOS_THROW_IF_GT_MSG( maxTemp, maxTempInK,
                         GEOS_FMT( "{}: Maximum temperature must be at most {}K ({} in C). "
                                   "The highest value provided in {} is {}K", fullName,
-                                  maxTempInK, minimumTemperature,
+                                  maxTempInK, maximumTemperature,
                                   viewKeyStruct::temperatureCoordinatesString(), maxTemp ),
                         InputError );
 

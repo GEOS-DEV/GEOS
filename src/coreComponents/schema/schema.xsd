@@ -7268,7 +7268,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" use="required" />
-		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureInterval  are left as is.-->
+		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureCoordinates  are left as is.-->
 		<xsd:attribute name="pressureInterval" type="real64" default="0" />
 		<!--salinity => The salinity of brine-->
 		<xsd:attribute name="salinity" type="real64" default="0" />
@@ -7280,7 +7280,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" use="required" />
-		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureInterval  are left as is.-->
+		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureCoordinates  are left as is.-->
 		<xsd:attribute name="temperatureInterval" type="real64" default="0" />
 		<!--tolerance => Tolerance to used for fluid property calculation-->
 		<xsd:attribute name="tolerance" type="real64" default="1e-09" />
@@ -7320,7 +7320,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" use="required" />
-		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureInterval  are left as is.-->
+		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureCoordinates  are left as is.-->
 		<xsd:attribute name="pressureInterval" type="real64" default="0" />
 		<!--salinity => The salinity of brine-->
 		<xsd:attribute name="salinity" type="real64" default="0" />
@@ -7332,7 +7332,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" use="required" />
-		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureInterval  are left as is.-->
+		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureCoordinates  are left as is.-->
 		<xsd:attribute name="temperatureInterval" type="real64" default="0" />
 		<!--tolerance => Tolerance to used for fluid property calculation-->
 		<xsd:attribute name="tolerance" type="real64" default="1e-09" />
@@ -7363,7 +7363,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" use="required" />
-		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureInterval  are left as is.-->
+		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureCoordinates  are left as is.-->
 		<xsd:attribute name="pressureInterval" type="real64" default="0" />
 		<!--salinity => The salinity of brine-->
 		<xsd:attribute name="salinity" type="real64" default="0" />
@@ -7375,7 +7375,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" use="required" />
-		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureInterval  are left as is.-->
+		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureCoordinates  are left as is.-->
 		<xsd:attribute name="temperatureInterval" type="real64" default="0" />
 		<!--tolerance => Tolerance to used for fluid property calculation-->
 		<xsd:attribute name="tolerance" type="real64" default="1e-09" />
@@ -7406,7 +7406,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" use="required" />
-		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureInterval  are left as is.-->
+		<!--pressureInterval => Step size used to evenly discretize the range pressure range given by pressureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in pressureCoordinates  are left as is.-->
 		<xsd:attribute name="pressureInterval" type="real64" default="0" />
 		<!--salinity => The salinity of brine-->
 		<xsd:attribute name="salinity" type="real64" default="0" />
@@ -7418,7 +7418,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" use="required" />
-		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureInterval into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureInterval  are left as is.-->
+		<!--temperatureInterval => Step size used to evenly discretize the range temperature range given by temperatureCoordinates into a set of evenly spaced values. If a positive is givem, it defines the spacing between generated points across the full range from the first to the last input value. If zero or a negative number is given then the points in temperatureCoordinates  are left as is.-->
 		<xsd:attribute name="temperatureInterval" type="real64" default="0" />
 		<!--tolerance => Tolerance to used for fluid property calculation-->
 		<xsd:attribute name="tolerance" type="real64" default="1e-09" />
