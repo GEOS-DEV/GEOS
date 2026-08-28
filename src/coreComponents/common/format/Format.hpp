@@ -18,6 +18,8 @@
 
 #include <type_traits>
 #include <optional>
+#include <sstream>
+#include <string>
 
 #define GEOS_USE_FMT
 
