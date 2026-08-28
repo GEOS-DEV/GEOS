@@ -99,6 +99,12 @@ public:
   void setExecutionContext( LinearSolverExecutionContext const & context ) override;
 
   /**
+   * @brief Set near-null-space modes to pass to HypreDrive during setup.
+   * @param nearNullKernel Full-system distributed near-null-space vectors.
+   */
+  void setNearNullKernel( arrayView1d< HypreVector const > const & nearNullKernel ) override;
+
+  /**
    * @brief Build or refresh the solver/preconditioner for a matrix.
    * @param mat Matrix that defines the system structure and coefficients.
    */
@@ -164,6 +170,7 @@ private:
   bool m_hasExecutionContext = false;
   bool m_timestepScopeActive = false;
   bool m_newtonScopeActive = false;
+  arrayView1d< HypreVector const > m_nearNullKernel;
   bool m_reportedGeneratedYamlFailure = false;
   size_t m_hypredriveGeneration = 0;
   HYPREDRV_t m_hypredrive{};
