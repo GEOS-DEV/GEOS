@@ -1400,7 +1400,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
     appendLine( stream, 2, "nonglk_max_elmts: 1" );
     appendLine( stream, 2, "pmax: 0" );
     appendLine( stream, 2, GEOS_FMT( "coarse_th: {}", strategy.m_coarseGridThreshold ) );
-    appendLine( stream, 2, "num_levels: 3" );
+    appendLine( stream, 2, "num_levels: 2" );
     appendLine( stream, 2, "level:" );
     appendLine( stream, 3, "0:" );
     stdVector< HYPRE_Int > const displacementLabels = { 0, 1, 2, 3, 4, 5 };
