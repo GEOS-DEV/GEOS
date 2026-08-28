@@ -765,7 +765,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
     ElementRegionManager const & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                        [&]
-                                                                       ( localIndex const regionIndex, auto & elementSubRegion )
+                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
     {
       if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
       {
