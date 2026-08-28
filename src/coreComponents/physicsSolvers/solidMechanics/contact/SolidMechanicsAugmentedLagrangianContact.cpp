@@ -1460,7 +1460,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     forAll< parallelHostPolicy >( subRegion.size(),
-                                  [ = ] GEOS_HOST ( localIndex const kfe )
+                                  [ =, this ] GEOS_HOST ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1991,7 +1991,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
         // The charLength formula differs between the two element types.
         bool const isTriangle = subRegion.size() > 0 && subRegion.getElementType( 0 ) == ElementType::Triangle;
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
         {
 
           if( ghostRank[kfe] < 0 )
