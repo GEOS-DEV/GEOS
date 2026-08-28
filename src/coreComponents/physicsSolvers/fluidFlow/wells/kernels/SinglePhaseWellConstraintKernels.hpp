@@ -52,6 +52,11 @@ struct ConstraintHelper
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
+#if defined(GEOS_USE_CUDA)
+    localMatrix.move( hostMemorySpace, false );
+    localRhs.move( hostMemorySpace, false );
+#endif
+
     // subRegion data
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
@@ -62,6 +67,12 @@ struct ConstraintHelper
     arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDensity = fluidSeparator.dDensity();
 
     arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
+
+#if defined(GEOS_USE_CUDA)
+    wellElemDofNumber.move( hostMemorySpace, false );
+    dDensity.move( hostMemorySpace, false );
+    wellElemGravCoef.move( hostMemorySpace, false );
+#endif
 
     // setup row/column indices for constraint equation
     using ROFFSET_WJ = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
@@ -122,10 +133,19 @@ struct ConstraintHelper
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
+#if defined(GEOS_USE_CUDA)
+    localMatrix.move( hostMemorySpace, false );
+    localRhs.move( hostMemorySpace, false );
+#endif
+
     // subRegion data
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+#if defined(GEOS_USE_CUDA)
+    wellElemDofNumber.move( hostMemorySpace, false );
+#endif
 
 
     // setup row/column indices for constraint equation
@@ -144,6 +164,11 @@ struct ConstraintHelper
     constitutive::SingleFluidBase & fluidSeparator =  wellControls.getSingleFluidSeparator();
     arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density = fluidSeparator.density();
     arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDensity = fluidSeparator.dDensity();
+
+#if defined(GEOS_USE_CUDA)
+    density.move( hostMemorySpace, false );
+    dDensity.move( hostMemorySpace, false );
+#endif
 
     // constraint data
     real64 const & targetVolRate = constraint.getConstraintValue( time_n );
