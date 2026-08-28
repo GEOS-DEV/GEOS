@@ -29,7 +29,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
@@ -65,7 +65,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
  * @param domain the physical domain object
  */
 bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               WellManager const * const wellSolver,
                                DomainPartition const & domain );
 
 }
@@ -357,7 +357,7 @@ private:
           GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
           GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
 
-          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=, this] ( localIndex const iperf )
           {
             GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
             GEOS_LOG_RANK( GEOS_FMT( "{}: perforation at ({},{},{}), perforated element center = ({},{},{}), transmissibility = {} [{}]",
