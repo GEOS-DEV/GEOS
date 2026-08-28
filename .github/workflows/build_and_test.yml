@@ -110,7 +110,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
+        # The device jobs query the same PR endpoint concurrently. Retry
+        # transient GitHub API throttling so an optional build does not turn a
+        # healthy matrix into a failure before compilation starts.
         pr_json=$(curl --fail --silent --show-error \
+          --retry 5 --retry-all-errors --retry-delay 5 --retry-max-time 90 \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
