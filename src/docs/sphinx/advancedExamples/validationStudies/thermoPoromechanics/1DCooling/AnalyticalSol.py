@@ -42,7 +42,7 @@ class DPAnalyticalSolution:
             return sigma_x, sigma_y, eps_x
         
     def compute_disp(self, deltaTemp):
-        _, _, esp_x = self.compute_stress(deltaTemp)
+        _, _, eps_x = self.compute_stress(deltaTemp)
 
         disp_y = 0
         disp_x = esp_x*1
