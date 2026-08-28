@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Dispatch the tests of shape function computations and grid to particle mapping methods."""
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = Path('/usr/workspace/crook5/GEOS_DEV/mpm') #SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+import variants
+
+VARIANTS = variants.VARIANTS
+
+if __name__ == "__main__":
+    raise SystemExit(
+        run_folder(
+            source_dir=SOURCE_DIR,
+            pfw_dir=PFW_ROOT,      
+            input_file="pfw_input_brazilianDisk_shapeFuncs.py",
+            post_script="postProcess_brazilianDisk_shapeFuncs.py",
+            variants=VARIANTS,
+            default_case_id="brazilianDisk_shapeFuncs",
+            description="Run brazilDisk example with precomputed and on-the-fly shape functions for different grid to particle methods",
+        )
+    )

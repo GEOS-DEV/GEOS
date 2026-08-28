@@ -1,0 +1,14 @@
+{
+  "case_id": "brazilianDisk_shapeFuncs__FMPM_OnTheFly",
+  "suite": "verification",
+  "source_dir": "/usr/WS1/crook5/GEOS_DEV/scripts/preProcessing/materialPointMethodParticleFileWriter/gpuDebug/shapeFunctionCalcs",
+  "input": "pfw_input_brazilianDisk_shapeFuncs.py",
+  "run_dir": "/p/lustre5/crook5/geosxTests/verification/brazilianDisk_shapeFuncs__FMPM_OnTheFly",
+  "output_dir": "/usr/WS1/crook5/GEOS_DEV/scripts/preProcessing/materialPointMethodParticleFileWriter/gpuDebug/shapeFunctionCalcs/output/brazilianDisk_shapeFuncs__FMPM_OnTheFly",
+  "userDefs": "/usr/workspace/crook5/GEOS_DEV/mpm/userDefs_crook5.py",
+  "bank": "mahem",
+  "geos_job_id": "",
+  "post_job_id": "",
+  "status": "generated",
+  "dispatch_elapsed_seconds": 4.324
+}
