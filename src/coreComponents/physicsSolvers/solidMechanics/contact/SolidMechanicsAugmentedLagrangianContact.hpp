@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
+ /*
  * SolidMechanicsAugmentedLagrangianContact.hpp
  *
  */
@@ -118,8 +118,7 @@ public:
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
@@ -143,8 +142,7 @@ public:
    * @brief Loop over the finite element type on the stick fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnStickFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
@@ -170,8 +168,7 @@ public:
    * @brief Loop over the finite element type on the slip fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnSlipFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
@@ -194,23 +191,20 @@ public:
   }
 
   /**
-   * @brief Create the list of finite elements of the same type
-   *   for each FaceElementSubRegion (Triangle or Quadrilateral)
-   *   and of the same fracture state (Stick or Slip).
+   * @brief Create the list of finite elements of the same type for each FaceElementSubRegion (Triangle or Quadrilateral) and of the same
+   *fracture state (Stick or Slip).
    * @param domain The physical domain object
    */
   void updateStickSlipList( DomainPartition const & domain );
 
   /**
-   * @brief Create the list of finite elements of the same type
-   *   for each FaceElementSubRegion (Triangle or Quadrilateral).
+   * @brief Create the list of finite elements of the same type for each FaceElementSubRegion (Triangle or Quadrilateral).
    * @param domain The physical domain object
    */
   void createFaceTypeList( DomainPartition const & domain );
 
   /**
-   * @brief Create the list of elements belonging to CellElementSubRegion
-   *  that are enriched with the bubble basis functions
+   * @brief Create the list of elements belonging to CellElementSubRegion that are enriched with the bubble basis functions
    * @param domain The physical domain object
    */
   void createBubbleCellList( DomainPartition & domain ) const;
@@ -224,8 +218,7 @@ private:
   void validateTetrahedralQuadrature( Group & meshBodies );
 
   /**
-   * @brief add the number of non-zero elements induced by the coupling between
-   *   nodal and bubble displacement.
+   * @brief add the number of non-zero elements induced by the coupling between nodal and bubble displacement.
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLengths the array containing the number of non-zero elements for each row
@@ -251,15 +244,12 @@ private:
    * @param domain The physical domain object
    *
    * This function computes the initial traction on each fracture element by:
-   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture)
-   * 2. Computing the traction vector as t = sigma * n (where n is the face normal) for each side
-   * 3. Averaging the tractions from both sides
-   * 4. Rotating the averaged traction to the local coordinate system of the fracture
-   * 5. Validating the traction against the Coulomb friction law and warning if inconsistent
+   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture) 2. Computing the traction vector as
+   *t = sigma * n (where n is the face normal) for each side 3. Averaging the tractions from both sides 4. Rotating the averaged traction to
+   *the local coordinate system of the fracture 5. Validating the traction against the Coulomb friction law and warning if inconsistent
    *
-   * This initialization ensures that the ALM traction field starts with a physically
-   * consistent value rather than zero, which is important for proper convergence
-   * when the domain is under stress.
+   * This initialization ensures that the ALM traction field starts with a physically consistent value rather than zero, which is important
+   *for proper convergence when the domain is under stress.
    */
   void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
 
@@ -302,7 +292,7 @@ private:
 
     constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
 
-    constexpr static char const * anisotropicString() { return "anisotropic"; }
+    constexpr static char const * isAnisotropicString() { return "anisotropic"; }
 
   };
 

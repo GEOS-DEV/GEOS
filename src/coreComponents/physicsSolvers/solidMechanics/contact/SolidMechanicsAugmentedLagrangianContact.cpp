@@ -106,7 +106,7 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setApplyDefaultValue( 5.e-02 ).
     setDescription( "Tolerance for the sliding check" );
 
-  registerWrapper( viewKeyStruct::symmetricString(), &m_isAnisotropic ).
+  registerWrapper( viewKeyStruct::isAnisotropicString(), &m_isAnisotropic ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag to use anisotropic scaling in tolerances and penalties computations" );
@@ -765,7 +765,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
     ElementRegionManager const & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                        [&]
-                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
+                                                                       ( localIndex const regionIndex, auto & elementSubRegion )
     {
       if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
       {
@@ -2050,6 +2050,9 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                 for( localIndex j = 0; j < 3; ++j )
                 {
                   bbox[j] = maxSize[j] - minSize[j];
+                  // Avoid division by zero in case of degenerate elements
+                  if( bbox[j] < 1e-12 )
+                    GEOS_ERROR( GEOS_FMT( "SolidMechanicsAugmentedLagrangianContact::computeTolerances: degenerate element detected with zero size in direction {}", j ), getDataContext() );
                 }
 
 
@@ -2066,7 +2069,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               for( localIndex j = 0; j < 3; ++j )
               {
 
-                //TODO (jafranc) once stabilized, get rid of this ugly ternary
                 stiffDiagApprox[ i ][ j ] = m_isAnisotropic ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / bbox[j] / bbox[j]
                 : ( isTriangle
                 ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * ( 2.0 - 3.0 * nu ) * charLength
