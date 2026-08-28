@@ -726,7 +726,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_finish "${ATS_RUN_STATUS}"
 
   HYPREDRV_BANNER_STATUS=0
-  ITER_PARITY_STATUS=0
+  HYPRE_ITERATION_PARITY_STATUS=0
+  HYPRE_RESULTS_PARITY_STATUS=0
+  ATS_LEGACY_RUN_STATUS=0
   if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
     # On a hypredrive-enabled build the previous pass exercised the hypredrive
     # solver path. Verify it actually ran (guards against silent fallback), then
@@ -739,33 +741,58 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
     echo "Re-running integrated tests through the legacy hypre path..."
     # Keep the hypredrive pass results; the second pass overwrites TestResults.
-    cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
+    if [[ -f integratedTests/TestResults/test_results.ini ]]; then
+      cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
+    else
+      echo "ERROR: hypredrive pass did not produce test_results.ini."
+      HYPRE_RESULTS_PARITY_STATUS=1
+    fi
     HD_HARVEST_STATUS=0
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/TestResults/test_data --iterative \
+            integratedTests/TestResults/test_data --geosx-only --strip-ats-prefix \
             -o $tempdir/iterations_hypredrive.json || HD_HARVEST_STATUS=$?
-    integratedTests/geos_ats.sh -a veryclean
-    GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
-    ATS_LEGACY_RUN_STATUS=$?
+    CLEAN_STATUS=0
+    integratedTests/geos_ats.sh -a veryclean || CLEAN_STATUS=$?
+    if [[ "${CLEAN_STATUS}" -eq 0 ]]; then
+      GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
+      ATS_LEGACY_RUN_STATUS=$?
+    else
+      echo "ERROR: could not clean the hypredrive integrated-test results before the legacy pass."
+      ATS_LEGACY_RUN_STATUS=${CLEAN_STATUS}
+    fi
 
     # Restart checks compare solution fields only. Require exact per-solve
-    # iteration sequences on every `_iterative` geosx log so a 1-iteration
-    # hypredrive drift cannot pass silently.
+    # iteration sequences on every GEOS log containing Hypre solver output so
+    # a one-iteration hypredrive drift cannot pass silently. This includes
+    # solver configurations that deliberately remain on legacy Hypre because
+    # they are not supported by HypreDrive.
     LG_HARVEST_STATUS=0
     python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
-            integratedTests/TestResults/test_data --iterative \
+            integratedTests/TestResults/test_data --geosx-only --strip-ats-prefix \
             -o $tempdir/iterations_legacy.json || LG_HARVEST_STATUS=$?
     if [[ "${HD_HARVEST_STATUS}" -ne 0 || "${LG_HARVEST_STATUS}" -ne 0 ]]; then
-      echo "ERROR: failed to harvest _iterative linear-solver iteration counts."
-      ITER_PARITY_STATUS=1
+      echo "ERROR: failed to harvest Hypre linear-solver iteration counts."
+      HYPRE_ITERATION_PARITY_STATUS=1
     else
-      echo "Comparing _iterative linear-solver iteration sequences (zero slack)..."
+      echo "Comparing all Hypre linear-solver iteration sequences (zero slack)..."
       python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
               $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
-              --exact-sequence || ITER_PARITY_STATUS=$?
+              --exact-sequence || HYPRE_ITERATION_PARITY_STATUS=$?
     fi
     cp -f $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
           integratedTests/TestResults/ 2>/dev/null || true
+
+    if [[ -f $tempdir/test_results_hypredrive.ini && \
+          -f integratedTests/TestResults/test_results.ini ]]; then
+      echo "Comparing ATS result classifications for the hypredrive and legacy passes..."
+      python3 ${GEOS_SRC_DIR}/scripts/compareIntegratedTestResults.py \
+              $tempdir/test_results_hypredrive.ini \
+              integratedTests/TestResults/test_results.ini \
+              || HYPRE_RESULTS_PARITY_STATUS=$?
+    else
+      echo "ERROR: both Hypre test result files are required for ATS parity."
+      HYPRE_RESULTS_PARITY_STATUS=1
+    fi
   fi
 
   PROCESS_LOGS_STATUS=0
@@ -820,8 +847,20 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
       echo "Hypredrive path was not exercised (no 'hypredrive input' banner)."
       INTEGRATED_TEST_EXIT_STATUS=1
     fi
-    if [[ "${ITER_PARITY_STATUS}" -ne 0 ]]; then
-      echo "Hypredrive vs legacy _iterative linear-solver iteration sequences do not match."
+    if [[ "${ATS_RUN_STATUS}" -ne 0 ]]; then
+      echo "The hypredrive integrated-test pass exited with ${ATS_RUN_STATUS}."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
+    if [[ "${ATS_LEGACY_RUN_STATUS}" -ne 0 ]]; then
+      echo "The legacy Hypre integrated-test pass exited with ${ATS_LEGACY_RUN_STATUS}."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
+    if [[ "${HYPRE_ITERATION_PARITY_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive vs legacy Hypre linear-solver iteration sequences do not match."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
+    if [[ "${HYPRE_RESULTS_PARITY_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive vs legacy Hypre ATS result classifications do not match."
       INTEGRATED_TEST_EXIT_STATUS=1
     fi
   fi

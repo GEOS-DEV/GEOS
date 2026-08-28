@@ -27,10 +27,11 @@
 # when the GCS download is unavailable. ATS -a rebaseline is not used: it
 # aborts the rest of an .ats file when one test has no restart output.
 #
-# After ATS, `_iterative` geosx logs are harvested to
+# After ATS, all GEOS logs that report Hypre solver iterations are harvested to
 # .integrated-test-iterations/{hypredrive,legacy}.json. A `--force-legacy` run
 # then compares that harvest to the hypredrive JSON with exact per-solve
-# sequences (zero slack) and fails if they differ.
+# sequences (zero slack), and compares the ATS result classifications, failing
+# if either differs.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -1082,7 +1083,7 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   fi
 fi
 
-harvest_iterative_logs() {
+harvest_hypre_logs() {
   local label="$1"
   local dest="${GEOS_SRC_DIR}/.integrated-test-iterations/${label}.json"
   local data_dir="integratedTests/TestResults/test_data"
@@ -1092,26 +1093,40 @@ harvest_iterative_logs() {
   fi
   mkdir -p "$(dirname "${dest}")"
   python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" harvest \
-    "${data_dir}" --iterative -o "${dest}"
+    "${data_dir}" --geosx-only --strip-ats-prefix -o "${dest}"
 }
 
-ITER_COMPARE_STATUS=0
+HYPRE_COMPARE_STATUS=0
 if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 ]]; then
-  harvest_iterative_logs legacy || true
+  harvest_hypre_logs legacy || true
   HYPREDRIVE_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive.json"
   LEGACY_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/legacy.json"
   if [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
-    log "Comparing _iterative linear-solver iteration sequences (zero slack)"
+    log "Comparing all Hypre linear-solver iteration sequences (zero slack)"
     python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" compare \
-      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --exact-sequence || ITER_COMPARE_STATUS=$?
-    if [[ "${ITER_COMPARE_STATUS}" -ne 0 ]]; then
-      log "hypredrive vs legacy _iterative iteration sequences do not match"
+      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --exact-sequence || HYPRE_COMPARE_STATUS=$?
+    if [[ "${HYPRE_COMPARE_STATUS}" -ne 0 ]]; then
+      log "hypredrive vs legacy Hypre iteration sequences do not match"
     fi
   else
     log "Skipping iteration compare (need both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS})"
   fi
+  HYPREDRIVE_RESULTS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive-results.ini"
+  if [[ -f "${HYPREDRIVE_RESULTS}" && -f integratedTests/TestResults/test_results.ini ]]; then
+    log "Comparing ATS result classifications for the hypredrive and legacy passes"
+    python3 "${GEOS_SRC_DIR}/scripts/compareIntegratedTestResults.py" \
+      "${HYPREDRIVE_RESULTS}" integratedTests/TestResults/test_results.ini \
+      || HYPRE_COMPARE_STATUS=$?
+  else
+    log "Skipping ATS result compare (need ${HYPREDRIVE_RESULTS} and legacy test_results.ini)"
+  fi
 else
-  harvest_iterative_logs hypredrive || true
+  harvest_hypre_logs hypredrive || true
+  if [[ -f integratedTests/TestResults/test_results.ini ]]; then
+    mkdir -p "${GEOS_SRC_DIR}/.integrated-test-iterations"
+    cp integratedTests/TestResults/test_results.ini \
+      "${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive-results.ini"
+  fi
 fi
 
 log "ATS exit status: ${ATS_STATUS}"
@@ -1125,7 +1140,7 @@ log "Results (on host):      ${RESULTS_ON_HOST}"
 if [[ "${SANITIZER_REPORT_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
   exit "${SANITIZER_REPORT_STATUS}"
 fi
-if [[ "${ITER_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
-  exit "${ITER_COMPARE_STATUS}"
+if [[ "${HYPRE_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
+  exit "${HYPRE_COMPARE_STATUS}"
 fi
 exit "${ATS_STATUS}"

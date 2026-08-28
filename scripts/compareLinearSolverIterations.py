@@ -12,12 +12,12 @@ so that GEOS emits per-solve lines of the form::
 
     Linear Solver | Success | Unknowns: ... | Iterations: 12 | ...
 
-Typical usage for the ``_iterative`` hypredrive equivalence family::
+Typical usage for all GEOS logs that report Hypre solver iterations::
 
     compareLinearSolverIterations.py harvest integratedTests/TestResults/test_data \\
-        --iterative -o hypredrive.json
+        --geosx-only --strip-ats-prefix -o hypredrive.json
     compareLinearSolverIterations.py harvest integratedTests/TestResults/test_data \\
-        --iterative -o legacy.json
+        --geosx-only --strip-ats-prefix -o legacy.json
     compareLinearSolverIterations.py compare hypredrive.json legacy.json --exact-sequence
 """
 
