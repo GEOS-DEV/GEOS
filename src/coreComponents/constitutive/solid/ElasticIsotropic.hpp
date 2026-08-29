@@ -394,7 +394,7 @@ public:
                                      localIndex const q,
                                      real64 const & timeIncrement,
                                      real64 const ( &strainIncrement )[6],
-                                     real64 ( &stress )[6] ) const override final
+                                     real64 ( & stress )[6] ) const override final
   {
     ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   }
@@ -404,7 +404,7 @@ public:
                           localIndex const q,
                           real64 const & timeIncrement,
                           real64 const ( &strainIncrement )[6],
-                          real64 ( &stress )[6],
+                          real64 ( & stress )[6],
                           DiscretizationOps & stiffness ) const override final
   {
     ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );

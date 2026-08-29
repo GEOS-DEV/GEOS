@@ -110,9 +110,9 @@ struct ConstraintHelper
 
       RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], currentBHP - targetBHP );
       localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                         dofColIndices,
-                                                                         dControlEqn,
-                                                                         COFFSET_WJ::nDer );
+                                                                        dofColIndices,
+                                                                        dControlEqn,
+                                                                        COFFSET_WJ::nDer );
     } );
   }
   template< template< typename U > class T, typename U=VolumeRateConstraint >
@@ -174,13 +174,13 @@ struct ConstraintHelper
       dControlEqn[COFFSET_WJ::dP] = -( useSurfaceConditions == 0 ) * dDensity_dP * currentVolRate * densInv;
       dControlEqn[COFFSET_WJ::dQ] = densInv;
       setTemperatureDerivative( dControlEqn,
-                               -( useSurfaceConditions == 0 ) * dDensity_dT * currentVolRate * densInv );
+                                -( useSurfaceConditions == 0 ) * dDensity_dT * currentVolRate * densInv );
 
       RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], currentVolRate - targetVolRate );
       localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                         dofColIndices,
-                                                                         dControlEqn,
-                                                                         COFFSET_WJ::nDer );
+                                                                        dofColIndices,
+                                                                        dControlEqn,
+                                                                        COFFSET_WJ::nDer );
     } );
   }
 };
