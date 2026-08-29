@@ -20,6 +20,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -370,11 +371,7 @@ void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartiti
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-  }
+  appendSparsityPattern( pattern, patternDiag );
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView());

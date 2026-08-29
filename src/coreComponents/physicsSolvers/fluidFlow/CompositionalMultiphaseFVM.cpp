@@ -1495,9 +1495,13 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
-                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                             stdMap< string, localIndex > const * const dR_dAperOffsets )
 {
   GEOS_MARK_FUNCTION;
+
+  GEOS_ERROR_IF( dR_dAperOffsets != nullptr,
+                 "CompositionalMultiphaseFVM does not support mesh-specific dR/dAperture row offsets." );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
