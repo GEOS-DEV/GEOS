@@ -54,6 +54,19 @@ option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 
+# ROCm 7.2 reports an illegal-state error when device-side printf is used on
+# the gfx10/gfx11 targets.  BLT's HIP smoke tests intentionally exercise
+# device-side printf, so leave those tests available as an opt-in while
+# keeping the rest of the HIP smoke coverage usable on these GPUs.
+option( GEOS_ENABLE_HIP_DEVICE_PRINTF_TESTS
+        "Run BLT HIP smoke tests that use device-side printf" OFF )
+if( ENABLE_HIP AND ENABLE_TESTS AND NOT GEOS_ENABLE_HIP_DEVICE_PRINTF_TESTS
+    AND CMAKE_HIP_ARCHITECTURES MATCHES "(^|;)gfx(10|11)" )
+  set_tests_properties( blt_hip_smoke blt_hip_gtest_smoke
+                        DIRECTORY ${BLT_BUILD_DIR}/tests/smoke
+                        PROPERTIES DISABLED TRUE )
+endif()
+
 # BLT's bundled GoogleTest currently uses an implicit char8_t-to-char32_t
 # conversion that Clang 22 diagnoses as -Wcharacter-conversion. Keep GEOS'
 # warnings-as-errors policy intact while limiting the compatibility flag to

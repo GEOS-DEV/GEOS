@@ -20,7 +20,9 @@
 #include "HypreInterface.hpp"
 
 #include "common/GeosxConfig.hpp"
+#if defined(GEOS_USE_SUITESPARSE)
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#endif
 #ifdef GEOS_USE_HYPREDRV
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 #endif
@@ -123,7 +125,12 @@ HypreInterface::createSolver( LinearSolverParameters params )
     }
     else
     {
+#if defined(GEOS_USE_SUITESPARSE)
       return std::make_unique< SuiteSparse< HypreInterface > >( std::move( params ) );
+#else
+      GEOS_ERROR( "GEOS is configured without support for SuiteSparse." );
+      return std::unique_ptr< LinearSolverBase< HypreInterface > >( nullptr );
+#endif
     }
   }
   else

@@ -12,6 +12,14 @@ set( parallel_tests
 
 set( nranks 2 )
 
+# A single visible HIP device cannot safely service multiple HYPRE MPI ranks:
+# HYPRE's ROCm device-side radix sort reports hipErrorIllegalState when ranks
+# share the device during matrix assembly. Keep these unit tests runnable on
+# the one-GPU HIP configuration while retaining the two-rank CPU coverage.
+if( ENABLE_HIP )
+  set( nranks 1 )
+endif()
+
 set( dependencyList gtest linearAlgebra ${parallelDeps} )
 
 foreach(test ${serial_tests})

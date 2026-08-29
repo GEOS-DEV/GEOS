@@ -56,7 +56,13 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+#if defined(GEOS_USE_HIP)
+  // HYPRE's HIP implementation supports ILU(0) on device memory; level-1
+  // ILU uses a path that returns an error on the current ROCm stack.
+  parameters.ifact.fill = 0;
+#else
   parameters.ifact.fill = 1;
+#endif
   return parameters;
 }
 
@@ -78,6 +84,12 @@ LinearSolverParameters params_GMRES_AMG()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+#if defined(GEOS_USE_HIP)
+  // HYPRE's PMIS GPU path invokes a rocPRIM radix sort that returns
+  // hipErrorIllegalState on gfx10/gfx11 with the ROCm stack under test.
+  // Falgout avoids that path while remaining valid for device-resident matrices.
+  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::Falgout;
+#endif
   parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::fgs;
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
@@ -91,6 +103,12 @@ LinearSolverParameters params_CG_AMG()
   parameters.isSymmetric = true;
   parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+#if defined(GEOS_USE_HIP)
+  // HYPRE's PMIS GPU path invokes a rocPRIM radix sort that returns
+  // hipErrorIllegalState on gfx10/gfx11 with the ROCm stack under test.
+  // Falgout avoids that path while remaining valid for device-resident matrices.
+  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::Falgout;
+#endif
   parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::sgs;
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
@@ -214,12 +232,14 @@ protected:
 
 TYPED_TEST_SUITE_P( SolverTestLaplace2D );
 
+#if defined(GEOS_USE_SUITESPARSE)
 TYPED_TEST_P( SolverTestLaplace2D, DirectSerial )
 {
   LinearSolverParameters params = params_DirectSerial();
   params.isSymmetric = true;
   this->test( params );
 }
+#endif
 
 #if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TYPED_TEST_P( SolverTestLaplace2D, DirectParallel )
@@ -244,6 +264,7 @@ TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
 }
 
 #if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
+#if defined(GEOS_USE_SUITESPARSE)
 REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              DirectSerial,
                              GMRES_ILU,
@@ -251,11 +272,25 @@ REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              CG_AMG );
 #else
 REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
+                             GMRES_ILU,
+                             CG_SGS,
+                             CG_AMG );
+#endif
+#else
+#if defined(GEOS_USE_SUITESPARSE)
+REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              DirectSerial,
                              DirectParallel,
                              GMRES_ILU,
                              CG_SGS,
                              CG_AMG );
+#else
+REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
+                             DirectParallel,
+                             GMRES_ILU,
+                             CG_SGS,
+                             CG_AMG );
+#endif
 #endif
 
 #ifdef GEOS_USE_TRILINOS
@@ -293,10 +328,12 @@ protected:
 
 TYPED_TEST_SUITE_P( SolverTestElasticity2D );
 
+#if defined(GEOS_USE_SUITESPARSE)
 TYPED_TEST_P( SolverTestElasticity2D, DirectSerial )
 {
   this->test( params_DirectSerial() );
 }
+#endif
 
 #if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TYPED_TEST_P( SolverTestElasticity2D, DirectParallel )
@@ -314,14 +351,25 @@ TYPED_TEST_P( SolverTestElasticity2D, GMRES_AMG )
 }
 
 #if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
+#if defined(GEOS_USE_SUITESPARSE)
 REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
                              DirectSerial,
                              GMRES_AMG );
 #else
 REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
+                             GMRES_AMG );
+#endif
+#else
+#if defined(GEOS_USE_SUITESPARSE)
+REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
                              DirectSerial,
                              DirectParallel,
                              GMRES_AMG );
+#else
+REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
+                             DirectParallel,
+                             GMRES_AMG );
+#endif
 #endif
 
 #ifdef GEOS_USE_TRILINOS
