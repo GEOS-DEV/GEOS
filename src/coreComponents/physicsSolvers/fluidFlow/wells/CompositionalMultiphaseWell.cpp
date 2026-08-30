@@ -1354,6 +1354,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time );
   GEOS_UNUSED_VAR( dt );
+  integer const numDofPerWellElement = m_numDofPerWellElement;
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
@@ -1408,7 +1409,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
     arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
     arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
@@ -1419,7 +1420,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
           localIndex const localRow = dofIndex - rank_offset;
 
           real64 const unity = 1.0;
-          for( integer i=0; i < m_numDofPerWellElement; i++ )
+          for( integer i=0; i < numDofPerWellElement; i++ )
           {
             globalIndex const rindex = localRow+i;
             globalIndex const cindex =dofIndex + i;
@@ -1442,7 +1443,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
 
     arrayView1d< real64 >  mixConnRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
@@ -1451,7 +1452,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
         localIndex const localRow = dofIndex - rank_offset;
 
         real64 const unity = 1.0;
-        for( integer i=0; i < m_numDofPerWellElement; i++ )
+        for( integer i=0; i < numDofPerWellElement; i++ )
         {
           globalIndex const rindex = localRow+i;
           globalIndex const cindex =dofIndex + i;

@@ -852,6 +852,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 {
   GEOS_UNUSED_VAR( time );
   GEOS_UNUSED_VAR( dt );
+  integer const numDofPerWellElement = m_numDofPerWellElement;
   // get a reference to the degree-of-freedom numbers
   string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -890,7 +891,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
     arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
@@ -901,7 +902,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
           localIndex const localRow = dofIndex - rank_offset;
 
           real64 const unity = 1.0;
-          for( integer i=0; i < m_numDofPerWellElement; i++ )
+          for( integer i=0; i < numDofPerWellElement; i++ )
           {
             globalIndex const rindex = localRow+i;
             globalIndex const cindex =dofIndex + i;
@@ -924,7 +925,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
     arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
@@ -933,7 +934,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
         localIndex const localRow = dofIndex - rank_offset;
 
         real64 const unity = 1.0;
-        for( integer i=0; i < m_numDofPerWellElement; i++ )
+        for( integer i=0; i < numDofPerWellElement; i++ )
         {
           globalIndex const rindex = localRow+i;
           globalIndex const cindex =dofIndex + i;
