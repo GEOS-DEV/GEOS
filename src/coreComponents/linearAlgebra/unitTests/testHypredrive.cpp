@@ -303,7 +303,12 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
                  fieldNames,
                  numComponentsPerField,
                  target ) );
-  EXPECT_NE( target.argument.find( "num_levels: 3" ), std::string::npos );
+  // The outer MGR has one reduction level and its F-relaxation is a nested
+  // two-level MGR for the displacement and bubble-displacement blocks.
+  EXPECT_EQ( target.argument.find( "num_levels: 3" ), std::string::npos );
+  std::string::size_type const outerNumLevels = target.argument.find( "num_levels: 2" );
+  ASSERT_NE( outerNumLevels, std::string::npos );
+  EXPECT_NE( target.argument.find( "num_levels: 2", outerNumLevels + 1 ), std::string::npos );
   EXPECT_NE( target.argument.find( "cycle: v(1,0)" ), std::string::npos );
   EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2, "
                                    "totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
