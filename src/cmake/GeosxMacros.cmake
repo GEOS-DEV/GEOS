@@ -221,18 +221,22 @@ endmacro()
 ##                  KEY <key to use when looking up the kernel specification in the JSON object>
 ##                  RESULT <name of the variable to store the list of generated files in>
 ##                  SPLIT <delimiter used to split the instantiation strings into lists>
-##                  JSON <name of the JSON object variable> )
+##                  JSON <name of the JSON object variable>
+##                  LIST_TEMPLATE <path to the dispatch type list template> )
 ##
 ## This function generates kernel files from a template.
 ## The kernel specification is looked up in a JSON object using the provided key.
 ## The list of generated files is stored in the provided variable in the parent scope.
 ## The delimiter is used to split the instantiation strings into lists of symbol values.
 ## The JSON object is expected to be defined in the calling scope.
+## The dispatch type list template will be used to generate a list of types for dispatch of the
+## kernel. If this is not specified KernelDispatchTypeList.hpp.template in the parent directory
+## will be used.
 ##
 ##------------------------------------------------------------------------------
 function(generateKernels)
   set(options)
-  set(oneValueArgs TEMPLATE KEY HEADERS SOURCES SPLIT JSON)
+  set(oneValueArgs TEMPLATE KEY HEADERS SOURCES SPLIT JSON LIST_TEMPLATE)
   set(multiValueArgs)
 
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -320,7 +324,11 @@ function(generateKernels)
   set(generatedFileName "${CMAKE_BINARY_DIR}/include/${relativeSourceDir}/${localRelDir}/${KERNEL_GROUP_NAME}DispatchTypeList.hpp")
   string(REPLACE "coreComponents/" "" generatedFileName "${generatedFileName}")
   message(STATUS "Generating file: ${generatedFileName}")
-  configure_file(../KernelDispatchTypeList.hpp.template "${generatedFileName}" @ONLY)
+  set(LIST_TEMPLATE "${ARG_LIST_TEMPLATE}")
+  if ("${LIST_TEMPLATE}" STREQUAL "")
+    set(LIST_TEMPLATE "../KernelDispatchTypeList.hpp.template")
+  endif()
+  configure_file(${LIST_TEMPLATE} "${generatedFileName}" @ONLY)
   list(APPEND generatedHeadersList ${generatedFileName})
 
   # The list of generated files is returned by setting the variable in the parent scope
