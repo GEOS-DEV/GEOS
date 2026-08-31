@@ -38,6 +38,14 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
 
+  /// True when the flow solver carries well degrees of freedom.
+  static constexpr bool hasWells = std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >;
+
+  static_assert( hasWells || std::is_same_v< FLOW_SOLVER, SinglePhaseBase >,
+                 "SinglePhasePoromechanicsConformingFracturesALM supports only the SinglePhaseBase and "
+                 "SinglePhaseReservoirAndWells<> flow solvers. Both setMGRStrategy and assembleSystem branch "
+                 "on hasWells, so a new instantiation must be handled in both places." );
+
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFracturesALM"; }
 
@@ -85,12 +93,10 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override final;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override final;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -103,11 +109,53 @@ public:
 
   virtual void setMGRStrategy() override final
   {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+    LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
+    if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    {
+      return;
+    }
+
+    // Wells contribute their own dof labels and need an extra reduction level
+    // to keep the well block out of the coarse grid, so they get a separate
+    // strategy.
+    if constexpr ( hasWells )
+    {
+      linearSolverParameters.mgr.strategy =
+        LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM;
+    }
+    else
+    {
+      linearSolverParameters.mgr.strategy =
+        LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM;
+    }
+    linearSolverParameters.mgr.separateComponents = true;
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
+                           GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
+                                     EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy ) ) );
   }
 
   /**@}*/
+
+protected:
+
+  virtual void initializePreSubGroups() override
+  {
+    Base::initializePreSubGroups();
+
+    // The ALM fracture assembly carries a single flow dof per fracture element:
+    // the dR/dAperture matrix is sized numElements x numElements and the contact
+    // kernels have no temperature block. Reject the thermal input rather than
+    // silently assembling an incomplete Jacobian.
+    // Checking the flow sub-solver too: PoromechanicsSolver only rejects the
+    // opposite direction (thermal coupled solver over a non-thermal flow
+    // solver), so a thermal SinglePhaseFVM under a non-thermal ALM solver would
+    // otherwise reach the two-equation thermal connector kernel.
+    GEOS_THROW_IF( this->m_isThermal || this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{}: thermal coupling is not supported by {}",
+                             this->getName(), this->getCatalogName() ),
+                   InputError, this->getDataContext() );
+  }
 
 private:
 
@@ -233,12 +281,8 @@ private:
    * @brief Set up the Dflux_dApertureMatrix object
    *
    * @param domain
-   * @param dofManager
-   * @param localMatrix
    */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
+  void setUpDflux_dApertureMatrix( DomainPartition & domain );
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -256,6 +300,8 @@ private:
   }
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
+
+  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
 
   string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 
