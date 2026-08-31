@@ -21,6 +21,8 @@
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/MultivariableNonuniformTableFunction.hpp"
+#include "functions/MultivariableNonuniformTableFunctionKernels.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -62,6 +64,36 @@ char const * multivariableTableFileContent =
   "19.80823163954285 19.80823163954285 1.980823163954483e-12 -19.984811062484262 0.090528615667852308 3.5306160110497706 3.4973907984679659e-13 9.9999999999999998e-13 62.091127816030024 6.0538849620689803e-11 5.9969142764489583e-14 9.9999999999999998e-13 0.7131018109295213 1.2870979890703782 0.00030768994664963448 0.0064779386502995641 0 0 0 0 0 0 0 33.024999999975314 0 -16.512499999987657 0 0 0 1421.4185799999796 659.94000000000005 0 0 1.9999999999998999 \n"
   "26.593517132455098 26.593517132455098 26.593517132455098 -39.969622124966527 0.19758054956862175 3.8811390924094633 3.8631336775423457 9.9999999999999998e-13 47.288336081028568 2.3222504717668846e-11 0.23114770668014975 9.9999999999999998e-13 1.313749928999681 1.6865497710000181 0.0004451760604583976 0.0064650030321583112 0 0 0 0 0 0 0 9.0593079982355817 0 -4.5296539991177909 0 0 0 1421.3211973666866 659.94000000000005 0 0 2.9999999999996998";
 
+char const * multivariableNonuniformTableFileContent =
+  "4 34\n"
+  "3 1 500.5 1000\n"
+  "2 1e-13 0.99999999999989997\n"
+  "2 1e-13 0.99999999999989997\n"
+  "2 1e-13 0.99999999999989997\n"
+  "2.5165096633488189e-12 2.5165096633488189e-12 2.5165096633488189e-12 19.982814779283817 0.17715834234447858 3.4799790238502815 3.4638346743277832 9.9999999999999998e-13 46.589817605162132 2.28794740689822e-11 0.22773331410153216 9.9999999999999998e-13 1.2444262762971973e-13 1.7553963362399752e-13 0.00044473177341675438 0.0058778098301284758 0 0 0 0 0 0 0 -4.5296539991171088 0 2.2648269995585544 0 0 0 1419.9027145548464 600 0 0 2.999822612537173e-13 \n"
+  "7.7713016930315248e-12 7.7713016930315248e-12 77.713016930307475 -1.9966842958308671e-12 7.7713016930307477e-12 7.7713016930307477e-12 77.713016930299716 9.9999999999999998e-13 0 0 0 0 1.0000000000000999 0 3.3572023313892832e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.00000000008 0 0 0 1.0000000000000999 \n"
+  "2.7975940691009456e-12 27.975940691006656 2.7975940691009456e-12 -1.9966842958308671e-12 2.7975940691006661e-12 27.97594069100386 2.7975940691006661e-12 9.9999999999999998e-13 0 0 0 0 1.0000000000000999 0 1.2085606378514876e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.00000000008 0 0 0 1.0000000000000999 \n"
+  "4.1141379411678857e-12 41.141379411674741 41.141379411674741 -19.982814779287814 2.0570689705840455e-12 20.570689705838397 20.570689705838397 9.9999999999999998e-13 0 0 0 0 1.9999999999999001 0 8.8865379529230774e-16 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.00000000004 0 0 0 1.9999999999999001 \n"
+  "13.633265167006751 1.3633265167008117e-12 1.3633265167008117e-12 -1.9966842958308671e-12 0 0 0 0 136.33265167005388 1.3633265167006753e-11 1.3633265167006753e-11 9.9999999999999998e-13 0 1.0000000000000999 0 0.005889570552146328 0 0 0 0 0 0 0 -4.9960036108132044e-13 0 2.4980018054066022e-13 0 0 0 0 600 0 0 1.0000000000000999 \n"
+  "23.490714960798009 2.3490714960800358e-12 23.490714960798009 -19.982814779287814 0.046287023642824505 1.8411044362036712e-13 1.8234282041118481 9.9999999999999998e-13 96.552512027963189 9.6011389494930567e-24 0.95089595179084896 9.9999999999999998e-13 0.31350334619913905 1.6864966538007611 0.00081380177433002497 0.0058659228652333875 0 0 0 0 0 0 0 -4.9999999999995008 0 2.4999999999997504 0 0 0 1419.8049512378052 600 0 0 1.9999999999999001 \n"
+  "18.603704313963757 18.603704313963757 1.8603704313965617e-12 -19.982814779287811 0.07994912869223153 3.1180160190001471 3.0886736196170012e-13 9.9999999999999998e-13 60.252762370057184 5.874644331086449e-11 5.8193604072238805e-14 9.9999999999999998e-13 0.67040756322114736 1.3295924367787526 0.00030738287116134427 0.0058895705521407066 0 0 0 0 0 0 0 33.024999999975314 0 -16.512499999987657 0 0 0 1419.9999999999795 600 0 0 1.9999999999998999 \n"
+  "25.166584712355728 25.166584712355728 25.166584712355728 -39.965629558573625 0.17715834234447866 3.4799790238502832 3.463834674327785 9.9999999999999998e-13 46.58981760516216 2.2879474068982213e-11 0.22773331410153225 9.9999999999999998e-13 1.2444998625214401 1.7555001374782597 0.00044473177341675433 0.0058778098301284767 0 0 0 0 0 0 0 9.0593079982355817 0 -4.5296539991177909 0 0 0 1419.9027145548464 600 0 0 2.9999999999996998 \n"
+  "2.5892526305777112e-12 2.5892526305777112e-12 2.5892526305777112e-12 19.983812920882041 0.18743599438218472 3.6818662905312016 3.6647853438122544 9.9999999999999998e-13 46.971091776178703 2.3066711387292285e-11 0.22959700095437138 9.9999999999999998e-13 1.2797587881148915e-13 1.7202136655617776e-13 0.00044495391693757605 0.0061714064311433935 0 0 0 0 0 0 0 -4.5296539991171088 0 2.2648269995585544 0 0 0 1420.6119559607666 629.96999999999991 0 0 2.999822612537173e-13 \n"
+  "7.775571828640934e-12 7.775571828640934e-12 77.75571828640156 -1.9967840302114436e-12 7.775183458226419e-12 7.775183458226419e-12 77.751834582256407 9.9999999999999998e-13 0 0 0 0 1.0000499500000999 0 3.3588792539538123e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.6993000000803 0 0 0 1.0000000000000999 \n"
+  "2.7991312769622549e-12 27.991312769619753 2.7991312769622549e-12 -1.9967840302114436e-12 2.7989914673381822e-12 27.989914673379023 2.7989914673381822e-12 9.9999999999999998e-13 0 0 0 0 1.0000499500000999 0 1.2091643138900945e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.6993000000803 0 0 0 1.0000000000000999 \n"
+  "4.1163985569075047e-12 41.163985569070931 41.163985569070931 -19.983812920886038 2.0580964765348525e-12 20.580964765346465 20.580964765346465 9.9999999999999998e-13 0 0 0 0 2.0000998999999 0 8.8909767786305609e-16 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1400.6993000000402 0 0 0 1.9999999999999001 \n"
+  "14.314961758724504 1.4314961758725935e-12 1.4314961758725935e-12 -1.9967840302114436e-12 0 0 0 0 143.14246762097306 1.4314246762098739e-11 1.4314246762098739e-11 9.9999999999999998e-13 0 1.0000499500000999 0 0.0061837546012260356 0 0 0 0 0 0 0 -4.9960036108132044e-13 0 2.4980018054066022e-13 0 0 0 0 629.96999999999991 0 0 1.0000000000000999 \n"
+  "24.475680879962209 2.4475680879964658e-12 24.475680879962209 -19.983812920886038 0.050219928346927054 1.9975389556008147e-13 1.9783608136674524 9.9999999999999998e-13 99.82255200313746 9.9263102734970568e-24 0.98310089094030273 9.9999999999999998e-13 0.32648546522983846 1.6736144347700614 0.00081420826831630274 0.0061589257123517939 0 0 0 0 0 0 0 -4.9999999999995008 0 2.4999999999997504 0 0 0 1420.5141438109486 629.96999999999991 0 0 1.9999999999999001 \n"
+  "19.215576739407531 19.215576739407531 1.9215576739409455e-12 -19.983812920886034 0.085243537804597286 3.3244979743826186 3.2932124560535381e-13 9.9999999999999998e-13 61.217128048687037 5.9686699847529531e-11 5.9125012231392857e-14 9.9999999999999998e-13 0.69211143544999387 1.3079884645499058 0.0003075364089054894 0.0061837546012201349 0 0 0 0 0 0 0 33.024999999975314 0 -16.512499999987657 0 0 0 1420.7092899999798 629.96999999999991 0 0 1.9999999999998999 \n"
+  "25.894057399489316 25.894057399489316 25.894057399489316 -39.967625841770072 0.18743599438218464 3.6818662905312003 3.664785343812254 9.9999999999999998e-13 46.971091776178696 2.3066711387292279e-11 0.2295970009543713 9.9999999999999998e-13 1.2798344636442114 1.7203153863554879 0.00044495391693757605 0.0061714064311433935 0 0 0 0 0 0 0 9.0593079982355817 0 -4.5296539991177909 0 0 0 1420.6119559607666 629.96999999999991 0 0 2.9999999999996998 \n"
+  "2.6591944680280507e-12 2.6591944680280507e-12 2.6591944680280507e-12 19.984811062480269 0.19758054956862175 3.8811390924094624 3.8631336775423457 9.9999999999999998e-13 47.288336081028589 2.3222504717668852e-11 0.23114770668014989 9.9999999999999998e-13 1.3136722480775809e-13 1.6864500467385845e-13 0.00044517606045839766 0.0064650030321583112 0 0 0 0 0 0 0 -4.5296539991171088 0 2.2648269995585544 0 0 0 1421.3211973666866 659.94000000000005 0 0 2.999822612537173e-13 \n"
+  "7.779842352038681e-12 7.779842352038681e-12 77.798423520379032 -1.9968837645920206e-12 7.7790652234220855e-12 7.7790652234220855e-12 77.79065223421307 9.9999999999999998e-13 0 0 0 0 1.0000999000000999 0 3.3605561765183409e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1401.39860000008 0 0 0 1.0000000000000999 \n"
+  "2.8006686244236482e-12 28.006686244233684 2.8006686244236482e-12 -1.9968837645920206e-12 2.8003888655756975e-12 28.003888655754174 2.8003888655756975e-12 9.9999999999999998e-13 0 0 0 0 1.0000999000000999 0 1.2097679899287013e-15 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1401.39860000008 0 0 0 1.0000000000000999 \n"
+  "4.1186593779428123e-12 41.186593779424001 41.186593779424001 -19.984811062484265 2.0591239824856591e-12 20.591239824854529 20.591239824854529 9.9999999999999998e-13 0 0 0 0 2.0001997999998999 0 8.8954156043380464e-16 0 0 0 0 0 0 0 0 0 0 -0 0 0 0 1401.39860000004 0 0 0 1.9999999999999001 \n"
+  "14.99672638050361 1.4996726380505108e-12 1.4996726380505108e-12 -1.9968837645920206e-12 0 0 0 0 149.95228357189228 1.4995228357190726e-11 1.4995228357190726e-11 9.9999999999999998e-13 0 1.0000999000000999 0 0.0064779386503057467 0 0 0 0 0 0 0 -4.9960036108132044e-13 0 2.4980018054066022e-13 0 0 0 0 659.94000000000005 0 0 1.0000000000000999 \n"
+  "25.445926657502518 2.5445926657505065e-12 25.445926657502518 -19.984811062484265 0.054247898177082414 2.157754768577228e-13 2.1370384130372595 9.9999999999999998e-13 102.983507562632 1.0240634291613648e-23 1.0142315138747284 9.9999999999999998e-13 0.33925837145800958 1.6609414285418904 0.00081461476230258061 0.0064519285594702028 0 0 0 0 0 0 0 -4.9999999999995008 0 2.4999999999997504 0 0 0 1421.2233363840917 659.94000000000005 0 0 1.9999999999999001 \n"
+  "19.80823163954285 19.80823163954285 1.980823163954483e-12 -19.984811062484262 0.090528615667852308 3.5306160110497706 3.4973907984679659e-13 9.9999999999999998e-13 62.091127816030024 6.0538849620689803e-11 5.9969142764489583e-14 9.9999999999999998e-13 0.7131018109295213 1.2870979890703782 0.00030768994664963448 0.0064779386502995641 0 0 0 0 0 0 0 33.024999999975314 0 -16.512499999987657 0 0 0 1421.4185799999796 659.94000000000005 0 0 1.9999999999998999 \n"
+  "26.593517132455098 26.593517132455098 26.593517132455098 -39.969622124966527 0.19758054956862175 3.8811390924094633 3.8631336775423457 9.9999999999999998e-13 47.288336081028568 2.3222504717668846e-11 0.23114770668014975 9.9999999999999998e-13 1.313749928999681 1.6865497710000181 0.0004451760604583976 0.0064650030321583112 0 0 0 0 0 0 0 9.0593079982355817 0 -4.5296539991177909 0 0 0 1421.3211973666866 659.94000000000005 0 0 2.9999999999996998";
 
 
 void writeTableToFile( string const & filename, char const * str )
@@ -692,6 +724,74 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   } );
 }
 
+template< integer NUM_DIMS, integer NUM_OPS >
+void testNonuniformMultivariableFunction( MultivariableNonuniformTableFunction & function,
+                                          arrayView1d< real64 const > const & inputs,
+                                          arrayView1d< real64 const > const & expectedValues,
+                                          arrayView1d< real64 const > const & expectedDerivatives,
+                                          real64 valuesTolerance = 1e-10,
+                                          real64 derivativesTolerance = 1e-10 )
+{
+  localIndex const numElems = inputs.size() / NUM_DIMS;
+
+  ASSERT_EQ( numElems * NUM_DIMS, inputs.size());
+  ASSERT_EQ( numElems * NUM_OPS, expectedValues.size());
+
+  array1d< real64 > evaluatedValues( numElems * NUM_OPS );
+  array2d< real64 > evaluatedDerivatives( numElems * NUM_OPS, NUM_DIMS );
+  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView();
+  arrayView2d< real64 > evaluatedDerivativesView = evaluatedDerivatives.toView();
+
+
+  MultivariableNonuniformTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisCoordinates(),
+                                                                                function.getAxisPoints(),
+                                                                                function.getAxisSteps(),
+                                                                                function.getAxisStepInvs(),
+                                                                                function.getAxisHypercubeMults(),
+                                                                                function.getHypercubeData()
+                                                                                );
+  // Test values evaluation first
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+                                             ( localIndex const elemIndex )
+  {
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
+  } );
+
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
+  } );
+
+  // And now - both values and derivatives
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+                                             ( localIndex const elemIndex )
+  {
+    // use local 2D array for the kernel
+    real64 derivatives[NUM_OPS][NUM_DIMS];
+
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], derivatives );
+
+    // now copy results to the view
+    for( auto i = 0; i < NUM_OPS; i++ )
+      for( auto j = 0; j < NUM_DIMS; j++ )
+        evaluatedDerivativesView[elemIndex * NUM_OPS + i][j] = derivatives[i][j];
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    for( auto j = 0; j < NUM_DIMS; j++ )
+      ASSERT_NEAR( expectedDerivatives[elemOpIndex * NUM_DIMS + j], evaluatedDerivativesView[elemOpIndex][j], derivativesTolerance );
+  } );
+}
+
+
 TEST( FunctionTests, 1DMultivariableTable )
 {
   FunctionManager * functionManager = &FunctionManager::getInstance();
@@ -722,6 +822,18 @@ TEST( FunctionTests, 1DMultivariableTable )
   table_f.setTableValues( values );
   table_f.initializeFunction();
 
+  // Create nonuniform version of uniformly spaced table
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+  array2d< real64 > axisCoordinates( nDims, axisPoints[0] );
+
+  real64 dx = (axisMaxs[0] - axisMins[0]) / (  axisPoints[0] - 1);
+  for( integer i=0; i<axisPoints[0]; i++ )
+    axisCoordinates[0][i] = (i+1)*dx;
+
+  table_nuif.setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
+  table_nuif.setTableValues( values );
+  table_nuif.initializeFunction();
+
 
   // Setup testing coordinates, expected values
   array1d< real64 > testCoordinates( nTest );
@@ -740,6 +852,7 @@ TEST( FunctionTests, 1DMultivariableTable )
 
 
   testMutivariableFunction< nDims, nOps >( table_f, testCoordinates, testExpectedValues, testExpectedDerivatives );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
 real64 operator1 ( real64 const x, real64 const y ) { return 2 * x + 3 * y * y; }
@@ -751,6 +864,10 @@ real64 dOperator2_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x ); 
 real64 operator3 ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( y ); return 2 * x + 3; }
 real64 dOperator3_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 2; }
 real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 0; }
+
+real64 operator1a ( real64 const x, real64 const y ) { return x + y; }
+real64 dOperator1a_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 1; }
+real64 dOperator1a_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 1; }
 
 TEST( FunctionTests, 2DMultivariableTable )
 {
@@ -797,6 +914,23 @@ TEST( FunctionTests, 2DMultivariableTable )
   table_g.initializeFunction();
 
 
+  // Create nonuniform version of uniformly spaced table
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+
+  integer maxDims = *std::max_element( axisPoints.begin(), axisPoints.end());
+
+  array2d< real64 > axisCoordinates( nDims, maxDims );
+
+  for( integer d=0; d<nDims; d++ )
+  {
+    real64 dx = (axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+    for( integer i=0; i<axisPoints[d]; i++ )
+      axisCoordinates[d][i] = axisMins[d] + i*dx;
+  }
+  table_nuif.setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
+  table_nuif.setTableValues( values );
+  table_nuif.initializeFunction();
+
   // Setup testing coordinates, expected values
   array1d< real64 > testCoordinates( nTest * nDims );
   testCoordinates[0] = 1.2334;
@@ -821,8 +955,105 @@ TEST( FunctionTests, 2DMultivariableTable )
     testExpectedDerivatives[i * nOps * nDims + 5] = dOperator3_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
   }
 
-
   testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
+}
+
+TEST( FunctionTests, 2DMultivariableNonuniformTable )
+{
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+  // 1D table
+  localIndex constexpr nDims = 2;
+  localIndex constexpr nOps = 1;
+  localIndex const nTest = 4;
+
+  // Setup table
+  array1d< real64 > axisMins( nDims );
+  array1d< real64 > axisMaxs( nDims );
+  integer_array axisPoints( nDims );
+
+
+  axisMins[0] = 1;
+  axisMins[1] = 0;
+  axisMaxs[0] = 2;
+  axisMaxs[1] = 1;
+  axisPoints[0] = 5;
+  axisPoints[1] = 5;
+
+  array1d< real64 > axisSteps( nDims );
+  for( auto i = 0; i < nDims; i++ )
+    axisSteps[i] = (axisMaxs[i] - axisMins[i]) /  (axisPoints[i]-1);
+
+  array1d< real64 > values( axisPoints[0] * axisPoints[1] * nOps );
+
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    for( auto j = 0; j < axisPoints[1]; j++ )
+    {
+      auto x = axisMins[0] + i * axisSteps[0];
+      auto y = axisMins[1] + j * axisSteps[1];
+      values[( i*axisPoints[1] + j ) * nOps] = operator1a( x, y );
+    }
+
+  MultivariableTableFunction & table_g = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  table_g.setTableCoordinates( nDims, nOps, axisMins, axisMaxs, axisPoints );
+  table_g.setTableValues( values );
+  table_g.initializeFunction();
+
+  // Create nonuniform version of uniformly spaced table
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+
+  integer maxDims = *std::max_element( axisPoints.begin(), axisPoints.end());
+
+  array2d< real64 > axisCoordinates( nDims, 2*maxDims );
+
+  for( integer d=0; d<nDims; d++ )
+  {
+
+    axisCoordinates[d][0] = axisMins[d];
+    for( integer j=1; j<axisPoints[d]-2; j++ )
+    {
+      real64 dx =  1/(j+1.0)*(axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+      axisCoordinates[d][j] = axisMins[d] + j*dx;
+    }
+    for( integer j=axisPoints[d]-2; j<axisPoints[d]-1; j++ )
+    {
+      real64 dx =  1/(j+2.0)*(axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+      axisCoordinates[d][j] = axisMins[d] + j*dx;
+    }
+    axisCoordinates[d][axisPoints[d]-1] = axisMins[d] + (axisPoints[d]-2)* (axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+  }
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    for( auto j = 0; j < axisPoints[1]; j++ )
+    {
+      auto x = axisCoordinates[0][i];
+      auto y = axisCoordinates[1][j];
+      values[( i * axisPoints[1] + j ) * nOps] = operator1a( x, y );
+    }
+  table_nuif.setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
+  table_nuif.setTableValues( values );
+  table_nuif.initializeFunction();
+
+  // Setup testing coordinates, expected values
+  array1d< real64 > testCoordinates( nTest * nDims );
+  testCoordinates[0] = 1.2334;
+  testCoordinates[1] = 0.1232;
+  testCoordinates[2] = 1.7342;
+  testCoordinates[3] = 0.2454;
+  testCoordinates[4] = 2.0;
+  testCoordinates[5] = 0.7745;
+  testCoordinates[6] = 1.0;
+  testCoordinates[7] = 0.0;
+
+  array1d< real64 > testExpectedValues( nTest * nOps );
+  array1d< real64 > testExpectedDerivatives( nTest * nOps * nDims );
+  for( auto i = 0; i < nTest; i++ )
+  {
+    testExpectedValues[i * nOps] = operator1a( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims] = dOperator1a_dx( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 1] = dOperator1a_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+  }
+  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
 }
 
 TEST( FunctionTests, MultivariableTableFromFile )
@@ -841,6 +1072,10 @@ TEST( FunctionTests, MultivariableTableFromFile )
   table_h.initializeFunctionFromFile ( "tableData.txt" );
   removeFile( "tableData.txt" );
 
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+  writeTableToFile( "tableData.txt", multivariableNonuniformTableFileContent );
+  table_nuif.initializeFunctionFromFile ( "tableData.txt" );
+  removeFile( "tableData.txt" );
 
   // Setup testing coordinates, expected values
   array1d< real64 > testCoordinates( nTest * 4 );
@@ -884,6 +1119,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
   }
 
   testMutivariableFunction< nDims, nOps >( table_h, testCoordinates, testExpectedValues, testExpectedDerivatives );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
 
