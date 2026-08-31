@@ -5,6 +5,7 @@
     <File name="./PhaseFieldFracture_SingleEdgeNotch_base_iterative.xml"/>
   </Included>
 
+  <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh
       name="SingleEdgeNotchTension"
@@ -17,7 +18,9 @@
       nz="{ 1 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
+  <!-- SPHINX_MESH_END -->
 
+  <!-- SPHINX_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="topTensionDisplacement"
@@ -68,14 +71,18 @@
       fieldName="ruptureState"
       scale="1"/>
   </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
 
+  <!-- SPHINX_GEOMETRY -->
   <Geometry>
     <Box
       name="initial_crack_nodes"
       xMin="{ -1.0e-7, 0.4999999, -0.0050001 }"
       xMax="{ 0.5000001, 0.5000001, 0.0050001 }"/>
   </Geometry>
+  <!-- SPHINX_GEOMETRY_END -->
 
+  <!-- SPHINX_EVENTS -->
   <Events
     maxTime="700.0">
     <SoloEvent
@@ -104,6 +111,7 @@
       cycleFrequency="500"
       target="/Outputs/restartOutput"/>
   </Events>
+  <!-- SPHINX_EVENTS_END -->
 
   <Outputs>
     <VTK
