@@ -104,8 +104,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::allowNonConvergedString(), &m_allowNonConverged ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Allow non-converged solution to be accepted. "
-                    "(i.e. exit from the Newton loop without achieving the desired tolerance)" );
+    setDescription( "When enabled, the simulation can continue even with a non-converged solution (residuals exceeding the tolerance during the "
+                    "newton loops) at the deepest level of sub-timesteps (maxSubSteps).\n"
+                    "When disabled, the simulation will stop with an error when no converged solution has been found at the last sub-step level." );
 
   registerWrapper( viewKeysStruct::timeStepDecreaseIterLimString(), &m_timeStepDecreaseIterLimit ).
     setApplyDefaultValue( 0.7 ).
@@ -214,6 +215,14 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 void NonlinearSolverParameters::postInputInitialization()
 {
+  if( m_allowNonConverged > 0 )
+  {
+    GEOS_WARNING( GEOS_FMT( "Solver '{}' has '{}' enabled.\nThe simulation will not stop on non-converged solutions, "
+                            "result may contain inaccurate solutions that VIOLATE CONVERGENCE TOLERANCES.",
+                            getParent().getName(), viewKeysStruct::allowNonConvergedString() ),
+                  getWrapperDataContext( viewKeysStruct::allowNonConvergedString() ) );
+  }
+
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         GEOS_FMT( "{} Value should be smaller than {}",
                                   viewKeysStruct::timeStepIncreaseIterLimString(),

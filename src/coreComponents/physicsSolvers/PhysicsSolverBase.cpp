@@ -217,17 +217,17 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ElementSubRegionBase & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-      setConstitutiveNames( subRegion );
-    } );
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        setConstitutiveNamesCallSuper( subRegion );
+        setConstitutiveNames( subRegion );
+      } );
 
-  } );
+    } );
 
 }
 
@@ -358,10 +358,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                         GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ),
                                         m_nonlinearSolverParameters );
       }
-    }
 
-    if( dtRemaining > 0.0 )
-    {
       GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
                              GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}",
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
@@ -827,10 +824,10 @@ real64 PhysicsSolverBase::eisenstatWalker( real64 const newNewtonNorm,
   return krylovTol;
 }
 
-real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 integer const cycleNumber,
-                                                 DomainPartition & domain )
+StepResult PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer const cycleNumber,
+                                                     DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
@@ -854,13 +851,19 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
-    // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
+      // reset the solver state, since we are restarting the time step
       Timer timer( m_timers.get_inserted( "reset state" ) );
-
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
+
+      // previous attempt failed, we try cuttting the timestep
+      stepDt *= dtCutFactor;
+      m_numTimestepsSinceLastDtCut = 0;
+      GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
+      getIterationStats().updateTimeStepCut();
+      getIterationStats().writeIterationStatsToTable();
     }
 
     // it's the simplest configuration that can be attempted whenever Newton's fails as a last resource.
@@ -919,38 +922,35 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConfigurationLoopConverged )
     {
-      // get out of outer loop
-      break;
-    }
-    else
-    {
-      // cut timestep, go back to beginning of step and restart the Newton loop
-      stepDt *= dtCutFactor;
-      m_numTimestepsSinceLastDtCut = 0;
-      GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
-
-      // notify the solver statistics counter that this is a time step cut
-      getIterationStats().updateTimeStepCut();
-      getIterationStats().writeIterationStatsToTable();
+      break; // we converged, get out of outer loop
     }
   } // end of outer loop (dt chopping strategy)
+  // if not converged & no timestep cut are permitted, we exit the loop
 
   if( !isConfigurationLoopConverged )
   {
-    GEOS_LOG_RANK_0( "Convergence not achieved." );
-
     if( allowNonConverged )
     {
-      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+      if ( MpiWrapper::commRank() == 0 )
+        recordNonConvergedTimestep( time_n, cycleNumber );
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext()  );
+      GEOS_ERROR( "Convergence not achieved. Terminating...", getDataContext() );
     }
   }
 
   // return the achieved timestep
   return stepDt;
+}
+
+void PhysicsSolverBase::recordNonConvergedTimestep( globalIndex const cycleNumber,
+                                                    real64 const time_n )
+{
+  GEOS_WARNING( dtRemaining > 0.0 && MpiWrapper::commRank() == 0,
+                "Maximum allowed number of sub-steps reached.\nNon-converged solutions are allowed, SIMULATION WILL CONTINUE WITH INACURATE RESULTS.",
+                getDataContext(), getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::allowNonConvergedString()) );
+  // TODO record non-converged timestep, cycle, residual...
 }
 
 bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
@@ -1619,6 +1619,33 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
+
+  if( m_nonlinearSolverParameters.m_allowNonConverged && m_nonConvergedCycleNumbers.size() > 0 )
+  { // TODO : relocate where non-convergence data is stored
+    globalIndex const numNonConverged = m_nonConvergedCycleNumbers.size();
+
+    TableLayout nonConvLayout( GEOS_FMT( "{} NON-CONVERGED TIMESTEPS", getName()),
+                               { "Cycle", "Time (s)", "Residual" } );
+
+    TableTextFormatter const nonConvFormatter( nonConvLayout );
+
+    TableData nonConvData;
+    for( globalIndex i = 0; i < numNonConverged; ++i )
+    {
+      real64 const timeVal = i < m_nonConvergedTimes.size() ? m_nonConvergedTimes[i] : 0.0;
+      real64 const residVal = i < m_nonConvergedResiduals.size() ? m_nonConvergedResiduals[i] : 0.0;
+      nonConvData.addRow( m_nonConvergedCycleNumbers[i], timeVal, residVal );
+    }
+
+    std::string const tableStr = nonConvFormatter.toString( nonConvData );
+
+    GEOS_WARNING( GEOS_FMT( "WARNING: Simulation ended with non-converged timesteps:\n"
+                            "- Results contain NON-PHYSICAL values and are likely invalid for use.\n"
+                            "- The simulation has not been aborted because 'allowNonConverged' was active on this solver.\n"
+                            "{}\n",
+                            tableStr ),
+                           );
+  }
 
   for( auto & timer : m_timers )
   {
