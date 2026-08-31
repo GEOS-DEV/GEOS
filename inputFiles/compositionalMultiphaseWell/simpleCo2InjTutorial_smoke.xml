@@ -26,7 +26,8 @@
                               { 525.0, 525.0, 6600.00 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
-        numElementsPerSegment="2">
+        numElementsPerSegment="2"
+        logLevel="1">
         <Perforation
           name="injector1_perf1"
           distanceFromHead="45"/>
@@ -34,6 +35,29 @@
    </InternalMesh>
   </Mesh>
   <!-- SPHINX_FIELD_CASE_Co2_MESH_END --> 
+
+  <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY -->
+  <Geometry>
+
+    <!-- This Box should select 5 x 5 elements around the perforation -->
+    <!-- ( Perforated cell center is at [530, 500, 6008] ) -->
+    <Box
+      name="injectorSurrounding"
+      xMin="{ 470.0, 400.0, 6584.0 }"
+      xMax="{ 590.0, 600.0, 6632.0 }" />
+
+    <!-- These two boxes are the top and bottom parts of the domain, and should contain an equal number of elements -->
+    <Box
+      name="domainTop"
+      xMin="{ 0.0, 450.0, 6500.0 }"
+      xMax="{ 1000.0, 550.0, 7100.0 }" />
+    <Box
+      name="domainBottom"
+      xMin="{ 0.0, 450.0, 7100.0 }"
+      xMax="{ 1000.0, 550.0, 7700.0 }" />
+
+  </Geometry>
+  <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY_END --> 
  
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   <Events
@@ -67,6 +91,16 @@
       name="solverApplications"
       maxEventDt="5e5"        
       target="/Solvers/coupledFlowAndWells"/>
+
+    <PeriodicEvent
+      name="domainAndInjectorFlowStatsEvent"
+      cycleFrequency="10"
+      target="/Tasks/domainAndInjectorFlowStats"/>
+
+    <PeriodicEvent
+      name="domainTopAndDownFlowStatsEvent"
+      cycleFrequency="10"
+      target="/Tasks/domainTopAndDownFlowStats"/>
 
   </Events>
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS_END -->  

@@ -41,33 +41,39 @@ using namespace dataRepository;
 
 RegionStatistics::RegionStatistics( string const & name,
                                     dataRepository::Group * const parent,
-                                    bool const statsOutputEnabled ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled )
+                                    string_view setName,
+                                    bool const dataOutputEnabled ):
+  RegionStatisticsBase( name, parent, setName, dataOutputEnabled )
 {}
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
                                   dataRepository::Group & meshBodies,
-                                  bool const statsOutputEnabled ):
-  Base( ownerDataContext, meshBodies, statsOutputEnabled )
+                                  bool const dataOutputEnabled ):
+  Base( ownerDataContext, meshBodies, dataOutputEnabled )
 {}
 
-void StatsAggregator::enableRegionStatisticsAggregation()
+void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
 {
-  auto const registerStats = [=, this] ( Group & parent,
-                                         string const & targetName ) -> RegionStatistics &
+  auto const registerStats = [=] ( Group & parent,
+                                   string const & targetName,
+                                   string_view setName,
+                                   bool const dataOutputEnabled ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,
                                                                        &parent,
-                                                                       m_statsOutputEnabled ) );
+                                                                       setName,
+                                                                       dataOutputEnabled ) );
   };
 
-  Base::enableRegionStatisticsAggregation( registerStats );
+  Base::enableRegionStatisticsAggregation( registerStats, setNames );
 }
 
 void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) const
 {
   stats.m_time = time;
+
+  stats.m_elemCount = 0;
 
   stats.m_averagePressure = 0.0;
   stats.m_maxPressure = 0.0;
@@ -87,7 +93,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 }
 
 void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion,
-                                                 RegionStatistics & subRegionStats ) const
+                                                 RegionStatistics & subRegionStats,
+                                                 SetType const & targetSet ) const
 {
   static constexpr string_view solidNamesVK = SinglePhaseBase::viewKeyStruct::solidNamesString();
   static constexpr string_view fluidNamesVK = FlowSolverBase::viewKeyStruct::fluidNamesString();
@@ -109,7 +116,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
   SingleFluidBase const & fluid = constitutiveModels.getGroup< SingleFluidBase >( fluidName );
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const densities = fluid.density();
 
-  singlePhaseBaseKernels::StatisticsKernel::launch( subRegion.size(),
+  singlePhaseBaseKernels::StatisticsKernel::launch( targetSet.toViewConst(),
                                                     elemGhostRank,
                                                     volume,
                                                     pres,
@@ -118,6 +125,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                                     refPorosity,
                                                     porosity,
                                                     densities,
+                                                    subRegionStats.m_elemCount,
                                                     subRegionStats.m_minPressure,
                                                     subRegionStats.m_averagePressure,
                                                     subRegionStats.m_maxPressure,
@@ -134,6 +142,8 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {
+  stats.m_elemCount += other.m_elemCount;
+
   stats.m_averagePressure += other.m_averagePressure;
   stats.m_minPressure = LvArray::math::min( stats.m_minPressure, other.m_minPressure );
   stats.m_maxPressure = LvArray::math::max( stats.m_maxPressure, other.m_maxPressure );
@@ -153,6 +163,8 @@ void StatsAggregator::aggregateStats( RegionStatistics & stats,
 
 void StatsAggregator::mpiAggregateStats( RegionStatistics & stats ) const
 {
+  stats.m_elemCount = MpiWrapper::sum( stats.m_elemCount );
+
   stats.m_averagePressure = MpiWrapper::sum( stats.m_averagePressure );
   stats.m_minPressure = MpiWrapper::min( stats.m_minPressure );
   stats.m_maxPressure = MpiWrapper::max( stats.m_maxPressure );
