@@ -36,6 +36,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
+#include "solid/ElasticIsotropicFiniteStrain.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/PorousDamageSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
@@ -55,6 +56,8 @@
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "contact/CoulombFriction.hpp"
 #include "contact/RateAndStateFriction.hpp"
+#include "electroChemistry/ElectroChemistryBase.hpp"
+#include "electroChemistry/ButlerVolmerReaction.hpp"
 
 
 namespace geos
@@ -164,6 +167,7 @@ struct ConstitutivePassThru< SolidBase >
                                  ModifiedCamClay,
                                  DelftEgg,
                                  DruckerPrager,
+                                 ElasticIsotropicFiniteStrain,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
@@ -237,6 +241,7 @@ struct ConstitutivePassThruTriaxialDriver< SolidBase >
                                  ModifiedCamClay,
                                  DelftEgg,
                                  DruckerPrager,
+                                 ElasticIsotropicFiniteStrain,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
@@ -535,6 +540,36 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
                                  ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
                                                                                                      std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Base material model for electrochemistry.
+ */
+template<>
+struct ConstitutivePassThru< ElectroChemistryBase >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ElectroChemistryBase >::execute( constitutiveRelation,
+                                                                  std::forward< LAMBDA >( lambda ));
+  }
+};
+
+/**
+ * @brief Material model for interface Butler-Volmer kinetics
+ */
+template<>
+struct ConstitutivePassThru< ButlerVolmerInterface >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ButlerVolmerInterface >::execute( constitutiveRelation,
+                                                                   std::forward< LAMBDA >( lambda ));
   }
 };
 

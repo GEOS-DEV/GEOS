@@ -1,0 +1,156 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Solvers>
+    <Electrostatics
+      name="halfcell"
+      discretization="FE1"
+      fieldName="potential"
+      targetRegions="{Region1, Region2, SEIRegion}">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </Electrostatics>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      fractureRegion="SEIRegion"
+      targetRegions="{ Region1, Region2 }"
+      initialRockToughness="1.0e10"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{C3D8}"
+      xCoords="{0, 5, 10}"
+      yCoords="{0, 1}"
+      zCoords="{0, 1}"
+      nx="{5, 5}"
+      ny="{1}"
+      nz="{1}"
+      cellBlockNames="{electrode, electrolyte}"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="currentCollector"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.01, 1.01 }"/>
+
+    <Box
+      name="ground"
+      xMin="{ 9.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
+
+    <Box
+      name="SEI"
+      xMin="{ 4.99, -0.01, -0.01 }"
+      xMax="{ 5.01, 1.01, 1.01 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{electrode}"
+      materialList="{electrodeMaterial}"/>
+
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{electrolyte}"
+      materialList="{electrolyteMaterial}"/>
+
+    <SurfaceElementRegion
+      name="SEIRegion"
+      defaultAperture="1.0e-6"
+      materialList="{lithium}"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElectroChemistryBase
+      name="electrodeMaterial"
+      defaultConductivity="100.0"/>
+
+    <ElectroChemistryBase
+      name="electrolyteMaterial"
+      defaultConductivity="10.0"/>
+
+    <ButlerVolmerInterface
+      name="lithium"
+      defaultReactivityCoefficient="1.0"/>
+  </Constitutive>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1.0">
+
+    <SoloEvent
+      name="preInterface"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplication"
+      forceDt="1.0"
+      target="/Solvers/halfcell"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="groundPotential"
+      fieldName="potential"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ground}"/>
+
+    <Traction
+      name="inputCurrent"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-1.0"
+      functionName="NeumannTimeFunction"
+      setNames="{currentCollector}"/>
+
+    <FieldSpecification
+      name="sei"
+      initialCondition="1"
+      setNames="{ SEI }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ SEI }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="NeumannTimeFunction"
+      inputVarNames="{time}"
+      coordinates="{ 0.0, 1.0}"
+      values="{ 0.0, -1.0}"/>
+  </Functions>
+
+</Problem>

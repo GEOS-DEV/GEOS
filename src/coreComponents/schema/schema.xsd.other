@@ -572,6 +572,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALM" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType" />
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
+			<xsd:element name="Electrostatics" type="ElectrostaticsType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="ExplicitQuasiDynamicEQ" type="ExplicitQuasiDynamicEQType" />
 			<xsd:element name="ExplicitSpringSlider" type="ExplicitSpringSliderType" />
@@ -973,6 +974,15 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="ElectrostaticsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1651,6 +1661,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyStone2RelativePermeability" type="BrooksCoreyStone2RelativePermeabilityType" />
+			<xsd:element name="ButlerVolmerInterface" type="ButlerVolmerInterfaceType" />
 			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
@@ -1682,9 +1693,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticIsotropicFiniteStrain" type="ElasticIsotropicFiniteStrainType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ElectroChemistryBase" type="ElectroChemistryBaseType" />
 			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
@@ -1899,6 +1912,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="ButlerVolmerInterfaceType">
+		<!--reactivityCoefficient => Reactivity Coefficient Field-->
+		<xsd:attribute name="reactivityCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2737,6 +2754,20 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
 		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
+	<xsd:complexType name="ElasticIsotropicFiniteStrainType">
+		<!--bulkModulus => Bulk modulus-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous material stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Shear modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current material stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--density => Material density-->
 		<xsd:attribute name="density" type="real64_array2d" />
@@ -2802,6 +2833,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="ElectroChemistryBaseType">
+		<!--conductivity => Electro Conductivity Field-->
+		<xsd:attribute name="conductivity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ExponentialDecayPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->

@@ -189,6 +189,7 @@ set( constitutive_headers
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
+     solid/ElasticIsotropicFiniteStrain.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
      solid/PerfectlyPlastic.hpp
@@ -203,6 +204,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
+     solid/SolidModelDiscretizationOpsFullTensor.hpp
      solid/CeramicDamage.hpp
      solid/SolidFields.hpp
      solid/porosity/PorosityFields.hpp
@@ -220,6 +222,8 @@ set( constitutive_headers
      thermalConductivity/SinglePhaseThermalConductivityBase.hpp
      thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityFields.hpp
+     electroChemistry/ElectroChemistryBase.hpp
+     electroChemistry/ButlerVolmerReaction.hpp
    )
 #
 # Specify all sources
@@ -336,6 +340,7 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/ElasticIsotropicFiniteStrain.cpp
      solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
@@ -353,6 +358,8 @@ set( constitutive_sources
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
+     electroChemistry/ElectroChemistryBase.cpp
+     electroChemistry/ButlerVolmerReaction.cpp
    )
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )

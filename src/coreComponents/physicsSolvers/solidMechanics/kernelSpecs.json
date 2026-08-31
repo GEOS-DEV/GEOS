@@ -74,6 +74,30 @@
                   "CellElementSubRegion#ElasticIsotropic#H1_Prism11_VEM_Gauss1" ]
   },
 
+  "SolidMechanicsImplicitFiniteStrainKernels": {
+    "vars": [ "SUBREGION_TYPE", "CONSTITUTIVE_TYPE", "FE_TYPE" ],
+    "constants": [
+      [ "ImplicitFiniteStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "ElasticIsotropicFiniteStrain"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss5",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": []
+  },
+
   "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
     "vars": [
       "SUBREGION_TYPE",
