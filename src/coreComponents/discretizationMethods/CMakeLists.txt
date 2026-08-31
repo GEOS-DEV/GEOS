@@ -23,7 +23,7 @@ Gives access to the discretization methods and their components for applications
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList ${parallelDeps} finiteVolume )
+set( dependencyList ${parallelDeps} finiteVolume mixedVEM )
 
 #
 # Specify all sources

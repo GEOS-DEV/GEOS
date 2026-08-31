@@ -929,6 +929,11 @@ ProblemManager::getDiscretizations() const
       discretization = fvDiscretizationManager.getGroupPointer( discretizationName );
     }
 
+    if( discretization==nullptr )
+    {
+      discretization = numericalMethodManager.getMixedVEMManager().getGroupPointer( discretizationName );
+    }
+
     if( discretization!=nullptr )
     {
       solver.forDiscretizationOnMeshTargets( meshBodies,

@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+
+<!-- Reference solution of the clamped cantilever, computed with the displacement based
+     finite element solver. Compare against beamBendingClamped_mixedVEM_smoke.xml. -->
+<Problem>
+
+  <Included>
+    <File name="./beamBendingClamped_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsLagrangianFEM
+      name="beamSolver"
+      discretization="FE1"
+      targetRegions="{ mesh1/Region2 }"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="clampX"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampY"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampZ"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <Traction
+      name="endLoad"
+      objectPath="faceManager"
+      scale="1.0e6"
+      direction="{ 0, 1, 0 }"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+</Problem>

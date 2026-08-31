@@ -23,6 +23,7 @@
 #include "dataRepository/Group.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
+#include "mixedVEM/MixedVEMManager.hpp"
 
 namespace geos
 {
@@ -69,6 +70,9 @@ public:
 
     /// @return Name for the finite volume manager.
     static constexpr char const * finiteVolumeManagerString() { return "FiniteVolume"; }
+
+    /// @return Name for the mixed virtual element discretization manager.
+    static constexpr char const * mixedVEMManagerString() { return "MixedVEM"; }
   };
 
   /**
@@ -91,6 +95,16 @@ public:
    */
   FiniteVolumeManager const & getFiniteVolumeManager() const { return m_finiteVolumeManager; }
 
+  /**
+   * @brief @return Returns reference to MixedVEMManager m_mixedVEMManager.
+   */
+  MixedVEMManager & getMixedVEMManager()       { return m_mixedVEMManager; }
+
+  /**
+   * @brief @return Returns reference to const MixedVEMManager m_mixedVEMManager.
+   */
+  MixedVEMManager const & getMixedVEMManager() const { return m_mixedVEMManager; }
+
 private:
 
   /// Contains the finite element discretizations
@@ -98,6 +112,9 @@ private:
 
   /// Contains the finite volume discretizations.
   FiniteVolumeManager m_finiteVolumeManager;
+
+  /// Contains the mixed virtual element discretizations.
+  MixedVEMManager m_mixedVEMManager;
 
 };
 

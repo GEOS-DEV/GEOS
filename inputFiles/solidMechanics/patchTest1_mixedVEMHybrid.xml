@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+
+<!--
+  Prototype Patch Test 1
+  Lowest-order Mixed VEM, hybridized form.
+
+  Mesh, material, events and outputs come from patchTest1_base.xml.
+-->
+
+<Problem>
+
+  <Included>
+    <File name="./patchTest1_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SolidMechanicsMixedVEM
+      name="patchSolver"
+      discretization="mixedVEM1"
+      targetRegions="{ Region1 }"
+      logLevel="1">
+
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"/>
+
+    </SolidMechanicsMixedVEM>
+
+  </Solvers>
+
+  <NumericalMethods>
+
+    <MixedVEM>
+      <MixedVEMDiscretization
+        name="mixedVEM1"
+        hybridization="1"/>
+    </MixedVEM>
+
+  </NumericalMethods>
+
+  <FieldSpecifications>
+
+    <!--
+      Dirichlet boundary:
+      Gamma_D = { x = 0 }
+
+      u = (1,0,0)
+    -->
+
+    <FieldSpecification
+      name="displacementX"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="0"
+      scale="1.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="displacementY"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="displacementZ"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="2"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+
+    <!--
+      Neumann boundary:
+      Gamma_N = boundary(Omega) \\ Gamma_D
+
+      sigma = diag(3,1,1)
+      t = sigma n
+    -->
+
+    <!-- x = 1 : t = (3,0,0) -->
+    <FieldSpecification
+      name="tractionXpos"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="0"
+      scale="3.0"
+      setNames="{ xpos }"/>
+
+
+    <!-- y = 0 : t = (0,-1,0) -->
+    <FieldSpecification
+      name="tractionYneg"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="1"
+      scale="-1.0"
+      setNames="{ yneg }"/>
+
+
+    <!-- y = 1 : t = (0,1,0) -->
+    <FieldSpecification
+      name="tractionYpos"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="1"
+      scale="1.0"
+      setNames="{ ypos }"/>
+
+
+    <!-- z = 0 : t = (0,0,-1) -->
+    <FieldSpecification
+      name="tractionZneg"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="2"
+      scale="-1.0"
+      setNames="{ zneg }"/>
+
+
+    <!-- z = 1 : t = (0,0,1) -->
+    <FieldSpecification
+      name="tractionZpos"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="2"
+      scale="1.0"
+      setNames="{ zpos }"/>
+
+  </FieldSpecifications>
+
+</Problem>

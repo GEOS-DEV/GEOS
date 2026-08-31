@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+
+<!-- Lowest-order mixed virtual element method, saddle point form.
+     Mesh, material, events and outputs come from columnGravity_base.xml. -->
+<Problem>
+
+  <Included>
+    <File name="./columnGravity_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SolidMechanicsMixedVEM
+      name="columnSolver"
+      discretization="mixedVEM1"
+      targetRegions="{ Lower, Upper }"
+      logLevel="1">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        krylovMaxIter="1000"/>
+    </SolidMechanicsMixedVEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedVEM>
+      <MixedVEMDiscretization
+        name="mixedVEM1"
+        hybridization="0"/>
+    </MixedVEM>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <!-- roller: the normal displacement component is restrained, the tangential is free -->
+    <FieldSpecification
+      name="lateralX"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="lateralY"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="bottomZ"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+  </FieldSpecifications>
+
+</Problem>

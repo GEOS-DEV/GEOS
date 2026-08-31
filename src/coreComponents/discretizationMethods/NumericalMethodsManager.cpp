@@ -27,12 +27,14 @@ using namespace dataRepository;
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
   Group( name, parent ),
   m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizationsString(), this ),
-  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManagerString(), this )
+  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManagerString(), this ),
+  m_mixedVEMManager( groupKeysStruct::mixedVEMManagerString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
   this->registerGroup( groupKeysStruct::finiteElementDiscretizationsString(), &m_finiteElementDiscretizationManager );
   this->registerGroup( groupKeysStruct::finiteVolumeManagerString(), &m_finiteVolumeManager );
+  this->registerGroup( groupKeysStruct::mixedVEMManagerString(), &m_mixedVEMManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()

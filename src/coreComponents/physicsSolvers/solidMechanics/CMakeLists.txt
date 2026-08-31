@@ -21,7 +21,7 @@ Contains:
 set( solidMechanicsSolvers_headers
      SolidMechanicsFields.hpp
      SolidMechanicsLagrangianFEM.hpp
-     SolidMechanicsLagrangianFEM.hpp
+     SolidMechanicsMixedVEM.hpp
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
      MPMSolverFields.hpp
@@ -62,6 +62,7 @@ set( solidMechanicsSolvers_headers
 # Specify solver sources
 set( solidMechanicsSolvers_sources
      SolidMechanicsLagrangianFEM.cpp
+     SolidMechanicsMixedVEM.cpp
      SolidMechanicsMPM.cpp
      SolidMechanicsInitialization.cpp
      SolidMechanicsStateReset.cpp
@@ -74,7 +75,7 @@ set( solidMechanicsSolvers_sources
 
 #include( kernels/SolidMechanicsKernels.cmake)
 
-set( dependencyList ${parallelDeps} physicsSolversBase )
+set( dependencyList ${parallelDeps} physicsSolversBase mixedVEM )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

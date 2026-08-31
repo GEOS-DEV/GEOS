@@ -36,9 +36,16 @@ namespace geos
  */
 struct HypreMGRData
 {
-  array1d< HYPRE_Int > pointMarkers;  ///< array1d of unique tags for local degrees of freedom
-  HyprePrecWrapper coarseSolver;      ///< MGR coarse solver pointer and functions
-  HyprePrecWrapper mechSolver;        ///< MGR mechanics fine solver pointer and functions
+  array1d< HYPRE_Int > pointMarkers;      ///< array1d of unique tags for local degrees of freedom
+  HyprePrecWrapper coarseSolver;          ///< MGR coarse solver pointer and functions
+  HyprePrecWrapper mechSolver;            ///< MGR mechanics fine solver pointer and functions
+
+  /// Near null space of the coarse system, borrowed from the caller. The vectors live on
+  /// the C-points of the first reduction level, in their own relative order, which is the
+  /// layout of the coarse grid MGR builds. A strategy that leaves the coarse system to an
+  /// algebraic multigrid can hand these over as interpolation vectors, exactly as the
+  /// stand alone AMG preconditioner does for a displacement system.
+  array1d< HYPRE_ParVector > nearNullSpace;
 };
 
 namespace hypre

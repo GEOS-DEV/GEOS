@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+
+<!-- Displacement based finite element reference for the mixed element gravity case. -->
+<Problem>
+
+  <Included>
+    <File name="./hybridMeshGravity_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SolidMechanicsLagrangianFEM
+      name="gravitySolver"
+      discretization="FE1"
+      targetRegions="{ Domain }"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"
+        krylovMaxIter="500"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="lateralX"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="lateralY"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="bottomZ"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+  </FieldSpecifications>
+
+</Problem>

@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+
+<!--
+  Gravity loading of a polyhedral field model, lowest-order mixed virtual element method,
+  saddle point form. Companion of industrialGravity_fem.xml on the same mesh.
+
+  Boundary conditions
+    lateral boundary : horizontal displacement restrained, vertical free
+    bottom (z=-2400) : vertical displacement restrained, horizontal free
+    top (z=0)        : sigma.n = 0, the default for a face carrying no specification
+    body force       : self weight through gravityVector and the material density
+
+  The conditions match industrialGravity_fem.xml component for component. Displacement is
+  natural in the mixed form, so a restrained component only loads the right hand side while
+  the traction of the remaining components stays free, which is exactly a roller.
+
+  One caveat on the lateral boundary. The three constant traction modes of a face are the
+  global Cartesian directions, so restraining a component is exact for them, but the three
+  first moment modes follow the frame of the face: one is tangential and two are normal. Each
+  is treated as prescribed only when its own direction is spanned by the unrestrained axes.
+  The bottom is planar with a vertical normal, so its roller is exact. The lateral boundary is
+  not axis aligned, its normals run at angles such as (0.55, 0.83, 0), so neither the tangents
+  nor the normal is spanned and the first moment modes fall back to free: the lateral roller
+  holds in its constant part only. The finite element file carries the same limitation in a
+  different guise, since it restrains Cartesian components on an oblique face as well.
+
+  Size. The mesh has 516,027 cells and on the order of 1.2 M faces, so this system carries
+  roughly 6 x 1.2 M + 6 x 516,027, about 10 M unknowns, and it is indefinite. A direct solve
+  is out of the question at this size and the multigrid reduction is not yet efficient, so
+  the hybridized companion file is the one to reach for.
+-->
+<Problem>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SolidMechanicsMixedVEM
+      name="gravitySolver"
+      discretization="mixedVEM1"
+      targetRegions="{ Domain }"
+      logLevel="1">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"
+        krylovMaxIter="1000"/>
+    </SolidMechanicsMixedVEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedVEM>
+      <MixedVEMDiscretization
+        name="mixedVEM1"
+        hybridization="0"/>
+    </MixedVEM>
+  </NumericalMethods>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      logLevel="1"
+      regionAttribute="region"
+      partitionMethod="parmetis"
+      partitionRefinement="1"
+      file="/Users/oduran/Documents/GitHub/GEOS/build-macOS_arm-release/bin/industrial_3_mechanics.vtu"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2400"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- a prescribed displacement component is natural here: it only loads the right hand
+         side, the traction of the complementary components stays free -->
+    <FieldSpecification
+      name="lateralX"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="0"
+      scale="0.0"
+      setNames="{ 1, 3, 9, 10, 11, 14, 15 }"/>
+
+    <FieldSpecification
+      name="lateralY"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="1"
+      scale="0.0"
+      setNames="{ 1, 3, 9, 10, 11, 14, 15 }"/>
+
+    <FieldSpecification
+      name="bottomZ"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="2"
+      scale="0.0"
+      setNames="{ 12 }"/>
+  </FieldSpecifications>
+
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/gravitySolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+
+</Problem>

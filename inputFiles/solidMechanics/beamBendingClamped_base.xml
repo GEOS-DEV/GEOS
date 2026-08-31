@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+
+<!--
+  Clamped cantilever beam, shared by the finite element and the mixed virtual element
+  versions of the problem so that the two solutions can be compared cell by cell.
+
+  The beam is fully clamped on x = 0 and loaded by a transverse traction on x = 80.
+  Every other boundary face is traction free. A full clamp is used rather than the
+  component-wise rollers of beamBending_base.xml because a displacement condition is
+  natural in the mixed form and is imposed on the whole vector at once.
+-->
+<Problem>
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/beamSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 80 }"
+      yCoords="{ 0, 8 }"
+      zCoords="{ 0, 4 }"
+      nx="{ 80 }"
+      ny="{ 20 }"
+      nz="{ 20 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region2"
+      meshBody="mesh1"
+      cellBlocks="{ * }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+</Problem>

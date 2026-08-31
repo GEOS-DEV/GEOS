@@ -322,7 +322,8 @@ struct LinearSolverParameters
       lagrangianContactMechanics,                  ///< Lagrangian contact mechanics
       augmentedLagrangianContactMechanics,         ///< Augmented Lagrangian contact mechanics
       lagrangianContactMechanicsBubbleStab,        ///< Lagrangian contact mechanics with bubble stabilization
-      solidMechanicsEmbeddedFractures              ///< Embedded fractures mechanics
+      solidMechanicsEmbeddedFractures,             ///< Embedded fractures mechanics
+      solidMechanicsMixedVEM                       ///< Mixed virtual element elasticity
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -599,7 +600,8 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "lagrangianContactMechanics",
               "augmentedLagrangianContactMechanics",
               "lagrangianContactMechanicsBubbleStab",
-              "solidMechanicsEmbeddedFractures" );
+              "solidMechanicsEmbeddedFractures",
+              "solidMechanicsMixedVEM" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,

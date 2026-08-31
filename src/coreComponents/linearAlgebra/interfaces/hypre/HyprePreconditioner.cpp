@@ -297,8 +297,11 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
                                           arrayView1d< HypreVector const > nearNullKernel )
   : HyprePreconditioner( std::move( params ) )
 {
-  if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg &&
-      m_params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
+  // MGR forwards the same vectors to whatever solves its coarse system, so both paths
+  // convert them here
+  if( m_params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes &&
+      ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg ||
+        m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr ) )
   {
     convertRigidBodyModes( nearNullKernel, m_nullSpace->vectors );
   }
@@ -342,6 +345,7 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     case LinearSolverParameters::PreconditionerType::mgr:
     {
       m_mgrData = std::make_unique< HypreMGRData >();
+      m_mgrData->nearNullSpace = m_nullSpace->vectors;
       hypre::mgr::createMGR( m_params, dofManager, *m_precond, *m_mgrData );
       break;
     }

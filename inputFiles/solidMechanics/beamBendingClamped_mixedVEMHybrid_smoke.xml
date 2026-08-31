@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+
+<!-- Clamped cantilever solved with the lowest-order mixed virtual element method.
+
+     hybridization = 1 breaks the stress space, condenses the face tractions and the cell
+     rigid body motions out elementwise, and solves the symmetric positive definite
+     interface problem H lambda = h for the displacement trace. The stress and the
+     displacement are then recovered cell by cell, so the VTK output is identical in kind
+     to the saddle point run and the two must agree to solver tolerance. -->
+<Problem>
+
+  <Included>
+    <File name="./beamBendingClamped_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsMixedVEM
+      name="beamSolver"
+      discretization="mixedVEM1"
+      targetRegions="{ mesh1/Region2 }"
+      logLevel="1">
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"
+        directParallel="0"/>
+    </SolidMechanicsMixedVEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedVEM>
+      <MixedVEMDiscretization
+        name="mixedVEM1"
+        hybridization="1"/>
+    </MixedVEM>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <!-- displacement is natural in the mixed form: prescribed on the face, not on nodes -->
+    <FieldSpecification
+      name="clampX"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampY"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampZ"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="2"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <!-- traction is essential in the mixed form: it constrains the face stress unknowns -->
+    <FieldSpecification
+      name="endLoad"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="1"
+      scale="1.0e6"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+</Problem>

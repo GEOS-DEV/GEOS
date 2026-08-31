@@ -172,6 +172,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp
+          interfaces/hypre/mgrStrategies/SolidMechanicsMixedVEM.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp

@@ -47,6 +47,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsMixedVEM.hpp"
 
 #include "LvArray/src/output.hpp"
 
@@ -216,6 +217,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures:
     {
       setStrategy< SolidMechanicsEmbeddedFractures >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::solidMechanicsMixedVEM:
+    {
+      setStrategy< SolidMechanicsMixedVEM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM:

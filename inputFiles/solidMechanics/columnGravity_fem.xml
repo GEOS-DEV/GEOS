@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<!-- Displacement based finite elements, the reference solution.
+     Mesh, material, events and outputs come from columnGravity_base.xml. -->
+<Problem>
+
+  <Included>
+    <File name="./columnGravity_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SolidMechanicsLagrangianFEM
+      name="columnSolver"
+      discretization="FE1"
+      targetRegions="{ Lower, Upper }"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-10"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"
+        krylovMaxIter="500"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <!-- roller: the normal displacement component is restrained, the tangential is free -->
+    <FieldSpecification
+      name="lateralX"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="lateralY"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="bottomZ"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+  </FieldSpecifications>
+
+</Problem>

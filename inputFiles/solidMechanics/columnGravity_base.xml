@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+
+<!--
+  Self weight of a laterally confined two layer column, shared by the finite element and the
+  two mixed virtual element versions of the problem so that the three solutions can be
+  compared.
+
+  Domain 1 x 1 x 2, the extent of hybrid_mesh_l_0.vtu, split at z = 1 into a lower and an
+  upper layer of 4 x 4 x 4 cubes of side 0.25 each. Both layers share the Young modulus and
+  the density and differ only in the Poisson ratio, 0.2 below and 0.35 above. Rollers on the
+  four laterals and on the base, free surface on top, gravity.
+
+  To change the resolution edit nx, ny and the two entries of nz, keeping the total number of
+  cells in z equal to twice nx so the cells stay cubes. For a tetrahedral mesh over the same
+  geometry set elementTypes to "{ C3D4, C3D4 }", which splits every brick into six tetrahedra.
+
+  Exact solution, with w = rho g = 23544 and M = E(1-nu)/((1+nu)(1-2nu)):
+    layer          nu     M              sigma_xx/sigma_zz = nu/(1-nu)
+    lower, z<1     0.20   1.111111e+10   0.2500
+    upper, z>1     0.35   1.604938e+10   0.5385
+
+    sigma_zz(z) = -w (H - z)                        linear and continuous, the layering does
+                                                    not enter because both layers weigh the
+                                                    same: sigma_zz(0) = -4.70880e+04,
+                                                    sigma_zz(1) = -2.35440e+04
+    sigma_xx    = sigma_yy = (nu/(1-nu)) sigma_zz   piecewise, jumps at z = 1
+    u_z(z)      = -(w/M_lower)(H z - z^2/2)                                   for z <= 1
+                = u_z(1) - (w/M_upper)[H(z-1) - (z^2-1)/2]                    for z >= 1
+                  u_z(1) = -3.17844e-06,  u_z(2) = -3.91193e-06
+-->
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8, C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1, 2 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
+      nz="{ 32, 32 }"
+      cellBlockNames="{ cbLower, cbUpper }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Lower"
+      meshBody="mesh1"
+      cellBlocks="{ cbLower }"
+      materialList="{ rockLower }"/>
+
+    <CellElementRegion
+      name="Upper"
+      meshBody="mesh1"
+      cellBlocks="{ cbUpper }"
+      materialList="{ rockUpper }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rockLower"
+      defaultDensity="2400"
+      defaultYoungModulus="1.0"
+      defaultPoissonRatio="0.20"/>
+
+    <ElasticIsotropic
+      name="rockUpper"
+      defaultDensity="2400"
+      defaultYoungModulus="1.0"
+      defaultPoissonRatio="0.495"/>
+  </Constitutive>
+
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/columnSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+
+</Problem>

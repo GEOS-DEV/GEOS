@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+
+<!--
+  Gravity loading of a small mixed tetrahedron, pyramid and hexahedron mesh, box
+  [0,1] x [0,1] x [0,2]. Same boundary conditions as the field model case, on a mesh small
+  enough to inspect: rollers on the four laterals and on the base, free surface on top, self
+  weight. The domain is a box, so the sets come from Box geometry rather than from surfaces.
+
+  No regionAttribute is given: the only candidate array in the file is gmsh:physical and the
+  schema does not accept a colon in that attribute, so the mesh becomes a single region with
+  one cell block per element type, which is all this single material case needs.
+
+  Reference for a laterally confined column under its own weight, with
+  M = K + 4G/3 = 1.11112e10 and rho g = 23544:
+    u_z(top)      = -rho g H^2 / (2 M) = -4.2379e-06 m
+    sigma_zz(base)= -rho g H           = -4.7088e+04 Pa
+-->
+<Problem>
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      logLevel="1"
+      file="/Users/oduran/Documents/GitHub/GEOS/build-macOS_arm-release/bin/hybrid_mesh_l_4.vtu"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="xneg" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  2.01 }"/>
+    <Box name="xpos" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  2.01 }"/>
+    <Box name="yneg" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  0.01,  2.01 }"/>
+    <Box name="ypos" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  2.01 }"/>
+    <Box name="zneg" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2400"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+  </Constitutive>
+
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/gravitySolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+</Problem>

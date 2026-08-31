@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+
+<!--
+  Prototype Patch Test 1
+
+  Domain:
+    Omega = (0,1)^3
+
+  Exact solution:
+    u(x,y,z) = (x+1, 0, 0)
+
+  Material:
+    lambda = 1
+    mu     = 1
+
+  Therefore:
+    E  = 2.5
+    nu = 0.25
+
+  Exact stress:
+    sigma = diag(3,1,1)
+
+  Body force:
+    f = 0
+-->
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
+      nz="{ 3 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      meshBody="mesh1"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="1.0"
+      defaultYoungModulus="2.5"
+      defaultPoissonRatio="0.25"/>
+  </Constitutive>
+
+  <Events
+    maxTime="1.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/patchSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+
+</Problem>

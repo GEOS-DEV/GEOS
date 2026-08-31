@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<!-- Clamped cantilever solved with the lowest-order mixed virtual element method.
+
+     hybridization = 0 assembles the saddle point system in the face tractions and the
+     cell rigid body motions. The cell fields written to VTK are displacement, rotation
+     and stress, directly comparable with the finite element run. -->
+<Problem>
+
+  <Included>
+    <File name="./beamBendingClamped_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsMixedVEM
+      name="beamSolver"
+      discretization="mixedVEM1"
+      targetRegions="{ mesh1/Region2 }"
+      logLevel="1">
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        krylovMaxIter="1000"/>
+    </SolidMechanicsMixedVEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedVEM>
+      <MixedVEMDiscretization
+        name="mixedVEM1"
+        hybridization="0"/>
+    </MixedVEM>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <!-- displacement is natural in the mixed form: prescribed on the face, not on nodes -->
+    <FieldSpecification
+      name="clampX"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampY"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="clampZ"
+      objectPath="faceManager"
+      fieldName="displacementTrace"
+      component="2"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <!-- traction is essential in the mixed form: it constrains the face stress unknowns -->
+    <FieldSpecification
+      name="endLoad"
+      objectPath="faceManager"
+      fieldName="faceTraction"
+      component="1"
+      scale="1.0e6"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+</Problem>
