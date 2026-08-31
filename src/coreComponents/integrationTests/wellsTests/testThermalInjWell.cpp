@@ -93,28 +93,32 @@ char const * xmlInput =
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
     </CompositionalMultiphaseFVM>
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
       isThermal="1"
       logLevel="1"
       initialDt="1e4"
       useMass="0">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WC_CO2_INJ"
         type="injector"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.706"
-        control="totalVolRate"
         enableCrossflow="0"
-        targetBHP="1e8"
-        referenceElevation="-2738" 
-        targetTotalRate="292"
-        injectionStream="{ 0.999, 0.001 }"
-        injectionTemperature="306"/>
-      </CompositionalMultiphaseWell>
-
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="-2738"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="292"
+          injectionStream="{  0.999, 0.001 }"
+          injectionTemperature="306"/>
+        </CompositionalMultiphaseWell>
+      </WellManager>
   </Solvers>
   <Mesh>
     <InternalMesh
@@ -212,8 +216,8 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{  pvtgas.txt,  pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt">
+      phasePVTParaFiles="{  testThermalInjWell_pvtgas.txt,  testThermalInjWell_pvtliquid.txt }"
+      flashModelParaFile="testThermalInjWell_co2flash.txt">
     </CO2BrinePhillipsThermalFluid>
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -281,6 +285,8 @@ char const * xmlInput =
 </Problem>
 )xml";
 
+// CSV output file are generated for the jacobian, which can be used to compare the analytical and numerical results.
+// Both matrices are reported to same file
 template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
@@ -328,7 +334,9 @@ void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const 
   omat1.close();
 }
 
-
+// CSV output file are generated for the residuals, which can be used to compare the analytical and numerical results.
+// Both residuals are reported to same file.  This is used to determine how the perturbation affects the residuals.
+// This is useful to determine if the perturbation is too small or too large.
 void printResiduals( array1d< real64 > const & rsd1,
                      array1d< real64 > const & rsd2, std::string const & testName )
 {
@@ -351,7 +359,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR ( testName );
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
   CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
 
@@ -381,6 +389,8 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
   ////////////////////////////////////////////////
   // Step 1) Compute the terms in J_RR and J_WR //
   ////////////////////////////////////////////////
+// Toggels to turn on/off the numerical jacobian computation of terms with respect to reservoir element dofs.
+// This is useful to isolate the terms that are causing the test to fail.
 #if 1
   domain.forMeshBodies( [&] ( MeshBody & meshBody )
   {
@@ -412,6 +422,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
         // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
         for( localIndex ei = 0; ei < subRegion.size(); ++ei )
         {
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir pressure.
 #if 1
           {
             solver.resetStateToBeginningOfStep( domain );
@@ -447,6 +458,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                    jacobianFD.toViewConstSizes() );
           }
 #endif
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir temperature.
 #if 1
           {
             solver.resetStateToBeginningOfStep( domain );
@@ -482,6 +494,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                    jacobianFD.toViewConstSizes() );
           }
 #endif
+// Turn on/off the numerical jacobian computation of terms with respect to reservoir component density.
 #if 1
           real64 totalDensity = 0.0;
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -493,7 +506,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           {
             solver.resetStateToBeginningOfStep( domain );
 
-            real64 const dRho = perturbParameter * totalDensity;
+            real64 const dRho = perturbParameter * (totalDensity+ perturbParameter);
             compDens.move( hostMemorySpace, true );
             compDens[ei][jc] += dRho;
 
@@ -529,14 +542,13 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
   } );
 
 #endif
-  // at this point we start assembling the finite-difference block by block
-
-
   /////////////////////////////////////////////////
   // Step 2) Compute the terms in J_RW and J_WW //
   /////////////////////////////////////////////////
 
   // loop over the wells
+// Toggels to turn on/off the numerical jacobian computation of terms with respect to well element dofs.
+// This is useful to isolate the terms that are causing the test to fail.
   if( 1 )
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
@@ -564,13 +576,13 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
         wellElemCompDens.move( hostMemorySpace, false );
 
         arrayView1d< real64 > const & connRate =
-          subRegion.getField< fields::well::mixtureConnectionRate >();
+          subRegion.getField< fields::well::connectionRate >();
         connRate.move( hostMemorySpace, false );
 
         // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
-
+// Turn on/off the numerical jacobian computation of terms with respect to well pressure.
 #if 1
           {
             solver.resetStateToBeginningOfStep( domain );
@@ -594,6 +606,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
                                    jacobianFD.toViewConstSizes() );
           }
 #endif
+// Turn on/off the numerical jacobian computation of terms with respect to well component density.
 #if 1
           real64 wellElemTotalDensity = 0.0;
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -604,7 +617,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           {
             solver.resetStateToBeginningOfStep( domain );
 
-            real64 const dRho = perturbParameter * wellElemTotalDensity;
+            real64 const dRho = perturbParameter * (wellElemTotalDensity+ perturbParameter);
             wellElemCompDens.move( hostMemorySpace, true );
             wellElemCompDens[iwelem][jc] += dRho;
 
@@ -663,10 +676,9 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           }
 #endif
         }
-
+// Turn on/off the numerical jacobian computation of terms with respect to well connection rate.
 #if 1
-        // b) compute all the derivatives wrt to the connection in WELL elem
-        // iwelem
+
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
           {
@@ -741,12 +753,13 @@ real64 constexpr CompositionalMultiphaseReservoirSolverTest::time;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::dt;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::eps;
 
-
-
-#if 0
-// There are a few terms that cause this test to fail, these are dt terms of cell connected to cell with boundary condtion.
-// The could be zeroed out in the jacobian assembly and then this test should pass.
+// Enable test for full well system jacobian, which includes the coupling terms.
+// There are is a terms that cause this test to fail, these are dt terms of cell connected to cell with boundary condtion.
+// The the well cell with boundary condition cannot have 2 constraints.  The temperature equation is set so that
+// in the energy balance  dEnergyBalance/dT = 1 and the residual is set to zero.
+// This causes the numerical jacobian to have a non-zero value, but the analytical jacobian has zero.
 // Otherwise the test is good, uncomment out printCompareLocalMatrices and look at FD and computed derivatives
+#if 0
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_System )
 {
   real64 const perturb = std::sqrt( eps );
@@ -776,9 +789,26 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Accum
                              [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleAccumulationTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.assembleWellAccumulationTerms( time, dt, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
   } );
 }
+// Enable test for well pressure relation derivatives
 #if 1
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_PressureRelation )
 {
@@ -791,10 +821,27 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
                              [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assemblePressureRelations( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.assembleWellPressureRelations( time, dt, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
   } );
 }
 #endif
+// Enable test for well flux derivatives
 #if 1
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux )
 {
@@ -807,22 +854,39 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
                              [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.assembleWellFluxTerms( time, dt, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
   } );
 }
 #endif
 int main( int argc, char * * argv )
 {
-  writeTableToFile( "co2flash.txt", co2flash );
-  writeTableToFile( "pvtliquid.txt", pvtLiquid );
-  writeTableToFile( "pvtgas.txt", pvtGas );
+  writeTableToFile( "testThermalInjWell_co2flash.txt", co2flash );
+  writeTableToFile( "testThermalInjWell_pvtliquid.txt", pvtLiquid );
+  writeTableToFile( "testThermalInjWell_pvtgas.txt", pvtGas );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  removeFile( "co2flash.txt" );
-  removeFile( "pvtliquid.txt" );
-  removeFile( "pvtgas.txt" );
+  removeFile( "testThermalInjWell_co2flash.txt" );
+  removeFile( "testThermalInjWell_pvtliquid.txt" );
+  removeFile( "testThermalInjWell_pvtgas.txt" );
 
   return result;
 }

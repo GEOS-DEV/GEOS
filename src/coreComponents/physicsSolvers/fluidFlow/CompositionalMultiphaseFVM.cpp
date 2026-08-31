@@ -1338,64 +1338,59 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
-        isothermalCompositionalMultiphaseFVMKernels::
-          DirichletFluxComputeZFormulationKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     kernelFlags,
-                                                     elemDofKey,
-                                                     getName(),
-                                                     faceManager,
-                                                     elemManager,
-                                                     stencilWrapper,
-                                                     multiFluidBase,
-                                                     dt,
-                                                     localMatrix,
-                                                     localRhs );
+        using KernelType = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeZFormulationKernelFactory< parallelDevicePolicy<> >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
 
+      }
+      else if( m_isThermal )
+      {
+        //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
+        using KernelType = thermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory<
+          parallelDevicePolicy<>,
+          BoundaryStencilWrapper >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
       }
       else
       {
-        if( m_isThermal )
-        {
-          //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
-          thermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       elemDofKey,
-                                                       getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       multiFluidBase,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       elemDofKey,
-                                                       getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       multiFluidBase,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
-        }
+        using KernelType = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< parallelDevicePolicy<> >;
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
       }
-
     } );
   } );
 }
@@ -1444,9 +1439,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                                  setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
+                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                          getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                                          setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
                                         bc );
       }
 
@@ -1500,9 +1495,13 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
-                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                             stdMap< string, localIndex > const * const dR_dAperOffsets )
 {
   GEOS_MARK_FUNCTION;
+
+  GEOS_ERROR_IF( dR_dAperOffsets != nullptr,
+                 "CompositionalMultiphaseFVM does not support mesh-specific dR/dAperture row offsets." );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

@@ -20,6 +20,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -370,11 +371,7 @@ void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartiti
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-  }
+  appendSparsityPattern( pattern, patternDiag );
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView());
@@ -1257,7 +1254,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [m_symmetric=m_symmetric]( localIndex const,
+      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [symmetric = m_symmetric]( localIndex const,
                                                                                                         FaceElementSubRegion & subRegion )
       {
 
@@ -1293,7 +1290,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               oldDispJump,
                                               dispJump,
                                               iterativePenalty,
-                                              m_symmetric,
+                                              symmetric,
                                               normalTractionTolerance,
                                               traction,
                                               fractureState );
@@ -1454,7 +1451,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     forAll< parallelHostPolicy >( subRegion.size(),
-                                  [ = ] GEOS_HOST ( localIndex const kfe )
+                                  [ =, this ] GEOS_HOST ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1975,7 +1972,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
         {
 
           if( ghostRank[kfe] < 0 )
@@ -2092,11 +2089,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
         // Try to get Coulomb parameters if available
-        bool const hasCoulombParams = frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) &&
-                                      frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
+        bool const hasCoulombParams = frictionLaw.hasWrapper( fields::contact::cohesion::key() ) &&
+                                      frictionLaw.hasWrapper( fields::contact::frictionCoefficient::key() );
 
-        real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
-        real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
+        GEOS_ERROR_IF( !hasCoulombParams,
+                       GEOS_FMT( "Friction law '{}' has no per-cell cohesion or frictionCoefficient fields. "
+                                 "These fields are required for initial traction computation.",
+                                 frictionLawName ) );
+
+        arrayView1d< real64 const > const cohesion = frictionLaw.getField< fields::contact::cohesion >().reference().toViewConst();
+        arrayView1d< real64 const > const frictionCoefficient = frictionLaw.getField< fields::contact::frictionCoefficient >().reference().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,
@@ -2214,7 +2216,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
                 // Coulomb criterion: |tau| <= cohesion - mu * sigma_n (sigma_n < 0 for compression)
                 // For open fracture (sigma_n > 0): no traction should be applied
-                real64 const tauLimit = cohesion - frictionCoefficient * normalTraction;
+                real64 const tauLimit = cohesion[kfe] - frictionCoefficient[kfe] * normalTraction;
 
                 bool isInvalid = false;
                 string reason;
@@ -2250,7 +2252,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                            "    t = ({:.6e}, {:.6e}, {:.6e})\n"
                                            "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
                                            kfe, reason,
-                                           cohesion, frictionCoefficient,
+                                           cohesion[kfe], frictionCoefficient[kfe],
                                            n[0], n[1], n[2],
                                            t1[0], t1[1], t1[2],
                                            t2[0], t2[1], t2[2],

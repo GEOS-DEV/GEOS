@@ -82,8 +82,8 @@ decks = [
         description=
         "Black oil well test using stone2 interp (3D displacement, hybrid FVM, 3-phase black-oil, 2 wells)",
         partitions=[(1, 1, 1), (2, 2, 1)],
-        restart_step=12,
-        check_step=25,
+        restart_step=13,
+        check_step=26,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="isothm_mass_inj_table",
@@ -146,7 +146,7 @@ decks = [
         partitions=[(1, 1, 1), (2, 2, 1)],
         restart_step=100,
         check_step=150,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))         
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)

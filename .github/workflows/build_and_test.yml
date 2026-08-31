@@ -37,11 +37,10 @@ on:
       DOCKER_RUN_ARGS:
         required: false
         type: string
-      DOCKER_CA_BUNDLE_HOST_PATH:
+      ENABLE_HYPRE:
         required: false
         type: string
-        default: ''
-      ENABLE_HYPRE:
+      ENABLE_HYPREDRV:
         required: false
         type: string
       ENABLE_HYPRE_DEVICE:
@@ -50,6 +49,13 @@ on:
       ENABLE_TRILINOS:
         required: false
         type: string
+      GCP_BUCKET:
+        required: false
+        type: string
+      UPLOAD_TO_GCP:
+        required: false
+        type: boolean
+        default: false
       HOST_CONFIG:
         required: false
         type: string
@@ -60,6 +66,10 @@ on:
       RUNS_ON:
         required: true
         type: string
+      SCCACHE_HOST_DIR:
+        required: false
+        type: string
+        default: ''
       USE_SCCACHE:
         required: false
         type: boolean
@@ -77,85 +87,14 @@ on:
       GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
-      STORAGE_PROVIDER:
-        required: false
-        type: string
-        default: ''
-      SCCACHE_PROFILE:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_UPLOAD_BUCKET_PATH:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_UPLOAD_COMMAND:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_UPLOAD_PRE_COMMAND:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_UPLOAD_URI_ROOT:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_PUBLIC_URL_ROOT:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED:
-        description: >
-          When "true", ARTIFACT_PUBLIC_URL_ROOT is treated as already rooted
-          inside the bucket (e.g. R2 public dev URLs of the form
-          https://pub-<hash>.r2.dev, which always resolve to one bucket). The
-          first path segment of ARTIFACT_UPLOAD_BUCKET_PATH (the bucket name)
-          is stripped before concatenation to avoid doubling up the bucket in
-          the final URL. Any value other than the literal string "true" is
-          treated as false.
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_UPLOAD_URI_PREFIX:
-        required: false
-        type: string
-        default: ''
-      ARTIFACT_PUBLIC_URL_PREFIX:
-        required: false
-        type: string
-        default: ''
     secrets:
-      SCCACHE_CONFIG_TOML:
-        required: false
-      SCCACHE_ENV_VARS_JSON:
-        required: false
-      SCCACHE_FILES_JSON:
-        required: false
-      SCCACHE_PROFILES_JSON:
-        required: false
-      ARTIFACT_UPLOAD_CREDENTIALS_JSON:
-        required: false
-      ARTIFACT_PROVIDER_CREDENTIALS_JSON:
+      CODECOV_TOKEN:
         required: false
       GOOGLE_CLOUD_GCP:
-        required: false
-      SCCACHE_BUCKET:
-        required: false
-      SCCACHE_ENDPOINT:
-        required: false
-      CLOUDFLARE_R2_ACCESS_KEY_ID:
-        required: false
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY:
-        required: false
-      CODECOV_TOKEN:
         required: false
 jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
-    defaults:
-      run:
-        shell: bash
     steps:
     - name: does_pr_have_necessary_labels
       if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
@@ -164,7 +103,7 @@ jobs:
       # frozen at the time the workflow was first triggered, so labels
       # added after that first run are invisible to re-runs. The curl
       # call below always returns current state, which is required for
-      # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
+      # CI re-runs to pick up newly added labels (e.g. "ci: run device
       # builds"). Do not replace with github.event.pull_request.labels.
       # The Authorization header is required for private repos/forks;
       # GITHUB_TOKEN is provided automatically to every workflow run.
@@ -192,370 +131,47 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.2
+      uses: actions/checkout@v7.0.0
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         fetch-depth: 1
 
-    - id: sccache_config
-      name: Resolve sccache configuration
-      env:
-        INPUT_USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
-        INPUT_SCCACHE_PROFILE: ${{ inputs.SCCACHE_PROFILE }}
-        INPUT_STORAGE_PROVIDER: ${{ inputs.STORAGE_PROVIDER }}
-        DIRECT_SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-        DIRECT_SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
-        DIRECT_SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
-        SCCACHE_PROFILES_JSON: ${{ secrets.SCCACHE_PROFILES_JSON }}
-        LEGACY_SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-        LEGACY_SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-        LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        LEGACY_GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
+    - id: 'auth'
+      if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
+      uses: 'google-github-actions/auth@v2.1.10'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
+
+    - name: Prepare Codecov verification key
+      if: inputs.CODE_COVERAGE
       run: |
-        set -euo pipefail
+        set -euxo pipefail
+        GNUPGHOME="${RUNNER_TEMP}/codecov-gnupg"
+        export GNUPGHOME
+        mkdir -p "${GNUPGHOME}"
+        chmod 700 "${GNUPGHOME}"
+        gpg --batch --import "${GITHUB_WORKSPACE}/.github/codecov/verification.gpg.asc" || true
+        gpg --batch --list-keys 806BB28AED779869 >/dev/null
+        echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
 
-        validate_optional_json_object() {
-          local name="$1"
-          local json="${2:-}"
-          if [[ -z "${json}" ]]; then
-            printf '{}'
-            return 0
-          fi
-          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
-            echo "::error::Invalid JSON object in ${name}." >&2
-            exit 1
-          fi
-          printf '%s' "${json}"
-        }
-
-        use_sccache=false
-        sccache_config_file=
-        sccache_env_file=
-        sccache_runtime_dir=
-        selected_sccache_config_toml=
-        selected_sccache_env_vars_json=
-        selected_sccache_files_json=
-        direct_sccache_env_vars_json=
-        direct_sccache_files_json=
-
-        if [[ "${INPUT_USE_SCCACHE}" == "true" ]]; then
-          # Generic payload contract:
-          # - SCCACHE_CONFIG_TOML: literal TOML contents for ~/.config/sccache/config
-          # - SCCACHE_ENV_VARS_JSON: JSON object of {"ENV_VAR":"value"}
-          # - SCCACHE_FILES_JSON: JSON object of {"relative/path":"file-content"}
-          sccache_profile="${INPUT_SCCACHE_PROFILE:-${INPUT_STORAGE_PROVIDER}}"
-
-          if [[ -n "${DIRECT_SCCACHE_ENV_VARS_JSON:-}" ]]; then
-            direct_sccache_env_vars_json="$(validate_optional_json_object "SCCACHE_ENV_VARS_JSON" "${DIRECT_SCCACHE_ENV_VARS_JSON}")"
-          fi
-
-          if [[ -n "${DIRECT_SCCACHE_FILES_JSON:-}" ]]; then
-            direct_sccache_files_json="$(validate_optional_json_object "SCCACHE_FILES_JSON" "${DIRECT_SCCACHE_FILES_JSON}")"
-          fi
-
-          if [[ -n "${DIRECT_SCCACHE_CONFIG_TOML:-}" || -n "${direct_sccache_env_vars_json}" || -n "${direct_sccache_files_json}" ]]; then
-            selected_sccache_config_toml="${DIRECT_SCCACHE_CONFIG_TOML:-}"
-            selected_sccache_env_vars_json="${direct_sccache_env_vars_json}"
-            selected_sccache_files_json="${direct_sccache_files_json}"
-          fi
-
-          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" && -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
-            sccache_profiles_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON" "${SCCACHE_PROFILES_JSON}")"
-
-            selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile] // empty' <<< "${sccache_profiles_json}")"
-            if [[ -n "${selected_profile_json}" ]]; then
-              selected_profile_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON[${sccache_profile}]" "${selected_profile_json}")"
-              selected_sccache_config_toml="$(jq -r '.config_toml // ""' <<< "${selected_profile_json}")"
-              selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
-              selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
-            fi
-          fi
-
-          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" ]]; then
-            # Temporary compatibility for orgs that still use pre-profile
-            # sccache secrets. Prefer SCCACHE_PROFILES_JSON for new setup.
-            case "${sccache_profile}" in
-              cloudflare)
-                if [[ -n "${LEGACY_SCCACHE_BUCKET:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" && -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" ]]; then
-                  selected_sccache_env_vars_json="$(jq -cn \
-                    --arg bucket "${LEGACY_SCCACHE_BUCKET}" \
-                    --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
-                    --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
-                    --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
-                    '{
-                      SCCACHE_BUCKET: $bucket,
-                      AWS_ACCESS_KEY_ID: $access_key_id,
-                      AWS_SECRET_ACCESS_KEY: $secret_access_key,
-                      SCCACHE_ENDPOINT: $endpoint,
-                      SCCACHE_S3_USE_SSL: "true",
-                      SCCACHE_REGION: "auto"
-                    }'
-                  )"
-                fi
-                ;;
-              gcp)
-                if [[ -n "${LEGACY_GOOGLE_CLOUD_GCP:-}" ]]; then
-                  selected_sccache_config_toml="$(printf '%s\n' \
-                    '[cache.gcs]' \
-                    'rw_mode = "READ_WRITE"' \
-                    'cred_path = "/tmp/geos/.sccache-runtime/gcp-service-account.json"' \
-                    'bucket = "geos-dev"' \
-                    'key_prefix = "sccache"')"
-                  selected_sccache_files_json="$(jq -cn --arg credentials "${LEGACY_GOOGLE_CLOUD_GCP}" '{"gcp-service-account.json": $credentials}')"
-                fi
-                ;;
-            esac
-          fi
-
-          if [[ "${selected_sccache_env_vars_json:-}" == "{}" ]]; then
-            selected_sccache_env_vars_json=
-          fi
-
-          if [[ "${selected_sccache_files_json:-}" == "{}" ]]; then
-            selected_sccache_files_json=
-          fi
-
-          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" ]]; then
-            echo "::warning::USE_SCCACHE=true but no sccache payload was provided (direct SCCACHE_* secrets or a matching entry in SCCACHE_PROFILES_JSON). Disabling sccache for this run."
-          else
-            use_sccache=true
-            # Keep the runtime directory stable so profile JSON can refer to helper files
-            # using a fixed path inside the mounted repository.
-            sccache_runtime_dir=".sccache-runtime"
-            runtime_path="${GITHUB_WORKSPACE}/${sccache_runtime_dir}"
-            rm -rf "${runtime_path}"
-            mkdir -p "${runtime_path}"
-
-            if [[ -n "${selected_sccache_config_toml:-}" ]]; then
-              sccache_config_file="${sccache_runtime_dir}/config.toml"
-              printf '%s' "${selected_sccache_config_toml}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
-              chmod 600 "${GITHUB_WORKSPACE}/${sccache_config_file}"
-            fi
-
-            if [[ -n "${selected_sccache_env_vars_json:-}" ]]; then
-              selected_sccache_env_vars_json="$(validate_optional_json_object "selected sccache env vars" "${selected_sccache_env_vars_json}")"
-
-              sccache_env_file="${sccache_runtime_dir}/env.list"
-              : > "${GITHUB_WORKSPACE}/${sccache_env_file}"
-
-              while IFS=$'\t' read -r key value_b64; do
-                if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-                  echo "Invalid env var name in SCCACHE_ENV_VARS_JSON: ${key}" >&2
-                  exit 1
-                fi
-
-                value="$(printf '%s' "${value_b64}" | base64 --decode)"
-                if [[ "${value}" == *$'\n'* ]]; then
-                  echo "Multiline env values are not supported in SCCACHE_ENV_VARS_JSON for key ${key}." >&2
-                  exit 1
-                fi
-
-                printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_WORKSPACE}/${sccache_env_file}"
-              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_env_vars_json}")
-
-              chmod 600 "${GITHUB_WORKSPACE}/${sccache_env_file}"
-            fi
-
-            if [[ -n "${selected_sccache_files_json:-}" ]]; then
-              selected_sccache_files_json="$(validate_optional_json_object "selected sccache files" "${selected_sccache_files_json}")"
-
-              while IFS=$'\t' read -r rel_path content_b64; do
-                if [[ ! "${rel_path}" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "${rel_path}" == /* ]] || [[ "${rel_path}" == *".."* ]]; then
-                  echo "Invalid file path in SCCACHE_FILES_JSON: ${rel_path}" >&2
-                  exit 1
-                fi
-
-                file_path="${runtime_path}/${rel_path}"
-                mkdir -p "$(dirname "${file_path}")"
-                printf '%s' "${content_b64}" | base64 --decode > "${file_path}"
-                chmod 600 "${file_path}"
-              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_files_json}")
-            fi
-          fi
-        fi
-
-        {
-          echo "use_sccache=${use_sccache}"
-          echo "sccache_config_file=${sccache_config_file}"
-          echo "sccache_env_file=${sccache_env_file}"
-          echo "sccache_runtime_dir=${sccache_runtime_dir}"
-        } >> "$GITHUB_OUTPUT"
-
-    - id: artifact_upload_credentials
-      name: Resolve artifact upload credentials
-      env:
-        INPUT_STORAGE_PROVIDER: ${{ inputs.STORAGE_PROVIDER }}
-        INPUT_ARTIFACT_UPLOAD_BUCKET_PATH: ${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}
-        DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}
-        ARTIFACT_PROVIDER_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_PROVIDER_CREDENTIALS_JSON }}
-        LEGACY_GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
-      run: |
-        set -euo pipefail
-
-        validate_optional_json() {
-          local name="$1"
-          local json="${2:-}"
-          if [[ -z "${json}" ]]; then
-            return 0
-          fi
-          if ! jq -e . <<< "${json}" >/dev/null 2>&1; then
-            echo "::error::Invalid JSON in ${name}." >&2
-            exit 1
-          fi
-        }
-
-        validate_optional_json_object() {
-          local name="$1"
-          local json="${2:-}"
-          if [[ -z "${json}" ]]; then
-            printf '{}'
-            return 0
-          fi
-          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
-            echo "::error::Invalid JSON object in ${name}." >&2
-            exit 1
-          fi
-          printf '%s' "${json}"
-        }
-
-        credentials_file=
-        credentials_payload=
-        storage_provider="${INPUT_STORAGE_PROVIDER}"
-        provider_credentials_json=
-
-        if [[ -n "${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON:-}" ]]; then
-          validate_optional_json "ARTIFACT_UPLOAD_CREDENTIALS_JSON" "${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON}"
-          credentials_payload="${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON}"
-        fi
-
-        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" && -n "${ARTIFACT_PROVIDER_CREDENTIALS_JSON:-}" && -n "${storage_provider}" ]]; then
-          provider_credentials_json="$(validate_optional_json_object "ARTIFACT_PROVIDER_CREDENTIALS_JSON" "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
-
-          entry_type="$(jq -r --arg provider "${storage_provider}" '(.[$provider] // null) | type' <<< "${provider_credentials_json}")"
-          case "${entry_type}" in
-            string)
-              credentials_payload="$(jq -r --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
-              ;;
-            object|array)
-              credentials_payload="$(jq -c --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
-              ;;
-            null)
-              ;;
-            *)
-              echo "::error::Unsupported credential payload type '${entry_type}' for storage provider '${storage_provider}'."
-              exit 1
-              ;;
-          esac
-        fi
-
-        # Legacy GCP fallback: the repo historically provided a single
-        # GOOGLE_CLOUD_GCP service-account JSON secret. It is kept so existing
-        # orgs do not have to migrate immediately. No equivalent Cloudflare
-        # fallback exists: new Cloudflare setups must provide credentials via
-        # ARTIFACT_PROVIDER_CREDENTIALS_JSON (or ARTIFACT_UPLOAD_CREDENTIALS_JSON
-        # for one-off overrides). Reusing SCCACHE_ENDPOINT as the R2 artifact
-        # endpoint is incorrect whenever cache and artifact buckets diverge.
-        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" ]]; then
-          case "${storage_provider}" in
-            gcp)
-              credentials_payload="${LEGACY_GOOGLE_CLOUD_GCP:-}"
-              ;;
-          esac
-        fi
-
-        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" ]]; then
-          echo "::error::No artifact upload credentials resolved for storage provider '${storage_provider}'. Set ARTIFACT_PROVIDER_CREDENTIALS_JSON (keyed by provider) or ARTIFACT_UPLOAD_CREDENTIALS_JSON for a one-off override."
-          exit 1
-        fi
-
-        if [[ -n "${credentials_payload}" ]]; then
-          validate_optional_json "resolved artifact upload credentials" "${credentials_payload}"
-          credentials_dir="${RUNNER_TEMP}/artifact-upload-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          mkdir -p "${credentials_dir}"
-          credentials_file="${credentials_dir}/${storage_provider:-artifact}.json"
-          printf '%s' "${credentials_payload}" > "${credentials_file}"
-          chmod 600 "${credentials_file}"
-        fi
-
-        echo "credentials_file=${credentials_file}" >> "$GITHUB_OUTPUT"
-
-    - name: Print environment
-      run: printenv
+    - name: 'Set up Cloud SDK'
+      if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
+      uses: 'google-github-actions/setup-gcloud@v2.1.4'
+      with:
+        version: '>= 363.0.0'
 
     - name: Build, test, deploy.
-      env:
-        INPUT_DOCKER_CA_BUNDLE_HOST_PATH: ${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}
+      id: build_test_deploy
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
-        HAS_DATA_EXCHANGE=false
-        HAS_UPLOAD_TARGET=false
-        DATA_BASENAME=
-        DATA_EXCHANGE_DIR=
-        STORAGE_PROVIDER="${{ inputs.STORAGE_PROVIDER }}"
-        ARTIFACT_UPLOAD_BUCKET_PATH="${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}"
-        ARTIFACT_UPLOAD_URI_ROOT="${{ inputs.ARTIFACT_UPLOAD_URI_ROOT }}"
-        ARTIFACT_PUBLIC_URL_ROOT="${{ inputs.ARTIFACT_PUBLIC_URL_ROOT }}"
-        ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="${{ inputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}"
-        ARTIFACT_UPLOAD_URI_PREFIX="${{ inputs.ARTIFACT_UPLOAD_URI_PREFIX }}"
-        ARTIFACT_PUBLIC_URL_PREFIX="${{ inputs.ARTIFACT_PUBLIC_URL_PREFIX }}"
-        ARTIFACT_UPLOAD_CREDENTIALS_FILE="${{ steps.artifact_upload_credentials.outputs.credentials_file }}"
-        ARTIFACT_UPLOAD_COMMAND="$(cat <<'__ARTIFACT_UPLOAD_COMMAND__'
-        ${{ inputs.ARTIFACT_UPLOAD_COMMAND }}
-        __ARTIFACT_UPLOAD_COMMAND__
-        )"
-        ARTIFACT_UPLOAD_PRE_COMMAND="$(cat <<'__ARTIFACT_UPLOAD_PRE_COMMAND__'
-        ${{ inputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
-        __ARTIFACT_UPLOAD_PRE_COMMAND__
-        )"
 
-        if [[ -z "${ARTIFACT_UPLOAD_URI_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
-          ARTIFACT_UPLOAD_URI_PREFIX="${ARTIFACT_UPLOAD_URI_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
-        fi
-
-        # The org config's artifact_public_url_base (propagated as
-        # ARTIFACT_PUBLIC_URL_ROOT) must already be rooted wherever the bucket
-        # is publicly served from. We simply append the bucket path.
-        #
-        # Exception: when ARTIFACT_PUBLIC_URL_BUCKET_SCOPED=="true" the root is
-        # already rooted *inside* the bucket (e.g. R2 public dev URLs of the
-        # form https://pub-<hash>.r2.dev, which always resolve to one bucket).
-        # In that case the leading path segment of ARTIFACT_UPLOAD_BUCKET_PATH
-        # is the bucket name and must be stripped before concatenation,
-        # otherwise we would double up the bucket in the final URL.
-        if [[ -z "${ARTIFACT_PUBLIC_URL_PREFIX}" && -n "${ARTIFACT_PUBLIC_URL_ROOT}" ]]; then
-          if [[ -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
-            PUBLIC_URL_BUCKET_PATH="${ARTIFACT_UPLOAD_BUCKET_PATH}"
-            if [[ "${ARTIFACT_PUBLIC_URL_BUCKET_SCOPED}" == "true" ]]; then
-              # Strip the first segment (the bucket name) and any leading slash.
-              PUBLIC_URL_BUCKET_PATH="${PUBLIC_URL_BUCKET_PATH#/}"
-              if [[ "${PUBLIC_URL_BUCKET_PATH}" == */* ]]; then
-                PUBLIC_URL_BUCKET_PATH="${PUBLIC_URL_BUCKET_PATH#*/}"
-              else
-                PUBLIC_URL_BUCKET_PATH=''
-              fi
-            fi
-            if [[ -n "${PUBLIC_URL_BUCKET_PATH}" ]]; then
-              ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${PUBLIC_URL_BUCKET_PATH}"
-            else
-              ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}"
-            fi
-          else
-            ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}"
-          fi
-        fi
-
-        if [[ -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" || -n "${ARTIFACT_UPLOAD_URI_PREFIX}" || -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
-          if [[ -z "${ARTIFACT_UPLOAD_COMMAND}" || -z "${ARTIFACT_UPLOAD_URI_PREFIX}" ]]; then
-            echo "::error::ARTIFACT_UPLOAD_COMMAND and ARTIFACT_UPLOAD_URI_PREFIX must both be set when enabling artifact upload."
-            exit 1
-          fi
-          HAS_UPLOAD_TARGET=true
-        fi
+        # Keep the repository mount point consistent between Docker and script args.
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
@@ -568,37 +184,34 @@ jobs:
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
-        if [[ -n "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
-          if [[ ! -f "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
-            echo "::error::Configured DOCKER_CA_BUNDLE_HOST_PATH does not exist: ${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}"
-            exit 1
-          fi
-          docker_args+=("--volume=${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}:/certs/ca-bundle.crt:ro")
-          docker_args+=(-e SSL_CERT_FILE=/certs/ca-bundle.crt)
-          docker_args+=(-e REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt)
-          docker_args+=(-e CURL_CA_BUNDLE=/certs/ca-bundle.crt)
-        fi
-
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
-        if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" || "${HAS_UPLOAD_TARGET}" == "true" ]]; then
-          HAS_DATA_EXCHANGE=true
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          echo "::group::Baseline and log uploads"
+          echo "Status: configuration error"
+          echo "Google Cloud configuration: bucket=not set, project=${GCP_PROJECT:-not set}"
+          echo "No files were uploaded."
+          echo "::endgroup::"
+          echo "::error::UPLOAD_TO_GCP=true requires GCP_BUCKET to be set."
+          exit 1
+        fi
 
-          if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" ]]; then
-            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
-            script_args+=(--run-integrated-tests)
-          else
-            DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
-          fi
+        DATA_BASENAME=
+        DATA_EXCHANGE_DIR=
+        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
+          DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+          script_args+=(--run-integrated-tests)
+        elif [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
+          DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
+        fi
 
+        if [[ -n "${DATA_BASENAME}" ]]; then
           script_args+=(--data-basename ${DATA_BASENAME})
 
           DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
-          if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
-            mkdir -p ${DATA_EXCHANGE_DIR}
-          fi
+          mkdir -p ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
           script_args+=(--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT})
@@ -607,27 +220,28 @@ jobs:
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
-        if [[ "${{ steps.sccache_config.outputs.use_sccache }}" == "true" ]]; then
-          script_args+=(--use-sccache)
+        if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
+          case "${{ inputs.RUNS_ON }}" in
+            streak2*)
+              SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
+              if [[ -z "${SCCACHE_HOST_DIR}" ]]; then
+                SCCACHE_HOST_DIR=/home/geos-data/sccache
+              fi
 
-          sccache_config_file="${{ steps.sccache_config.outputs.sccache_config_file }}"
-          if [[ -n "${sccache_config_file}" ]]; then
-            script_args+=(--sccache-config "${sccache_config_file}")
-          fi
-
-          sccache_env_file="${{ steps.sccache_config.outputs.sccache_env_file }}"
-          if [[ -n "${sccache_env_file}" && -f "${GITHUB_WORKSPACE}/${sccache_env_file}" ]]; then
-            while IFS='=' read -r key value || [[ -n "${key}" ]]; do
-              [[ -z "${key}" ]] && continue
-              export "${key}=${value}"
-              docker_args+=(-e "${key}")
-            done < "${GITHUB_WORKSPACE}/${sccache_env_file}"
-          fi
+              mkdir -p "${SCCACHE_HOST_DIR}"
+              docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
+              docker_args+=(-e SCCACHE_DIR=/sccache)
+              if [[ -n "${SCCACHE_CACHE_SIZE:-}" ]]; then
+                docker_args+=(-e SCCACHE_CACHE_SIZE)
+              fi
+              script_args+=(--use-sccache)
+              ;;
+            *)
+              script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+              ;;
+          esac
         fi
 
-        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
-        # Since this information is repeated twice, we use a variable.
-        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
@@ -638,9 +252,9 @@ jobs:
           script_args+=(--cmake-cuda-architectures "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}")
         fi
 
-        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
-        # are passed as scripts parameters. Specific care must be taken to be sure
-        # there's no conflict with the host-config files.
+        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPREDRV,
+        # ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS) are passed as script parameters.
+        # Specific care must be taken to be sure there's no conflict with the host-config files.
 
         # Hypre
         ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
@@ -648,9 +262,15 @@ jobs:
           script_args+=(--enable-hypre "${{ inputs.ENABLE_HYPRE }}")
         fi
 
+        ENABLE_HYPREDRV=${{ inputs.ENABLE_HYPREDRV }}
+        if [ ! -z "${{ inputs.ENABLE_HYPREDRV }}" ]; then
+          script_args+=(--enable-hypredrv "${{ inputs.ENABLE_HYPREDRV }}")
+        fi
+
         # Trilinos
         ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
+        docker_args+=(-e ENABLE_HYPREDRV=${ENABLE_HYPREDRV:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
         docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
@@ -737,6 +357,8 @@ jobs:
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
           ${script_args[@]}"
 
+        # In case of integrated tests run, we still want to send the results to the cloud for inspection.
+        # While for standard build (if even possible), pushing a failed build would be pointless.
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
@@ -750,81 +372,106 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
-        artifact_upload_prepared=false
-        function upload_artifact () {
-          local source_file="$1"
-          local output_message="$2"
+        echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
+        echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
+        echo "data_exchange_dir=${DATA_EXCHANGE_DIR}" >> "${GITHUB_OUTPUT}"
 
-          if [[ "${HAS_UPLOAD_TARGET}" != "true" ]]; then
-            return 0
+        exit ${EXIT_STATUS}
+
+    - name: Baseline and log uploads
+      if: ${{ always() && steps.build_test_deploy.outputs.data_basename != '' }}
+      env:
+        GEOS_BUILD_EXIT_STATUS: ${{ steps.build_test_deploy.outputs.exit_status }}
+        GEOS_DATA_BASENAME: ${{ steps.build_test_deploy.outputs.data_basename }}
+        GEOS_DATA_EXCHANGE_DIR: ${{ steps.build_test_deploy.outputs.data_exchange_dir }}
+      run: |
+        EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
+        DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
+        UPLOAD_HEADER_PRINTED=false
+        GCP_CREDENTIALS_STATUS="not set"
+        if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+          GCP_CREDENTIALS_STATUS=configured
+        fi
+
+        if [[ -n "${DATA_BASENAME}" ]]; then
+          if [ -f "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" ]; then
+            echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
           fi
-          if [[ ! -f "${source_file}" ]]; then
-            return 0
+
+          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
           fi
 
-          if [[ "${artifact_upload_prepared}" != "true" ]]; then
-            if [[ -n "${ARTIFACT_UPLOAD_PRE_COMMAND}" ]]; then
-              eval "${ARTIFACT_UPLOAD_PRE_COMMAND}"
-            fi
-            artifact_upload_prepared=true
-          fi
+          if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
+            THIS_PR_NUMBER=pr${{ github.event.number }}
+            TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baselines_${THIS_PR_NUMBER}"
+            mkdir -p "${TARGET_DIR}"
 
-          artifact_name="$(basename "${source_file}")"
-          artifact_destination="${ARTIFACT_UPLOAD_URI_PREFIX%/}/${artifact_name}"
-          (
-            set -euo pipefail
-            export UPLOAD_SRC="${source_file}"
-            export UPLOAD_DST="${artifact_destination}"
-            export ARTIFACT_UPLOAD_CREDENTIALS_FILE="${ARTIFACT_UPLOAD_CREDENTIALS_FILE}"
-            eval "${ARTIFACT_UPLOAD_COMMAND}"
-          )
-
-          if [[ -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
-            echo "${output_message} ${ARTIFACT_PUBLIC_URL_PREFIX%/}/${artifact_name}"
-          else
-            echo "${output_message} ${artifact_destination}"
-          fi
-        }
-
-        if [[ "${HAS_DATA_EXCHANGE}" == "true" ]]; then
-          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            if [[ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]]; then
-              echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
-              upload_artifact "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" "Download the bundle at"
-            fi
-
-            if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
-              echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
-              upload_artifact "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" "Download integrated test logs here:"
-            fi
-
-            if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
-              if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
-                # 1. We copy the baselines to a local directory to store them
-
-                # 1.a Create the new target directory to store the new baselines
-                THIS_PR_NUMBER=pr${{ github.event.number }}
-                NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/${NEW_PR_BASELINE_FOLDER_NAME}"
-                echo "Create folder ${TARGET_DIR}"
-                mkdir -p "${TARGET_DIR}"
-
-                # 1.b We copy the new baselines to the new target directory
-                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
-                cp "${SOURCE_FILE}" "${TARGET_DIR}"
+            for file in \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+            do
+              if [ -f "${file}" ]; then
+                cp "${file}" "${TARGET_DIR}"
+                echo "Copied $(basename "${file}") to ${TARGET_DIR}"
               fi
+            done
+          fi
 
-              # 2. We push the baselines to cloud storage if an upload backend is configured.
-              upload_artifact "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" "Download test baselines here:"
-              echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
-            else
-              echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
-            fi
+          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" ]; then
+            echo "No new baseline archive was generated."
           fi
         fi
 
-        exit ${EXIT_STATUS}
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
+          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
+            if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
+              echo "Status: upload configuration failed"
+              echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}"
+              exit 1
+            fi
+
+            for file in \
+              "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+            do
+              if [ -f "${file}" ]; then
+                case "$(basename "${file}")" in
+                  baseline_*)
+                    UPLOAD_LABEL=baselines
+                    ;;
+                  test_logs_*)
+                    UPLOAD_LABEL=logs
+                    ;;
+                  *)
+                    UPLOAD_LABEL=artifact
+                    ;;
+                esac
+
+                if ! CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/; then
+                  echo "Status: upload failed"
+                  echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}, access=publicRead"
+                  echo
+                  echo "Failed upload:"
+                  echo "  ${UPLOAD_LABEL}: gs://${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                  exit 1
+                fi
+
+                if [[ "${UPLOAD_HEADER_PRINTED}" != "true" ]]; then
+                  echo
+                  echo "Users can download uploaded files at:"
+                  UPLOAD_HEADER_PRINTED=true
+                fi
+                echo "  ${UPLOAD_LABEL}:"
+                echo "    https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+              fi
+            done
+          fi
+        else
+          echo "GCP upload disabled."
+        fi
 
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
@@ -843,7 +490,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v6.0.0
+      uses: codecov/codecov-action@v7.0.0
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
@@ -855,13 +502,12 @@ jobs:
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
 
-    - name: Show sccache stats
-      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
+    - name: Show sccache summary
+      if: ${{ always() && inputs.USE_SCCACHE }}
       run: |
-        sccache_runtime_dir="${{ steps.sccache_config.outputs.sccache_runtime_dir }}"
-        sccache_stats_file="${GITHUB_WORKSPACE}/${sccache_runtime_dir}/stats.txt"
-        if [[ -n "${sccache_runtime_dir}" && -f "${sccache_stats_file}" ]]; then
-          cat "${sccache_stats_file}"
+        SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
+        if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
+          grep -E '^(Compile requests|Cache hits|Cache misses|Cache timeouts|Cache read errors|Cache write errors|Compilation failures|Cache errors|Non-cacheable compilations|Non-cacheable calls|Cache location|Cache size|Max cache size|Version \(client\))' "${SCCACHE_STATS_FILE}" || cat "${SCCACHE_STATS_FILE}"
         else
           echo "No in-container sccache stats file was captured."
         fi
