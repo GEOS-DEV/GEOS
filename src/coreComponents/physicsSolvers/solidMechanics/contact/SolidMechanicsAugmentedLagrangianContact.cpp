@@ -20,6 +20,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -370,11 +371,7 @@ void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartiti
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-  }
+  appendSparsityPattern( pattern, patternDiag );
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView());
@@ -1257,7 +1254,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [m_symmetric=m_symmetric]( localIndex const,
+      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [symmetric = m_symmetric]( localIndex const,
                                                                                                         FaceElementSubRegion & subRegion )
       {
 
@@ -1293,7 +1290,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               oldDispJump,
                                               dispJump,
                                               iterativePenalty,
-                                              m_symmetric,
+                                              symmetric,
                                               normalTractionTolerance,
                                               traction,
                                               fractureState );
@@ -1454,7 +1451,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     forAll< parallelHostPolicy >( subRegion.size(),
-                                  [ = ] GEOS_HOST ( localIndex const kfe )
+                                  [ =, this ] GEOS_HOST ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1975,7 +1972,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
         {
 
           if( ghostRank[kfe] < 0 )

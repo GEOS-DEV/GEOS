@@ -54,10 +54,10 @@ StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
 
 void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
 {
-  auto const registerStats = [=] ( Group & parent,
-                                   string const & targetName,
-                                   string_view setName,
-                                   bool const dataOutputEnabled ) -> RegionStatistics &
+  auto const registerStats = [=, this] ( Group & parent,
+                                         string const & targetName,
+                                         string_view setName,
+                                         bool const dataOutputEnabled ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,
