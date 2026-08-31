@@ -166,7 +166,8 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
             auto const * const subRegionSetWrapper = subRegion.sets().getWrapperPointer< SetType >( setName );
             if( subRegionSetWrapper != nullptr )
             {
-              confirmedSets.emplace( setName );
+              if( subRegionSetWrapper->reference().empty() )
+                confirmedSets.emplace( setName );
 
               // Insert the set elements ids in the mesh-level compound. If doubles are found, sets intersect.
               SetViewType const & subRegionSet = subRegionSetWrapper->reference();
