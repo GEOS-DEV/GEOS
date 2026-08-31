@@ -403,11 +403,34 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of HDF5 file containing table values
+    static constexpr char const * hdf5FileString() { return "hdf5File"; }
+    /// @return Key for list of coordinate dataset names in HDF5 file
+    static constexpr char const * hdf5CoordinateDatasetNamesString() { return "hdf5CoordinateDatasetNames"; }
+    /// @return Key for name of dataset containing table values in HDF5 file
+    static constexpr char const * hdf5TableDatasetNameString() { return "hdf5TableDatasetName"; }
     /// @return Key for name of file containing table values
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
+
+  /**
+   * @enum TableInputType
+   * @brief Enumerator of available interpolation types
+   */
+  enum class TableInputType
+  {
+    None, //!< no input type is specified
+    OneD, //!< one-dimensional input type
+    ND,   //!< N-dimensional input type
+    HDF5  //!< input data in the HDF5 format
+  };
+
+  /**
+   * @brief Validates the input data for the table function.
+   */
+  TableInputType determineTableInputType() const;
 
   /**
    * @brief Parse a table file.
@@ -424,8 +447,17 @@ private:
   /// List of table coordinate file names
   path_array m_coordinateFiles;
 
-  /// Table voxel file names
+  /// Table voxel file name
   Path m_voxelFile;
+
+  /// Table voxel HDF5 file name
+  Path m_hdf5FileName;
+
+  /// List of table coordinate dataset names in HDF5 file
+  string_array m_hdf5CoordinateDatasetNames;
+
+  /// Table dataset name in HDF5 file
+  string m_hdf5TableDatasetName;
 
   /// Table interpolation method
   InterpolationType m_interpolationMethod;
@@ -435,6 +467,8 @@ private:
 
   /// Table values (in fortran order)
   array1d< real64 > m_values;
+
+  ///
 
   /// The units of each table coordinate axes
   stdVector< units::Unit > m_dimUnits;
