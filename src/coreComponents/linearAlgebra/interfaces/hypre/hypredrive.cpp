@@ -921,13 +921,6 @@ struct LevelAMGBlock
     flavor( other.flavor )
   {}
 
-  LevelAMGBlock & operator=( LevelAMGBlock const & other )
-  {
-    level = other.level;
-    flavor = other.flavor;
-    return *this;
-  }
-
   HYPRE_Int level;
   AMGFlavor flavor;
 };
