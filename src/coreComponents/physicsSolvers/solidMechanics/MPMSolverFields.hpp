@@ -204,6 +204,22 @@ DECLARE_FIELD( particleDeformationGradient,
                WRITE_AND_READ,
                "ParticleDeformationGradient" );
 
+DECLARE_FIELD( particleRotation,
+               "particleRotation",
+               array3d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleRotation" );
+
+DECLARE_FIELD( particleOldRotation,
+               "particleOldRotation",
+               array3d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleOldRotation" );
+
 DECLARE_FIELD( particleFDot,
                "particleFDot",
                array3d< real64 >,

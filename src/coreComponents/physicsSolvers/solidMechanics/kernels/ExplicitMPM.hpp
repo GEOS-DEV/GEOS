@@ -38,43 +38,62 @@ using namespace constitutive;
  */
 struct ParticleStateUpdateKernel
 {
-  enum class PolarTestMode : int
+  /**
+   * @brief Launch the kernel function doing constitutive updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONSTITUTIVE_WRAPPER the type of consitutive wrapper doing the constitutive updates
+   * @param[in] dt The time step
+   * @param[in] hyperelasticUpdate Flag to perform hyperelastic update (constitutive model dependent)
+   * @param[in] deformationGradient The current/end-of-step particle deformation gradient F_{n+1}
+   * @param[in] fDot The step-averaged time derivative of the deformation gradient, used to recover F_n
+   * @param[in] velocityGradient The step velocity gradient used to build the strain increment over [t_n,t_{n+1}]
+   * @param[out] particleStress The new particle stress, returned for plotting convenience
+   */
+  template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
+  static void launch( SortedArrayView< localIndex const > const indices,
+                      localIndex const batchSize,
+                      CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
+                      arrayView3d< real64 const > const deformationGradient,
+                      arrayView2d< real64 > const particleStress )
   {
-    Baseline,
-    PreservedSnapshot,
-    ReverseCallOrder,
-    SingleCallForIdenticalInputs,
-    NoInline
-  };
+    arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
+    arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
 
-  GEOS_HOST_DEVICE
-  static bool matricesAreIdentical( real64 const (& matrixA)[3][3],
-                                    real64 const (& matrixB)[3][3] )
-  {
-    for( int i = 0; i < 3; ++i )
+    if( indices.size() == 0 )
     {
-      for( int j = 0; j < 3; ++j )
-      {
-        if( matrixA[i][j] != matrixB[i][j] )
-        {
-          return false;
-        }
-      }
+      return;
     }
-    return true;
+
+    for( localIndex begin = 0; begin < indices.size(); begin += batchSize )
+    {
+      localIndex const count = LvArray::math::min( batchSize, indices.size() - begin );
+
+      forAll< POLICY >( count, [=] GEOS_HOST_DEVICE ( localIndex const q )
+      {
+        localIndex const k = begin + q;
+        localIndex const p = indices[k];
+
+        real64 stress[6] = {};
+
+        real64 FminusI[3][3] = {};
+        LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
+        LvArray::tensorOps::addIdentity< 3 >( FminusI, -1.0 );
+
+        constitutiveWrapper.hyperUpdate( p,       // particle local index
+                                         0,       // particles have 1 quadrature point
+                                         FminusI, // particle strain increment
+                                         stress );
+
+        // Copy the updated stress into particleStress
+        LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
+
+        // Copy m_newStress into m_oldStress
+        constitutiveWrapper.saveConvergedState( p, 0 );
+    
+      } );
+    }
   }
 
-  // Change only this line between builds so each test keeps the same kernel
-  // body except for the selected polar-decomposition strategy.
-  static constexpr PolarTestMode polarTestMode = PolarTestMode::Baseline;
-
-  GEOS_HOST_DEVICE
-  __attribute__((noinline))
-  static bool polarDecompositionNoInline( real64 (& rotation)[3][3],
-                                          real64 const (& deformationGradient)[3][3] )
-  {
-    return LvArray::tensorOps::polarDecomposition< 3 >( rotation, deformationGradient );
-  }
 
   /**
    * @brief Launch the kernel function doing constitutive updates
@@ -89,82 +108,23 @@ struct ParticleStateUpdateKernel
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
   static void launch( SortedArrayView< localIndex const > const indices,
+                      localIndex const batchSize,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
-                      int const rank,
-                      int hyperelasticUpdate,
                       arrayView3d< real64 const > const deformationGradient,
-                      arrayView3d< real64 const > const fDot,
+                      arrayView3d< real64 const > const rotation,
+                      arrayView3d< real64 const > const oldRotation,
                       arrayView3d< real64 const > const velocityGradient,
-                      arrayView2d< real64 > const particleStress,
-                      arrayView1d< globalIndex const > const particleID  )
+                      arrayView2d< real64 > const particleStress )
   {
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
     arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
-    GEOS_UNUSED_VAR( rank );
-    GEOS_UNUSED_VAR( particleID );
-
-    // GEOS_LOG_RANK( "indices.size(): " << indices.size() 
-    //                 << ", "
-    //                 << "deformationGradient.size(0): "
-    //                 << deformationGradient.size(0)
-    //                 << ", "
-    //                 << "fDot.size(0): "
-    //                 << fDot.size(0)
-    //                 << ", "
-    //                 << "velocityGradient.size(0): "
-    //                 << velocityGradient.size(0) 
-    //                 << ", "
-    //                 << "oldStress.size(0): " 
-    //                 << oldStress.size(0)
-    //                 << ", "
-    //                 << "newStress.size(0): " 
-    //                 << newStress.size(0)
-    //                 << ", "
-    //                 << "particleStress.size(0): "
-    //                 << particleStress.size(0)
-    //                 << ", "
-    //                 << "particleID.size(0): "
-    //                 << particleID.size(0) );
 
     if( indices.size() == 0 )
     {
       return;
     }
 
-    // // Make arrays and array views to store and check the rotations after the kernel runs
-    // // TODO
-
-    // // Run smaller kernel to debug
-    // forAll< POLICY >( count, [=] GEOS_HOST_DEVICE ( localIndex const q )
-    //   {
-    //     localIndex const k = begin + q;
-    //     localIndex const p = indices[k];
-
-
-    //     // deformationGradient[p] has already been advanced by updateDeformationGradient(), so it is F_{n+1}.
-    //     // Recover the beginning-of-step F_n from F_{n+1} - Fdot * dt for the objective stress update.
-    //     real64 fOld[3][3] = {};
-    //     real64 fNew[3][3] = {};
-    //     LvArray::tensorOps::copy< 3, 3 >( fNew, deformationGradient[p] );
-    //     LvArray::tensorOps::copy< 3, 3 >( fOld, deformationGradient[p] );
-    //     LvArray::tensorOps::scaledAdd< 3, 3 >( fOld, fDot[p], -dt );
-
-    //     // Polar decompositions
-    //     real64 rotBeginning[3][3] = {};
-    //     real64 rotEnd[3][3] = {};
-
-    
-    //     bool const beginningConverged = LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-
-    //     real64 rotBeginningSnapshot[3][3] = {};
-    //     LvArray::tensorOps::copy< 3, 3 >( rotBeginningSnapshot, rotBeginning );
-
-    //     bool const endConverged = LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );    
-    //   } );
-
-    // Use the original full-rank launch that reproduces the bad rotations.
-    localIndex const batchSize = indices.size(); //1536;
     for( localIndex begin = 0; begin < indices.size(); begin += batchSize )
     {
       localIndex const count = LvArray::math::min( batchSize, indices.size() - begin );
@@ -174,147 +134,31 @@ struct ParticleStateUpdateKernel
         localIndex const k = begin + q;
         localIndex const p = indices[k];
 
-        // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for
-        // some reason
-        #if defined(GEOS_USE_DEVICE)
-        // Keep constitutive oldStress synchronized with the particle stress in
-        // device builds. CUDA already needed this for MPI/MPM consistency; HIP
-        // has the same host/device residency issue.
-        LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
-        #endif
-
         real64 stress[6] = {};
-        //CC: debug hardcoded hyperelastic model for now
-        if( hyperelasticUpdate == 1 )
-        // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to
-        // manually add their name here everything we add them
-        // Some models we might want hyperelastic updates when plasticity or damage are turned off
-        { // Hyperelastic stress update
-          // Don't believe we need to perform unrotation and rotation here (yes...unrotation...)
-          // Think we can update stress directly by calling constitutive model
-          // Hyperelastic models in GEOSX currently use FminusI as input argument
-          real64 FminusI[3][3] = {};
-          LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
-          LvArray::tensorOps::addIdentity< 3 >( FminusI, -1.0 );
+        
+        // Hypoeleastic stress update
+        // Determine the strain increment in Voigt notation
+        real64 strainIncrement[6] = {};
+        strainIncrement[0] = velocityGradient[p][0][0] * dt;
+        strainIncrement[1] = velocityGradient[p][1][1] * dt;
+        strainIncrement[2] = velocityGradient[p][2][2] * dt;
+        strainIncrement[3] = (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
+        strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
+        strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
-          constitutiveWrapper.hyperUpdate( p,      // particle local index
-                                          0,      // particles have 1 quadrature point
-                                          FminusI, // particle strain increment
-                                          stress );
-        }
-        else //Hypoeleastic stress update
-        {
-          // Determine the strain increment in Voigt notation
-          real64 strainIncrement[6] = {};
-          strainIncrement[0] = velocityGradient[p][0][0] * dt;
-          strainIncrement[1] = velocityGradient[p][1][1] * dt;
-          strainIncrement[2] = velocityGradient[p][2][2] * dt;
-          strainIncrement[3] = (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
-          strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
-          strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
+        real64 rotBeginning[3][3] = {};
+        real64 rotEnd[3][3] = {};
+        LvArray::tensorOps::copy< 3, 3 >( rotBeginning, oldRotation[p] );
+        LvArray::tensorOps::copy< 3, 3 >( rotEnd, rotation[p] );
 
-          // deformationGradient[p] has already been advanced by updateDeformationGradient(), so it is F_{n+1}.
-          // Recover the beginning-of-step F_n from F_{n+1} - Fdot * dt for the objective stress update.
-          real64 fOld[3][3] = {};
-          real64 fNew[3][3] = {};
-          LvArray::tensorOps::copy< 3, 3 >( fNew, deformationGradient[p] );
-          LvArray::tensorOps::copy< 3, 3 >( fOld, deformationGradient[p] );
-          LvArray::tensorOps::scaledAdd< 3, 3 >( fOld, fDot[p], -dt );
-
-          // Polar decompositions
-          real64 rotBeginning[3][3] = {};
-          real64 rotEnd[3][3] = {};
-
-          if constexpr( polarTestMode == PolarTestMode::PreservedSnapshot )
-          {
-            bool const beginningConverged =
-              LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-
-            real64 rotBeginningSnapshot[3][3] = {};
-            LvArray::tensorOps::copy< 3, 3 >( rotBeginningSnapshot, rotBeginning );
-
-            bool const endConverged =
-              LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
-
-            GEOS_UNUSED_VAR( beginningConverged );
-            GEOS_UNUSED_VAR( endConverged );
-
-            // Passing the snapshot makes the first result genuinely live
-            // across the second polar call without adding validation logic.
-            constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,
-                                                                  p,
-                                                                  0,
-                                                                  dt,
-                                                                  strainIncrement,
-                                                                  rotBeginningSnapshot,
-                                                                  rotEnd,
-                                                                  stress );
-          }
-          else if constexpr( polarTestMode == PolarTestMode::Baseline )
-          {
-            bool const beginningConverged =
-              LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-            bool const endConverged =
-              LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
-
-            GEOS_UNUSED_VAR( beginningConverged );
-            GEOS_UNUSED_VAR( endConverged );
-
-            constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,
-                                                                  p,
-                                                                  0,
-                                                                  dt,
-                                                                  strainIncrement,
-                                                                  rotBeginning,
-                                                                  rotEnd,
-                                                                  stress );
-          }
-          else
-          {
-            bool beginningConverged = false;
-            bool endConverged = false;
-
-            if constexpr( polarTestMode == PolarTestMode::ReverseCallOrder )
-            {
-              endConverged =
-                LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
-              beginningConverged =
-                LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-            }
-            else if constexpr( polarTestMode == PolarTestMode::SingleCallForIdenticalInputs )
-            {
-              beginningConverged =
-                LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-
-              if( matricesAreIdentical( fOld, fNew ) )
-              {
-                LvArray::tensorOps::copy< 3, 3 >( rotEnd, rotBeginning );
-                endConverged = beginningConverged;
-              }
-              else
-              {
-                endConverged =
-                  LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
-              }
-            }
-            else if constexpr( polarTestMode == PolarTestMode::NoInline )
-            {
-              beginningConverged = polarDecompositionNoInline( rotBeginning, fOld );
-              endConverged = polarDecompositionNoInline( rotEnd, fNew );
-            }
-            GEOS_UNUSED_VAR( beginningConverged );
-            GEOS_UNUSED_VAR( endConverged );
-
-            constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,
-                                                                  p,
-                                                                  0,
-                                                                  dt,
-                                                                  strainIncrement,
-                                                                  rotBeginning,
-                                                                  rotEnd,
-                                                                  stress );
-          }
-        }
+        constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,
+                                                              p,
+                                                              0,
+                                                              dt,
+                                                              strainIncrement,
+                                                              rotBeginning,
+                                                              rotEnd,
+                                                              stress );
 
         // Copy the updated stress into particleStress
         LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
@@ -323,8 +167,6 @@ struct ParticleStateUpdateKernel
         constitutiveWrapper.saveConvergedState( p, 0 );
     
       } );
-
-      parallelDeviceSync(); // diagnostic only
     }
   }
 };

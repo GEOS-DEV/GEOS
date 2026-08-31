@@ -1328,6 +1328,7 @@ protected:
 
   // Member fields are ordered alphabetically by member name to match the constructor initializer list.
   mpm::AreaIntegrationOption m_areaIntegrationMethod;
+  localIndex m_batchSize;
   array2d< real64 > m_bcTable;
   int m_binSizeMultiplier;
   array1d< real64 > m_bodyForce;

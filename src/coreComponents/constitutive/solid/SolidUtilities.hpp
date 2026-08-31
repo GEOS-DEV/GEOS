@@ -348,17 +348,7 @@ struct SolidUtilities
     Ddt[3] *= 2;
     Ddt[4] *= 2;
     Ddt[5] *= 2;
-  // if( k == 1536)
-  // {
-  //   printf("k: %d, Ddt: {%f, %f, %f, %f, %f, %f}\n",
-  //     k,
-  //                 Ddt[0],
-  //               Ddt[1],
-  //             Ddt[2],
-  //           Ddt[3],
-  //         Ddt[4],
-  //       Ddt[5]);
-  //   }
+
     // Stress increment
     solid.smallStrainUpdate_StressOnly( k,
                                         q,
@@ -373,7 +363,6 @@ struct SolidUtilities
     LvArray::tensorOps::copy< 6 >( stress, temp );
     solid.saveStress( k, q, stress );
   }
-
 
 };
 

@@ -1661,6 +1661,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   PhysicsSolverBase( name, parent ),
   m_areaIntegrationMethod( mpm::AreaIntegrationOption::BruteForce ),
+  m_batchSize( std::numeric_limits< localIndex >::max() ),
   m_bcTable(),
   m_binSizeMultiplier( 1 ),
   m_bodyForce(),
@@ -1920,6 +1921,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_areaIntegrationMethod ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Method for performing nodal area integration" );
+
+  registerWrapper( "batchSize", &m_batchSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_batchSize ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Batch sizing for constitutive model update kernels on device" );
 
   registerWrapper( "bcTable", &m_bcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3920,6 +3927,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleCohesiveReferenceDeformationGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleReferenceRVectors >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleDeformationGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
+        subRegion.registerField< particleRotation >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
+        subRegion.registerField< particleOldRotation >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleFDot >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleVelocityGradient >( getName() ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleReferenceShapeFunctionGradientValues >( getName() ).reference().resizeDimension< 1, 2 >( 8 * subRegion.numberOfVerticesPerParticle(), 3 );
@@ -6715,6 +6724,8 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
     dumpParticleDataToFile( particleManager, cycleNumber, "preUpdateDefGrad");
   }
   updateDeformationGradient( dt, particleManager );
+  parallelDeviceSync();
+  GEOS_LOG_RANK("Updated deformation gradient");
   if( cycleNumber <= 2 )
   {
     dumpParticleDataToFile( particleManager, cycleNumber, "postUpdateDefGrad");
@@ -6759,6 +6770,8 @@ void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64
     dumpParticleDataToFile(particleManager, cycleNumber, "preModelUpdate");
   }
   updateConstitutiveModelDependencies( particleManager );
+  parallelDeviceSync();
+    GEOS_LOG_RANK("Updated constitutive models");
   updateStress( dt, particleManager );
     if( cycleNumber <=2 )
   {
@@ -10076,6 +10089,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
     arrayView2d< real64 > const particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
     arrayView3d< real64 > const particleCohesiveReferenceDeformationGradient = subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleRotation = subRegion.getField< fields::mpm::particleRotation >();
+    arrayView3d< real64 > const particleOldRotation = subRegion.getField< fields::mpm::particleOldRotation >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
     arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
@@ -10186,7 +10201,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       // particleColor is imported from the particle file and must remain distinct from the contact group.
       GEOS_ERROR_IF( particleColor[p] < 0, "particleColor must be non-negative for rigid-body MPM." );
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( integer g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         particleCohesiveFieldMapping[p][g] = particleGroup[p];
       }
@@ -10220,6 +10235,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
         for( localIndex j = 0; j < 3; ++j )
         {
           particleDeformationGradient[p][i][j] = i == j ? 1.0 : 0.0;
+          particleRotation[p][i][j] = i == j ? 1.0 : 0.0;
+          particleOldRotation[p][i][j] = i == j ? 1.0 : 0.0;
           particleCohesiveReferenceDeformationGradient[p][i][j] = i == j ? 1.0 : 0.0; // Need to check if this is still needed
           if( directionalOverlapCorrection > 0 )
           {
@@ -10921,9 +10938,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
           particleReferenceTemperature[p] = state.temperature;
         }
 
-        for( int i = 0; i < 3; ++i )
+        for( integer i = 0; i < 3; ++i )
         {
-          for( int j = 0; j < 3; ++j )
+          for( integer j = 0; j < 3; ++j )
           {
             particleDeformationGradient[p][i][j] = i == j ? scale[i] : 0.0;
             particleCohesiveReferenceDeformationGradient[p][i][j] = i == j ? scale[i] : 0.0;
@@ -10933,7 +10950,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
           }
         }
 
-        for( int i = 0; i < 3; ++i )
+        for( integer i = 0; i < 3; ++i )
         {
           particleReferenceSurfacePosition[p][i] = particleSurfacePosition[p][i] / scale[i];
           particleReferenceSurfaceNormal[p][i] = particleSurfaceNormal[p][i] / cofactorScale[i];
@@ -10942,7 +10959,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
 
         if( initializeStress )
         {
-          for( int i = 0; i < 6; ++i )
+          for( integer i = 0; i < 6; ++i )
           {
             particleStress[p][i] = state.stress[i];
           }
@@ -30143,6 +30160,8 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleRotation = subRegion.getField< fields::mpm::particleRotation >();
+    arrayView3d< real64 > const particleOldRotation = subRegion.getField< fields::mpm::particleOldRotation >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
 
@@ -30234,6 +30253,17 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
       LvArray::tensorOps::copy< 3, 3 >(
         particleDeformationGradient[p],
         newDeformationGradient );
+
+      LvArray::tensorOps::copy< 3, 3 >(
+        particleOldRotation[p],
+        particleRotation[p]
+      );
+         
+      bool const converged = LvArray::tensorOps::polarDecomposition< 3 >( particleRotation[p], newDeformationGradient );
+      if( !converged )
+      {
+        // TODO Mark particle as bad and report error outside kernel
+      }
 
       // Existing restartable particle volume is the authoritative volumetric
       // state; no new old-L or log-J field is required.
@@ -31079,7 +31109,8 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     // Get particle kinematic fields that are fed into constitutive model
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView3d< real64 const > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 const > const particleRotation = subRegion.getField< fields::mpm::particleRotation >();
+    arrayView3d< real64 const > const particleOldRotation = subRegion.getField< fields::mpm::particleOldRotation >();
     arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
 
@@ -31097,54 +31128,54 @@ void SolidMechanicsMPM::updateStress( real64 dt,
       using SolidType = TYPEOFREF( castedConstitutiveModel );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
 
-      GEOS_LOG_RANK( "subRegion.size(): " << subRegion.size() 
-                     << ", "
-                     << "activeParticleIndices.size(): "
-                     << subRegion.activeParticleIndices().size()
-                     << ", "
-                     << "particleDeformationGradient.size(0)"
-                     << particleDeformationGradient.size(0)
-                     << ", "
-                     << "particleFDot.size(0)"
-                     << particleFDot.size(0) 
-                     << ", "
-                     << "particleVelocityGradient.size(0)" 
-                     << particleVelocityGradient.size(0)
-                     << ", "
-                     << "particleStress.size(0)"
-                     << particleStress.size(0)
-                     << ", "
-                     << "particleID.size(0)"
-                     << particleID.size(0) );
-
       if constexpr( HasMPMHostStressUpdate< SolidType >::value )
       {
         if( castedConstitutiveModel.useMPMHostStressUpdate() )
         {
-          solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
-                                                                                       constitutiveModelWrapper,
-                                                                                       dt,
-                                                                                       rank,
-                                                                                       hyperelasticUpdate,
-                                                                                       particleDeformationGradient,
-                                                                                       particleFDot,
-                                                                                       particleVelocityGradient,
-                                                                                       particleStress,
-                                                                                       particleID );
+          if( hyperelasticUpdate == 1 )
+          {
+            solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
+                                                                                         subRegion.activeParticleIndices().size(),
+                                                                                         constitutiveModelWrapper,
+                                                                                         particleDeformationGradient,
+                                                                                         particleStress );
+          }
+          else 
+          {
+            solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
+                                                                                         subRegion.activeParticleIndices().size(),
+                                                                                         constitutiveModelWrapper,
+                                                                                         dt,
+                                                                                         particleDeformationGradient,
+                                                                                         particleRotation,
+                                                                                         particleOldRotation,
+                                                                                         particleVelocityGradient,
+                                                                                         particleStress );
+          }
           return;
         }
       }
 
-      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
-                                                                                             constitutiveModelWrapper,
-                                                                                             dt,
-                                                                                             rank,
-                                                                                             hyperelasticUpdate,
-                                                                                             particleDeformationGradient,
-                                                                                             particleFDot,
-                                                                                             particleVelocityGradient,
-                                                                                             particleStress,
-                                                                                             particleID );
+      if( hyperelasticUpdate == 1 )
+      {
+        solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
+                                                                                               m_batchSize,
+                                                                                               constitutiveModelWrapper,
+                                                                                               particleDeformationGradient,
+                                                                                               particleStress );
+      }
+      else 
+      {
+        solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
+                                                                                               m_batchSize,
+                                                                                               constitutiveModelWrapper,
+                                                                                               dt,
+                                                                                               particleDeformationGradient,
+                                                                                               particleRotation,
+                                                                                               particleOldRotation,
+                                                                                               particleVelocityGradient,
+                                                                                               particleStress );
+          }
     } );
   } );
 }
