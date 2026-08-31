@@ -22,6 +22,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -136,11 +137,7 @@ public:
     pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
     // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-    {
-      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-    }
+    appendSparsityPattern( pattern, patternDiag );
 
     // Add the nonzeros from coupling
     addCouplingSparsityPattern( domain, dofManager, pattern.toView());
