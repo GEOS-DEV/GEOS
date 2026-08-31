@@ -147,28 +147,19 @@ time step of 1 s is used throughout:
 Inspecting results
 ---------------------------------
 
-The figure below shows the damage field at four instants of the loading history. Damage
+The figure below compares the damage field predicted by GEOS (top row) with the reference
+solution of Miehe et al. (bottom row), at three successive stages of the loading history. Damage
 nucleates at the notch tip, propagates at an angle of about 60 degrees from the notch plane, and
-then curves progressively towards the bottom-right corner of the specimen.
-
-.. _singleEdgeNotchShearDamageFig:
-.. figure:: damage_evolution.png
-   :align: center
-   :width: 700
-   :figclass: align-center
-
-   Phase-field damage evolution
-
-The final crack path is compared with the reference solution below. The curved trajectory
+then curves progressively towards the bottom-right corner of the specimen. The curved trajectory
 predicted by GEOS matches the reference, which is the discriminating result for this benchmark.
 
-.. _singleEdgeNotchShearComparisonFig:
-.. figure:: damage_comparison.png
+.. _singleEdgeNotchShearDamageFig:
+.. figure:: damage_shear_evolution.png
    :align: center
-   :width: 700
+   :width: 800
    :figclass: align-center
 
-   Final damage field: GEOS (left) and reference solution (right)
+   Phase-field damage evolution: GEOS (top row) and reference solution (bottom row)
 
 The horizontal reaction force on the loaded boundary is obtained by integrating the
 ``averageStress`` field over the faces lying on the top edge and rescaling to the 1 mm thick

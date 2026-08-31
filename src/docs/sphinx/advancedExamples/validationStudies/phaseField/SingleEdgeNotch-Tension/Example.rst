@@ -243,28 +243,19 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results. The figure below
-shows the damage field at four instants of the loading history. Damage nucleates at the notch
-tip and the crack propagates horizontally across the remaining ligament.
+compares the damage field predicted by GEOS (top row) with the reference solution of Miehe et al.
+(bottom row), at three successive stages of the loading history. Damage nucleates at the notch
+tip and the crack propagates horizontally across the remaining ligament: GEOS reproduces the
+straight mode-I path, and the width of the damage band, which is controlled by the regularization
+length :math:`L`, is consistent with the reference.
 
 .. _singleEdgeNotchTensionDamageFig:
-.. figure:: damage_evolution.png
+.. figure:: damage_tension_evolution.png
    :align: center
-   :width: 700
+   :width: 800
    :figclass: align-center
 
-   Phase-field damage evolution
-
-The final crack path is compared with the reference solution of Miehe et al. below. GEOS
-reproduces the straight mode-I crack, with a damage band whose width is controlled by the
-regularization length :math:`L`.
-
-.. _singleEdgeNotchTensionComparisonFig:
-.. figure:: damage_comparison.png
-   :align: center
-   :width: 700
-   :figclass: align-center
-
-   Final damage field: GEOS (left) and reference solution (right)
+   Phase-field damage evolution: GEOS (top row) and reference solution (bottom row)
 
 The reaction force on the loaded boundary is obtained by integrating the ``averageStress`` field
 over the faces lying on the top edge, and is rescaled to the 1 mm thick specimen of the
