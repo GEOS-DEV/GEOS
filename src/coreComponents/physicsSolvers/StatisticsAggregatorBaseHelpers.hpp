@@ -222,7 +222,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
   m_regionStatsState.m_isDirty = true;
 
   GEOS_ERROR_IF( regionFound == 0 || subRegionFound == 0,
-                 GEOS_FMT( "Missing region for computing statistics:\n- {} regions,\n- {} sub-regions.",
+                 GEOS_FMT( "{}: Missing region for computing statistics:\n- {} regions,\n- {} sub-regions.",
                            getOwnerName(),
                            regionFound ? "found" : "no",
                            subRegionFound ? "found" : "no" ),
