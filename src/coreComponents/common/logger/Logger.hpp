@@ -251,7 +251,7 @@
                                      .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
                                      .getDiagnosticMsg(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
-      ex.prepareWhat( exceptionMsg ); \
+      ex.prepareWhat( GEOS_GLOBAL_LOGGER, exceptionMsg ); \
       throw ex; \
     } \
   }while( false )

@@ -56,6 +56,7 @@ DataFileContext const importantAdditionalContext = DataFileContext( "Important A
 void beginLocalLoggerTest( ErrorLogger & errorLogger, string_view filename )
 {
   errorLogger.enableFileOutput( true );
+  errorLogger.setDiagnosticInfoLevel( DiagnosticInfoLevel::WarningSources );
   errorLogger.setOutputFilename( filename );
   errorLogger.createFile();
 }
@@ -181,11 +182,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   }
   catch( geos::DomainError const & ex )
   {
-    string const errorMsg = "Table input error.\n";
-    testErrorLogger.modifyCurrentExceptionMessage()
-      .addToMsg( errorMsg )
-      .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
+    // Verify generated exception text (which could be output by the system in the worst case.
     string const whatExpected = GEOS_FMT( "***** Exception\n"
                                           "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
@@ -194,12 +191,17 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
                                           "Empty Group",
                                           testErrorLogger.getCurrentExceptionMsg().m_file, line1,
                                           testErrorLogger.getCurrentExceptionMsg().m_contextsInfo.front().m_formattedContext );
-    GEOS_ERROR_IF_EQ_MSG( string( ex.what()).find( whatExpected ), string::npos,
-                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "  Error message :\n{}"
-                                    "  expected sequence :\n{}",
-                                    ex.what(),
-                                    whatExpected ) );
+    EXPECT_TRUE( string( ex.what()).find( whatExpected ) != string::npos ) << GEOS_FMT( "The error message was not containing the expected sequence:\n"
+                                                                                        "  Error message :\n{}"
+                                                                                        "  expected sequence :\n{}",
+                                                                                        ex.what(),
+                                                                                        whatExpected );
+
+    // add more context for final exception output
+    testErrorLogger.modifyCurrentExceptionMessage()
+      .addToMsg( "Table input error.\n" )
+      .addContextInfo( additionalContext.getContextInfo() )
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
   }
 
   testErrorLogger.flushCurrentExceptionMessage();
@@ -324,10 +326,9 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       additionalContext.toString(),
       testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
     std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
+    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss, true );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
+                          GEOS_FMT( "The error message was not containing the expected sequence:\n"
                                     "  Error message :\n{}"
                                     "  expected sequence :\n{}",
                                     oss.str(),
@@ -352,7 +353,7 @@ TEST( ErrorHandling, testStdException )
       .addCallStackInfo( LvArray::system::stackTrace( true ) );
 
     std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
+    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss, true );
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** Rank 0\n"
@@ -360,8 +361,7 @@ TEST( ErrorHandling, testStdException )
       "{}\n",
       testErrorLogger.getCurrentExceptionMsg().m_msg );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
+                          GEOS_FMT( "The error message was not containing the expected sequence:\n"
                                     "  Error message :\n{}"
                                     "  expected sequence :\n{}",
                                     oss.str(),
