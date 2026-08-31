@@ -720,14 +720,12 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
     using FluidType = TYPEOFREF( castedFluid );
 
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                        fluidWrapper,
-                                        pres,
-                                        temp,
-                                        compFrac );
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
+    KernelType::launch( dataGroup.size(),
+                        fluidWrapper,
+                        pres,
+                        temp,
+                        compFrac );
   } );
 }
 
@@ -1377,32 +1375,33 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       {
         using FluidType = TYPEOFREF( castedFluid );
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel;
+        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel< typename FluidType::KernelWrapper >;
+        using KernelReturnType = typename Kernel::ReturnType;
 
         // note: This is a serial Kernel (due to the nature of the problem being solved). So values do not need to go onto the GPU
-        Kernel::ReturnType const returnValue = Kernel::launch( numPointsInTable,
-                                                               numComps,
-                                                               numPhases,
-                                                               ipGas,
-                                                               ipOil,
-                                                               ipWater,
-                                                               ipInit,
-                                                               maxNumEquilIterations,
-                                                               phaseContacts,
-                                                               phaseMinVolumeFraction,
-                                                               equilTolerance,
-                                                               gravVector,
-                                                               datumElevation,
-                                                               datumPressure,
-                                                               fluidWrapper,
-                                                               compFracTableWrappers.toViewConst(),
-                                                               tempTableWrapper,
-                                                               elevationValues.toNestedView(),
-                                                               pressureValues.toView(),
-                                                               phaseDens.toView(),
-                                                               phaseCompFrac.toView() );
+        KernelReturnType const returnValue = Kernel::launch( numPointsInTable,
+                                                             numComps,
+                                                             numPhases,
+                                                             ipGas,
+                                                             ipOil,
+                                                             ipWater,
+                                                             ipInit,
+                                                             maxNumEquilIterations,
+                                                             phaseContacts,
+                                                             phaseMinVolumeFraction,
+                                                             equilTolerance,
+                                                             gravVector,
+                                                             datumElevation,
+                                                             datumPressure,
+                                                             fluidWrapper,
+                                                             compFracTableWrappers.toViewConst(),
+                                                             tempTableWrapper,
+                                                             elevationValues.toNestedView(),
+                                                             pressureValues.toView(),
+                                                             phaseDens.toView(),
+                                                             phaseCompFrac.toView() );
 
-        GEOS_THROW_IF( returnValue == Kernel::ReturnType::FAILED_TO_CONVERGE,
+        GEOS_THROW_IF( returnValue == KernelReturnType::FAILED_TO_CONVERGE,
                        GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
                                  "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
                                  "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
@@ -1411,7 +1410,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
         if( singlePhaseInitialisation )
         {
-          GEOS_LOG_RANK_0_IF( returnValue == Kernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+          GEOS_LOG_RANK_0_IF( returnValue == KernelReturnType::DETECTED_MULTIPHASE_FLOW,
                               getCatalogName() << " " << getDataContext() <<
                               ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                               "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
@@ -1845,9 +1844,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1877,6 +1876,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       localIndex const rankOffset = dofManager.rankOffset();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > elementCount( 0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
@@ -1913,7 +1913,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs,
-                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           massProd,
+                                                           elementCount] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1924,6 +1925,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
         real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;   // scale the contribution by the sizeScalingFactor here!
         massProd += rhsValue;
+        elementCount += 1;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
@@ -1948,7 +1950,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ m_numComponents };
         massProdArr[fluidComponentId] = massProd.get();
-        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), targetSet.size() );
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
+        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
   } );
@@ -2179,14 +2182,12 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         using FluidType = TYPEOFREF( castedFluid );
 
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< parallelDevicePolicy<> >( targetSet,
-                                            fluidWrapper,
-                                            bcPres,
-                                            bcTemp,
-                                            compFrac );
+        using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
+        KernelType::launch( targetSet,
+                            fluidWrapper,
+                            bcPres,
+                            bcTemp,
+                            compFrac );
       } );
 
       arrayView1d< integer const > const ghostRank =
@@ -2793,6 +2794,14 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
+      // discard any warm-started state held by the fluid model (e.g. K-values
+      // used to seed the flash) so the rolled-back step does not inherit
+      // iterate-dependent state from the failed Newton attempt.
+      {
+        string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        fluid.initializeState();
+      }
       // update all fluid properties
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy

@@ -69,7 +69,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
+  registerWrapper( viewKeyStruct::maxOilRelPermString(), &m_maxOilRelPerm ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setApplyDefaultValue( 0.0 ).
     setSizedFromParent( 0 );
@@ -146,7 +146,7 @@ void TableRelativePermeability::initializePreSubGroups()
   real64 phaseRelPermMaxEndPoint = 0.0;
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
-  m_waterOilMaxRelPerm = 1.0;
+  m_maxOilRelPerm = 1.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -204,7 +204,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-        m_waterOilMaxRelPerm = phaseRelPermMaxEndPoint;
+        m_maxOilRelPerm = phaseRelPermMaxEndPoint;
       }
     }
     for( size_t ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -269,7 +269,8 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                  arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                 real64 const & waterPhaseMaxVolumeFraction,
+                 real64 const & connateWaterSaturation,
+                 real64 const & maxOilRelPerm,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
                  ThreePhaseInterpolator const & threePhaseInterpolator,
@@ -283,7 +284,8 @@ TableRelativePermeability::KernelWrapper::
                                     phaseTrappedVolFrac ),
   m_relPermKernelWrappers( relPermKernelWrappers ),
   m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
-  m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
+  m_connateWaterSaturation( connateWaterSaturation ),
+  m_maxOilRelPerm( maxOilRelPerm ),
   m_threePhaseInterpolator( threePhaseInterpolator ) {}
 
 TableRelativePermeability::KernelWrapper
@@ -293,16 +295,44 @@ TableRelativePermeability::createKernelWrapper()
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
   createAllTableKernelWrappers();
 
+  // Extract the connate water saturation
+  real64 const connateWaterSaturation = getConnateWaterSaturation();
+
   // then we create the actual TableRelativePermeability::KernelWrapper
   return KernelWrapper( m_relPermKernelWrappers,
                         m_phaseMinVolumeFraction,
-                        m_waterOilMaxRelPerm,
+                        connateWaterSaturation,
+                        m_maxOilRelPerm,
                         m_phaseTypes,
                         m_phaseOrder,
                         m_threePhaseInterpolator,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrappedVolFrac );
+}
+
+real64 TableRelativePermeability::getConnateWaterSaturation() const
+{
+  real64 connateWaterSaturation = 0.0;
+
+  if( 0 <= m_phaseOrder[PhaseType::WATER] )
+  {
+    string const tableName = [&]( integer const phaseCount )
+    {
+      if( phaseCount == 3 )
+      {
+        return m_wettingIntermediateRelPermTableNames[0];
+      }
+      else
+      {
+        return m_wettingNonWettingRelPermTableNames[0];
+      }
+    }( m_phaseNames.size());
+    TableFunction const & relPermTable = FunctionManager::getInstance().getGroup< TableFunction >( tableName );
+    ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
+    connateWaterSaturation = coords[0][0];
+  }
+  return connateWaterSaturation;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeability, std::string const &, Group * const )
