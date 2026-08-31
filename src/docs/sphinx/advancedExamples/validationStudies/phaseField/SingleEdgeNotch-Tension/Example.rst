@@ -44,7 +44,7 @@ provided at:
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/phaseField/Single-edged-NotchedBlock-Tension/extractForce_tension.py
+  src/docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Tension/extractForce_tension.py
 
 
 ------------------------------------------------------------------

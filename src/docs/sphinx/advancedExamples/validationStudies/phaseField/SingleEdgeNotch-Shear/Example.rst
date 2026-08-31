@@ -44,7 +44,7 @@ provided at:
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/phaseField/Single-edged-NotchedBlock-Shear/extractForce_shear.py
+  src/docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Shear/extractForce_shear.py
 
 
 ------------------------------------------------------------------
