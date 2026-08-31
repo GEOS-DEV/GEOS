@@ -23,6 +23,50 @@ except Exception:
 import xml_formatter
 
 
+def _comment_preserving_parser():
+    """Return a parser that keeps the comments inside the root element.
+
+    xml.etree drops every comment by default. A GEOS deck uses comments to
+    record why a value was chosen, so dropping them loses information that
+    the user cannot recover from the output.
+    """
+    return ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
+
+
+def read_prolog_comments(path: str) -> List[str]:
+    """Return the text of each comment that sits before the root element.
+
+    xml.etree keeps no prolog, so those comments survive neither the parse
+    nor the write. Read them before the conversion writes anything, because
+    the source and the target can be the same file.
+    """
+    if lxml_etree is None:
+        return []
+    try:
+        tree = lxml_etree.parse(path)
+    except Exception:
+        return []
+    out = []
+    node = tree.getroot().getprevious()
+    while node is not None:
+        if isinstance(node, lxml_etree._Comment):
+            out.insert(0, node.text)
+        node = node.getprevious()
+    return out
+
+
+def write_prolog_comments(path: str, comments: List[str]) -> int:
+    """Put the prolog comments back into the file that was just written."""
+    if lxml_etree is None or not comments:
+        return 0
+    tree = lxml_etree.parse(path)
+    root = tree.getroot()
+    for text in comments:
+        root.addprevious(lxml_etree.Comment(text))
+    tree.write(path, encoding="UTF-8", xml_declaration=True, pretty_print=True)
+    return len(comments)
+
+
 def pretty_print_file(tree, outpath: str | None, indent: str, wrap_width: int, attr_per_line: bool,doo_pretty: bool):
 
     """
@@ -97,7 +141,7 @@ def validate_with_xsd(tree: ET.ElementTree, xsd_path: str) -> Tuple[bool, str]:
 def update_constraint_element(xml_file,add_we,estimatorSolves):
     delete_old_schema=True
     with open(xml_file, 'rb') as xml_file:
-     tree = ET.parse(xml_file)
+     tree = ET.parse(xml_file, _comment_preserving_parser())
     root = tree.getroot()
     compoFluidModel = True
     isThermal=False
@@ -298,7 +342,7 @@ def update_constraint_element(xml_file,add_we,estimatorSolves):
 
 def removeUseMass(xml_file,delete_old_schema,add_we,estimatorSolves):
     with open(xml_file, 'rb') as xml_file:
-     tree = ET.parse(xml_file)
+     tree = ET.parse(xml_file, _comment_preserving_parser())
     root = tree.getroot()
     compoFluidModel = True
     isThermal=False
@@ -320,7 +364,7 @@ def removeUseMass(xml_file,delete_old_schema,add_we,estimatorSolves):
 
 def add_we(xml_file,estimatorSolves):
     with open(xml_file, 'rb') as xml_file:
-     tree = ET.parse(xml_file)
+     tree = ET.parse(xml_file, _comment_preserving_parser())
     root = tree.getroot()
     compoFluidModel = True
     isThermal=False
@@ -339,6 +383,7 @@ def add_we(xml_file,estimatorSolves):
 
 def main1(ifs,ofs,add_we,estimatorSolves,args):    
     try:
+        prolog = read_prolog_comments(ifs)
         mod,tree= update_constraint_element(ifs, add_we,estimatorSolves)
         #mod,tree= removeUseMass(ifs, delete_old_schema,add_we,estimatorSolves)
         if mod:
@@ -356,12 +401,14 @@ def main1(ifs,ofs,add_we,estimatorSolves,args):
                     print("XSD failed for ",ofs )
                     xml_formatter.format_file(ofs + ".failed.xml")
                 else:
+                    write_prolog_comments(ofs, prolog)
                     print("XSD validation passed. Wrote to ",ofs)
     except Exception as e:
         print("Error occurred:", e,ifs)
         
 def add_estimator(ifs,ofs,estimatorSolves,args):    
     try:
+        prolog = read_prolog_comments(ifs)
         #tree= updateconstraint_element(ifs, delete_old_schema,add_we,estimatorSolves)
         mod,tree= add_we(ifs, estimatorSolves)
         if mod:
@@ -379,6 +426,7 @@ def add_estimator(ifs,ofs,estimatorSolves,args):
                     print("XSD failed for ",ofs )
                     xml_formatter.format_file(ofs + ".failed.xml")
                 else:
+                    write_prolog_comments(ofs, prolog)
                     print("XSD validation passed. Wrote to ",ofs)
     except Exception as e:
         print("Error occurred:", e,ifs)
