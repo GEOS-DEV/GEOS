@@ -48,10 +48,16 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The lower limit of the degradation function" );
 
-  this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
-    setApplyDefaultValue( 0 ).
+  this->registerWrapper( viewKeyStruct::fractureModelTypeString(), &m_fractureModelType ).
+    setApplyDefaultValue( FractureModelType::Brittle ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Whether to have external driving force. Can be 0 or 1" );
+    setDescription( "Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation" );
+
+  this->registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
+    setApplyDefaultValue( LocalDissipationOption::Linear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of local dissipation function. Must match the damage solver's "
+                    "localDissipation option. Can be Linear or Quadratic" );
 
   this->registerWrapper( viewKeyStruct::defaultTensileStrengthString(), &m_defaultTensileStrength ).
     setApplyDefaultValue( 0.0 ).
@@ -76,7 +82,9 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
 
   this->template registerField< fields::solid::damageGrad >( &m_damageGrad );
 
-  this->template registerField< fields::solid::strainEnergyDensity >( &m_strainEnergyDensity );
+  this->template registerField< fields::solid::crackDrivingForce >( &m_crackDrivingForce );
+
+  this->template registerField< fields::solid::oldCrackDrivingForce >( &m_oldCrackDrivingForce );
 
   this->template registerField< fields::solid::volStrain >( &m_volStrain );
 
@@ -99,24 +107,45 @@ void Damage< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
 
-  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
-                 "invalid external driving force flag option - must"
-                 " be 0 or 1",
+  GEOS_ERROR_IF( m_fractureModelType != FractureModelType::Brittle && m_localDissipationOption != LocalDissipationOption::Linear,
+                 "the Cohesive and Nucleation crack models are only supported with the Linear "
+                 "local dissipation option",
                  this->getDataContext() );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Cohesive && m_criticalStrainEnergy <= 0.0,
+                 "criticalStrainEnergy must be positive when the Cohesive crack model is used",
+                 this->getDataContext() );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultTensileStrength <= 0.0,
                  "tensile strength must be input and positive when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressiveStrength  <= 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultCompressiveStrength  <= 0.0,
                  "compressive strength must be input and positive when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultDeltaCoefficient < 0.0,
                  "delta coefficient must be input and non-negative when the"
-                 " external driving force flag is turned on",
+                 " Nucleation crack model is used",
                  this->getDataContext()  );
+}
 
-  // set results as array default values
+template< typename BASE >
+void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const numPts )
+{
+  m_newDamage.resize( 0, numPts );
+  m_oldDamage.resize( 0, numPts );
+  m_damageGrad.resize( 0, numPts, 3 );
+  m_crackDrivingForce.resize( 0, numPts );
+  m_oldCrackDrivingForce.resize( 0, numPts );
+  m_volStrain.resize( 0, numPts );
+  m_extDrivingForce.resize( 0, numPts );
+  m_biotCoefficient.resize( parent.size() );
+  m_criticalFractureEnergy.resize( parent.size() );
+  m_tensileStrength.resize( parent.size() );
+  m_compressiveStrength.resize( parent.size() );
+  m_deltaCoefficient.resize( parent.size() );
+
+  // apply the defaults here, after resizing: setApplyDefaultValue() in postInputInitialization()
+  // runs before the arrays exist, so it has nothing to fill in.
   this->template getField< fields::solid::criticalFractureEnergy >().
     setApplyDefaultValue( m_defaultCriticalFractureEnergy );
 
@@ -128,22 +157,6 @@ void Damage< BASE >::postInputInitialization()
 
   this->template getField< fields::solid::deltaCoefficient >().
     setApplyDefaultValue( m_defaultDeltaCoefficient );
-}
-
-template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const numPts )
-{
-  m_newDamage.resize( 0, numPts );
-  m_oldDamage.resize( 0, numPts );
-  m_damageGrad.resize( 0, numPts, 3 );
-  m_strainEnergyDensity.resize( 0, numPts );
-  m_volStrain.resize( 0, numPts );
-  m_extDrivingForce.resize( 0, numPts );
-  m_biotCoefficient.resize( parent.size() );
-  m_criticalFractureEnergy.resize( parent.size() );
-  m_tensileStrength.resize( parent.size() );
-  m_compressiveStrength.resize( parent.size() );
-  m_deltaCoefficient.resize( parent.size() );
 
   BASE::allocateConstitutiveData( parent, numPts );
 }
@@ -158,12 +171,15 @@ void Damage< BASE >::saveConvergedState() const
 
   arrayView2d< real64 const > newDamage = m_newDamage;
   arrayView2d< real64 > oldDamage = m_oldDamage;
+  arrayView2d< real64 const > crackDrivingForce = m_crackDrivingForce;
+  arrayView2d< real64 > oldCrackDrivingForce = m_oldCrackDrivingForce;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
       oldDamage( k, q ) = newDamage( k, q );
+      oldCrackDrivingForce( k, q ) = crackDrivingForce( k, q );
     }
   } );
 }

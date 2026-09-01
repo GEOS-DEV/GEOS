@@ -7,11 +7,11 @@
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
-      logLevel="2"
+      logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         couplingType="Sequential"
-	lineSearchAction="None"  	  
+        lineSearchAction="None"
         newtonMaxIter="100"/>
     </PhaseFieldFracture>
 
@@ -32,9 +32,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      
-      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -73,37 +70,6 @@
       xMax="{  1.01, 1.01,  0.11 }"/>
   </Geometry>
 
-  <Events
-    maxTime="30.0">
-    <!-- <SoloEvent name="siloOutput0"
-               target="/Outputs/SiloOutput"/> -->
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1.0"
-      target="/Solvers/PhaseFieldSolve"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="vtkOutput"
-      timeFrequency="1.0"
-      target="/Outputs/Mode2VolDev_VTKOutput"/>
-
-    <PeriodicEvent
-      name="siloOutputs"
-      timeFrequency="1.0"
-      target="/Outputs/Mode2VolDev_SiloOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="15.0"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
-  </Events>
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -119,26 +85,7 @@
       materialList="{ shale }"/>
   </ElementRegions>
 
-  <Constitutive>
-    <DamageVolDevElasticIsotropic
-      name="shale"
-      defaultDensity="2700"
-      defaultBulkModulus="1.750e5"
-      defaultShearModulus="8.077e4"
-      lengthScale="0.25"
-      defaultCriticalFractureEnergy="54.0"
-      criticalStrainEnergy="14.88"/>
-  </Constitutive>
-
   <FieldSpecifications>
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="54.0"/>
-    
     <FieldSpecification
       name="shearLoad"
       fieldName="totalDisplacement"
@@ -178,22 +125,4 @@
       values="{ -1, 100 }"/>
   </Functions>
 
-  <Outputs>
-    <Silo
-      name="Mode2VolDev_SiloOutput"/>
-
-    <VTK
-      name="Mode2VolDev_VTKOutput"
-      plotFileRoot="plot"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
-
-  <!-- <Geometry> -->
-  <!--   <Box name="bottom" xMin="{-0.51, -0.51, -0.01" xMax="0.51, -0.49, +0.11"/> -->
-  <!--   <Box name="top" xMin="{-0.51, 0.49, -0.01" xMax="0.51, 0.51, +0.11"/> -->
-  <!--   <Box name="left" xMin="{-0.51, -0.51, -0.01" xMax="-0.49, 0.51, +0.11"/> -->
-  <!--   <Box name="right" xMin="0.49, -0.51, -0.01" xMax="0.51, 0.51, +0.11"/> -->
-  <!-- </Geometry> -->
 </Problem>
