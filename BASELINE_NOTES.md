@@ -8,6 +8,9 @@ These notes should be in reverse-chronological order, and use the following time
 PR #3777 (2026-08-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3777-17413-0a5f007.tar.gz>
 Move CO2 Brine parameters to xml
 
+PR #4096 (2026-08-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4096-17439-18734f3.tar.gz>
+Refactor the phase-field module and add new benchmarks for baseline
+
 PR #4127 (2026-08-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4127-17399-63445db.tar.gz>
 Rebaseline five restart checks after the TPL update changed VTK/Scotch mesh partitioning. Global mesh topology and fields are unchanged.
 
