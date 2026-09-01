@@ -39,14 +39,20 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
 
+  /**
+   * @brief main constructor for PhaseFieldFractureSolver objects
+   * @param name the name of this instantiation of PhaseFieldFractureSolver in the repository
+   * @param parent the parent group of this instantiation of PhaseFieldFractureSolver
+   */
   PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
 
-  ~PhaseFieldFractureSolver() override;
+  /// Destructor for the class
+  ~PhaseFieldFractureSolver() override = default;
 
   /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @brief name of the solver in the object catalog
+   * @return string that contains the catalog name to generate a new PhaseFieldFractureSolver object through the object catalog.
    */
   static string catalogName()
   {
@@ -78,19 +84,27 @@ public:
   }
 
   /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
+   * @brief accessor for the pointer to the damage solver
+   * @return a pointer to the damage solver
    */
   PhaseFieldDamageFEM * damageSolver() const
   {
     return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
 
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final {}
+
+private:
+
+  /**
+   * @brief interpolate the nodal damage field and its gradient onto the quadrature points of the solid constitutive model
+   * @param[in] domain the domain partition
+   */
+  void mapDamageToQuadrature( DomainPartition & domain );
 
 };
 
@@ -102,27 +116,51 @@ struct DamageInterpolationKernel
     m_numElems( subRegion.size() )
   {}
 
-  void interpolateDamage( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
-                          arrayView1d< real64 const > const nodalDamage,
-                          arrayView2d< real64 > damageFieldOnMaterial )
+  void interpolateDamageAndGradient( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
+                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes,
+                                     arrayView1d< real64 const > const nodalDamage,
+                                     arrayView2d< real64 > damageFieldOnMaterial,
+                                     arrayView3d< real64 > damageGradOnMaterial )
   {
     forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
       constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
 
+      real64 xLocal[ numNodesPerElement ][ 3 ];
+      real64 nodalDamageLocal[ numNodesPerElement ];
+
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        localIndex const localNodeIndex = elemToNodes( k, a );
+
+        for( int dim=0; dim < 3; ++dim )
+        {
+          xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
+        }
+
+        nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
+      }
+
       for( localIndex q = 0; q < n_q_points; ++q )
       {
         real64 N[ numNodesPerElement ];
         FE_TYPE::calcN( q, N );
 
-        damageFieldOnMaterial( k, q ) = 0;
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        real64 dNdX[ numNodesPerElement ][ 3 ];
+        real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
+
+        GEOS_UNUSED_VAR( detJ );
+
+        real64 qDamage = 0.0;
+        real64 qDamageGrad[3] = {0, 0, 0};
+        finiteElement::feOps::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+
+        damageFieldOnMaterial( k, q ) = qDamage;
+
+        for( int dim=0; dim < 3; ++dim )
         {
-          damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemToNodes( k, a )];
-          //solution is probably not going to work because the solution of the coupled solver
-          //has both damage and displacements. Using the damageResult field from the Damage solver
-          //is probably better
+          damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
         }
       }
 

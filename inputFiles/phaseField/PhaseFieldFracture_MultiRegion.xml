@@ -1,5 +1,10 @@
 <?xml version="1.0" ?>
 
+<!-- Mode-I notched plate split in y into ElasticBottom | DamageRegion | ElasticTop.
+     Mechanics is solved on all three regions, phase-field damage only on the
+     middle strip, which contains the expected crack path. The coupled solver
+     must target the damage region only. -->
+
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
@@ -8,10 +13,10 @@
       solidSolverName="SolidMechSolve"
       damageSolverName="DamageSolve"
       logLevel="1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ DamageRegion }">
       <NonlinearSolverParameters
         couplingType="Sequential"
-	lineSearchAction="None"  	  
+        lineSearchAction="None"
         newtonMaxIter="50"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -21,11 +26,10 @@
       name="SolidMechSolve"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
-      >
+      targetRegions="{ ElasticBottom, DamageRegion, ElasticTop }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
-        newtonTol="1.0e-6"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangianFEM>
@@ -35,10 +39,10 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       logLevel="1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ DamageRegion }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
-        newtonTol="1.0e-12"/>
+        newtonTol="1.0e-10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldDamageFEM>
@@ -48,42 +52,38 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -1, 1 }"
-      yCoords="{ -1, 1 }"
-      zCoords="{ -1, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
-      nz="{ 3 }"
-      cellBlockNames="{ cb1 }"/>
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 0.25, 0.75, 1 }"
+      zCoords="{ 0, 0.05 }"
+      nx="{ 40 }"
+      ny="{ 5, 20, 5 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cbBottom, cbMid, cbTop }"/>
   </Mesh>
 
+  <Geometry>
+    <!-- pre-notch, must lie strictly inside DamageRegion -->
+    <Box
+      name="notch"
+      xMin="{ -0.01, 0.49, -0.01 }"
+      xMax="{ 0.51, 0.51, 0.06 }"/>
+  </Geometry>
+
   <Events
-    maxTime="130.0">
-    <!-- <SoloEvent name="siloOutput0"
-               target="/Outputs/SiloOutput"/> -->
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+    maxTime="20.0">
     <PeriodicEvent
       name="solverApplications"
       forceDt="1.0"
       target="/Solvers/PhaseFieldSolve"/>
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="vtkOutput"
-      timeFrequency="1.0"
-      target="/Outputs/DamageAndLoad_VTKOutput"/>
-
-    <PeriodicEvent
-      name="siloOutputs"
-      timeFrequency="1.0"
-      target="/Outputs/DamageAndLoad_SiloOutput"/>
+      timeFrequency="2.0"
+      target="/Outputs/MultiRegion_VTKOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="65.0"
+      timeFrequency="10.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -98,47 +98,63 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
-      cellBlocks="{ * }"
-      materialList="{ shale }"/>
+      name="ElasticBottom"
+      cellBlocks="{ cbBottom }"
+      materialList="{ elasticRock }"/>
+
+    <CellElementRegion
+      name="DamageRegion"
+      cellBlocks="{ cbMid }"
+      materialList="{ damageRock }"/>
+
+    <CellElementRegion
+      name="ElasticTop"
+      cellBlocks="{ cbTop }"
+      materialList="{ elasticRock }"/>
   </ElementRegions>
 
   <Constitutive>
-    <DamageElasticIsotropic
-      name="shale"
+    <DamageSpectralElasticIsotropic
+      name="damageRock"
       defaultDensity="2700"
-      defaultBulkModulus="2.00e5"
-      defaultShearModulus="3.00e5"
-      lengthScale="0.2"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"
+      lengthScale="0.05"
       defaultCriticalFractureEnergy="2.7"
       criticalStrainEnergy="0"
       fractureModelType="Brittle"
-      localDissipationOption="Quadratic"/>
+      localDissipationOption="Linear"/>
+
+    <ElasticIsotropic
+      name="elasticRock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="xtraction"
+      name="ytraction"
       fieldName="totalDisplacement"
-      component="0"
+      component="1"
       objectPath="nodeManager"
-      scale="1e-4"
+      scale="1.0"
       functionName="f_b"
-      setNames="{ xpos }"/>
-
-    <FieldSpecification
-      name="xfix"
-      fieldName="totalDisplacement"
-      component="0"
-      objectPath="nodeManager"
-      setNames="{ xneg }"/>
+      setNames="{ ypos }"/>
 
     <FieldSpecification
       name="yfix"
       fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
-      setNames="{ all }"/>
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="xfix"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zfix"
@@ -148,40 +164,27 @@
       setNames="{ all }"/>
 
     <FieldSpecification
-      name="pointSource"
+      name="initialNotch"
       fieldName="damage"
       objectPath="nodeManager"
       scale="1"
-      setNames="{ middle }"/>
+      setNames="{ notch }"/>
   </FieldSpecifications>
 
   <Functions>
-    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
-    symbolic math function should expect the variables to be given, and an expression that it will compile.
-    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <TableFunction
       name="f_b"
       inputVarNames="{ time }"
-      coordinates="{ 0, 130 }"
-      values="{ -0.5, 129.5 }"/>
+      coordinates="{ 0, 20 }"
+      values="{ 0, 1.5e-2 }"/>
   </Functions>
 
   <Outputs>
-    <Silo
-      name="DamageAndLoad_SiloOutput"/>
-
     <VTK
-      name="DamageAndLoad_VTKOutput"
+      name="MultiRegion_VTKOutput"
       plotFileRoot="plot"/>
 
     <Restart
       name="restartOutput"/>
   </Outputs>
-
-  <Geometry>
-    <Box
-      name="middle"
-      xMin="{ -0.334, -1.001, -1.001 }"
-      xMax="{ +0.334, +0.001, +1.001 }"/>
-  </Geometry>
 </Problem>
