@@ -75,6 +75,7 @@ void HypreInterface::initialize()
   HYPRE_SetSpGemmUseVendor( 0 );
 #else
   HYPRE_SetSpGemmUseVendor( 1 );
+  HYPRE_SetSpMVUseVendor( 0 );
 #endif
 #if !GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
   HYPRE_DeviceInitialize();

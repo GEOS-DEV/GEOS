@@ -172,6 +172,20 @@ TEST( HypredriveYaml, BuildsGeneratedFallbackForAMG )
   EXPECT_NE( target.argument.find( "preconditioner:" ), std::string::npos );
   EXPECT_NE( target.argument.find( "amg:" ), std::string::npos );
   EXPECT_EQ( target.argument.find( "linear_system:" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "general:" ), std::string::npos );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
+  EXPECT_NE( target.argument.find( "exec_policy: device" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spmv: on" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spgemm: off" ), std::string::npos );
+#elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  EXPECT_NE( target.argument.find( "exec_policy: device" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spmv: off" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spgemm: on" ), std::string::npos );
+#else
+  EXPECT_NE( target.argument.find( "exec_policy: host" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spmv: off" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spgemm: off" ), std::string::npos );
+#endif
 }
 
 TEST( HypredriveYaml, AmgIluSmootherDisablesRcm )
