@@ -1,0 +1,116 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_SingleEdgeNotch_base_iterative.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="SingleEdgeNotchTension"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 0.45, 0.5, 1.0 }"
+      yCoords="{ 0.0, 0.45, 0.5, 0.55, 1.0 }"
+      zCoords="{ -0.005, 0.005 }"
+      nx="{ 50, 50, 500 }"
+      ny="{ 30, 50, 50, 30 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="topTensionDisplacement"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="1.0e-5"
+      functionName="loadRamp"
+      setNames="{ ypos }"/>
+
+    <FieldSpecification
+      name="bottomYConstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="bottomXConstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="zConstraints"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ initial_crack_nodes }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ initial_crack_nodes }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  </FieldSpecifications>
+
+  <Geometry>
+    <Box
+      name="initial_crack_nodes"
+      xMin="{ -1.0e-7, 0.4999999, -0.0050001 }"
+      xMax="{ 0.5000001, 0.5000001, 0.0050001 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="700.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="50"
+      target="/Outputs/SingleEdgeNotchTension_VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="500.0"
+      maxEventDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="500.0"
+      maxEventDt="0.1"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="500"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="SingleEdgeNotchTension_VTKOutput"
+      plotFileRoot="singleEdgeNotchTension"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
