@@ -5,7 +5,11 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4096 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4083-17503-96f5eac.tar.gz>
+PR #3777 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3777-17510-d53ac15.tar.gz>
+=====================
+Move CO2 Brine parameters to xml
+
+PR #4083 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4083-17503-96f5eac.tar.gz>
 =====================
 Dispatch scaling wrt to fracture element type for ALM contact solver
 
