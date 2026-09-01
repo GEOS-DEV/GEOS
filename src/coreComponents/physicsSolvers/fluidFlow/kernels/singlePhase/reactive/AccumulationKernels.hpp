@@ -162,7 +162,7 @@ public:
                             StackVariables & stack ) const
   {
     // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventDensity * stack.poreVolume - primarySpeciesAggregateMole_n[is])
-    //                 - dt * m_volume * primarySpeciesKineticRate[is] * solventDensity
+    //                 - dt * m_volume * primarySpeciesKineticRate[is]
 
     Base::computeAccumulation( ei, stack );
 
@@ -187,7 +187,7 @@ public:
       stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventDensity * stack.poreVolume;
 
       // Reaction term
-      stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is] * m_solventDensity;
+      stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is];
 
       // Step 2.1: jacobian
       // Drivative of primary species amount in pore volume wrt pressure
@@ -204,7 +204,7 @@ public:
                                                                               m_primarySpeciesAggregateConcentration[ei][0][is]
                                                                            + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] * m_solventDensity;
 
-        stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js] * m_solventDensity;
+        stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js];
       }
     }
   }

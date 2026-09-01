@@ -123,7 +123,8 @@ public:
 
     for( integer i = 0; i < numSpecies; ++i )
     {
-      stack.localSpeciesJacobian[i][numDof-numSpecies-1] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity * m_dDensity[ei][0][DerivOffset::dT] / (m_density[ei][0] * m_density[ei][0]) *
+      stack.localSpeciesJacobian[i][numDof-numSpecies-1] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity * m_dDensity[ei][0][DerivOffset::dT] /
+                                                            (m_density[ei][0] * m_density[ei][0]) *
                                                             scaledInflowMass;
     }
   }

@@ -265,7 +265,7 @@ public:
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js] 
+          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js]
                                                              * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
           dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConcMolarity_i_dLogConc_j / fluidDens_up * fluxVal;
         }

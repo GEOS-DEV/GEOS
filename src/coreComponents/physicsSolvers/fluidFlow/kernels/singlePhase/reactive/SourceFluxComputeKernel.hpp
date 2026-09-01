@@ -153,11 +153,13 @@ public:
     for( integer i = 0; i < numSpecies; ++i )
     {
       stack.localSpeciesRhs[i] += m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity / m_density[ei][0] * scaledInflowMass;
-      stack.localSpeciesJacobian[i][0] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity * m_dDensity[ei][0][DerivOffset::dP] / (m_density[ei][0] * m_density[ei][0]) * scaledInflowMass;
+      stack.localSpeciesJacobian[i][0] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventDensity * m_dDensity[ei][0][DerivOffset::dP] / (m_density[ei][0] * m_density[ei][0]) *
+                                          scaledInflowMass;
 
       for( integer j = 0; j < numSpecies; ++j )
       {
-        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] * m_solventDensity / m_density[ei][0] * scaledInflowMass;
+        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] * m_solventDensity / m_density[ei][0] *
+                                                              scaledInflowMass;
       }
     }
   }

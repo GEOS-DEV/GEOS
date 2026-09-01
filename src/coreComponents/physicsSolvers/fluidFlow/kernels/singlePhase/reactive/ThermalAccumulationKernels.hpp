@@ -164,7 +164,8 @@ public:
       // Drivative of primary species amount in pore volume wrt temperature
       stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] += stack.dPoreVolume_dTemp * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventDensity
                                                                         /* + stack.poreVolume *
-                                                                           m_dPrimarySpeciesAggregateConcentration_dTemp[ei][is] * m_solventDensity */;
+                                                                           m_dPrimarySpeciesAggregateConcentration_dTemp[ei][is] *
+                                                                              m_solventDensity */;
       // // Derivative of reaction term wrt temperature
       // stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
       // m_dPrimarySpeciesTotalKineticRate_dTemp[is];

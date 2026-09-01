@@ -617,13 +617,12 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
-    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r];
       }
     } );
   }
@@ -632,13 +631,12 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
-    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r];
       }
     } );
   }
