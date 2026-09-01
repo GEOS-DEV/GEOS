@@ -127,11 +127,21 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      string const reactiveFluidModelName = m_isThermal? getConstitutiveName< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion ):
+                                            getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
+
       if( m_reactiveFluidModelName.empty() )
       {
-        m_reactiveFluidModelName = m_isThermal? getConstitutiveName< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion ):
-                                   getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
+        m_reactiveFluidModelName = reactiveFluidModelName;
       }
+
+      // The number of species, the dof layout and the solvent density are all taken from a single reactive
+      // fluid model, and the flux kernels are launched per stencil rather than per region, so every subregion
+      // must share that model.
+      GEOS_THROW_IF_NE_MSG( reactiveFluidModelName, m_reactiveFluidModelName,
+                            GEOS_FMT( "SinglePhaseReactiveTransport {}: all regions must use the same reactive fluid model, but {} uses a different one",
+                                      getDataContext(), subRegion.getDataContext() ),
+                            InputError );
 
       // If at least one region has a diffusion model, consider it enabled for all
       string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
@@ -461,34 +471,20 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
     }
   }
 
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  real64 const solventDensity =
+    m_isThermal ? cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventDensity()
+                : cm.getConstitutiveRelation< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventDensity();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               string_array const & regionNames )
+                                                               string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-    real64 solventDensity = 1.0;
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
-    {
-      if( m_isThermal )
-      {
-        reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & fluid =
-          getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        solventDensity = fluid.solventDensity();
-      }
-      else
-      {
-        reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
-          getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        solventDensity = fluid.solventDensity();
-      }
-    } );
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
