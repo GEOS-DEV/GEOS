@@ -405,29 +405,35 @@ if ( ENABLE_ATS )
                        DEPENDS geosx_python_tools
                        DEPENDS ${ATS_SCRIPT} )
 
+    set( _geos_ats_launch ${ATS_SCRIPT} )
+    if( GEOS_ENABLE_SANITIZERS )
+      set( _geos_ats_launch ${CMAKE_COMMAND} -E env ${GEOS_SANITIZER_CMAKE_ENV} ${ATS_SCRIPT} )
+    endif()
+
     add_custom_target( ats_run
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh
+                       COMMAND ${_geos_ats_launch}
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS ats_environment
                      )
 
     add_custom_target( ats_clean
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a veryclean
+                       COMMAND ${_geos_ats_launch} -a veryclean
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS ats_environment
                      )
 
     add_custom_target( ats_rebaseline
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a rebaseline
+                       COMMAND ${_geos_ats_launch} -a rebaseline
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS ats_environment
                      )
 
     add_custom_target( ats_rebaseline_failed
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a rebaselinefailed
+                       COMMAND ${_geos_ats_launch} -a rebaselinefailed
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS ats_environment
                      )
+    unset( _geos_ats_launch )
 endif()
 
 
@@ -448,5 +454,7 @@ endif()
 # builds the unit tests before running them
 get_property( tmp GLOBAL PROPERTY geos_tests_exe_list )
 add_custom_target( build_test COMMAND ${CMAKE_CTEST_COMMAND} ${CMAKE_CTEST_ARGUMENTS} DEPENDS ${tmp} )
+
+geos_apply_sanitizer_test_environment()
 
 message( DEBUG "geos_tests: ${tmp} " )

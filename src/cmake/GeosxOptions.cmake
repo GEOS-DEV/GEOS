@@ -6,6 +6,7 @@ message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 ### OPTIONS ###
 option( GEOS_ENABLE_FPE "Enables floating point exceptions" ON )
 option( GEOS_ENABLE_TESTS "Enables unit tests" ON )
+option( GEOS_ENABLE_SANITIZERS "Build and test with AddressSanitizer and UndefinedBehaviorSanitizer" OFF )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
@@ -252,5 +253,19 @@ message( "GEOS_GLOBALINDEX_TYPE_FLAG = ${GEOS_GLOBALINDEX_TYPE_FLAG}" )
 
 
 message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
+
+# A TPL host-config or -DCMAKE_*_FLAGS=-fsanitize=... already instruments the
+# build. Treat that as a sanitizer build even if the cache option was left off.
+if( NOT GEOS_ENABLE_SANITIZERS )
+  string( JOIN " " _geos_sanitizer_flag_probe
+          "${CMAKE_C_FLAGS}" "${CMAKE_CXX_FLAGS}"
+          "${CMAKE_EXE_LINKER_FLAGS}" "${CMAKE_SHARED_LINKER_FLAGS}" )
+  if( _geos_sanitizer_flag_probe MATCHES "-fsanitize=" )
+    set( GEOS_ENABLE_SANITIZERS ON CACHE BOOL
+         "Detected from compiler/linker flags" FORCE )
+    message( STATUS "GEOS_ENABLE_SANITIZERS enabled because sanitizer flags are present" )
+  endif()
+  unset( _geos_sanitizer_flag_probe )
+endif()
 
 message( "Leaving GeosxOptions.cmake\n" )

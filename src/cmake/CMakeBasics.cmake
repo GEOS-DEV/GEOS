@@ -50,6 +50,7 @@ include( "${CMAKE_CURRENT_LIST_DIR}/thirdparty/SetupGeosxThirdParty.cmake" )
 #include(components/cmake/thirdparty/SetupGeosxThirdParty.cmake)
 
 include( cmake/GeosxMacros.cmake )
+include( "${CMAKE_CURRENT_LIST_DIR}/SetupSanitizerTests.cmake" )
 
 
 
