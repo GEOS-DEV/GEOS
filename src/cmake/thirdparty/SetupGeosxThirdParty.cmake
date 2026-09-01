@@ -721,6 +721,12 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                      LIBRARIES HYPRE
                      DEPENDS ${HYPRE_DEPENDS} )
 
+    # HYPREDRVConfig.cmake probes for a CMake HYPRE package.  Legacy Autotools
+    # installs do not provide one, and that probe can replace HYPRE_DIR with a
+    # -NOTFOUND cache entry even though the imported legacy target is valid.
+    # Preserve the user/TPL-supplied path for subsequent reconfiguration.
+    set( _geos_hypre_dir "${HYPRE_DIR}" )
+
     extract_version_from_header( NAME hypre
                                  HEADER "${HYPRE_INSTALL_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
@@ -798,6 +804,10 @@ if( ENABLE_HYPREDRV )
                         ${HYPREDRV_DIR}/lib64/cmake/HYPREDRV
                         ${HYPREDRV_DIR}/cmake/HYPREDRV
                   NO_DEFAULT_PATH )
+
+    if( DEFINED _geos_hypre_dir )
+        set( HYPRE_DIR "${_geos_hypre_dir}" CACHE PATH "" FORCE )
+    endif()
 
     if( NOT HYPREDRV_FOUND )
         hypredrv_install_not_found(
