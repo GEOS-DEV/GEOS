@@ -73,14 +73,53 @@
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
 
-  <!-- SPHINX_GEOMETRY -->
   <Geometry>
+    <!-- Two nodes on the loaded edge. The imposed displacement is uniform along that
+         edge, so probing one point of it is enough, and their reference positions give
+         the height and the thickness of the specimen. -->
+    <Box
+      name="loadedEdgeProbe"
+      xMin="{  0.999, 0.999, -0.01 }"
+      xMax="{  1.001, 1.001,  0.01 }"/>
+
+    <!-- Top row of elements, used to integrate the reaction force on the loaded
+         boundary. An element belongs to a set only if all of its nodes do, so the
+         box spans the two node lines of the top row (y = 0.985 and y = 1). -->
+    <Box
+      name="topRow"
+      xMin="{ -0.01, 0.98, -0.01 }"
+      xMax="{  1.01, 1.01,  0.01 }"/>
+
+    <!-- SPHINX_GEOMETRY -->
     <Box
       name="initial_crack_nodes"
       xMin="{ -1.0e-7, 0.4999999, -0.0050001 }"
       xMax="{ 0.5000001, 0.5000001, 0.0050001 }"/>
+    <!-- SPHINX_GEOMETRY_END -->
   </Geometry>
-  <!-- SPHINX_GEOMETRY_END -->
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="topDisplacementCollection"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      setNames="{ loadedEdgeProbe }"/>
+
+    <PackCollection
+      name="topStressCollection"
+      objectPath="ElementRegions/Region1/cb"
+      fieldName="averageStress"
+      setNames="{ topRow }"/>
+
+    <PackCollection
+      name="topVolumeCollection"
+      objectPath="ElementRegions/Region1/cb"
+      fieldName="elementVolume"
+      setNames="{ topRow }"
+      disableCoordCollection="1"/>
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
 
   <!-- SPHINX_EVENTS -->
   <Events
@@ -96,15 +135,36 @@
 
     <PeriodicEvent
       name="solverApplication0"
-      endTime="500.0"
+      endTime="545.0"
       maxEventDt="1.0"
       target="/Solvers/PhaseFieldSolve"/>
 
     <PeriodicEvent
       name="solverApplication1"
-      beginTime="500.0"
+      beginTime="545.0"
       maxEventDt="0.1"
       target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="topDisplacementCollection"
+      cycleFrequency="50"
+      target="/Tasks/topDisplacementCollection"/>
+
+    <PeriodicEvent
+      name="topStressCollection"
+      cycleFrequency="50"
+      target="/Tasks/topStressCollection"/>
+
+    <PeriodicEvent
+      name="topVolumeCollection"
+      cycleFrequency="50"
+      target="/Tasks/topVolumeCollection"/>
+
+    <PeriodicEvent
+      name="topBoundaryHistoryOutput"
+      cycleFrequency="50"
+      targetExactTimestep="0"
+      target="/Outputs/topBoundaryHistoryOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -117,6 +177,11 @@
     <VTK
       name="SingleEdgeNotchTension_VTKOutput"
       plotFileRoot="singleEdgeNotchTension"/>
+
+    <TimeHistory
+      name="topBoundaryHistoryOutput"
+      sources="{ /Tasks/topDisplacementCollection, /Tasks/topStressCollection, /Tasks/topVolumeCollection }"
+      filename="singleEdgeNotchTension_topBoundary"/>
 
     <Restart
       name="restartOutput"/>

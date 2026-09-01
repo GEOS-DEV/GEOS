@@ -1,0 +1,22 @@
+# Single-edge notched block under tension: reference load-displacement curve
+# Source: C. Miehe, M. Hofacker, F. Welschinger, Computer Methods in Applied
+# Mechanics and Engineering 199:2765-2778, 2010. Digitized from the published
+# figure for the length scale L = 0.0075 mm and the viscosity eta = 0.
+# displacement [mm],load [kN per mm of thickness]
+0.000000e+00,0.000000e+00
+7.000000e-04,9.000000e-02
+1.400000e-03,1.830000e-01
+2.100000e-03,2.760000e-01
+2.800000e-03,3.700000e-01
+3.500000e-03,4.630000e-01
+4.200000e-03,5.560000e-01
+4.900000e-03,6.500000e-01
+5.550000e-03,7.370000e-01
+5.620000e-03,7.040000e-01
+5.690000e-03,6.330000e-01
+5.760000e-03,5.320000e-01
+5.820000e-03,4.050000e-01
+5.860000e-03,2.820000e-01
+5.890000e-03,1.580000e-01
+5.900000e-03,5.000000e-02
+5.900000e-03,0.000000e+00

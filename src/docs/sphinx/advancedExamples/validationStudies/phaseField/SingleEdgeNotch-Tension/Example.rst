@@ -39,12 +39,21 @@ available at:
 
   inputFiles/phaseField/benchmark/singleEdgeNotch/PhaseFieldFracture_SingleEdgeNotchTension_smoke.xml
 
-A Python script used to extract and post-process the reaction force on the loaded boundary is
-provided at:
+The post-processing is split in two steps, each with its own script sitting next to the case.
+The first one reads the ``TimeHistory`` output of the run and reduces it to a two-column load
+curve of a few kilobytes. It takes no argument:
 
 .. code-block:: console
 
-  src/docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Tension/extractForce_tension.py
+  cd src/docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Tension
+  python3 extractLoadCurveTension.py
+
+The second one draws the figure from that curve and from the digitized reference, and needs
+only numpy and matplotlib, so it runs when the documentation is built:
+
+.. code-block:: console
+
+  src/docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Tension/plotLoadCurve.py
 
 
 ------------------------------------------------------------------
@@ -262,18 +271,14 @@ over the faces lying on the top edge, and is rescaled to the 1 mm thick specimen
 reference. The GEOS response follows the reference through the elastic branch and the peak load,
 and captures the sharp post-peak drop associated with the rapid crack growth.
 
-.. _singleEdgeNotchTensionForceFig:
-.. figure:: force_response.png
-   :align: center
-   :width: 600
-   :figclass: align-center
-
-   Force applied on the top boundary versus imposed displacement
+.. plot:: docs/sphinx/advancedExamples/validationStudies/phaseField/SingleEdgeNotch-Tension/plotLoadCurve.py
 
 .. note::
-   The figure above is produced by ``extractForce_tension.py``, which reads the ``.pvd`` time
-   series written by GEOS. Run it from the directory containing the simulation output, or pass
-   the path to the ``.pvd`` file as an argument. The script requires the ``vtk`` Python module.
+   The figure above is regenerated when the documentation is built, from the two text files
+   committed next to the plotting script: ``loadCurve.csv``, the GEOS result reduced from the
+   ``TimeHistory`` output, and ``reference_Miehe2010.csv``, the reference curve digitized from
+   the published figure. Re-running the benchmark and running ``extractLoadCurve.py`` again is
+   enough to update it.
 
 
 ------------------------------------------------------------------
