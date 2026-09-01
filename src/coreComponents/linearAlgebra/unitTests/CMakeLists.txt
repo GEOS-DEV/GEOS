@@ -21,6 +21,12 @@ if( ENABLE_HIP )
 endif()
 
 set( dependencyList gtest linearAlgebra ${parallelDeps} )
+# MPI is intentionally consumed through linearAlgebra's public interface.
+# Adding the legacy BLT `mpi` target here independently can cause CMake to
+# split libmpicxx and libmpi across the transitive link line.
+if( ENABLE_MPI )
+  list( REMOVE_ITEM dependencyList mpi )
+endif()
 
 foreach(test ${serial_tests})
   get_filename_component( test_name ${test} NAME_WE )
