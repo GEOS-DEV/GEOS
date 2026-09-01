@@ -5,7 +5,12 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4096 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4083-17503-96f5eac.tar.gz>
+=====================
+Dispatch scaling wrt to fracture element type for ALM contact solver
+
 PR #4096 (2026-08-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4096-17439-18734f3.tar.gz>
+=====================
 Refactor the phase-field module and add new benchmarks for baseline
 
 PR #4127 (2026-08-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4127-17399-63445db.tar.gz>
