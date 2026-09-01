@@ -180,7 +180,7 @@ TEST( HypredriveYaml, BuildsGeneratedFallbackForAMG )
 #elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   EXPECT_NE( target.argument.find( "exec_policy: device" ), std::string::npos );
   EXPECT_NE( target.argument.find( "use_vendor_spmv: off" ), std::string::npos );
-  EXPECT_NE( target.argument.find( "use_vendor_spgemm: on" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "use_vendor_spgemm: off" ), std::string::npos );
 #else
   EXPECT_NE( target.argument.find( "exec_policy: host" ), std::string::npos );
   EXPECT_NE( target.argument.find( "use_vendor_spmv: off" ), std::string::npos );

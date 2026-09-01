@@ -765,11 +765,7 @@ void appendGeneralYaml( std::ostringstream & stream )
 #else
   appendLine( stream, 1, "use_vendor_spmv: on" );
 #endif
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
   appendLine( stream, 1, "use_vendor_spgemm: off" );
-#else
-  appendLine( stream, 1, "use_vendor_spgemm: on" );
-#endif
 #else
   appendLine( stream, 1, "exec_policy: host" );
   appendLine( stream, 1, "use_vendor_spmv: off" );
