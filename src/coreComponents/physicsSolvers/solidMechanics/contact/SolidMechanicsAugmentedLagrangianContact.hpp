@@ -269,6 +269,7 @@ private:
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
+    constexpr static char const * bubbleFaceMarkerString() { return "bubbleFaceMarker"; }
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
 

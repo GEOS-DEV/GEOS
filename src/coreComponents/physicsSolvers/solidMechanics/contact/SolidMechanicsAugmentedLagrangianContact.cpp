@@ -145,6 +145,12 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     // Register the incremental bubble displacement
     faceManager.registerField< contact::incrementalBubbleDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
+
+    faceManager.registerWrapper< array1d< integer > >( viewKeyStruct::bubbleFaceMarkerString() ).
+      setApplyDefaultValue( 0 ).
+      setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+      setRegisteringObjects( getName() ).
+      setDescription( "Marker for faces carrying a bubble (fracture) element" );
   } );
 
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
@@ -1518,40 +1524,37 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
                                                                 string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
+    FaceManager & faceManager = mesh.getFaceManager();
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    // Nothing to do when there are no fracture face elements.
-    if( subRegion.size() == 0 )
-    {
-      return;
-    }
+    // Mark the faces that carry a fracture element, then synchronize the marker.
+    arrayView1d< integer > const bubbleFaceMarker =
+      faceManager.getReference< array1d< integer > >( viewKeyStruct::bubbleFaceMarkerString() );
+    bubbleFaceMarker.zero();
 
-    // Array to store face indexes
-    array1d< localIndex > tmpSpace( 2*subRegion.size());
-    SortedArray< localIndex > faceIdList;
-
-    arrayView1d< localIndex > const tmpSpace_v = tmpSpace.toView();
-    // Store indexes of faces in the temporany array.
+    if( subRegion.size() > 0 )
     {
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
       forAll< parallelHostPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
       {
-
-        localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
-        tmpSpace_v[2*kfe] = kf0, tmpSpace_v[2*kfe+1] = kf1;
-
+        bubbleFaceMarker[ elemsToFaces[kfe][0] ] = 1;
+        bubbleFaceMarker[ elemsToFaces[kfe][1] ] = 1;
       } );
     }
 
-    // Sort indexes to enable efficient searching using binary search.
-    RAJA::stable_sort< parallelHostPolicy >( tmpSpace_v );
-    // Move data back to host: after the device sort the buffer lives on the GPU,
-    // but SortedArray::insert is a host-only operation that dereferences the iterators.
-    faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
-    SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
+    {
+      FieldIdentifiers fieldsToBeSync;
+      fieldsToBeSync.addFields( FieldLocation::Face, { viewKeyStruct::bubbleFaceMarkerString() } );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                           mesh,
+                                                           domain.getNeighbors(),
+                                                           false );
+    }
+
+    arrayView1d< integer const > const faceIdList_v = bubbleFaceMarker.toViewConst();
 
     // Search for bubble element on each CellElementSubRegion and
     // store element indexes, global and local face indexes.
@@ -1581,7 +1584,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         for( int i=0; i < elemsToFaces.size( 1 ); ++i )
         {
           perms_v[kfe*elemsToFaces.size( 1 )+i] = kfe*elemsToFaces.size( 1 )+i;
-          if( faceIdList_v.contains( elemsToFaces[kfe][i] ))
+          if( faceIdList_v[ elemsToFaces[kfe][i] ] == 1 )
           {
             keys_v[kfe*elemsToFaces.size( 1 )+i] = 0;
             vals_v[kfe*elemsToFaces.size( 1 )+i] = kfe;
