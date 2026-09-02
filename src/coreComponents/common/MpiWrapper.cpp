@@ -18,7 +18,18 @@
  */
 
 #include "MpiWrapper.hpp"
+#include "LvArray/src/system.hpp"
+#include "common/logger/Logger.hpp"
 #include <unistd.h>
+#include <chrono>
+#include <thread>
+
+#if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
+#if defined(__GLIBC__) || defined(__APPLE__)
+#include <dlfcn.h>
+#include <execinfo.h>
+#endif
+#endif
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -38,9 +49,96 @@ MPI_Comm MPI_COMM_GEOS;
 int MPI_COMM_GEOS = 0;
 #endif
 
+namespace desyncDetection
+{
+
+#if defined( GEOS_USE_MPI ) && defined( GEOS_USE_MPI_DESYNC_DETECTION )
+void StackTrace::saveStackFrames()
+{
+  // LvArray already implements an equivalent (see internal `collect()` in LvArray/src/system.cpp)
+  // but it is not exposed to the public API. (TODO) Remove this in favor of LvArray's `collect()`
+  // if it becomes public.
+#if defined(__GLIBC__) || defined(__APPLE__)
+  m_frameCount = backtrace( m_frames.data(), maxFrames );
+#else
+  m_frameCount = 0;
+#endif
+}
+
+/// @brief Symbolize and demangle the captured stacktrace frames
+string symbolizeStackTrace( StackTrace const & trace )
+{
+  // adapted from LvArray::system::getFunctionNameFromFrame()
+  std::ostringstream oss;
+#if defined(__GLIBC__) || defined(__APPLE__)
+  for( int i = 0; i < trace.m_frameCount; ++i )
+  {
+    Dl_info dli;
+    bool const dlOk = dladdr( trace.m_frames[ i ], &dli );
+
+    oss << "Frame " << i << ": "
+        << ( dlOk ?
+         ( dli.dli_sname ? LvArray::system::demangle( dli.dli_sname ) : dli.dli_fname ) :
+         "Unknown" )
+        << "\n";
+  }
+#else
+  GEOS_UNUSED_VAR( frames, frameCount );
+#endif
+  return oss.str();
+}
+
+void failed( MPI_Comm const & comm )
+{
+  g_lastCollectiveOperationSuccess = false;
+  GEOS_LOG_RANK( GEOS_FMT( "MPI desync detected: rank timed out\n"
+                           "{}\n"
+                           "Last successful stacktrace:\n"
+                           "{}",
+                           symbolizeStackTrace( g_lastStackTrace ),
+                           symbolizeStackTrace( g_lastSuccessfulStackTrace ) ) );
+  MPI_Abort( comm, 1 );
+}
+
+void succeeded()
+{
+  g_lastCollectiveOperationSuccess = true;
+  g_lastSuccessfulStackTrace = g_lastStackTrace;
+}
+
+bool MpiDesyncGuard::detectMpiDesync()
+{
+  MPI_Request request;
+  MPI_Ibarrier( m_comm, &request );
+
+  int flag = 0;
+  double start = MpiWrapper::wtime();
+  while( true )
+  {
+    MpiWrapper::test( &request, &flag, MPI_STATUS_IGNORE );
+
+    if( flag )
+    {
+      return false;
+    }
+    if( MpiWrapper::wtime() - start > 10 )
+    {
+      return true;
+    }
+
+    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+  }
+}
+#endif
+
+} // namespace desyncDetection
+
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
+#ifdef GEOS_USE_MPI_DESYNC_DETECTION
+  desyncDetection::MpiDesyncGuard const mpiDesyncGuard( comm, desyncDetection::failed, desyncDetection::succeeded );
+#endif
   MPI_Barrier( comm );
 #endif
 }

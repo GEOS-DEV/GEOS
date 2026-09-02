@@ -19,6 +19,7 @@
 
 // Source includes
 #include "Logger.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Path.hpp"
 
 namespace geos
@@ -53,7 +54,7 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
       makeDirsForPath( rankOutputDir );
     }
 
-    MPI_Barrier( mpi_comm );
+    MpiWrapper::barrier( mpi_comm );
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::g_rankString + ".out";
     internal::g_rankStream = new std::ofstream( outputFilePath );
   }

@@ -577,12 +577,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       BCTableSize = BCTable1D.size();
     }
 
-    MPI_Bcast( &BCTableSize, 1, MPI_INT, 0, MPI_COMM_GEOS ); // Broadcast the size of BCTable1D to other processes
+    MpiWrapper::bcast( &BCTableSize, 1, 0, MPI_COMM_GEOS ); // Broadcast the size of BCTable1D to other processes
     if( rank != 0 ) // All processes except for root resize their versions of BCTable1D
     {
       BCTable1D.resize( BCTableSize );
     }
-    MPI_Bcast( BCTable1D.data(), BCTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOS ); // Broadcast BCTable1D to other processes
+    MpiWrapper::bcast( BCTable1D.data(), BCTableSize, 0, MPI_COMM_GEOS ); // Broadcast BCTable1D to other processes
 
     // Technically don't need to reshape BCTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
     m_bcTable.resize( BCTableSize / 7, 7 ); // Initialize size of m_BCTable
@@ -618,12 +618,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       FTableSize = FTable1D.size();
     }
 
-    MPI_Bcast( &FTableSize, 1, MPI_INT, 0, MPI_COMM_GEOS ); // Broadcast the size of FTable1D to other processes
+    MpiWrapper::bcast( &FTableSize, 1, 0, MPI_COMM_GEOS ); // Broadcast the size of FTable1D to other processes
     if( rank != 0 ) // All processes except for root resize their versions of FTable1D
     {
       FTable1D.resize( FTableSize );
     }
-    MPI_Bcast( FTable1D.data(), FTableSize, MPI_DOUBLE, 0, MPI_COMM_GEOS ); // Broadcast FTable1D to other processes
+    MpiWrapper::bcast( FTable1D.data(), FTableSize, 0, MPI_COMM_GEOS ); // Broadcast FTable1D to other processes
 
     // Techinically don't need to reshape FTable1D into a 2D array, but it makes things more readable and should have little runtime penalty
     m_fTable.resize( FTableSize / 4, 4 ); // Initialize size of m_fTable
@@ -823,12 +823,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     {
       localMinMass = DBL_MAX;
     }
-    MPI_Allreduce( &localMinMass,
-                   &globalMinMass,
-                   1,
-                   MPI_DOUBLE,
-                   MPI_MIN,
-                   MPI_COMM_GEOS );
+    globalMinMass = MpiWrapper::min( localMinMass, MPI_COMM_GEOS );
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
     // Initialize deformation gradient and velocity gradient
@@ -884,12 +879,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       }
     }
   } );
-  MPI_Allreduce( &maxLocalGroupNumber,
-                 &maxGlobalGroupNumber,
-                 1,
-                 MPI_INT,
-                 MPI_MAX,
-                 MPI_COMM_GEOS );
+  maxGlobalGroupNumber = MpiWrapper::max( maxLocalGroupNumber, MPI_COMM_GEOS );
 
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
@@ -1465,12 +1455,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   real64 globalFaceReactions[6];
   for( int face = 0; face < 6; face++ )
   {
-    MPI_Allreduce( &localFaceReactions[face],
-                   &globalFaceReactions[face],
-                   1,
-                   MPI_DOUBLE,
-                   MPI_SUM,
-                   MPI_COMM_GEOS );
+    globalFaceReactions[face] = MpiWrapper::sum( localFaceReactions[face], MPI_COMM_GEOS );
   }
 
   // Get end-of-step domain dimensions - note that m_domainExtent is updated later
@@ -1956,7 +1941,7 @@ void SolidMechanicsMPM::solverProfiling( std::string label )
 {
   if( m_solverProfiling >= 1 )
   {
-    MPI_Barrier( MPI_COMM_GEOS );
+    MpiWrapper::barrier( MPI_COMM_GEOS );
     GEOS_LOG_RANK_IF( m_solverProfiling == 2, label );
     m_profilingTimes.push_back( MPI_Wtime() );
     m_profilingLabels.push_back( label );
@@ -2195,18 +2180,8 @@ void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
   real64 globalWeightedMultiplier;
   int localNumberOfParticles = particleManager.getNumberOfParticles();
   real64 localWeightedMultiplier = optimalMultiplier * localNumberOfParticles;
-  MPI_Allreduce( &localWeightedMultiplier,
-                 &globalWeightedMultiplier,
-                 1,
-                 MPI_DOUBLE,
-                 MPI_SUM,
-                 MPI_COMM_GEOS );
-  MPI_Allreduce( &localNumberOfParticles,
-                 &globalNumberOfParticles,
-                 1,
-                 MPI_INT,
-                 MPI_SUM,
-                 MPI_COMM_GEOS );
+  globalWeightedMultiplier = MpiWrapper::sum( localWeightedMultiplier, MPI_COMM_GEOS );
+  globalNumberOfParticles = MpiWrapper::sum( localNumberOfParticles, MPI_COMM_GEOS );
 
   // Set bin size multiplier
   m_binSizeMultiplier = std::max( (int) std::round( globalWeightedMultiplier / globalNumberOfParticles ), 1 );
@@ -2753,20 +2728,10 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   // so file is directly plottable in excel as CSV or something.
   for( localIndex i = 0; i < 9; i++ )
   {
-    real64 localSum = boxSums[i];
-    real64 globalSum;
-    MPI_Allreduce( &localSum,
-                   &globalSum,
-                   1,
-                   MPI_DOUBLE,
-                   MPI_SUM,
-                   MPI_COMM_GEOS );
-    boxSums[i] = globalSum;
+    boxSums[i] = MpiWrapper::sum( boxSums[i], MPI_COMM_GEOS );
   }
 
-  int rank;
-  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
@@ -3333,7 +3298,7 @@ void SolidMechanicsMPM::printProfilingResults()
   }
 
   // Print out solver profiling
-  MPI_Barrier( MPI_COMM_GEOS );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
   if( rank == 0 )
   {
     std::cout << "---------------------------------------------" << std::endl;
