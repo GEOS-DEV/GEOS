@@ -735,6 +735,18 @@
 					<xsd:selector xpath="CompositionalTwoPhaseKValueFluidPhillipsBrine" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseKValueThermalFluidPhillipsBrineUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseKValueThermalFluidPhillipsBrine" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseThermalFluidLohrenzBrayClarkUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseThermalFluidLohrenzBrayClark" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseThermalFluidPhillipsBrineUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseThermalFluidPhillipsBrine" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
 					<xsd:selector xpath="CompressibleSinglePhaseFluid" />
 					<xsd:field xpath="@name" />
@@ -7025,6 +7037,9 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompositionalTwoPhaseFluidPhillipsBrine" type="CompositionalTwoPhaseFluidPhillipsBrineType" />
 			<xsd:element name="CompositionalTwoPhaseKValueFluidLohrenzBrayClark" type="CompositionalTwoPhaseKValueFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseKValueFluidPhillipsBrine" type="CompositionalTwoPhaseKValueFluidPhillipsBrineType" />
+			<xsd:element name="CompositionalTwoPhaseKValueThermalFluidPhillipsBrine" type="CompositionalTwoPhaseKValueThermalFluidPhillipsBrineType" />
+			<xsd:element name="CompositionalTwoPhaseThermalFluidLohrenzBrayClark" type="CompositionalTwoPhaseThermalFluidLohrenzBrayClarkType" />
+			<xsd:element name="CompositionalTwoPhaseThermalFluidPhillipsBrine" type="CompositionalTwoPhaseThermalFluidPhillipsBrineType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -7730,6 +7745,168 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="salinity" type="real64" default="0" />
 		<!--saltMolarWeight => The molar weight for the salt component-->
 		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
+		<xsd:attribute name="temperatureCoordinates" type="real64_array" default="{0}" />
+		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
+* HerningZipperer
+* Wilke
+* Brokaw-->
+		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
+		<!--waterCompressibility => The compressibility of pure water.-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="4.5e-10" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalTwoPhaseKValueThermalFluidPhillipsBrineType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentHeatCapacityCoefficients => The polynomial coefficients for the specific heat capacity of each component.-->
+		<xsd:attribute name="componentHeatCapacityCoefficients" type="real64_array2d" use="required" />
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--enthalpyReferenceTemperature => The reference temperature for enthalpy calculation-->
+		<xsd:attribute name="enthalpyReferenceTemperature" type="real64" default="298.15" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--kValueTables => List of k-value tables for each phase.-->
+		<xsd:attribute name="kValueTables" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
+		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
+		<!--referenceEnthalpy => The enthalpy of each component in each of the phases at the reference temperature.-->
+		<xsd:attribute name="referenceEnthalpy" type="real64_array2d" default="{{0}}" />
+		<!--salinity => Brine salinity-->
+		<xsd:attribute name="salinity" type="real64" default="0" />
+		<!--saltMolarWeight => The molar weight for the salt component-->
+		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
+		<xsd:attribute name="temperatureCoordinates" type="real64_array" default="{0}" />
+		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
+* HerningZipperer
+* Wilke
+* Brokaw-->
+		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
+		<!--waterCompressibility => The compressibility of pure water.-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="4.5e-10" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalTwoPhaseThermalFluidLohrenzBrayClarkType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentHeatCapacityCoefficients => The polynomial coefficients for the specific heat capacity of each component.-->
+		<xsd:attribute name="componentHeatCapacityCoefficients" type="real64_array2d" use="required" />
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--enthalpyReferenceTemperature => The reference temperature for enthalpy calculation-->
+		<xsd:attribute name="enthalpyReferenceTemperature" type="real64" default="298.15" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--referenceEnthalpy => The enthalpy of each component in each of the phases at the reference temperature.-->
+		<xsd:attribute name="referenceEnthalpy" type="real64_array2d" default="{{0}}" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
+		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
+* HerningZipperer
+* Wilke
+* Brokaw-->
+		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalTwoPhaseThermalFluidPhillipsBrineType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentHeatCapacityCoefficients => The polynomial coefficients for the specific heat capacity of each component.-->
+		<xsd:attribute name="componentHeatCapacityCoefficients" type="real64_array2d" use="required" />
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--enthalpyReferenceTemperature => The reference temperature for enthalpy calculation-->
+		<xsd:attribute name="enthalpyReferenceTemperature" type="real64" default="298.15" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
+		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
+		<!--referenceEnthalpy => The enthalpy of each component in each of the phases at the reference temperature.-->
+		<xsd:attribute name="referenceEnthalpy" type="real64_array2d" default="{{0}}" />
+		<!--salinity => Brine salinity-->
+		<xsd:attribute name="salinity" type="real64" default="0" />
+		<!--saltMolarWeight => The molar weight for the salt component-->
+		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" default="{0}" />
 		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
