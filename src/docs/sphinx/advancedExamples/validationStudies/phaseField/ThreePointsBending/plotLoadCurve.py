@@ -13,7 +13,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+# When this script is executed by the "plot" directive of the documentation, Sphinx runs it
+# without defining __file__, but with the working directory set to the directory holding
+# it. Both situations are covered here.
+HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
 GEOS_CURVE = os.path.join(HERE, "loadCurve.csv")
 REFERENCE_CURVE = os.path.join(HERE, "reference_Miehe2010.csv")
 
