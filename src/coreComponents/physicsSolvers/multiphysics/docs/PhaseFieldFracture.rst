@@ -336,8 +336,10 @@ The following examples exercise the model against reference solutions:
 
 * :ref:`ExampleSingleEdgeNotchTension`, mode-I propagation in a single-edge notched block,
 * :ref:`ExampleSingleEdgeNotchShear`, mixed-mode propagation on the same specimen,
-* :ref:`ExampleThreePointsBendingWithHoles`, crack path driven by the interaction with
-  geometric features.
+* :ref:`ExampleThreePointsBending`, mode-I propagation in a notched beam loaded in symmetric
+  three-point bending,
+* :ref:`ExampleThreePointsBendingWithHoles`, the same beam perforated by holes, where the crack
+  path is driven by the interaction with geometric features.
 
 
 References

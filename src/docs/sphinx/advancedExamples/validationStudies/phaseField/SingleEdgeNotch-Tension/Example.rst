@@ -289,8 +289,8 @@ To go further
 
 - :ref:`ExampleSingleEdgeNotchShear`, the mode-II counterpart of this benchmark, which shares
   the same specimen and base input file.
-- :ref:`ExampleThreePointsBendingWithHoles`, where the crack path is driven by the interaction
-  between bending and geometric features.
+- :ref:`ExampleThreePointsBending` and :ref:`ExampleThreePointsBendingWithHoles`, the same model
+  applied to a structural specimen, with and without holes deflecting the crack path.
 
 **Feedback on this example**
 

@@ -9,5 +9,6 @@ PhaseField
 
    SingleEdgeNotch-Tension/Example
    SingleEdgeNotch-Shear/Example
-   Three-point-bending-holes/Example
+   ThreePointsBending/Example
+   ThreePointsBendingWithHoles/Example
 

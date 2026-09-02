@@ -193,8 +193,8 @@ To go further
 
 - :ref:`ExampleSingleEdgeNotchTension`, the mode-I counterpart of this benchmark, which
   describes the phase-field formulation and the constitutive parameters in detail.
-- :ref:`ExampleThreePointsBendingWithHoles`, where the crack path is driven by the interaction
-  between bending and geometric features.
+- :ref:`ExampleThreePointsBending` and :ref:`ExampleThreePointsBendingWithHoles`, the same model
+  applied to a structural specimen, with and without holes deflecting the crack path.
 
 **Feedback on this example**
 

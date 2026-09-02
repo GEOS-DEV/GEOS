@@ -68,6 +68,40 @@
   <!-- SPHINX_MESH_END -->
 
   <!-- SPHINX_EVENTS -->
+  <Geometry>
+    <!-- Vertical slab between the left support (x = 0) and the load line (x = 4), where the shear force equals half of the
+         applied load. Integrating the shear stress over it gives the reaction without
+         relying on any nodal force field. -->
+    <Box
+      name="reactionCut"
+      xMin="{ 1.5, -0.01, -0.06 }"
+      xMax="{ 2.5, 2.01,  0.06 }"/>
+
+  </Geometry>
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="deflectionCollection"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      setNames="{ load_line_full_thickness }"/>
+
+    <PackCollection
+      name="cutStressCollection"
+      objectPath="ElementRegions/Region1/hexahedra"
+      fieldName="averageStress"
+      setNames="{ reactionCut }"/>
+
+    <PackCollection
+      name="cutVolumeCollection"
+      objectPath="ElementRegions/Region1/hexahedra"
+      fieldName="elementVolume"
+      setNames="{ reactionCut }"
+      disableCoordCollection="1"/>
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
+
   <Events
     maxTime="600.0">
     <PeriodicEvent
@@ -94,6 +128,58 @@
       maxEventDt="0.01"
       target="/Solvers/PhaseFieldSolve"/>
 
+    <!-- 360 steps at dt <= 1 then 24000 at dt <= 0.01: sampling every 15 cycles before
+         the switch and every 400 after keeps both branches populated -->
+    <PeriodicEvent
+      name="deflectionCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/deflectionCollection"/>
+
+    <PeriodicEvent
+      name="deflectionCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/deflectionCollection"/>
+
+    <PeriodicEvent
+      name="cutStressCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/cutStressCollection"/>
+
+    <PeriodicEvent
+      name="cutStressCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/cutStressCollection"/>
+
+    <PeriodicEvent
+      name="cutVolumeCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/cutVolumeCollection"/>
+
+    <PeriodicEvent
+      name="cutVolumeCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/cutVolumeCollection"/>
+
+    <PeriodicEvent
+      name="reactionHistoryOutput0"
+      endTime="360.0"
+      cycleFrequency="15"
+      targetExactTimestep="0"
+      target="/Outputs/reactionHistoryOutput"/>
+
+    <PeriodicEvent
+      name="reactionHistoryOutput1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      targetExactTimestep="0"
+      target="/Outputs/reactionHistoryOutput"/>
+
     <PeriodicEvent
       name="restarts"
       cycleFrequency="500"
@@ -105,6 +191,11 @@
     <VTK
       name="ThreePointsBending_VTKOutput"
       plotFileRoot="threePointsBending"/>
+
+    <TimeHistory
+      name="reactionHistoryOutput"
+      sources="{ /Tasks/deflectionCollection, /Tasks/cutStressCollection, /Tasks/cutVolumeCollection }"
+      filename="threePointsBending_reactionCut"/>
 
     <Restart
       name="restartOutput"/>
