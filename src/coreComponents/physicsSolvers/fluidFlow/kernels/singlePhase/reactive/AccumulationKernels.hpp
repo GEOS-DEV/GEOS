@@ -82,7 +82,7 @@ public:
                       arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, localMatrix, localRhs ),
     m_dt( dt ),
-    m_solventDensity( fluid.solventDensity() ),
+    m_solventMassPerSolutionVolume( fluid.solventMassPerSolutionVolume() ),
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
     m_porosity( solid.getPorosity() ),
@@ -161,7 +161,7 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
-    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventDensity * stack.poreVolume - primarySpeciesAggregateMole_n[is])
+    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventMassPerSolutionVolume * stack.poreVolume - primarySpeciesAggregateMole_n[is])
     //                 - dt * m_volume * primarySpeciesKineticRate[is]
 
     Base::computeAccumulation( ei, stack );
@@ -184,14 +184,14 @@ public:
       // Step 2.1: residual
       // Primary species mole amount in pore volume
       stack.localResidual[is+numEqn-numSpecies] -= m_primarySpeciesAggregateMole_n[ei][is];
-      stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventDensity * stack.poreVolume;
+      stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassPerSolutionVolume * stack.poreVolume;
 
       // Reaction term
       stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is];
 
       // Step 2.1: jacobian
       // Drivative of primary species amount in pore volume wrt pressure
-      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventDensity
+      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassPerSolutionVolume
                                                       /* + stack.poreVolume * m_dTotalPrimarySpeciesConcentration_dPres[ei][is] */;
       // // Derivative of reaction term wrt pressure
       // stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
@@ -202,7 +202,7 @@ public:
       {
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] = /* stack.dPoreVolume_dLogPrimaryConc[js] *
                                                                               m_primarySpeciesAggregateConcentration[ei][0][is]
-                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] * m_solventDensity;
+                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] * m_solventMassPerSolutionVolume;
 
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js];
       }
@@ -240,8 +240,8 @@ protected:
   /// Time step size
   real64 const m_dt;
 
-  /// Solvent density [kg/m³] used to convert molality [mol/kg] to molarity [mol/m³]
-  real64 const m_solventDensity;
+  /// Mass of solvent per unit volume of solution [kg/m³], converting molality [mol/kg] to molarity [mol/m³]
+  real64 const m_solventMassPerSolutionVolume;
 
   /// View on the element volumes
   arrayView1d< real64 const > const m_volume;

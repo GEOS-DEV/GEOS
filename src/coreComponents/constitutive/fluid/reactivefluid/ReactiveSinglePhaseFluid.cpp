@@ -46,6 +46,13 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
 
+  this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
+    setApplyDefaultValue( 1000.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Mass of solvent per unit volume of solution [kg/m^3], used to convert species "
+                    "molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 "
+                    "approximates an aqueous solution by the density of pure water." );
+
   this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration >( &m_primarySpeciesAggregateConcentration );
@@ -72,7 +79,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
-  newConstitutiveRelation.m_solventDensity = m_solventDensity;
+  newConstitutiveRelation.m_solventMassPerSolutionVolume = m_solventMassPerSolutionVolume;
 
   return clone;
 }
@@ -88,44 +95,43 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numPrimarySpecies = 9;
       m_numSecondarySpecies = 16;
       m_numKineticReactions = 5;
-      m_solventDensity = ultramaficSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::carbonate:
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 10;
       m_numKineticReactions = 1;
-      m_solventDensity = carbonateSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::carbonateAllEquilibrium:
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
-      m_solventDensity = carbonateSystemAllEquilibrium.getSolventDensity();
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;
       m_numKineticReactions = 3;
-      m_solventDensity = serialAllKineticParams.getSolventDensity();
       break;
 
     case ChemicalSystemType::momasMedium:
       m_numPrimarySpecies = 5;
       m_numSecondarySpecies = 9;
       m_numKineticReactions = 1;
-      m_solventDensity = mediumCaseParams.getSolventDensity();
       break;
 
     default:
       m_numPrimarySpecies = 5;
       m_numSecondarySpecies = 7;
       m_numKineticReactions = 0;
-      m_solventDensity = easyCaseParams.getSolventDensity();
       break;
   }
+
+  GEOS_THROW_IF_LE_MSG( m_solventMassPerSolutionVolume, 0.0,
+                        GEOS_FMT( "invalid value of attribute '{}'",
+                                  viewKeyStruct::solventMassPerSolutionVolumeString() ),
+                        InputError, this->getDataContext() );
 }
 
 template< typename BASE >

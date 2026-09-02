@@ -122,7 +122,7 @@ public:
    * @param[in] porosityAccessors
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
-   * @param[in] solventDensity the density of the solvent (e.g., water) [kg/m3]
+   * @param[in] solventMassPerSolutionVolume mass of solvent per unit volume of solution [kg/m3]
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -139,7 +139,7 @@ public:
                      PorosityAccessors const & porosityAccessors,
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                     real64 const & solventDensity,
+                     real64 const & solventMassPerSolutionVolume,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -162,7 +162,7 @@ public:
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_hasDiffusion( hasDiffusion ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
-    m_solventDensity( solventDensity )
+    m_solventMassPerSolutionVolume( solventMassPerSolutionVolume )
   {}
 
   /**
@@ -253,7 +253,7 @@ public:
       for( integer is = 0; is < numSpecies; ++is )
       {
         real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is]
-                                               * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
+                                               * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
         speciesFlux[is] = aggregateConcMolarity_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -266,7 +266,7 @@ public:
         for( integer js = 0; js < numSpecies; ++js )
         {
           real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js]
-                                                             * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
+                                                             * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
           dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConcMolarity_i_dLogConc_j / fluidDens_up * fluxVal;
         }
       }
@@ -360,13 +360,13 @@ public:
               localIndex const ei  = sei[ke];
 
               real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is]
-                                                     * m_solventDensity; // convert from mol/kg to mol/m3 using solvent density
+                                                     * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
 
               speciesGrad[is] += diffusionTrans[ke] * aggregateConcMolarity_i;
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js] * m_solventDensity;
+                real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js] * m_solventMassPerSolutionVolume;
 
                 dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConcMolarity_i_dLogConc_j;
               }
@@ -507,8 +507,8 @@ protected:
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
 
-  /// Density of the solvent (e.g., water) [kg/m3]
-  real64 const m_solventDensity;
+  /// Mass of solvent per unit volume of solution [kg/m3], converting molality [mol/kg] to molarity [mol/m3]
+  real64 const m_solventMassPerSolutionVolume;
 };
 
 /**
@@ -525,7 +525,7 @@ public:
    * @param[in] numSpecies the number of primary species
    * @param[in] hasDiffusion the flag of adding diffusion term
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
-   * @param[in] solventDensity the density of the solvent (e.g., water) [kg/m3]
+   * @param[in] solventMassPerSolutionVolume mass of solvent per unit volume of solution [kg/m3]
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -540,7 +540,7 @@ public:
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,
-                   real64 const solventDensity,
+                   real64 const solventMassPerSolutionVolume,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -572,7 +572,7 @@ public:
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, fluidAccessors, reactiveFluidAccessors,
                          permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion, mobilePrimarySpeciesFlags,
-                         solventDensity, dt, localMatrix, localRhs );
+                         solventMassPerSolutionVolume, dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

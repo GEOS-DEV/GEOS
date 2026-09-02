@@ -53,7 +53,7 @@ public:
   using Base::m_volume;
   using Base::m_deltaVolume;
   using Base::m_primarySpeciesAggregateConcentration;
-  using Base::m_solventDensity;
+  using Base::m_solventMassPerSolutionVolume;
 
   /// Note: Derivative lineup only supports dP & dT, not component terms
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
@@ -162,10 +162,10 @@ public:
     for( integer is = 0; is < numSpecies; ++is )
     {
       // Drivative of primary species amount in pore volume wrt temperature
-      stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] += stack.dPoreVolume_dTemp * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventDensity
+      stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] += stack.dPoreVolume_dTemp * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassPerSolutionVolume
                                                                         /* + stack.poreVolume *
                                                                            m_dPrimarySpeciesAggregateConcentration_dTemp[ei][is] *
-                                                                              m_solventDensity */;
+                                                                              m_solventMassPerSolutionVolume */;
       // // Derivative of reaction term wrt temperature
       // stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
       // m_dPrimarySpeciesTotalKineticRate_dTemp[is];

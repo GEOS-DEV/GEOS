@@ -113,7 +113,14 @@ public:
 
   integer numKineticReactions() const { return m_numKineticReactions; }
 
-  real64 solventDensity() const { return m_solventDensity; }
+  /**
+   * @brief Mass of solvent per unit volume of solution [kg/m^3].
+   *
+   * Converts species molality [mol/kg solvent] to molarity [mol/m^3 solution]. HPCReact is a
+   * molality-based library: concentrations, equilibrium constants and mass-action quotients are all
+   * on the molal scale.
+   */
+  real64 solventMassPerSolutionVolume() const { return m_solventMassPerSolutionVolume; }
 
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
@@ -332,6 +339,7 @@ protected:
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
+    static constexpr char const * solventMassPerSolutionVolumeString() { return "solventMassPerSolutionVolume"; }
   };
 
 protected:
@@ -368,7 +376,16 @@ protected:
 
   ChemicalSystemType m_chemicalSystemType;
 
-  real64 m_solventDensity;
+  /// TODO: prescribed as a constant for now. The exact factor is
+  ///
+  ///         rho_s = rho * w
+  ///
+  ///       where rho_s is this quantity [kg/m^3], rho the solution density [kg/m^3] and w the
+  ///       solvent mass fraction [-]. For the carbonate brine EQ3/6 gives 1070.9 * 0.898 = 961.6,
+  ///       not the 1000 defaulted here. Ideally rho is a function of pressure, temperature and
+  ///       species concentration, and w a function of concentration. The update methods and where
+  ///       they should be launched are TBD.
+  real64 m_solventMassPerSolutionVolume;
 };
 
 // these aliases are useful in constitutive dispatch

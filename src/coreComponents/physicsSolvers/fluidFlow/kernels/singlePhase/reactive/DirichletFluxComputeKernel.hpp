@@ -117,7 +117,7 @@ public:
                               ReactiveSinglePhaseFluidAccessors const & reactiveSinglePhaseFluidAccessors,
                               PermeabilityAccessors const & permeabilityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                              real64 const & solventDensity,
+                              real64 const & solventMassPerSolutionVolume,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -137,7 +137,7 @@ public:
     m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get(
                                                             fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
-    m_solventDensity( solventDensity )
+    m_solventMassPerSolutionVolume( solventMassPerSolutionVolume )
   {}
 
   /**
@@ -196,7 +196,7 @@ public:
 
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is] * m_solventDensity;
+        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is] * m_solventMassPerSolutionVolume;
         speciesFlux[is] = aggregateConcMolarity_i / dens_up * fluxVal * mobility_up;
 
         dSpeciesFlux_dP[is] = aggregateConcMolarity_i / dens_up * dFlux_dP * mobility_up
@@ -205,7 +205,7 @@ public:
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js] * m_solventDensity;
+          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js] * m_solventMassPerSolutionVolume;
           dSpeciesFlux_dLogConc[is][js] += dAggregateConcMolarity_i_dLogConc_j / dens_up * fluxVal * mobility_up;
         }
       }
@@ -269,8 +269,8 @@ protected:
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
 
-  /// Solvent density [kg/m³] used to convert molality [mol/kg] to molarity [mol/m³]
-  real64 const m_solventDensity;
+  /// Mass of solvent per unit volume of solution [kg/m³], converting molality [mol/kg] to molarity [mol/m³]
+  real64 const m_solventMassPerSolutionVolume;
 
 };
 
@@ -349,7 +349,7 @@ public:
                            reactiveFluidAccessors,
                            permeabilityAccessors,
                            mobilePrimarySpeciesFlags,
-                           reactiveFluid.solventDensity(),
+                           reactiveFluid.solventMassPerSolutionVolume(),
                            dt,
                            localMatrix,
                            localRhs );
