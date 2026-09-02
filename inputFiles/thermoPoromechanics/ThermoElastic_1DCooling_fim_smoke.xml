@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ThermoMech_1DCooling_base.xml" />
+  </Included>
+
+  <Solvers
+  gravityVector="{ 0.0, 0.0, 0.0 }">  
+ 
+  <SinglePhasePoromechanics
+    name="thermoPoroSolver"
+    solidSolverName="solidMechSolver"
+    flowSolverName="flowSolver"
+    isThermal="1"
+    logLevel="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      couplingType="FullyImplicit"
+      lineSearchAction="None"
+      newtonMaxIter="200"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhasePoromechanics>
+  
+  <SolidMechanicsLagrangianFEM
+    name="solidMechSolver"
+    logLevel="1"
+    discretization="FE1"
+    targetRegions="{ Domain }"/>
+
+  <SinglePhaseFVM
+    name="flowSolver"
+    logLevel="1"
+    discretization="tpfaFlow"
+    temperature="273.0"
+    isThermal="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      newtonMaxIter="100"
+      newtonMinIter="0"
+      newtonTol="1.0e-6"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhaseFVM>   
+ </Solvers>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"
+    />
+
+    <!-- SPHINX_ELASTIC_SOLID -->
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="0.5e9"
+      defaultShearModulus="0.3e9"
+      defaultDrainedLinearTEC="3e-7"/>
+    <!-- SPHINX_ELASTIC_SOLID_END -->
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.2"/>       
+        
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.672e5"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>     
+              
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="0.0"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="1.672e2"
+      referenceInternalEnergy="0.001"/> 
+ 
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-100, 1.0e-100, 1.0e-100 }"/>
+    
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 836, 836, 836 }"/>  
+  </Constitutive>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 7 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 14 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="100.0"> 
+
+    <PeriodicEvent
+      name="outputs0"
+      cycleFrequency="1"
+      target="/Outputs/thermoPoroVTKOutput"/>
+
+    <PeriodicEvent
+      name="stressHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/stressHistoryOutput"/>
+
+    <PeriodicEvent
+      name="displacementHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/displacementCollection"/>
+    <PeriodicEvent
+      name="displacementTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/displacementHistoryOutput"/>
+    
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="1e-10"
+      forceDt="1e-10"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1e-10"
+      endTime="100.0"
+      forceDt="1.0"
+      target="/Solvers/thermoPoroSolver"/>
+    
+    <PeriodicEvent
+        name="restarts"
+        beginTime="0"
+        timeFrequency="50.0"
+        target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

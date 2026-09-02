@@ -24,6 +24,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <gtest/gtest.h>
 
@@ -43,7 +44,6 @@ CommandLineOptions g_commandLineOptions;
 struct TestInputs
 {
   string xmlInput;
-  stdMap< string, string > tableFiles;
 
   string sourceFluxName;
   string sinkFluxName;
@@ -155,36 +155,7 @@ struct TestSet
 
 
 class FlowStatisticsTest : public ::testing::Test
-{
-public:
-
-  void writeTableFiles( stdMap< string, string > const & files )
-  {
-    for( auto const & [fileName, content] : files )
-    {
-      std::ofstream os( fileName );
-      ASSERT_TRUE( os.is_open() );
-      os << content;
-      os.close();
-
-      m_tableFileNames.push_back( fileName );
-    }
-  }
-
-  void TearDown() override
-  {
-    // removing temp table files
-    for( string const & fileName : m_tableFileNames )
-    {
-      ASSERT_TRUE( std::remove( fileName.c_str() ) == 0 );
-    }
-    m_tableFileNames.clear();
-  }
-
-private:
-  stdVector< string > m_tableFileNames;
-};
-
+{};
 
 
 class IterationTest : public IterationsStatistics
@@ -660,8 +631,12 @@ TestSet getTestSet()
                           phaseNames="{ gas, water }"
                           componentNames="{ co2, water }"
                           componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                          flashModelParaFile="co2flash.txt" />
+                          pressureCoordinates="{1.5e7, 2.5e7}"
+                          pressureInterval="1e5"
+                          temperatureCoordinates="{370.15, 400.15}"
+                          temperatureInterval="2.0"
+                          ezrokhiDensityCoefficients="{0.1033, -2.2991e-5, -2.3658e-6}"
+                          ezrokhiViscosityCoefficients="{0, 0, 0}" />
 
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
@@ -794,15 +769,6 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
-
-  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
-
-  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
-
-
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
@@ -851,7 +817,6 @@ TestSet getTestSet()
 TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 {
   TestSet const testSet = getTestSet();
-  writeTableFiles( testSet.inputs.tableFiles );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
@@ -954,8 +919,12 @@ TestSet getTestSet()
                           phaseNames="{ gas, water }"
                           componentNames="{ co2, water }"
                           componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                          flashModelParaFile="co2flash.txt" />
+                          pressureCoordinates="{1.5e7, 2.5e7}"
+                          pressureInterval="1e5"
+                          temperatureCoordinates="{370.15, 400.15}"
+                          temperatureInterval="2.0"
+                          ezrokhiDensityCoefficients="{0.1033, -2.2991e-5, -2.3658e-6}"
+                          ezrokhiViscosityCoefficients="{0, 0, 0}" />
 
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
@@ -1088,15 +1057,6 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
-
-  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
-
-  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
-
-
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
@@ -1149,7 +1109,6 @@ TestSet getTestSet()
 TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 {
   TestSet const testSet = getTestSet();
-  writeTableFiles( testSet.inputs.tableFiles );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();

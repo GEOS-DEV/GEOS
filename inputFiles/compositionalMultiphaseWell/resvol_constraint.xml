@@ -23,31 +23,42 @@
       targetRegions="{ Region1 }"
       temperature="297.15"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
-      writeCSV="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
         control="BHP"
-        referenceElevation="2"
-        targetBHP="4e6"
-        targetPhaseRate="1e-7"
         referenceReservoirRegion="Region1"
-        targetPhaseName="oil"/>
-      <WellControls
+        writeCSV="1">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e-7"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="4e6"
+          referenceElevation="2"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="injector"
         control="totalVolRate"
         referenceReservoirRegion="Region1"
-        referenceElevation="2"
-        targetBHP="1e8"
-        targetTotalRate="1e-7"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
-    </CompositionalMultiphaseWell>
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="2"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-7"
+          injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
@@ -61,7 +72,6 @@
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }">
-
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -75,7 +85,6 @@
           name="producer1_perf1"
           distanceFromHead="1.45"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion2"
@@ -99,6 +108,7 @@
       beginTime="0"
       cycleFrequency="1"
       target="/Tasks/compositionalMultiphaseFlowStatistics"/>
+
     <PeriodicEvent
       name="solverApplications"
       forceDt="2.5e3"
@@ -114,22 +124,21 @@
       timeFrequency="1.25e4"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
-
   </Events>
 
   <Tasks>
-      <CompositionalMultiphaseStatistics
+    <CompositionalMultiphaseStatistics
       name="compositionalMultiphaseFlowStatistics"
       flowSolverName="compositionalMultiphaseFlow"
       computeRegionStatistics="1"
       logLevel="1"
       writeCSV="1"/>
   </Tasks>
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        />
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -189,7 +198,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -198,7 +206,6 @@
       fieldName="pressure"
       scale="5e6"/>
 
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_N2"
       initialCondition="1"

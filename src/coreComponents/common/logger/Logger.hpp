@@ -189,7 +189,6 @@
   { \
     if( COND ) \
     { \
-      GEOS_UNUSED_VAR( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ); \
       constexpr char const * formatString = "***** ERROR\n" \
                                             "***** LOCATION" LOCATION "\n" \
                                                                       "***** BLOCK:  [%u, %u, %u]\n" \
@@ -278,8 +277,6 @@
   { \
     if( COND ) \
     { \
-      ::geos::internal::DeviceNullStream __geosNullStream; \
-      __geosNullStream << MSG; \
       static char const formatString[] = "***** ERROR\n" \
                                          "***** LOCATION" LOCATION "\n" \
                                                                    "***** BLOCK:  [%u, %u, %u]\n" \

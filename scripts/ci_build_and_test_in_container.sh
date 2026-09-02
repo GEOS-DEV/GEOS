@@ -99,6 +99,124 @@ function print_phase_summary () {
     done
 }
 
+function openssl_fips_provider_available () {
+    local fips_module_path
+
+    for fips_module_path in \
+        /usr/lib/x86_64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib/aarch64-linux-gnu/ossl-modules/fips.so \
+        /usr/lib64/ossl-modules/fips.so \
+        /usr/lib/ossl-modules/fips.so \
+        /usr/local/lib64/ossl-modules/fips.so \
+        /usr/local/lib/ossl-modules/fips.so; do
+        if [[ -f "${fips_module_path}" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+function configure_openssl_for_non_fips_ubuntu_container () {
+    local fips_enabled=""
+    local openssl_conf_path=/tmp/geos-openssl-non-fips.cnf
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" ]]; then
+        return 0
+    fi
+
+    if [[ ! -r /etc/os-release ]] || ! grep -Eq '^ID="?ubuntu"?$' /etc/os-release; then
+        return 0
+    fi
+
+    if [[ -e /etc/system-fips ]]; then
+        return 0
+    fi
+
+    if openssl_fips_provider_available; then
+        return 0
+    fi
+
+    export OPENSSL_FORCE_FIPS_MODE=0
+
+    if [[ -n "${OPENSSL_CONF:-}" ]]; then
+        echo "Host FIPS mode is visible in this Ubuntu container, but OPENSSL_CONF is already set to ${OPENSSL_CONF}; leaving it unchanged."
+        echo "Using OPENSSL_FORCE_FIPS_MODE=0 because no OpenSSL FIPS provider module was found."
+        return 0
+    fi
+
+    if ! cat > "${openssl_conf_path}" <<'EOF'
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+[provider_sect]
+default = default_sect
+
+[default_sect]
+activate = 1
+
+[algorithm_sect]
+default_properties = fips=no
+EOF
+    then
+        echo "WARNING: unable to write ${openssl_conf_path}; leaving OpenSSL configuration unchanged."
+        return 0
+    fi
+
+    export OPENSSL_CONF="${openssl_conf_path}"
+
+    echo "Host FIPS mode is visible in this non-FIPS Ubuntu container, and no OpenSSL FIPS provider module was found."
+    echo "Using OPENSSL_CONF=${OPENSSL_CONF} so OpenSSL initializes the default provider for CI tooling."
+}
+
+function print_crypto_diagnostics () {
+    local fips_enabled=""
+
+    if [[ -r /proc/sys/crypto/fips_enabled ]]; then
+        fips_enabled="$(tr -d '[:space:]' < /proc/sys/crypto/fips_enabled)"
+    fi
+
+    if [[ "${fips_enabled}" != "1" && -z "${OPENSSL_CONF:-}" && -z "${OPENSSL_FORCE_FIPS_MODE:-}" ]]; then
+        return 0
+    fi
+
+    echo "Crypto/FIPS summary:"
+    echo "  host fips_enabled: ${fips_enabled:-unavailable}"
+    echo "  container /etc/system-fips: $(if [[ -e /etc/system-fips ]]; then echo present; else echo absent; fi)"
+    echo "  openssl fips provider module: $(if openssl_fips_provider_available; then echo present; else echo absent; fi)"
+    echo "  OPENSSL_CONF: ${OPENSSL_CONF:-<unset>}"
+    echo "  OPENSSL_FORCE_FIPS_MODE: ${OPENSSL_FORCE_FIPS_MODE:-<unset>}"
+
+    if command -v openssl >/dev/null 2>&1; then
+        openssl version 2>&1 | sed 's/^/  openssl version: /' || true
+    fi
+}
+
+function bootstrap_pip () {
+    local python_executable="$1"
+
+    if [[ "${GEOS_SKIP_PIP_BOOTSTRAP:-false}" == "true" ]]; then
+        echo "Skipping pip bootstrap because GEOS_SKIP_PIP_BOOTSTRAP=true."
+        return 0
+    fi
+
+    echo "Updating pip"
+    if ! "${python_executable}" -m pip install --upgrade pip setuptools wheel; then
+        echo "::warning::pip bootstrap failed for ${python_executable}; continuing with the existing pip so the package install step can report the actionable failure."
+        "${python_executable}" -m pip --version || true
+        return 0
+    fi
+
+    "${python_executable}" -m pip cache purge || true
+}
+
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -118,6 +236,9 @@ Usage: $0
       Either ON or OFF (default is ON). Build geos with bounds check.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
+  --enable-hypredrv
+      One of ON or OFF (default is ON). Build geos with hypredrive.
+      This flag overrides the TPL image host-config.
   --enable-hypre-device
       One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
   --enable-trilinos
@@ -146,6 +267,8 @@ Usage: $0
       Run the integrated tests. Then bundle and send the results to the cloud.
   --use-sccache
       Enable sccache as compiler launcher.
+  --sccache-credentials credentials.json
+      Basename of the json credentials file to connect to the sccache cloud cache.
   --sccache-config config.toml
       Relative path to an sccache config file to use inside the container.
   --test-code-style
@@ -159,7 +282,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-hypredrv:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,sccache-credentials:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -167,6 +290,7 @@ BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 ENABLE_HYPRE=ON
+ENABLE_HYPREDRV=OFF
 ENABLE_HYPRE_DEVICE=CPU
 GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
@@ -180,6 +304,7 @@ CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
+SCCACHE_CREDS=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
@@ -213,6 +338,7 @@ do
       shift 2;;
     --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
+    --enable-hypredrv)       ENABLE_HYPREDRV=$2;         shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
@@ -233,6 +359,7 @@ do
     --ctest-parallel-level)
       CTEST_PARALLEL_LEVEL_ARG=$2
       shift 2;;
+    --sccache-credentials)   SCCACHE_CREDS=$2; USE_SCCACHE=true; shift 2;;
     --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -282,12 +409,36 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
+configure_openssl_for_non_fips_ubuntu_container
+print_crypto_diagnostics
+
+# Always pass the requested state so a host-config cannot silently enable
+# hypredrive when the CI job requested OFF. Do not pass -DHYPREDRV_DIR:
+# TPL images install hypredrive under a compiler-prefixed hashed path, which
+# /spack-generated.cmake already sets. ${GEOSX_TPL_DIR}/hypredrive does not
+# exist and would override that host-config value (CMake -D wins over -C
+# set(... CACHE ...) without FORCE).
+HYPREDRV_CMAKE_ARGS=(-DENABLE_HYPREDRV=${ENABLE_HYPREDRV})
 if [[ "${USE_SCCACHE}" == true ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
   if [[ -z "${SCCACHE_BIN}" ]]; then
     echo "sccache was requested, but no sccache binary is available in the container."
     exit 1
+  fi
+
+  if [[ -n "${SCCACHE_CREDS:-}" ]]; then
+    # The credential json file is available at the root of the geos repository.
+    # We hereafter create the config file that points to it.
+    # We use this file since it's managed by the 'google-github-actions/auth' actions.
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cat <<EOT >> ${HOME}/.config/sccache/config
+[cache.gcs]
+rw_mode = "READ_WRITE"
+cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
+bucket = "geos-dev"
+key_prefix = "sccache"
+EOT
   fi
 
   if [[ -n "${SCCACHE_CONFIG_FILE:-}" ]]; then
@@ -317,6 +468,10 @@ if [ -z "${NPROC}" ]; then
   NPROC=$(nproc)
   echo "NPROC unset, setting to ${NPROC}..."
 fi
+if ! [[ "${NPROC}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "NPROC must be a positive integer, got '${NPROC}'."
+  exit 1
+fi
 echo "Using ${NPROC} cores."
 
 if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
@@ -327,14 +482,20 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
-  # We install the python environment required by ATS to run the integrated tests.
-  or_die apt-get update
-  or_die apt-get install -y python3-dev python3-venv
-  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
-  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
+  # We install the python environment required by ATS to run the integrated tests.
+  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
+  if ! python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}" ||
+     ! "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel' >/dev/null 2>&1; then
+    echo "ATS virtualenv lacks required Python packaging modules; installing distro packages and recreating it."
+    rm -rf "${ATS_PYTHON_HOME}"
+    or_die apt-get update
+    or_die apt-get install -y python3-dev python3-venv python3-setuptools python3-wheel
+    or_die python3 -m venv --system-site-packages "${ATS_PYTHON_HOME}"
+    or_die "${ATS_PYTHON_HOME}/bin/python3" -c 'import setuptools, wheel'
+  fi
+
+  bootstrap_pip "${ATS_PYTHON_HOME}/bin/python3"
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
@@ -343,7 +504,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  # Open MPI refuses root launches in CI containers unless both guard variables are set.
+  # Keep this separate from openmpi_args because repeated geos-ats overrides replace values.
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
+  echo "Integrated test ATS arguments: ${ATS_ARGUMENTS}"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
@@ -414,6 +580,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
+               "${HYPREDRV_CMAKE_ARGS[@]}" \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
@@ -466,11 +633,11 @@ fi
 phase_finish 0
 
 if [[ -n "${SCCACHE_BIN}" ]]; then
-  echo "sccache post-build state"
+  echo "Capturing sccache post-build stats"
   SCCACHE_STATS_FILE="${GEOS_SRC_DIR}/.sccache-runtime/stats.txt"
   or_die mkdir -p "$(dirname "${SCCACHE_STATS_FILE}")"
-  ${SCCACHE_BIN} --show-adv-stats | tee "${SCCACHE_STATS_FILE}"
-  SCCACHE_STATS_STATUS=${PIPESTATUS[0]}
+  ${SCCACHE_BIN} --show-adv-stats > "${SCCACHE_STATS_FILE}"
+  SCCACHE_STATS_STATUS=$?
   if [[ ${SCCACHE_STATS_STATUS} != 0 ]]; then
     echo ERROR ${SCCACHE_STATS_STATUS} command: ${SCCACHE_BIN} --show-adv-stats
     exit ${SCCACHE_STATS_STATUS}
@@ -488,10 +655,12 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   phase_start "Unit tests"
+  export OMP_NUM_THREADS=1
+  echo "Running unit tests with OMP_NUM_THREADS=${OMP_NUM_THREADS}."
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure --parallel -E "testUncrustifyCheck|testDoxygenCheck"
   fi
   phase_finish 0
 fi
@@ -508,6 +677,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   phase_start "Build ATS environment"
   or_die cmake --build . --target ats_environment
+  # The system-site virtualenv inherits Ubuntu's NumPy 1.x-built Matplotlib,
+  # while the GEOS Python packages require NumPy 2.x.
+  or_die "${ATS_PYTHON_HOME}/bin/python3" -m pip install --disable-pip-version-check --upgrade matplotlib
   phase_finish 0
 
   # The tests are not run using cmake (`cmake --build . --verbose  --target ats_run`)
@@ -517,13 +689,85 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Available baselines:"
   ls -lR /tmp/geos/baselines
 
+  # This CI route configures geos-ats' Open MPI machine explicitly. Capture the
+  # selected launcher's identity once, and fail before tests if an image change
+  # would make the Open MPI placement environment below ineffective.
+  echo "Diagnostic: mpirun --version"
+  MPIRUN_VERSION_OUTPUT="$(/usr/bin/mpirun --version 2>&1)"
+  MPIRUN_VERSION_STATUS=$?
+  printf '%s\n' "${MPIRUN_VERSION_OUTPUT}"
+  echo "Diagnostic 'mpirun --version' exit status: ${MPIRUN_VERSION_STATUS}"
+  if [[ "${MPIRUN_VERSION_STATUS}" -ne 0 ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun --version to succeed."
+    exit "${MPIRUN_VERSION_STATUS}"
+  fi
+  if [[ "${MPIRUN_VERSION_OUTPUT}" != *"Open MPI"* ]]; then
+    echo "Open MPI integrated tests require /usr/bin/mpirun to identify itself as Open MPI."
+    exit 1
+  fi
+
+  # ATS accounts for the rank capacity of concurrent tests but does not assign
+  # disjoint CPU affinities to their independent mpirun processes. Disable each
+  # launcher's local rank binding so Linux can schedule ranks across the
+  # container's allowed CPU set; this policy does not guarantee exclusive cores.
+  export OMPI_MCA_hwloc_base_binding_policy=none
+  echo "Open MPI rank binding disabled with OMPI_MCA_hwloc_base_binding_policy=${OMPI_MCA_hwloc_base_binding_policy}."
+
+  # Report the resulting Open MPI placement policy. Each report is written to
+  # the individual launch's stderr, which ATS retains in TestResults for the
+  # packed diagnostic artifact.
+  export OMPI_MCA_hwloc_base_report_bindings=1
+  echo "Open MPI binding reports enabled with OMPI_MCA_hwloc_base_report_bindings=${OMPI_MCA_hwloc_base_report_bindings}."
+
   echo "Running integrated tests..."
   phase_start "Integrated tests"
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
   ATS_RUN_STATUS=$?
   phase_finish "${ATS_RUN_STATUS}"
 
-  phase_start "Process integrated test logs"
+  HYPREDRV_BANNER_STATUS=0
+  ITER_PARITY_STATUS=0
+  if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
+    # On a hypredrive-enabled build the previous pass exercised the hypredrive
+    # solver path. Verify it actually ran (guards against silent fallback), then
+    # re-run the suite through the legacy hypre path against the same baselines,
+    # so hypredrive-vs-legacy equivalence is checked within a single job.
+    grep -rl "hypredrive input" integratedTests/TestResults > /dev/null 2>&1 || HYPREDRV_BANNER_STATUS=$?
+    if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
+      echo "ERROR: no 'hypredrive input' banner found in any integrated-test log; the hypredrive path was not exercised."
+    fi
+
+    echo "Re-running integrated tests through the legacy hypre path..."
+    # Keep the hypredrive pass results; the second pass overwrites TestResults.
+    cp integratedTests/TestResults/test_results.ini $tempdir/test_results_hypredrive.ini
+    HD_HARVEST_STATUS=0
+    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
+            integratedTests/TestResults/test_data --iterative \
+            -o $tempdir/iterations_hypredrive.json || HD_HARVEST_STATUS=$?
+    integratedTests/geos_ats.sh -a veryclean
+    GEOS_HYPREDRV_FORCE_LEGACY=1 integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
+    ATS_LEGACY_RUN_STATUS=$?
+
+    # Restart checks compare solution fields only. Require exact per-solve
+    # iteration sequences on every `_iterative` geosx log so a 1-iteration
+    # hypredrive drift cannot pass silently.
+    LG_HARVEST_STATUS=0
+    python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py harvest \
+            integratedTests/TestResults/test_data --iterative \
+            -o $tempdir/iterations_legacy.json || LG_HARVEST_STATUS=$?
+    if [[ "${HD_HARVEST_STATUS}" -ne 0 || "${LG_HARVEST_STATUS}" -ne 0 ]]; then
+      echo "ERROR: failed to harvest _iterative linear-solver iteration counts."
+      ITER_PARITY_STATUS=1
+    else
+      echo "Comparing _iterative linear-solver iteration sequences (zero slack)..."
+      python3 ${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py compare \
+              $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
+              --exact-sequence || ITER_PARITY_STATUS=$?
+    fi
+    cp -f $tempdir/iterations_hypredrive.json $tempdir/iterations_legacy.json \
+          integratedTests/TestResults/ 2>/dev/null || true
+  fi
+
   PROCESS_LOGS_STATUS=0
   echo "Processing logs..."
   bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt || PROCESS_LOGS_STATUS=$?
@@ -538,7 +782,18 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   LOG_CHECK_STATUS=$?
   cat $tempdir/log_check.txt
-  phase_finish "${LOG_CHECK_STATUS}"
+  if [[ -f $tempdir/test_results_hypredrive.ini ]]; then
+    # Also gate on the hypredrive pass saved before the forced-legacy re-run.
+    bin/geos_ats_log_check $tempdir/test_results_hypredrive.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check_hypredrive.txt
+    cat $tempdir/log_check_hypredrive.txt
+    if ! grep -q "Overall status: PASSED" "$tempdir/log_check_hypredrive.txt"; then
+      echo "Hypredrive-path integrated tests did not pass."
+      LOG_CHECK_STATUS=1
+      # Force the rebaseline branch below to report failure.
+      echo "Overall status: FAILED (hypredrive pass)" >> $tempdir/log_check.txt
+      sed -i 's/Overall status: PASSED//' $tempdir/log_check.txt
+    fi
+  fi
 
   if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."
@@ -558,6 +813,17 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     fi
     phase_finish "${REBASELINE_STATUS}"
     INTEGRATED_TEST_EXIT_STATUS=1
+  fi
+
+  if [[ "${ENABLE_HYPREDRV}" = ON ]]; then
+    if [[ "${HYPREDRV_BANNER_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive path was not exercised (no 'hypredrive input' banner)."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
+    if [[ "${ITER_PARITY_STATUS}" -ne 0 ]]; then
+      echo "Hypredrive vs legacy _iterative linear-solver iteration sequences do not match."
+      INTEGRATED_TEST_EXIT_STATUS=1
+    fi
   fi
 
   echo "Done!"

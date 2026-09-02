@@ -169,9 +169,6 @@ private:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
-    static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
-    static constexpr char const * solubilityTablesString() { return "solubilityTableNames"; }
-    static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * checkPhasePresenceString() { return "checkPhasePresence"; }
   };
@@ -186,14 +183,8 @@ private:
    */
   void createPVTModels();
 
-  /// Names of the files defining the viscosity and density models
-  path_array m_phasePVTParaFiles;
-
-  /// Name of the file defining the flash model
-  Path m_flashModelParaFile;
-
-  /// Names of solubility tables for each phase
-  string_array m_solubilityTables;
+  /// All brine model properties
+  PVTProps::BrineFluidParameters m_brineFluidParameters{};
 
   /// Index of the liquid phase
   integer m_p1Index;
