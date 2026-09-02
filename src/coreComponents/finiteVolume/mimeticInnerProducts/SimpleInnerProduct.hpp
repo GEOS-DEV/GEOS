@@ -234,9 +234,9 @@ SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITI
   real64 A[ NF ] = { 0.0 };
   real64 CKCt[ NF ][ NF ] = {{0}};
 
-  MimeticInnerProductHelpers::computeConsistencyGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
-                                                                elemCenter, elemVolume, elemPerm,
-                                                                areaTolerance, C, N, A, CKCt );
+  MimeticInnerProductHelpers::computeCellToFaceGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
+                                                               elemCenter, areaTolerance, C, N, A );
+  MimeticInnerProductHelpers::computeConsistencyTerm< NF >( C, elemVolume, elemPerm, CKCt );
 
   // 3) Q = orth(N / A)
   real64 q0[ NF ], q1[ NF ], q2[ NF ];

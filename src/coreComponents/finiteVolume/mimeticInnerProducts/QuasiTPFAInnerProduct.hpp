@@ -142,9 +142,9 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
   real64 faceArea[ NF ] = { 0.0 };
   real64 CKCt[ NF ][ NF ] = {{ 0 }};
 
-  MimeticInnerProductHelpers::computeConsistencyGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
-                                                                elemCenter, elemVolume, elemPerm,
-                                                                areaTolerance, C, N, faceArea, CKCt );
+  MimeticInnerProductHelpers::computeCellToFaceGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
+                                                               elemCenter, areaTolerance, C, N, faceArea );
+  MimeticInnerProductHelpers::computeConsistencyTerm< NF >( C, elemVolume, elemPerm, CKCt );
 
   // 4) compute W = N K N'
   real64 W[ NF ][ NF ] = {{ 0 }};

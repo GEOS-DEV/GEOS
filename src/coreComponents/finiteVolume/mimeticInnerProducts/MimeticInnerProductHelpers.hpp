@@ -84,42 +84,29 @@ struct MimeticInnerProductHelpers
 
   /**
    * @brief In a given element, compute the cell-to-face vectors C, the outward area-weighted
-   *        face normals N, the face areas, and the consistency term CKCt = C K^{-1} C^T / elemVolume.
+   *        face normals N, and the face areas.
    * @tparam NF number of faces in the element
    * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
-   * @param[in] elemVolume the volume of the element
-   * @param[in] elemPerm the permeability in the element
    * @param[in] areaTolerance the tolerance used in the face area calculations
    * @param[out] C the cell-to-face vectors, one row per face
    * @param[out] N the outward area-weighted face normals, one row per face
    * @param[out] faceArea the face areas
-   * @param[out] CKCt the consistency term C K^{-1} C^T / elemVolume
    */
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static
-  void computeConsistencyGeometry( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                   ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                   arraySlice1d< localIndex const > const & elemToFaces,
-                                   arraySlice1d< real64 const > const & elemCenter,
-                                   real64 const & elemVolume,
-                                   real64 const (&elemPerm)[ 3 ],
-                                   real64 const & areaTolerance,
-                                   real64 (& C)[ NF ][ 3 ],
-                                   real64 (& N)[ NF ][ 3 ],
-                                   real64 (& faceArea)[ NF ],
-                                   real64 (& CKCt)[ NF ][ NF ] )
+  void computeCellToFaceGeometry( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                  ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                  arraySlice1d< localIndex const > const & elemToFaces,
+                                  arraySlice1d< real64 const > const & elemCenter,
+                                  real64 const & areaTolerance,
+                                  real64 (& C)[ NF ][ 3 ],
+                                  real64 (& N)[ NF ][ 3 ],
+                                  real64 (& faceArea)[ NF ] )
   {
-    // Kinv assumes diagonal K
-    real64 Kinv[ 3 ][ 3 ] = {{ 0 }};
-    for( int d = 0; d < 3; ++d )
-    {
-      Kinv[d][d] = 1.0 / elemPerm[d];
-    }
-
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
     {
       real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
@@ -139,6 +126,30 @@ struct MimeticInnerProductHelpers
         C[ifaceLoc][d] = cellToFaceVec[d];
         N[ifaceLoc][d] = faceArea[ifaceLoc] * faceNormal[d];
       }
+    }
+  }
+
+  /**
+   * @brief Compute the consistency term CKCt = C K^{-1} C^T / elemVolume of the inner product matrix.
+   * @tparam NF number of faces in the element
+   * @param[in] C the cell-to-face vectors, one row per face
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[out] CKCt the consistency term C K^{-1} C^T / elemVolume
+   */
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static
+  void computeConsistencyTerm( real64 const (&C)[ NF ][ 3 ],
+                               real64 const & elemVolume,
+                               real64 const (&elemPerm)[ 3 ],
+                               real64 (& CKCt)[ NF ][ NF ] )
+  {
+    // Kinv assumes diagonal K
+    real64 Kinv[ 3 ][ 3 ] = {{ 0 }};
+    for( int d = 0; d < 3; ++d )
+    {
+      Kinv[d][d] = 1.0 / elemPerm[d];
     }
 
     real64 work[ 3 ][ NF ] = {{ 0 }};
