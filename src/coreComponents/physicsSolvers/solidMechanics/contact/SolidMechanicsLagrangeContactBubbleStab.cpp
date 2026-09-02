@@ -119,7 +119,7 @@ void SolidMechanicsLagrangeContactBubbleStab::initializePostInitialConditionsPre
 {
   ContactSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   validateTetrahedralQuadrature( domain.getMeshBodies() );
 }
 
@@ -128,7 +128,7 @@ void SolidMechanicsLagrangeContactBubbleStab::validateTetrahedralQuadrature( Gro
   string const discretizationName = getDiscretizationName();
 
   NumericalMethodsManager const & numericalMethodManager =
-    this->getGroupByPath< DomainPartition >( "/Problem/domain" ).getNumericalMethodManager();
+    getDomainPartition().getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();
   FiniteElementDiscretization const & feDiscretization =
@@ -225,7 +225,7 @@ void SolidMechanicsLagrangeContactBubbleStab::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();

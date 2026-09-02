@@ -21,33 +21,89 @@
 #ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
-#include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
+#include "common/initializeEnvironment.hpp"
+
+// for helper functions
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "functions/FunctionManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "events/EventManager.hpp"
+#include "events/tasks/TasksManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "fileIO/Outputs/OutputManager.hpp"
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
 {
 
-class PhysicsSolverManager;
-class DomainPartition;
-class GeometricObjectManager;
-class FiniteElementDiscretization;
-class MeshLevel;
-namespace constitutive
+/**
+ * @brief A Group to contain the command line options within the data-repository
+ */
+class CommandLine : public dataRepository::Group
 {
-class ConstitutiveManager;
-}
-class EventManager;
-class TasksManager;
-class FunctionManager;
-class FieldSpecificationManager;
-struct CommandLineOptions;
-class CellBlockManagerABC;
-class ParticleBlockManagerABC;
+public:
+
+  /// @cond DO_NOT_DOCUMENT
+
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
+    dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
+    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
+    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in x key
+    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in y key
+    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in z key
+    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning
+                                                                                     ///< key
+    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};           ///< Schema file name key
+    dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
+    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
+    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
+                                                                                     ///< memory key
+  } m_vks; ///< Command line input viewKeys
+
+  /// @endcond
+
+  /**
+   * @brief Construct a new CommandLine Group to contain the command line options within the data-repository.
+   * @param name
+   * @param parent
+   */
+  CommandLine( string const & name, Group * parent );
+
+  /**
+   * @brief Setup all the command line Group values from the provided inputs
+   * @param options provided input options
+   * @param inputFileName final composed main input filename (returned by `xmlWrapper::buildMultipleInputXML()`)
+   */
+  void setValues( CommandLineOptions const & options,
+                  string_view inputFileName );
+
+};
+
+// CommandLine Group is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline CommandLine & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< CommandLine >( m_gks.commandLine ); }
+
+// CommandLine Group is available through the ProblemRepository as a const problem-unique manager.
+template<> inline CommandLine const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< CommandLine >( m_gks.commandLine ); }
+
+namespace constitutive
+{ class ConstitutiveManager; }
 
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOS
  */
-class ProblemManager : public dataRepository::Group
+class ProblemManager : public dataRepository::Group, public dataRepository::ProblemRepository
 {
 public:
 
@@ -173,158 +229,109 @@ public:
   void applyInitialConditions();
 
   /**
-   * @brief Returns a pointer to the DomainPartition
-   * @return Pointer to the DomainPartition
-   */
-  DomainPartition & getDomainPartition();
-
-  /**
-   * @brief Returns a pointer to the DomainPartition
-   * @return Const pointer to the DomainPartition
-   */
-  DomainPartition const & getDomainPartition() const;
-
-  /**
    * @brief Returns the problem name
    * @return The problem name
    */
-  string const & getProblemName() const
-  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.problemName ); }
+  string const & getProblemName() const;
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  string const & getInputFileName() const
-  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
+  string const & getInputFileName() const;
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  string const & getRestartFileName() const
-  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.restartFileName ); }
+  string const & getRestartFileName() const;
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  string const & getSchemaFileName() const
-  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
-
-  /// Command line input viewKeys
-  struct viewKeysStruct
-  {
-    dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
-    dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
-    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
-    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in x key
-    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in y key
-    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in z key
-    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning
-                                                                                     ///< key
-    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};           ///< Schema file name key
-    dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
-    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
-    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
-                                                                                     ///< memory key
-  } viewKeys; ///< Command line input viewKeys
-
-  /// Child group viewKeys
-  struct groupKeysStruct
-  {
-    /// @return Numerical methods string
-    static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
-    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
-    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
-    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
-    dataRepository::GroupKey externalDataSourceManager = { "ExternalDataSource" };        ///< External Data Source key
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
-    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
-    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
-    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
-    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
-  } groupKeys; ///< Child group viewKeys
+  string const & getSchemaFileName() const;
 
   /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Reference to the PhysicsSolverManager
+   *  @name Managers access-helper functions for tests
    */
+  ///@{
+  /// @cond DO_NOT_DOCUMENT
+
+  CommandLine & getCommandLine()
+  { return getManager< CommandLine >(); }
+
+  CommandLine const & getCommandLine() const
+  { return getManager< CommandLine >(); }
+
+  DomainPartition & getDomainPartition()
+  { return getManager< DomainPartition >(); }
+
+  DomainPartition const & getDomainPartition() const
+  { return getManager< DomainPartition >(); }
+
   PhysicsSolverManager & getPhysicsSolverManager()
-  {
-    return *m_physicsSolverManager;
-  }
+  { return getManager< PhysicsSolverManager >(); }
 
-  /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Const reference to the PhysicsSolverManager
-   */
   PhysicsSolverManager const & getPhysicsSolverManager() const
-  {
-    return *m_physicsSolverManager;
-  }
+  { return getManager< PhysicsSolverManager >(); }
 
-  /**
-   * @brief Returns the FunctionManager.
-   * @return The FunctionManager.
-   */
   FunctionManager & getFunctionManager()
-  {
-    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager;
-  }
+  { return getManager< FunctionManager >(); }
 
-  /**
-   * @brief Returns the const FunctionManager.
-   * @return The const FunctionManager.
-   */
   FunctionManager const & getFunctionManager() const
-  {
-    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager;
-  }
+  { return getManager< FunctionManager >(); }
 
-  /**
-   * @brief Returns the FieldSpecificationManager.
-   * @return The FieldSpecificationManager.
-   */
   FieldSpecificationManager & getFieldSpecificationManager()
-  {
-    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager;
-  }
+  { return getManager< FieldSpecificationManager >(); }
 
-  /**
-   * @brief Returns the const FunctionManager.
-   * @return The const FunctionManager.
-   */
   FieldSpecificationManager const & getFieldSpecificationManager() const
-  {
-    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager;
-  }
+  { return getManager< FieldSpecificationManager >(); }
 
-  /**
-   * @brief Returns the EventManager.
-   * @return The EventManager.
-   */
   EventManager & getEventManager()
-  {return *m_eventManager;}
+  { return getManager< EventManager >(); }
 
-  /**
-   * @brief Returns the TasksManager.
-   * @return The TasksManager.
-   */
+  EventManager const & getEventManager() const
+  { return getManager< EventManager >(); }
+
   TasksManager & getTasksManager()
-  {return *m_tasksManager;}
+  { return getManager< TasksManager >(); }
+
+  TasksManager const & getTasksManager() const
+  { return getManager< TasksManager >(); }
+
+  NumericalMethodsManager & getNumericalMethodsManager()
+  { return getManager< NumericalMethodsManager >(); }
+
+  NumericalMethodsManager const & getNumericalMethodsManager() const
+  { return getManager< NumericalMethodsManager >(); }
+
+  MeshManager & getMeshManager()
+  { return getManager< MeshManager >(); }
+
+  MeshManager const & getMeshManager() const
+  { return getManager< MeshManager >(); }
+
+  OutputManager & getOutputManager()
+  { return getManager< OutputManager >(); }
+
+  OutputManager const & getOutputManager() const
+  { return getManager< OutputManager >(); }
+
+  GeometricObjectManager & getGeometricObjectManager()
+  { return getManager< GeometricObjectManager >(); }
+
+  GeometricObjectManager const & getGeometricObjectManager() const
+  { return getManager< GeometricObjectManager >(); }
+
+  constitutive::ConstitutiveManager & getConstitutiveManager()
+  { return getManager< constitutive::ConstitutiveManager >(); }
+
+  constitutive::ConstitutiveManager const & getConstitutiveManager() const
+  { return getManager< constitutive::ConstitutiveManager >(); }
+
+  /// @endcond
+  ///@}
 
 protected:
   /**
@@ -347,8 +354,7 @@ private:
   map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
 
 
-  map< std::pair< string, Group const * const >, string_array const & >
-  getDiscretizations() const;
+  map< std::pair< string, Group const * const >, string_array const & > getDiscretizations();
 
   void generateMeshLevel( MeshLevel & meshLevel,
                           CellBlockManagerABC const & cellBlockManager,
@@ -371,20 +377,6 @@ private:
                             constitutive::ConstitutiveManager const & constitutiveManager,
                             map< std::tuple< string, string, string, string >, localIndex > const & regionQuadrature );
 
-  /// The PhysicsSolverManager
-  PhysicsSolverManager * m_physicsSolverManager;
-
-  /// The EventManager
-  EventManager * m_eventManager;
-
-  /// The TasksManager
-  TasksManager * m_tasksManager;
-
-  /// The FunctionManager
-  FunctionManager * m_functionManager;
-
-  /// The FieldSpecificationManager
-  FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
 } /* namespace geos */

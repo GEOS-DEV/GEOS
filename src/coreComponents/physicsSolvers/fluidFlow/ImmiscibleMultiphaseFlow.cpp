@@ -191,7 +191,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -461,7 +461,7 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

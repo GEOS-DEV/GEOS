@@ -396,7 +396,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   applyFreeSurfaceBC( 0.0, domain );
 
@@ -486,7 +486,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     //We use the timeStep defined inside the xml
     else if( m_timestepStabilityLimit==0 )
     {
-      EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+      EventManager const & event = ProblemRepository::getManager< EventManager >( *this );
       for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
       {
         EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
@@ -539,7 +539,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
