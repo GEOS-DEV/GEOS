@@ -291,9 +291,9 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
       GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
     }
 #if defined(GEOS_DEVICE_COMPILE)
-    GEOS_ERROR( "Null area found" );
+    GEOS_WARNING( "Null area found - ok in case of pinched cell" );
 #else
-    GEOS_ERROR( GEOS_FMT( "Null area found : {}", area ) );
+    GEOS_WARNING( GEOS_FMT( "Null area found : {} - ok in case of pinched cell", area ) );
 #endif
 
     return 0.0;
