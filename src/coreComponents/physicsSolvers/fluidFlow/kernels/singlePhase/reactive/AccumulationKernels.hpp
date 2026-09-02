@@ -161,7 +161,8 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
-    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventMassPerSolutionVolume * stack.poreVolume - primarySpeciesAggregateMole_n[is])
+    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventMassPerSolutionVolume * stack.poreVolume -
+    // primarySpeciesAggregateMole_n[is])
     //                 - dt * m_volume * primarySpeciesKineticRate[is]
 
     Base::computeAccumulation( ei, stack );
@@ -202,7 +203,8 @@ public:
       {
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] = /* stack.dPoreVolume_dLogPrimaryConc[js] *
                                                                               m_primarySpeciesAggregateConcentration[ei][0][is]
-                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] * m_solventMassPerSolutionVolume;
+                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] *
+                                                                          m_solventMassPerSolutionVolume;
 
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js];
       }
