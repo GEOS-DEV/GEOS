@@ -35,13 +35,14 @@ namespace PVTProps
 {
 
 EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
-                                          string_array const & inputPara,
+                                          BrineFluidParameters const & brineFluidParameters,
                                           string_array const & componentNames,
                                           array1d< real64 > const & componentMolarWeight,
                                           TableFunction::OutputOptions const pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
-                   componentMolarWeight )
+                   componentMolarWeight ),
+  m_waterCompressibility( brineFluidParameters.m_waterCompressibility )
 {
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
@@ -49,7 +50,7 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  makeCoefficients( inputPara );
+  makeCoefficients( brineFluidParameters.m_ezrokhiDensityCoefficients );
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
 
@@ -57,27 +58,13 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterSatDensityTable->outputTableData( pvtOutputOpts );
 }
 
-void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
+void EzrokhiBrineDensity::makeCoefficients( arrayView1d< real64 const > const & coefficients )
 {
   // compute brine density following Ezrokhi`s method
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
-
-  m_waterCompressibility = 4.5e-10; // Pa-1
-  GEOS_THROW_IF_LT_MSG( inputPara.size(), 5,
-                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                        InputError );
-
-  try
-  {
-    // assume CO2 is the only non-water component in the brine
-    m_coef0 = stod( inputPara[2] );
-    m_coef1 = stod( inputPara[3] );
-    m_coef2 = stod( inputPara[4] );
-  }
-  catch( std::invalid_argument const & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
-  }
+  m_coef0 = coefficients[0];
+  m_coef1 = coefficients[1];
+  m_coef2 = coefficients[2];
 }
 
 void EzrokhiBrineDensity::checkTablesParameters( real64 const GEOS_UNUSED_PARAM( pressure ),

@@ -21,14 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-
-struct stabledt
-{
-  double m_maxdt;
-};
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFields.hpp"
 
 namespace geos
 {
@@ -36,8 +30,6 @@ namespace dataRepository
 {
 class Group;
 }
-class FieldSpecification;
-class FiniteElementBase;
 class DomainPartition;
 
 class PhaseFieldDamageFEM : public PhysicsSolverBase
@@ -138,64 +130,35 @@ public:
   {
     SteadyState,
     ImplicitTransient,
-    ExplicitTransient
-  };
-
-  enum class LocalDissipation
-  {
-    Linear,
-    Quadratic,
+    ExplicitTransient ///< not implemented
   };
 
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * coeffNameString() { return "coeffField"; }
-    static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
+    static constexpr char const * viscousRegularizationCoeffString() { return "viscousRegularizationCoeff"; }
     static constexpr char const * fracturePressureTermFlagString() { return "fracturePressureTermFlag"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
   } PhaseFieldDamageFEMViewKeys;
 
-  inline ParallelVector const * getSolution() const
-  {
-    return &m_solution;
-  }
-
-  inline globalIndex getSize() const
-  {
-    return m_matrix.numGlobalRows();
-  }
-
-  string const & getFieldName() const
-  {
-    return m_fieldName;
-  }
-
 protected:
-  virtual void postInputInitialization() override final;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
 private:
-  string m_fieldName;
-  stabledt m_stabledt;
   TimeIntegrationOption m_timeIntegrationOption;
-  LocalDissipation m_localDissipationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
   integer m_fracturePressureTermFlag;
 
-  array1d< real64 > m_coeff;
-
-  PhaseFieldDamageFEM();
+  /// Damping coefficient eta regularizing the rate-independent phase-field evolution (eta = 0 recovers it)
+  real64 m_viscousRegularizationCoeff;
 };
 
 /// Declare strings associated with enumeration values.
-ENUM_STRINGS( PhaseFieldDamageFEM::LocalDissipation,
-              "Linear",
-              "Quadratic" );
 ENUM_STRINGS( PhaseFieldDamageFEM::TimeIntegrationOption,
               "SteadyState",
               "ImplicitTransient",
