@@ -192,16 +192,6 @@ private:
 
 
 
-class IterationTest : public IterationsStatistics
-{
-public:
-  void AssertTimeStepEquals( TestSet testSet )
-  {
-    EXPECT_GE( m_numTimeStepCuts, testSet.inputs.requiredSubTimeStep ) << "The test did not encountered any timestep cut, but were expected to. "
-                                                                          "Consider adapting the simulation so a timestep cut occurs to check they work as expected.";
-  }
-};
-
 void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::initializer_list< real64 > > timestepPhaseValues )
 {
   rateTable.resize( timestepPhaseValues.size(), timestepPhaseValues.begin()->size() );
@@ -361,8 +351,10 @@ void checkWholeSimTimeStepStats( ProblemManager & problem,
   EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
   PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( testSet.inputs.flowSolverPath );
-  IterationTest & solverStats = static_cast< IterationTest & >(solver.getIterationStats());
-  solverStats.AssertTimeStepEquals( testSet );
+  IterationsStatistics const & solverStats = solver.getIterationStats();
+  integer const & numTimeStepCuts = solverStats.getReference< integer >( IterationsStatistics::viewKeyStruct::numTimeStepCutsString() );
+  EXPECT_GE( numTimeStepCuts, testSet.inputs.requiredSubTimeStep ) << "The test did not encountered any timestep cut, but were expected to. "
+                                                                      "Consider adapting the simulation so a timestep cut occurs to check they work as expected.";
 }
 
 

@@ -77,9 +77,19 @@ void HypreInterface::initialize()
   HYPRE_SetSpGemmUseVendor( 0 );
   HYPRE_SetSpMVUseVendor( 0 );
 #endif
+  // The HIP vendor CSR-transpose path can leave rocSPARSE in a state that
+  // makes a subsequent iterative ILU setup fail on gfx1100.  Keep the
+  // device-independent HYPRE implementation for this operation, as is
+  // already done by HYPRE's CUDA configuration.
+  HYPRE_SetSpTransUseVendor( 0 );
 #if !GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
   HYPRE_DeviceInitialize();
 #endif
+  // GEOS exposes HYPRE vector and matrix storage through Chai/LvArray. HYPRE
+  // defaults to asynchronous device execution without unified memory, so a
+  // subsequent GEOS-side access could race with the preceding HYPRE kernel.
+  // Keep the HYPRE calls synchronous at this interoperability boundary.
+  hypre_SetSyncCudaCompute( 1 );
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
   HYPRE_SetPrintErrorMode( 1 );

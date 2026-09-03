@@ -8,6 +8,9 @@ if(POLICY CMP0146)
   cmake_policy(SET CMP0146 OLD)
 endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
 

@@ -24,10 +24,19 @@
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #endif
+#if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 #include <gtest/gtest.h>
 
+#include <cstdio>
+#include <fstream>
 #include <string>
+
+#if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
+#include <unistd.h>
+#endif
 
 using namespace geos;
 
@@ -74,6 +83,12 @@ LinearSolverParameters params_CG_SGS()
   parameters.isSymmetric = true;
   parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::sgs;
+#if defined(GEOS_USE_HIP)
+  // HYPRE's HIP SGS implementation enters rocSPARSE csrsv, which is not
+  // available on the ROCm stack used by the sanitizer test device. Keep the
+  // test at the same CG coverage while using the device-supported relaxation.
+  parameters.preconditionerType = LinearSolverParameters::PreconditionerType::l1jacobi;
+#endif
   return parameters;
 }
 
@@ -87,10 +102,16 @@ LinearSolverParameters params_GMRES_AMG()
 #if defined(GEOS_USE_HIP)
   // HYPRE's PMIS GPU path invokes a rocPRIM radix sort that returns
   // hipErrorIllegalState on gfx10/gfx11 with the ROCm stack under test.
-  // Falgout avoids that path while remaining valid for device-resident matrices.
-  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::Falgout;
+  // HMIS uses the device-supported hybrid coarsening path without that sort.
+  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::HMIS;
 #endif
+#if defined(GEOS_USE_HIP)
+  // Keep the AMG smoother on HYPRE's device-supported L1-Jacobi path; the
+  // hybrid Gauss-Seidel variants call rocSPARSE triangular solves on HIP.
+  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::l1jacobi;
+#else
   parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::fgs;
+#endif
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
@@ -106,13 +127,100 @@ LinearSolverParameters params_CG_AMG()
 #if defined(GEOS_USE_HIP)
   // HYPRE's PMIS GPU path invokes a rocPRIM radix sort that returns
   // hipErrorIllegalState on gfx10/gfx11 with the ROCm stack under test.
-  // Falgout avoids that path while remaining valid for device-resident matrices.
-  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::Falgout;
+  // HMIS uses the device-supported hybrid coarsening path without that sort.
+  parameters.amg.coarseningType = LinearSolverParameters::AMG::CoarseningType::HMIS;
 #endif
+#if defined(GEOS_USE_HIP)
+  // The standard SGS implementation enters rocSPARSE csrsv on HIP. L1-Jacobi
+  // exercises the same CG+AMG path without that unsupported triangular solve.
+  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::l1jacobi;
+#else
   parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::sgs;
+#endif
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
+
+#if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
+/**
+ * @brief Apply the HIP-only ILU workaround to this unit test's YAML.
+ *
+ * The production-generated YAML intentionally retains HYPRE's direct
+ * triangular solve default. This test uses the test HYPRE build on gfx1100,
+ * where that rocSPARSE analysis is unavailable, so make the exception local
+ * to the test configuration.
+ */
+class ScopedHipIluTestConfiguration final
+{
+public:
+
+  explicit ScopedHipIluTestConfiguration( LinearSolverParameters & params )
+    : m_params( params )
+  {}
+
+  ~ScopedHipIluTestConfiguration()
+  {
+    if( !m_path.empty() )
+    {
+      std::remove( m_path.c_str() );
+    }
+  }
+
+  bool apply()
+  {
+    if( m_params.solverType != LinearSolverParameters::SolverType::gmres )
+    {
+      return true;
+    }
+
+    if( m_params.preconditionerType != LinearSolverParameters::PreconditionerType::iluk &&
+        m_params.preconditionerType != LinearSolverParameters::PreconditionerType::ilut )
+    {
+      return true;
+    }
+
+    hypre::hypredrive::InputArgsParseTarget target;
+    if( !hypre::hypredrive::buildInputArgsParseTarget( m_params, target ) )
+    {
+      return false;
+    }
+
+    std::string const reorderingLine = "    reordering: 1\n";
+    std::string::size_type const reordering = target.argument.find( reorderingLine );
+    if( reordering == std::string::npos )
+    {
+      return false;
+    }
+    target.argument.replace( reordering,
+                             reorderingLine.size(),
+                             "    reordering: 0\n    tri_solve: 0\n" );
+
+    m_path = "/tmp/geos-test-external-solvers-hip-ilu-" +
+             std::to_string( static_cast< long long >( getpid() ) ) +
+             ".yml";
+    std::ofstream output( m_path );
+    if( !output.good() )
+    {
+      m_path.clear();
+      return false;
+    }
+    output << target.argument;
+    if( !output.good() )
+    {
+      m_path.clear();
+      return false;
+    }
+
+    m_params.hypredriveInputFile = Path( m_path.c_str() );
+    return true;
+  }
+
+private:
+
+  LinearSolverParameters & m_params;
+  std::string m_path;
+};
+#endif
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TEST( HypreSolver, KeepsSetupDummyUntagged )
@@ -178,6 +286,12 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
+    LinearSolverParameters solverParams = params;
+#if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
+    ScopedHipIluTestConfiguration hipIluConfiguration( solverParams );
+    ASSERT_TRUE( hipIluConfiguration.apply() );
+#endif
+
     // Create a random "true" solution vector
     Vector sol_true;
     sol_true.create( matrix.numLocalCols(), matrix.comm() );
@@ -194,7 +308,7 @@ protected:
     sol_comp.zero();
 
     // Create the solver and solve the system
-    auto solver = LAI::createSolver( params );
+    auto solver = LAI::createSolver( solverParams );
     solver->setup( matrix );
     solver->solve( rhs, sol_comp );
     EXPECT_TRUE( solver->result().success() );

@@ -838,6 +838,14 @@ bool buildAMGPreconditionerYaml( LinearSolverParameters const & params,
   {
     char const * const relaxType = getGeneratedAMGRelaxationName( params.amg.smootherType );
 
+    // HYPRE_BoomerAMGCreate defaults to Schwarz (6) with no extra smoother
+    // levels. HypreDrive defaults its smoother to ILU (5), so make the
+    // generated configuration explicit to keep both interfaces equivalent.
+    appendLine( stream, 2, "smoother:" );
+    appendLine( stream, 3, "type: schwarz" );
+    appendLine( stream, 3, "num_levels: 0" );
+    appendLine( stream, 3, "num_sweeps: 1" );
+
     appendLine( stream, 2, "relaxation:" );
     appendLine( stream, 3, GEOS_FMT( "weight: {}", params.amg.relaxWeight ) );
 

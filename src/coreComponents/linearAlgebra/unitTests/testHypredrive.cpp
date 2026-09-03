@@ -42,6 +42,168 @@ public:
   }
 };
 
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+/**
+ * @brief Test-local legacy BiCGSTAB/ILU solver configuration for gfx1100.
+ *
+ * The HIP test HYPRE build uses the classical ILU setup, but ROCm's legacy
+ * rocSPARSE triangular analysis is not usable on gfx1100. Keep this override
+ * in the test-owned solver instead of changing GEOS' production defaults.
+ */
+class TestConfiguredHypreIluSolver final
+{
+public:
+
+  explicit TestConfiguredHypreIluSolver( LinearSolverParameters const & params )
+    : m_params( params )
+  {}
+
+  ~TestConfiguredHypreIluSolver()
+  {
+    clear();
+  }
+
+  HYPRE_Int setup( HypreMatrix const & matrix )
+  {
+    clear();
+
+    HYPRE_Int ierr = HYPRE_ILUCreate( &m_preconditioner );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ILUSetMaxIter( m_preconditioner, 1 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ILUSetTol( m_preconditioner, 0.0 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ILUSetType( m_preconditioner, hypre::getILUType( m_params.preconditionerType ) );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    if( m_params.ifact.fill >= 0 )
+    {
+      ierr = HYPRE_ILUSetLevelOfFill( m_preconditioner,
+                                      LvArray::integerConversion< HYPRE_Int >( m_params.ifact.fill ) );
+      if( ierr != 0 )
+      {
+        return ierr;
+      }
+    }
+    if( m_params.ifact.threshold >= 0 &&
+        m_params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
+    {
+      ierr = HYPRE_ILUSetDropThreshold( m_preconditioner, m_params.ifact.threshold );
+      if( ierr != 0 )
+      {
+        return ierr;
+      }
+    }
+
+    // These are test-only settings for the known gfx1100/rocSPARSE failure.
+    ierr = HYPRE_ILUSetLocalReordering( m_preconditioner, 0 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ILUSetTriSolve( m_preconditioner, 0 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+
+    ierr = HYPRE_ParCSRBiCGSTABCreate( matrix.comm(), &m_solver );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ParCSRBiCGSTABSetMaxIter( m_solver, m_params.krylov.maxIterations );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ParCSRBiCGSTABSetTol( m_solver, m_params.krylov.relTolerance );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ParCSRBiCGSTABSetPrintLevel( m_solver, 0 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ParCSRBiCGSTABSetLogging( m_solver, 1 );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+    ierr = HYPRE_ParCSRBiCGSTABSetPrecond( m_solver,
+                                           HYPRE_ILUSolve,
+                                           HYPRE_ILUSetup,
+                                           m_preconditioner );
+    if( ierr != 0 )
+    {
+      return ierr;
+    }
+
+    HypreVector dummy;
+    dummy.create( matrix.numLocalRows(), matrix.comm() );
+    return HYPRE_ParCSRBiCGSTABSetup( m_solver,
+                                      matrix.unwrapped(),
+                                      dummy.unwrapped(),
+                                      dummy.unwrapped() );
+  }
+
+  HYPRE_Int solve( HypreMatrix const & matrix,
+                   HypreVector const & rhs,
+                   HypreVector & solution )
+  {
+    HYPRE_Int ierr = HYPRE_ParCSRBiCGSTABSolve( m_solver,
+                                                matrix.unwrapped(),
+                                                rhs.unwrapped(),
+                                                solution.unwrapped() );
+    if( ierr == 0 )
+    {
+      ierr = HYPRE_ParCSRBiCGSTABGetNumIterations( m_solver, &m_numIterations );
+    }
+    return ierr;
+  }
+
+  HYPRE_Int numIterations() const
+  {
+    return m_numIterations;
+  }
+
+private:
+
+  void clear()
+  {
+    if( m_solver != nullptr )
+    {
+      HYPRE_ParCSRBiCGSTABDestroy( m_solver );
+      m_solver = nullptr;
+    }
+    if( m_preconditioner != nullptr )
+    {
+      HYPRE_ILUDestroy( m_preconditioner );
+      m_preconditioner = nullptr;
+    }
+    m_numIterations = 0;
+  }
+
+  LinearSolverParameters m_params;
+  HYPRE_Solver m_solver = nullptr;
+  HYPRE_Solver m_preconditioner = nullptr;
+  HYPRE_Int m_numIterations = 0;
+};
+#endif
+
 namespace
 {
 
@@ -365,6 +527,15 @@ TEST( HypreMGR, SetsUpFullyCoupledSinglePhaseALM )
 
   hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM strategy( numComponentsPerField.toView() );
   strategy.setup( params.mgr, precond, mgrData );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  // The HIP unit-test configuration uses HYPRE's device triangular
+  // application because rocSPARSE csrsv analysis is unavailable on gfx1100.
+  ASSERT_EQ( HYPRE_ILUSetTriSolve( mgrData.coarseSolver.ptr, 0 ), 0 );
+#endif
+  ASSERT_EQ( HYPRE_MGRSetCoarseSolver( precond.ptr,
+                                       mgrData.coarseSolver.solve,
+                                       mgrData.coarseSolver.setup,
+                                       mgrData.coarseSolver.ptr ), 0 );
 
   EXPECT_EQ( HYPRE_MGRSetup( precond.ptr, matrix.unwrapped(), nullptr, nullptr ), 0 );
 
@@ -664,7 +835,8 @@ TEST( HypredriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
               "    max_iter: 5\n"
               "preconditioner:\n"
               "  amg:\n"
-              "    print_level: 0\n";
+              "    print_level: 0\n"
+    ;
   }
 
   LinearSolverParameters params;
@@ -779,19 +951,66 @@ void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
   solHypredrive.zero();
   solLegacy.zero();
 
-  HypredriveSolver hypredriveSolver( params );
+  LinearSolverParameters hypredriveParams = params;
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  std::string const hipIluConfigurationFile = "/tmp/geos-hypredrive-hip-ilu-test.yml";
+  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
+      params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
+  {
+    // Keep the production-generated YAML unchanged. The HIP test explicitly
+    // selects the settings needed by the test HYPRE build on gfx1100.
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+    std::string const reorderingLine = "    reordering: 1\n";
+    std::string::size_type const reordering = target.argument.find( reorderingLine );
+    ASSERT_NE( reordering, std::string::npos );
+    target.argument.replace( reordering,
+                             reorderingLine.size(),
+                             "    reordering: 0\n    tri_solve: 0\n" );
+
+    std::ofstream output( hipIluConfigurationFile );
+    ASSERT_TRUE( output.good() );
+    output << target.argument;
+    ASSERT_TRUE( output.good() );
+    hypredriveParams.hypredriveInputFile = Path( hipIluConfigurationFile.c_str() );
+  }
+#endif
+
+  HypredriveSolver hypredriveSolver( hypredriveParams );
   hypredriveSolver.setup( matrix );
   hypredriveSolver.solve( rhs, solHypredrive );
   ASSERT_TRUE( hypredriveSolver.result().success() );
   hypredriveSolver.clear();
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
+      params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
+  {
+    ASSERT_EQ( std::remove( hipIluConfigurationFile.c_str() ), 0 );
+  }
+#endif
 
-  HypreSolver legacySolver( params );
-  legacySolver.setup( matrix );
-  legacySolver.solve( rhs, solLegacy );
-  ASSERT_TRUE( legacySolver.result().success() );
-  legacySolver.clear();
+  integer legacyNumIterations = 0;
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
+      params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
+  {
+    TestConfiguredHypreIluSolver legacySolver( params );
+    ASSERT_EQ( legacySolver.setup( matrix ), 0 );
+    ASSERT_EQ( legacySolver.solve( matrix, rhs, solLegacy ), 0 );
+    legacyNumIterations = legacySolver.numIterations();
+  }
+  else
+#endif
+  {
+    HypreSolver legacySolver( params );
+    legacySolver.setup( matrix );
+    legacySolver.solve( rhs, solLegacy );
+    ASSERT_TRUE( legacySolver.result().success() );
+    legacyNumIterations = legacySolver.result().numIterations;
+    legacySolver.clear();
+  }
 
-  EXPECT_EQ( hypredriveSolver.result().numIterations, legacySolver.result().numIterations );
+  EXPECT_EQ( hypredriveSolver.result().numIterations, legacyNumIterations );
 
   // Both solutions satisfy the same tolerance; their difference is bounded by
   // the solve tolerance amplified by the operator conditioning.
