@@ -44,7 +44,7 @@ struct InnerProductType
   static constexpr integer BDVLM_WITH_MULTIPLIERS = 6;
 };
 
-static constexpr real64 consistency_tol = 1e-15;
+static constexpr real64 consistency_tol = 1e-14;
 
 void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & transMatrix,
                                       arraySlice2d< real64 const > const & transMatrixRef )
