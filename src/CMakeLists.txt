@@ -8,6 +8,9 @@ if(POLICY CMP0146)
   cmake_policy(SET CMP0146 OLD)
 endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
 
@@ -246,7 +249,8 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
 
   add_custom_target( geosx_generate_schema
                      ALL
-                     COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+                     COMMAND ${CMAKE_COMMAND} -E env ${GEOS_SANITIZER_BUILD_TOOL_CMAKE_ENV}
+                             $<TARGET_FILE:geosx> -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
                      COMMENT "Generating XML schema"
@@ -285,13 +289,20 @@ install( DIRECTORY ../scripts/
 
 add_custom_target( geosx_generate_install_schema
          ALL
-         COMMAND geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+         COMMAND ${CMAKE_COMMAND} -E env ${GEOS_SANITIZER_BUILD_TOOL_CMAKE_ENV}
+                 $<TARGET_FILE:geosx> -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
          DEPENDS geosx
          COMMENT "Generating XML schema to install"
          )
 
-if( NOT GEOS_INSTALL_SCHEMA )
+# HIP/Clang sanitizer builds can emit duplicate internal string globals while
+# compiling host code for shared libraries.  Running the instrumented geosx
+# executable for this build-only artifact makes ASan abort on that false ODR
+# positive before any tests run.  The schema is optional for sanitizer builds;
+# leave this target out of the default build and keep sanitizer instrumentation
+# focused on the tests themselves.
+if( NOT GEOS_INSTALL_SCHEMA OR GEOS_ENABLE_SANITIZERS )
   set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif()
 

@@ -8,8 +8,20 @@ leak:event_base_loop
 leak:MPI_Init
 leak:caliper
 
+# MPICH 4.2.x retains small communicator-collective selection allocations
+# until process exit. Keep these suppressions at the MPICH allocation
+# boundary; do not suppress generic communicator or GEOS frames.
+leak:MPIR_Csel_prune
+leak:MPIR_Find_local
+leak:MPIR_Find_external
+
 # HDF5 1.14.6's parallel MPIO driver leaves tiny MPI-IO request bookkeeping
 # allocations behind after collective writes. Keep the suppression at the
 # HDF5 driver boundary; do not suppress generic MPI or GEOS allocations.
 leak:H5FD__mpio_write_vector
 leak:H5FD__mpio_write_selection
+
+# ROCm 7.x HSA initialization retains a small device-discovery allocation
+# until process exit.  Scope this to the HSA runtime module; do not suppress
+# allocations in HIP, GEOS, or application code.
+leak:libhsa-runtime64.so

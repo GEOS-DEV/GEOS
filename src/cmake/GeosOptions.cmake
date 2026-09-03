@@ -1,4 +1,4 @@
-message( "\nProcessing GeosxOptions.cmake" )
+message( "\nProcessing GeosOptions.cmake" )
 message( "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}" )
 message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
 message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
@@ -268,4 +268,44 @@ if( NOT GEOS_ENABLE_SANITIZERS )
   unset( _geos_sanitizer_flag_probe )
 endif()
 
-message( "Leaving GeosxOptions.cmake\n" )
+if( GEOS_ENABLE_SANITIZERS AND ENABLE_HIP AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+    AND CMAKE_CXX_FLAGS MATCHES "-fsanitize=address" )
+  # amdclang emits duplicate ASan metadata for local string constants when
+  # host code is compiled as part of a HIP build.  The resulting ODR report
+  # is a compiler/runtime false positive and aborts every test before main().
+  # Keep ASan's stack/heap instrumentation and UBSan checks while disabling
+  # only global instrumentation for the HIP host compiler.
+  check_cxx_compiler_flag( "-mllvm=-asan-globals=0" GEOS_CXX_HAS_NO_ASAN_GLOBALS )
+  if( GEOS_CXX_HAS_NO_ASAN_GLOBALS )
+    # Keep the LLVM backend option off link commands.  This also migrates
+    # build directories created with the earlier flag-based workaround.
+    string( REPLACE "-mllvm=-asan-globals=0" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+    string( REPLACE "-fno-sanitize-address-use-odr-indicator" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "" FORCE )
+    add_compile_options( $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-mllvm=-asan-globals=0> )
+
+    if( CMAKE_HIP_FLAGS MATCHES "-fsanitize=address" AND NOT CMAKE_HIP_FLAGS MATCHES "-asan-globals=0" )
+      set( CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -Xarch_host -mllvm=-asan-globals=0" )
+      set( CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}" CACHE STRING "" FORCE )
+    endif()
+    unset( _geos_cxx_no_asan_globals_pos )
+  endif()
+endif()
+
+if( GEOS_ENABLE_SANITIZERS AND ENABLE_VTK )
+  # VTK and GEOS' VTK mesh registrations construct polymorphic objects during
+  # shared-library startup. UBSan's vptr check diagnoses that valid cross-DSO
+  # initialization before main(), so disable only vptr instrumentation for
+  # the VTK-enabled sanitizer build while retaining ASan and the other UBSan
+  # checks.
+  set( _geos_vtk_ubsan_flag "-fno-sanitize=vptr" )
+  string( FIND "${CMAKE_CXX_FLAGS}" "${_geos_vtk_ubsan_flag}" _geos_vtk_ubsan_pos )
+  if( _geos_vtk_ubsan_pos EQUAL -1 )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_geos_vtk_ubsan_flag}" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "" FORCE )
+  endif()
+  unset( _geos_vtk_ubsan_flag )
+  unset( _geos_vtk_ubsan_pos )
+endif()
+
+message( "Leaving GeosOptions.cmake\n" )
