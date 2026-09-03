@@ -47,7 +47,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       initialRockToughness="1e6"
-      mpiCommOrder="1"/>
+      mpiCommOrder="1"
+      isPoroelastic="1"/>
   </Solvers>
 
   <NumericalMethods>
