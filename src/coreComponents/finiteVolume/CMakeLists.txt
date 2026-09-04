@@ -35,6 +35,7 @@ set( finiteVolume_headers
      MimeticInnerProductDispatch.hpp
      StencilBase.hpp
      TwoPointFluxApproximation.hpp
+     mimeticInnerProducts/AdaptiveInnerProduct.hpp
      mimeticInnerProducts/BdVLMInnerProduct.hpp
      mimeticInnerProducts/MimeticInnerProductBase.hpp
      mimeticInnerProducts/MimeticInnerProductHelpers.hpp

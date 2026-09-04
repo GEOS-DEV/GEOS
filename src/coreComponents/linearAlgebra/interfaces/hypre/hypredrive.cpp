@@ -22,6 +22,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseMixedMFD.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
@@ -424,6 +425,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::thermalSinglePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
+    case StrategyType::singlePhaseMixedMFD:
     case StrategyType::singlePhaseReservoirHybridFVM:
     case StrategyType::singlePhasePoromechanics:
     case StrategyType::thermalSinglePhasePoromechanics:
@@ -1010,6 +1012,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     case StrategyType::invalid:
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
+    case StrategyType::singlePhaseMixedMFD:
     case StrategyType::singlePhaseReservoirHybridFVM:
     case StrategyType::compositionalMultiphaseFVM:
     case StrategyType::compositionalMultiphaseHybridFVM:
@@ -1532,6 +1535,8 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
       return buildStrategyYaml< hypre::mgr::ThermalSinglePhaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhaseHybridFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhaseHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
+    case StrategyType::singlePhaseMixedMFD:
+      return buildStrategyYaml< hypre::mgr::SinglePhaseMixedMFD >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhaseReservoirHybridFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhaseReservoirHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanics:
