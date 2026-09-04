@@ -94,8 +94,10 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
+      pressureCoordinates="{1.0e6, 7.5e7}"
+      pressureInterval="5e5"
+      temperatureCoordinates="{299.15, 369.15}"
+      temperatureInterval="10.0" />
 
     <BrooksCoreyRelativePermeability
       name="relperm"

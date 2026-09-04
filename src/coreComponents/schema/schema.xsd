@@ -5586,6 +5586,8 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		</xsd:choice>
 		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--anisotropic => Flag to use anisotropic scaling in tolerances and penalties computations-->
+		<xsd:attribute name="anisotropic" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactPenaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->

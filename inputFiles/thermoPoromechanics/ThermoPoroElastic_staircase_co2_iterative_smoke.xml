@@ -145,8 +145,11 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
-      flashModelParaFile="pvt_tables/co2flash.txt"/>
+      pressureCoordinates="{1e5, 5e7}"
+      pressureInterval="5e5"
+      temperatureCoordinates="{288, 368}"
+      temperatureInterval="10"
+      salinity="2.5" />
     
     <TableRelativePermeability
       name="relperm"
