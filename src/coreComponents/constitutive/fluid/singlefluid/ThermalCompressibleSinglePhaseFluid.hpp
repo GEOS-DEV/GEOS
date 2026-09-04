@@ -91,7 +91,7 @@ public:
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const override
+                        real64 & dViscosity_dPressure ) const override final
   {
     m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
@@ -112,7 +112,7 @@ public:
                         real64 & dInternalEnergy_dTemperature,
                         real64 & enthalpy,
                         real64 & dEnthalpy_dPressure,
-                        real64 & dEnthalpy_dTemperature ) const override
+                        real64 & dEnthalpy_dTemperature ) const override final
   {
     m_densRelation.compute( pressure, temperature, density, dDensity_dPressure, dDensity_dTemperature );
 
@@ -131,7 +131,7 @@ public:
   GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       real64 const pressure ) const override
+                       real64 const pressure ) const override final
   {
     compute( pressure,
              m_density[k][q],
@@ -145,7 +145,7 @@ public:
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
-                       real64 const temperature ) const override
+                       real64 const temperature ) const override final
   {
     compute( pressure,
              temperature,
@@ -169,7 +169,7 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override final
   {
     compute( pressure,
              temperature,

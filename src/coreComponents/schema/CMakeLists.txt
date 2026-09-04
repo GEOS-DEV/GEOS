@@ -42,6 +42,13 @@ blt_add_library( NAME       schema
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14.3 )
+  # See the matching workaround in common/CMakeLists.txt. Schema generation
+  # uses std::regex extensively.
+  set_source_files_properties( ${CMAKE_CURRENT_SOURCE_DIR}/schemaUtilities.cpp
+                                PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+endif()
+
 
 target_include_directories( schema PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
