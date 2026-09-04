@@ -34,6 +34,7 @@
 
 // System includes
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 namespace geos
@@ -389,7 +390,18 @@ template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
 stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value, Regex const & regex )
 {
-  validateString( value, regex );
+  try
+  {
+    validateString( value, regex );
+  }
+  catch( std::regex_error const & error )
+  {
+    // libc++ rejects the deeply nested regexes used for multidimensional arrays.
+    if( error.code() != std::regex_constants::error_complexity )
+    {
+      throw;
+    }
+  }
 
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }

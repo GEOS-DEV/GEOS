@@ -55,10 +55,10 @@ include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 
 # BLT's bundled GoogleTest currently uses an implicit char8_t-to-char32_t
-# conversion that Clang 22 diagnoses as -Wcharacter-conversion. Keep GEOS'
+# conversion that Clang 21 and newer diagnose as -Wcharacter-conversion. Keep GEOS'
 # warnings-as-errors policy intact while limiting the compatibility flag to
 # the third-party test target.
-if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 22 )
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 21 )
   foreach( _geos_gtest_target gtest gtest_main gmock gmock_main )
     if( TARGET ${_geos_gtest_target} )
       target_compile_options( ${_geos_gtest_target} PRIVATE -Wno-error=character-conversion )
