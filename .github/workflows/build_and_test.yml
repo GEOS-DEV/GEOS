@@ -131,7 +131,7 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@v7.0.1
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -139,7 +139,7 @@ jobs:
 
     - id: 'auth'
       if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
-      uses: 'google-github-actions/auth@v2.1.10'
+      uses: 'google-github-actions/auth@v3.0.0'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
@@ -158,7 +158,7 @@ jobs:
 
     - name: 'Set up Cloud SDK'
       if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v2.1.4'
+      uses: 'google-github-actions/setup-gcloud@v3.0.1'
       with:
         version: '>= 363.0.0'
 
