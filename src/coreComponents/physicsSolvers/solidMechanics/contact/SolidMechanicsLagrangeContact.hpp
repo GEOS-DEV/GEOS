@@ -102,7 +102,9 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-  void assembleContact( DomainPartition & domain,
+  void assembleContact( real64 const time,
+                        real64 const dt,
+                        DomainPartition & domain,
                         DofManager const & dofManager,
                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
@@ -142,32 +144,10 @@ public:
 
   void computeTolerances( DomainPartition & domain ) const;
 
-  void computeFaceNodalArea( localIndex const kf0,
-                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                             ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
-                             arrayView2d< localIndex const > const & edgeToNodeMap,
-                             arrayView2d< real64 const > const faceCenters,
-                             arrayView2d< real64 const > const faceNormals,
-                             arrayView1d< real64 const > const faceAreas,
-                             stackArray1d< real64, FaceManager::maxFaceNodes() > & nodalArea ) const;
-
-  void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                             localIndex const (&faceToNodes)[11],
-                             localIndex const (&faceToEdges)[11],
-                             localIndex const & numFaceVertices,
-                             real64 const & faceArea,
-                             real64 const (&faceCenter)[3],
-                             real64 const (&faceNormal)[3],
-                             arrayView2d< localIndex const > const & edgeToNodes,
-                             real64 const & invCellDiameter,
-                             real64 const (&cellCenter)[3],
-                             stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals,
-                             real64 ( &threeDMonomialIntegrals )[3] ) const;
-
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   string getStabilizationName() const { return m_stabilizationName; }
+  bool hasStabilization() const { return true;}
 
 protected:
 
@@ -185,8 +165,6 @@ private:
   real64 const m_slidingCheckTolerance = 0.05;
 
   real64 m_stabilizationScalingCoefficient = 1.0;
-
-  static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 

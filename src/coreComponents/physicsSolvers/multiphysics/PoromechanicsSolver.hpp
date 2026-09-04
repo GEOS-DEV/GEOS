@@ -50,6 +50,12 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
+#define GEOS_MGR_STRATEGY_NOT_SUPPORTED() \
+  virtual void setMGRStrategy() override \
+  { \
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr ) \
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName() ) ); \
+  }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
