@@ -22,6 +22,24 @@ kgd_viscosity_dominated_poroelastic = {
     "check_step": 1
 }
 
+kgd_viscosity_dominated_thermal = {
+    "name": "kgdViscosityDominated_thermal_smoke",
+    "description":
+    "KGD fracture in viscosity-dominated regime with heat transport in the fracture",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 20
+}
+
+kgd_viscosity_dominated_thermoporoelastic = {
+    "name": "kgdViscosityDominated_thermoporoelastic_smoke",
+    "description":
+    "KGD fracture in viscosity-dominated regime in a thermoporoelastic solid",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 20,
+    "check_step": 40
+}
+
 kgd_toughness_dominated = {
     "name": "kgdToughnessDominated_smoke",
     "description": "KGD fracture in toughness-dominated regime",
@@ -40,6 +58,24 @@ kgd_toughness_dominated_poroelastic = {
     "partitions": ((1, 1, 1), (2, 3, 1)),
     "restart_step": 0,
     "check_step": 1
+}
+
+kgd_toughness_dominated_thermal = {
+    "name": "kgdToughnessDominated_thermal_smoke",
+    "description":
+    "KGD fracture in toughness-dominated regime with heat transport in the fracture",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 20
+}
+
+kgd_toughness_dominated_thermoporoelastic = {
+    "name": "kgdToughnessDominated_thermoporoelastic_smoke",
+    "description":
+    "KGD fracture in toughness-dominated regime in a thermoporoelastic solid",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 20,
+    "check_step": 40
 }
 
 kgd_validation = {
@@ -116,6 +152,42 @@ penny_shaped_viscosity_dominated_poroelastic = {
     "check_step": 5
 }
 
+penny_shaped_toughness_dominated_thermal = {
+    "name": "pennyShapedToughnessDominated_thermal_smoke",
+    "description":
+    "Penny Shaped fracture in Toughness-dominated regime with heat transport in the fracture",
+    "partitions": ((1, 1, 1), (1, 3, 2)),
+    "restart_step": 5,
+    "check_step": 10
+}
+
+penny_shaped_toughness_dominated_thermoporoelastic = {
+    "name": "pennyShapedToughnessDominated_thermoporoelastic_smoke",
+    "description":
+    "Penny Shaped fracture in Toughness-dominated regime in a thermoporoelastic solid",
+    "partitions": ((1, 1, 1), (1, 3, 2)),
+    "restart_step": 5,
+    "check_step": 10
+}
+
+penny_shaped_viscosity_dominated_thermal = {
+    "name": "pennyShapedViscosityDominated_thermal_smoke",
+    "description":
+    "Penny Shaped fracture in Viscosity-dominated regime with heat transport in the fracture",
+    "partitions": ((1, 1, 1), (1, 2, 2)),
+    "restart_step": 5,
+    "check_step": 10
+}
+
+penny_shaped_viscosity_dominated_thermoporoelastic = {
+    "name": "pennyShapedViscosityDominated_thermoporoelastic_smoke",
+    "description":
+    "Penny Shaped fracture in Viscosity-dominated regime in a thermoporoelastic solid",
+    "partitions": ((1, 1, 1), (1, 2, 2)),
+    "restart_step": 5,
+    "check_step": 10
+}
+
 pkn_viscosity_dominated = {
     "name": "pknViscosityDominated_smoke",
     "description": "PKN fracture in Viscosity-dominated regime",
@@ -171,12 +243,19 @@ kgd_toughness_storage_dominated = {
 }
 
 decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
-         kgd_toughness_dominated, kgd_toughness_dominated_poroelastic,
-         kgd_validation, kgd_edge_based_C3D6, kgd_node_based_C3D6,
-         heterogeneous_fracture, penny_shaped_toughness_dominated,
+         kgd_viscosity_dominated_thermal,
+         kgd_viscosity_dominated_thermoporoelastic, kgd_toughness_dominated,
+         kgd_toughness_dominated_poroelastic, kgd_toughness_dominated_thermal,
+         kgd_toughness_dominated_thermoporoelastic, kgd_validation,
+         kgd_edge_based_C3D6, kgd_node_based_C3D6, heterogeneous_fracture,
+         penny_shaped_toughness_dominated,
          penny_shaped_toughness_dominated_poroelastic,
          penny_shaped_viscosity_dominated,
-         penny_shaped_viscosity_dominated_poroelastic, pkn_viscosity_dominated,
+         penny_shaped_viscosity_dominated_poroelastic,
+         penny_shaped_toughness_dominated_thermal,
+         penny_shaped_toughness_dominated_thermoporoelastic,
+         penny_shaped_viscosity_dominated_thermal,
+         penny_shaped_viscosity_dominated_thermoporoelastic, pkn_viscosity_dominated,
          pkn_viscosity_dominated_poroelastic, sneddon, walsh_quarter_no_chombo,
          kgd_toughness_leakoff_dominated, kgd_toughness_storage_dominated)
 

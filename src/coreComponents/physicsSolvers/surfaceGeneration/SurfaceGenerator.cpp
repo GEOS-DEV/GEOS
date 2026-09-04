@@ -469,7 +469,7 @@ void SurfaceGenerator::postRestartInitialization()
 
 real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                     const int cycleNumber,
                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -591,6 +591,31 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       DiffusionBase & diffusionModel = getConstitutiveModel< DiffusionBase >( fractureSubRegion, diffusionModelName );
       arrayView1d< real64 const > const temperature = fractureSubRegion.template getField< flow::temperature >();
       diffusionModel.initializeTemperatureState( temperature );
+    }
+
+    if( !m_appliedInitialConditionsToFracture && cycleNumber == 0 )
+    {
+      // The initial fracture elements do not exist yet when ProblemManager::applyInitialConditions()
+      // runs, so they never receive their initial conditions. Re-apply them here. This must happen
+      // exactly once: the fracture is generated again from the resolve loop of the coupled solver,
+      // at which point re-applying would overwrite the solution.
+      m_appliedInitialConditionsToFracture = true;
+
+      // The call below covers the whole mesh level, so the deck's initial rupture state would rewind the faces
+      // separated above from "ruptured" (2) back to "ready to rupture" (1). Hold the rupture state across the call.
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      array1d< integer > const savedRuptureState( faceManager.getField< surfaceGeneration::ruptureState >() );
+
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+      fsManager.applyInitialConditions( meshLevel );
+
+      arrayView1d< integer const > const savedRuptureStateView = savedRuptureState.toViewConst();
+      arrayView1d< integer > const ruptureState =
+        faceManager.getField< surfaceGeneration::ruptureState >();
+      forAll< parallelHostPolicy >( ruptureState.size(), [=] ( localIndex const kf )
+      {
+        ruptureState[kf] = savedRuptureStateView[kf];
+      } );
     }
   } );
 
