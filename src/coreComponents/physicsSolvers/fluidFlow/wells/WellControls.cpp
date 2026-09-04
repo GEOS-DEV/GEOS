@@ -328,12 +328,9 @@ void WellControls::shutEntireWell( WellElementSubRegion & subRegion,
                 localMatrix,
                 localRhs,
                 false );
-  resetShutInControlState();
-}
 
-void WellControls::resetShutInControlState()
-{
-  getReference< real64 >( viewKeyStruct::currentBHPString() ) = 0.0;
+  resetShutInControlState();
+
 }
 
 void WellControls::postInputInitialization()

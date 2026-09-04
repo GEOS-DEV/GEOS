@@ -232,11 +232,8 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     m_numPhases = fluid0.numFluidPhases();
     m_numComponents = fluid0.numFluidComponents();
   }
-  // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
+
   WellControls::registerWellDataOnMesh( subRegion );
-
-
-
   string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
@@ -1407,7 +1404,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
 
 void CompositionalMultiphaseWell::resetShutInControlState()
 {
-  WellControls::resetShutInControlState();
+  getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() ) = 0.0;
   getReference< array1d< real64 > >(
     CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ).zero();
   getReference< real64 >(

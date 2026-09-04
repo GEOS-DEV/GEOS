@@ -888,7 +888,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
 void SinglePhaseWell::resetShutInControlState()
 {
-  WellControls::resetShutInControlState();
+  getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() ) = 0.0;
   getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() ) = 0.0;
 }
 
