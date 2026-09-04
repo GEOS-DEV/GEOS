@@ -22,6 +22,7 @@
 
 // System includes
 #include <type_traits>
+#include <utility>
 
 namespace geos
 {
@@ -247,7 +248,7 @@ public:
    * @return the return type of <tt>T::operator()</tt>
    */
   template< typename ... ARGS >
-  inline typename std::result_of< T & (ARGS&&...) >::type
+  inline typename std::invoke_result< T &, ARGS&&... >::type
   operator()( ARGS && ... args )
   {
     return m_ref->operator()( std::forward< ARGS >(args)... );
@@ -260,7 +261,7 @@ public:
    * @return the return type of <tt>T::operator()</tt> const
    */
   template< typename ... ARGS >
-  inline typename std::result_of< T const&(ARGS&&...) >::type
+  inline typename std::invoke_result< T const &, ARGS&&... >::type
   operator()( ARGS && ... args ) const
   {
     return m_ref->operator()( std::forward< ARGS >(args)... );
