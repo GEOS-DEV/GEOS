@@ -606,10 +606,10 @@ public:
   }
 };
 
-template< integer IS_THERMAL >
-class ThermalSinglePhaseWellFluxKernel : public IsothermalSinglePhaseWellFluxKernel< IS_THERMAL >
+class ThermalSinglePhaseWellFluxKernel : public IsothermalSinglePhaseWellFluxKernel< 1 >
 {
 public:
+  static constexpr integer IS_THERMAL = 1;
   using Base = IsothermalSinglePhaseWellFluxKernel< IS_THERMAL >;
   static constexpr integer resNumDOF = 1 + IS_THERMAL;
 
@@ -709,7 +709,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    using kernelType = ThermalSinglePhaseWellFluxKernel< 1 >;
+    using kernelType = ThermalSinglePhaseWellFluxKernel;
     kernelType kernel( isProducer, dt, rankOffset, wellDofKey, subRegion, perforationData, localMatrix, localRhs );
     kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
