@@ -815,6 +815,8 @@ void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegi
   arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
 
+  bool converged = true;
+
   if( m_isThermal )
   {
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
@@ -822,7 +824,7 @@ void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegi
 
     constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
     {
-      singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
+      converged = singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
     } );
 
     fluid.saveConvergedState();
@@ -834,11 +836,15 @@ void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegi
 
     constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
     {
-      singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
+      converged = singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
     } );
 
     fluid.saveConvergedState();
   }
+
+  GEOS_ERROR_IF( !converged,
+                 GEOS_FMT( "{}: the initial equilibrium speciation did not converge.",
+                           subRegion.getDataContext() ) );
 }
 
 void SinglePhaseReactiveTransport::initializePostInitialConditionsPreSubGroups()

@@ -46,6 +46,14 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
 
+  this->registerWrapper( viewKeyStruct::activityModelNameString(), &m_activityModelType ).
+    setApplyDefaultValue( ActivityModelType::identity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Activity model applied to the chemical system. Available options are: "
+                    "``" + EnumStrings< ActivityModelType >::concat( "|" ) + "``. "
+                    "``bdot`` requires ion size and b-dot parameters, which only the geochemical "
+                    "systems carry." );
+
   this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
     setApplyDefaultValue( 1000.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -76,6 +84,7 @@ deliverClone( string const & name, Group * const parent ) const
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
 
   newConstitutiveRelation.m_chemicalSystemType = m_chemicalSystemType;
+  newConstitutiveRelation.m_activityModelType = m_activityModelType;
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
@@ -89,44 +98,25 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
 
-  switch( m_chemicalSystemType )
+  GEOS_THROW_IF( !isSupportedReactionSystem( m_chemicalSystemType, m_activityModelType ),
+                 GEOS_FMT( "{}: chemical system '{}' has no '{}' activity model.",
+                           this->getDataContext(),
+                           EnumStrings< ChemicalSystemType >::toString( m_chemicalSystemType ),
+                           EnumStrings< ActivityModelType >::toString( m_activityModelType ) ),
+                 InputError );
+
+  // taken from the reaction system itself
+  forEachReactionSystem( [&]( auto system )
   {
-    case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9;
-      m_numSecondarySpecies = 16;
-      m_numKineticReactions = 5;
-      break;
-
-    case ChemicalSystemType::carbonate:
-      m_numPrimarySpecies = 7;
-      m_numSecondarySpecies = 10;
-      m_numKineticReactions = 1;
-      break;
-
-    case ChemicalSystemType::carbonateAllEquilibrium:
-      m_numPrimarySpecies = 7;
-      m_numSecondarySpecies = 11;
-      m_numKineticReactions = 0;
-      break;
-
-    case ChemicalSystemType::chainSerialAllKinetic:
-      m_numPrimarySpecies = 3;
-      m_numSecondarySpecies = 0;
-      m_numKineticReactions = 3;
-      break;
-
-    case ChemicalSystemType::momasMedium:
-      m_numPrimarySpecies = 5;
-      m_numSecondarySpecies = 9;
-      m_numKineticReactions = 1;
-      break;
-
-    default:
-      m_numPrimarySpecies = 5;
-      m_numSecondarySpecies = 7;
-      m_numKineticReactions = 0;
-      break;
-  }
+    using System = decltype( system );
+    if( System::chemicalSystem == m_chemicalSystemType && System::activityModel == m_activityModelType )
+    {
+      using ReactionParams = typename System::ReactionParamsType;
+      m_numPrimarySpecies = ReactionParams::numPrimarySpecies();
+      m_numSecondarySpecies = ReactionParams::numSecondarySpecies();
+      m_numKineticReactions = ReactionParams::numKineticReactions();
+    }
+  } );
 
   GEOS_THROW_IF_LE_MSG( m_solventMassPerSolutionVolume, 0.0,
                         GEOS_FMT( "invalid value of attribute '{}'",
