@@ -600,8 +600,22 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       // exactly once: the fracture is generated again from the resolve loop of the coupled solver,
       // at which point re-applying would overwrite the solution.
       m_appliedInitialConditionsToFracture = true;
+
+      // The call below covers the whole mesh level, so the deck's initial rupture state would rewind the faces
+      // separated above from "ruptured" (2) back to "ready to rupture" (1). Hold the rupture state across the call.
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      array1d< integer > const savedRuptureState( faceManager.getField< surfaceGeneration::ruptureState >() );
+
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
       fsManager.applyInitialConditions( meshLevel );
+
+      arrayView1d< integer const > const savedRuptureStateView = savedRuptureState.toViewConst();
+      arrayView1d< integer > const ruptureState =
+        faceManager.getField< surfaceGeneration::ruptureState >();
+      forAll< parallelHostPolicy >( ruptureState.size(), [=] ( localIndex const kf )
+      {
+        ruptureState[kf] = savedRuptureStateView[kf];
+      } );
     }
   } );
 
