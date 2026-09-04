@@ -387,10 +387,8 @@ stringToInputVariable( Tensor< T, SIZE > & target, string const & value, Regex c
  */
 template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value, Regex const & regex )
+stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value, Regex const & )
 {
-  validateString( value, regex );
-
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
