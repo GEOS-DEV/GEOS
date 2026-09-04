@@ -40,6 +40,9 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
+      ENABLE_HYPREDRV:
+        required: false
+        type: string
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
@@ -49,6 +52,10 @@ on:
       GCP_BUCKET:
         required: false
         type: string
+      UPLOAD_TO_GCP:
+        required: false
+        type: boolean
+        default: false
       HOST_CONFIG:
         required: false
         type: string
@@ -59,6 +66,10 @@ on:
       RUNS_ON:
         required: true
         type: string
+      SCCACHE_HOST_DIR:
+        required: false
+        type: string
+        default: ''
       USE_SCCACHE:
         required: false
         type: boolean
@@ -92,7 +103,7 @@ jobs:
       # frozen at the time the workflow was first triggered, so labels
       # added after that first run are invisible to re-runs. The curl
       # call below always returns current state, which is required for
-      # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
+      # CI re-runs to pick up newly added labels (e.g. "ci: run device
       # builds"). Do not replace with github.event.pull_request.labels.
       # The Authorization header is required for private repos/forks;
       # GITHUB_TOKEN is provided automatically to every workflow run.
@@ -120,14 +131,14 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v7.0.0
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         fetch-depth: 1
 
     - id: 'auth'
-      if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
+      if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
       uses: 'google-github-actions/auth@v2.1.10'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
@@ -146,17 +157,21 @@ jobs:
         echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
 
     - name: 'Set up Cloud SDK'
-      if: inputs.GCP_BUCKET
+      if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v2.1.4'
       with:
         version: '>= 363.0.0'
 
     - name: Build, test, deploy.
+      id: build_test_deploy
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
+
+        # Keep the repository mount point consistent between Docker and script args.
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
@@ -173,21 +188,30 @@ jobs:
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
-        # All the data exchanged with the docker container is eventually meant to be sent to the cloud.
-        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
-          if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
-            DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
-          elif [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]; then
-            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
-            script_args+=(--run-integrated-tests)
-          fi
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          echo "::group::Baseline and log uploads"
+          echo "Status: configuration error"
+          echo "Google Cloud configuration: bucket=not set, project=${GCP_PROJECT:-not set}"
+          echo "No files were uploaded."
+          echo "::endgroup::"
+          echo "::error::UPLOAD_TO_GCP=true requires GCP_BUCKET to be set."
+          exit 1
+        fi
 
+        DATA_BASENAME=
+        DATA_EXCHANGE_DIR=
+        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
+          DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+          script_args+=(--run-integrated-tests)
+        elif [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
+          DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
+        fi
+
+        if [[ -n "${DATA_BASENAME}" ]]; then
           script_args+=(--data-basename ${DATA_BASENAME})
 
           DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
-          if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
-            mkdir -p ${DATA_EXCHANGE_DIR}
-          fi
+          mkdir -p ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
           script_args+=(--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT})
@@ -196,13 +220,28 @@ jobs:
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
-        if ${{ inputs.USE_SCCACHE }} == 'true'; then
-          script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+        if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
+          case "${{ inputs.RUNS_ON }}" in
+            streak2*)
+              SCCACHE_HOST_DIR="${{ inputs.SCCACHE_HOST_DIR }}"
+              if [[ -z "${SCCACHE_HOST_DIR}" ]]; then
+                SCCACHE_HOST_DIR=/home/geos-data/sccache
+              fi
+
+              mkdir -p "${SCCACHE_HOST_DIR}"
+              docker_args+=(--volume=${SCCACHE_HOST_DIR}:/sccache)
+              docker_args+=(-e SCCACHE_DIR=/sccache)
+              if [[ -n "${SCCACHE_CACHE_SIZE:-}" ]]; then
+                docker_args+=(-e SCCACHE_CACHE_SIZE)
+              fi
+              script_args+=(--use-sccache)
+              ;;
+            *)
+              script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+              ;;
+          esac
         fi
 
-        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
-        # Since this information is repeated twice, we use a variable.
-        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
@@ -213,9 +252,9 @@ jobs:
           script_args+=(--cmake-cuda-architectures "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}")
         fi
 
-        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
-        # are passed as scripts parameters. Specific care must be taken to be sure
-        # there's no conflict with the host-config files.
+        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPREDRV,
+        # ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS) are passed as script parameters.
+        # Specific care must be taken to be sure there's no conflict with the host-config files.
 
         # Hypre
         ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
@@ -223,9 +262,15 @@ jobs:
           script_args+=(--enable-hypre "${{ inputs.ENABLE_HYPRE }}")
         fi
 
+        ENABLE_HYPREDRV=${{ inputs.ENABLE_HYPREDRV }}
+        if [ ! -z "${{ inputs.ENABLE_HYPREDRV }}" ]; then
+          script_args+=(--enable-hypredrv "${{ inputs.ENABLE_HYPREDRV }}")
+        fi
+
         # Trilinos
         ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
+        docker_args+=(-e ENABLE_HYPREDRV=${ENABLE_HYPREDRV:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
         docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
@@ -327,51 +372,106 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
-        # Send to the bucket and print the download link when it makes sense.
-        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
-          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            # disable warning about parallel composite upload
-            CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+        echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
+        echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
+        echo "data_exchange_dir=${DATA_EXCHANGE_DIR}" >> "${GITHUB_OUTPUT}"
 
-            if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
-              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-              echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
-            fi
+        exit ${EXIT_STATUS}
 
-            if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
-              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-              echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
-            fi
+    - name: Baseline and log uploads
+      if: ${{ always() && steps.build_test_deploy.outputs.data_basename != '' }}
+      env:
+        GEOS_BUILD_EXIT_STATUS: ${{ steps.build_test_deploy.outputs.exit_status }}
+        GEOS_DATA_BASENAME: ${{ steps.build_test_deploy.outputs.data_basename }}
+        GEOS_DATA_EXCHANGE_DIR: ${{ steps.build_test_deploy.outputs.data_exchange_dir }}
+      run: |
+        EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
+        DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
+        UPLOAD_HEADER_PRINTED=false
+        GCP_CREDENTIALS_STATUS="not set"
+        if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+          GCP_CREDENTIALS_STATUS=configured
+        fi
 
-            if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
+        if [[ -n "${DATA_BASENAME}" ]]; then
+          if [ -f "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" ]; then
+            echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
+          fi
 
-              if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
-                # 1. We copy the baselines to a local directory to store them
+          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+          fi
 
-                # 1.a Create the new target directory to store the new baselines
-                THIS_PR_NUMBER=pr${{ github.event.number }}
-                NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/${NEW_PR_BASELINE_FOLDER_NAME}"
-                echo "Create folder ${TARGET_DIR}"
-                mkdir -p "${TARGET_DIR}"
+          if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
+            THIS_PR_NUMBER=pr${{ github.event.number }}
+            TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baselines_${THIS_PR_NUMBER}"
+            mkdir -p "${TARGET_DIR}"
 
-                # 1.b We copy the new baselines to the new target directory
-                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
-                cp "${SOURCE_FILE}" "${TARGET_DIR}"
+            for file in \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+            do
+              if [ -f "${file}" ]; then
+                cp "${file}" "${TARGET_DIR}"
+                echo "Copied $(basename "${file}") to ${TARGET_DIR}"
               fi
+            done
+          fi
 
-              # 2. We push the baselines to the cloud
-              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-              echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
-              echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
-            else
-              echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
-            fi
+          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" ]; then
+            echo "No new baseline archive was generated."
           fi
         fi
 
-        exit ${EXIT_STATUS}
+        if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
+          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
+            if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
+              echo "Status: upload configuration failed"
+              echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}"
+              exit 1
+            fi
+
+            for file in \
+              "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+            do
+              if [ -f "${file}" ]; then
+                case "$(basename "${file}")" in
+                  baseline_*)
+                    UPLOAD_LABEL=baselines
+                    ;;
+                  test_logs_*)
+                    UPLOAD_LABEL=logs
+                    ;;
+                  *)
+                    UPLOAD_LABEL=artifact
+                    ;;
+                esac
+
+                if ! CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/; then
+                  echo "Status: upload failed"
+                  echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}, access=publicRead"
+                  echo
+                  echo "Failed upload:"
+                  echo "  ${UPLOAD_LABEL}: gs://${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                  exit 1
+                fi
+
+                if [[ "${UPLOAD_HEADER_PRINTED}" != "true" ]]; then
+                  echo
+                  echo "Users can download uploaded files at:"
+                  UPLOAD_HEADER_PRINTED=true
+                fi
+                echo "  ${UPLOAD_LABEL}:"
+                echo "    https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+              fi
+            done
+          fi
+        else
+          echo "GCP upload disabled."
+        fi
 
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
@@ -390,7 +490,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v6.0.1
+      uses: codecov/codecov-action@v7.0.0
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
@@ -401,6 +501,16 @@ jobs:
         SSL_CERT_FILE: /etc/pki/tls/certs/ca-bundle.crt
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
+
+    - name: Show sccache summary
+      if: ${{ always() && inputs.USE_SCCACHE }}
+      run: |
+        SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
+        if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
+          grep -E '^(Compile requests|Cache hits|Cache misses|Cache timeouts|Cache read errors|Cache write errors|Compilation failures|Cache errors|Non-cacheable compilations|Non-cacheable calls|Cache location|Cache size|Max cache size|Version \(client\))' "${SCCACHE_STATS_FILE}" || cat "${SCCACHE_STATS_FILE}"
+        else
+          echo "No in-container sccache stats file was captured."
+        fi
 
     - name: 'Cleanup build folder'
       if: always()

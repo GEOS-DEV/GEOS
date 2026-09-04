@@ -116,8 +116,20 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
-  
+  void setupLinearSolverNearNullKernel( DomainPartition & domain,
+                                        DofManager const & dofManager );
+
+  arrayView1d< ParallelVector const > getLinearSolverNearNullKernel() const override
+  {
+    return m_linearSolverNearNullKernel.toViewConst();
+  }
+
+  virtual void setMGRStrategy() override
+  {
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
+
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {
     GEOS_MARK_FUNCTION;
@@ -151,6 +163,7 @@ protected:
 
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 
+  array1d< ParallelVector > m_linearSolverNearNullKernel;
   integer m_damageFlag;
 };
 

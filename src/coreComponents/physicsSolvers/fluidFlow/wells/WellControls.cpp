@@ -50,6 +50,7 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
+  m_useMass( 0 ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -71,6 +72,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_regionAveragePressure( -1 ),
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
+  m_thermalEffectsEnabled( false ),
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
@@ -313,15 +315,6 @@ void WellControls::postInputInitialization()
   // 13) Validate constraints
   bool const isProducerWell = isProducer();
 
-  forSubGroups< InjectionConstraint< MassRateConstraint >,
-                ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
-  {
-    GEOS_THROW_IF( useMass(),
-                   GEOS_FMT( "Constraint {} of type {} only allowed for {} if useMass is set to 1",
-                             constraint.getName(), getName() ),
-                   InputError, constraint.getDataContext() );
-  } );
-
   stdVector< std::tuple< string, string, WellConstraintBase const * > > constraints;
   forSubGroups< MaximumBHPConstraint,
                 InjectionConstraint< MassRateConstraint >,
@@ -398,6 +391,16 @@ void WellControls::postInputInitialization()
 
 void WellControls::initializePreSubGroups()
 {
+  // Validate constraint against formulation , useMass valid at this stack level
+  forSubGroups< InjectionConstraint< MassRateConstraint >,
+                ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
+  {
+    GEOS_THROW_IF( !useMass(),
+                   GEOS_FMT( "Constraint {} only allowed for {} if useMass is set to 1",
+                             constraint.getName(), getName() ),
+                   InputError, constraint.getDataContext() );
+  } );
+
   // Validate the reference region
   validateReferenceRegion();
 }
