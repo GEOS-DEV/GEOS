@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <!-- SPHINX_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="loadPointDisplacement"
@@ -58,7 +59,9 @@
       fieldName="ruptureState"
       scale="1"/>
   </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
 
+  <!-- SPHINX_GEOMETRY -->
   <Geometry>
     <Box
       name="midPlane"
@@ -80,6 +83,7 @@
       xMin="{ 9.50, 7.40, -0.051 }"
       xMax="{ 10.50, 8.02, 0.051 }"/>
   </Geometry>
+  <!-- SPHINX_GEOMETRY_END -->
 
   <NumericalMethods>
     <FiniteElements>
@@ -101,6 +105,7 @@
       materialList="{ concrete }"/>
   </ElementRegions>
 
+  <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <DamageSpectralElasticIsotropic
       name="concrete"
@@ -114,7 +119,9 @@
       fractureModelType="Brittle"
       localDissipationOption="Quadratic"/>
   </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
 
+  <!-- SPHINX_LOADING -->
   <Functions>
     <TableFunction
       name="loadRamp"
@@ -122,4 +129,5 @@
       coordinates="{ 0.0, 100 }"
       values="{ 0.0, -100.0 }"/>
   </Functions>
+  <!-- SPHINX_LOADING_END -->
 </Problem>
