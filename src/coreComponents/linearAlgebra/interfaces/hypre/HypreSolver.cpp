@@ -212,7 +212,9 @@ void HypreSolver::setup( HypreMatrix const & mat )
                                               hypre::dummySetup,
                                               m_precond.unwrapped().ptr ) );
 
-  // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
+  // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup).
+  // Keep the dummy untagged: the solve receives caller-owned rhs/solution vectors, and
+  // hypre's tagged inner-product path requires all Krylov vectors to have matching tags.
   HypreVector dummy;
   dummy.create( mat.numLocalRows(), mat.comm() );
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
