@@ -73,6 +73,7 @@ set( linearAlgebra_headers
      utilities/ComponentMask.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
+     utilities/SparsityPatternUtilities.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
@@ -169,6 +170,8 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
@@ -189,7 +192,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND tplDependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre umpire::umpire )
 
     if( ENABLE_HYPREDRV )
         list( APPEND linearAlgebra_headers
@@ -257,4 +260,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( utilities/unitTests )
 endif( )
-

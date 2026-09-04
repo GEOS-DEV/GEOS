@@ -227,44 +227,16 @@ SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITI
                               arraySlice2d< real64 > const & M )
 {
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  // 0) Helper: diagonal inverse of [k1, k2, k3]
-  real64 Kinv[3][3] = {{ 0 }};
-  for( int i =0; i < 3; ++i )
-  {
-    Kinv[i][i] = 1.0 / elemPerm[i];
-  }
 
-  // 1) Compute C, N, A
+  // 1) Compute C, N, A and the consistency part C K^{-1} C^T / volume
   real64 C[ NF ][ 3 ] = {{ 0 }};
   real64 N[ NF ][ 3 ] = {{ 0 }};
   real64 A[ NF ] = { 0.0 };
-
-  for( localIndex i = 0; i < NF; ++i )
-  {
-    real64 faceCenter[3], faceNormal[3];
-    real64 area = computationalGeometry::centroid_3DPolygon(
-      faceToNodes[elemToFaces[i]], nodePosition, faceCenter, faceNormal, areaTolerance );
-
-    real64 cellToFaceVec[3];
-    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
-    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
-
-    for( int d = 0; d < 3; ++d )
-    {
-      C[i][d] = cellToFaceVec[d];
-      N[i][d] = faceNormal[d] * area;
-    }
-
-    A[i] = area;
-  }
-
-  // 2) Compute C K^{-1} C^T / volume
   real64 CKCt[ NF ][ NF ] = {{0}};
-  real64 work3xNF[ 3 ][ NF ] = {{0}};
 
-  LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work3xNF, Kinv, C );
-  LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( CKCt, C, work3xNF );
-  LvArray::tensorOps::scale< NF, NF >( CKCt, 1.0 / elemVolume );
+  MimeticInnerProductHelpers::computeCellToFaceGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
+                                                               elemCenter, areaTolerance, C, N, A );
+  MimeticInnerProductHelpers::computeConsistencyTerm< NF >( C, elemVolume, elemPerm, CKCt );
 
   // 3) Q = orth(N / A)
   real64 q0[ NF ], q1[ NF ], q2[ NF ];

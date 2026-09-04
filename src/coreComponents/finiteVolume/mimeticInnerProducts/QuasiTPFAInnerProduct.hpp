@@ -132,50 +132,19 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
   // 0) stabilization parameter for quasi-TPFA
   constexpr real64 tParam = 2.0;
 
-  // 1) assemble permeability tensor and its inverse
+  // 1) assemble permeability tensor
   real64 K[3][3] = {{0}};
   MimeticInnerProductHelpers::makeFullTensor( elemPerm, K );
 
-  real64 Kinv[3][3] = {{0}};
-  for( int i = 0; i < 3; ++i )
-  {
-    Kinv[i][i] = 1.0 / elemPerm[i];
-  }
-
-  // 2) compute C and N
+  // 2) compute C, N, face areas and the consistency part C K^{-1} C^T / volume
   real64 C[ NF ][ 3 ] = {{ 0 }};
   real64 N[ NF ][ 3 ] = {{ 0 }};
-
-  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
-  {
-    real64 faceCenter[3], faceNormal[3];
-
-    real64 const faceArea =
-      computationalGeometry::centroid_3DPolygon(
-        faceToNodes[elemToFaces[ifaceLoc]],
-        nodePosition,
-        faceCenter,
-        faceNormal,
-        areaTolerance );
-
-    real64 cellToFaceVec[3];
-    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
-    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
-
-    for( int d = 0; d < 3; ++d )
-    {
-      C[ifaceLoc][d] = cellToFaceVec[d];
-      N[ifaceLoc][d] = faceArea * faceNormal[d];
-    }
-  }
-
-  // 3) compute consistency part C K^{-1} C^T / volume
+  real64 faceArea[ NF ] = { 0.0 };
   real64 CKCt[ NF ][ NF ] = {{ 0 }};
-  real64 work[ 3 ][ NF ] = {{ 0 }};
 
-  LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work, Kinv, C );
-  LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( CKCt, C, work );
-  LvArray::tensorOps::scale< NF, NF >( CKCt, 1.0 / elemVolume );
+  MimeticInnerProductHelpers::computeCellToFaceGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
+                                                               elemCenter, areaTolerance, C, N, faceArea );
+  MimeticInnerProductHelpers::computeConsistencyTerm< NF >( C, elemVolume, elemPerm, CKCt );
 
   // 4) compute W = N K N'
   real64 W[ NF ][ NF ] = {{ 0 }};

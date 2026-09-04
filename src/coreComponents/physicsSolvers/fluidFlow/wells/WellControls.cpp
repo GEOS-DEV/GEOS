@@ -50,6 +50,7 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
+  m_useMass( 0 ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -71,6 +72,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_regionAveragePressure( -1 ),
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
+  m_thermalEffectsEnabled( false ),
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
@@ -213,6 +215,8 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
+  updateNumDofPerElement();
+
   std::string const & regionName = subRegion.getName();
   std::string addrWithMask( regionName );
   std::size_t pos = addrWithMask.find( "UniqueSubRegion" );
@@ -220,15 +224,18 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   m_targetRegionNames.push_back( addr );
 
   registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
+  // name for volume rate could be improved if for singlephase runs, a phase name is used
+  // tag for future cleanup
   registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
-
-  registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
-    setSizedFromParent( 0 ).
-    reference().resizeDimension< 0 >( m_numPhases );
-  registerWrapper< real64 >( viewKeyStruct::massDensityString() );
-
-  registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
-  registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
+  if( numFluidComponents() > 0 )
+  {
+    registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
+    registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numPhases );
+    registerWrapper< real64 >( viewKeyStruct::massDensityString() );
+    registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
+  }
 
   // If estimator is used including thermal effects set during constraint evaluation
   // otherwise they are always included
@@ -239,6 +246,91 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
       enableThermalEffects( true );
     }
   }
+}
+
+void WellControls::updateNumDofPerElement()
+{
+  localIndex const numFlowComponents = numFluidComponents();
+  m_numDofPerWellElement = isThermal() ? numFlowComponents + 2 : numFlowComponents + 1;
+  ++m_numDofPerWellElement; // Extra well connection-rate DOF.
+  m_numDofPerResElement = isThermal() ? numFlowComponents + 2 : numFlowComponents + 1;
+}
+
+namespace
+{
+
+void shutDownWell( WellElementSubRegion & subRegion,
+                   DofManager const & dofManager,
+                   string const & wellElementDofName,
+                   integer const numDofPerWellElement,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs,
+                   bool const shutClosedElementsOnly )
+{
+  string const wellElemDofKey = dofManager.getKey( wellElementDofName );
+
+  arrayView1d< globalIndex const > const & wellElemDofNumber =
+    subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
+  arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
+  arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+  arrayView1d< real64 > const connRate = subRegion.getField< fields::well::connectionRate >();
+
+  localIndex const rankOffset = dofManager.rankOffset();
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    if( wellElemGhostRank[ei] < 0 &&
+        ( !shutClosedElementsOnly || elemStatus[ei] == WellElementSubRegion::WellElemStatus::CLOSED ) )
+    {
+      connRate[ei] = 0.0;
+      globalIndex const dofIndex = wellElemDofNumber[ei];
+      localIndex const localRow = dofIndex - rankOffset;
+
+      real64 const unity = 1.0;
+      for( integer i = 0; i < numDofPerWellElement; ++i )
+      {
+        globalIndex const rindex = localRow + i;
+        globalIndex const cindex = dofIndex + i;
+        localMatrix.template addToRow< serialAtomic >( rindex,
+                                                       &cindex,
+                                                       &unity,
+                                                       1 );
+        localRhs[rindex] = 0.0;
+      }
+    }
+  } );
+}
+
+}
+
+void WellControls::shutClosedSegments( WellElementSubRegion & subRegion,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
+{
+  shutDownWell( subRegion,
+                dofManager,
+                wellElementDofName(),
+                m_numDofPerWellElement,
+                localMatrix,
+                localRhs,
+                true );
+}
+
+void WellControls::shutEntireWell( WellElementSubRegion & subRegion,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
+{
+  shutDownWell( subRegion,
+                dofManager,
+                wellElementDofName(),
+                m_numDofPerWellElement,
+                localMatrix,
+                localRhs,
+                false );
+
+  resetShutInControlState();
+
 }
 
 void WellControls::postInputInitialization()
@@ -312,15 +404,6 @@ void WellControls::postInputInitialization()
 
   // 13) Validate constraints
   bool const isProducerWell = isProducer();
-
-  forSubGroups< InjectionConstraint< MassRateConstraint >,
-                ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
-  {
-    GEOS_THROW_IF( useMass(),
-                   GEOS_FMT( "Constraint {} of type {} only allowed for {} if useMass is set to 1",
-                             constraint.getName(), getName() ),
-                   InputError, constraint.getDataContext() );
-  } );
 
   stdVector< std::tuple< string, string, WellConstraintBase const * > > constraints;
   forSubGroups< MaximumBHPConstraint,
@@ -398,6 +481,16 @@ void WellControls::postInputInitialization()
 
 void WellControls::initializePreSubGroups()
 {
+  // Validate constraint against formulation , useMass valid at this stack level
+  forSubGroups< InjectionConstraint< MassRateConstraint >,
+                ProductionConstraint< MassRateConstraint > >( [&]( auto const & constraint )
+  {
+    GEOS_THROW_IF( !useMass(),
+                   GEOS_FMT( "Constraint {} only allowed for {} if useMass is set to 1",
+                             constraint.getName(), getName() ),
+                   InputError, constraint.getDataContext() );
+  } );
+
   // Validate the reference region
   validateReferenceRegion();
 }

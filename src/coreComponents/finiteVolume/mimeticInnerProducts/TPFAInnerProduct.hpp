@@ -83,6 +83,48 @@ public:
             real64 const (&elemPerm)[ 3 ],
             real64 const & lengthTolerance,
             arraySlice2d< real64 > const & M );
+
+private:
+
+  /**
+   * @brief Compute the one-sided (half) TPFA transmissibility of a local face, k_n A / d.
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] faceIndex the index of the face
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] areaTolerance the tolerance used in the face area calculations
+   * @return the one-sided transmissibility of the face
+   */
+  GEOS_HOST_DEVICE
+  inline
+  static real64
+  computeOneSidedTrans( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                        ArrayOfArraysView< localIndex const > const & faceToNodes,
+                        localIndex const faceIndex,
+                        arraySlice1d< real64 const > const & elemCenter,
+                        real64 const (&elemPerm)[ 3 ],
+                        real64 const & areaTolerance )
+  {
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
+
+    real64 const faceArea =
+      computationalGeometry::centroid_3DPolygon( faceToNodes[faceIndex],
+                                                 nodePosition,
+                                                 faceCenter,
+                                                 faceNormal,
+                                                 areaTolerance );
+
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
+
+    real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
+
+    // TPFA assumes diagonal K
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
+
+    return LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
+  }
 };
 
 template< localIndex NF >
@@ -103,42 +145,20 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance;
 
-  // 0) assemble full coefficient tensor from principal axis/components
-  real64 permTensor[ 3 ][ 3 ] = {{ 0 }};
-  MimeticInnerProductHelpers::makeFullTensor( elemPerm, permTensor );
-
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     real64 const mult = transMultiplier[elemToFaces[ifaceLoc]];
+
+    real64 const halfTrans = computeOneSidedTrans( nodePosition, faceToNodes, elemToFaces[ifaceLoc],
+                                                   elemCenter, elemPerm, areaTolerance );
 
     for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
       // for now, TPFA trans
       if( ifaceLoc == jfaceLoc )
       {
-        real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-        // 1) compute the face geometry data: center, normal, vector from cell center to face center
-        real64 const faceArea =
-          computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                     nodePosition,
-                                                     faceCenter,
-                                                     faceNormal,
-                                                     areaTolerance );
-
-        MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
-        MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
-
-        real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
-        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
-
-        // 3) compute the one-sided face transmissibility
-        real64 const halfTrans =
-          LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * mult * faceArea / c2fDistance;
-        // T := sign(T) * max(|T|, tol), so that |T| >= tol and sign(T) is preserved
-        transMatrix[ifaceLoc][jfaceLoc] = ( halfTrans < 0.0 ? -1.0 : 1.0 ) *
-                                          LvArray::math::max( LvArray::math::abs( halfTrans ), weightTolerance );
+        transMatrix[ifaceLoc][jfaceLoc] = LvArray::math::max( mult * halfTrans, weightTolerance );
       }
       else
       {
@@ -170,32 +190,13 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    real64 faceCenter[3], faceNormal[3], faceConormal[3], cellToFaceVec[3];
+    // 1) one-sided transmissibility T_ii, shared with compute()
+    real64 const Tii = LvArray::math::max( computeOneSidedTrans( nodePosition, faceToNodes, elemToFaces[ifaceLoc],
+                                                                 elemCenter, elemPerm, areaTolerance ),
+                                           weightTolerance );
 
-    // 1) face geometry
-    real64 const faceArea =
-      computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                 nodePosition,
-                                                 faceCenter,
-                                                 faceNormal,
-                                                 areaTolerance );
-
-    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
-    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
-
-    real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
-    // 2) K * n (TPFA assumes diagonal K)
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
-
-    // 3) compute T_ii
-    real64 Tii = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
-
-    // T := max(|T|, tol), so that M_ii = 1/T is well-defined with M_ii <= 1/tol
-    Tii = LvArray::math::max( LvArray::math::abs( Tii ), weightTolerance );
-
-    // 4) M = |T|^{-1}
-    M[ifaceLoc][ifaceLoc] = 1.0 / Tii;
+    // 2) M = |T|^{-1}
+    M[ifaceLoc][ifaceLoc] = 1.0 / LvArray::math::abs( Tii );
   }
 }
 

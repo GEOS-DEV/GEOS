@@ -533,7 +533,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
         arrayView1d< real64 > const aperture = subRegion.getField< elementAperture >();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
         {
 
           // Contact constraints
@@ -713,7 +713,7 @@ void SolidMechanicsLagrangeContact::
     arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+    forAll< serialPolicy >( subRegion.size(), [=, this]( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1363,7 +1363,7 @@ void SolidMechanicsLagrangeContact::
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+    forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
     {
 
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -1491,7 +1491,7 @@ void SolidMechanicsLagrangeContact::
       using FrictionType = TYPEOFREF( castedFrictionLaw );
       typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
       {
 
 
@@ -1782,7 +1782,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
   {
     typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-    forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
+    forAll< serialPolicy >( stencil.size(), [=, this] ( localIndex const iconn )
     {
       localIndex const numFluxElems = sei.sizeOfArray( iconn );
 
@@ -2264,7 +2264,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         using FrictionType = TYPEOFREF( castedFrictionLaw );
         typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=, &subRegion] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, &subRegion, this] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {

@@ -34,9 +34,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      
-      localDissipation="Linear"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
       logLevel="1"
@@ -111,45 +108,14 @@
       lengthScale="0.001"
       defaultCriticalFractureEnergy="91"
       criticalStrainEnergy="0"
-      extDrivingForceFlag="1"
+      fractureModelType="Nucleation"
+      localDissipationOption="Linear"
       defaultTensileStrength="27e6"
       defaultCompressiveStrength="77e6"
       defaultDeltaCoefficient="0.0"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="rock_criticalFractureEnergy"
-       scale="91"/>
-
-    <FieldSpecification
-      name="tensileStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_tensileStrength"
-      scale="27e6"/>
-
-    <FieldSpecification
-      name="compressiveStrength"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_compressiveStrength"
-      scale="77e6"/>
-
-    <FieldSpecification
-      name="deltaCoefficient"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1"
-      fieldName="rock_deltaCoefficient"
-      scale="0.0"/>
-
     <FieldSpecification
       name="xtraction"
       fieldName="totalDisplacement"
@@ -182,7 +148,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1"
       setNames="{ middle }"/>
