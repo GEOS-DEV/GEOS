@@ -20,6 +20,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -41,6 +42,7 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#include <cmath>
 #include <stdio.h>
 
 #if defined( GEOS_USE_CUDA )
@@ -104,6 +106,11 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 5.e-02 ).
     setDescription( "Tolerance for the sliding check" );
+
+  registerWrapper( viewKeyStruct::isAnisotropicString(), &m_isAnisotropic ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to use anisotropic scaling in tolerances and penalties computations" );
 
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
@@ -370,11 +377,7 @@ void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartiti
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-  }
+  appendSparsityPattern( pattern, patternDiag );
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView());
@@ -1932,6 +1935,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                                                 string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // Get the "face to element" map (valid for the entire mesh)
@@ -1955,6 +1959,11 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
       elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
 
+    ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
+
+    // Get the coordinates for all nodes
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
+
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       if( subRegion.hasField< contact::traction >() )
@@ -1975,6 +1984,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+        // Triangle face elements bound tetrahedral bulk elements; quadrilateral faces bound hexahedral ones.
+        // The charLength formula differs between the two element types.
+        bool const isTriangle = subRegion.size() > 0 && subRegion.getElementType( 0 ) == ElementType::Triangle;
+
         forAll< parallelHostPolicy >( subRegion.size(), [=, this] ( localIndex const kfe )
         {
 
@@ -1992,6 +2005,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
             for( localIndex i = 0; i < 2; ++i )
             {
+
               localIndex const faceIndex = elemsToFaces[kfe][i];
               localIndex const er = faceToElemRegion[faceIndex][0];
               localIndex const esr = faceToElemSubRegion[faceIndex][0];
@@ -2006,12 +2020,56 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
               real64 const M = K + 4.0 / 3.0 * G;
 
-              real64 const charLength = pow( volume, 1.0 / 3.0 );
+              real64 bbox[3]{};
+
+              if( m_isAnisotropic )
+              {
+                NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
+                localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
+
+                real64 maxSize[3];
+                real64 minSize[3];
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+                  minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+                }
+
+                for( localIndex a = 1; a < numNodesPerElem; ++a )
+                {
+                  for( localIndex j = 0; j < 3; ++j )
+                  {
+                    maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                    minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                  }
+                }
+
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  bbox[j] = maxSize[j] - minSize[j];
+                  // Avoid division by zero in case of degenerate elements
+                  if( bbox[j] < 1e-12 )
+                    GEOS_ERROR( GEOS_FMT( "SolidMechanicsAugmentedLagrangianContact::computeTolerances: degenerate element detected with zero size in direction {}", j ), getDataContext() );
+                }
+
+
+              }
+
+              // For anisotropic factor: XYZ-aligned bbox length
+              // For tetrahedra (triangle faces): charLength = edge = (6*sqrt(2)*V)^(1/3)
+              // For hexahedra (quadrilateral faces): charLength = (V)^(1/3)
+              real64 const charLength = m_isAnisotropic ? bbox[0] : ( isTriangle
+                  ? pow( 6 * std::sqrt( 2 ) * volume, 1.0 / 3.0 )
+                  : pow( volume, 1.0 / 3.0 ) );
 
               // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
               for( localIndex j = 0; j < 3; ++j )
               {
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
+
+                stiffDiagApprox[ i ][ j ] = m_isAnisotropic ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / bbox[j] / bbox[j]
+                : ( isTriangle
+                ? E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * ( 2.0 - 3.0 * nu ) * charLength
+                : E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength );
               }
 
               averageYoungModulus += 0.5*E;

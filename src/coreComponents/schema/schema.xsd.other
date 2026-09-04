@@ -2486,6 +2486,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--compressiveStrength => Compressive strength-->
 		<xsd:attribute name="compressiveStrength" type="real64_array" />
+		<!--crackDrivingForce => Material crack driving force-->
+		<xsd:attribute name="crackDrivingForce" type="real64_array2d" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material damage-->
@@ -2498,6 +2500,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External driving force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
+		<!--oldCrackDrivingForce => Material crack driving force at the last converged state-->
+		<xsd:attribute name="oldCrackDrivingForce" type="real64_array2d" />
 		<!--oldDamage => Material old damage-->
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
@@ -2506,8 +2510,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--strainEnergyDensity => Material strain energy density-->
-		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--tensileStrength => Tensile strength-->
@@ -2532,6 +2534,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--compressiveStrength => Compressive strength-->
 		<xsd:attribute name="compressiveStrength" type="real64_array" />
+		<!--crackDrivingForce => Material crack driving force-->
+		<xsd:attribute name="crackDrivingForce" type="real64_array2d" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material damage-->
@@ -2544,6 +2548,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External driving force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
+		<!--oldCrackDrivingForce => Material crack driving force at the last converged state-->
+		<xsd:attribute name="oldCrackDrivingForce" type="real64_array2d" />
 		<!--oldDamage => Material old damage-->
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
@@ -2552,8 +2558,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--strainEnergyDensity => Material strain energy density-->
-		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--tensileStrength => Tensile strength-->
@@ -2572,6 +2576,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="bulkModulus" type="real64_array" />
 		<!--compressiveStrength => Compressive strength-->
 		<xsd:attribute name="compressiveStrength" type="real64_array" />
+		<!--crackDrivingForce => Material crack driving force-->
+		<xsd:attribute name="crackDrivingForce" type="real64_array2d" />
 		<!--criticalFractureEnergy => Critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64_array" />
 		<!--damage => Material damage-->
@@ -2584,6 +2590,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--extDrivingForce => External driving force-->
 		<xsd:attribute name="extDrivingForce" type="real64_array2d" />
+		<!--oldCrackDrivingForce => Material crack driving force at the last converged state-->
+		<xsd:attribute name="oldCrackDrivingForce" type="real64_array2d" />
 		<!--oldDamage => Material old damage-->
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
@@ -2592,8 +2600,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--strainEnergyDensity => Material strain energy density-->
-		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--tensileStrength => Tensile strength-->

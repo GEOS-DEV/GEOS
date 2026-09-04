@@ -94,6 +94,15 @@ public:
   }
 
   /**
+   * @brief Supply near-null-space vectors used to construct physics-aware preconditioners.
+   * @param nearNullKernel Distributed vectors spanning the near null space.
+   */
+  virtual void setNearNullKernel( arrayView1d< Vector const > const & nearNullKernel )
+  {
+    GEOS_UNUSED_VAR( nearNullKernel );
+  }
+
+  /**
    * @brief @return parameters of the solver.
    */
   LinearSolverParameters const & parameters() const

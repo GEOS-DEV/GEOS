@@ -584,6 +584,10 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_ITS_SANITIZERS="${SANITIZERS}"
     --mount "type=bind,src=${GEOS_SRC_DIR},dst=/workspace"
   )
+  if [[ "${SANITIZERS}" -eq 0 && "${BUILD_DIR_NAME}" == /* ]]; then
+    mkdir -p "${BUILD_DIR_NAME}"
+    docker_args+=(--mount "type=bind,src=${BUILD_DIR_NAME},dst=${BUILD_DIR_NAME}")
+  fi
   if [[ "${FORCE_LEGACY}" -eq 1 ]]; then
     docker_args+=(--env GEOS_HYPREDRV_FORCE_LEGACY=1)
     log "Forcing legacy hypre path (GEOS_HYPREDRV_FORCE_LEGACY=1)"
