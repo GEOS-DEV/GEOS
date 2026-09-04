@@ -363,6 +363,16 @@ def _build_PoroStaircaseCO2PeacemanWell_fim_iterative_cases():
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
+def _build_ReservoirThermoPoroElastic_Circulation_iterative_cases():
+    description = Description(
+        "Thermo-poroelastic circulation with hypre MGR "
+        "(exercises the hypredrive path when available)", "auto", "GEOS team", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "ReservoirThermoPoroElastic_Circulation_iterative_smoke.xml", (3, 5),
+        ((1, 1, 1), ), description, restartcheck_params)
+
+
 def _build_PoroStaircaseCO2PeacemanWell_sequential_cases():
     description = Description(
         "Staircase CO2 poroelastic problem with Peaceman wells ", "auto",
@@ -482,6 +492,7 @@ def test_poro_elastic_coupling_cases():
         _build_PoroStaircaseCO2PeacemanWell_fim_cases(),
         _build_PoroStaircaseCO2PeacemanWell_fim_iterative_cases(),
         _build_PoroStaircaseCO2PeacemanWell_sequential_cases(),
+        _build_ReservoirThermoPoroElastic_Circulation_iterative_cases(),
         _build_PoroElasticPEBICO2FIM_cases(),
         _build_PoroElasticPEBICO2Sequential_cases(),
         _build_PoroElasticGravity_cases(),
