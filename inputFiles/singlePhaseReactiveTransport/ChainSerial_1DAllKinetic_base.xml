@@ -44,7 +44,8 @@
       referencePressure="0.0"
       compressibility="0.0"
       viscosibility="0.0"
-      chemicalSystemType="chainSerialAllKinetic"/>
+      chemicalSystemType="chainSerialAllKinetic"
+      solventMassPerSolutionVolume="1"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"

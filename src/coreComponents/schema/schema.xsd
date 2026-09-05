@@ -5355,6 +5355,8 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsoluteLogConcentrationChange => Maximum (absolute) change in the natural log of a primary species concentration in a Newton iteration. Zero or less disables the scaling.-->
+		<xsd:attribute name="maxAbsoluteLogConcentrationChange" type="real64" default="4.60517" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
@@ -8809,6 +8811,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompressibleSinglePhaseFluidType">
+		<!--activityModelType => Activity model applied to the chemical system. Available options are: ``identity|bdot``. ``bdot`` requires ion size and b-dot parameters, which only the geochemical systems carry.-->
+		<xsd:attribute name="activityModelType" type="geos_constitutive_reactivefluid_ActivityModelType" default="identity" />
 		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic``-->
 		<xsd:attribute name="chemicalSystemType" type="geos_constitutive_reactivefluid_ChemicalSystemType" use="required" />
 		<!--compressibility => Fluid compressibility [Pa^-1]-->
@@ -8828,6 +8832,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
+		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
@@ -8838,6 +8844,11 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_constitutive_reactivefluid_ActivityModelType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|identity|bdot" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geos_constitutive_reactivefluid_ChemicalSystemType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic" />
@@ -8892,6 +8903,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveThermalCompressibleSinglePhaseFluidType">
+		<!--activityModelType => Activity model applied to the chemical system. Available options are: ``identity|bdot``. ``bdot`` requires ion size and b-dot parameters, which only the geochemical systems carry.-->
+		<xsd:attribute name="activityModelType" type="geos_constitutive_reactivefluid_ActivityModelType" default="identity" />
 		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic``-->
 		<xsd:attribute name="chemicalSystemType" type="geos_constitutive_reactivefluid_ChemicalSystemType" use="required" />
 		<!--compressibility => Fluid compressibility [Pa^-1]-->
@@ -8920,6 +8933,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
+		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
 		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
 		<!--temperatureViscosityCoefficient => Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K-->
