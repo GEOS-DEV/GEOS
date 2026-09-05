@@ -47,7 +47,7 @@ DECLARE_FIELD( logPrimarySpeciesConcentration_n,
                "logPrimarySpeciesConcentration_n",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Natural log of primary species concentration (molality) at the previous converged time step" );
 
@@ -55,7 +55,7 @@ DECLARE_FIELD( bcLogPrimarySpeciesConcentration,
                "bcLogPrimarySpeciesConcentration",
                array2dLayoutComp,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Boundary condition for natural log of primary species concentration (molality)" );
 
@@ -71,8 +71,8 @@ DECLARE_FIELD( primarySpeciesAggregateMole_n,
                "primarySpeciesAggregateMole_n",
                array2dLayoutComp,
                0,
-               LEVEL_0,
-               WRITE_AND_READ,
+               NOPLOT,
+               NO_WRITE,
                "Aggregate amount of primary species in mole at the previous converged time step" );
 
 DECLARE_FIELD( kineticReactionMolarIncrements,
