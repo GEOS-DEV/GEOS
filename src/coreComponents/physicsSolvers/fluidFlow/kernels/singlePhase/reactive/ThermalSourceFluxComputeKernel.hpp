@@ -45,6 +45,7 @@ public:
   using Base::numDof;
   using Base::numEqn;
   using Base::m_sizeScalingFactor;
+  using Base::m_solventMassPerSolutionVolume;
   using Base::m_primarySpeciesAggregateConcentration;
   using Base::m_density;
   using Base::m_dDensity;
@@ -122,7 +123,8 @@ public:
 
     for( integer i = 0; i < numSpecies; ++i )
     {
-      stack.localSpeciesJacobian[i][numDof-numSpecies-1] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_dDensity[ei][0][DerivOffset::dT] / (m_density[ei][0] * m_density[ei][0]) *
+      stack.localSpeciesJacobian[i][numDof-numSpecies-1] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventMassPerSolutionVolume * m_dDensity[ei][0][DerivOffset::dT] /
+                                                            (m_density[ei][0] * m_density[ei][0]) *
                                                             scaledInflowMass;
     }
   }
