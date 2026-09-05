@@ -19,6 +19,7 @@
 
 #include "SinglePhaseReactiveTransport.hpp"
 
+#include "common/format/LogPart.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
@@ -772,6 +773,10 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
 
 void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, string_array const & regionNames )
 {
+  LogPart equilibriumLog( "Initial Chemical Equilibrium Enforcement",
+                          MpiWrapper::commRank() == 0 && isLogLevelActive< logInfo::Convergence >( getLogLevel() ) );
+  equilibriumLog.begin();
+
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
   {
@@ -812,6 +817,8 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
       diffusionMaterial.initializeTemperatureState( temperature );
     }
   } );
+
+  equilibriumLog.end();
 }
 
 void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const
@@ -848,6 +855,15 @@ void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegi
 
     fluid.saveConvergedState();
   }
+
+  // Report the cell count and the status over all ranks, not just the one doing the logging.
+  globalIndex const numCells = MpiWrapper::sum< globalIndex >( subRegion.getNumberOfLocalIndices() );
+  integer const allConverged = MpiWrapper::min< integer >( converged ? 1 : 0 );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                         GEOS_FMT( "{}: initial equilibrium speciation on {} ({} cells): {}",
+                                   getName(), subRegion.getName(), numCells,
+                                   allConverged ? "converged" : "NOT converged" ) );
 
   GEOS_ERROR_IF( !converged,
                  GEOS_FMT( "{}: the initial equilibrium speciation did not converge.",
