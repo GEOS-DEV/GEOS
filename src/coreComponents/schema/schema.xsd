@@ -5355,6 +5355,8 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsoluteLogConcentrationChange => Maximum (absolute) change in the natural log of a primary species concentration in a Newton iteration. Zero or less disables the scaling.-->
+		<xsd:attribute name="maxAbsoluteLogConcentrationChange" type="real64" default="4.60517" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->

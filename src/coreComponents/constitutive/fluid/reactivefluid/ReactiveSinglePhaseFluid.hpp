@@ -368,7 +368,7 @@ updateEquilibriumReaction( localIndex const k,
 {
   constexpr integer numSecondarySpecies = REACTION_PARAMS_TYPE::numSecondarySpecies();
 
-  if constexpr( numSecondarySpecies > 0 )
+  if constexpr ( numSecondarySpecies > 0 )
   {
     stackArray1d< real64, numSecondarySpecies > logSecondarySpeciesConcentration( numSecondarySpecies );
 
