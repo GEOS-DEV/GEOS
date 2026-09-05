@@ -34,7 +34,7 @@ namespace mimeticInnerProduct
  * Provides the mimetic inner product that reproduces the lowest-order Raviart-Thomas mass matrix
  * exactly on simplices, and extends it consistently to general polyhedra
  */
-class RTInnerProduct
+class RTInnerProduct : public MimeticInnerProductBase
 {
 public:
 

@@ -2572,11 +2572,14 @@ TEST( MimeticIP_RT0Exactness, Triangle2D )
     real64 q0[3] = { N[0][0], N[1][0], N[2][0] };
     real64 q1[3] = { N[0][1], N[1][1], N[2][1] };
     real64 nrm = std::sqrt( q0[0]*q0[0] + q0[1]*q0[1] + q0[2]*q0[2] );
-    for( int i = 0; i < 3; ++i ) q0[i] /= nrm;
+    for( int i = 0; i < 3; ++i )
+      q0[i] /= nrm;
     real64 const dot = q0[0]*q1[0] + q0[1]*q1[1] + q0[2]*q1[2];
-    for( int i = 0; i < 3; ++i ) q1[i] -= dot * q0[i];
+    for( int i = 0; i < 3; ++i )
+      q1[i] -= dot * q0[i];
     nrm = std::sqrt( q1[0]*q1[0] + q1[1]*q1[1] + q1[2]*q1[2] );
-    for( int i = 0; i < 3; ++i ) q1[i] /= nrm;
+    for( int i = 0; i < 3; ++i )
+      q1[i] /= nrm;
 
     real64 const s = ( M1[0][0] + M1[1][1] + M1[2][2] ) / 4.0;   // tr(M1)/(d+2), d = 2
 
