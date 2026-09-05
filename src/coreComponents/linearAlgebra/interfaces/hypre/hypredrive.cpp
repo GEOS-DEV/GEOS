@@ -283,6 +283,7 @@ bool supportsGeneratedPreconditioner( LinearSolverParameters::PreconditionerType
     case PreconditionerType::direct:
     case PreconditionerType::bgs:
     case PreconditionerType::multiscale:
+    case PreconditionerType::riesz:
       return false;
   }
 
@@ -1386,6 +1387,17 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   std::iota( mgrData.pointMarkers.begin(), mgrData.pointMarkers.end(), 0 );
 
   strategy.setup( params.mgr, precond, mgrData );
+
+  // strategies driven by solver-provided custom point markers use more blocks than there are
+  // dof fields; those labels have no field-name representation, so skip the YAML preview
+  if( strategy.m_numBlocks > LvArray::integerConversion< HYPRE_Int >( labelNames.size() ) )
+  {
+    destroyWrapper( mgrData.coarseSolver );
+    destroyWrapper( mgrData.mechSolver );
+    destroyWrapper( mgrData.nestedSolver );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
+    return false;
+  }
 
   std::ostringstream stream;
   if( params.mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM )

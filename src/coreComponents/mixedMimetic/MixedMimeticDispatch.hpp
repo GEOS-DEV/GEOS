@@ -25,6 +25,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
 #include "common/logger/Logger.hpp"
 
 namespace geos
@@ -57,6 +58,10 @@ mixedMimeticInnerProductDispatch( mimeticInnerProduct::MimeticInnerProductBase c
   else if( auto const * const ptr4 = dynamic_cast< mimeticInnerProduct::BdVLMInnerProduct const * >(&input) )
   {
     lambda( *ptr4 );
+  }
+  else if( auto const * const ptr5 = dynamic_cast< mimeticInnerProduct::RTInnerProduct const * >(&input) )
+  {
+    lambda( *ptr5 );
   }
   else
   {

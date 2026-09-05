@@ -105,43 +105,53 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    // if the label-1 set is empty the level-1 reduction is the identity: use a single
-    // level eliminating all (diagonal) fluxes at once
-    integer localAnyLive = 0;
+    // a reduction level with an empty F-set is the identity and is dropped: the level
+    // structure is determined by which label sets D_0 (TPFA dofs) and D_1 (MFD dofs)
+    // are nonempty
+    integer localD0Nonempty = 0;
+    integer localD1Nonempty = 0;
     for( localIndex i = 0; i < mgrParams.customPointMarkers.size(); ++i )
     {
-      if( mgrParams.customPointMarkers[i] == 1 )
-      {
-        localAnyLive = 1;
-        break;
-      }
+      localD0Nonempty |= ( mgrParams.customPointMarkers[i] == 0 );
+      localD1Nonempty |= ( mgrParams.customPointMarkers[i] == 1 );
     }
-    bool const anyLiveFaces = MpiWrapper::max( localAnyLive ) == 1;
+    bool const d0Nonempty = MpiWrapper::max( localD0Nonempty ) == 1;
+    bool const d1Nonempty = MpiWrapper::max( localD1Nonempty ) == 1;
 
     m_labels[0].clear();
     m_labels[1].clear();
-    if( anyLiveFaces )
+    HYPRE_Int numActiveLevels;
+    if( d0Nonempty && d1Nonempty )
     {
+      // two reduction levels: level 0 with F = D_0 (exact Jacobi elimination of the
+      // diagonal block), level 1 with F = D_1 (SSOR sweeps on the MFD block)
       m_labels[0].push_back( 1 );
       m_labels[0].push_back( 2 );
       m_labels[1].push_back( 2 );
+      m_levelFRelaxType[0]  = MGRFRelaxationType::jacobi;
+      m_levelFRelaxIters[0] = 1;
+      m_levelInterpType[0]  = MGRInterpolationType::jacobi;
+      numActiveLevels = numLevels;
     }
     else
     {
+      // one reduction level with F = D_0 (exact Jacobi elimination) or F = D_1 (SSOR sweeps)
       m_labels[0].push_back( 2 );
+      m_levelFRelaxType[0]  = d1Nonempty ? MGRFRelaxationType::hybridSymmetricGaussSeidel
+                                         : MGRFRelaxationType::jacobi;
+      m_levelFRelaxIters[0] = d1Nonempty ? m_levelFRelaxIters[1] : 1;
+      m_levelInterpType[0]  = MGRInterpolationType::jacobi;
+      numActiveLevels = 1;
     }
     setupLabels();
 
-    setReduction( precond, mgrData, anyLiveFaces ? numLevels : 1 );
+    setReduction( precond, mgrData, numActiveLevels );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur
     // complement. Two V-cycles per MGR application: the coarse solve accuracy governs the
     // outer FGMRES iteration count (a single cycle leaves the reduction quality unused)
     setPressureAMG( mgrData.coarseSolver );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 2 ) );
-    // strength threshold suited to 3D anisotropic permeability fields (hypre default 0.25
-    // over-couples the weak direction and degrades coarsening quality)
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.coarseSolver.ptr, 0.6 ) );
   }
 };
 

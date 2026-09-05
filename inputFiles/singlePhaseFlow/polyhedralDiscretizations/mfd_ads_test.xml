@@ -1,0 +1,143 @@
+<?xml version="1.0" ?>
+<Problem>
+
+  <Solvers>
+
+    <SinglePhaseMixedMFD
+      name="mfdFlow"
+      logLevel="1"
+      discretization="mfdDiscretization"
+      targetRegions="{ overburden, reservoir, underburden }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="riesz"
+        krylovTol="1.0e-6"
+        logLevel="1"/>
+    </SinglePhaseMixedMFD>
+
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mfdDiscretization"
+        innerProductType="RT"
+        adaptive="1"
+        residualTolerance="1.0e+24"
+        nominalGradient="{ 1.0, 0.0, 0.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <Mesh>
+    <VTKMesh
+      name="reservoirMesh"
+      file="mesh_props_cg.vtu"
+      logLevel="1"
+      partitionRefinement="0"
+      useGlobalIds="0"
+      regionAttribute="unit"
+      fieldsToImport="{ porosity, permeability }"
+      fieldNamesInGEOS="{ rockPorosity_referencePorosity, rockPerm_permeability }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="bottomBC"
+      xMin="{ 558000.0, 6205000.0, -2401.0 }"
+      xMax="{ 759000.0, 6353000.0, -2399.0 }"/>
+    <Box
+      name="topBC"
+      xMin="{ 558000.0, 6205000.0, -1.0 }"
+      xMax="{ 759000.0, 6353000.0,  1.0 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="overburden"
+      cellBlocks="{ 1_* }"
+      materialList="{ fluid, rock }"/>
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ 2_* }"
+      materialList="{ fluid, rock }"/>
+    <CellElementRegion
+      name="underburden"
+      cellBlocks="{ 3_* }"
+      materialList="{ fluid, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000.0"
+      referenceDensity="1000.0"
+      defaultViscosity="0.001"
+      referenceViscosity="0.001"
+      referencePressure="2.0e7"
+      compressibility="4.5e-10"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="2.0e7"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-15 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="2.0e7"/>
+
+    <FieldSpecification
+      name="bottomPressure"
+      setNames="{ bottomBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="2.4e7"/>
+    <FieldSpecification
+      name="topPressure"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e5"/>
+  </FieldSpecifications>
+
+  <Events maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/mfdFlow"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="mfdClassify"
+      fieldNames="{ stencilFlag, consistencyIndicator, pressure }"/>
+  </Outputs>
+
+</Problem>

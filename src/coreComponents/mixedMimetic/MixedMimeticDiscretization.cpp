@@ -24,6 +24,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
 
 namespace geos
 {
@@ -131,15 +132,20 @@ MixedMimeticDiscretization::factory( string const & mimeticInnerProductType ) co
   {
     rval = std::make_unique< BdVLMInnerProduct >();
   }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::RT )
+  {
+    rval = std::make_unique< RTInnerProduct >();
+  }
   else
   {
     GEOS_ERROR( GEOS_FMT( "Key value of {} does not have an associated mimetic inner product implementing the mixed-form "
-                          "mass matrix (valid options: {}, {}, {}, {}).",
+                          "mass matrix (valid options: {}, {}, {}, {}, {}).",
                           mimeticInnerProductType,
                           MimeticInnerProductTypeStrings::TPFA,
                           MimeticInnerProductTypeStrings::QuasiTPFA,
                           MimeticInnerProductTypeStrings::Simple,
-                          MimeticInnerProductTypeStrings::BdVLM ),
+                          MimeticInnerProductTypeStrings::BdVLM,
+                          MimeticInnerProductTypeStrings::RT ),
                 getDataContext() );
   }
   return rval;

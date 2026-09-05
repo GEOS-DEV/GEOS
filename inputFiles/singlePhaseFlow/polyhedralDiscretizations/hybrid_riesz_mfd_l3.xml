@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File name="./hybrid_riesz_mfd_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="hybridMesh"
+      file="hybrid_mesh_l_3.vtu"
+      logLevel="1"
+      partitionRefinement="0"
+      useGlobalIds="0"/>
+  </Mesh>
+</Problem>

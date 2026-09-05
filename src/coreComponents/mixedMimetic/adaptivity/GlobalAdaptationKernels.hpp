@@ -181,10 +181,10 @@ struct FaceFluxProjectionKernel
 
 /**
  * @class FaceLabelKernel
- * @brief Classify the face dofs. A face dof f is a TPFA dof iff, for every adjacent
- *        cell C, (i) chi_C = 0 and (ii) (x_f - x_C) . K_C n_out > 0: its constitutive
- *        row is then exactly diagonal with a positive two-point coefficient. Only TPFA
- *        dofs are condensed (label 0); every other face dof is a live unknown (label 1).
+ * @brief Classify the face dofs. A face dof f is a TPFA dof iff chi_C = 0 for every
+ *        adjacent cell C: its constitutive row is then exactly diagonal and the dof is
+ *        condensed (label 0), whatever the sign of its two-point coefficient. Every other
+ *        face dof is a live unknown (label 1).
  *        When the selected inner product is itself TPFA, the effective operator is diagonal
  *        everywhere and all faces get label 0.
  */
@@ -201,11 +201,8 @@ struct FaceLabelKernel
           arrayView2d< localIndex const > const & elemList,
           SortedArrayView< localIndex const > const & regionFilter,
           ElementViewConst< arrayView1d< integer const > > const & stencilFlag,
-          arrayView2d< real64 const > const & faceCenter,
-          arrayView2d< real64 const > const & faceNormal,
-          ElementViewConst< arrayView2d< real64 const > > const & elemCenter,
-          ElementViewConst< arrayView3d< real64 const > > const & elemPerm,
           bool const effectiveTpfa,
+          bool const keepAllFacesLive,
           arrayView1d< integer > const & faceStencilLabel )
   {
     forAll< POLICY >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const kf )
@@ -220,26 +217,9 @@ struct FaceLabelKernel
           localIndex const ei  = elemList[kf][k];
           if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
           {
-            label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
-
-            // u = x_f - x_C, n the fixed global normal: n_out = sign(u . n) n, so
-            // sign(u . K n_out) = sign((u . K n)(u . n))
-            real64 uDotKn = 0.0;
-            for( integer d = 0; d < 3; ++d )
-            {
-              uDotKn += ( faceCenter[kf][d] - elemCenter[er][esr][ei][d] ) *
-                        elemPerm[er][esr][ei][0][d] * faceNormal[kf][d];
-            }
-            real64 uDotN = 0.0;
-            for( integer d = 0; d < 3; ++d )
-            {
-              uDotN += ( faceCenter[kf][d] - elemCenter[er][esr][ei][d] ) * faceNormal[kf][d];
-            }
-            // u . K n_out <= 0: half-transmissibility not positive, keep the flux live
-            if( uDotKn * uDotN <= 0.0 )
-            {
-              label = 1;
-            }
+            // a face is live next to an MFD cell, or everywhere when the saddle point is kept whole
+            // (the Riesz-map preconditioner needs it): a TPFA cell then only selects its diagonal star
+            label = keepAllFacesLive ? 1 : LvArray::math::max( label, stencilFlag[er][esr][ei] );
           }
         }
       }

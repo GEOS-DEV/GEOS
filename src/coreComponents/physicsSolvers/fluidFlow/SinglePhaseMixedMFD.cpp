@@ -188,7 +188,7 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
         subRegion.getField< mixedMimetic::stencilFlag >().template setValues< parallelDevicePolicy<> >( 1 );
       } );
     } );
-    computeFaceStencilLabels( domain );
+    computeFaceStencilLabels( domain, false );
     return;
   }
 
@@ -196,6 +196,7 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
   real64 const tolerance = discretization.getResidualTolerance();
   R1Tensor const gradientInput = discretization.getNominalGradient();
   real64 const gradient[3] = { gradientInput[0], gradientInput[1], gradientInput[2] };
+  localIndex numMfdCellsTotal = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -244,19 +245,19 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
       mixedMimeticKernels::internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
         mixedMimeticKernels::LocalResidualKernel< NUM_FACES >::
-          template launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                     nodeManager.referencePosition(),
-                                                     faceManager.nodeList().toViewConst(),
-                                                     subRegion.faceList().toViewConst(),
-                                                     subRegion.getElementCenter(),
-                                                     subRegion.getElementVolume(),
-                                                     permeability.permeability(),
-                                                     faceManager.faceCenter(),
-                                                     faceManager.faceNormal(),
-                                                     projFaceFlux.toViewConst(),
-                                                     gradient,
-                                                     lengthTolerance,
-                                                     faceResidual );
+        template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                   nodeManager.referencePosition(),
+                                                   faceManager.nodeList().toViewConst(),
+                                                   subRegion.faceList().toViewConst(),
+                                                   subRegion.getElementCenter(),
+                                                   subRegion.getElementVolume(),
+                                                   permeability.permeability(),
+                                                   faceManager.faceCenter(),
+                                                   faceManager.faceNormal(),
+                                                   projFaceFlux.toViewConst(),
+                                                   gradient,
+                                                   lengthTolerance,
+                                                   faceResidual );
       } );
     } );
 
@@ -273,13 +274,13 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
       mixedMimeticKernels::internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
         numMfdCells += mixedMimeticKernels::MarkingKernel< NUM_FACES >::
-                         template launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                    subRegion.faceList().toViewConst(),
-                                                                    subRegion.ghostRank(),
-                                                                    faceResidual.toViewConst(),
-                                                                    tolerance,
-                                                                    consistencyIndicator,
-                                                                    stencilFlag );
+                       template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                  subRegion.faceList().toViewConst(),
+                                                                  subRegion.ghostRank(),
+                                                                  faceResidual.toViewConst(),
+                                                                  tolerance,
+                                                                  consistencyIndicator,
+                                                                  stencilFlag );
       } );
       numCells += subRegion.size() - subRegion.getNumberOfGhosts();
     } );
@@ -293,12 +294,18 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
     globalIndex const globalNumCells = MpiWrapper::sum< globalIndex >( numCells );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: Global Adaptation marked {} / {} cells as MFD-compatible (tolerance = {})",
                                getName(), globalNumMfdCells, globalNumCells, tolerance ) );
+    numMfdCellsTotal += numMfdCells;
   } );
 
-  computeFaceStencilLabels( domain );
+  // the Riesz-map preconditioner is a map of the whole saddle point: as soon as one cell is MFD no
+  // face is condensed (eliminating faces removes the elliptic content of the div term from the map);
+  // with no MFD cell the condensed SPD system is solved as such
+  bool const riesz = m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::riesz;
+  bool const keepAllFacesLive = riesz && MpiWrapper::sum< globalIndex >( numMfdCellsTotal ) > 0;
+  computeFaceStencilLabels( domain, keepAllFacesLive );
 }
 
-void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
+void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain, bool const keepAllFacesLive )
 {
   GEOS_MARK_FUNCTION;
 
@@ -320,12 +327,6 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
     ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const stencilFlagAccessor =
       elemManager.constructArrayViewAccessor< integer, 1 >( mixedMimetic::stencilFlag::key() );
 
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenterAccessor =
-      elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-
-    using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase, fields::permeability::permeability >;
-    PermeabilityAccessors const permAccessors( elemManager, getName() );
-
     mixedMimeticKernels::FaceLabelKernel::
       launch< parallelDevicePolicy<> >( faceManager.size(),
                                         faceManager.elementRegionList(),
@@ -333,11 +334,8 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
                                         faceManager.elementList(),
                                         m_regionFilter.toViewConst(),
                                         stencilFlagAccessor.toNestedViewConst(),
-                                        faceManager.faceCenter(),
-                                        faceManager.faceNormal(),
-                                        elemCenterAccessor.toNestedViewConst(),
-                                        permAccessors.get( fields::permeability::permeability {} ),
                                         effectiveTpfa,
+                                        keepAllFacesLive,
                                         faceManager.getField< mixedMimetic::faceStencilLabel >() );
   } );
 }
@@ -410,9 +408,9 @@ void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  this->getName(), time, fs.getCatalogName(), fs.getName(),
-                                                  setName, targetGroup.getName(), numTargetFaces ),
+                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                          this->getName(), time, fs.getCatalogName(), fs.getName(),
+                                                          setName, targetGroup.getName(), numTargetFaces ),
                                         fs );
       }
 
@@ -439,6 +437,11 @@ void SinglePhaseMixedMFD::setupSystem( DomainPartition & domain,
   // with the dof numbering finalized, build the per-dof labels driving the
   // stencilFlag-guided three-level MGR reduction
   computeMgrPointMarkers( domain, dofManager );
+
+  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::riesz )
+  {
+    computeADSAuxData( domain, dofManager );
+  }
 }
 
 void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain,
@@ -516,6 +519,266 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
         }
       } );
     } );
+  } );
+}
+
+void SinglePhaseMixedMFD::computeADSAuxData( DomainPartition const & domain,
+                                             DofManager const & dofManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  GEOS_ERROR_IF( MpiWrapper::commSize() > 1,
+                 GEOS_FMT( "{}: the Riesz-map preconditioner currently supports serial runs only", getName() ) );
+
+  LinearSolverParameters::ADSAuxData & aux = m_linearSolverParameters.get().adsAuxData;
+  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+
+    localIndex const numNodes = nodeManager.size();
+    localIndex const numEdges = edgeManager.size();
+    localIndex const numFaces = faceManager.size();
+
+    arrayView1d< globalIndex const > const faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceStencilLabel = faceManager.getField< mixedMimetic::faceStencilLabel >();
+
+    // flux rows: live MFD faces in ascending dof order, matching the F-point order of the ADS level
+    stdVector< std::pair< globalIndex, localIndex > > liveFaces;
+    for( localIndex kf = 0; kf < numFaces; ++kf )
+    {
+      if( faceDofNumber[kf] >= 0 && faceStencilLabel[kf] == 1 )
+      {
+        liveFaces.emplace_back( faceDofNumber[kf], kf );
+      }
+    }
+    std::sort( liveFaces.begin(), liveFaces.end() );
+    localIndex const numFluxRows = LvArray::integerConversion< localIndex >( liveFaces.size() );
+
+    array1d< localIndex > faceToRow( numFaces );
+    faceToRow.setValues< serialPolicy >( -1 );
+    for( localIndex r = 0; r < numFluxRows; ++r )
+    {
+      faceToRow[liveFaces[r].second] = r;
+    }
+
+    // ---- the de Rham sub-complex of the MFD region: only the edges of the live faces and the
+    // vertices of those edges enter the auxiliary spaces, compactly renumbered, so ADS sees the
+    // complex of exactly the block it is handed (the condensed TPFA faces are its boundary)
+    ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToEdges = faceManager.edgeList().toViewConst();
+    arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
+
+    array1d< localIndex > edgeToAux( numEdges );
+    edgeToAux.setValues< serialPolicy >( -1 );
+    for( localIndex r = 0; r < numFluxRows; ++r )
+    {
+      localIndex const kf = liveFaces[r].second;
+      for( localIndex j = 0; j < faceToEdges.sizeOfArray( kf ); ++j )
+      {
+        edgeToAux[faceToEdges( kf, j )] = 0;
+      }
+    }
+    localIndex numActiveEdges = 0;
+    for( localIndex e = 0; e < numEdges; ++e )
+    {
+      if( edgeToAux[e] == 0 )
+      {
+        edgeToAux[e] = numActiveEdges++;
+      }
+    }
+
+    array1d< localIndex > nodeToAux( numNodes );
+    nodeToAux.setValues< serialPolicy >( -1 );
+    for( localIndex e = 0; e < numEdges; ++e )
+    {
+      if( edgeToAux[e] >= 0 )
+      {
+        nodeToAux[edgeToNodes( e, 0 )] = 0;
+        nodeToAux[edgeToNodes( e, 1 )] = 0;
+      }
+    }
+    localIndex numActiveNodes = 0;
+    for( localIndex n = 0; n < numNodes; ++n )
+    {
+      if( nodeToAux[n] == 0 )
+      {
+        nodeToAux[n] = numActiveNodes++;
+      }
+    }
+
+    // ---- discrete curl: signed edges of the boundary loop of each live face. The flux dof
+    // follows the normal pointing out of the adjacent element with the smaller global index
+    // (the assembly kernel's convention), so the loop of faceToNodes is flipped when its
+    // right-hand normal points into that element
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
+    arrayView2d< localIndex const > const fToElemRegion = faceManager.elementRegionList();
+    arrayView2d< localIndex const > const fToElemSubRegion = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const fToElem = faceManager.elementList();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemLocalToGlobal =
+      elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
+      elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+    real64 const areaTolerance = LvArray::math::square( domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol );
+
+    aux.cRowPtr.resize( numFluxRows + 1 );
+    stdVector< globalIndex > cCols;
+    stdVector< real64 > cVals;
+    aux.cRowPtr[0] = 0;
+    for( localIndex r = 0; r < numFluxRows; ++r )
+    {
+      localIndex const kf = liveFaces[r].second;
+
+      // the element the dof normal points out of: smallest global index among the neighbours
+      globalIndex gMin = -1;
+      real64 refCenter[3]{};
+      for( localIndex k = 0; k < 2; ++k )
+      {
+        localIndex const er = fToElemRegion( kf, k );
+        localIndex const esr = fToElemSubRegion( kf, k );
+        localIndex const ei = fToElem( kf, k );
+        if( er < 0 || esr < 0 || ei < 0 )
+        {
+          continue;
+        }
+        globalIndex const g = elemLocalToGlobal[er][esr][ei];
+        if( gMin < 0 || g < gMin )
+        {
+          gMin = g;
+          LvArray::tensorOps::copy< 3 >( refCenter, elemCenter[er][esr][ei] );
+        }
+      }
+
+      real64 faceCenter[3], loopNormal[3];
+      computationalGeometry::centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, loopNormal, areaTolerance );
+      LvArray::tensorOps::subtract< 3 >( faceCenter, refCenter );
+      real64 const loopSign = LvArray::tensorOps::AiBi< 3 >( faceCenter, loopNormal ) < 0.0 ? -1.0 : 1.0;
+
+      localIndex const numFaceNodes = faceToNodes.sizeOfArray( kf );
+      for( localIndex i = 0; i < numFaceNodes; ++i )
+      {
+        localIndex const a = faceToNodes( kf, i );
+        localIndex const b = faceToNodes( kf, ( i + 1 ) % numFaceNodes );
+        for( localIndex j = 0; j < faceToEdges.sizeOfArray( kf ); ++j )
+        {
+          localIndex const e = faceToEdges( kf, j );
+          localIndex const n0 = edgeToNodes( e, 0 );
+          localIndex const n1 = edgeToNodes( e, 1 );
+          if( ( n0 == a && n1 == b ) || ( n0 == b && n1 == a ) )
+          {
+            cCols.push_back( edgeToAux[e] );
+            cVals.push_back( loopSign * ( n0 == a ? 1.0 : -1.0 ) );
+            break;
+          }
+        }
+      }
+      aux.cRowPtr[r + 1] = LvArray::integerConversion< globalIndex >( cCols.size() );
+    }
+    aux.cCols.resize( cCols.size() );
+    aux.cVals.resize( cVals.size() );
+    std::copy( cCols.begin(), cCols.end(), aux.cCols.begin() );
+    std::copy( cVals.begin(), cVals.end(), aux.cVals.begin() );
+
+    // ---- discrete gradient: signed vertex-edge incidence over the active edges
+    aux.gRowPtr.resize( numActiveEdges + 1 );
+    aux.gCols.resize( 2 * numActiveEdges );
+    aux.gVals.resize( 2 * numActiveEdges );
+    aux.gRowPtr[0] = 0;
+    for( localIndex e = 0; e < numEdges; ++e )
+    {
+      localIndex const ea = edgeToAux[e];
+      if( ea < 0 )
+      {
+        continue;
+      }
+      aux.gCols[2 * ea] = nodeToAux[edgeToNodes( e, 0 )];
+      aux.gVals[2 * ea] = -1.0;
+      aux.gCols[2 * ea + 1] = nodeToAux[edgeToNodes( e, 1 )];
+      aux.gVals[2 * ea + 1] = 1.0;
+      aux.gRowPtr[ea + 1] = 2 * ( ea + 1 );
+    }
+
+    // ---- coordinates of the active vertices
+    aux.xCoords.resize( numActiveNodes );
+    aux.yCoords.resize( numActiveNodes );
+    aux.zCoords.resize( numActiveNodes );
+    for( localIndex n = 0; n < numNodes; ++n )
+    {
+      localIndex const na = nodeToAux[n];
+      if( na >= 0 )
+      {
+        aux.xCoords[na] = nodePosition( n, 0 );
+        aux.yCoords[na] = nodePosition( n, 1 );
+        aux.zCoords[na] = nodePosition( n, 2 );
+      }
+    }
+
+    // ---- per pressure dof: the cell's stencil flag and the geometric factor (l_e/D)^2 of its L2
+    // weight, l_e^2 = |E|^2 / sum_f A_f^2 and D the bounding-box diagonal of the mesh
+    {
+      string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+      globalIndex const rankOffset = dofManager.rankOffset();
+      aux.mfdCell.resize( dofManager.numLocalDofs() );
+      aux.mfdCell.zero();
+      aux.pressureNormScale.resize( dofManager.numLocalDofs() );
+      aux.pressureNormScale.zero();
+
+      real64 lo[3] = { LvArray::NumericLimits< real64 >::max, LvArray::NumericLimits< real64 >::max, LvArray::NumericLimits< real64 >::max };
+      real64 hi[3] = { -LvArray::NumericLimits< real64 >::max, -LvArray::NumericLimits< real64 >::max, -LvArray::NumericLimits< real64 >::max };
+      for( localIndex n = 0; n < numNodes; ++n )
+      {
+        for( int d = 0; d < 3; ++d )
+        {
+          lo[d] = LvArray::math::min( lo[d], nodePosition( n, d ) );
+          hi[d] = LvArray::math::max( hi[d], nodePosition( n, d ) );
+        }
+      }
+      real64 diag2 = 0.0;
+      for( int d = 0; d < 3; ++d )
+      {
+        diag2 += LvArray::math::square( MpiWrapper::max( hi[d] ) - MpiWrapper::min( lo[d] ) );
+      }
+
+      arrayView1d< real64 const > const faceArea = faceManager.faceArea();
+      elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+      {
+        if( !subRegion.hasWrapper( elemDofKey ) )
+        {
+          return;
+        }
+        arrayView1d< globalIndex const > const elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+        arrayView1d< real64 const > const elemVolume = subRegion.getElementVolume();
+        arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+        arrayView1d< integer const > const stencilFlag = subRegion.getField< mixedMimetic::stencilFlag >();
+        arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+        for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+        {
+          if( elemGhostRank[ei] >= 0 || elemDofNumber[ei] < 0 )
+          {
+            continue;
+          }
+          real64 sumArea2 = 0.0;
+          for( localIndex j = 0; j < elemsToFaces.size( 1 ); ++j )
+          {
+            localIndex const kf = elemsToFaces( ei, j );
+            sumArea2 += kf >= 0 ? LvArray::math::square( faceArea[kf] ) : 0.0;
+          }
+          localIndex const row = elemDofNumber[ei] - rankOffset;
+          aux.mfdCell[row] = stencilFlag[ei] != 0 ? 1 : 0;
+          aux.pressureNormScale[row] = sumArea2 > 0.0 ? LvArray::math::square( elemVolume[ei] ) / sumArea2 / diag2 : 0.0;
+        }
+      } );
+    }
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: Riesz-map sub-complex built: {} live flux rows, {} active edges (of {}), {} active vertices (of {})",
+                               getName(), numFluxRows, numActiveEdges, numEdges, numActiveNodes, numNodes ) );
   } );
 }
 
@@ -665,6 +928,112 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
   // the face pressure boundary values are applied inside the constitutive rows during assembly;
   // only the cell-centered boundary conditions (Dirichlet cells, source fluxes) remain to be applied here
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
+  // residual-norm weights w_i = ||A_i S||_inf = max_j |A_ij| s_j, S = diag(s_j) the
+  // characteristic scales of the unknowns: each term |A_ij| s_j has the units of r_i,
+  // and w_i is invariant under row rescaling and under the TPFA-face condensation
+  localIndex const numRows = localMatrix.numRows();
+  m_residualWeight.resize( numRows );
+  m_dofScale.resize( numRows );
+  arrayView1d< real64 > const residualWeight = m_residualWeight.toView();
+  arrayView1d< real64 > const dofScale = m_dofScale.toView();
+  residualWeight.zero();
+  dofScale.zero();
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+
+    // s_p = |p_n| for the cell-pressure dofs
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > const elemDofNumber =
+        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const presN = subRegion.getField< fields::flow::pressure_n >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( elemGhostRank[ei] < 0 )
+        {
+          dofScale[elemDofNumber[ei] - rankOffset] = LvArray::math::abs( presN[ei] );
+        }
+      } );
+    } );
+
+    // s_m = p_scale / |M_ff| for the face-flux dofs, p_scale the mean adjacent |p_n|
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const presNAccessor =
+      elemManager.constructArrayViewAccessor< real64, 1 >( fields::flow::pressure_n::key() );
+    ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > const presN = presNAccessor.toNestedViewConst();
+
+    arrayView1d< globalIndex const > const faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+    arrayView2d< localIndex const > const elemRegionList = faceManager.elementRegionList();
+    arrayView2d< localIndex const > const elemSubRegionList = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const elemList = faceManager.elementList();
+    SortedArrayView< localIndex const > const regionFilter = m_regionFilter.toViewConst();
+
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    {
+      if( faceGhostRank[kf] >= 0 || faceDofNumber[kf] < 0 )
+      {
+        return;
+      }
+      real64 presSum = 0.0;
+      integer elemCounter = 0;
+      for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
+      {
+        localIndex const er  = elemRegionList[kf][k];
+        localIndex const esr = elemSubRegionList[kf][k];
+        localIndex const ei  = elemList[kf][k];
+        if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
+        {
+          presSum += LvArray::math::abs( presN[er][esr][ei] );
+          elemCounter++;
+        }
+      }
+      real64 const pScale = elemCounter > 0 ? presSum / elemCounter : 0.0;
+      localIndex const localRow = faceDofNumber[kf] - rankOffset;
+      real64 diag = 0.0;
+      arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( localRow );
+      arraySlice1d< real64 const > const entries = localMatrix.getEntries( localRow );
+      for( localIndex k = 0; k < localMatrix.numNonZeros( localRow ); ++k )
+      {
+        if( columns[k] == faceDofNumber[kf] )
+        {
+          diag = LvArray::math::abs( entries[k] );
+        }
+      }
+      dofScale[localRow] = diag > 0.0 ? pScale / diag : pScale;
+    } );
+  } );
+
+  // w_i = max_j |A_ij| s_j over the locally-owned columns of row i
+  forAll< parallelDevicePolicy<> >( numRows, [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    real64 w = 0.0;
+    arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( i );
+    arraySlice1d< real64 const > const entries = localMatrix.getEntries( i );
+    for( localIndex k = 0; k < localMatrix.numNonZeros( i ); ++k )
+    {
+      globalIndex const localCol = columns[k] - rankOffset;
+      if( localCol >= 0 && localCol < numRows )
+      {
+        w = LvArray::math::max( w, LvArray::math::abs( entries[k] ) * dofScale[localCol] );
+      }
+    }
+    residualWeight[i] = w;
+  } );
 }
 
 void SinglePhaseMixedMFD::applyAquiferBC( real64 const time,
@@ -688,105 +1057,42 @@ void SinglePhaseMixedMFD::saveAquiferConvergedState( real64 const & time,
 
 real64 SinglePhaseMixedMFD::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                    real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                   DomainPartition const & domain,
-                                                   DofManager const & dofManager,
+                                                   DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                                    arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
-  real64 localResidualNorm = 0.0;
-  real64 localResidualNormalizer = 0.0;
-
+  // row-equilibrated residual norm ||D^{-1} r||, D = diag(max(eps, w_i)), w_i = ||A_i S||_inf
   physicsSolverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+  real64 const minNormalizer = m_nonlinearSolverParameters.m_minNormalizer;
 
-  globalIndex const rankOffset = dofManager.rankOffset();
-  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                string_array const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    FaceManager const & faceManager = mesh.getFaceManager();
-
-    // step 1: compute the residual for the element-based mass conservation equations
-
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ElementSubRegionBase const & subRegion )
-    {
-      real64 subRegionResidualNorm[1]{};
-      real64 subRegionResidualNormalizer[1]{};
-
-      singlePhaseBaseKernels::
-        ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( normType,
-                                                   rankOffset,
-                                                   elemDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   m_nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm,
-                                                   subRegionResidualNormalizer );
-
-      if( normType == physicsSolverBaseKernels::NormType::Linf )
-      {
-        if( subRegionResidualNorm[0] > localResidualNorm )
-        {
-          localResidualNorm = subRegionResidualNorm[0];
-        }
-      }
-      else
-      {
-        localResidualNorm += subRegionResidualNorm[0];
-        localResidualNormalizer += subRegionResidualNormalizer[0];
-      }
-    } );
-
-    // step 2: compute the residual for the face-based constitutive rows
-
-    real64 faceResidualNorm[1]{};
-    real64 faceResidualNormalizer[1]{};
-
-    singlePhaseMixedMFDKernels::
-      ResidualNormKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( normType,
-                                                 rankOffset,
-                                                 faceDofKey,
-                                                 localRhs,
-                                                 m_regionFilter.toViewConst(),
-                                                 getName(),
-                                                 elemManager,
-                                                 faceManager,
-                                                 m_nonlinearSolverParameters.m_minNormalizer,
-                                                 faceResidualNorm,
-                                                 faceResidualNormalizer );
-
-    if( normType == physicsSolverBaseKernels::NormType::Linf )
-    {
-      if( faceResidualNorm[0] > localResidualNorm )
-      {
-        localResidualNorm = faceResidualNorm[0];
-      }
-    }
-    else
-    {
-      localResidualNorm += faceResidualNorm[0];
-      localResidualNormalizer += faceResidualNormalizer[0];
-    }
-  } );
-
-  // step 3: second reduction across MPI ranks
+  arrayView1d< real64 const > const residualWeight = m_residualWeight.toViewConst();
+  localIndex const numRows = localRhs.size();
 
   real64 residualNorm = 0.0;
   if( normType == physicsSolverBaseKernels::NormType::Linf )
   {
-    physicsSolverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > maxVal( 0.0 );
+    forAll< parallelDevicePolicy<> >( numRows, [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      maxVal.max( LvArray::math::abs( localRhs[i] ) /
+                  LvArray::math::max( minNormalizer, residualWeight[i] ) );
+    } );
+    real64 const localNorm = maxVal.get();
+    physicsSolverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localNorm, residualNorm );
   }
   else
   {
-    physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > sumVal( 0.0 );
+    forAll< parallelDevicePolicy<> >( numRows, [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      real64 const r = localRhs[i] / LvArray::math::max( minNormalizer, residualWeight[i] );
+      sumVal += r * r;
+    } );
+    real64 const localSum = sumVal.get();
+    real64 const localCount = static_cast< real64 >( numRows );
+    physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localSum, localCount, residualNorm );
   }
 
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,

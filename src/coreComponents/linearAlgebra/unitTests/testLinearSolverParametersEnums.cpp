@@ -56,6 +56,7 @@ TEST( LinearSolverParametersEnums, PreconditionerType )
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
   ASSERT_EQ( "amg", toString( EnumType::amg ) );
   ASSERT_EQ( "mgr", toString( EnumType::mgr ) );
+  ASSERT_EQ( "riesz", toString( EnumType::riesz ) );
   ASSERT_EQ( "block", toString( EnumType::block ) );
   ASSERT_EQ( "direct", toString( EnumType::direct ) );
   ASSERT_EQ( "bgs", toString( EnumType::bgs ) );

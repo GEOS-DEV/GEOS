@@ -186,7 +186,7 @@ private:
    * @brief Classify the faces from the cell marking (0 = condensable TPFA face, 1 = live MFD face).
    * @param[in] domain the domain
    */
-  void computeFaceStencilLabels( DomainPartition & domain );
+  void computeFaceStencilLabels( DomainPartition & domain, bool const keepAllFacesLive );
 
   /**
    * @brief Build the per-dof labels used by the stencilFlag-guided three-level MGR strategy:
@@ -199,11 +199,27 @@ private:
   void computeMgrPointMarkers( DomainPartition const & domain,
                                DofManager const & dofManager );
 
+  /**
+   * @brief Build the de Rham sub-complex of the live MFD faces (discrete curl and gradient,
+   *        active vertex coordinates) for the Riesz-map preconditioner.
+   * @param[in] domain the domain
+   * @param[in] dofManager the dof manager (dof numbers must be finalized)
+   */
+  void computeADSAuxData( DomainPartition const & domain,
+                          DofManager const & dofManager );
+
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;
 
+
   /// region filter used in flux assembly
   SortedArray< localIndex > m_regionFilter;
+
+  /// residual-norm weights w_i = ||A_i S||_inf, S = diag(s_j)
+  array1d< real64 > m_residualWeight;
+
+  /// characteristic scale s_j of unknown x_j: s_p = |p_n|, s_m = p_scale / |M_ff|
+  array1d< real64 > m_dofScale;
 
 };
 
