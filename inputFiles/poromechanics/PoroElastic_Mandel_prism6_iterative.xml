@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./PoroElastic_Mandel_prism6_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_POROMECHANICSSOLVER -->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhasePoromechanics>
+    <!-- SPHINX_POROMECHANICSSOLVER_END -->
+
+    <!-- SPHINX_MECHANICALSOLVER -->
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+    <!-- SPHINX_MECHANICALSOLVER_END -->
+
+    <!-- SPHINX_SINGLEPHASEHYBRIDFVM -->
+    <SinglePhaseHybridFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Domain }"/>
+    <!-- SPHINX_SINGLEPHASEHYBRIDFVM_END -->
+  </Solvers>
+  
+  <!-- SPHINX_NUMERICAL -->
+
+</Problem>

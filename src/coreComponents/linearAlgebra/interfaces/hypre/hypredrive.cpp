@@ -887,9 +887,7 @@ bool buildILUPreconditionerYaml( LinearSolverParameters const & params,
   {
     appendLine( stream, 2, GEOS_FMT( "droptol: {}", params.ifact.threshold ) );
   }
-  // HYPRE_ILUCreate defaults to RCM reordering. Keep the legacy path's
-  // behavior for scalar systems while retaining the mechanics safeguard.
-  appendLine( stream, 2, GEOS_FMT( "reordering: {}", params.dofsPerNode > 1 ? 0 : 1 ) );
+  appendIlUDisableRcm( stream, 2 );
 
   yaml = stream.str();
   return true;

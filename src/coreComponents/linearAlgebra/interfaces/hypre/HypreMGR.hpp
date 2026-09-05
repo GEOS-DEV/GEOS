@@ -337,6 +337,36 @@ protected:
     HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
   }
   /**
+   * @brief Set up an explicitly configured ILU(0) F-solver for a given MGR level
+   * @param level the MGR level whose F system is solved with ILU
+   * @param precond the preconditioner wrapper
+   * @param mgrData auxiliary MGR data
+   *
+   * @note hypre's internal ILU F-relaxation (MGRFRelaxationType::ilu without an attached
+   *       F-solver) is configured with different defaults and has been observed to stall
+   *       on hybrid FVM cell-block eliminations; an explicitly configured ILU F-solver
+   *       matches the configuration hypredrive uses and is robust.
+   */
+  void setILUFSolverAtLevel( HYPRE_Int const level,
+                             HyprePrecWrapper & precond,
+                             HypreMGRData & mgrData )
+  {
+    HYPRE_ILUCreate( &mgrData.mechSolver.ptr );
+    HYPRE_ILUSetType( mgrData.mechSolver.ptr, 0 );
+    HYPRE_ILUSetLevelOfFill( mgrData.mechSolver.ptr, 0 );
+    HYPRE_ILUSetMaxIter( mgrData.mechSolver.ptr, 1 );
+    HYPRE_ILUSetTol( mgrData.mechSolver.ptr, 0.0 );
+    HYPRE_ILUSetLocalReordering( mgrData.mechSolver.ptr, 0 );
+    HYPRE_ILUSetPrintLevel( mgrData.mechSolver.ptr, 0 );
+
+    mgrData.mechSolver.setup = HYPRE_ILUSetup;
+    mgrData.mechSolver.solve = HYPRE_ILUSolve;
+    mgrData.mechSolver.destroy = HYPRE_ILUDestroy;
+
+    HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, level );
+  }
+
+  /**
    * @brief
    *
    * @param solver
