@@ -283,7 +283,6 @@ bool supportsGeneratedPreconditioner( LinearSolverParameters::PreconditionerType
     case PreconditionerType::direct:
     case PreconditionerType::bgs:
     case PreconditionerType::multiscale:
-    case PreconditionerType::riesz:
       return false;
   }
 

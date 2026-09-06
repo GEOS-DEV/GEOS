@@ -69,8 +69,7 @@ struct LinearSolverParameters
     block,     ///< Block preconditioner
     direct,    ///< Direct solver as preconditioner
     bgs,       ///< Gauss-Seidel smoothing (backward sweep)
-    multiscale, ///< Multiscale preconditioner
-    riesz      ///< Riesz-map block preconditioner for the mixed MFD saddle point (Hypre only)
+    multiscale ///< Multiscale preconditioner
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -342,27 +341,6 @@ struct LinearSolverParameters
   }
   mgr;                                                ///< Multigrid reduction (MGR) parameters
 
-  /**
-   * @brief Solver-provided de Rham sub-complex of the live mixed-MFD flux dofs, for the Riesz-map
-   *        preconditioner (empty = unused). CSR over compact auxiliary numberings: flux rows follow the
-   *        dof order of the live faces, edge and vertex columns the active entities of those faces.
-   */
-  struct ADSAuxData
-  {
-    array1d< globalIndex > cRowPtr;                   ///< CSR row offsets of the discrete curl (live faces x active edges)
-    array1d< globalIndex > cCols;                     ///< CSR column indices of the discrete curl
-    array1d< real64 > cVals;                          ///< CSR values (+-1) of the discrete curl
-    array1d< globalIndex > gRowPtr;                   ///< CSR row offsets of the discrete gradient (active edges x active vertices)
-    array1d< globalIndex > gCols;                     ///< CSR column indices of the discrete gradient
-    array1d< real64 > gVals;                          ///< CSR values (+-1) of the discrete gradient
-    array1d< real64 > xCoords;                        ///< active vertex x coordinates
-    array1d< real64 > yCoords;                        ///< active vertex y coordinates
-    array1d< real64 > zCoords;                        ///< active vertex z coordinates
-    array1d< integer > mfdCell;                       ///< 1 at the pressure dof of an MFD cell, 0 elsewhere
-    array1d< real64 > pressureNormScale;              ///< (l_e/D)^2 at each pressure dof, l_e^2 = |E|^2 / sum_f A_f^2
-  }
-  adsAuxData;                                         ///< live-face sub-complex for the Riesz-map preconditioner
-
   /// Incomplete factorization parameters
   struct IFact
   {
@@ -585,8 +563,7 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "block",
               "direct",
               "bgs",
-              "multiscale",
-              "riesz" );
+              "multiscale" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,

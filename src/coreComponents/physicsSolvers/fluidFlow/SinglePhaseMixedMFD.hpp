@@ -180,6 +180,13 @@ private:
    * @brief Run the residual-based Global Adaptation pipeline and mark the cells.
    * @param[in] domain the domain
    */
+  /**
+   * @brief Store, for every face, the global index of the cell its flux unknown points out of,
+   *        and synchronize it so that the orientation is the same on every rank.
+   * @param domain the domain
+   */
+  void computeFaceOrientation( DomainPartition & domain );
+
   void computeGlobalAdaptationIndicators( DomainPartition & domain );
 
   /**
@@ -194,27 +201,17 @@ private:
    * @brief Classify the faces from the cell marking (0 = condensable TPFA face, 1 = live MFD face).
    * @param[in] domain the domain
    */
-  void computeFaceStencilLabels( DomainPartition & domain, bool const keepAllFacesLive );
+  void computeFaceStencilLabels( DomainPartition & domain );
 
   /**
-   * @brief Build the per-dof labels used by the stencilFlag-guided three-level MGR strategy:
-   *        0 = face flux with exactly-diagonal row (all adjacent cells TPFA-compatible),
-   *        1 = face flux adjacent to at least one MFD-compatible cell,
+   * @brief Build the per-dof labels of the MGR strategy:
+   *        0 = condensed face flux (exactly diagonal row), 1 = non-condensed face flux,
    *        2 = cell pressure.
    * @param[in] domain the domain
    * @param[in] dofManager the dof manager (dof numbers must be finalized)
    */
   void computeMgrPointMarkers( DomainPartition const & domain,
                                DofManager const & dofManager );
-
-  /**
-   * @brief Build the de Rham sub-complex of the live MFD faces (discrete curl and gradient,
-   *        active vertex coordinates) for the Riesz-map preconditioner.
-   * @param[in] domain the domain
-   * @param[in] dofManager the dof manager (dof numbers must be finalized)
-   */
-  void computeADSAuxData( DomainPartition const & domain,
-                          DofManager const & dofManager );
 
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;

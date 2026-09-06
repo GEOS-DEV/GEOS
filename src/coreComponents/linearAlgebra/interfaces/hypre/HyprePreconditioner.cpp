@@ -19,7 +19,6 @@
 
 #include "HyprePreconditioner.hpp"
 #include "HypreMGR.hpp"
-#include "HypreRieszMFD.hpp"
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
@@ -361,11 +360,6 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     {
       m_precond->solve = hypre::SuperLUDistSolve;
       m_precond->destroy = hypre::SuperLUDistDestroy;
-      break;
-    }
-    case LinearSolverParameters::PreconditionerType::riesz:
-    {
-      hypre::createRieszMFD( m_params, *m_precond );
       break;
     }
     default:

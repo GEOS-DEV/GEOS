@@ -202,7 +202,6 @@ struct FaceLabelKernel
           SortedArrayView< localIndex const > const & regionFilter,
           ElementViewConst< arrayView1d< integer const > > const & stencilFlag,
           bool const effectiveTpfa,
-          bool const keepAllFacesLive,
           arrayView1d< integer > const & faceStencilLabel )
   {
     forAll< POLICY >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const kf )
@@ -217,9 +216,7 @@ struct FaceLabelKernel
           localIndex const ei  = elemList[kf][k];
           if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
           {
-            // a face is live next to an MFD cell, or everywhere when the saddle point is kept whole
-            // (the Riesz-map preconditioner needs it): a TPFA cell then only selects its diagonal star
-            label = keepAllFacesLive ? 1 : LvArray::math::max( label, stencilFlag[er][esr][ei] );
+            label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
           }
         }
       }

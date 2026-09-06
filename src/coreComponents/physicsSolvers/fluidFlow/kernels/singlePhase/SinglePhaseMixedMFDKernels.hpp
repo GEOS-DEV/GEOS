@@ -73,7 +73,6 @@ public:
                               NodeManager const & nodeManager,
                               FaceManager const & faceManager,
                               CellElementSubRegion const & subRegion,
-                              LocalToGlobalAccessor const & elemLocalToGlobal,
                               constitutive::SingleFluidBase const & fluid,
                               constitutive::PermeabilityBase const & permeability,
                               real64 const & dt,
@@ -96,8 +95,8 @@ public:
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
-    m_elemLocalToGlobal( elemLocalToGlobal.toNestedViewConst() ),
     m_myElemLocalToGlobal( subRegion.localToGlobalMap() ),
+    m_faceOrientationCell( faceManager.getField< fields::mixedMimetic::faceOrientationCell >() ),
     m_nodePosition( nodeManager.referencePosition() ),
     m_elemPerm( permeability.permeability() ),
     m_elemPres( subRegion.getField< fields::flow::pressure >() ),
@@ -190,28 +189,21 @@ public:
 
     // step 3: face orientations, localized fluxes and no-flow flags.
     // The orientation must be identical on every MPI rank sharing the face (the face
-    // mass-flux unknown is shared across ranks), so it cannot rely on the face normal,
-    // whose direction is not guaranteed to be rank-invariant. Instead, the global face
-    // orientation points out of the adjacent cell with the smallest global element index.
+    // mass-flux unknown is shared across ranks): the face points out of the adjacent cell
+    // with the smallest global element index, stored per face by the face owner and
+    // synchronized, so that a ghost cell whose neighbour is absent on this rank still
+    // orients the face like its owner
     real64 localFlux[NUM_FACE]{};
     globalIndex const myGlobalElem = m_myElemLocalToGlobal[ei];
     for( integer i = 0; i < NUM_FACE; ++i )
     {
       localIndex const kf = m_elemToFaces[ei][i];
 
-      real64 sigma = 1.0;
-      bool const valid0 = ( m_elemRegionList[kf][0] >= 0 && m_elemSubRegionList[kf][0] >= 0 && m_elemList[kf][0] >= 0 );
-      bool const valid1 = ( m_elemRegionList[kf][1] >= 0 && m_elemSubRegionList[kf][1] >= 0 && m_elemList[kf][1] >= 0 );
-      if( valid0 && valid1 )
-      {
-        globalIndex const g0 = m_elemLocalToGlobal[m_elemRegionList[kf][0]][m_elemSubRegionList[kf][0]][m_elemList[kf][0]];
-        globalIndex const g1 = m_elemLocalToGlobal[m_elemRegionList[kf][1]][m_elemSubRegionList[kf][1]][m_elemList[kf][1]];
-        globalIndex const gMin = ( g0 < g1 ) ? g0 : g1;
-        sigma = ( myGlobalElem == gMin ) ? 1.0 : -1.0;
-      }
-      stack.orientation[i] = sigma;
+      stack.orientation[i] = ( myGlobalElem == m_faceOrientationCell[kf] ) ? 1.0 : -1.0;
       localFlux[i] = stack.orientation[i] * m_faceFlux[kf];
 
+      bool const valid0 = ( m_elemRegionList[kf][0] >= 0 && m_elemSubRegionList[kf][0] >= 0 && m_elemList[kf][0] >= 0 );
+      bool const valid1 = ( m_elemRegionList[kf][1] >= 0 && m_elemSubRegionList[kf][1] >= 0 && m_elemList[kf][1] >= 0 );
       bool const onBoundary = !( valid0 && valid1 );
       stack.isNoFlowFace[i] = ( onBoundary && m_isPresBcFace[kf] == 0 ) ? 1 : 0;
       stack.isCondensedFace[i] = ( m_faceStencilLabel[kf] == 0 && stack.isNoFlowFace[i] == 0 ) ? 1 : 0;
@@ -396,8 +388,9 @@ protected:
   arrayView2d< localIndex const > const m_elemRegionList;
   arrayView2d< localIndex const > const m_elemSubRegionList;
   arrayView2d< localIndex const > const m_elemList;
-  ElementViewConst< arrayView1d< globalIndex const > > const m_elemLocalToGlobal;
   arrayView1d< globalIndex const > const m_myElemLocalToGlobal;
+  /// global index of the cell each face points out of (rank-invariant orientation)
+  arrayView1d< globalIndex const > const m_faceOrientationCell;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition;
 
   /// permeability
@@ -440,7 +433,6 @@ public:
                    string const faceDofKey,
                    NodeManager const & nodeManager,
                    FaceManager const & faceManager,
-                   ElementRegionManager const & elemManager,
                    CellElementSubRegion const & subRegion,
                    mimeticInnerProduct::MimeticInnerProductBase const & mimeticInnerProductBase,
                    constitutive::SingleFluidBase const & fluid,
@@ -449,11 +441,6 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    // rank-invariant global face orientation requires the global element indices of both
-    // cells adjacent to each face, possibly living in different subregions
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemLocalToGlobal =
-      elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
-
     mixedMimeticInnerProductDispatch( mimeticInnerProductBase,
                                       [&] ( auto const mimeticInnerProduct )
     {
@@ -463,7 +450,7 @@ public:
       {
         ElementBasedAssemblyKernel< NUM_FACES, IP >
         kernel( rankOffset, lengthTolerance, elemDofKey, faceDofKey, nodeManager, faceManager,
-                subRegion, elemLocalToGlobal, fluid, permeability, dt, localMatrix, localRhs );
+                subRegion, fluid, permeability, dt, localMatrix, localRhs );
         ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     } );

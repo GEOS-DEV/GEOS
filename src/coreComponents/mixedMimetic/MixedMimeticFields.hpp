@@ -73,6 +73,22 @@ DECLARE_FIELD( degeneracyIndicator,
                WRITE_AND_READ,
                "Cell volume as a percentage of the total volume of its node star (admissibility of the stabilized reconstruction)" );
 
+DECLARE_FIELD( faceOrientationCell,
+               "faceOrientationCell",
+               array1d< globalIndex >,
+               -1,
+               NOPLOT,
+               NO_WRITE,
+               "Global index of the cell E_min whose outward normal orients the face flux: sigma_{E,f} = +1 if E = E_min, -1 otherwise" );
+
+DECLARE_FIELD( faceDofScale,
+               "faceDofScale",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Characteristic scale of the face flux unknown, s_f = p_scale / |M_ff|, used by the residual-norm weights" );
+
 DECLARE_FIELD( faceStencilLabel,
                "faceStencilLabel",
                array1d< integer >,

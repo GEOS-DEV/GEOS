@@ -74,11 +74,11 @@ public:
     /// @return The key for the inner product
     static constexpr char const * innerProductString() { return "innerProduct"; }
 
-    /// @return The key for the adaptive flag
-    static constexpr char const * adaptiveString() { return "adaptive"; }
+    /// @return The key for the adaptive consistency flag
+    static constexpr char const * adaptiveConsistencyString() { return "adaptiveConsistency"; }
 
-    /// @return The key for the residual tolerance
-    static constexpr char const * residualToleranceString() { return "residualTolerance"; }
+    /// @return The key for the consistency tolerance
+    static constexpr char const * consistencyToleranceString() { return "consistencyTolerance"; }
 
     /// @return The key for the nominal gradient of the projection probe
     static constexpr char const * nominalGradientString() { return "nominalGradient"; }
@@ -88,9 +88,9 @@ public:
   };
 
   /**
-   * @brief @return Whether the residual-based Global Adaptation is enabled
+   * @brief @return Whether the consistency layer of the Global Adaptation is enabled
    */
-  bool isAdaptive() const { return m_isAdaptive == 1; }
+  bool isAdaptiveConsistency() const { return m_adaptiveConsistency == 1; }
 
   /**
    * @brief @return Whether the selected inner product is the (diagonal) TPFA inner product
@@ -98,9 +98,9 @@ public:
   bool isTpfaInnerProduct() const;
 
   /**
-   * @brief @return The residual tolerance used in the marking criterion
+   * @brief @return The consistency tolerance used in the marking criterion
    */
-  real64 getResidualTolerance() const { return m_residualTolerance; }
+  real64 getConsistencyTolerance() const { return m_consistencyTolerance; }
 
   /**
    * @brief @return The nominal gradient used to build the projected admissible flow field
@@ -123,11 +123,11 @@ private:
   /// type of inner product used in the mixed mimetic solver
   string m_innerProductType;
 
-  /// flag enabling the residual-based Global Adaptation (1 = adaptive, 0 = selected inner product everywhere)
-  integer m_isAdaptive;
+  /// flag enabling the consistency layer of the Global Adaptation (1 = adaptive, 0 = selected inner product everywhere)
+  integer m_adaptiveConsistency;
 
-  /// user-prescribed tolerance for the marking criterion
-  real64 m_residualTolerance;
+  /// user-prescribed tolerance on the consistency indicator
+  real64 m_consistencyTolerance;
 
   /// nominal gradient inducing the projected admissible flow field
   R1Tensor m_nominalGradient;
