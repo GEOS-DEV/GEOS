@@ -8,8 +8,8 @@ PFW_ROOT = Path('/usr/workspace/crook5/GEOS_DEV/mpm') #SOURCE_DIR.parent.parent
 sys.path.insert(0, str(PFW_ROOT))
 from pfw_replace import *
 
-method = ["PIC"] #, "PIC", "XPIC", "FMPM"]
-precompute = ["Precomputed"] # ["OnTheFly"]
+method = ["FLIP", "PIC", "XPIC", "FMPM"]
+precompute = ["Precomputed", "OnTheFly"]
 
 comboObj = Combination([
     ParameterSet({'method': method}, method),

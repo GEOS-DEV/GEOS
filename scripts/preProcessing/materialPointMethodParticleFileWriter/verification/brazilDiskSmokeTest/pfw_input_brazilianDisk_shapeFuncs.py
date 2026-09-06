@@ -32,7 +32,7 @@ variant_label = os.environ.get("DISK_VARIANT_LABEL", f"{g2pMethod}_{usePrecomput
 pfw["runDebug"] = True
 pfw["mBatch"]=True
 pfw["mBank"]="mahem"
-pfw["mWallTime"]="00:05:00"
+pfw["mWallTime"]="00:30:00"
 pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 
@@ -98,9 +98,10 @@ pfw["minParticleJacobian"]=0.01
 pfw["maxParticleJacobian"]=10.0
 pfw["FSubcycles"]=10
 
-pfw["gridToParticleMapping"]="Precomputed"
+pfw["gridToParticleMapping"]=usePrecomputed
 pfw["updateMethod"]=g2pMethod
 pfw["updateOrder"]="2"
+# pfw["batchSize"]=200
 
 pfw["contactGapCorrection"]="Implicit"
 pfw["explicitSurfaceNormalInfluence"]=1
