@@ -742,6 +742,7 @@ parameters = {
                'allowNonConvergedLinearSolverSolution': ( None, True ),  # MPM: accept failed linear solve solution instead of cutting dt.
                'areaIntegrationMethod': ( None, True ),  # MPM: method for nodal area integration.
                'autoRestart': ( False, False ),  # PFW: generate auto-restart job logic.
+               'batchSize': ( None, True ), # Controls the constitutive update batch size running on device
                'bcTable': ( None, True ),  # MPM: time-dependent boundary-condition type table.
                'binSizeMultiplier': ( None, True ),  # MPM: neighbor/bin size multiplier.
                'bodyForce': ( None, True ),  # MPM: uniform body-force vector.
@@ -1947,13 +1948,18 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
 
-# # Serialization for debugging gpu
+# Serialization for debugging gpu
 # export AMD_SERIALIZE_KERNEL=3
 # export AMD_SERIALIZE_COPY=3
 # export HIP_LAUNCH_BLOCKING=1
 # export AMD_LOG_LEVEL=4
 # export AMD_LOG_MASK=0x20387
 # ulimit -c unlimited
+
+# unset AMD_LOG_LEVEL
+# export AMD_SERIALIZE_KERNEL=3
+# export AMD_SERIALIZE_COPY=3
+# export ASAN_OPTIONS=detect_leaks=0
 
 echo "Launching flux run command..."
 export OMP_NUM_THREADS=1

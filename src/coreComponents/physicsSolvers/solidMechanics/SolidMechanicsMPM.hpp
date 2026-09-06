@@ -351,7 +351,6 @@ public:
                                                                NodeManager & nodeManager );
 
   void updateGridDynamicsAndContactForExplicitStep( real64 const dt,
-                                                    int const cycleNumber,
                                                     ParticleManager & particleManager,
                                                     NodeManager & nodeManager );
 
@@ -391,12 +390,10 @@ public:
 
   void updateParticleKinematicsForExplicitStep( real64 const dt,
                                                 real64 const time_n,
-                                                int const cycleNumber,
                                                 ParticleManager & particleManager,
                                                 SpatialPartition & partition );
 
   void updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
-    int const cycleNumber,
                                                          ParticleManager & particleManager );
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
@@ -1044,6 +1041,7 @@ public:
 
   void deleteBadParticles( ParticleManager & particleManager );
 
+  void validateParticleMappings( ParticleManager & particleManager, NodeManager & nodeManager );
   void dumpMappingDataToFile( ParticleManager & particleManager, int const cycleNumbder, std::string label);
   void dumpGridDataToFile(NodeManager & nodeManager, int const cycleNumber, std::string label);
   void dumpModelDataToFile(ParticleManager & particleManager, int const cycleNumbder, std::string label);

@@ -4365,7 +4365,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
  */
 void SolidMechanicsMPM::initializePreSubGroups()
 {
-  GEOS_LOG_RANK("SolidMechanicsMPM::initializePreSubGroups");
   PhysicsSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -5017,11 +5016,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                           particleManager,
                                           partition,
                                           periodic );
-
-  // if( cycleNumber <= 2 )
-  // {
-  //   dumpParticleDataToFile( particleManager, cycleNumber, "afterGhosting");
-  // }
                           
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5048,6 +5042,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   logAndProfile( "05. Populate particle-grid mapping", particleManager, nodeManager );
   populateParticleGridMappingForExplicitStep( particleManager,
                                               nodeManager );
+  // validateParticleMappings( particleManager, nodeManager );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5090,7 +5085,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                           particleManager,
                                                           nodeManager );
 
-
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 09.5 Particle shape function gradient diagnostics.
@@ -5098,11 +5092,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "09.5 Particle shape function gradient diagnostics", particleManager, nodeManager );
   shapeFunctionDiagnostics( particleManager );
-
-  if( cycleNumber <=2 )
-  {
-    dumpParticleDataToFile(particleManager, cycleNumber, "preP2G");
-  }
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5118,11 +5107,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         particleManager,
                                         nodeManager );
 
-  if( cycleNumber <=2 )
-  {
-    dumpGridDataToFile(nodeManager, cycleNumber, "postP2G");
-  }
-
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 10. Synchronize grid fields across MPI ranks.
@@ -5137,11 +5121,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   computeActiveGridFieldsForExplicitStep( domain,
                                           nodeManager,
                                           mesh );
-
-  if( cycleNumber <=2 )
-  {
-    dumpGridDataToFile(nodeManager, cycleNumber, "postGridSync");
-  }
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5177,9 +5156,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "13. Update grid dynamics and contact", particleManager, nodeManager );
   updateGridDynamicsAndContactForExplicitStep( dt,
-    cycleNumber,
                                                particleManager,
                                                nodeManager );
+
   if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
   {
     /*
@@ -5265,13 +5244,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
   else
   {
-    if(cycleNumber <= 2)
-    {
-      dumpMappingDataToFile( particleManager, cycleNumber, "preG2P");
-      dumpGridDataToFile( nodeManager, cycleNumber, "preG2P");
-      dumpParticleDataToFile( particleManager, cycleNumber, "preG2P");
-    }
-
     /*
      * ----------------------------------------------------------------------------------------------------------
      * 15. Map grid state back to particles.
@@ -5281,13 +5253,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
      */
     logAndProfile( "15. Map grid state back to particles", particleManager, nodeManager );
     gridToParticle( dt, particleManager, nodeManager, domain, mesh );
-
-    if(cycleNumber <= 2)
-    {
-      dumpMappingDataToFile( particleManager, cycleNumber, "postG2P");
-      dumpGridDataToFile( nodeManager, cycleNumber, "postG2P");
-      dumpParticleDataToFile( particleManager, cycleNumber, "postG2P");
-    }
 
     /*
      * ----------------------------------------------------------------------------------------------------------
@@ -5300,14 +5265,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     logAndProfile( "16. Update particle kinematics", particleManager, nodeManager );
     updateParticleKinematicsForExplicitStep( dt,
                                              time_n,
-                                             cycleNumber,
                                              particleManager,
                                              partition );
-
-    if( cycleNumber <= 2 )
-    {
-      dumpParticleDataToFile( particleManager, cycleNumber, "preStressUpdate");
-    }
 
     /*
      * ----------------------------------------------------------------------------------------------------------
@@ -5319,14 +5278,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
      */
     logAndProfile( "17. Update constitutive and thermal state", particleManager, nodeManager );
     updateConstitutiveAndThermalStateForExplicitStep( dt,
-      cycleNumber,
                                                       particleManager );
-
-                                                          if( cycleNumber <= 2 )
-    {
-      dumpParticleDataToFile( particleManager, cycleNumber, "postStressUpdate");
-    }
-
   }
 
   /*
@@ -5358,16 +5310,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                               partition,
                                               periodic );
 
-  if( cycleNumber <= 2 )
-  {
-    dumpParticleDataToFile( particleManager, cycleNumber, "endOfStep" );
-    if( cycleNumber == 2) 
-    {
-      parallelDeviceSync();
-      exit(0);
-    }
-  }
-
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 20. Check event completion
@@ -5389,6 +5331,69 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     printProfilingResults();
   }
   return dtReturn;
+}
+
+void SolidMechanicsMPM::validateParticleMappings( ParticleManager & particleManager, NodeManager & nodeManager )
+{
+  parallelDeviceSync();
+
+  localIndex maxNodalIndex = nodeManager.size()-1;
+
+  GEOS_LOG_RANK("Checking particle mappings...");
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    localIndex const numberOfMappedNodesPerParticle = 8 * subRegion.numberOfVerticesPerParticle();
+    
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    
+#ifdef GEOS_USE_DEVICE
+    m_mappedFields[subRegionIndex].move( hostMemorySpace, true );
+    m_mappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    m_shapeFunctionValues[subRegionIndex].move( hostMemorySpace, true );
+    m_shapeFunctionGradientValues[subRegionIndex].move( hostMemorySpace, true );
+#endif
+
+    // Get views to mapping arrays
+    arrayView2d< localIndex const > const mappedFields = m_mappedFields[subRegionIndex];
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
+    arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [&] GEOS_HOST ( localIndex const pp )
+    {     
+      localIndex const p = activeParticleIndices[pp];
+
+      bool mappedNodeOutOfBounds = false;
+      for( integer g = 0; g < numberOfMappedNodesPerParticle; ++g )
+      {
+        localIndex const node = mappedNodes[pp][g];
+        if( node < 0 || node > maxNodalIndex )
+        {
+          GEOS_LOG_RANK( "pID: " 
+                        << particleID[p]
+                        << " at {"
+                        << particlePosition[p][0]
+                        << ", " 
+                        << particlePosition[p][1]
+                        << ", "
+                        << particlePosition[p][2]
+                        << "}" 
+                        << " maps to node outside bounds."
+                         );
+          mappedNodeOutOfBounds |= true;
+        } 
+      }
+
+    } );
+    ++subRegionIndex;
+  } );
+
+  parallelDeviceSync();
+  GEOS_LOG_RANK("Finished checking particle mappings");
 }
 
 // Adding helping function to dump particle data to files for debugging
@@ -5971,21 +5976,11 @@ void SolidMechanicsMPM::computeParticleLoadsAndBackgroundFieldsForExplicitStep( 
  * @brief Updates grid trial motion, applies contact, and computes nodal area data.
  */
 void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 const dt,
-                                                                     int const cycleNumber,
                                                                      ParticleManager & particleManager,
                                                                      NodeManager & nodeManager )
 {
-  
-  if( cycleNumber <=2 )
-  {
-    dumpGridDataToFile(nodeManager, cycleNumber, "preGridTrial");
-  }
   gridTrialUpdate( dt, nodeManager );
   
-  if( cycleNumber <=2 )
-  {
-    dumpGridDataToFile(nodeManager, cycleNumber, "postGridTrial");
-  }
   /*
    * FMPM Net contact needs two first-order grid velocities. gridVelocity is
    * about to become the ordinary lumped velocity after material contact, while
@@ -6708,28 +6703,18 @@ void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplic
  */
 void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt,
                                                                  real64 const time_n,
-                                                                 int const cycleNumber,
                                                                  ParticleManager & particleManager,
                                                                  SpatialPartition & partition )
 {
-
   if( m_prescribedFTable == 1 )
   {
     applySuperimposedVelocityGradient( dt,
                                        particleManager,
                                        partition );
   }
-  if( cycleNumber <= 2 )
-  {
-    dumpParticleDataToFile( particleManager, cycleNumber, "preUpdateDefGrad");
-  }
+
   updateDeformationGradient( dt, particleManager );
-  parallelDeviceSync();
-  GEOS_LOG_RANK("Updated deformation gradient");
-  if( cycleNumber <= 2 )
-  {
-    dumpParticleDataToFile( particleManager, cycleNumber, "postUpdateDefGrad");
-  }
+
   transformParticlesForTriggeredEvents( time_n,
                                         dt,
                                         particleManager );
@@ -6738,16 +6723,10 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
     sphOverlapCorrection( dt,
                           particleManager );
   }
-  if( cycleNumber <= 2 )
-  {
-    dumpParticleDataToFile( particleManager, cycleNumber, "preKinematicUpdate");
-  }
+
   particleKinematicUpdate( dt,
                            particleManager );
-    if( cycleNumber <= 2 )
-  {
-    dumpParticleDataToFile( particleManager, cycleNumber, "postKinematicUpdate");
-  }
+
   computeKineticEnergy( particleManager );
 
 }
@@ -6756,36 +6735,19 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
  * @brief Updates optional thermal state and the constitutive stress state.
  */
 void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
-  int const cycleNumber,
-                                                                         ParticleManager & particleManager )
+                                                                          ParticleManager & particleManager )
 {
   if( m_computeInternalEnergyAndTemperature == 1 )
   {
     computeInternalEnergyAndTemperature( dt,
                                          particleManager );
   }
-  if( cycleNumber <=2 )
-  {
-    dumpModelDataToFile(particleManager, cycleNumber, "preModelUpdate");
-    dumpParticleDataToFile(particleManager, cycleNumber, "preModelUpdate");
-  }
-  updateConstitutiveModelDependencies( particleManager );
-  parallelDeviceSync();
-    GEOS_LOG_RANK("Updated constitutive models");
-  updateStress( dt, particleManager );
-    if( cycleNumber <=2 )
-  {
-    parallelDeviceSync();
-    dumpParticleDataToFile(particleManager, cycleNumber, "postModelUpdate");
-  dumpModelDataToFile(particleManager, cycleNumber, "postModelUpdate");
-  }
-  updateSolverDependencies( particleManager );
 
-      if( cycleNumber <=2 )
-  {
-    dumpParticleDataToFile(particleManager, cycleNumber, "postSolverUpdate");
-  // dumpModelDataToFile(particleManager, cycleNumber, "postModelUpdate");
-  }
+  updateConstitutiveModelDependencies( particleManager );
+
+  updateStress( dt, particleManager );
+  
+  updateSolverDependencies( particleManager );
 
   if( m_disableSurfaceNormalsAndPositionsOnDamage == 1 || m_disableSurfaceTractionsOnDamage == 1 )
   {
@@ -6816,16 +6778,19 @@ real64 SolidMechanicsMPM::writeOutputsAndComputeStableTimeStepForExplicitStep( r
     computeAndWriteBoxAverage( time_n, dt, particleManager );
     m_nextBoxAverageWriteTime += m_boxAverageWriteInterval;
   }
+
   if( m_writeParticleData == 1 && outputTime >= m_nextParticleDataWriteTime )
   {
     writeParticleData( time_n, particleManager );
     m_nextParticleDataWriteTime += m_particleDataWriteInterval;
   }
+
   if( shouldWriteTracers( outputTime, cycleNumber ) )
   {
     computeAndWriteTracers( cycleNumber, time_n, dt, particleManager );
     updateNextTracerWriteTime( outputTime );
   }
+
   return getStableTimeStep( particleManager );
 }
 
@@ -6873,7 +6838,14 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
  */
 void SolidMechanicsMPM::logAndProfile( std::string const & label )
 {
+#ifdef GEOS_USE_DEVICE
+  if( isLogLevelActive< logInfo::MPMSubroutines >( this->getLogLevel() ) )
+  {
+    parallelDeviceSync();
+  }  
+#endif
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, label );
+
   if( m_solverProfiling == 1 )
   {
     MPI_Barrier( MPI_COMM_GEOS );
@@ -7515,7 +7487,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & parti
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
 
     // Get views to mapping arrays
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    integer const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
     arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
     // arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
@@ -7528,7 +7500,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & parti
       real64 particleContributionToGrid;
 
       // Map to grid
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( integer g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
 
@@ -10001,7 +9973,6 @@ int SolidMechanicsMPM::factorial( int n )
  */
 void SolidMechanicsMPM::setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const
 {
-  GEOS_LOG_RANK("SolidMechanicsMPM::setParticlesConstitutiveNames");
   subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -17661,6 +17632,13 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+
+#ifdef GEOS_USE_DEVICE
+  m_mappedNodes[subRegionIndex].move( hostMemorySpace, true );
+  m_numEffectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+  m_effectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+#endif
+
     arrayView2d< integer > const mappedFields = m_mappedFields[subRegionIndex];
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
     arrayView1d< localIndex const > const numEffectiveMappedNodes = m_numEffectiveMappedNodes[subRegionIndex];
@@ -17703,8 +17681,15 @@ void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
       }
     } );
 
+  #ifdef GEOS_USE_DEVICE
+m_mappedFields[subRegionIndex].registerTouch( hostMemorySpace );
+m_effectiveMappedFields[subRegionIndex].registerTouch( hostMemorySpace );
+#endif
+
     ++subRegionIndex;
   } );
+
+
 }
 
 

@@ -117,6 +117,8 @@ struct ParticleStateUpdateKernel
                       arrayView3d< real64 const > const velocityGradient,
                       arrayView2d< real64 > const particleStress )
   {
+    GEOS_UNUSED_VAR( deformationGradient );
+
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
     arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
 
