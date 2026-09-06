@@ -288,6 +288,7 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * formulationTypeString() { return "formulationType"; }
+    static constexpr char const * hasVelocityComputedString() { return "hasVelocityComputed"; }
 
     // time stepping controls
 
@@ -298,6 +299,7 @@ public:
     static constexpr char const * targetRelativeCompDensChangeString() { return "targetRelativeCompDensChangeInTimeStep"; }
     static constexpr char const * targetCompFracChangeString() { return "targetCompFracChangeInTimeStep"; }
     static constexpr char const * targetFlowCFLString() { return "targetFlowCFL"; }
+
 
 
     // nonlinear solver parameters
@@ -476,6 +478,9 @@ protected:
 
   /// flag to determine whether or not to apply dispersion
   bool m_hasDispersion;
+
+  /// flag to determine whether or not to apply assemble velocities
+  int m_hasVelocityComputed;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
