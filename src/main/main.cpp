@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorLogger.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
@@ -81,17 +81,15 @@ int main( int argc, char *argv[] )
   { // GEOS generated exceptions management
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
-    LvArray::system::callErrorHandler();
+    ErrorHandler::getInstance().abortProgram();
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
-                                           MsgType::Exception, e.what(),
-                                           ::geos::logger::internal::g_rank )
-                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                           .getDiagnosticMsg());
+    string_view constexpr causeMessage = "A dependency has thrown an exception";
+    auto const stackTrace = LvArray::system::stackTrace( true ); // auto const for compatibility with stacktrace library
+    ErrorHandler::getInstance().manageException( e, causeMessage, stackTrace );
     basicCleanup( true );
-    LvArray::system::callErrorHandler();
+    ErrorHandler::getInstance().abortProgram();
   }
   return 0;
 }

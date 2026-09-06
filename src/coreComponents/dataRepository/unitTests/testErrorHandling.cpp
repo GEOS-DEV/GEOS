@@ -15,11 +15,10 @@
 
 // forcefully enable asserts macros for this unit test
 #include "LvArray/src/system.hpp"
-#include "common/logger/ExternalErrorHandler.hpp"
 #include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
-#include "common/logger/ErrorHandling.hpp"
 
+#include "common/logger/ErrorHandler.hpp"
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -47,6 +46,14 @@ int testValue = 5;
 DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/file.xml", 23 );
 DataFileContext const additionalContext = DataFileContext( "Additional Test Class", "/path/to/file.xml", 32 );
 DataFileContext const importantAdditionalContext = DataFileContext( "Important Additional Test Class", "/path/to/file.xml", 64 );
+
+// original error handler to backup to
+ErrorHandler defaultErrorhandler;
+
+/**
+ * @name Helper functions
+ */
+///@{
 
 /**
  * @brief begin a test with a local logger
@@ -96,7 +103,7 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
                                 << "-----------------------\n";
     testFailed |= !foundFileBit;
   }
-  EXPECT_FALSE( testFailed ) << "Generated error file content:\n"
+  EXPECT_FALSE( testFailed ) << "Generated error file content ("<<filename<<"):\n"
                              << "-----------------------\n"
                              << fileContent << '\n'
                              << "-----------------------\n";
@@ -105,11 +112,32 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
     fs::remove( filename );
 }
 
+template< typename LAMBDA >
+void beginLocalErrorHandlerTest( ErrorLogger & logger, LAMBDA && abortCustomFunc )
+{
+  ErrorHandler testErrorHandler;
+  testErrorHandler.setProgramAborter( abortCustomFunc );
+  testErrorHandler.setLogger( &logger );
+
+  // backup and change
+  defaultErrorhandler = ErrorHandler::getInstance();
+  ErrorHandler::setupErrorHandlingStrategy( std::move( testErrorHandler ) );
+}
+
+void endLocalErrorHandlerTest()
+{
+  // restore backup
+  ErrorHandler defaultErrorHandlerBackup = defaultErrorhandler;
+  ErrorHandler::setupErrorHandlingStrategy( std::move( defaultErrorHandlerBackup ) );
+}
+
+///@}
+
 TEST( ErrorHandling, testYamlFileWarningOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileWarningOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
@@ -170,7 +198,7 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
   ErrorLogger testErrorLogger;
-  string const file = "exceptionTestOutput.yaml";
+  string const file = "testYamlFileExceptionOutput.yaml";
   beginLocalLoggerTest( testErrorLogger, file );
   size_t line1;
 
@@ -241,7 +269,7 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "errorTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileErrorOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
                                      GEOS_FMT( "{}: option should be lower than {}.",
@@ -287,7 +315,6 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
   } );
 }
 
-
 TEST( ErrorHandling, testLogFileExceptionOutput )
 {
   ErrorLogger testErrorLogger;
@@ -327,7 +354,6 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
                                     "  Error message :\n{}"
                                     "  expected sequence :\n{}",
                                     oss.str(),
@@ -335,45 +361,113 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   }
 }
 
-TEST( ErrorHandling, testStdException )
+// testing the capture & processing of lvarray exceptions, also testing what happens in case of an
+// std::exception (as this is what lvarray throws).
+TEST( ErrorHandling, testLvArrayStdException )
+{
+  ErrorLogger testErrorLogger;
+  bool exceptionHappened = false;
+
+  beginLocalLoggerTest( testErrorLogger, "testLvArrayAndStdException.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, abortGeos );
+
+  // Standard exception thrown by LvArray
+  try
+  {
+    // no ',' in between numbers will throw an exception
+    array1d< localIndex > dummy;
+    LvArray::input::stringToArray( dummy, "{123 456}" );
+  }
+  catch( geos::Exception & e )
+  {
+    EXPECT_FALSE( true ) << "Exception not correctly handled.";
+  }
+  catch( std::exception const & e )
+  {
+    exceptionHappened = true;
+
+    // mimic "main()" exception logging behaviour
+    {
+      string_view constexpr causeMessage = "A dependency has thrown an exception";
+      auto const stackTrace = LvArray::system::stackTrace( true ); // auto const for compatibility with stacktrace library
+      ErrorHandler::getInstance().manageException( e, causeMessage, stackTrace );
+    }
+    // we continue without aborting to check the yaml results
+  }
+  catch( ... )
+  {
+    EXPECT_FALSE( true ) << "Unexpected exception.";
+  }
+  EXPECT_TRUE( exceptionHappened ) << "Exception has not been thrown";
+
+  // we have to inherint the LvArray formatting here
+  endLocalErrorHandlerTest();
+  endLocalLoggerTest( testErrorLogger, {
+    R"(errors:)",
+
+    // LvArray Exception
+    R"(- type: Exception
+    rank: 0
+    message: >-)",
+
+    "Array value sequence specified without ',' delimiter: {123 456}",
+
+    R"(cause: >-
+      A dependency has thrown an exception)",
+    "sourceCallStack:",
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
+  } );
+}
+
+// testing the capture & processing of lvarray error, also testing what happens when a dependency terminates
+TEST( ErrorHandling, testLvArrayError )
 {
   ErrorLogger testErrorLogger;
 
-  try
-  {
+  beginLocalLoggerTest( testErrorLogger, "testLvArrayAndStdError.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, abortGeos );
 
-    throw std::invalid_argument( "received negative value" );
-  }
-  catch( std::exception & e )
-  {
+  // Standard error caused by LvArray: not existing MemorySpace will cause an error with defined behaviour.
+  LvArray::MemorySpace const badValue = LvArray::MemorySpace( -2 );
+  EXPECT_EXIT( LvArray::operator<<( std::cout, badValue ), ::testing::ExitedWithCode( 1 ), ".*" );
 
-    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(),
-                                                 ::geos::logger::internal::g_rank )
-      .addCallStackInfo( LvArray::system::stackTrace( true ) );
+  endLocalErrorHandlerTest();
 
-    std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
-    string const streamExpected = GEOS_FMT(
-      "***** Exception\n"
-      "***** Rank 0\n"
-      "***** Message :\n"
-      "{}\n",
-      testErrorLogger.getCurrentExceptionMsg().m_msg );
-    GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
-                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
-                                    "The error message was not containing the expected sequence.\n"
-                                    "  Error message :\n{}"
-                                    "  expected sequence :\n{}",
-                                    oss.str(),
-                                    streamExpected ) );
-  }
+  // we have to inherint the LvArray formatting here
+  endLocalLoggerTest( testErrorLogger, {
+    R"(errors:)",
+
+    R"(  - type: ExternalError
+    rank: 0
+    message: >-
+      LvArray Runtime Error
+    contexts:
+      - priority: 0
+        description: LvArray Error Handler
+        detectionLocation: LvArray Error Handler)",
+
+    // LvArray Error
+    // Exact reason is deactivated: For now, we cannot capture the lvarray error reason, because the lvarray error
+    //                              handler does not communicate the error message (excepted directly in std::cout).
+    // "Unrecognized memory space -2",
+
+    // LvArray also does not communicate the error line.
+    // GEOS_FMT( "{}:{}", __FILE__, line1 ),
+
+    "sourceCallStack:",
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
+  } );
 }
 
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
   ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( testErrorLogger, "assertTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "testYamlFileAssertOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
                                 GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
@@ -412,44 +506,38 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   } );
 }
 
-
-TEST( ErrorHandling, VerifySignalHandlerLogs )
+TEST( ErrorHandling, testSignalHandling )
 {
   ErrorLogger testErrorLogger;
-
-  beginLocalLoggerTest( testErrorLogger, "errors.yaml" );
-
-  setupLogger();
-
   bool signalHappened = false;
-  LvArray::system::setErrorHandler( [&]()
+
+  beginLocalLoggerTest( testErrorLogger, "VerifySignalHandlerLogs.yaml" );
+  beginLocalErrorHandlerTest( testErrorLogger, [&]()
   {
-    endLocalLoggerTest( testErrorLogger, {
-      R"(- type: ExternalError
+    signalHappened = true;
+    // we do not really abort, we want to test signal handling behaviour
+  } );
+
+  raise( SIGFPE );
+  EXPECT_TRUE( signalHappened );
+
+  endLocalErrorHandlerTest();
+  endLocalLoggerTest( testErrorLogger, {
+    R"(- type: ExternalError
     rank: 0
     message: >-
-      Signal encountered (no. 2): Interrupt
+      Floating point error encountered:
+      Unknown reason.
     contexts:
       - priority: 0
         description: Signal (detected from Signal Handler)
         detectionLocation: Signal handler
-        signal: 2
+        signal: 8
     sourceCallStack:)",
-      "- frame0: ",
-      "- frame1: ",
-      "- frame2: "
-    } );
-
-    signalHappened = true;
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
   } );
-
-  ErrorLogger::global().enableFileOutput( true );
-
-  raise( SIGINT );
-
-  EXPECT_TRUE( signalHappened );
-
-  setupLogger();
 }
 
 int main( int ac, char * av[] )

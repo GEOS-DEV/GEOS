@@ -129,7 +129,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
-    { ERRORSOUTPUT, 0, "e", "errorsOutput", Arg::nonEmpty, "\t-e, --errors-output, \t Output path for the errors file (\".yaml\" supported)" },
+    { ERRORSOUTPUT, 0, "e", "errors-output", Arg::nonEmpty, "\t-e, --errors-output, \t Output path for the errors file (\".yaml\" supported)" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 

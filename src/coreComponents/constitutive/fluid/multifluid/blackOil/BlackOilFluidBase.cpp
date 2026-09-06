@@ -15,7 +15,7 @@
 
 #include "BlackOilFluidBase.hpp"
 
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorLogger.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
