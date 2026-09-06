@@ -50,8 +50,8 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setApplyDefaultValue( ActivityModelType::identity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Activity model applied to the chemical system. Available options are: "
-                    "``" + EnumStrings< ActivityModelType >::concat( "|" ) + "``. "
-                    "``bdot`` requires ion size and b-dot parameters, which only the geochemical "
+                    "``" + EnumStrings< ActivityModelType >::concat( "|" ) +
+                    ". ``bdot`` requires ion size and b-dot parameters, which only the geochemical "
                     "systems carry." );
 
   this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
