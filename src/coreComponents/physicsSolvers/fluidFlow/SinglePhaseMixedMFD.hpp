@@ -22,6 +22,8 @@
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include <utility>
+
 namespace geos
 {
 
@@ -193,9 +195,24 @@ private:
    * @brief Second classification layer: cells whose volume is below the degeneracy tolerance
    *        (percent of the volume of their node star) fall back to the diagonal product.
    * @param domain the domain
-   * @return the number of locally-owned cells switched to the diagonal product by this layer
+   * @return the number of locally-owned cells switched to the diagonal product by this layer, and how many
+   *         of them were prescribed the consistent (MFD) product
    */
-  localIndex applyDegeneracyLayer( DomainPartition & domain );
+  std::pair< localIndex, localIndex > applyDegeneracyLayer( DomainPartition & domain );
+
+  /**
+   * @brief Third classification layer: the user prescription of eta read from the mesh
+   *        (prescribedMfdFlag: negative free, 0 diagonal product, 1 consistent (MFD) product).
+   * @param domain the domain
+   * @return the number of locally-owned cells prescribed 0 and prescribed 1
+   */
+  std::pair< localIndex, localIndex > applyPrescribedFlag( DomainPartition & domain );
+
+  /**
+   * @brief Apply the prescription and degeneracy layers on top of the current eta, then label the faces.
+   * @param domain the domain
+   */
+  void applyLayersAndLabel( DomainPartition & domain );
 
   /**
    * @brief Classify the faces from the cell marking (0 = condensable TPFA face, 1 = live MFD face).

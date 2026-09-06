@@ -49,13 +49,22 @@ DECLARE_FIELD( faceMassFlux_n,
                WRITE_AND_READ,
                "Face mass flux at the previous converged time step" );
 
-DECLARE_FIELD( stencilFlag,
-               "stencilFlag",
+DECLARE_FIELD( mfdFlag,
+               "mfdFlag",
                array1d< integer >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Adaptive stencil activation flag (0 = TPFA-compatible, 1 = MFD-compatible)" );
+               "Inner product selector eta of the cell: 1 = consistent (MFD) product, 0 = diagonal (TPFA) product" );
+
+DECLARE_FIELD( prescribedMfdFlag,
+               "prescribedMfdFlag",
+               array1d< real64 >,
+               -1.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "User prescription of eta read from the mesh (real-valued so that it can be imported): negative = free "
+               "(the solver decides), 0 = diagonal product, 1 = consistent (MFD) product (rejected on a degenerate cell)" );
 
 DECLARE_FIELD( consistencyIndicator,
                "consistencyIndicator",
@@ -71,7 +80,7 @@ DECLARE_FIELD( degeneracyIndicator,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Cell volume as a percentage of the total volume of its node star (admissibility of the stabilized reconstruction)" );
+               "Cell volume as a percentage of the total volume of its node star (admissibility of the consistent (MFD) product)" );
 
 DECLARE_FIELD( faceOrientationCell,
                "faceOrientationCell",

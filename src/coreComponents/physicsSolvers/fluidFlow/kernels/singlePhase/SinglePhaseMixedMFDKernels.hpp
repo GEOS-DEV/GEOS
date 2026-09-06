@@ -104,7 +104,7 @@ public:
     m_bcPres( faceManager.getField< fields::flow::bcPressure >() ),
     m_isPresBcFace( faceManager.getField< fields::flow::isBoundaryFace >() ),
     m_faceStencilLabel( faceManager.getField< fields::mixedMimetic::faceStencilLabel >() ),
-    m_stencilFlag( subRegion.getField< fields::mixedMimetic::stencilFlag >() ),
+    m_mfdFlag( subRegion.getField< fields::mixedMimetic::mfdFlag >() ),
     m_elemDens( fluid.density() ),
     m_dElemDens( fluid.dDensity() ),
     m_mob( subRegion.getField< fields::flow::mobility >() ),
@@ -219,7 +219,7 @@ public:
     }
     if( anyLiveFace )
     {
-      real64 const chi = static_cast< real64 >( m_stencilFlag[ei] );
+      real64 const chi = static_cast< real64 >( m_mfdFlag[ei] );
       mimeticInnerProduct::AdaptiveInnerProduct< IP >::template computeM< NUM_FACE >( m_nodePosition,
                                                                                       m_faceToNodes,
                                                                                       m_elemToFaces[ei],
@@ -404,7 +404,7 @@ protected:
   arrayView1d< integer const > const m_faceStencilLabel;
 
   /// adaptive stencil flag
-  arrayView1d< integer const > const m_stencilFlag;
+  arrayView1d< integer const > const m_mfdFlag;
 
   /// fluid data
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_elemDens;

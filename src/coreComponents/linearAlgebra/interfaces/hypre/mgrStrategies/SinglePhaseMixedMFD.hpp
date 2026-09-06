@@ -48,7 +48,7 @@ namespace mgr
  *
  * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers):
  *  0 = face flux whose row is exactly diagonal (condensed two-point face, no-flow face)
- *  1 = face flux adjacent to at least one stabilized (MFD) cell
+ *  1 = face flux adjacent to at least one cell with the consistent (MFD) product
  *  2 = cell pressure
  * Both flux labels are F-points of the single reduction level.
  */

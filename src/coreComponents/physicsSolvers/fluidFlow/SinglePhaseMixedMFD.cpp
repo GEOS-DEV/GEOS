@@ -72,7 +72,8 @@ void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< mixedMimetic::stencilFlag >( getName() );
+      subRegion.registerField< mixedMimetic::mfdFlag >( getName() );
+      subRegion.registerField< mixedMimetic::prescribedMfdFlag >( getName() );
       subRegion.registerField< mixedMimetic::consistencyIndicator >( getName() );
       subRegion.registerField< mixedMimetic::degeneracyIndicator >( getName() );
     } );
@@ -225,22 +226,22 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
   MixedMimeticDiscretizationManager const & mmManager = numericalMethodManager.getMixedMimeticDiscretizationManager();
   MixedMimeticDiscretization const & discretization = mmManager.getMixedMimeticDiscretization( m_discretizationName );
 
+  // every cell starts with the consistent (MFD) product; the layers below can only refine that choice
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase & subRegion )
+    {
+      subRegion.getField< mixedMimetic::mfdFlag >().template setValues< parallelDevicePolicy<> >( 1 );
+    } );
+  } );
+
   if( !discretization.isAdaptiveConsistency() )
   {
-    // no adaptation: activate the selected inner product in every cell
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  string_array const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                                          [&]( localIndex const,
-                                                                               ElementSubRegionBase & subRegion )
-      {
-        subRegion.getField< mixedMimetic::stencilFlag >().template setValues< parallelDevicePolicy<> >( 1 );
-      } );
-    } );
-    applyDegeneracyLayer( domain );
-    computeFaceStencilLabels( domain );
+    applyLayersAndLabel( domain );
     return;
   }
 
@@ -320,7 +321,7 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
                                                                    CellElementSubRegion & subRegion )
     {
       arrayView1d< real64 > const consistencyIndicator = subRegion.getField< mixedMimetic::consistencyIndicator >();
-      arrayView1d< integer > const stencilFlag = subRegion.getField< mixedMimetic::stencilFlag >();
+      arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
 
       mixedMimeticKernels::internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
@@ -331,14 +332,14 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
                                                                   faceResidual.toViewConst(),
                                                                   tolerance,
                                                                   consistencyIndicator,
-                                                                  stencilFlag );
+                                                                  mfdFlag );
       } );
       numCells += subRegion.size() - subRegion.getNumberOfGhosts();
     } );
 
     // make the marking consistent on ghost cells
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { mixedMimetic::stencilFlag::key(), mixedMimetic::consistencyIndicator::key() }, regionNames );
+    fieldsToBeSync.addElementFields( { mixedMimetic::mfdFlag::key(), mixedMimetic::consistencyIndicator::key() }, regionNames );
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     globalIndex const globalNumMfdCells = MpiWrapper::sum< globalIndex >( numMfdCells );
@@ -347,12 +348,66 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
                                tolerance, globalNumMfdCells, globalNumCells ) );
   } );
 
-  // second layer: the degenerate cells fall back to the diagonal product whatever the consistency says
-  applyDegeneracyLayer( domain );
+  applyLayersAndLabel( domain );
+}
+
+void SinglePhaseMixedMFD::applyLayersAndLabel( DomainPartition & domain )
+{
+  // prescription, then degeneracy (admissibility, which alone may override the prescription)
+  std::pair< localIndex, localIndex > const prescribed = applyPrescribedFlag( domain );
+  std::pair< localIndex, localIndex > const degenerate = applyDegeneracyLayer( domain );
+  globalIndex const numPrescribed0 = MpiWrapper::sum< globalIndex >( prescribed.first );
+  globalIndex const numPrescribed1 = MpiWrapper::sum< globalIndex >( prescribed.second );
+  globalIndex const numRejected = MpiWrapper::sum< globalIndex >( degenerate.second );
+  if( numPrescribed0 + numPrescribed1 > 0 )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: prescribed eta = 0 on {} cells and eta = 1 on {} cells ({} rejected by the degeneracy layer)",
+                               numPrescribed0, numPrescribed1, numRejected ) );
+  }
   computeFaceStencilLabels( domain );
 }
 
-localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
+std::pair< localIndex, localIndex > SinglePhaseMixedMFD::applyPrescribedFlag( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  localIndex numPrescribed0 = 0;
+  localIndex numPrescribed1 = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    FieldIdentifiers prescribedToBeSync;
+    prescribedToBeSync.addElementFields( { mixedMimetic::prescribedMfdFlag::key() }, regionNames );
+    CommunicationTools::getInstance().synchronizeFields( prescribedToBeSync, mesh, domain.getNeighbors(), false );
+
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< real64 const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+      arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      {
+        if( prescribed[ei] < 0.0 )
+        {
+          continue;
+        }
+        integer const eta = prescribed[ei] > 0.5 ? 1 : 0;
+        mfdFlag[ei] = eta;
+        if( ghostRank[ei] < 0 )
+        {
+          numPrescribed0 += ( eta == 0 );
+          numPrescribed1 += ( eta == 1 );
+        }
+      }
+    } );
+  } );
+  return { numPrescribed0, numPrescribed1 };
+}
+
+std::pair< localIndex, localIndex > SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -362,6 +417,7 @@ localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
   real64 const tolerance = discretization.getDegeneracyTolerance();
 
   localIndex numDegenerate = 0;
+  localIndex numRejected = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -382,7 +438,8 @@ localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 > const indicator = subRegion.getField< mixedMimetic::degeneracyIndicator >();
-      arrayView1d< integer > const stencilFlag = subRegion.getField< mixedMimetic::stencilFlag >();
+      arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
+      arrayView1d< real64 const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
       localIndex const numNodes = subRegion.numNodesPerElement();
 
       // the node star of a cell: every cell sharing a vertex with it, counted once
@@ -411,19 +468,20 @@ localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
         // share of the cell in the volume of its node star, in percent
         real64 const percent = sum > 0.0 ? 100.0 * volume[ei] / sum : 0.0;
         indicator[ei] = percent;
-        if( percent < tolerance && stencilFlag[ei] == 1 )
+        if( percent < tolerance && mfdFlag[ei] == 1 )
         {
-          stencilFlag[ei] = 0;
+          mfdFlag[ei] = 0;
           numDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;
+          numRejected += ( ghostRank[ei] < 0 && prescribed[ei] > 0.5 ) ? 1 : 0;
         }
       }
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { mixedMimetic::stencilFlag::key(), mixedMimetic::degeneracyIndicator::key() }, regionNames );
+    fieldsToBeSync.addElementFields( { mixedMimetic::mfdFlag::key(), mixedMimetic::degeneracyIndicator::key() }, regionNames );
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
   } );
-  return numDegenerate;
+  return { numDegenerate, numRejected };
 }
 
 void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
@@ -445,8 +503,8 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const stencilFlagAccessor =
-      elemManager.constructArrayViewAccessor< integer, 1 >( mixedMimetic::stencilFlag::key() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const mfdFlagAccessor =
+      elemManager.constructArrayViewAccessor< integer, 1 >( mixedMimetic::mfdFlag::key() );
 
     mixedMimeticKernels::FaceLabelKernel::
       launch< parallelDevicePolicy<> >( faceManager.size(),
@@ -454,7 +512,7 @@ void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain )
                                         faceManager.elementSubRegionList(),
                                         faceManager.elementList(),
                                         m_regionFilter.toViewConst(),
-                                        stencilFlagAccessor.toNestedViewConst(),
+                                        mfdFlagAccessor.toNestedViewConst(),
                                         effectiveTpfa,
                                         faceManager.getField< mixedMimetic::faceStencilLabel >() );
   } );

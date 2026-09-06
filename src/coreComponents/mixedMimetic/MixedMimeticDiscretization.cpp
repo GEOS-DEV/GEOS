@@ -67,7 +67,7 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.1 ).
     setDescription( "Degeneracy tolerance in percent: a cell whose volume is below this percentage of the total volume "
-                    "of its node star is not admissible for the stabilized reconstruction and uses the diagonal (TPFA) "
+                    "of its node star is not admissible for the consistent (MFD) product and uses the diagonal (TPFA) "
                     "product, whatever the consistency indicator says; 0 disables the layer" );
 }
 

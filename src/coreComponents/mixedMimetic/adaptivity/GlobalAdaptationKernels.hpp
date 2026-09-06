@@ -200,7 +200,7 @@ struct FaceLabelKernel
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
           SortedArrayView< localIndex const > const & regionFilter,
-          ElementViewConst< arrayView1d< integer const > > const & stencilFlag,
+          ElementViewConst< arrayView1d< integer const > > const & mfdFlag,
           bool const effectiveTpfa,
           arrayView1d< integer > const & faceStencilLabel )
   {
@@ -216,7 +216,7 @@ struct FaceLabelKernel
           localIndex const ei  = elemList[kf][k];
           if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
           {
-            label = LvArray::math::max( label, stencilFlag[er][esr][ei] );
+            label = LvArray::math::max( label, mfdFlag[er][esr][ei] );
           }
         }
       }
@@ -344,7 +344,7 @@ struct MarkingKernel
           arrayView1d< real64 const > const & faceResidual,
           real64 const tolerance,
           arrayView1d< real64 > const & consistencyIndicator,
-          arrayView1d< integer > const & stencilFlag )
+          arrayView1d< integer > const & mfdFlag )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > numMfdCells( 0 );
 
@@ -357,7 +357,7 @@ struct MarkingKernel
       }
       consistencyIndicator[ei] = indicator;
       integer const flag = ( indicator > tolerance ) ? 1 : 0;
-      stencilFlag[ei] = flag;
+      mfdFlag[ei] = flag;
       numMfdCells += ( elemGhostRank[ei] < 0 ) ? flag : 0;
     } );
 
