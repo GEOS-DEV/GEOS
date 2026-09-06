@@ -189,20 +189,21 @@ void ParticleSubRegionBase::erase( std::set< localIndex > const & indicesToErase
 
 void ParticleSubRegionBase::setActiveParticleIndices()
 {
-  m_activeParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
+  m_activeParticleIndices.move( LvArray::MemorySpace::host, true ); // TODO: Is this needed?
   m_activeParticleIndices.clear();
 
-  m_inactiveParticleIndices.move( LvArray::MemorySpace::host ); // TODO: Is this needed?
+  m_inactiveParticleIndices.move( LvArray::MemorySpace::host, true ); // TODO: Is this needed?
   m_inactiveParticleIndices.clear();
 
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
   arrayView1d< int const > const particleDeleteFlag = this->getField< fields::mpm::particleDeleteFlag >();
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-  forAll< serialPolicy >( this->size(), [&, particleRank, particleDeleteFlag] GEOS_HOST ( localIndex const p ) // This must be on host since
-                                                                                                               // we're dealing with
-                                                                                                               // a sorted array.
-                                                                                                               // Parallelize with atomics?
+
+  // Must be on serial because it requires insertion into SortedArray
+  // To parallelize we would need to first count active and inactive particles initialize arrays then go back and add them with atomics
+  // Two step approach
+  forAll< serialPolicy >( this->size(), [&, particleRank, particleDeleteFlag] GEOS_HOST ( localIndex const p )
     {
       if( particleRank[p] == rank && particleDeleteFlag[p] != 1 )
       {

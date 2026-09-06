@@ -55,6 +55,18 @@ namespace mpm
   };
 
   /**
+   * @enum GridToParticleMappingOption
+   *
+   * Selects how grid-to-particle kernels obtain their node connectivity,
+   * shape-function values, and shape-function gradients.
+   */
+  enum class GridToParticleMappingOption : integer
+  {
+    Precomputed, //!< Reuse the raw mapping arrays built once per step.
+    OnTheFly     //!< Recompute the raw particle mapping inside each G2P kernel.
+  };
+
+  /**
    * @enum BoundaryConditionOption
    *
    * The options for essential boundary conditions
@@ -230,6 +242,10 @@ ENUM_STRINGS( mpm::UpdateMethodOption,
               "PIC",
               "XPIC",
               "FMPM" );
+
+ENUM_STRINGS( mpm::GridToParticleMappingOption,
+              "Precomputed",
+              "OnTheFly" );
 
 ENUM_STRINGS( mpm::BoundaryConditionOption,
               "Outflow",

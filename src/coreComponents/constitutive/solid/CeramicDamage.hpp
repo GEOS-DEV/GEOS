@@ -662,7 +662,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
       if( nominalElasticStrainEnergy < m_fractureEnergyReleaseRate / m_lengthScale[k] )
       { // Increment damage to ramp down stress until energy criteria is met.
-        for( int i = 0; i < 16; ++i )
+        for( integer i = 0; i < 16; ++i )
         { // Use fixed-point iteration to find damage consistent with dissipation for the current step.
           CeramicDamageUpdates::plasticReturn( m_damage[k][q],  // damage
                                                m_crackTipStressConcentration[k],
@@ -782,7 +782,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     //                                       = strainIncrement - C^inv:(sigmaNew - sigmaOld)
     //                                       = strainIncrement - C^inv:stressIncrement
     real64 stressIncrement[6] = { };
-    real64 oldStress[6] = { 0 };
+    real64 oldStress[6] = { };
     LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] );
     LvArray::tensorOps::copy< 6 >( stressIncrement, stress );
     LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
@@ -793,7 +793,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     // re-rotate the result.
 
     // Compute plastic strain increment
-    real64 plasticStrainIncrement[6] = {0};
+    real64 plasticStrainIncrement[6] = { };
     computePlasticStrainIncrement( k,
                                    q,
                                    timeIncrement,
@@ -840,7 +840,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // copy updated value to state variable.
     LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
-  }
+  } 
 }
 
 GEOS_HOST_DEVICE

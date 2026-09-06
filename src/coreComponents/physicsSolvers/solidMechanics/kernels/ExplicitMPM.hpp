@@ -51,52 +51,94 @@ struct ParticleStateUpdateKernel
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
   static void launch( SortedArrayView< localIndex const > const indices,
+                      localIndex const batchSize,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
-                      real64 dt,
-                      int hyperelasticUpdate,
                       arrayView3d< real64 const > const deformationGradient,
-                      arrayView3d< real64 const > const fDot,
-                      arrayView3d< real64 const > const velocityGradient,
                       arrayView2d< real64 > const particleStress )
   {
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
+    arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
 
-    // Perform constitutive call
-    forAll< POLICY >( indices.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    if( indices.size() == 0 )
     {
-      // Particle index
-      localIndex const p = indices[k];
+      return;
+    }
 
-      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for
-      // some reason
-      #if defined(GEOS_USE_DEVICE)
-      // Keep constitutive oldStress synchronized with the particle stress in
-      // device builds. CUDA already needed this for MPI/MPM consistency; HIP
-      // has the same host/device residency issue.
-      LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
-      #endif
+    for( localIndex begin = 0; begin < indices.size(); begin += batchSize )
+    {
+      localIndex const count = LvArray::math::min( batchSize, indices.size() - begin );
 
-      real64 stress[6] = {};
-      //CC: debug hardcoded hyperelastic model for now
-      if( hyperelasticUpdate == 1 )
-      // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to
-      // manually add their name here everything we add them
-      // Some models we might want hyperelastic updates when plasticity or damage are turned off
-      { //Hyperelastic stress update
-        // Don't believe we need to perform unrotation and rotation here (yes...unrotation...)
-        // Think we can update stress directly by calling constitutive model
-        // Hyperelastic models in GEOSX currently use FminusI as input argument
+      forAll< POLICY >( count, [=] GEOS_HOST_DEVICE ( localIndex const q )
+      {
+        localIndex const k = begin + q;
+        localIndex const p = indices[k];
+
+        real64 stress[6] = {};
+
         real64 FminusI[3][3] = {};
         LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
         LvArray::tensorOps::addIdentity< 3 >( FminusI, -1.0 );
 
-        constitutiveWrapper.hyperUpdate( p,      // particle local index
-                                         0,      // particles have 1 quadrature point
+        constitutiveWrapper.hyperUpdate( p,       // particle local index
+                                         0,       // particles have 1 quadrature point
                                          FminusI, // particle strain increment
                                          stress );
-      }
-      else //Hypoeleastic stress update
+
+        // Copy the updated stress into particleStress
+        LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
+
+        // Copy m_newStress into m_oldStress
+        constitutiveWrapper.saveConvergedState( p, 0 );
+    
+      } );
+    }
+  }
+
+
+  /**
+   * @brief Launch the kernel function doing constitutive updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONSTITUTIVE_WRAPPER the type of consitutive wrapper doing the constitutive updates
+   * @param[in] dt The time step
+   * @param[in] hyperelasticUpdate Flag to perform hyperelastic update (constitutive model dependent)
+   * @param[in] deformationGradient The current/end-of-step particle deformation gradient F_{n+1}
+   * @param[in] fDot The step-averaged time derivative of the deformation gradient, used to recover F_n
+   * @param[in] velocityGradient The step velocity gradient used to build the strain increment over [t_n,t_{n+1}]
+   * @param[out] particleStress The new particle stress, returned for plotting convenience
+   */
+  template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
+  static void launch( SortedArrayView< localIndex const > const indices,
+                      localIndex const batchSize,
+                      CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
+                      real64 dt,
+                      arrayView3d< real64 const > const deformationGradient,
+                      arrayView3d< real64 const > const rotation,
+                      arrayView3d< real64 const > const oldRotation,
+                      arrayView3d< real64 const > const velocityGradient,
+                      arrayView2d< real64 > const particleStress )
+  {
+    GEOS_UNUSED_VAR( deformationGradient );
+
+    arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
+    arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
+
+    if( indices.size() == 0 )
+    {
+      return;
+    }
+
+    for( localIndex begin = 0; begin < indices.size(); begin += batchSize )
+    {
+      localIndex const count = LvArray::math::min( batchSize, indices.size() - begin );
+
+      forAll< POLICY >( count, [=] GEOS_HOST_DEVICE ( localIndex const q )
       {
+        localIndex const k = begin + q;
+        localIndex const p = indices[k];
+
+        real64 stress[6] = {};
+        
+        // Hypoeleastic stress update
         // Determine the strain increment in Voigt notation
         real64 strainIncrement[6] = {};
         strainIncrement[0] = velocityGradient[p][0][0] * dt;
@@ -106,38 +148,28 @@ struct ParticleStateUpdateKernel
         strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
         strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
-        // deformationGradient[p] has already been advanced by updateDeformationGradient(), so it is F_{n+1}.
-        // Recover the beginning-of-step F_n from F_{n+1} - Fdot * dt for the objective stress update.
-        real64 fOld[3][3] = {};
-        real64 fNew[3][3] = {};
-        LvArray::tensorOps::copy< 3, 3 >( fNew, deformationGradient[p] );
-        LvArray::tensorOps::copy< 3, 3 >( fOld, deformationGradient[p] );
-        LvArray::tensorOps::scaledAdd< 3, 3 >( fOld, fDot[p], -dt );
-
-        // Polar decompositions
         real64 rotBeginning[3][3] = {};
         real64 rotEnd[3][3] = {};
+        LvArray::tensorOps::copy< 3, 3 >( rotBeginning, oldRotation[p] );
+        LvArray::tensorOps::copy< 3, 3 >( rotEnd, rotation[p] );
 
-        LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
-        LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
+        constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,
+                                                              p,
+                                                              0,
+                                                              dt,
+                                                              strainIncrement,
+                                                              rotBeginning,
+                                                              rotEnd,
+                                                              stress );
 
-        // Call stress update
-        constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,  // the constitutive model
-                                                              p,                    // particle local index
-                                                              0,                    // particles have 1 quadrature point
-                                                              dt,                   // time step size
-                                                              strainIncrement,      // particle strain increment
-                                                              rotBeginning,         // beginning-of-step rotation matrix
-                                                              rotEnd,               // end-of-step rotation matrix
-                                                              stress );             // final updated stress
-      }
+        // Copy the updated stress into particleStress
+        LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
 
-      // Copy the updated stress into particleStress
-      LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
-
-      // Copy m_newStress into m_oldStress
-      constitutiveWrapper.saveConvergedState( p, 0 );
-    } );
+        // Copy m_newStress into m_oldStress
+        constitutiveWrapper.saveConvergedState( p, 0 );
+    
+      } );
+    }
   }
 };
 

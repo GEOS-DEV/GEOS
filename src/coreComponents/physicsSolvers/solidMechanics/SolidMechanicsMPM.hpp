@@ -279,7 +279,8 @@ public:
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
-                       MPI_Op op );
+                       MPI_Op op,
+                       bool syncGridOnDevice = false );
 
   void replaceGridFieldsOwnerToGhost( stdVector< std::string > const & fieldNames,
                                       DomainPartition & domain,
@@ -1040,7 +1041,11 @@ public:
 
   void deleteBadParticles( ParticleManager & particleManager );
 
-  // void dumpParticleStressToFile(ParticleManager & particleManager, int const cycleNumber, std::string label);
+  void validateParticleMappings( ParticleManager & particleManager, NodeManager & nodeManager );
+  void dumpMappingDataToFile( ParticleManager & particleManager, int const cycleNumbder, std::string label);
+  void dumpGridDataToFile(NodeManager & nodeManager, int const cycleNumber, std::string label);
+  void dumpModelDataToFile(ParticleManager & particleManager, int const cycleNumbder, std::string label);
+  void dumpParticleDataToFile(ParticleManager & particleManager, int const cycleNumber, std::string label);
 
   // void checkParticlesForNan( ParticleManager & particleManager, std::string label );
 
@@ -1308,11 +1313,11 @@ public:
 
 protected:
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                  xmlWrapper::xmlNode & targetNode );
+                                  xmlWrapper::xmlNode & targetNode ) override;
 
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & targetNodePos );
+                                  xmlWrapper::xmlNodePos const & targetNodePos ) override;
 
   virtual void postInputInitialization() override final;
 
@@ -1322,6 +1327,7 @@ protected:
 
   // Member fields are ordered alphabetically by member name to match the constructor initializer list.
   mpm::AreaIntegrationOption m_areaIntegrationMethod;
+  localIndex m_batchSize;
   array2d< real64 > m_bcTable;
   int m_binSizeMultiplier;
   array1d< real64 > m_bodyForce;
@@ -1384,7 +1390,7 @@ protected:
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable;
   // Deprecated compatibility input; the fixed-L exponential uses internal scaling and squaring.
-  int m_FSubcycles;
+  integer m_FSubcycles;
   int m_flagParticlesWithBadMappingArraysForDeletion;
   array2d< real64 > m_fTable;
   mpm::InterpolationOption m_fTableInterpType;
@@ -1406,8 +1412,8 @@ protected:
   stdVector< array2d< integer > > m_mappedFields;
   stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
                                                     // # of particles, # of nodes a particle on the subregion maps to}
-  int m_maxLRIterations;
-  int m_maxNodalNeighbors;
+  integer m_maxLRIterations;
+  integer m_maxNodalNeighbors;
   real64 m_maxParticleJacobian;
   real64 m_maxParticleVelocity;
   real64 m_maxParticleVelocitySquared;
@@ -1415,7 +1421,7 @@ protected:
   int m_needsNeighborList;
   int m_needsNodalNeighborList;
   real64 m_neighborRadius;
-  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
+  array1d< integer > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   real64 m_nextBoxAverageWriteTime;
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
@@ -1425,12 +1431,12 @@ protected:
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
-  int m_numContactFlags;
-  int m_numContactGroups;
-  int m_numDims;
+  integer m_numContactFlags;
+  integer m_numContactGroups;
+  integer m_numDims;
   stdVector< array1d< localIndex > > m_numEffectiveMappedNodes;
-  int m_numSurfaceIntegrationPoints;
-  int m_numVelocityFields;
+  integer m_numSurfaceIntegrationPoints;
+  integer m_numVelocityFields;
   mpm::OverlapCorrectionOption m_overlapCorrection;
   real64 m_overlapThreshold1;
   real64 m_overlapThreshold2;
@@ -1567,8 +1573,9 @@ protected:
   string_array m_tracerVariables;
   real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
+  mpm::GridToParticleMappingOption m_gridToParticleMapping;
   mpm::UpdateMethodOption m_updateMethod;
-  int m_updateOrder;
+  integer m_updateOrder;
   int m_useCrackTipDetection;
   int m_useEvents;                   // Events flag
   int m_useInternalForceAsFaceReaction;
