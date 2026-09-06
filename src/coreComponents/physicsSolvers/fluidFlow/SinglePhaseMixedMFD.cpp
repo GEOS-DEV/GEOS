@@ -374,10 +374,10 @@ localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
         {
           sum += elemVolume[c[0]][c[1]][c[2]];
         }
-        real64 const mean = star.empty() ? 0.0 : sum / star.size();
-        real64 const ratio = mean > 0.0 ? volume[ei] / mean : 0.0;
-        indicator[ei] = ratio;
-        if( 100.0 * ratio < tolerance && stencilFlag[ei] == 1 )
+        // share of the cell in the volume of its node star, in percent
+        real64 const percent = sum > 0.0 ? 100.0 * volume[ei] / sum : 0.0;
+        indicator[ei] = percent;
+        if( percent < tolerance && stencilFlag[ei] == 1 )
         {
           stencilFlag[ei] = 0;
           numDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;

@@ -38,7 +38,7 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
   m_isAdaptive( 1 ),
   m_residualTolerance( 1e-3 ),
   m_nominalGradient( { 1.0, 1.0, 1.0 } ),
-  m_degeneracyTolerance( 1.0 )
+  m_degeneracyTolerance( 0.1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -65,8 +65,8 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
 
   registerWrapper( viewKeyStruct::degeneracyToleranceString(), &m_degeneracyTolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1.0 ).
-    setDescription( "Degeneracy tolerance in percent: a cell whose volume is below this percentage of the mean volume "
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Degeneracy tolerance in percent: a cell whose volume is below this percentage of the total volume "
                     "of its node star is not admissible for the stabilized reconstruction and uses the diagonal (TPFA) "
                     "product, whatever the consistency indicator says; 0 disables the layer" );
 }

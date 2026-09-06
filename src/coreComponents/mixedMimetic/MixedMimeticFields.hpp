@@ -71,7 +71,7 @@ DECLARE_FIELD( degeneracyIndicator,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Cell volume over the mean volume of its node star (admissibility of the stabilized reconstruction)" );
+               "Cell volume as a percentage of the total volume of its node star (admissibility of the stabilized reconstruction)" );
 
 DECLARE_FIELD( faceStencilLabel,
                "faceStencilLabel",

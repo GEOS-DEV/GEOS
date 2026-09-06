@@ -108,7 +108,7 @@ public:
   R1Tensor getNominalGradient() const { return m_nominalGradient; }
 
   /**
-   * @brief @return The degeneracy tolerance in percent of the mean node-star volume
+   * @brief @return The degeneracy tolerance in percent of the node-star volume
    */
   real64 getDegeneracyTolerance() const { return m_degeneracyTolerance; }
 
@@ -132,7 +132,7 @@ private:
   /// nominal gradient inducing the projected admissible flow field
   R1Tensor m_nominalGradient;
 
-  /// cells whose volume is below this percentage of the mean volume of their node star use the diagonal product
+  /// cells whose volume is below this percentage of the volume of their node star use the diagonal product
   real64 m_degeneracyTolerance;
 
   /**
