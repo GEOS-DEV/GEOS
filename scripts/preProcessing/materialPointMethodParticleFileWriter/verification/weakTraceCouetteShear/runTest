@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import sys
+
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent
+sys.path.insert(0, str(PFW_ROOT))
+
+from mpm_vv_folder_runner import run_folder
+
+
+CASE_ID = "weakTraceCouetteShear"
+
+
+def variant(name: str, label: str) -> dict:
+    return {
+        "name": name,
+        "label": label,
+        "case_name": f"{CASE_ID}_{name}",
+        "env": {
+            "WEAK_TRACE_VARIANT": name,
+            "VV_CASE_NAME": f"{CASE_ID}_{name}",
+            "VV_VARIANT_LABEL": label,
+        },
+    }
+
+
+VARIANTS = [
+    variant("singleField", "single-field baseline"),
+    variant("traceContactGroups", "weak trace, contact groups"),
+    variant("falseElasticCZ", "stiff elastic CZ reference"),
+]
+
+
+if __name__ == "__main__":
+    raise SystemExit(
+        run_folder(
+            source_dir=SOURCE_DIR,
+            input_file="pfw_input_weakTraceCouetteShear.py",
+            post_script="postProcess_weakTraceCouetteShear.py",
+            variants=VARIANTS,
+            default_case_id=CASE_ID,
+            description="Run weak-trace Couette shear verification",
+        )
+    )

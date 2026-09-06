@@ -1,0 +1,22 @@
+\paragraph{Problem.}
+This verification problem sends a small longitudinal velocity packet through a
+flat interface between two linear elastic materials in a quasi-one-dimensional
+plane-strain bar.  The left boundary is driven by an F-table approximation to a
+small Gaussian velocity pulse.  The transverse grid faces are constrained to
+enforce uniaxial strain, and the right computational boundary is placed at
+$x=0$ so the same global F-table velocity field prescribes zero normal velocity
+on the right boundary.
+
+\paragraph{Expected response.}
+For a bonded interface the transmitted and reflected wave amplitudes are set by
+the one-dimensional elastic impedances $Z_i=\rho_i c_i$, with
+$c_i=\sqrt{M_i/\rho_i}$ and
+$M_i=E_i(1-\nu_i)/[(1+\nu_i)(1-2\nu_i)]$.  The weak-trace variant should follow
+the same transmitted pulse and should not create a persistent normal opening at
+the interface.  The analytical comparison uses the incident pulse implied by
+the imposed left-boundary velocity and then applies the bonded-interface
+reflection and transmission coefficients.  Profile-history output is compared
+against the analytical wave shape at selected times to separate ordinary
+numerical dispersion from interface errors.
+
+\IfFileExists{\CaseOutputDir/weakTraceDynamicWave_results.tex}{\input{\CaseOutputDir/weakTraceDynamicWave_results.tex}}{\emph{Run this folder to generate weakTraceDynamicWave results.}}

@@ -1057,7 +1057,17 @@ public:
                                          real64 const ( &surfacePosition )[3],
                                          int const & minParticlesPerSide,
                                          real64 const & maxMisfitFraction,
-                                         real64 const & minMeanMargin );
+                                         real64 const & minMeanMargin,
+                                         localIndex & countA,
+                                         localIndex & countB,
+                                         localIndex & positiveSideCount,
+                                         localIndex & negativeSideCount,
+                                         real64 & supportRadius,
+                                         real64 & planeOffset,
+                                         real64 & wrongSideFraction,
+                                         real64 & meanMargin,
+                                         real64 & wrongSideFractionReverse,
+                                         real64 & meanMarginReverse );
 
   void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
                                                  NodeManager & nodeManager );

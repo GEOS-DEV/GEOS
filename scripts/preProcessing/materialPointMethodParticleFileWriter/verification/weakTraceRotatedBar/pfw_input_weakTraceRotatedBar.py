@@ -43,6 +43,8 @@ pfw["mSubmitJobs"] = False
 refine = int(os.environ.get("WEAK_TRACE_REFINE", "1"))
 cpp = int(os.environ.get("WEAK_TRACE_CPP", "40"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
+particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", "2"))
+update_order_text = os.environ.get("WEAK_TRACE_UPDATE_ORDER", "")
 
 pfw["planeStrain"] = 1
 pfw["xpar"] = refine
@@ -83,6 +85,8 @@ pfw["weakDiscontinuityInsertion"] = "off"
 pfw["weakInterfaceTraceGeometry"] = "surface"
 pfw["cpdiDomainScaling"] = 0
 pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC")
+if update_order_text.strip():
+    pfw["updateOrder"] = int(update_order_text)
 pfw["outputType"] = "silo"
 pfw["plotGridFields"] = 1
 pfw["gridFieldNames"] = [
@@ -235,7 +239,7 @@ def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
         vel=[0.0, 0.0, 0.0],
         mat=0,
         group=lower_group,
-        particleType=2,
+        particleType=particle_type,
         flaggedSurfaces=lower_flags,
     )
     upper = geom.polygon(
@@ -244,7 +248,7 @@ def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
         vel=[0.0, 0.0, 0.0],
         mat=1,
         group=upper_group,
-        particleType=2,
+        particleType=particle_type,
         flaggedSurfaces=upper_flags,
     )
     if surface_flag is not None:
@@ -317,6 +321,9 @@ pfw_expected = {
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
+    "particle_type": particle_type,
+    "update_method": pfw.get("updateMethod", ""),
+    "update_order": pfw.get("updateOrder", None),
     "weak_discontinuity_insertion": pfw.get("weakDiscontinuityInsertion", "off"),
     "weak_interface_trace_geometry": pfw.get("weakInterfaceTraceGeometry", "surface"),
     "material_lr_max_misfit_fraction": pfw.get("weakInterfaceTraceMaterialLRMaxMisfitFraction", None),

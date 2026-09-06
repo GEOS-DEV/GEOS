@@ -1,0 +1,12 @@
+\paragraph{Problem.}
+This verification problem embeds an elliptical elastic inclusion in an elastic
+matrix and applies a slow remote uniaxial displacement ramp.  The curved
+inclusion boundary intentionally cuts through mixed grid cells.
+
+\paragraph{Expected response.}
+The bonded Eshelby-type inclusion response has continuous displacement and
+traction across the matrix/inclusion boundary.  The weak-trace variant should
+reduce mixed-cell stress artifacts near the ellipse while tracking the stiff
+elastic cohesive-zone reference and avoiding spurious interface opening.
+
+\IfFileExists{\CaseOutputDir/weakTraceEllipticalInclusion_results.tex}{\input{\CaseOutputDir/weakTraceEllipticalInclusion_results.tex}}{\emph{Run this folder to generate weakTraceEllipticalInclusion results.}}

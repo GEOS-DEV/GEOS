@@ -76,6 +76,49 @@ constexpr real64 explicitSurfaceNormalTolerance = 1.0e-12;
 constexpr real64 explicitSurfaceNormalNormSquaredTolerance =
   explicitSurfaceNormalTolerance * explicitSurfaceNormalTolerance;
 
+constexpr int materialWeakLRDebugMaxSamples = 160;
+
+enum MaterialLogisticRegressionDebugReason : int
+{
+  materialLRPass = 0,
+  materialLRInvalidGridScale = 1,
+  materialLRPlaneMissesNodeSupport = 2,
+  materialLRTooFewParticles = 3,
+  materialLRPlaneDoesNotDivideField = 4,
+  materialLRMisfitOrMargin = 5,
+  materialLRZeroInitialNormal = 6,
+  materialLRFitFailed = 7,
+  materialLRZeroFittedNormal = 8,
+  materialLRReasonCount = 9
+};
+
+char const * materialLRDebugReasonName( int const reason )
+{
+  switch( reason )
+  {
+    case materialLRPass:
+      return "pass";
+    case materialLRInvalidGridScale:
+      return "invalidGridScale";
+    case materialLRPlaneMissesNodeSupport:
+      return "planeMissesNodeSupport";
+    case materialLRTooFewParticles:
+      return "tooFewParticles";
+    case materialLRPlaneDoesNotDivideField:
+      return "planeDoesNotDivideField";
+    case materialLRMisfitOrMargin:
+      return "misfitOrMargin";
+    case materialLRZeroInitialNormal:
+      return "zeroInitialNormal";
+    case materialLRFitFailed:
+      return "fitFailed";
+    case materialLRZeroFittedNormal:
+      return "zeroFittedNormal";
+    default:
+      return "unknown";
+  }
+}
+
 template< typename VECTOR >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -9346,6 +9389,82 @@ int SolidMechanicsMPM::materialLogisticRegression( int const & planeStrain,
   real64 s_old[3] = {};
   LvArray::tensorOps::copy< 3 >( n_old, normal0 );
 
+  localIndex countA = 0;
+  localIndex countB = 0;
+  real64 centroidA[3] = {};
+  real64 centroidB[3] = {};
+  for( localIndex n = 0; n < numNeighboringParticles; ++n )
+  {
+    localIndex const regionIndex = neighborRegions[n];
+    localIndex const subRegionIndex = neighborSubRegions[n];
+    localIndex const particleIndex = neighborIndices[n];
+    if( particleGroup[regionIndex][subRegionIndex][particleIndex] != materialGroup )
+    {
+      continue;
+    }
+    int const material = particleMaterialType[regionIndex][subRegionIndex][particleIndex];
+    if( material != materialA && material != materialB )
+    {
+      continue;
+    }
+
+    real64 x_p[3] = {};
+    x_p[0] = particlePosition[regionIndex][subRegionIndex][particleIndex][0] - gridPosition[0];
+    x_p[1] = particlePosition[regionIndex][subRegionIndex][particleIndex][1] - gridPosition[1];
+    x_p[2] = planeStrain == 1 ? 0.0 :
+             particlePosition[regionIndex][subRegionIndex][particleIndex][2] - gridPosition[2];
+    if( material == materialA )
+    {
+      ++countA;
+      LvArray::tensorOps::add< 3 >( centroidA, x_p );
+    }
+    else
+    {
+      ++countB;
+      LvArray::tensorOps::add< 3 >( centroidB, x_p );
+    }
+  }
+
+  bool haveValidPlane = false;
+  bool usedSeparableFallback = false;
+  if( countA > 0 && countB > 0 )
+  {
+    LvArray::tensorOps::scale< 3 >( centroidA, 1.0 / static_cast< real64 >( countA ) );
+    LvArray::tensorOps::scale< 3 >( centroidB, 1.0 / static_cast< real64 >( countB ) );
+
+    real64 centroidNormal[3] = {};
+    LvArray::tensorOps::copy< 3 >( centroidNormal, centroidB );
+    LvArray::tensorOps::subtract< 3 >( centroidNormal, centroidA );
+    if( planeStrain == 1 )
+    {
+      centroidNormal[2] = 0.0;
+    }
+    real64 const centroidNormalNorm = LvArray::tensorOps::l2Norm< 3 >( centroidNormal );
+    if( centroidNormalNorm > 1.0e-25 )
+    {
+      LvArray::tensorOps::scale< 3 >( centroidNormal, 1.0 / centroidNormalNorm );
+      LvArray::tensorOps::copy< 3 >( normal0, centroidNormal );
+      LvArray::tensorOps::copy< 3 >( n_old, centroidNormal );
+
+      real64 midpoint[3] = {};
+      for( int d = 0; d < 3; ++d )
+      {
+        midpoint[d] = 0.5 * ( centroidA[d] + centroidB[d] );
+      }
+      real64 const seedOffset = LvArray::tensorOps::AiBi< 3 >( midpoint, n_old );
+      LvArray::tensorOps::scaledCopy< 3 >( s_old, n_old, seedOffset );
+
+      phi[0] = n_old[0];
+      phi[1] = n_old[1];
+      phi[2] = planeStrain == 1 ? 0.0 : n_old[2];
+      phi[3] = -seedOffset;
+
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      haveValidPlane = true;
+    }
+  }
+
   bool converged = false;
   bool errored = false;
   for( localIndex iter = 0; iter < maxLRIterations; ++iter )
@@ -9390,7 +9509,14 @@ int SolidMechanicsMPM::materialLogisticRegression( int const & planeStrain,
     {
       LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
       LvArray::tensorOps::copy< 3 >( normal, n_old );
-      errored = true;
+      if( haveValidPlane )
+      {
+        usedSeparableFallback = true;
+      }
+      else
+      {
+        errored = true;
+      }
       break;
     }
     LvArray::tensorOps::invert< 4 >( matInv, mat );
@@ -9445,13 +9571,24 @@ int SolidMechanicsMPM::materialLogisticRegression( int const & planeStrain,
 #endif
       LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
       LvArray::tensorOps::copy< 3 >( normal, n_old );
-      errored = true;
+      if( haveValidPlane )
+      {
+        usedSeparableFallback = true;
+      }
+      else
+      {
+        errored = true;
+      }
       break;
     }
 
-    real64 const surfaceOffset = ( -LvArray::math::log( 1.0 / 3.0 ) - phi[3] ) / newNorm;
+    // For material labels, the physical trace is the classifier decision
+    // boundary, phi . (x - x_g) + phi_3 = 0. A shifted logistic contour would
+    // move a clean material interface away from the actual A/B boundary.
+    real64 const surfaceOffset = -phi[3] / newNorm;
     real64 s_new[3] = {};
     LvArray::tensorOps::scaledCopy< 3 >( s_new, n_new, surfaceOffset );
+    haveValidPlane = true;
 
     real64 diff[3] = {};
     LvArray::tensorOps::copy< 3 >( diff, s_new );
@@ -9482,7 +9619,7 @@ int SolidMechanicsMPM::materialLogisticRegression( int const & planeStrain,
     LvArray::tensorOps::copy< 3 >( s_old, s_new );
   }
 
-  if( !converged && !errored )
+  if( !converged && !errored && !usedSeparableFallback )
   {
 #if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
     GEOS_LOG_RANK( "Material logistic regression did not converge! Using last iteration value." );
@@ -9511,37 +9648,54 @@ int SolidMechanicsMPM::materialLogisticRegressionQuality( int const & planeStrai
                                                           real64 const (& surfacePosition)[3],
                                                           int const & minParticlesPerSide,
                                                           real64 const & maxMisfitFraction,
-                                                          real64 const & minMeanMargin )
+                                                          real64 const & minMeanMargin,
+                                                          localIndex & countA,
+                                                          localIndex & countB,
+                                                          localIndex & positiveSideCount,
+                                                          localIndex & negativeSideCount,
+                                                          real64 & supportRadius,
+                                                          real64 & planeOffset,
+                                                          real64 & wrongSideFraction,
+                                                          real64 & meanMargin,
+                                                          real64 & wrongSideFractionReverse,
+                                                          real64 & meanMarginReverse )
 {
+  countA = 0;
+  countB = 0;
+  positiveSideCount = 0;
+  negativeSideCount = 0;
+  supportRadius = 0.0;
+  planeOffset = LvArray::tensorOps::AiBi< 3 >( surfacePosition, normal );
+  wrongSideFraction = 0.0;
+  meanMargin = 0.0;
+  wrongSideFractionReverse = 0.0;
+  meanMarginReverse = 0.0;
+
   real64 const hNorm =
     planeStrain == 1
     ? LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] )
     : LvArray::tensorOps::l2Norm< 3 >( hEl );
   if( hNorm <= 0.0 )
   {
-    return 0;
+    return materialLRInvalidGridScale;
   }
 
-  // The trace projection is anchored at the node being classified. If the LR
-  // surface point is outside the node's one-cell support, the later projection
-  // would reject the anchor after the fields were already split. Reject it here
-  // so the node stays single-field in that case.
+  // Keep the idealized one-cell plane-box support radius as a diagnostic, but
+  // do not use it as a hard gate for material LR. CPDI and other extended
+  // particle domains can map particles to a node even when this simplified box
+  // misses the fitted plane. The hard support test below is therefore based on
+  // the mapped point cloud actually being divided by the fitted plane.
   for( int d = 0; d < 3; ++d )
   {
     if( planeStrain == 1 && d == 2 )
     {
       continue;
     }
-    if( LvArray::math::abs( surfacePosition[d] ) > hEl[d] * ( 1.0 + 1.0e-12 ) )
-    {
-      return 0;
-    }
+    supportRadius += LvArray::math::abs( normal[d] ) * hEl[d];
   }
 
-  localIndex countA = 0;
-  localIndex countB = 0;
   localIndex wrongSideCount = 0;
-  real64 meanMargin = 0.0;
+  localIndex wrongSideCountReverse = 0;
 
   for( localIndex n = 0; n < numNeighboringParticles; ++n )
   {
@@ -9579,19 +9733,35 @@ int SolidMechanicsMPM::materialLogisticRegressionQuality( int const & planeStrai
       xRelative[2] = 0.0;
     }
 
+    real64 const distanceFromPlane = LvArray::tensorOps::AiBi< 3 >( xRelative, normal );
+    if( distanceFromPlane > 0.0 )
+    {
+      ++positiveSideCount;
+    }
+    else if( distanceFromPlane < 0.0 )
+    {
+      ++negativeSideCount;
+    }
+
     // materialLogisticRegression is initialized with the normal from materialA
     // centroid to materialB centroid and uses labels -1/+1 for A/B. A good fit
     // should therefore place materialA at negative signed distance and materialB
     // at positive signed distance from the fitted trace point.
     real64 const signedDistance =
       ( material == materialB ? 1.0 : -1.0 ) *
-      LvArray::tensorOps::AiBi< 3 >( xRelative, normal );
+      distanceFromPlane;
     real64 const normalizedMargin = signedDistance / hNorm;
+    real64 const normalizedMarginReverse = -normalizedMargin;
     if( normalizedMargin < 0.0 )
     {
       ++wrongSideCount;
     }
+    if( normalizedMarginReverse < 0.0 )
+    {
+      ++wrongSideCountReverse;
+    }
     meanMargin += normalizedMargin;
+    meanMarginReverse += normalizedMarginReverse;
   }
 
   localIndex const totalCount = countA + countB;
@@ -9599,15 +9769,22 @@ int SolidMechanicsMPM::materialLogisticRegressionQuality( int const & planeStrai
       countB < minParticlesPerSide ||
       totalCount == 0 )
   {
-    return 0;
+    return materialLRTooFewParticles;
+  }
+  if( positiveSideCount == 0 || negativeSideCount == 0 )
+  {
+    return materialLRPlaneDoesNotDivideField;
   }
 
-  real64 const wrongSideFraction =
+  wrongSideFraction =
     static_cast< real64 >( wrongSideCount ) / static_cast< real64 >( totalCount );
+  wrongSideFractionReverse =
+    static_cast< real64 >( wrongSideCountReverse ) / static_cast< real64 >( totalCount );
   meanMargin /= static_cast< real64 >( totalCount );
+  meanMarginReverse /= static_cast< real64 >( totalCount );
 
   return wrongSideFraction <= maxMisfitFraction &&
-         meanMargin >= minMeanMargin ? 1 : 0;
+         meanMargin >= minMeanMargin ? materialLRPass : materialLRMisfitOrMargin;
 }
 
 /**
@@ -17281,12 +17458,30 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
                   mesh,
                   MPI_MAX );
 
+  static int materialWeakLRDebugCallCount = 0;
+  bool const materialWeakLRDebugThisCall =
+    materialWeakLRGate == 1 && materialWeakLRDebugCallCount == 0;
+  if( materialWeakLRGate == 1 )
+  {
+    ++materialWeakLRDebugCallCount;
+  }
+
+  localIndex materialLRDebugCandidates = 0;
+  localIndex materialLRDebugAccepted = 0;
+  localIndex materialLRDebugSamples = 0;
+  localIndex materialLRDebugReasonCounts[materialLRReasonCount] = {};
+  std::ostringstream materialLRDebugStream;
+  if( materialWeakLRDebugThisCall )
+  {
+    materialLRDebugStream << std::scientific << std::setprecision( 8 );
+  }
+
   // Expand the per-contact-group classifier into both side fields. The lower
   // material id maps to side 0 by default; computeParticleFieldMappings()
   // explicitly redirects only the upper material id to side 1. Three-or-more
   // material nodes are marked overflow and left inactive so they remain
   // single-field unless another mechanism, such as DFG, has already taken over.
-  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
+  forAll< serialPolicy >( nodeManager.size(), [&] GEOS_HOST ( localIndex const g )
   {
     for( localIndex groupIndex = 0; groupIndex < numContactGroups; ++groupIndex )
     {
@@ -17303,10 +17498,29 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
 
       if( active == 1 && materialWeakLRGate == 1 )
       {
+        int materialLRDebugReason = materialLRTooFewParticles;
         localIndex countMin = 0;
         localIndex countMax = 0;
+        localIndex positiveSideCount = 0;
+        localIndex negativeSideCount = 0;
         real64 centroidMin[3] = {};
         real64 centroidMax[3] = {};
+        real64 normal0[3] = {};
+        real64 normal[3] = {};
+        real64 surfacePosition[3] = {};
+        real64 normal0Norm = 0.0;
+        real64 normalNorm = 0.0;
+        real64 supportRadius = 0.0;
+        real64 planeOffset = 0.0;
+        real64 wrongSideFraction = 0.0;
+        real64 meanMargin = 0.0;
+        real64 wrongSideFractionReverse = 0.0;
+        real64 meanMarginReverse = 0.0;
+        if( materialWeakLRDebugThisCall )
+        {
+          ++materialLRDebugCandidates;
+        }
+
         for( localIndex n = 0; n < numNeighborsAll[g]; ++n )
         {
           localIndex const regionIndex = neighborRegions[g][n];
@@ -17338,7 +17552,6 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
           LvArray::tensorOps::scale< 3 >( centroidMin, 1.0 / static_cast< real64 >( countMin ) );
           LvArray::tensorOps::scale< 3 >( centroidMax, 1.0 / static_cast< real64 >( countMax ) );
 
-          real64 normal0[3] = {};
           LvArray::tensorOps::copy< 3 >( normal0, centroidMax );
           LvArray::tensorOps::subtract< 3 >( normal0, centroidMin );
           if( planeStrain == 1 )
@@ -17346,13 +17559,11 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
             normal0[2] = 0.0;
           }
 
-          real64 const normal0Norm = LvArray::tensorOps::l2Norm< 3 >( normal0 );
+          normal0Norm = LvArray::tensorOps::l2Norm< 3 >( normal0 );
           if( normal0Norm > 1.0e-20 )
           {
             LvArray::tensorOps::scale< 3 >( normal0, 1.0 / normal0Norm );
 
-            real64 normal[3] = {};
-            real64 surfacePosition[3] = {};
             int const lrFitOk =
               materialLogisticRegression( planeStrain,
                                           maxLRIterations,
@@ -17377,11 +17588,19 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
               normal[2] = 0.0;
               surfacePosition[2] = 0.0;
             }
-            real64 const normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
-            if( lrFitOk == 1 && normalNorm > 1.0e-20 )
+            normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
+            if( lrFitOk != 1 )
+            {
+              materialLRDebugReason = materialLRFitFailed;
+            }
+            else if( normalNorm <= 1.0e-20 )
+            {
+              materialLRDebugReason = materialLRZeroFittedNormal;
+            }
+            else
             {
               LvArray::tensorOps::scale< 3 >( normal, 1.0 / normalNorm );
-              active =
+              materialLRDebugReason =
                 materialLogisticRegressionQuality( planeStrain,
                                                    hEl,
                                                    groupIndex,
@@ -17399,8 +17618,68 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
                                                    surfacePosition,
                                                    minLRParticlesPerSide,
                                                    maxLRMisfitFraction,
-                                                   minLRMeanMargin );
+                                                   minLRMeanMargin,
+                                                   countMin,
+                                                   countMax,
+                                                   positiveSideCount,
+                                                   negativeSideCount,
+                                                   supportRadius,
+                                                   planeOffset,
+                                                   wrongSideFraction,
+                                                   meanMargin,
+                                                   wrongSideFractionReverse,
+                                                   meanMarginReverse );
+              active = materialLRDebugReason == materialLRPass ? 1 : 0;
             }
+          }
+          else
+          {
+            materialLRDebugReason = materialLRZeroInitialNormal;
+          }
+        }
+
+        if( materialWeakLRDebugThisCall )
+        {
+          if( active == 1 )
+          {
+            ++materialLRDebugAccepted;
+          }
+          if( materialLRDebugReason >= 0 && materialLRDebugReason < materialLRReasonCount )
+          {
+            ++materialLRDebugReasonCounts[materialLRDebugReason];
+          }
+          if( materialLRDebugSamples < materialWeakLRDebugMaxSamples )
+          {
+            ++materialLRDebugSamples;
+            materialLRDebugStream
+              << "  sample " << materialLRDebugSamples
+              << ": node=" << g
+              << " group=" << groupIndex
+              << " materials=(" << minMaterial << "," << maxMaterial << ")"
+              << " reason=" << materialLRDebugReasonName( materialLRDebugReason )
+              << " active=" << active
+              << " count=(" << countMin << "," << countMax << ")"
+              << " sideCount=(-,+)=(" << negativeSideCount << "," << positiveSideCount << ")"
+              << " gridPosition=(" << gridPosition[g][0] << "," << gridPosition[g][1] << "," << gridPosition[g][2] << ")"
+              << " normal0Norm=" << normal0Norm
+              << " normal0=(" << normal0[0] << "," << normal0[1] << "," << normal0[2] << ")"
+              << " normalNorm=" << normalNorm
+              << " normal=(" << normal[0] << "," << normal[1] << "," << normal[2] << ")"
+              << " surfacePosition=(" << surfacePosition[0] << "," << surfacePosition[1] << "," << surfacePosition[2] << ")"
+              << " |surfacePosition|/h=("
+              << ( hEl[0] > 0.0 ? LvArray::math::abs( surfacePosition[0] ) / hEl[0] : 0.0 ) << ","
+              << ( hEl[1] > 0.0 ? LvArray::math::abs( surfacePosition[1] ) / hEl[1] : 0.0 ) << ","
+              << ( hEl[2] > 0.0 ? LvArray::math::abs( surfacePosition[2] ) / hEl[2] : 0.0 ) << ")"
+              << " planeOffset=" << planeOffset
+              << " planeSupportRadius=" << supportRadius
+              << " supportMiss="
+              << ( supportRadius <= 0.0 ||
+                   LvArray::math::abs( planeOffset ) > supportRadius * ( 1.0 + 1.0e-12 ) ? 1 : 0 )
+              << " wrongForward=" << wrongSideFraction
+              << " marginForward=" << meanMargin
+              << " wrongReverse=" << wrongSideFractionReverse
+              << " marginReverse=" << meanMarginReverse
+              << "\n";
           }
         }
       }
@@ -17432,6 +17711,32 @@ void SolidMechanicsMPM::classifyMaterialWeakInterfaceNodes( DomainPartition & do
       gridMaterialWeakSecondaryMaterial[g][fieldIndex] = noMaterial;
     }
   } );
+
+  if( materialWeakLRDebugThisCall )
+  {
+    std::ostringstream materialLRDebugSummary;
+    materialLRDebugSummary << std::scientific << std::setprecision( 8 )
+                           << "Material weak LR debug, first classifier call, rank-local rank 0 view\n"
+                           << "  thresholds: minParticlesPerSide=" << minLRParticlesPerSide
+                           << " maxMisfitFraction=" << maxLRMisfitFraction
+                           << " minMeanMargin=" << minLRMeanMargin
+                           << " hEl=(" << hEl[0] << "," << hEl[1] << "," << hEl[2] << ")"
+                           << " planeStrain=" << planeStrain << "\n"
+                           << "  candidates=" << materialLRDebugCandidates
+                           << " accepted=" << materialLRDebugAccepted
+                           << " rejected=" << ( materialLRDebugCandidates - materialLRDebugAccepted )
+                           << " samplesPrinted=" << materialLRDebugSamples << "\n"
+                           << "  reasonCounts:";
+    for( int reason = 0; reason < materialLRReasonCount; ++reason )
+    {
+      materialLRDebugSummary << " "
+                             << materialLRDebugReasonName( reason )
+                             << "=" << materialLRDebugReasonCounts[reason];
+    }
+    materialLRDebugSummary << "\n"
+                           << materialLRDebugStream.str();
+    GEOS_LOG_RANK_0( materialLRDebugSummary.str() );
+  }
 }
 
 /**
@@ -22997,12 +23302,40 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
           continue;
         }
 
+        real64 const nodalBlend = anchorWeight * anchorWeight * anchorWeight * anchorWeight;
+        real64 projectionWeights[8] = {};
+        bool anchorInserted = false;
+        for( int q = 0; q < 8; ++q )
+        {
+          projectionWeights[q] = ( 1.0 - nodalBlend ) * traceWeights[q];
+          if( !anchorInserted && traceNodes[q] == g )
+          {
+            projectionWeights[q] += nodalBlend;
+            anchorInserted = true;
+          }
+        }
+        // If the reconstructed interface point falls close to an existing grid
+        // node, that node already represents the weak interface degree of
+        // freedom. Blend continuously from the trace basis to a nodal A/B
+        // projection, using the anchor shape-function weight as the smooth
+        // proximity measure.
+        //
+        // The force scale still needs a quadrature-like weight because each
+        // active anchor contributes a local trace constraint. Using unit weight
+        // at every active anchor overconstrains cell-interior traces. Using the
+        // raw anchor weight is stable, but makes near-node traces much stronger
+        // than cell-interior traces. Cap the strength at the bilinear reference
+        // value for a plane-strain interface to preserve the stabilizing
+        // partition-of-unity role without the near-node strength spike.
+        real64 const referenceAnchorWeight = planeStrain == 1 ? 0.25 : 0.125;
+        real64 const projectionStrength = LvArray::math::min( anchorWeight, referenceAnchorWeight );
+
         real64 weightA = 0.0;
         real64 weightB = 0.0;
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
+          real64 const N = projectionWeights[q];
           if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
           {
             weightA += N;
@@ -23038,7 +23371,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
+          real64 const N = projectionWeights[q];
           if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
           {
             real64 const NA = N / weightA;
@@ -23070,7 +23403,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         real64 gapCorrection[3] = {};
         for( int i = 0; i < numDims; ++i )
         {
-          gapCorrection[i] = gapStabilization * gapJump[i] / dt;
+          gapCorrection[i] = ( 1.0 - nodalBlend ) * gapStabilization * gapJump[i] / dt;
         }
         real64 const gapCorrectionNorm = LvArray::tensorOps::l2Norm< 3 >( gapCorrection );
         if( maxGapCorrectionVelocity > 0.0 && gapCorrectionNorm > maxGapCorrectionVelocity )
@@ -23084,7 +23417,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         for( int i = 0; i < numDims; ++i )
         {
           residual[i] = vA[i] - vB[i] + gapCorrection[i];
-          impulse[i] = -projectionScale * anchorWeight * residual[i] / inverseEffectiveMass;
+          impulse[i] = -projectionScale * projectionStrength * residual[i] / inverseEffectiveMass;
           gridWeakInterfaceTraceVelocityJump[g][A][i] = residual[i];
           gridWeakInterfaceTraceVelocityJump[g][B][i] = -residual[i];
         }
@@ -23096,7 +23429,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const 
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
+          real64 const N = projectionWeights[q];
           if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
           {
             real64 const NA = N / weightA;
@@ -23221,12 +23554,38 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( Nod
           }
         }
 
+        real64 anchorWeight = 0.0;
+        for( int q = 0; q < 8; ++q )
+        {
+          if( traceNodes[q] == g )
+          {
+            anchorWeight += traceWeights[q];
+          }
+        }
+        if( anchorWeight <= minTraceWeight )
+        {
+          continue;
+        }
+
+        real64 const nodalBlend = anchorWeight * anchorWeight * anchorWeight * anchorWeight;
+        real64 projectionWeights[8] = {};
+        bool anchorInserted = false;
+        for( int q = 0; q < 8; ++q )
+        {
+          projectionWeights[q] = ( 1.0 - nodalBlend ) * traceWeights[q];
+          if( !anchorInserted && traceNodes[q] == g )
+          {
+            projectionWeights[q] += nodalBlend;
+            anchorInserted = true;
+          }
+        }
+
         real64 weightA = 0.0;
         real64 weightB = 0.0;
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
+          real64 const N = projectionWeights[q];
           if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
           {
             weightA += N;
@@ -23246,7 +23605,7 @@ void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( Nod
         for( int q = 0; q < 8; ++q )
         {
           localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
+          real64 const N = projectionWeights[q];
           if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
           {
             real64 const NA = N / weightA;

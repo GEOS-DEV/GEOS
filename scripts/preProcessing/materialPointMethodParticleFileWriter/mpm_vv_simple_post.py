@@ -7,6 +7,7 @@ import csv
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -228,11 +229,33 @@ def detect_visit(requested: str) -> str | None:
     return None
 
 
-def render_visit_frames(args: argparse.Namespace, run_dir: Path, output_dir: Path, case_name: str, variable: str, states: str = "initial,middle,final", view: str = "auto", colortable: str = "hot_desaturated", range_mode: str = "auto", color_min: float | None = None, color_max: float | None = None) -> list[str]:
+def render_visit_frames(
+    args: argparse.Namespace,
+    run_dir: Path,
+    output_dir: Path,
+    case_name: str,
+    variable: str,
+    states: str = "initial,middle,final",
+    view: str = "auto",
+    colortable: str = "hot_desaturated",
+    range_mode: str = "auto",
+    color_min: float | None = None,
+    color_max: float | None = None,
+    strict_variable: bool = False,
+    vector_variables: list[str] | None = None,
+    vector_scale: float | None = None,
+    vector_count: int | None = None,
+    vector_stride: int | None = None,
+    dedupe_key: str | None = "default",
+) -> list[str]:
     if args.no_visit:
         return []
-    if getattr(args, "_mpm_vv_visit_rendered", False) and not getattr(args, "visit_all_variants", False):
-        return []
+    dedupe_attr = None
+    if dedupe_key is not None:
+        safe_key = re.sub(r"[^A-Za-z0-9_]+", "_", str(dedupe_key or "default")).strip("_") or "default"
+        dedupe_attr = f"_mpm_vv_visit_rendered_{safe_key}"
+        if getattr(args, dedupe_attr, False) and not getattr(args, "visit_all_variants", False):
+            return []
     visit = detect_visit(args.visit_cmd)
     script = run_dir / "pfw_visit_render.py"
     if not visit or not script.is_file():
@@ -253,8 +276,19 @@ def render_visit_frames(args: argparse.Namespace, run_dir: Path, output_dir: Pat
     ]
     if color_min is not None and color_max is not None:
         cmd += ["--color-min", str(color_min), "--color-max", str(color_max), "--range-mode", "explicit"]
+    if strict_variable:
+        cmd.append("--strict-variable")
+    for vector_variable in vector_variables or []:
+        cmd += ["--vector-variable", str(vector_variable)]
+    if vector_scale is not None:
+        cmd += ["--vector-scale", str(vector_scale)]
+    if vector_count is not None:
+        cmd += ["--vector-count", str(vector_count)]
+    if vector_stride is not None:
+        cmd += ["--vector-stride", str(vector_stride)]
     log_path = output_dir / f"{case_name}_visit_render.log"
-    setattr(args, "_mpm_vv_visit_rendered", True)
+    if dedupe_attr is not None:
+        setattr(args, dedupe_attr, True)
     try:
         proc = subprocess.run(
             cmd,
@@ -265,6 +299,8 @@ def render_visit_frames(args: argparse.Namespace, run_dir: Path, output_dir: Pat
             timeout=max(1.0, float(getattr(args, "visit_timeout", 60.0))),
         )
         log_path.write_text(proc.stdout + f"\nreturncode={proc.returncode}\n")
+        if proc.returncode != 0:
+            return []
     except subprocess.TimeoutExpired as exc:
         partial = exc.stdout or ""
         if isinstance(partial, bytes):

@@ -1,0 +1,15 @@
+\paragraph{Problem.}
+This verification problem places a circular elastic inclusion in an elastic
+matrix and drives anti-plane shear by applying opposite transverse $z$ velocities
+on the top and bottom grid boundaries.  The case uses a thin 3D slab, rather
+than GEOS plane-strain mode, so the out-of-plane velocity component is active.
+
+\paragraph{Expected response.}
+The bonded anti-plane inclusion solution has continuous out-of-plane
+displacement and shear traction across the circular interface.  The weak-trace
+variant should preserve this no-opening, no-slip response while reducing
+mixed-cell artifacts in $\sigma_{xz}$ and $\sigma_{yz}$ near the material
+interface.  The report includes both final-time axis tracer comparisons and
+VisIt field renderings of the shear stresses and weak-trace interface fields.
+
+\IfFileExists{\CaseOutputDir/weakTraceCircularInclusionAntiPlane_results.tex}{\input{\CaseOutputDir/weakTraceCircularInclusionAntiPlane_results.tex}}{\emph{Run this folder to generate weakTraceCircularInclusionAntiPlane results.}}

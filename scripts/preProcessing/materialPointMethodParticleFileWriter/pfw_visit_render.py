@@ -63,7 +63,7 @@ def parse_args(argv):
     parser.add_argument("--vector-count", type=int, default=500, help="Target vector glyph count when supported by VisIt")
     parser.add_argument("--vector-stride", type=int, default=1, help="Stride for vector glyphs when stride mode is enabled")
     parser.add_argument("--no-annotations", action="store_true")
-    parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=True, help="Add VisIt TimeSlider annotation")
+    parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=False, help="Add VisIt TimeSlider annotation")
     parser.add_argument("--no-time-slider", dest="time_slider", action="store_false", help="Disable TimeSlider annotation")
     parser.add_argument("--list-databases", action="store_true", help="Print database candidates before opening one")
     parser.add_argument("--dry-run", action="store_true", help="Discover databases/variables without saving windows")
@@ -383,8 +383,28 @@ def _array_decompose_candidate(path, index):
     return "array_decompose({0},{1})".format(_quote_visit_var(path), int(index))
 
 
-def _stress_base_candidates(all_names):
+def _particle_region_meshes(meshes, all_names):
+    """Return ParticleRegion*_ParticleDomains meshes in deterministic order."""
+    candidates = []
+    for name in list(meshes or []) + list(all_names or []):
+        match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains", str(name))
+        if not match:
+            continue
+        mesh = match.group(1) + "_ParticleDomains"
+        if mesh not in candidates:
+            candidates.append(mesh)
+    return sorted(candidates, key=natural_key)
+
+
+def _particle_region_name(mesh):
+    match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains", str(mesh))
+    return match.group(1) if match else None
+
+
+def _stress_base_candidates(all_names, particle_meshes=None):
     candidates = [
+        "{0}_ParticleFields/particleStress".format(mesh) for mesh in particle_meshes or []
+    ] + [
         "ParticleRegion1_ParticleDomains_ParticleFields/particleStress",
         "particleStress",
     ]
@@ -395,10 +415,10 @@ def _stress_base_candidates(all_names):
     return _unique_keep_order(candidates)
 
 
-def _stress_leaf_candidates(all_names, label, legacy_index):
+def _stress_leaf_candidates(all_names, label, legacy_index, particle_meshes=None):
     labels = [label, label.lower(), label.upper(), str(legacy_index)]
     candidates = []
-    for base in _stress_base_candidates(all_names):
+    for base in _stress_base_candidates(all_names, particle_meshes=particle_meshes):
         for leaf in labels:
             candidates.append("{0}/{1}".format(base, leaf))
         candidates.append("{0}_{1}".format(base, legacy_index))
@@ -412,20 +432,20 @@ def _stress_leaf_candidates(all_names, label, legacy_index):
     return _unique_keep_order(candidates)
 
 
-def _stress_component_expression_candidates(all_names, label, legacy_index):
+def _stress_component_expression_candidates(all_names, label, legacy_index, particle_meshes=None):
     expressions = []
 
     # Preferred path: decompose the native GEOS Voigt stress array.  This creates
     # true scalar component expressions without adding any solver-side scalar
     # fields.
-    for base in _stress_base_candidates(all_names):
+    for base in _stress_base_candidates(all_names, particle_meshes=particle_meshes):
         expressions.append(_array_decompose_candidate(base, legacy_index))
 
     # Fallback path for VisIt/Silo outputs that only expose component leaves.
     # The vector-index form handles component leaves that appear in scalar menus
     # but evaluate as vector variables.  The direct form remains useful for older
     # outputs where the leaves are genuine scalars.
-    for leaf in _stress_leaf_candidates(all_names, label, legacy_index):
+    for leaf in _stress_leaf_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes):
         expressions.append(_indexed_candidate(leaf, 0))
         expressions.append(_array_decompose_candidate(leaf, 0))
         expressions.append(_quoted_candidate(leaf))
@@ -433,16 +453,32 @@ def _stress_component_expression_candidates(all_names, label, legacy_index):
     return _unique_keep_order(expressions)
 
 
-def _define_stress_component_expression(name, all_names, label, legacy_index):
+def _define_particle_region_stress_component_candidates(name, particle_meshes, label, legacy_index):
     names = []
-    for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index)):
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        base = "{0}_ParticleFields/particleStress".format(mesh)
+        for leaf in (label, label.lower(), str(legacy_index)):
+            names.append("{0}/{1}".format(base, leaf))
+        expr_name = "{0}_{1}".format(name, region)
+        expression = _array_decompose_candidate(base, legacy_index)
+        _define_scalar_expression(expr_name, expression)
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
+def _define_stress_component_expression(name, all_names, label, legacy_index, particle_meshes=None):
+    names = []
+    for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes)):
         expr_name = name if i == 0 else "{0}_candidate{1}".format(name, i)
         _define_scalar_expression(expr_name, expression)
         names.append(expr_name)
     return names
 
 
-def _define_particle_stress_tensor_candidates(all_names):
+def _define_particle_stress_tensor_candidates(all_names, particle_meshes=None):
     component_info = (
         ("XX", 0, "particleStressXX"),
         ("YY", 1, "particleStressYY"),
@@ -453,7 +489,7 @@ def _define_particle_stress_tensor_candidates(all_names):
     )
     component_candidates = {}
     for label, index, base_name in component_info:
-        component_candidates[label] = _define_stress_component_expression(base_name, all_names, label, index)
+        component_candidates[label] = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
 
     tensor_names = []
     max_candidates = max(len(v) for v in component_candidates.values())
@@ -480,7 +516,7 @@ def _define_particle_stress_tensor_candidates(all_names):
     return tensor_names
 
 
-def _derive_particle_stress_component(all_names, requested):
+def _derive_particle_stress_component(all_names, requested, particle_meshes=None):
     key = _compact_name(requested or "")
     component_map = {
         "particlestressxx": ("XX", 0),
@@ -505,7 +541,10 @@ def _derive_particle_stress_component(all_names, requested):
     for compact, value in component_map.items():
         if key == compact or compact in key:
             label, index = value
-            return _define_stress_component_expression("particleStress{0}".format(label), all_names, label, index)
+            base_name = "particleStress{0}".format(label)
+            region_names = _define_particle_region_stress_component_candidates(base_name, particle_meshes, label, index)
+            fallback_names = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
+            return _unique_keep_order(region_names + fallback_names)
     return None
 
 
@@ -534,8 +573,8 @@ def _derive_pressure(scalars):
     return _define_scalar_expression("pressure", expression)
 
 
-def _derive_particle_von_mises_stress(all_names):
-    tensor_names = _define_particle_stress_tensor_candidates(all_names)
+def _derive_particle_von_mises_stress(all_names, particle_meshes=None):
+    tensor_names = _define_particle_stress_tensor_candidates(all_names, particle_meshes=particle_meshes)
     if not tensor_names:
         print("Could not derive particleVonMisesStress; no particleStress array/component candidates found")
         return None
@@ -687,14 +726,15 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
     tensors = tensors or []
     vectors = vectors or []
     all_names = _unique_keep_order(list(scalars or []) + list(vectors or []) + list(arrays or []) + list(tensors or []))
+    particle_meshes = _particle_region_meshes(meshes, all_names)
     key = _compact_name(requested or "")
-    stress_component = _derive_particle_stress_component(all_names, requested)
+    stress_component = _derive_particle_stress_component(all_names, requested, particle_meshes=particle_meshes)
     if stress_component:
         return stress_component
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
     if key in ("particlevonmisesstress", "vonmisesstress", "vonmises", "equivalentstress", "misesstress"):
-        return _derive_particle_von_mises_stress(all_names)
+        return _derive_particle_von_mises_stress(all_names, particle_meshes=particle_meshes)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
         return _derive_plastic_strain_magnitude(scalars)
     if key in ("griddisplacementmagnitude", "griddisplacement", "backgrounddisplacement"):
@@ -773,7 +813,7 @@ def ordered_scalar_candidates(scalars, requested):
     return candidates
 
 
-def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
+def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None, legend_flag=True):
     try:
         PseudocolorAttributes = globals()["PseudocolorAttributes"]
         SetPlotOptions = globals()["SetPlotOptions"]
@@ -793,7 +833,7 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", colo
         if hasattr(attrs, "pointSizeVarEnabled"):
             attrs.pointSizeVarEnabled = 0
         if hasattr(attrs, "legendFlag"):
-            attrs.legendFlag = 1
+            attrs.legendFlag = 1 if legend_flag else 0
         mode = str(range_mode).lower()
         if color_min is not None and color_max is not None:
             mode = "explicit"
@@ -816,10 +856,32 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", colo
         print("Could not configure Pseudocolor attributes: {0}".format(exc))
 
 
-def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
+def try_add_pseudocolor(
+    variable,
+    point_size_pixels,
+    colortable,
+    range_mode="unit",
+    color_min=None,
+    color_max=None,
+    plot_index=None,
+    clear_on_failure=True,
+    legend_flag=True,
+):
     try:
         call_visit("AddPlot", "Pseudocolor", variable)
-        configure_pseudocolor(point_size_pixels, colortable, range_mode, color_min=color_min, color_max=color_max)
+        if plot_index is not None:
+            try:
+                call_visit("SetActivePlots", int(plot_index))
+            except Exception:
+                pass
+        configure_pseudocolor(
+            point_size_pixels,
+            colortable,
+            range_mode,
+            color_min=color_min,
+            color_max=color_max,
+            legend_flag=legend_flag,
+        )
         # VisIt often accepts an expression at AddPlot time and only discovers
         # rank/type errors when the engine draws the plot.  Validate each
         # candidate immediately so strict render requests can fall through to
@@ -831,11 +893,34 @@ def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="uni
         return True
     except Exception as exc:
         print("Could not add Pseudocolor plot for {0}: {1}".format(variable, exc))
-        try:
-            call_visit("DeleteAllPlots")
-        except Exception:
-            pass
+        if clear_on_failure:
+            try:
+                call_visit("DeleteAllPlots")
+            except Exception:
+                pass
+        else:
+            try:
+                if plot_index is not None:
+                    call_visit("SetActivePlots", int(plot_index))
+                call_visit("DeleteActivePlots")
+            except Exception:
+                pass
         return False
+
+
+def particle_region_for_variable(name):
+    text = str(name)
+    match = re.search(r"^particleStress[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains_ParticleFields/particleStress(?:/|$)", text)
+    if match:
+        return match.group(1)
+    return None
+
+
+def is_particle_region_expression(name):
+    return particle_region_for_variable(name) is not None
 
 
 def choose_mesh(meshes, requested):
@@ -1168,11 +1253,11 @@ def configure_annotations(enabled):
         return
     annot = AnnotationAttributes()
     try:
-        annot.axes3D.visible = 1 if enabled else 0
+        annot.axes3D.visible = 0
     except Exception:
         pass
     try:
-        annot.axes2D.visible = 1 if enabled else 0
+        annot.axes2D.visible = 0
     except Exception:
         pass
     for attr, value in (
@@ -1328,22 +1413,59 @@ def main(argv=None):
             candidates.append(args.variable)
     print("Scalar candidate order: {0}".format(candidates[:12]))
 
-    plotted_variable = None
-    for variable in candidates:
-        if try_add_pseudocolor(
-            variable,
-            args.point_size_pixels,
-            args.colortable,
-            args.range_mode,
-            color_min=args.color_min,
-            color_max=args.color_max,
-        ):
-            plotted_variable = variable
-            break
-    if plotted_variable is None:
+    plotted_variables = []
+    overlay_candidates = [candidate for candidate in candidates if is_particle_region_expression(candidate)]
+    if len(overlay_candidates) > 1:
+        print("Overlaying particle-region variables: {0}".format(overlay_candidates))
+        candidates_by_region = []
+        for variable in overlay_candidates:
+            region = particle_region_for_variable(variable)
+            if not region:
+                continue
+            for existing_region, variables in candidates_by_region:
+                if existing_region == region:
+                    variables.append(variable)
+                    break
+            else:
+                candidates_by_region.append((region, [variable]))
+        if len(candidates_by_region) > 1:
+            for _region, region_candidates in candidates_by_region:
+                for variable in region_candidates:
+                    if try_add_pseudocolor(
+                        variable,
+                        args.point_size_pixels,
+                        args.colortable,
+                        args.range_mode,
+                        color_min=args.color_min,
+                        color_max=args.color_max,
+                        plot_index=len(plotted_variables),
+                        clear_on_failure=False,
+                        legend_flag=(len(plotted_variables) == 0),
+                    ):
+                        plotted_variables.append(variable)
+                        break
+
+    if not plotted_variables:
+        try:
+            call_visit("DeleteAllPlots")
+        except Exception:
+            pass
+        for variable in candidates:
+            if try_add_pseudocolor(
+                variable,
+                args.point_size_pixels,
+                args.colortable,
+                args.range_mode,
+                color_min=args.color_min,
+                color_max=args.color_max,
+            ):
+                plotted_variables.append(variable)
+                break
+    if not plotted_variables:
         if args.strict_variable:
             raise RuntimeError("Could not create a pseudocolor plot for requested variable {0}".format(args.variable))
         raise RuntimeError("Could not create a pseudocolor plot for any scalar variable candidate")
+    plotted_variable = "+".join(plotted_variables)
 
     mesh_variable = choose_mesh(meshes, args.mesh)
     if mesh_variable:
@@ -1387,7 +1509,7 @@ def main(argv=None):
     states = resolve_states(args.states, n_states)
     print("Rendering states: {0}; variable={1}".format(states, plotted_variable))
 
-    safe_variable = basename_of_variable(plotted_variable)
+    safe_variable = basename_of_variable(args.variable if len(plotted_variables) > 1 and args.variable else plotted_variable)
     for label, state in states:
         try:
             call_visit("SetTimeSliderState", state)

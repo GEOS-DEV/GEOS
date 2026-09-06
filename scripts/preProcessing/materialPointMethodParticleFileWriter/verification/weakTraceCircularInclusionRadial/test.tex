@@ -1,0 +1,14 @@
+\paragraph{Problem.}
+This verification problem places a circular elastic inclusion at the center of a
+linear elastic matrix disk and applies a slow virtual-fluid pressure ramp to the
+outer curved material boundary.  The material interface is curved and
+intentionally cuts through mixed grid cells.
+
+\paragraph{Expected response.}
+The bonded concentric inclusion solution has a continuous radial displacement
+and continuous radial traction across the interface, with piecewise radial and
+hoop stresses determined by the matrix and inclusion elastic constants.  The
+weak-trace variant should reduce mixed-cell stress artifacts without creating
+interface slip or opening relative to the stiff elastic cohesive-zone reference.
+
+\IfFileExists{\CaseOutputDir/weakTraceCircularInclusionRadial_results.tex}{\input{\CaseOutputDir/weakTraceCircularInclusionRadial_results.tex}}{\emph{Run this folder to generate weakTraceCircularInclusionRadial results.}}
