@@ -19,6 +19,9 @@
 
 #include "SinglePhaseMixedMFD.hpp"
 
+#include <algorithm>
+#include <array>
+
 #include "common/logger/Logger.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -70,6 +73,7 @@ void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< mixedMimetic::stencilFlag >( getName() );
       subRegion.registerField< mixedMimetic::consistencyIndicator >( getName() );
+      subRegion.registerField< mixedMimetic::degeneracyIndicator >( getName() );
     } );
 
     // 2) Register the face data
@@ -188,6 +192,9 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
         subRegion.getField< mixedMimetic::stencilFlag >().template setValues< parallelDevicePolicy<> >( 1 );
       } );
     } );
+    globalIndex const numDegenerate = MpiWrapper::sum< globalIndex >( applyDegeneracyLayer( domain ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: degeneracy layer (tolerance = {}%) switched {} cells to the diagonal product",
+                               getName(), discretization.getDegeneracyTolerance(), numDegenerate ) );
     computeFaceStencilLabels( domain, false );
     return;
   }
@@ -297,12 +304,92 @@ void SinglePhaseMixedMFD::computeGlobalAdaptationIndicators( DomainPartition & d
     numMfdCellsTotal += numMfdCells;
   } );
 
+  // second layer: the degenerate cells fall back to the diagonal product whatever the consistency says
+  localIndex const numDegenerate = applyDegeneracyLayer( domain );
+  numMfdCellsTotal -= numDegenerate;
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: degeneracy layer (tolerance = {}%) switched {} more cells to the diagonal product",
+                             getName(), discretization.getDegeneracyTolerance(), MpiWrapper::sum< globalIndex >( numDegenerate ) ) );
+
   // the Riesz-map preconditioner is a map of the whole saddle point: as soon as one cell is MFD no
   // face is condensed (eliminating faces removes the elliptic content of the div term from the map);
   // with no MFD cell the condensed SPD system is solved as such
   bool const riesz = m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::riesz;
   bool const keepAllFacesLive = riesz && MpiWrapper::sum< globalIndex >( numMfdCellsTotal ) > 0;
   computeFaceStencilLabels( domain, keepAllFacesLive );
+}
+
+localIndex SinglePhaseMixedMFD::applyDegeneracyLayer( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  MixedMimeticDiscretizationManager const & mmManager = numericalMethodManager.getMixedMimeticDiscretizationManager();
+  MixedMimeticDiscretization const & discretization = mmManager.getMixedMimeticDiscretization( m_discretizationName );
+  real64 const tolerance = discretization.getDegeneracyTolerance();
+
+  localIndex numDegenerate = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    ArrayOfArraysView< localIndex const > const nodeToRegion = nodeManager.elementRegionList();
+    ArrayOfArraysView< localIndex const > const nodeToSubRegion = nodeManager.elementSubRegionList();
+    ArrayOfArraysView< localIndex const > const nodeToElem = nodeManager.elementList();
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
+      elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   CellElementSubRegion & subRegion )
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = subRegion.nodeList().toViewConst();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      arrayView1d< real64 > const indicator = subRegion.getField< mixedMimetic::degeneracyIndicator >();
+      arrayView1d< integer > const stencilFlag = subRegion.getField< mixedMimetic::stencilFlag >();
+      localIndex const numNodes = subRegion.numNodesPerElement();
+
+      // the node star of a cell: every cell sharing a vertex with it, counted once
+      stdVector< std::array< localIndex, 3 > > star;
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      {
+        star.clear();
+        for( localIndex a = 0; a < numNodes; ++a )
+        {
+          localIndex const n = elemToNodes( ei, a );
+          for( localIndex k = 0; k < nodeToElem.sizeOfArray( n ); ++k )
+          {
+            if( nodeToRegion( n, k ) >= 0 && nodeToSubRegion( n, k ) >= 0 && nodeToElem( n, k ) >= 0 )
+            {
+              star.push_back( { nodeToRegion( n, k ), nodeToSubRegion( n, k ), nodeToElem( n, k ) } );
+            }
+          }
+        }
+        std::sort( star.begin(), star.end() );
+        star.erase( std::unique( star.begin(), star.end() ), star.end() );
+        real64 sum = 0.0;
+        for( auto const & c : star )
+        {
+          sum += elemVolume[c[0]][c[1]][c[2]];
+        }
+        real64 const mean = star.empty() ? 0.0 : sum / star.size();
+        real64 const ratio = mean > 0.0 ? volume[ei] / mean : 0.0;
+        indicator[ei] = ratio;
+        if( 100.0 * ratio < tolerance && stencilFlag[ei] == 1 )
+        {
+          stencilFlag[ei] = 0;
+          numDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;
+        }
+      }
+    } );
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( { mixedMimetic::stencilFlag::key(), mixedMimetic::degeneracyIndicator::key() }, regionNames );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
+  } );
+  return numDegenerate;
 }
 
 void SinglePhaseMixedMFD::computeFaceStencilLabels( DomainPartition & domain, bool const keepAllFacesLive )

@@ -82,6 +82,9 @@ public:
 
     /// @return The key for the nominal gradient of the projection probe
     static constexpr char const * nominalGradientString() { return "nominalGradient"; }
+
+    /// @return The key for the degeneracy tolerance
+    static constexpr char const * degeneracyToleranceString() { return "degeneracyTolerance"; }
   };
 
   /**
@@ -104,6 +107,11 @@ public:
    */
   R1Tensor getNominalGradient() const { return m_nominalGradient; }
 
+  /**
+   * @brief @return The degeneracy tolerance in percent of the mean node-star volume
+   */
+  real64 getDegeneracyTolerance() const { return m_degeneracyTolerance; }
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -123,6 +131,9 @@ private:
 
   /// nominal gradient inducing the projected admissible flow field
   R1Tensor m_nominalGradient;
+
+  /// cells whose volume is below this percentage of the mean volume of their node star use the diagonal product
+  real64 m_degeneracyTolerance;
 
   /**
    * @brief Factory method to instantiate a type of mimetic inner product.

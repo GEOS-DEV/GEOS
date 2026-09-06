@@ -37,7 +37,8 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
   : Group( name, parent ),
   m_isAdaptive( 1 ),
   m_residualTolerance( 1e-3 ),
-  m_nominalGradient( { 1.0, 1.0, 1.0 } )
+  m_nominalGradient( { 1.0, 1.0, 1.0 } ),
+  m_degeneracyTolerance( 1.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -61,6 +62,13 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_nominalGradient ).
     setDescription( "Nominal pressure gradient inducing the projected admissible flow field used by the residual indicators" );
+
+  registerWrapper( viewKeyStruct::degeneracyToleranceString(), &m_degeneracyTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Degeneracy tolerance in percent: a cell whose volume is below this percentage of the mean volume "
+                    "of its node star is not admissible for the stabilized reconstruction and uses the diagonal (TPFA) "
+                    "product, whatever the consistency indicator says; 0 disables the layer" );
 }
 
 void MixedMimeticDiscretization::postInputInitialization()
@@ -70,6 +78,11 @@ void MixedMimeticDiscretization::postInputInitialization()
   GEOS_THROW_IF_LT_MSG( m_residualTolerance, 0.0,
                         GEOS_FMT( "{}: the residual tolerance cannot be negative",
                                   getWrapperDataContext( viewKeyStruct::residualToleranceString() ) ),
+                        InputError );
+
+  GEOS_THROW_IF_LT_MSG( m_degeneracyTolerance, 0.0,
+                        GEOS_FMT( "{}: the degeneracy tolerance cannot be negative",
+                                  getWrapperDataContext( viewKeyStruct::degeneracyToleranceString() ) ),
                         InputError );
 
   GEOS_THROW_IF_LT_MSG( LvArray::tensorOps::l2Norm< 3 >( m_nominalGradient.data ), LvArray::NumericLimits< real64 >::epsilon,

@@ -65,6 +65,14 @@ DECLARE_FIELD( consistencyIndicator,
                WRITE_AND_READ,
                "Residual-based consistency indicator per cell (Global Adaptation)" );
 
+DECLARE_FIELD( degeneracyIndicator,
+               "degeneracyIndicator",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Cell volume over the mean volume of its node star (admissibility of the stabilized reconstruction)" );
+
 DECLARE_FIELD( faceStencilLabel,
                "faceStencilLabel",
                array1d< integer >,

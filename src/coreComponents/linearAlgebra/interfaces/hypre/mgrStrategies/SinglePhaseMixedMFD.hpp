@@ -20,7 +20,6 @@
 #ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEMIXEDMFD_HPP_
 #define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEMIXEDMFD_HPP_
 
-#include "common/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geos
@@ -33,34 +32,27 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhaseMixedMFD strategy: stencilFlag-guided three-level MGR reduction of the
- *        mixed mimetic finite difference saddle-point system
- *          [ M  -B^T ]
- *          [ B    0  ]
- *        with face mass-flux and cell pressure unknowns.
+ * @brief SinglePhaseMixedMFD strategy: one-level multigrid reduction of the mixed mimetic
+ *        saddle point
+ *          [ M   D^T ]
+ *          [ D    C  ]
+ *        with face mass-flux (F) and cell pressure (C) unknowns.
  *
- * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers)
- * splitting the face-flux dofs by the Global Adaptation classification:
- *  dofLabel: 0 = face flux whose adjacent cells are all TPFA-compatible (the assembled
- *               flux row is exactly diagonal: TPFA/TPFA interfaces, boundary faces of
- *               TPFA cells and no-flow identity rows)
- *  dofLabel: 1 = face flux adjacent to at least one MFD-compatible cell
- *  dofLabel: 2 = cell-centered pressure
+ * The interpolation is built from the diagonal of the flux block, W_p = -diag(M)^{-1} D^T,
+ * the restriction is injection and the Galerkin coarse operator is the cell-centred
+ * Laplacian S = C + D diag(M)^{-1} D^T: exact where both cells of a face use the diagonal
+ * (TPFA) product, and spectrally equivalent to the pressure Schur complement elsewhere with
+ * the constants of diag(M) ~ M. Being an M-matrix, S is what classical AMG is built for;
+ * the F-relaxation is one symmetric Gauss-Seidel sweep on M and the coarse solve one BoomerAMG
+ * V-cycle.
  *
- * Ingredients:
- * 1. Level 0: F-points = TPFA-diagonal face fluxes (label 0). The F-block is exactly
- *    diagonal, so a single Jacobi sweep and Jacobi (diagonal) prolongation perform the
- *    elimination exactly, and the Galerkin (RAP) coarse grid is the exact Schur complement.
- *    The cost of this level is proportional to the TPFA fraction selected by the
- *    residual tolerance, mirroring the sparsity-reduction metric of the adaptive scheme.
- * 2. Level 1: F-points = MFD face fluxes (label 1), relaxed with symmetric Gauss-Seidel
- *    sweeps on the (SPD, well-conditioned) MFD flux block; Jacobi prolongation,
- *    injection restriction, Galerkin (RAP) coarse grid approximating the pressure
- *    Schur complement.
- * 3. Coarsest level: cell-pressure system solved with BoomerAMG.
- * 4. Global smoother: none. The Krylov solver is (F)GMRES.
+ * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers):
+ *  0 = face flux whose row is exactly diagonal (condensed two-point face, no-flow face)
+ *  1 = face flux adjacent to at least one stabilized (MFD) cell
+ *  2 = cell pressure
+ * Both flux labels are F-points of the single reduction level.
  */
-class SinglePhaseMixedMFD : public MGRStrategyBase< 2 >
+class SinglePhaseMixedMFD : public MGRStrategyBase< 1 >
 {
 public:
   /**
@@ -69,35 +61,23 @@ public:
   explicit SinglePhaseMixedMFD( arrayView1d< int const > const & )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 3 ) )
   {
-    // Level 0: eliminate the TPFA-diagonal face fluxes, keep the MFD fluxes and the pressure
-    m_labels[0].push_back( 1 );
+    // Level 0: eliminate every face flux, keep the pressure
     m_labels[0].push_back( 2 );
-
-    // Level 1: eliminate the MFD face fluxes, keep the pressure
-    m_labels[1].push_back( 2 );
-
     setupLabels();
 
-    // Level 0: the F-block is exactly diagonal - one Jacobi sweep is an exact solve
-    m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
+    // l1-scaled relaxations are rejected by hypre here (the pressure rows have an empty C-C block
+    // without accumulation) and plain Jacobi has no weight in MGR: symmetric Gauss-Seidel instead
+    m_levelFRelaxType[0]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
-
-    // Level 1: SGS sweeps on the well-conditioned SPD flux block outperform an AMG
-    // V-cycle; Jacobi prolongation avoids the setup cost of approximateInverse
-    m_levelFRelaxType[1]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
-    m_levelFRelaxIters[1]        = 3;
-    m_levelInterpType[1]         = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]       = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
   }
 
   /**
    * @brief Setup the MGR strategy.
+   * @param mgrParams MGR parameters
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
@@ -105,53 +85,11 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    // a reduction level with an empty F-set is the identity and is dropped: the level
-    // structure is determined by which label sets D_0 (TPFA dofs) and D_1 (MFD dofs)
-    // are nonempty
-    integer localD0Nonempty = 0;
-    integer localD1Nonempty = 0;
-    for( localIndex i = 0; i < mgrParams.customPointMarkers.size(); ++i )
-    {
-      localD0Nonempty |= ( mgrParams.customPointMarkers[i] == 0 );
-      localD1Nonempty |= ( mgrParams.customPointMarkers[i] == 1 );
-    }
-    bool const d0Nonempty = MpiWrapper::max( localD0Nonempty ) == 1;
-    bool const d1Nonempty = MpiWrapper::max( localD1Nonempty ) == 1;
+    GEOS_UNUSED_VAR( mgrParams );
+    setReduction( precond, mgrData );
 
-    m_labels[0].clear();
-    m_labels[1].clear();
-    HYPRE_Int numActiveLevels;
-    if( d0Nonempty && d1Nonempty )
-    {
-      // two reduction levels: level 0 with F = D_0 (exact Jacobi elimination of the
-      // diagonal block), level 1 with F = D_1 (SSOR sweeps on the MFD block)
-      m_labels[0].push_back( 1 );
-      m_labels[0].push_back( 2 );
-      m_labels[1].push_back( 2 );
-      m_levelFRelaxType[0]  = MGRFRelaxationType::jacobi;
-      m_levelFRelaxIters[0] = 1;
-      m_levelInterpType[0]  = MGRInterpolationType::jacobi;
-      numActiveLevels = numLevels;
-    }
-    else
-    {
-      // one reduction level with F = D_0 (exact Jacobi elimination) or F = D_1 (SSOR sweeps)
-      m_labels[0].push_back( 2 );
-      m_levelFRelaxType[0]  = d1Nonempty ? MGRFRelaxationType::hybridSymmetricGaussSeidel
-                                         : MGRFRelaxationType::jacobi;
-      m_levelFRelaxIters[0] = d1Nonempty ? m_levelFRelaxIters[1] : 1;
-      m_levelInterpType[0]  = MGRInterpolationType::jacobi;
-      numActiveLevels = 1;
-    }
-    setupLabels();
-
-    setReduction( precond, mgrData, numActiveLevels );
-
-    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure Schur
-    // complement. Two V-cycles per MGR application: the coarse solve accuracy governs the
-    // outer FGMRES iteration count (a single cycle leaves the reduction quality unused)
+    // one V-cycle on the cell-centred Laplacian
     setPressureAMG( mgrData.coarseSolver );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 2 ) );
   }
 };
 

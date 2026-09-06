@@ -183,6 +183,14 @@ private:
   void computeGlobalAdaptationIndicators( DomainPartition & domain );
 
   /**
+   * @brief Second classification layer: cells whose volume is below the degeneracy tolerance
+   *        (percent of the mean volume of their node star) fall back to the diagonal product.
+   * @param domain the domain
+   * @return the number of locally-owned cells switched to the diagonal product by this layer
+   */
+  localIndex applyDegeneracyLayer( DomainPartition & domain );
+
+  /**
    * @brief Classify the faces from the cell marking (0 = condensable TPFA face, 1 = live MFD face).
    * @param[in] domain the domain
    */
