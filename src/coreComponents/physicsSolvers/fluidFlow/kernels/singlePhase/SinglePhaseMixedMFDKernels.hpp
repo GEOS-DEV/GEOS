@@ -29,7 +29,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mixedMimetic/MixedMimeticDispatch.hpp"
 #include "mixedMimetic/MixedMimeticFields.hpp"
-#include "mixedMimetic/adaptivity/GlobalAdaptationKernels.hpp"
+#include "mixedMimetic/consistency/ConsistencyAdaptationKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"

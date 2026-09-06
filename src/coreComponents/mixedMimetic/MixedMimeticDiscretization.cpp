@@ -49,14 +49,14 @@ MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
   registerWrapper( viewKeyStruct::adaptiveConsistencyString(), &m_adaptiveConsistency ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
-    setDescription( "Flag enabling the consistency layer of the Global Adaptation: when enabled (1, default), the "
-                    "cell-wise inner product is selected between TPFA and innerProductType according to the "
-                    "consistency indicator; when disabled (0), innerProductType is used in every cell" );
+    setDescription( "Flag enabling the consistency layer: when enabled (1, default), the cell-wise inner product is "
+                    "TPFA where the consistency indicator is below consistencyTolerance and innerProductType elsewhere; "
+                    "when disabled (0), innerProductType is used in every cell" );
 
   registerWrapper( viewKeyStruct::consistencyToleranceString(), &m_consistencyTolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1e-3 ).
-    setDescription( "Tolerance on the consistency indicator of the Global Adaptation used in the cell marking criterion" );
+    setDescription( "Tolerance of the consistency layer: the consistent (MFD) product is selected where the indicator exceeds it" );
 
   registerWrapper( viewKeyStruct::nominalGradientString(), &m_nominalGradient ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -90,9 +90,7 @@ void MixedMimeticDiscretization::postInputInitialization()
                                   getWrapperDataContext( viewKeyStruct::nominalGradientString() ) ),
                         InputError );
 
-  // degenerate combination: with a TPFA inner product, the adaptive blend mixes TPFA with TPFA
-  // and the operator is TPFA everywhere regardless of the marking; the consistency indicator
-  // fields are still computed and output, which makes this combination a useful diagnostic mode
+  // with a TPFA inner product both branches of the selection coincide: the indicators are only a diagnostic
   if( isAdaptiveConsistency() && m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA )
   {
     GEOS_WARNING( GEOS_FMT( "{}: 'adaptiveConsistency' is enabled but 'innerProductType' is TPFA: the adaptation has no "

@@ -14,21 +14,21 @@
  */
 
 /**
- * @file GlobalAdaptationKernels.hpp
+ * @file ConsistencyAdaptationKernels.hpp
  *
- * Residual-based Global Adaptation (GA) indicators for the mixed mimetic discretization.
+ * Kernels of the consistency layer: residual-based indicator of the two-point product per cell.
  * The construction follows four steps:
  *  1) projection of an admissible flow field induced by a nominal uniform gradient,
  *     using the harmonic face-normal diffusive projection across interfaces;
  *  2) evaluation of the localized (cell-wise) TPFA constitutive residual, normalized
  *     by the local pressure drop profile;
  *  3) assembly of the normalized residuals across shared interfaces with respect to
- *     a fixed global orientation of the face normal (Global Adaptation);
+ *     a fixed global orientation of the face normal (assembled on the faces);
  *  4) thresholding to produce the binary stencil activation flag per cell.
  */
 
-#ifndef GEOS_MIXEDMIMETIC_ADAPTIVITY_GLOBALADAPTATIONKERNELS_HPP_
-#define GEOS_MIXEDMIMETIC_ADAPTIVITY_GLOBALADAPTATIONKERNELS_HPP_
+#ifndef GEOS_MIXEDMIMETIC_CONSISTENCY_CONSISTENCYADAPTATIONKERNELS_HPP_
+#define GEOS_MIXEDMIMETIC_CONSISTENCY_CONSISTENCYADAPTATIONKERNELS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -369,4 +369,4 @@ struct MarkingKernel
 
 } // namespace geos
 
-#endif //GEOS_MIXEDMIMETIC_ADAPTIVITY_GLOBALADAPTATIONKERNELS_HPP_
+#endif //GEOS_MIXEDMIMETIC_CONSISTENCY_CONSISTENCYADAPTATIONKERNELS_HPP_

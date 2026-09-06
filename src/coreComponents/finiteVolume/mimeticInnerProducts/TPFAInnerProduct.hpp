@@ -84,8 +84,6 @@ public:
             real64 const & lengthTolerance,
             arraySlice2d< real64 > const & M );
 
-private:
-
   /**
    * @brief Compute the one-sided (half) TPFA transmissibility of a local face, k_n A / d.
    * @param[in] nodePosition the position of the nodes

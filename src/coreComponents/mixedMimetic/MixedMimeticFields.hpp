@@ -72,7 +72,7 @@ DECLARE_FIELD( consistencyIndicator,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Residual-based consistency indicator per cell (Global Adaptation)" );
+               "Residual-based consistency indicator per cell" );
 
 DECLARE_FIELD( degeneracyIndicator,
                "degeneracyIndicator",
@@ -113,7 +113,7 @@ DECLARE_FIELD( faceResidual,
                0,
                LEVEL_1,
                NO_WRITE,
-               "Global Adaptation face-assembled normalized residual" );
+               "Face-assembled normalized residual of the consistency layer" );
 
 }
 

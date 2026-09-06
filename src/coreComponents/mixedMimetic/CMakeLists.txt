@@ -4,7 +4,7 @@ Package: mixedMimetic
 
 Contains the mixed mimetic finite difference discretization infrastructure:
 the discretization object registered under the NumericalMethods block, the
-residual-based Global Adaptation kernels, and the dispatch over the mixed-form
+selection of the cell inner product (ConsistencyAdaptation) and the dispatch over the mixed-form
 inner products.
 #]]
 #--------------------------------------------------------------------------------------------------
@@ -17,14 +17,16 @@ set( mixedMimetic_headers
      MixedMimeticDiscretizationManager.hpp
      MixedMimeticDispatch.hpp
      MixedMimeticFields.hpp
-     adaptivity/GlobalAdaptationKernels.hpp )
+     consistency/ConsistencyAdaptation.hpp
+     consistency/ConsistencyAdaptationKernels.hpp )
 
 #
 # Specify all sources
 #
 set( mixedMimetic_sources
      MixedMimeticDiscretization.cpp
-     MixedMimeticDiscretizationManager.cpp )
+     MixedMimeticDiscretizationManager.cpp
+     consistency/ConsistencyAdaptation.cpp )
 
 set( dependencyList ${parallelDeps} finiteVolume )
 
@@ -40,3 +42,7 @@ blt_add_library( NAME       mixedMimetic
 target_include_directories( mixedMimetic PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS mixedMimetic LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()

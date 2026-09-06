@@ -29,11 +29,9 @@ namespace geos
 /**
  * @class MixedMimeticDiscretization
  *
- * Provides management of the cell-wise inner products and of the residual-based
- * Global Adaptation (GA) parameters used by the mixed mimetic finite difference solvers.
- * Global Adaptation is the only supported cell classification paradigm: when adaptation
- * is enabled, the residual tolerance controls the TPFA/MFD partition; when disabled, the
- * selected inner product is used in every cell.
+ * Cell-wise inner product of the mixed mimetic finite difference solvers and parameters of
+ * its selection eta (ConsistencyAdaptation): consistency tolerance of the residual layer and
+ * degeneracy tolerance; without adaptation the selected inner product is used in every cell.
  */
 class MixedMimeticDiscretization : public dataRepository::Group
 {
@@ -88,7 +86,7 @@ public:
   };
 
   /**
-   * @brief @return Whether the consistency layer of the Global Adaptation is enabled
+   * @brief @return Whether the consistency layer is enabled
    */
   bool isAdaptiveConsistency() const { return m_adaptiveConsistency == 1; }
 
@@ -98,7 +96,7 @@ public:
   bool isTpfaInnerProduct() const;
 
   /**
-   * @brief @return The consistency tolerance used in the marking criterion
+   * @brief @return The tolerance of the consistency layer: eta = 1 where the indicator exceeds it
    */
   real64 getConsistencyTolerance() const { return m_consistencyTolerance; }
 
@@ -123,10 +121,10 @@ private:
   /// type of inner product used in the mixed mimetic solver
   string m_innerProductType;
 
-  /// flag enabling the consistency layer of the Global Adaptation (1 = adaptive, 0 = selected inner product everywhere)
+  /// flag enabling the consistency layer (1 = adaptive, 0 = selected inner product everywhere)
   integer m_adaptiveConsistency;
 
-  /// user-prescribed tolerance on the consistency indicator
+  /// tolerance of the consistency layer
   real64 m_consistencyTolerance;
 
   /// nominal gradient inducing the projected admissible flow field
