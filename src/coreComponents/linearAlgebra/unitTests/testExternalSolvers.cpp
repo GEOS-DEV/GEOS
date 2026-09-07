@@ -19,6 +19,7 @@
 
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "common/MpiWrapper.hpp"
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
@@ -97,7 +98,7 @@ LinearSolverParameters params_CG_AMG()
 }
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
-TEST( HypreSolver, KeepsSetupDummyUntagged )
+TEST( HypreSolver, KeepsSetupDummyTagsAlive )
 {
   struct KrylovDofLabelsGuard
   {
@@ -139,7 +140,10 @@ TEST( HypreSolver, KeepsSetupDummyUntagged )
   solver.clear();
 
   EXPECT_TRUE( solver.result().success() );
-  EXPECT_EQ( output.find( "L2 norm of b0" ), std::string::npos );
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    EXPECT_NE( output.find( "L2 norm of b0" ), std::string::npos );
+  }
 }
 #endif
 
