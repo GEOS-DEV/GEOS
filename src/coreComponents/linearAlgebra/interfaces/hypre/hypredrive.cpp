@@ -2150,14 +2150,17 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
     m_legacySolver.reset();
   }
 
-  // Legacy HypreSolver destroys and recreates MGR on every setup. Reusing a
-  // HYPREDRV handle across Newton steps can keep MGR/AMG/ILU bookkeeping even
-  // when YAML reuse is off, which shows up as later-solve iteration drift.
-  // AMG-only generated configs keep the handle so unit tests can assert reuse.
+  // Legacy HypreSolver destroys and recreates MGR and scalar ILU on every setup.
+  // Reusing a HYPREDRV handle across Newton steps can retain matrix-dependent
+  // MGR/ILU bookkeeping even when YAML reuse is off, which can fail on a later
+  // matrix setup. AMG-only generated configs keep the handle so unit tests can
+  // assert reuse.
   bool const recreateHandle = ( m_hypredrive == nullptr ) ||
                               ( m_configurationSignature != configurationSignature ) ||
                               ( m_structureSignature != structureSignature ) ||
-                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr );
+                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr ) ||
+                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ) ||
+                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut );
 
   if( recreateHandle )
   {

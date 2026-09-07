@@ -916,6 +916,40 @@ TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.clear();
 }
 
+TEST( HypredriveSolverReuse, RecreatesHandleForILUOnCompatibleSetupCycles )
+{
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::bicgstab;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.logLevel = 0;
+
+  HypredriveSolver solver( params );
+  solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
+  solver.setup( matrix );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+
+  sol.zero();
+  solver.setExecutionContext( makeExecutionContext( 11, 1 ) );
+  solver.setup( matrix );
+
+  EXPECT_GT( HypredriveSolverTestPeer::generation( solver ), generation1 );
+  solver.solve( rhs, sol );
+  EXPECT_TRUE( solver.result().success() );
+  solver.clear();
+}
+
 TEST( HypredriveSolverReuse, RecreatesHandleWhenStructureChanges )
 {
   HypreMatrix matrix1;
