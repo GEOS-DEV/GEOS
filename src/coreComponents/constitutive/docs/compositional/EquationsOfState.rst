@@ -7,8 +7,6 @@ An Equation of State (EoS) mathematically relates the pressure, volume, temperat
 
 The fugacity coefficient of a component is derived from the exact thermodynamic relationship involving the integration of the EoS volume departure with respect to pressure. 
 
-.. _cubic-eos:
-
 Cubic equation of state
 ~~~~~~~~~~~~~~~~~~~~~~~
 
