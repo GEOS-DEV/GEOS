@@ -942,7 +942,7 @@ TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.clear();
 }
 
-TEST( HypredriveSolverReuse, RecreatesHandleForILUOnCompatibleSetupCycles )
+TEST( HypredriveSolverReuse, ReusesHandleForILUOnCompatibleSetupCycles )
 {
   HypreMatrix matrix;
   testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
@@ -970,7 +970,7 @@ TEST( HypredriveSolverReuse, RecreatesHandleForILUOnCompatibleSetupCycles )
   solver.setExecutionContext( makeExecutionContext( 11, 1 ) );
   solver.setup( matrix );
 
-  EXPECT_GT( HypredriveSolverTestPeer::generation( solver ), generation1 );
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver ), generation1 );
   solver.solve( rhs, sol );
   EXPECT_TRUE( solver.result().success() );
   solver.clear();

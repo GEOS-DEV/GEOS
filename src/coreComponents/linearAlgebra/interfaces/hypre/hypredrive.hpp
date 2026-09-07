@@ -162,6 +162,10 @@ private:
 
   void resetHypredriveState();
 
+  char const * solverNameForLogs() const;
+
+  void reportGeneratedYamlFailure( char const * const reason );
+
   using Base::m_params;
   using Base::m_result;
 

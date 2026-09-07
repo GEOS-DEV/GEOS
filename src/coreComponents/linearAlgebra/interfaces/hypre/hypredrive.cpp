@@ -120,10 +120,13 @@ std::string makeInputArgsParseTargetSignature( hypre::hypredrive::InputArgsParse
                    target.argument );
 }
 
-std::set< std::string > & loggedInputArgsParseTargets()
+std::string & lastLoggedInputArgsParseTarget()
 {
-  static std::set< std::string > loggedTargets;
-  return loggedTargets;
+  // Logging is a diagnostic side effect, not a cache. Keep only the most
+  // recent signature so generated YAML changes do not grow process-global
+  // memory without bound.
+  static std::string signature;
+  return signature;
 }
 
 bool & generatedAMGGlobalRelaxationUnsupported()
@@ -714,13 +717,36 @@ std::string joinLabelNames( stdVector< HYPRE_Int > const & values,
   return stream.str();
 }
 
-void destroyWrapper( HyprePrecWrapper & wrapper )
+bool isGeneratedAMGWithGlobalRelaxation( LinearSolverParameters const & params,
+                                         hypre::hypredrive::InputArgsParseTarget const & target )
 {
-  if( wrapper.ptr != nullptr && wrapper.destroy != nullptr )
+  return target.source == hypre::hypredrive::InputSource::generatedFallback &&
+         params.preconditionerType == LinearSolverParameters::PreconditionerType::amg &&
+         hypre::getAMGRelaxationType( params.amg.smootherType ) >= 0;
+}
+
+void appendGeneratedMGRHeader( std::ostringstream & stream,
+                               integer const logLevel,
+                               char const * const cycle,
+                               HYPRE_Real const coarseThreshold,
+                               HYPRE_Int const numLevels,
+                               hypre::mgr::MGRParameters const & mgrParameters = hypre::mgr::defaultMGRParameters() )
+{
+  appendLine( stream, 0, "preconditioner:" );
+  appendLine( stream, 1, "mgr:" );
+  appendLine( stream, 2, GEOS_FMT( "tolerance: {}", mgrParameters.tolerance ) );
+  appendLine( stream, 2, GEOS_FMT( "max_iter: {}", mgrParameters.maxIterations ) );
+  appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( logLevel ) ) );
+  if( cycle != nullptr )
   {
-    GEOS_LAI_CHECK_ERROR( wrapper.destroy( wrapper.ptr ) );
-    wrapper.ptr = nullptr;
+    appendLine( stream, 2, GEOS_FMT( "cycle: {}", cycle ) );
   }
+  appendLine( stream, 2, GEOS_FMT( "non_c_to_f: {}", mgrParameters.nonCpointsToFpoints ) );
+  appendLine( stream, 2, GEOS_FMT( "nonglk_max_elmts: {}", mgrParameters.nonGalerkinMaxElmts ) );
+  appendLine( stream, 2, GEOS_FMT( "pmax: {}", mgrParameters.pMaxElmts ) );
+  appendLine( stream, 2, GEOS_FMT( "coarse_th: {}", coarseThreshold ) );
+  appendLine( stream, 2, GEOS_FMT( "num_levels: {}", numLevels ) );
+  appendLine( stream, 2, "level:" );
 }
 
 std::string buildDofLabelsYaml( stdVector< string > const & labelNames )
@@ -947,15 +973,14 @@ struct LevelAMGBlock
     return *this;
   }
 
-  HYPRE_Int level;
-  AMGFlavor flavor;
+  HYPRE_Int level = 0;
+  AMGFlavor flavor = AMGFlavor::pressure;
 };
 
 struct MGRSpecialization
 {
   AMGFlavor coarseFlavor = AMGFlavor::pressure;
   stdVector< LevelAMGBlock > fRelaxAMGLevels;
-  HYPRE_Int pmax = 0;
   HYPRE_Int coarseMinCoarseSize = -1;
   char const * cycle = nullptr;
 };
@@ -970,14 +995,14 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     case StrategyType::thermalCompositionalMultiphaseFVM:
     case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
     {
-      return { AMGFlavor::pressureTemperature, {}, 0, -1 };
+      return { AMGFlavor::pressureTemperature, {}, -1 };
     }
     case StrategyType::lagrangianContactMechanics:
     case StrategyType::augmentedLagrangianContactMechanics:
     case StrategyType::lagrangianContactMechanicsBubbleStab:
     case StrategyType::solidMechanicsEmbeddedFractures:
     {
-      return { AMGFlavor::displacementFiltered, {}, 0, -1 };
+      return { AMGFlavor::displacementFiltered, {}, -1 };
     }
     case StrategyType::singlePhasePoromechanics:
     case StrategyType::thermalSinglePhasePoromechanics:
@@ -998,7 +1023,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
       specialization.fRelaxAMGLevels = { LevelAMGBlock{ 0, AMGFlavor::displacementFiltered } };
       if( strategy == StrategyType::hydrofracture )
       {
-        specialization.coarseMinCoarseSize = 1000;
+        specialization.coarseMinCoarseSize = hypre::mgr::hydrofractureMinCoarseSize;
       }
       return specialization;
     }
@@ -1058,222 +1083,183 @@ std::optional< AMGFlavor > getFRelaxAMGFlavor( MGRSpecialization const & special
   return std::nullopt;
 }
 
-void appendAMGHeader( std::ostringstream & stream,
-                      integer const indentLevel )
+char const * generatedAMGSmootherName( HYPRE_Int const type )
 {
-  appendLine( stream, indentLevel, "amg:" );
-  appendLine( stream, indentLevel + 1, "tolerance: 0.0" );
-  appendLine( stream, indentLevel + 1, "max_iter: 1" );
-  appendLine( stream, indentLevel + 1, "print_level: 0" );
-  // HYPRE_BoomerAMGCreate uses Schwarz (6) with zero extra smoother levels.
-  // hypredrive's YAML AMG smoother defaults to ILU (5) and always writes that
-  // onto the BoomerAMG object, so nested MGR AMG must pin the Create values.
-  appendLine( stream, indentLevel + 1, "smoother:" );
-  appendLine( stream, indentLevel + 2, "type: schwarz" );
-  appendLine( stream, indentLevel + 2, "num_levels: 0" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
-  appendLine( stream, indentLevel + 2, "ilu:" );
-  // HYPRE_BoomerAMGCreate defaults the nested ILU row cap to 20 and local
-  // reordering to RCM (1). Do not rely on that default: the legacy GEOS path
-  // explicitly disables RCM, so emit the same choice for the hypredrive path.
-  appendLine( stream, indentLevel + 3, "max_row_nnz: 20" );
-  appendIlUDisableRcm( stream, indentLevel + 3 );
+  return type == 6 ? "schwarz" : nullptr;
 }
 
-void appendHypreBoomerAMGCreateMaxCoarseSize( std::ostringstream & stream,
-                                              integer const indentLevel )
+std::string generatedAMGRelaxationName( HYPRE_Int const type )
 {
-  // HYPRE_BoomerAMGCreate defaults max_coarse_size to 9. hypredrive's YAML AMG
-  // defaults it to 64 and always writes that value unless the key is present,
-  // so every nested MGR AMG block that would otherwise inherit hypre's Create
-  // default must emit 9 explicitly. Leaving it out changes the first linear
-  // solve, not just later Newton drift.
-  appendLine( stream, indentLevel, "max_coarse_size: 9" );
+  switch( type )
+  {
+    case 89:
+      return "l1sym-hgs";
+    case 9:
+      return "ge";
+    default:
+      return GEOS_FMT( "{}", type );
+  }
+}
+
+std::string generatedAMGCoarseningName( HYPRE_Int const type )
+{
+  if( type == hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout ) )
+  {
+    return "falgout";
+  }
+  return GEOS_FMT( "{}", type );
+}
+
+void appendAMGHeader( std::ostringstream & stream,
+                      integer const indentLevel,
+                      hypre::mgr::BoomerAMGParameters const & params )
+{
+  appendLine( stream, indentLevel, "amg:" );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "tolerance: {}", params.tolerance ) );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "max_iter: {}", params.maxIterations ) );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "print_level: {}", params.printLevel ) );
+  appendLine( stream, indentLevel + 1, "smoother:" );
+  char const * const smootherName = generatedAMGSmootherName( params.smoothType );
+  appendLine( stream, indentLevel + 2,
+              smootherName == nullptr ? GEOS_FMT( "type: {}", params.smoothType )
+                                       : GEOS_FMT( "type: {}", smootherName ) );
+  appendLine( stream, indentLevel + 2, GEOS_FMT( "num_levels: {}", params.smoothNumLevels ) );
+  appendLine( stream, indentLevel + 2, GEOS_FMT( "num_sweeps: {}", params.smoothNumSweeps ) );
+  appendLine( stream, indentLevel + 2, "ilu:" );
+  appendLine( stream, indentLevel + 3, GEOS_FMT( "max_row_nnz: {}", params.smoothMaxRowNnz ) );
+  appendLine( stream, indentLevel + 3, GEOS_FMT( "reordering: {}", params.iluLocalReordering ) );
+}
+
+void appendAMGCoarsening( std::ostringstream & stream,
+                          integer const indentLevel,
+                          hypre::mgr::BoomerAMGParameters const & params,
+                          HYPRE_Int const minCoarseSize = -1 )
+{
+  appendLine( stream, indentLevel, "coarsening:" );
+  HYPRE_Int const effectiveMinCoarseSize = minCoarseSize >= 0 ? minCoarseSize : params.minCoarseSize;
+  if( effectiveMinCoarseSize >= 0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "min_coarse_size: {}", effectiveMinCoarseSize ) );
+  }
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "max_coarse_size: {}", params.maxCoarseSize ) );
+  if( params.coarseningType >= 0 )
+  {
+    appendLine( stream, indentLevel + 1,
+                GEOS_FMT( "type: {}", generatedAMGCoarseningName( params.coarseningType ) ) );
+  }
+  if( params.maxRowSum >= 0.0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "max_row_sum: {}", params.maxRowSum ) );
+  }
+  if( params.strongThreshold >= 0.0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "strong_th: {}", params.strongThreshold ) );
+  }
+  if( params.numFunctions >= 0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_functions: {}", params.numFunctions ) );
+  }
+  if( params.filterFunctions >= 0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "filter_functions: {}", params.filterFunctions ) );
+  }
+}
+
+void appendAMGRelaxation( std::ostringstream & stream,
+                          integer const indentLevel,
+                          hypre::mgr::BoomerAMGParameters const & params )
+{
+  appendLine( stream, indentLevel, "relaxation:" );
+  if( params.relaxType >= 0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "down_type: {}", params.relaxType ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "up_type: {}", params.relaxType ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "coarse_type: {}", params.relaxType ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_sweeps: {}", params.numSweeps ) );
+  }
+  else if( params.downRelaxType >= 0 || params.upRelaxType >= 0 || params.coarseRelaxType >= 0 )
+  {
+    appendLine( stream, indentLevel + 1,
+                GEOS_FMT( "down_type: {}", generatedAMGRelaxationName( params.downRelaxType ) ) );
+    appendLine( stream, indentLevel + 1,
+                GEOS_FMT( "up_type: {}", generatedAMGRelaxationName( params.upRelaxType ) ) );
+    appendLine( stream, indentLevel + 1,
+                GEOS_FMT( "coarse_type: {}", generatedAMGRelaxationName( params.coarseRelaxType ) ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "num_sweeps: {}", params.numSweeps ) );
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "order: {}", params.relaxOrder ) );
+  }
+  else if( params.relaxOrder >= 0 )
+  {
+    appendLine( stream, indentLevel + 1, GEOS_FMT( "order: {}", params.relaxOrder ) );
+  }
 }
 
 void appendDisplacementAMG( std::ostringstream & stream,
                             integer const indentLevel,
-                            integer const separateComponents,
-                            bool const filterFunctions,
-                            bool const useALMSmoother = false )
+                            hypre::mgr::BoomerAMGParameters const & params )
 {
-  appendAMGHeader( stream, indentLevel );
-  appendLine( stream, indentLevel + 1, "coarsening:" );
-  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
-  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
-  appendLine( stream, indentLevel + 2, "strong_th: 0.6" );
-  appendLine( stream, indentLevel + 2, "num_functions: 3" );
-  appendLine( stream, indentLevel + 2, GEOS_FMT( "filter_functions: {}", filterFunctions ? separateComponents : 0 ) );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "type: 8" );
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "down_type: 16" );
-  appendLine( stream, indentLevel + 2, "up_type: 16" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 16" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
-#else
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  if( useALMSmoother )
+  appendAMGHeader( stream, indentLevel, params );
+  if( params.pMaxElmts >= 0 )
   {
-    appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
-    appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
-    appendLine( stream, indentLevel + 2, "coarse_type: ge" );
-    appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
-    appendLine( stream, indentLevel + 2, "order: 0" );
+    appendLine( stream, indentLevel + 1, "interpolation:" );
+    appendLine( stream, indentLevel + 2, GEOS_FMT( "max_nnz_row: {}", params.pMaxElmts ) );
   }
-  else
+  if( params.aggressiveNumLevels >= 0 )
   {
-    appendLine( stream, indentLevel + 2, "order: 1" );
+    appendLine( stream, indentLevel + 1, "aggressive:" );
+    appendLine( stream, indentLevel + 2, GEOS_FMT( "num_levels: {}", params.aggressiveNumLevels ) );
   }
-#endif
+  appendAMGCoarsening( stream, indentLevel + 1, params );
+  appendAMGRelaxation( stream, indentLevel + 1, params );
 }
 
 void appendPressureAMG( std::ostringstream & stream,
                         integer const indentLevel,
-                        HYPRE_Int const minCoarseSize )
+                        hypre::mgr::BoomerAMGParameters const & params,
+                        HYPRE_Int const minCoarseSize = -1 )
 {
-  appendAMGHeader( stream, indentLevel );
+  appendAMGHeader( stream, indentLevel, params );
   appendLine( stream, indentLevel + 1, "aggressive:" );
-  appendLine( stream, indentLevel + 2, "num_levels: 1" );
-  appendLine( stream, indentLevel + 2, "max_nnz_row: 20" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "prolongation_type: 7" );
-#else
-  appendLine( stream, indentLevel + 2, "prolongation_type: 4" );
-#endif
-  appendLine( stream, indentLevel + 1, "coarsening:" );
-  if( minCoarseSize >= 0 )
+  appendLine( stream, indentLevel + 2, GEOS_FMT( "num_levels: {}", params.aggressiveNumLevels ) );
+  appendLine( stream, indentLevel + 2, GEOS_FMT( "max_nnz_row: {}", params.aggressivePMaxElmts ) );
+  if( params.aggressiveInterpType >= 0 )
   {
-    appendLine( stream, indentLevel + 2, GEOS_FMT( "min_coarse_size: {}", minCoarseSize ) );
+    appendLine( stream, indentLevel + 2, GEOS_FMT( "prolongation_type: {}", params.aggressiveInterpType ) );
   }
-  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "type: 8" );
-  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "down_type: 18" );
-  appendLine( stream, indentLevel + 2, "up_type: 18" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 18" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
-#else
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "order: 1" );
-#endif
-}
-
-void appendALMDisplacementFineAMG( std::ostringstream & stream,
-                                   integer const indentLevel )
-{
-  appendAMGHeader( stream, indentLevel );
-  appendLine( stream, indentLevel + 1, "aggressive:" );
-  appendLine( stream, indentLevel + 2, "num_levels: 1" );
-  appendLine( stream, indentLevel + 1, "interpolation:" );
-  appendLine( stream, indentLevel + 2, "max_nnz_row: 20" );
-  appendLine( stream, indentLevel + 1, "coarsening:" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "type: 8" );
-#else
-  appendLine( stream, indentLevel + 2, "type: falgout" );
-#endif
-  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
-  appendLine( stream, indentLevel + 2, "strong_th: 0.8" );
-  appendLine( stream, indentLevel + 2, "num_functions: 3" );
-  appendLine( stream, indentLevel + 2, "filter_functions: 1" );
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "down_type: 16" );
-  appendLine( stream, indentLevel + 2, "up_type: 16" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 16" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
-#else
-  appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
-  appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
-  appendLine( stream, indentLevel + 2, "coarse_type: ge" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
-  appendLine( stream, indentLevel + 2, "order: 0" );
-#endif
-}
-
-void appendALMDisplacementBubbleAMG( std::ostringstream & stream,
-                                     integer const indentLevel )
-{
-  appendAMGHeader( stream, indentLevel );
-  appendLine( stream, indentLevel + 1, "interpolation:" );
-  appendLine( stream, indentLevel + 2, "max_nnz_row: 10" );
-  appendLine( stream, indentLevel + 1, "coarsening:" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "type: 8" );
-#endif
-  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
-  appendLine( stream, indentLevel + 2, "strong_th: 0.75" );
-  appendLine( stream, indentLevel + 2, "num_functions: 3" );
-  appendLine( stream, indentLevel + 2, "filter_functions: 0" );
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "down_type: 16" );
-  appendLine( stream, indentLevel + 2, "up_type: 16" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 16" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
-#else
-  appendLine( stream, indentLevel + 2, "down_type: l1sym-hgs" );
-  appendLine( stream, indentLevel + 2, "up_type: l1sym-hgs" );
-  appendLine( stream, indentLevel + 2, "coarse_type: ge" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
-  appendLine( stream, indentLevel + 2, "order: 0" );
-#endif
+  appendAMGCoarsening( stream, indentLevel + 1, params, minCoarseSize );
+  appendAMGRelaxation( stream, indentLevel + 1, params );
 }
 
 void appendALMNestedMGR( std::ostringstream & stream,
                          integer const indentLevel,
                          stdVector< string > const & labelNames )
 {
+  hypre::mgr::MGRParameters const mgrParameters = hypre::mgr::defaultMGRParameters();
   stdVector< HYPRE_Int > const nodalLabels = { 0, 1, 2 };
   appendLine( stream, indentLevel, "mgr:" );
-  appendLine( stream, indentLevel + 1, "tolerance: 0.0" );
-  appendLine( stream, indentLevel + 1, "max_iter: 1" );
-  appendLine( stream, indentLevel + 1, "print_level: 0" );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "tolerance: {}", mgrParameters.tolerance ) );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "max_iter: {}", mgrParameters.maxIterations ) );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "print_level: {}", mgrParameters.printLevel ) );
   appendLine( stream, indentLevel + 1, "cycle: v(1,0)" );
+  appendLine( stream, indentLevel + 1,
+              GEOS_FMT( "non_c_to_f: {}", mgrParameters.nonCpointsToFpoints ) );
+  appendLine( stream, indentLevel + 1,
+              GEOS_FMT( "nonglk_max_elmts: {}", mgrParameters.nonGalerkinMaxElmts ) );
+  appendLine( stream, indentLevel + 1, GEOS_FMT( "pmax: {}", mgrParameters.pMaxElmts ) );
   appendLine( stream, indentLevel + 1, "num_levels: 2" );
   appendLine( stream, indentLevel + 1, "level:" );
   appendLine( stream, indentLevel + 2, "0:" );
   appendLine( stream, indentLevel + 3,
               GEOS_FMT( "f_dofs: [{}]", joinLabelNames( nodalLabels, labelNames ) ) );
   appendLine( stream, indentLevel + 3, "f_relaxation:" );
-  appendALMDisplacementFineAMG( stream, indentLevel + 4 );
+  appendDisplacementAMG( stream, indentLevel + 4,
+                         hypre::mgr::displacementAMGParameters( 1, true, true ) );
   appendLine( stream, indentLevel + 3, "g_relaxation: none" );
   appendLine( stream, indentLevel + 3, "prolongation_type: injection" );
   appendLine( stream, indentLevel + 3, "restriction_type: injection" );
   appendLine( stream, indentLevel + 3, "coarse_level_type: rap" );
   appendLine( stream, indentLevel + 1, "coarsest_level:" );
-  appendALMDisplacementBubbleAMG( stream, indentLevel + 2 );
-}
-
-void appendPressureTemperatureAMG( std::ostringstream & stream,
-                                   integer const indentLevel )
-{
-  appendAMGHeader( stream, indentLevel );
-  appendLine( stream, indentLevel + 1, "aggressive:" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "num_levels: 0" );
-#else
-  appendLine( stream, indentLevel + 2, "num_levels: 1" );
-#endif
-  appendLine( stream, indentLevel + 2, "max_nnz_row: 16" );
-  appendLine( stream, indentLevel + 1, "coarsening:" );
-  appendHypreBoomerAMGCreateMaxCoarseSize( stream, indentLevel + 2 );
-  appendLine( stream, indentLevel + 2, "num_functions: 2" );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  appendLine( stream, indentLevel + 2, "type: 8" );
-  appendLine( stream, indentLevel + 2, "max_row_sum: 1.0" );
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "down_type: 18" );
-  appendLine( stream, indentLevel + 2, "up_type: 18" );
-  appendLine( stream, indentLevel + 2, "coarse_type: 18" );
-  appendLine( stream, indentLevel + 2, "num_sweeps: 2" );
-#else
-  appendLine( stream, indentLevel + 1, "relaxation:" );
-  appendLine( stream, indentLevel + 2, "order: 1" );
-#endif
+  appendDisplacementAMG( stream, indentLevel + 2, hypre::mgr::almBubbleAMGParameters() );
 }
 
 void appendNamedMGRRelaxation( std::ostringstream & stream,
@@ -1341,27 +1327,30 @@ void appendAMGByFlavor( std::ostringstream & stream,
   {
     case AMGFlavor::pressure:
     {
-      appendPressureAMG( stream, indentLevel, coarseMinCoarseSize );
+      appendPressureAMG( stream, indentLevel,
+                         hypre::mgr::pressureAMGParameters( coarseMinCoarseSize ) );
       break;
     }
     case AMGFlavor::pressureTemperature:
     {
-      appendPressureTemperatureAMG( stream, indentLevel );
+      appendPressureAMG( stream, indentLevel, hypre::mgr::pressureTemperatureAMGParameters() );
       break;
     }
     case AMGFlavor::displacementFiltered:
     {
-      appendDisplacementAMG( stream, indentLevel, mgrParams.separateComponents, true );
+      appendDisplacementAMG( stream, indentLevel,
+                             hypre::mgr::displacementAMGParameters( mgrParams.separateComponents, true ) );
       break;
     }
     case AMGFlavor::displacement:
     {
-      appendDisplacementAMG( stream, indentLevel, 0, false );
+      appendDisplacementAMG( stream, indentLevel, hypre::mgr::displacementAMGParameters( 0, false ) );
       break;
     }
     case AMGFlavor::almDisplacement:
     {
-      appendDisplacementAMG( stream, indentLevel, mgrParams.separateComponents, true, true );
+      appendDisplacementAMG( stream, indentLevel,
+                             hypre::mgr::almReservoirDisplacementAMGParameters( mgrParams.separateComponents ) );
       break;
     }
   }
@@ -1398,14 +1387,28 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   MGRStrategyProbe< STRATEGY > strategy( numComponentsPerField );
   MGRSpecialization const specialization = getSpecialization( params.mgr.strategy );
 
-  HyprePrecWrapper precond;
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
-
-  HypreMGRData mgrData;
-  mgrData.pointMarkers.resize( strategy.m_numBlocks );
-  std::iota( mgrData.pointMarkers.begin(), mgrData.pointMarkers.end(), 0 );
-
-  strategy.setup( params.mgr, precond, mgrData );
+  // These are the only strategy setup changes that affect the serialized
+  // reduction metadata.  The remaining setup work only creates HYPRE solver
+  // objects, which is deliberately deferred to the real solve path.
+  if( params.mgr.areWellsShut )
+  {
+    using StrategyType = LinearSolverParameters::MGR::StrategyType;
+    switch( params.mgr.strategy )
+    {
+      case StrategyType::singlePhaseReservoirFVM:
+      case StrategyType::thermalSinglePhaseReservoirFVM:
+      case StrategyType::singlePhaseReservoirHybridFVM:
+      {
+        strategy.m_levelFRelaxType[0] = hypre::MGRFRelaxationType::jacobi;
+        break;
+      }
+      default:
+      {
+        break;
+      }
+    }
+  }
+  strategy.normalizeReductionParameters();
 
   std::ostringstream stream;
   if( params.mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM )
@@ -1413,18 +1416,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
     // Keep this representation in lockstep with the fully coupled ALM
     // strategy: the outer F block is displacement plus bubble displacement,
     // and its F-relaxation is a two-level nested MGR.
-    appendLine( stream, 0, "preconditioner:" );
-    appendLine( stream, 1, "mgr:" );
-    appendLine( stream, 2, "tolerance: 0.0" );
-    appendLine( stream, 2, "max_iter: 1" );
-    appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
-    appendLine( stream, 2, "cycle: v(1,0)" );
-    appendLine( stream, 2, "non_c_to_f: 1" );
-    appendLine( stream, 2, "nonglk_max_elmts: 1" );
-    appendLine( stream, 2, "pmax: 0" );
-    appendLine( stream, 2, GEOS_FMT( "coarse_th: {}", strategy.m_coarseGridThreshold ) );
-    appendLine( stream, 2, "num_levels: 2" );
-    appendLine( stream, 2, "level:" );
+    appendGeneratedMGRHeader( stream, params.logLevel, "v(1,0)", strategy.m_coarseGridThreshold, 2 );
     appendLine( stream, 3, "0:" );
     stdVector< HYPRE_Int > const displacementLabels = { 0, 1, 2, 3, 4, 5 };
     appendLine( stream, 4,
@@ -1436,36 +1428,20 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
     appendLine( stream, 4, "restriction_type: injection" );
     appendLine( stream, 4, "coarse_level_type: rap" );
     appendLine( stream, 2, "coarsest_level:" );
-    appendPressureAMG( stream, 3, -1 );
-
+    appendPressureAMG( stream, 3, hypre::mgr::pressureAMGParameters(), -1 );
     preconditionerYaml = stream.str();
-
-    destroyWrapper( mgrData.coarseSolver );
-    destroyWrapper( mgrData.mechSolver );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
-    destroyWrapper( mgrData.nestedSolver );
     return true;
   }
 
-  appendLine( stream, 0, "preconditioner:" );
-  appendLine( stream, 1, "mgr:" );
-  appendLine( stream, 2, "tolerance: 0.0" );
-  appendLine( stream, 2, "max_iter: 1" );
   // Do not emit relax_type. HYPRE_MGRCreate defaults it to 0, but hypredrive's
   // YAML validator rejects 0 (allowed names map to 3–18, default Jacobi 7).
   // hypre's MGR setup also rewrites F-relax type 0 to 7 unless interp is 12,
   // so omitting the key matches the effective legacy behavior.
-  appendLine( stream, 2, GEOS_FMT( "print_level: {}", getMGRPrintLevel( params.logLevel ) ) );
-  if( specialization.cycle != nullptr )
-  {
-    appendLine( stream, 2, GEOS_FMT( "cycle: {}", specialization.cycle ) );
-  }
-  appendLine( stream, 2, GEOS_FMT( "non_c_to_f: {}", 1 ) );
-  appendLine( stream, 2, GEOS_FMT( "nonglk_max_elmts: {}", 1 ) );
-  appendLine( stream, 2, GEOS_FMT( "pmax: {}", specialization.pmax ) );
-  appendLine( stream, 2, GEOS_FMT( "coarse_th: {}", strategy.m_coarseGridThreshold ) );
-  appendLine( stream, 2, GEOS_FMT( "num_levels: {}", MGRStrategyProbe< STRATEGY >::numReductionLevels + 1 ) );
-  appendLine( stream, 2, "level:" );
+  appendGeneratedMGRHeader( stream,
+                            params.logLevel,
+                            specialization.cycle,
+                            strategy.m_coarseGridThreshold,
+                            MGRStrategyProbe< STRATEGY >::numReductionLevels + 1 );
 
   stdVector< HYPRE_Int > activeLabels( static_cast< size_t >( strategy.m_numBlocks ) );
   std::iota( activeLabels.begin(), activeLabels.end(), 0 );
@@ -1522,12 +1498,6 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   appendAMGByFlavor( stream, 3, specialization.coarseFlavor, params.mgr, specialization.coarseMinCoarseSize );
 
   preconditionerYaml = stream.str();
-
-  destroyWrapper( mgrData.coarseSolver );
-  destroyWrapper( mgrData.mechSolver );
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
-  destroyWrapper( mgrData.nestedSolver );
-
   return true;
 }
 
@@ -1549,64 +1519,39 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
 
   switch( params.mgr.strategy )
   {
-    case StrategyType::singlePhaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhaseHybridFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhaseReservoirHybridFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseReservoirHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::hybridSinglePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::HybridSinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFractures:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALMReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseHybridFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseReservoirHybridFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseReservoirHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::immiscibleMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::ImmiscibleMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::reactiveCompositionalMultiphaseOBL:
-      return buildStrategyYaml< hypre::mgr::ReactiveCompositionalMultiphaseOBL >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalCompositionalMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalCompositionalMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalCompositionalMultiphaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::multiphasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::MultiphasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::multiphasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::MultiphasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalMultiphasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::ThermalMultiphasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::hydrofracture:
-      return buildStrategyYaml< hypre::mgr::Hydrofracture >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::lagrangianContactMechanics:
-      return buildStrategyYaml< hypre::mgr::LagrangianContactMechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::augmentedLagrangianContactMechanics:
-      return buildStrategyYaml< hypre::mgr::AugmentedLagrangianContactMechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::lagrangianContactMechanicsBubbleStab:
-      return buildStrategyYaml< hypre::mgr::LagrangianContactMechanicsBubbleStabilization >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::solidMechanicsEmbeddedFractures:
-      return buildStrategyYaml< hypre::mgr::SolidMechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
+#define GEOS_HYPREDRIVE_MGR_CASE( enumName, typeName ) \
+  case StrategyType::enumName: \
+    return buildStrategyYaml< hypre::mgr::typeName >( params, labelNames, numComponentsPerField, preconditionerYaml )
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirFVM, SinglePhaseReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhaseReservoirFVM, ThermalSinglePhaseReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhaseHybridFVM, SinglePhaseHybridFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirHybridFVM, SinglePhaseReservoirHybridFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanics, SinglePhasePoromechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhasePoromechanics, ThermalSinglePhasePoromechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( hybridSinglePhasePoromechanics, HybridSinglePhasePoromechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanicsEmbeddedFractures, SinglePhasePoromechanicsEmbeddedFractures );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanicsConformingFractures, SinglePhasePoromechanicsConformingFractures );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanicsConformingFracturesALM, SinglePhasePoromechanicsConformingFracturesALM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanicsConformingFracturesALMReservoirFVM, SinglePhasePoromechanicsConformingFracturesALMReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanicsReservoirFVM, SinglePhasePoromechanicsReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhasePoromechanicsReservoirFVM, ThermalSinglePhasePoromechanicsReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( compositionalMultiphaseFVM, CompositionalMultiphaseFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( compositionalMultiphaseHybridFVM, CompositionalMultiphaseHybridFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( compositionalMultiphaseReservoirFVM, CompositionalMultiphaseReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( compositionalMultiphaseReservoirHybridFVM, CompositionalMultiphaseReservoirHybridFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( immiscibleMultiphaseFVM, ImmiscibleMultiphaseFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( reactiveCompositionalMultiphaseOBL, ReactiveCompositionalMultiphaseOBL );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalCompositionalMultiphaseFVM, ThermalCompositionalMultiphaseFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalCompositionalMultiphaseReservoirFVM, ThermalCompositionalMultiphaseReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( multiphasePoromechanics, MultiphasePoromechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( multiphasePoromechanicsReservoirFVM, MultiphasePoromechanicsReservoirFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalMultiphasePoromechanics, ThermalMultiphasePoromechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( hydrofracture, Hydrofracture );
+    GEOS_HYPREDRIVE_MGR_CASE( lagrangianContactMechanics, LagrangianContactMechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( augmentedLagrangianContactMechanics, AugmentedLagrangianContactMechanics );
+    GEOS_HYPREDRIVE_MGR_CASE( lagrangianContactMechanicsBubbleStab, LagrangianContactMechanicsBubbleStabilization );
+    GEOS_HYPREDRIVE_MGR_CASE( solidMechanicsEmbeddedFractures, SolidMechanicsEmbeddedFractures );
+#undef GEOS_HYPREDRIVE_MGR_CASE
     case StrategyType::invalid:
       return false;
   }
@@ -1743,23 +1688,18 @@ std::string formatInputArgsParseTargetYaml( InputArgsParseTarget const & target 
 
 bool wasInputArgsParseTargetLogged( InputArgsParseTarget const & target )
 {
-  return loggedInputArgsParseTargets().count( makeInputArgsParseTargetSignature( target ) ) > 0;
+  return lastLoggedInputArgsParseTarget() == makeInputArgsParseTargetSignature( target );
 }
 
 void markInputArgsParseTargetLogged( InputArgsParseTarget const & target )
 {
-  loggedInputArgsParseTargets().insert( makeInputArgsParseTargetSignature( target ) );
+  lastLoggedInputArgsParseTarget() = makeInputArgsParseTargetSignature( target );
 }
 
 void logInputArgsParseTarget( LinearSolverParameters const & params,
                               InputArgsParseTarget const & target )
 {
-  if( params.logLevel < 1 )
-  {
-    return;
-  }
-
-  if( wasInputArgsParseTargetLogged( target ) )
+  if( params.logLevel < 1 || wasInputArgsParseTargetLogged( target ) )
   {
     return;
   }
@@ -1781,12 +1721,11 @@ void logInputArgsParseTarget( LinearSolverParameters const & params,
                                  "        hypredrive input | unable to read authoritative YAML from GEOS",
                                  target.argument ) );
     }
+    return;
   }
-  else
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "        hypredrive input | generated fallback\n{}",
-                               target.argument ) );
-  }
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "        hypredrive input | generated fallback\n{}",
+                             target.argument ) );
 }
 
 void initializeRuntime()
@@ -1887,6 +1826,25 @@ void HypredriveSolver::setNearNullKernel( arrayView1d< HypreVector const > const
   m_nearNullKernel = nearNullKernel;
 }
 
+char const * HypredriveSolver::solverNameForLogs() const
+{
+  return ( m_hasExecutionContext && !m_executionContext.solverName.empty() )
+         ? m_executionContext.solverName.c_str()
+         : "linear solver";
+}
+
+void HypredriveSolver::reportGeneratedYamlFailure( char const * const reason )
+{
+  if( m_reportedGeneratedYamlFailure )
+  {
+    return;
+  }
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: {}; falling back to the legacy hypre solver",
+                             solverNameForLogs(), reason ) );
+  m_reportedGeneratedYamlFailure = true;
+}
+
 void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
@@ -1932,10 +1890,7 @@ bool HypredriveSolver::createHypredrive( HypreMatrix const & mat,
     // version originally shipped in the TPL package. Treat this specific
     // generated-configuration incompatibility like the other unsupported
     // generated configurations and use legacy hypre instead.
-    bool const generatedAMG =
-      parseTarget.source == hypre::hypredrive::InputSource::generatedFallback &&
-      m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg &&
-      hypre::getAMGRelaxationType( m_params.amg.smootherType ) >= 0;
+    bool const generatedAMG = isGeneratedAMGWithGlobalRelaxation( m_params, parseTarget );
     if( generatedAMG )
     {
       generatedAMGGlobalRelaxationUnsupported() = true;
@@ -1945,14 +1900,8 @@ bool HypredriveSolver::createHypredrive( HypreMatrix const & mat,
       {
         checkHypredriveCall( destroyError, "HYPREDRV_Destroy", parseContext );
       }
-      if( !m_reportedGeneratedYamlFailure )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: the installed hypredrive library does not expose "
-                                   "the global AMG relaxation setting; falling back to the legacy hypre solver",
-                                   ( m_hasExecutionContext && !m_executionContext.solverName.empty() )
-                                     ? m_executionContext.solverName : "linear solver" ) );
-        m_reportedGeneratedYamlFailure = true;
-      }
+      reportGeneratedYamlFailure( "the installed hypredrive library does not expose "
+                                  "the global AMG relaxation setting" );
       return false;
     }
 
@@ -2064,28 +2013,7 @@ void HypredriveSolver::updateKrylovDofTags( arrayView1d< int > const & pointMark
   GEOS_UNUSED_VAR( pointMarkers );
   GEOS_UNUSED_VAR( comm );
 #else
-  int localMax = -1;
-  for( localIndex i = 0; i < pointMarkers.size(); ++i )
-  {
-    localMax = std::max( localMax, pointMarkers[i] );
-  }
-
-  int const globalMax = MpiWrapper::max( localMax, comm );
-  m_numKrylovDofTags = LvArray::integerConversion< HYPRE_Int >( std::max( globalMax + 1, 1 ) );
-
-  if( m_numKrylovDofTags > 1 )
-  {
-    m_krylovDofTags.resize( pointMarkers.size() );
-    for( localIndex i = 0; i < pointMarkers.size(); ++i )
-    {
-      m_krylovDofTags[i] = LvArray::integerConversion< HYPRE_Int >( pointMarkers[i] );
-    }
-  }
-  else
-  {
-    m_krylovDofTags.clear();
-  }
-
+  hypre::assignKrylovDofTags( pointMarkers, comm, m_krylovDofTags, m_numKrylovDofTags );
   ++m_krylovDofTagsGeneration;
 #endif
 }
@@ -2178,14 +2106,8 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
                                                      numComponentsPerField,
                                                      parseTarget ) )
   {
-    if( !m_reportedGeneratedYamlFailure )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: hypredrive input generation failed for the current "
-                                 "linear-solver configuration; falling back to the legacy hypre solver",
-                                 ( m_hasExecutionContext && !m_executionContext.solverName.empty() )
-                                   ? m_executionContext.solverName : "linear solver" ) );
-      m_reportedGeneratedYamlFailure = true;
-    }
+    reportGeneratedYamlFailure( "hypredrive input generation failed for the current "
+                                "linear-solver configuration" );
     return false;
   }
 
@@ -2197,20 +2119,11 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
                             pointMarkers,
                             m_hasExecutionContext ? &m_executionContext : nullptr );
 
-  bool const generatedAMG =
-    parseTarget.source == hypre::hypredrive::InputSource::generatedFallback &&
-    m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg &&
-    hypre::getAMGRelaxationType( m_params.amg.smootherType ) >= 0;
-  if( generatedAMGGlobalRelaxationUnsupported() && generatedAMG )
+  if( generatedAMGGlobalRelaxationUnsupported() &&
+      isGeneratedAMGWithGlobalRelaxation( m_params, parseTarget ) )
   {
-    if( !m_reportedGeneratedYamlFailure )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: the installed hypredrive library does not expose "
-                                 "the global AMG relaxation setting; falling back to the legacy hypre solver",
-                                 ( m_hasExecutionContext && !m_executionContext.solverName.empty() )
-                                   ? m_executionContext.solverName : "linear solver" ) );
-      m_reportedGeneratedYamlFailure = true;
-    }
+    reportGeneratedYamlFailure( "the installed hypredrive library does not expose "
+                                "the global AMG relaxation setting" );
     return false;
   }
 
@@ -2222,17 +2135,13 @@ bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
     m_legacySolver.reset();
   }
 
-  // Legacy HypreSolver destroys and recreates MGR and scalar ILU on every setup.
-  // Reusing a HYPREDRV handle across Newton steps can retain matrix-dependent
-  // MGR/ILU bookkeeping even when YAML reuse is off, which can fail on a later
-  // matrix setup. AMG-only generated configs keep the handle so unit tests can
-  // assert reuse.
+  // HYPREDRV_LinearSolverDestroy below releases matrix-dependent solver and
+  // preconditioner state. The parsed handle and its bound objects are safe to
+  // reuse when both the YAML and matrix structure are unchanged, including
+  // MGR and ILU configurations.
   bool const recreateHandle = ( m_hypredrive == nullptr ) ||
                               ( m_configurationSignature != configurationSignature ) ||
-                              ( m_structureSignature != structureSignature ) ||
-                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr ) ||
-                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ) ||
-                              ( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::ilut );
+                              ( m_structureSignature != structureSignature );
 
   if( recreateHandle )
   {
@@ -2494,6 +2403,7 @@ void HypredriveSolver::resetHypredriveState()
   destroyHypredrive();
   m_dummyRhs.reset();
   m_dummySol.reset();
+  m_residual.reset();
   m_krylovDofTags.clear();
   m_numKrylovDofTags = 1;
   m_krylovDofTagsGeneration = 0;
