@@ -54,10 +54,12 @@ public:
    * for each quadrature point.
    * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] anelasticStrainRate The ArrayView holding the anelastic strain rate data for each element.
    * @param[in] newstress                   The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldstress                   The ArrayView holding the old stress data from the previous converged state for each quadrature
    * point.
    * @param[in] disableInelasticity         Flag to disable plastic response/
+   * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   ModifiedCamClayUpdates( real64 const & refPressure,
                           real64 const & refStrainVol,
@@ -68,10 +70,16 @@ public:
                           arrayView2d< real64 > const & oldPreConsolidationPressure,
                           arrayView1d< real64 const > const & shearModulus,
                           arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                          arrayView2d< real64 const > const & anelasticStrainRate,
+                          arrayView2d< real64 > const & newAnelasticStrain,
+                          arrayView2d< real64 > const & oldAnelasticStrain,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                          bool const & disableInelasticity ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+                          bool const & disableInelasticity,
+                          const integer & enableAnelasticStrain ):
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, thermalExpansionCoefficient, anelasticStrainRate, newAnelasticStrain,
+                                              oldAnelasticStrain, newStress, oldStress,
+                                              disableInelasticity, enableAnelasticStrain ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
@@ -535,9 +543,13 @@ public:
                                    m_oldPreConsolidationPressure,
                                    m_shearModulus,
                                    m_thermalExpansionCoefficient,
+                                   m_anelasticStrainRate,
+                                   m_newAnelasticStrain,
+                                   m_oldAnelasticStrain,
                                    m_newStress,
                                    m_oldStress,
-                                   m_disableInelasticity );
+                                   m_disableInelasticity,
+                                   m_enableAnelasticStrain );
   }
 
   /**
@@ -560,9 +572,13 @@ public:
                           m_oldPreConsolidationPressure,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainRate,
+                          m_newAnelasticStrain,
+                          m_oldAnelasticStrain,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 protected:

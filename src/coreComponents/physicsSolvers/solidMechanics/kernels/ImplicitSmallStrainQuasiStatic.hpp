@@ -179,11 +179,15 @@ public:
      * @brief operator() no-op used for modifying the stress tensor prior to
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
+     * @param stressModification The stressModification array.
      */
     GEOS_HOST_DEVICE inline constexpr
-    void operator() ( real64 (& stress)[6] )
+    void operator() ( real64 (& stress)[6], real64 const (&stressModification)[6] )
     {
-      GEOS_UNUSED_VAR( stress );
+      for( localIndex i = 0; i < 6; ++i )
+      {
+        stress[i] -= stressModification[i];
+      }
     }
   };
 
