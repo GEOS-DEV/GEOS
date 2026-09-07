@@ -792,11 +792,15 @@ parameters = {
                'weakInterfaceTraceMaterialLRMaxMisfitFraction': ( None, True ),  # MPM: max wrong-side fraction for material-LR weak-interface insertion.
                'weakInterfaceTraceMaterialLRMinMeanMargin': ( None, True ),  # MPM: min normalized mean margin for material-LR weak-interface insertion.
                'weakInterfaceTraceMaterialLRMinParticlesPerSide': ( None, True ),  # MPM: min neighboring particles per material side for material-LR weak-interface insertion.
-               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
-               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
+               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: maximum PCG iterations for coupled cut-cell weak-interface projection.
+               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: scale for the coupled weak-interface mass projection.
                'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.
                'weakInterfaceTraceMaxGapCorrectionVelocity': ( None, True ),  # MPM: cap for trace accumulated-gap correction velocity.
                'weakInterfaceTraceMinWeight': ( None, True ),  # MPM: minimum active trace interpolation weight.
+               'weakInterfaceTraceCutTolerance': ( None, True ),  # MPM: cut/conforming classification tolerance relative to in-plane cell diagonal.
+               'weakInterfaceTraceMinSegmentFraction': ( None, True ),  # MPM: sliver segment threshold relative to minimum in-plane cell width.
+               'weakInterfaceTraceLinearSolverTolerance': ( None, True ),  # MPM: relative PCG tolerance for coupled weak-interface projection.
+               'weakInterfaceTraceLinearSolverRegularization': ( None, True ),  # MPM: diagonal regularization fraction for coupled projection matrix.
                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.

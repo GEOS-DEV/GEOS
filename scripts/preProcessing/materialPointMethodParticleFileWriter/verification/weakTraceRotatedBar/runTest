@@ -39,8 +39,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups materialWeak materialWeakSurface)
-PLACEHOLDER_VARIANTS=(dfgSurfaceFlags stressResidualPartition)
+ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups)
+PLACEHOLDER_VARIANTS=(materialWeak materialWeakSurface dfgSurfaceFlags stressResidualPartition)
 
 selected_variants=()
 if [ -n "$VARIANT_FILTER" ]; then
@@ -136,7 +136,7 @@ for p in jsons:
         "jobs": jobs,
         "placeholder": False,
     })
-for variant in ["dfgSurfaceFlags", "stressResidualPartition"]:
+for variant in ["materialWeak", "materialWeakSurface", "dfgSurfaceFlags", "stressResidualPartition"]:
     if not any(s["name"] == variant for s in subcases):
         subcases.append({
             "name": variant,

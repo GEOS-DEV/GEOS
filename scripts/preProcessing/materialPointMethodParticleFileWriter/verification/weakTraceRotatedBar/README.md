@@ -17,9 +17,15 @@ with `explicitSurfaceNormalInfluence=25.0` by default.  Override with
 `WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE=<value>` when comparing normal-mapping
 sensitivity.
 
-The weak-trace variant defaults to a small gap-feedback test,
-`weakInterfaceTraceGapStabilization=0.01`, with the accumulated-gap correction
-velocity capped by `weakInterfaceTraceMaxGapCorrectionVelocity=1.0e-5`.
-Override `WEAK_TRACE_GAP_STABILIZATION=0.0` for the stable velocity-only
-projection baseline or `0.1` to reproduce the overcorrected failed case.
-Override `WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY=<value>` to test the cap.
+The current experimental weak-interface implementation uses one canonical
+constraint per cut cell (plus nodal constraints for conforming or sliver cuts)
+and solves the coupled mass-metric projection with PCG.  The default
+`weakInterfaceTraceProjectionIterations=100` is therefore the maximum PCG
+iteration count, not a number of repeated Jacobi projection passes.
+
+This prototype intentionally disables displacement/gap feedback:
+`weakInterfaceTraceGapStabilization=0` and
+`weakInterfaceTraceMaxGapCorrectionVelocity=0` are required.  Use
+`WEAK_TRACE_PROJECTION_SCALE=1.0` for the full coupled projection and inspect
+the solver log for PCG convergence, post-projection velocity jump, and kinetic
+energy change.

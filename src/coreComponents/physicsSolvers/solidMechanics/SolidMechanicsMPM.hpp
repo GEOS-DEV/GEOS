@@ -542,13 +542,14 @@ public:
                              NodeManager & nodeManager );
 
   /**
-   * @brief Enforces the prescribed weak-interface trace projection on nodal velocity fields.
+   * @brief Enforces a coupled cut-cell weak-interface projection on nodal velocity fields.
    *
-   * This projection is run after ordinary grid dynamics/contact. It uses the
-   * already-mapped weak/surface position fields to find a local trace point and
-   * applies a balanced impulse that reduces the velocity jump between selected
-   * field pairs. It does not create new fields; field creation must already have
-   * happened through contact-group, DFG, or material weak partitioning.
+   * The current prototype is CPU-only, single-rank, plane strain, and uses
+   * prescribed surface geometry. It reconstructs one canonical interface segment
+   * per cut cell, collapses conforming/sliver cuts to nodal constraints, assembles
+   * the coupled mass-metric constraint matrix, and solves the multiplier system
+   * with preconditioned conjugate gradients. Field creation must already have
+   * occurred through the prescribed contact-group split.
    */
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
@@ -562,27 +563,10 @@ public:
   void zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager );
 
   /**
-   * @brief Computes weak-trace projection forces for eligible nodal field pairs.
-   *
-   * Prescribed weak-surface pairs are controlled by weakInterfaceTracePairs.
-   * Material-weak pairs are controlled by the material classifier. Both paths
-   * require active fields, a trace point in the grid, and enough basis support on
-   * both fields.
-   */
-  void computeWeakInterfaceTraceProjectionForces( real64 const dt,
-                                                  ParticleManager & particleManager,
-                                                  NodeManager & nodeManager );
-
-  /**
    * @brief Applies the accumulated weak-trace projection force to grid state.
    */
   void applyWeakInterfaceTraceProjectionForces( real64 const dt,
                                                 NodeManager & nodeManager );
-
-  /**
-   * @brief Recomputes the trace velocity jump after applying the projection impulse.
-   */
-  void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
 
   /**
    * @brief Populates diagnostic mechanism/force/jump fields for active interfaces.
@@ -1687,6 +1671,10 @@ protected:
   int m_weakInterfaceTraceMaterialLRMinParticlesPerSide;
   real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
   real64 m_weakInterfaceTraceMinWeight;
+  real64 m_weakInterfaceTraceCutTolerance;
+  real64 m_weakInterfaceTraceMinSegmentFraction;
+  real64 m_weakInterfaceTraceLinearSolverTolerance;
+  real64 m_weakInterfaceTraceLinearSolverRegularization;
   array2d< int > m_weakInterfaceTracePairs;
   int m_weakInterfaceTraceProjectionIterations;
   real64 m_weakInterfaceTraceProjectionScale;

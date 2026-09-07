@@ -858,15 +858,43 @@ def _circular_inclusion_tracer_diagnostics(
         if errors:
             out["max_errors"][f"final_{quantity}_max_abs_axis_tracer_error"] = max(errors)
         for ring in ("interface_inner", "interface_outer", "outer_surface"):
-            ring_errors = [
-                abs(float(row[f"error_{quantity}"]))
-                for row in out["ring_rows"]
-                if row.get("ring") == ring and math.isfinite(float(row.get(f"error_{quantity}", math.nan)))
-            ]
+            ring_errors = []
+            dedup_error_sums: dict[tuple[float, float], list[float]] = {}
+            for row in out["ring_rows"]:
+                if row.get("ring") != ring:
+                    continue
+                try:
+                    error = float(row[f"error_{quantity}"])
+                    radius0 = float(row["radius0"])
+                    angle0 = float(row["angleDeg0"])
+                except Exception:
+                    continue
+                if not math.isfinite(error):
+                    continue
+                ring_errors.append(abs(error))
+                # Tracers are snapped to the nearest particle at setup. Multiple
+                # requested tracers can therefore report the same physical sample,
+                # especially at symmetric axis points; keep the original metric
+                # and also expose one-error-per-snapped-location summaries.
+                key = (round(radius0, 12), round(angle0, 12))
+                if key not in dedup_error_sums:
+                    dedup_error_sums[key] = [0.0, 0.0]
+                dedup_error_sums[key][0] += error
+                dedup_error_sums[key][1] += 1.0
             if ring_errors:
                 out["max_errors"][f"final_{quantity}_max_abs_{ring}_tracer_error"] = max(ring_errors)
                 out["max_errors"][f"final_{quantity}_rms_{ring}_tracer_error"] = math.sqrt(
                     sum(error * error for error in ring_errors) / float(len(ring_errors))
+                )
+            dedup_errors = [
+                values[0] / values[1]
+                for values in dedup_error_sums.values()
+                if values[1] > 0.0
+            ]
+            if dedup_errors:
+                out["max_errors"][f"final_{quantity}_max_abs_{ring}_tracer_error_dedup"] = max(abs(error) for error in dedup_errors)
+                out["max_errors"][f"final_{quantity}_rms_{ring}_tracer_error_dedup"] = math.sqrt(
+                    sum(error * error for error in dedup_errors) / float(len(dedup_errors))
                 )
     return out
 
