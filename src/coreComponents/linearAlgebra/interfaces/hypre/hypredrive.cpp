@@ -1052,6 +1052,10 @@ void appendAMGHeader( std::ostringstream & stream,
   appendLine( stream, indentLevel + 2, "num_levels: 0" );
   appendLine( stream, indentLevel + 2, "num_sweeps: 1" );
   appendLine( stream, indentLevel + 2, "ilu:" );
+  // HYPRE_BoomerAMGCreate defaults the nested ILU row cap to 20 and local
+  // reordering to RCM (1). Do not rely on that default: the legacy GEOS path
+  // explicitly disables RCM, so emit the same choice for the hypredrive path.
+  appendLine( stream, indentLevel + 3, "max_row_nnz: 20" );
   appendIlUDisableRcm( stream, indentLevel + 3 );
 }
 
@@ -1947,14 +1951,19 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                                          reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
 
+  // Keep the GEOS-owned caller vectors on the same tagged Krylov path as the
+  // setup vectors created above.  The labels are metadata only; the vector
+  // values remain in the caller's buffers throughout every solve.
+  updateKrylovDofTags( pointMarkers, mat.comm() );
+
   // This must be called on every rank, including ranks that own no local rows:
   // hypredrive builds the global dof-label set collectively inside this call, so
   // skipping it where the local dofmap is empty leaves those ranks out of the
   // collective and the subsequent solver creation fails there.
   //
-  // Library-mode hypredrive uses these labels to configure its MGR hierarchy.
-  // The legacy HypreSolver path deliberately keeps its setup dummy untagged because
-  // its solve receives caller-owned rhs and solution vectors.
+  // Library-mode hypredrive uses these labels to configure its MGR hierarchy
+  // and to tag the setup vectors. The same tags are applied to the caller-owned
+  // rhs and solution vectors immediately before each solve.
   checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
                                                        LvArray::integerConversion< int >( pointMarkers.size() ),
                                                        pointMarkers.data() ),
@@ -1989,6 +1998,71 @@ void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
         values.data() ),
       "HYPREDRV_LinearSystemSetNearNullSpace" );
   }
+}
+
+void HypredriveSolver::updateKrylovDofTags( arrayView1d< int > const & pointMarkers,
+                                            MPI_Comm const & comm )
+{
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  // HypreDrive skips tagged inner products for device execution because the
+  // current hypre implementation performs a host round-trip for each one.
+  GEOS_UNUSED_VAR( pointMarkers );
+  GEOS_UNUSED_VAR( comm );
+#else
+  int localMax = -1;
+  for( localIndex i = 0; i < pointMarkers.size(); ++i )
+  {
+    localMax = std::max( localMax, pointMarkers[i] );
+  }
+
+  int const globalMax = MpiWrapper::max( localMax, comm );
+  m_numKrylovDofTags = LvArray::integerConversion< HYPRE_Int >( std::max( globalMax + 1, 1 ) );
+
+  if( m_numKrylovDofTags > 1 )
+  {
+    m_krylovDofTags.resize( pointMarkers.size() );
+    for( localIndex i = 0; i < pointMarkers.size(); ++i )
+    {
+      m_krylovDofTags[i] = LvArray::integerConversion< HYPRE_Int >( pointMarkers[i] );
+    }
+  }
+  else
+  {
+    m_krylovDofTags.clear();
+  }
+#endif
+}
+
+void HypredriveSolver::tagKrylovDofVector( HypreVector const & vec ) const
+{
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  GEOS_UNUSED_VAR( vec );
+#else
+  if( m_numKrylovDofTags <= 1 )
+  {
+    return;
+  }
+
+  if( m_krylovDofTags.empty() )
+  {
+    // Empty ranks still participate in the tagged reductions and must use the
+    // same global tag count as ranks that own rows.
+    GEOS_LAI_ASSERT_EQ( vec.localSize(), 0 );
+  }
+  else
+  {
+    GEOS_LAI_ASSERT_EQ( m_krylovDofTags.size(), vec.localSize() );
+  }
+
+  // HYPRE_IJVectorSetTags with owns_tags == 0 only installs the metadata
+  // pointer. m_krylovDofTags lives with this solver, so no vector values or tag
+  // arrays are copied on the solve path.
+  GEOS_LAI_CHECK_ERROR(
+    HYPRE_IJVectorSetTags( vec.unwrappedIJ(),
+                           0,
+                           m_numKrylovDofTags,
+                           const_cast< HYPRE_Int * >( m_krylovDofTags.data() ) ) );
+#endif
 }
 
 void HypredriveSolver::setupLegacy( HypreMatrix const & mat )
@@ -2123,18 +2197,17 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
   GEOS_LAI_ASSERT( rhs.ready() );
   GEOS_LAI_ASSERT( sol.ready() );
 
-  m_dummySol.copy( sol );
-  checkHypredriveCall( HYPREDRV_LinearSystemSetInitialGuess( m_hypredrive,
-                                                             reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
-                       "HYPREDRV_LinearSystemSetInitialGuess" );
+  // The caller's solution vector already contains the initial guess. Bind it
+  // directly so hypredrive and hypre operate on the GEOS-owned storage without
+  // copying the solution on every call.
+  tagKrylovDofVector( rhs );
+  tagKrylovDofVector( sol );
   checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
                                                     reinterpret_cast< HYPRE_Vector >( rhs.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetRHS" );
   checkHypredriveCall( HYPREDRV_LinearSystemSetSolution( m_hypredrive,
                                                          reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
-  checkHypredriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypredrive ),
-                       "HYPREDRV_LinearSystemResetInitialGuess" );
 
   {
     // As during setup, hypre's Krylov and MGR kernels can raise benign floating point
@@ -2183,9 +2256,17 @@ void HypredriveSolver::solve( HypreVector const & rhs,
   real64 const rhsNorm = rhs.norm2();
   real64 const denominator = rhsNorm > 0.0 ? rhsNorm : 1.0;
   m_result.residualReduction = m_residual.norm2() / denominator;
-  m_result.status = ( m_result.residualReduction <= m_params.krylov.relTolerance )
-                    ? LinearSolverResult::Status::Success
-                    : LinearSolverResult::Status::NotConverged;
+
+  // Match the legacy Hypre interface: its status is based on the Krylov solver's
+  // return/convergence flag, rather than on recomputing the residual with the full
+  // matrix after the solve.  In particular, GMRES can intentionally stop after a
+  // decreasing residual check even when that recomputed residual is above the
+  // requested tolerance.
+  int converged = 0;
+  checkHypredriveCall( HYPREDRV_LinearSolverGetConverged( m_hypredrive, &converged ),
+                       "HYPREDRV_LinearSolverGetConverged" );
+  m_result.status = converged ? LinearSolverResult::Status::Success
+                              : LinearSolverResult::Status::NotConverged;
 
   if( m_params.logLevel >= 1 )
   {
@@ -2307,6 +2388,8 @@ void HypredriveSolver::resetHypredriveState()
   destroyHypredrive();
   m_dummyRhs.reset();
   m_dummySol.reset();
+  m_krylovDofTags.clear();
+  m_numKrylovDofTags = 1;
   m_configurationSignature.clear();
   m_structureSignature.clear();
 }

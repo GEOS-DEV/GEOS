@@ -22,6 +22,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 #endif
+#include <_hypre_parcsr_mv.h>
 #endif
 
 namespace geos
@@ -39,6 +40,11 @@ public:
   static HYPREDRV_t handle( HypredriveSolver const & solver )
   {
     return solver.m_hypredrive;
+  }
+
+  static HYPRE_Int numTags( HypreVector const & vector )
+  {
+    return hypre_ParVectorNumTags( vector.unwrapped() );
   }
 };
 
@@ -303,7 +309,9 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
                  fieldNames,
                  numComponentsPerField,
                  target ) );
-  EXPECT_NE( target.argument.find( "num_levels: 3" ), std::string::npos );
+  // The outer MGR has one reduction level plus its coarsest level; the
+  // displacement F-relaxation is the separate two-level nested MGR below.
+  EXPECT_NE( target.argument.find( "num_levels: 2" ), std::string::npos );
   EXPECT_NE( target.argument.find( "cycle: v(1,0)" ), std::string::npos );
   EXPECT_NE( target.argument.find( "f_dofs: [totalDisplacement_0, totalDisplacement_1, totalDisplacement_2, "
                                    "totalBubbleDisplacement_0, totalBubbleDisplacement_1, totalBubbleDisplacement_2]" ),
@@ -764,6 +772,14 @@ void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
   hypredriveSolver.setup( matrix );
   hypredriveSolver.solve( rhs, solHypredrive );
   ASSERT_TRUE( hypredriveSolver.result().success() );
+
+  if( numDofTags > 1 )
+  {
+    HYPRE_Int const expectedNumTags = LvArray::integerConversion< HYPRE_Int >( numDofTags );
+    EXPECT_EQ( HypredriveSolverTestPeer::numTags( rhs ), expectedNumTags );
+    EXPECT_EQ( HypredriveSolverTestPeer::numTags( solHypredrive ), expectedNumTags );
+  }
+
   hypredriveSolver.clear();
 
   HypreSolver legacySolver( params );
@@ -800,8 +816,8 @@ TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmg )
 
 TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmgWithMultipleDofTags )
 {
-  // hypredrive library mode tags dummy Krylov vectors from the dofmap. GEOS
-  // legacy GMRES must stamp the same labels so InnerProdTagged matches.
+  // hypredrive tags its setup vectors from the dofmap and GEOS applies the same
+  // labels to the caller-owned rhs and solution vectors before each solve.
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;

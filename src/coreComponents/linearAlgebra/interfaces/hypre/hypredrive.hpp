@@ -142,10 +142,15 @@ private:
   void refreshBoundObjects( HypreMatrix const & mat,
                             arrayView1d< int > const & pointMarkers );
 
+  void updateKrylovDofTags( arrayView1d< int > const & pointMarkers,
+                            MPI_Comm const & comm );
+
   void setupLegacy( HypreMatrix const & mat );
 
   void applyHypredrive( HypreVector const & rhs,
                         HypreVector & sol ) const;
+
+  void tagKrylovDofVector( HypreVector const & vec ) const;
 
   void syncExecutionAnnotations();
 
@@ -178,6 +183,8 @@ private:
   mutable HypreVector m_dummyRhs;
   mutable HypreVector m_dummySol;
   mutable HypreVector m_residual;
+  array1d< HYPRE_Int > m_krylovDofTags;
+  HYPRE_Int m_numKrylovDofTags = 1;
   std::unique_ptr< HypreSolver > m_legacySolver;
 };
 
