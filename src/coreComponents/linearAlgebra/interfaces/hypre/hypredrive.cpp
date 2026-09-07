@@ -2030,6 +2030,8 @@ void HypredriveSolver::updateKrylovDofTags( arrayView1d< int > const & pointMark
   {
     m_krylovDofTags.clear();
   }
+
+  ++m_krylovDofTagsGeneration;
 #endif
 }
 
@@ -2054,14 +2056,35 @@ void HypredriveSolver::tagKrylovDofVector( HypreVector const & vec ) const
     GEOS_LAI_ASSERT_EQ( m_krylovDofTags.size(), vec.localSize() );
   }
 
-  // HYPRE_IJVectorSetTags with owns_tags == 0 only installs the metadata
-  // pointer. m_krylovDofTags lives with this solver, so no vector values or tag
-  // arrays are copied on the solve path.
+  HYPRE_IJVector const ijVector = vec.unwrappedIJ();
+  if( m_taggedVectorGeneration != m_krylovDofTagsGeneration )
+  {
+    m_taggedRhs = nullptr;
+    m_taggedSol = nullptr;
+    m_taggedVectorGeneration = m_krylovDofTagsGeneration;
+  }
+  if( ijVector == m_taggedRhs || ijVector == m_taggedSol )
+  {
+    return;
+  }
+
+  // Let hypre own its copy of the tags. HypreDrive may replace the tags with its
+  // dofmap-owned copy during a later setup, so borrowing m_krylovDofTags here
+  // would let that replacement free memory owned by GEOS.
   GEOS_LAI_CHECK_ERROR(
-    HYPRE_IJVectorSetTags( vec.unwrappedIJ(),
-                           0,
+    HYPRE_IJVectorSetTags( ijVector,
+                           1,
                            m_numKrylovDofTags,
                            const_cast< HYPRE_Int * >( m_krylovDofTags.data() ) ) );
+
+  if( m_taggedRhs == nullptr )
+  {
+    m_taggedRhs = ijVector;
+  }
+  else
+  {
+    m_taggedSol = ijVector;
+  }
 #endif
 }
 
@@ -2395,6 +2418,10 @@ void HypredriveSolver::resetHypredriveState()
   m_dummySol.reset();
   m_krylovDofTags.clear();
   m_numKrylovDofTags = 1;
+  m_krylovDofTagsGeneration = 0;
+  m_taggedVectorGeneration = 0;
+  m_taggedRhs = nullptr;
+  m_taggedSol = nullptr;
   m_configurationSignature.clear();
   m_structureSignature.clear();
 }
