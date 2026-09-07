@@ -312,6 +312,38 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   }
 }
 
+TEST( HypredriveYaml, AppliesShutWellFRelaxationToAllReservoirStrategies )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  stdVector< StrategyType > const strategies = {
+    StrategyType::singlePhaseReservoirFVM,
+    StrategyType::thermalSinglePhaseReservoirFVM,
+    StrategyType::singlePhaseReservoirHybridFVM,
+    StrategyType::compositionalMultiphaseReservoirFVM,
+    StrategyType::thermalSinglePhasePoromechanicsReservoirFVM,
+    StrategyType::multiphasePoromechanicsReservoirFVM
+  };
+
+  stdVector< string > const fieldNames = makeFieldNames();
+  array1d< int > const numComponentsPerField = makeMgrNumComponentsPerField();
+
+  for( StrategyType const strategy : strategies )
+  {
+    LinearSolverParameters params = makeMgrParameters( strategy );
+    params.mgr.areWellsShut = 1;
+
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params,
+                                                               fieldNames,
+                                                               numComponentsPerField,
+                                                               target ) )
+      << static_cast< int >( strategy );
+    EXPECT_NE( target.argument.find( "f_relaxation: jacobi" ), std::string::npos )
+      << static_cast< int >( strategy );
+  }
+}
+
 TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "totalBubbleDisplacement", "pressure" };
@@ -629,6 +661,24 @@ TEST( HypredriveLogging, LogLevelGatesGeneratedYamlDump )
     EXPECT_NE( capture.str().find( "generated fallback" ), std::string::npos );
     EXPECT_NE( capture.str().find( "preconditioner:" ), std::string::npos );
   }
+}
+
+TEST( HypredriveLogging, DeduplicatesAlternatingGeneratedYamlDumps )
+{
+  LinearSolverParameters params;
+  params.logLevel = 1;
+
+  hypre::hypredrive::InputArgsParseTarget first;
+  first.argument = "solver:\n  gmres:\n    max_iter: 41\n";
+  hypre::hypredrive::InputArgsParseTarget second;
+  second.argument = "solver:\n  gmres:\n    max_iter: 42\n";
+
+  ScopedCoutCapture capture;
+  hypre::hypredrive::logInputArgsParseTarget( params, first );
+  hypre::hypredrive::logInputArgsParseTarget( params, second );
+  hypre::hypredrive::logInputArgsParseTarget( params, first );
+
+  EXPECT_EQ( countSubstrings( capture.str(), "generated fallback" ), 2 );
 }
 
 TEST( HypredriveLogging, LogsAuthoritativeFileContents )

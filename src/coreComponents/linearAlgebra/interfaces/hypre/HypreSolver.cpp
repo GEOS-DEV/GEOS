@@ -60,8 +60,6 @@ struct HypreSolverWrapper : public HyprePrecWrapper
   /// DoF-component labels used by hypre's tagged Krylov reductions.
   array1d< HYPRE_Int > krylovDofTags;
   HYPRE_Int numKrylovDofTags = 1;
-  HYPRE_IJVector taggedRhs{};
-  HYPRE_IJVector taggedSol{};
   HypreVector dummy;
 };
 
@@ -238,11 +236,6 @@ void tagKrylovDofVector( HypreSolverWrapper & solver,
   }
 
   HYPRE_IJVector const ijVector = vec.unwrappedIJ();
-  if( ijVector == solver.taggedRhs || ijVector == solver.taggedSol )
-  {
-    return;
-  }
-
   bool const tagsChanged = !hasMatchingKrylovDofTags( ijVector,
                                                       solver.numKrylovDofTags,
                                                       solver.krylovDofTags.data() );
@@ -254,14 +247,6 @@ void tagKrylovDofVector( HypreSolverWrapper & solver,
   if( MpiWrapper::max( tagsChanged ? 1 : 0, vec.comm() ) > 0 )
   {
     GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( ijVector ) );
-  }
-  if( solver.taggedRhs == nullptr )
-  {
-    solver.taggedRhs = ijVector;
-  }
-  else
-  {
-    solver.taggedSol = ijVector;
   }
 }
 #endif

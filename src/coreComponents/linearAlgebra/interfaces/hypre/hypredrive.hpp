@@ -189,10 +189,6 @@ private:
   mutable HypreVector m_residual;
   array1d< HYPRE_Int > m_krylovDofTags;
   HYPRE_Int m_numKrylovDofTags = 1;
-  size_t m_krylovDofTagsGeneration = 0;
-  mutable size_t m_taggedVectorGeneration = 0;
-  mutable HYPRE_IJVector m_taggedRhs{};
-  mutable HYPRE_IJVector m_taggedSol{};
   std::unique_ptr< HypreSolver > m_legacySolver;
 };
 

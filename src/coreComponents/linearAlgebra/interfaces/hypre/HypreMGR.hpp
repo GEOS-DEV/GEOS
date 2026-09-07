@@ -39,6 +39,7 @@ struct HypreMGRData
   array1d< HYPRE_Int > pointMarkers;  ///< array1d of unique tags for local degrees of freedom
   HyprePrecWrapper coarseSolver;      ///< MGR coarse solver pointer and functions
   HyprePrecWrapper mechSolver;        ///< MGR mechanics fine solver pointer and functions
+  HyprePrecWrapper iluSolver;         ///< MGR ILU fine solver pointer and functions
   HyprePrecWrapper nestedSolver;      ///< Optional nested MGR F-relaxation wrapper
 };
 
@@ -126,8 +127,8 @@ struct BoomerAMGParameters
 };
 
 inline BoomerAMGParameters displacementAMGParameters( integer const separateComponents,
-                                                       bool const filterFunctions,
-                                                       bool const useALMSmoother = false )
+                                                      bool const filterFunctions,
+                                                      bool const useALMSmoother = false )
 {
   BoomerAMGParameters result;
   result.maxRowSum = 1.0;
@@ -442,6 +443,13 @@ protected:
 
 public:
   /**
+   * @brief Apply parameter-dependent changes to the reduction hierarchy.
+   * @param mgrParams MGR configuration parameters
+   */
+  void configure( LinearSolverParameters::MGR const & )
+  {}
+
+  /**
    * @brief Normalize MGR iteration counts without touching a HYPRE handle.
    *
    * Generated hypredrive YAML needs the same normalization as the legacy
@@ -567,9 +575,9 @@ protected:
    * @brief Configure the displacement F-solver attached to a specific MGR level.
    */
   void setMechanicsFSolverAtLevel( HyprePrecWrapper & precond,
-                                    HypreMGRData & mgrData,
-                                    integer const & separateComponents,
-                                    HYPRE_Int const level )
+                                   HypreMGRData & mgrData,
+                                   integer const & separateComponents,
+                                   HYPRE_Int const level )
   {
     setDisplacementAMG( mgrData.mechSolver, separateComponents );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, level ) );
@@ -589,19 +597,19 @@ protected:
                              HyprePrecWrapper & precond,
                              HypreMGRData & mgrData )
   {
-    HYPRE_ILUCreate( &mgrData.mechSolver.ptr );
-    HYPRE_ILUSetType( mgrData.mechSolver.ptr, 0 );
-    HYPRE_ILUSetLevelOfFill( mgrData.mechSolver.ptr, 0 );
-    HYPRE_ILUSetMaxIter( mgrData.mechSolver.ptr, 1 );
-    HYPRE_ILUSetTol( mgrData.mechSolver.ptr, 0.0 );
-    HYPRE_ILUSetLocalReordering( mgrData.mechSolver.ptr, 0 );
-    HYPRE_ILUSetPrintLevel( mgrData.mechSolver.ptr, 0 );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUCreate( &mgrData.iluSolver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetType( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( mgrData.iluSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetTol( mgrData.iluSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLocalReordering( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetPrintLevel( mgrData.iluSolver.ptr, 0 ) );
 
-    mgrData.mechSolver.setup = HYPRE_ILUSetup;
-    mgrData.mechSolver.solve = HYPRE_ILUSolve;
-    mgrData.mechSolver.destroy = HYPRE_ILUDestroy;
+    mgrData.iluSolver.setup = HYPRE_ILUSetup;
+    mgrData.iluSolver.solve = HYPRE_ILUSolve;
+    mgrData.iluSolver.destroy = HYPRE_ILUDestroy;
 
-    HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, level );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.iluSolver.ptr, level ) );
   }
 
   /**

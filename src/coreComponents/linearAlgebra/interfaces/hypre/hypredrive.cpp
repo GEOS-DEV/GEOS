@@ -46,6 +46,7 @@
 #include <cstdio>
 #include <cfenv>
 #include <cstdlib>
+#include <deque>
 #include <fstream>
 #include <numeric>
 #include <optional>
@@ -120,13 +121,18 @@ std::string makeInputArgsParseTargetSignature( hypre::hypredrive::InputArgsParse
                    target.argument );
 }
 
-std::string & lastLoggedInputArgsParseTarget()
+struct LoggedInputArgsParseTargets
 {
-  // Logging is a diagnostic side effect, not a cache. Keep only the most
-  // recent signature so generated YAML changes do not grow process-global
-  // memory without bound.
-  static std::string signature;
-  return signature;
+  static size_t constexpr maxEntries = 64;
+
+  std::set< std::string > signatures;
+  std::deque< std::string > order;
+};
+
+LoggedInputArgsParseTargets & loggedInputArgsParseTargets()
+{
+  static LoggedInputArgsParseTargets targets;
+  return targets;
 }
 
 bool & generatedAMGGlobalRelaxationUnsupported()
@@ -1387,27 +1393,8 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   MGRStrategyProbe< STRATEGY > strategy( numComponentsPerField );
   MGRSpecialization const specialization = getSpecialization( params.mgr.strategy );
 
-  // These are the only strategy setup changes that affect the serialized
-  // reduction metadata.  The remaining setup work only creates HYPRE solver
-  // objects, which is deliberately deferred to the real solve path.
-  if( params.mgr.areWellsShut )
-  {
-    using StrategyType = LinearSolverParameters::MGR::StrategyType;
-    switch( params.mgr.strategy )
-    {
-      case StrategyType::singlePhaseReservoirFVM:
-      case StrategyType::thermalSinglePhaseReservoirFVM:
-      case StrategyType::singlePhaseReservoirHybridFVM:
-      {
-        strategy.m_levelFRelaxType[0] = hypre::MGRFRelaxationType::jacobi;
-        break;
-      }
-      default:
-      {
-        break;
-      }
-    }
-  }
+  // Apply the same parameter-dependent hierarchy changes as the legacy setup.
+  strategy.configure( params.mgr );
   strategy.normalizeReductionParameters();
 
   std::ostringstream stream;
@@ -1519,9 +1506,9 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
 
   switch( params.mgr.strategy )
   {
-#define GEOS_HYPREDRIVE_MGR_CASE( enumName, typeName ) \
-  case StrategyType::enumName: \
-    return buildStrategyYaml< hypre::mgr::typeName >( params, labelNames, numComponentsPerField, preconditionerYaml )
+    #define GEOS_HYPREDRIVE_MGR_CASE( enumName, typeName ) \
+      case StrategyType::enumName: \
+        return buildStrategyYaml< hypre::mgr::typeName >( params, labelNames, numComponentsPerField, preconditionerYaml )
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirFVM, SinglePhaseReservoirFVM );
     GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhaseReservoirFVM, ThermalSinglePhaseReservoirFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseHybridFVM, SinglePhaseHybridFVM );
@@ -1688,12 +1675,24 @@ std::string formatInputArgsParseTargetYaml( InputArgsParseTarget const & target 
 
 bool wasInputArgsParseTargetLogged( InputArgsParseTarget const & target )
 {
-  return lastLoggedInputArgsParseTarget() == makeInputArgsParseTargetSignature( target );
+  std::string const signature = makeInputArgsParseTargetSignature( target );
+  LoggedInputArgsParseTargets const & targets = loggedInputArgsParseTargets();
+  return targets.signatures.find( signature ) != targets.signatures.end();
 }
 
 void markInputArgsParseTargetLogged( InputArgsParseTarget const & target )
 {
-  lastLoggedInputArgsParseTarget() = makeInputArgsParseTargetSignature( target );
+  LoggedInputArgsParseTargets & targets = loggedInputArgsParseTargets();
+  std::string signature = makeInputArgsParseTargetSignature( target );
+  if( targets.signatures.insert( signature ).second )
+  {
+    targets.order.push_back( std::move( signature ) );
+    if( targets.order.size() > LoggedInputArgsParseTargets::maxEntries )
+    {
+      targets.signatures.erase( targets.order.front() );
+      targets.order.pop_front();
+    }
+  }
 }
 
 void logInputArgsParseTarget( LinearSolverParameters const & params,
@@ -2014,7 +2013,6 @@ void HypredriveSolver::updateKrylovDofTags( arrayView1d< int > const & pointMark
   GEOS_UNUSED_VAR( comm );
 #else
   hypre::assignKrylovDofTags( pointMarkers, comm, m_krylovDofTags, m_numKrylovDofTags );
-  ++m_krylovDofTagsGeneration;
 #endif
 }
 
@@ -2040,17 +2038,6 @@ void HypredriveSolver::tagKrylovDofVector( HypreVector const & vec ) const
   }
 
   HYPRE_IJVector const ijVector = vec.unwrappedIJ();
-  if( m_taggedVectorGeneration != m_krylovDofTagsGeneration )
-  {
-    m_taggedRhs = nullptr;
-    m_taggedSol = nullptr;
-    m_taggedVectorGeneration = m_krylovDofTagsGeneration;
-  }
-  if( ijVector == m_taggedRhs || ijVector == m_taggedSol )
-  {
-    return;
-  }
-
   // Let hypre own its copy of the tags. HypreDrive may replace the tags with its
   // dofmap-owned copy during a later setup, so borrowing m_krylovDofTags here
   // would let that replacement free memory owned by GEOS.
@@ -2059,15 +2046,6 @@ void HypredriveSolver::tagKrylovDofVector( HypreVector const & vec ) const
                            1,
                            m_numKrylovDofTags,
                            const_cast< HYPRE_Int * >( m_krylovDofTags.data() ) ) );
-
-  if( m_taggedRhs == nullptr )
-  {
-    m_taggedRhs = ijVector;
-  }
-  else
-  {
-    m_taggedSol = ijVector;
-  }
 #endif
 }
 
@@ -2208,21 +2186,16 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
   GEOS_LAI_ASSERT( sol.ready() );
 
   // The caller's solution vector already contains the initial guess. Bind it
-  // directly so hypredrive and hypre operate on the GEOS-owned storage without
-  // copying the solution on every call.
+  // directly so hypredrive operates on the GEOS-owned storage without creating
+  // an intermediate initial-guess vector on every call.
   tagKrylovDofVector( rhs );
   tagKrylovDofVector( sol );
   checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
                                                     reinterpret_cast< HYPRE_Vector >( rhs.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetRHS" );
-  checkHypredriveCall( HYPREDRV_LinearSystemSetInitialGuess( m_hypredrive,
-                                                             reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
-                       "HYPREDRV_LinearSystemSetInitialGuess" );
   checkHypredriveCall( HYPREDRV_LinearSystemSetSolution( m_hypredrive,
                                                          reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
-  checkHypredriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypredrive ),
-                       "HYPREDRV_LinearSystemResetInitialGuess" );
 
   {
     // As during setup, hypre's Krylov and MGR kernels can raise benign floating point
@@ -2406,10 +2379,6 @@ void HypredriveSolver::resetHypredriveState()
   m_residual.reset();
   m_krylovDofTags.clear();
   m_numKrylovDofTags = 1;
-  m_krylovDofTagsGeneration = 0;
-  m_taggedVectorGeneration = 0;
-  m_taggedRhs = nullptr;
-  m_taggedSol = nullptr;
   m_configurationSignature.clear();
   m_structureSignature.clear();
 }

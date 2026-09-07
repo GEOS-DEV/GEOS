@@ -83,6 +83,20 @@ public:
   }
 
   /**
+   * @brief Apply MGR parameters that affect the reduction hierarchy.
+   * @param mgrParams MGR configuration parameters
+   */
+  void configure( LinearSolverParameters::MGR const & mgrParams )
+  {
+    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
+    // in that case, we just use Jacobi
+    if( mgrParams.areWellsShut )
+    {
+      m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
+    }
+  }
+
+  /**
    * @brief Setup the MGR strategy.
    * @param mgrParams parameters for the configuration of the MGR recipe
    * @param precond preconditioner wrapper
@@ -92,13 +106,7 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
-    // in that case, we just use Jacobi
-    if( mgrParams.areWellsShut )
-    {
-      m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
-    }
-
+    configure( mgrParams );
     setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
