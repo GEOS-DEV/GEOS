@@ -42,6 +42,11 @@ public:
     return solver.m_hypredrive;
   }
 
+  static bool usesHypredrive( HypredriveSolver const & solver )
+  {
+    return solver.m_hypredrive != nullptr;
+  }
+
   static HYPRE_Int numTags( HypreVector const & vector )
   {
     return hypre_ParVectorNumTags( vector.unwrapped() );
@@ -244,6 +249,18 @@ TEST( HypredriveYaml, UsesCanonicalL1JacobiRelaxationName )
   EXPECT_NE( target.argument.find( "up_type: l1-jacobi" ), std::string::npos );
   EXPECT_NE( target.argument.find( "coarse_type: l1-jacobi" ), std::string::npos );
   EXPECT_EQ( target.argument.find( "l1jacobi" ), std::string::npos );
+}
+
+TEST( HypredriveYaml, EmitsGlobalRelaxationForGeneratedAMG )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1sgs;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_NE( target.argument.find( "type: 8" ), std::string::npos );
 }
 
 TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
@@ -699,6 +716,10 @@ TEST( HypredriveLogging, GeneratedFallbackNamesStatisticsSummary )
   HypredriveSolver solver( params );
   solver.setExecutionContext( makeExecutionContext( 61, 0, "namedGeneratedSolver" ) );
   solver.setup( matrix );
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
   solver.solve( rhs, sol );
 
   ::testing::internal::CaptureStdout();
@@ -773,7 +794,7 @@ void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
   hypredriveSolver.solve( rhs, solHypredrive );
   ASSERT_TRUE( hypredriveSolver.result().success() );
 
-  if( numDofTags > 1 )
+  if( numDofTags > 1 && HypredriveSolverTestPeer::usesHypredrive( hypredriveSolver ) )
   {
     HYPRE_Int const expectedNumTags = LvArray::integerConversion< HYPRE_Int >( numDofTags );
     EXPECT_EQ( HypredriveSolverTestPeer::numTags( rhs ), expectedNumTags );
@@ -900,6 +921,11 @@ TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
 
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
+
   HYPREDRV_t const handle1 = HypredriveSolverTestPeer::handle( solver );
   size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
   ASSERT_NE( handle1, nullptr );
@@ -960,6 +986,10 @@ TEST( HypredriveSolverReuse, RecreatesHandleWhenStructureChanges )
   HypredriveSolver solver( makeReusableAMGParameters() );
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
   size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
 
   solver.setExecutionContext( makeExecutionContext( 12, 0 ) );
@@ -1051,6 +1081,12 @@ TEST( HypredriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
   solver2.setup( matrix2 );
   HYPREDRV_t const handle2 = HypredriveSolverTestPeer::handle( solver2 );
   size_t const generation2 = HypredriveSolverTestPeer::generation( solver2 );
+
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver1 ) ||
+      !HypredriveSolverTestPeer::usesHypredrive( solver2 ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
 
   ASSERT_NE( handle1, nullptr );
   ASSERT_NE( handle2, nullptr );

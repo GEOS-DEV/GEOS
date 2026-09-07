@@ -133,7 +133,7 @@ private:
 
   bool configureHypredrive( HypreMatrix const & mat );
 
-  void createHypredrive( HypreMatrix const & mat,
+  bool createHypredrive( HypreMatrix const & mat,
                          hypre::hypredrive::InputArgsParseTarget const & parseTarget,
                          std::string const & configurationSignature,
                          std::string const & structureSignature,
