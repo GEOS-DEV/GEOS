@@ -39,7 +39,7 @@ The dimensionless enthalpy departure is given by:
 .. math::
     \frac{H_{dep}}{RT} = Z - 1 + \frac{A + T\frac{\partial A}{\partial T}}{B(\delta_1 - \delta_2)} \ln \left( \frac{Z + \delta_1 B}{Z + \delta_2 B} \right)
 
-where :math:`Z` is the compressibility factor of the mixture and :math:`A` and :math:`B` are dimensionless mixture parameters (see :ref:`Cubic equation of state`).
+where :math:`Z` is the compressibility factor of the mixture and :math:`A` and :math:`B` are dimensionless mixture parameters from the equation of state.
 
 This model is recommended whenever non-isothermal compositional physics are required.
 
