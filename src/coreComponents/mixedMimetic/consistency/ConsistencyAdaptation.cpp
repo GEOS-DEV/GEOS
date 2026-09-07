@@ -19,6 +19,7 @@
 
 #include "ConsistencyAdaptation.hpp"
 
+#include "common/MpiWrapper.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mixedMimetic/MixedMimeticFields.hpp"
@@ -63,7 +64,24 @@ ConsistencyAdaptation::Report ConsistencyAdaptation::classify( MeshLevel & mesh,
 
   std::pair< localIndex, localIndex > const degenerate = applyDegeneracyLayer( mesh, regionNames, params.degeneracyTolerance, neighbors );
   report.numDegenerate = degenerate.first;
-  report.numRejected = degenerate.second;
+  report.numPrescribedDegenerate = degenerate.second;
+
+  // final count, and the invariant of the layers: a prescribed cell is never altered
+  elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
+    arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    {
+      GEOS_ERROR_IF( prescribed[ei] >= 0 && mfdFlag[ei] != prescribed[ei],
+                     GEOS_FMT( "ConsistencyAdaptation: the prescription of cell {} of {} was altered by the layers",
+                               subRegion.localToGlobalMap()[ei], subRegion.getName() ) );
+      report.numConsistentFinal += ( ghostRank[ei] < 0 && mfdFlag[ei] == 1 ) ? 1 : 0;
+    }
+  } );
 
   labelFaces( mesh, regionFilter, params.effectiveTpfa );
   return report;
@@ -169,27 +187,47 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyPrescription( Me
   prescribedToBeSync.addElementFields( { mixedMimetic::prescribedMfdFlag::key() }, regionNames );
   CommunicationTools::getInstance().synchronizeFields( prescribedToBeSync, mesh, neighbors, false );
 
+  // validation on every rank before the collective throw: a rank must not leave the others in a collective
+  localIndex numInvalid = 0;
+  mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                      [&]( localIndex const,
+                                                                           ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    {
+      if( prescribed[ei] < -1 || prescribed[ei] > 1 )
+      {
+        GEOS_LOG_RANK( GEOS_FMT( "{}: prescribedMfdFlag = {} on cell {} is not one of -1 (free), 0 (diagonal product), 1 (consistent product)",
+                                 subRegion.getName(), prescribed[ei], subRegion.localToGlobalMap()[ei] ) );
+        ++numInvalid;
+      }
+    }
+  } );
+  GEOS_THROW_IF( MpiWrapper::sum( numInvalid ) > 0,
+                 "ConsistencyAdaptation: invalid prescribedMfdFlag values (see the cells listed above)",
+                 InputError );
+
   localIndex numPrescribed0 = 0;
   localIndex numPrescribed1 = 0;
   mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                       [&]( localIndex const,
                                                                            ElementSubRegionBase & subRegion )
   {
-    arrayView1d< real64 const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+    arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
     arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
-      if( prescribed[ei] < 0.0 )
+      if( prescribed[ei] < 0 )
       {
         continue;
       }
-      integer const eta = prescribed[ei] > 0.5 ? 1 : 0;
-      mfdFlag[ei] = eta;
+      mfdFlag[ei] = prescribed[ei];
       if( ghostRank[ei] < 0 )
       {
-        numPrescribed0 += ( eta == 0 );
-        numPrescribed1 += ( eta == 1 );
+        numPrescribed0 += ( prescribed[ei] == 0 );
+        numPrescribed1 += ( prescribed[ei] == 1 );
       }
     }
   } );
@@ -210,7 +248,7 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
     elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
   localIndex numDegenerate = 0;
-  localIndex numRejected = 0;
+  localIndex numPrescribedDegenerate = 0;
   elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                             [&]( localIndex const,
                                                                  CellElementSubRegion & subRegion )
@@ -220,7 +258,7 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< real64 > const indicator = subRegion.getField< mixedMimetic::degeneracyIndicator >();
     arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
-    arrayView1d< real64 const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+    arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
     localIndex const numNodes = subRegion.numNodesPerElement();
 
     // the node star of a cell: every cell sharing a vertex with it, counted once
@@ -251,9 +289,16 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
       indicator[ei] = percent;
       if( percent < tolerance && mfdFlag[ei] == 1 )
       {
-        mfdFlag[ei] = 0;
-        numDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;
-        numRejected += ( ghostRank[ei] < 0 && prescribed[ei] > 0.5 ) ? 1 : 0;
+        // a prescribed cell is final: only a free cell is switched
+        if( prescribed[ei] < 0 )
+        {
+          mfdFlag[ei] = 0;
+          numDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;
+        }
+        else
+        {
+          numPrescribedDegenerate += ( ghostRank[ei] < 0 ) ? 1 : 0;
+        }
       }
     }
   } );
@@ -261,7 +306,7 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addElementFields( { mixedMimetic::mfdFlag::key(), mixedMimetic::degeneracyIndicator::key() }, regionNames );
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, false );
-  return { numDegenerate, numRejected };
+  return { numDegenerate, numPrescribedDegenerate };
 }
 
 void ConsistencyAdaptation::labelFaces( MeshLevel & mesh,

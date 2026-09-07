@@ -251,16 +251,21 @@ void SinglePhaseMixedMFD::classifyCells( DomainPartition & domain )
   globalIndex const numConsistent = MpiWrapper::sum< globalIndex >( report.numConsistent );
   globalIndex const numPrescribed0 = MpiWrapper::sum< globalIndex >( report.numPrescribed0 );
   globalIndex const numPrescribed1 = MpiWrapper::sum< globalIndex >( report.numPrescribed1 );
-  globalIndex const numRejected = MpiWrapper::sum< globalIndex >( report.numRejected );
-  if( params.adaptiveConsistency )
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: consistency layer (tolerance = {}) set eta = 1 on {} / {} cells",
-                               params.consistencyTolerance, numConsistent, numCells ) );
-  }
+  globalIndex const numDegenerate = MpiWrapper::sum< globalIndex >( report.numDegenerate );
+  globalIndex const numPrescribedDegenerate = MpiWrapper::sum< globalIndex >( report.numPrescribedDegenerate );
+  globalIndex const numConsistentFinal = MpiWrapper::sum< globalIndex >( report.numConsistentFinal );
+  string const consistencyLayer = params.adaptiveConsistency
+                                  ? GEOS_FMT( "consistency layer (tolerance = {}) selected {}", params.consistencyTolerance, numConsistent )
+                                  : "consistency layer off";
+  GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: eta = 1 on {} / {} cells: {}, degeneracy layer (tolerance = {} %) switched {} free cells to eta = 0",
+                             numConsistentFinal, numCells, consistencyLayer, params.degeneracyTolerance, numDegenerate ) );
   if( numPrescribed0 + numPrescribed1 > 0 )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: prescribed eta = 0 on {} cells and eta = 1 on {} cells ({} rejected by the degeneracy layer)",
-                               numPrescribed0, numPrescribed1, numRejected ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: prescribed eta = 0 on {} cells and eta = 1 on {} cells, kept unchanged ({} of the latter below the degeneracy tolerance)",
+                               numPrescribed0, numPrescribed1, numPrescribedDegenerate ) );
+    GEOS_WARNING_IF( numPrescribed0 + numPrescribed1 == numCells,
+                     GEOS_FMT( "{}: every cell is prescribed (no prescribedMfdFlag = -1): the consistency and degeneracy layers are inert",
+                               getDataContext() ) );
   }
 }
 

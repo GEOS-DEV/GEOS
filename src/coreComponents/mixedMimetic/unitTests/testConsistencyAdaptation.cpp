@@ -94,6 +94,10 @@ static string const prescriptions =
     <FieldSpecification name="eastDiagonal" initialCondition="1" setNames="{ east }"
                         objectPath="ElementRegions/Domain" fieldName="prescribedMfdFlag" scale="0.0"/>)xml";
 
+static string const invalidPrescription =
+  R"xml(<FieldSpecification name="thinInvalid" initialCondition="1" setNames="{ thin }"
+                        objectPath="ElementRegions/Domain" fieldName="prescribedMfdFlag" scale="2.0"/>)xml";
+
 static string const noPrescription;
 
 // Cartesian hexahedra: K-orthogonal, the two-point product is consistent everywhere
@@ -103,6 +107,7 @@ static string const tetrahedra = makeInput( "C3D4", "0, 1", "4", "cb1", noPrescr
 // a 1e-3 thick layer of 4 cells (0.2475 % of their node star) in front of 40 unit-height cells
 static string const thinLayer = makeInput( "C3D8", "0, 1e-3, 1", "1, 10", "cb1, cb2", noPrescription );
 static string const thinLayerPrescribed = makeInput( "C3D8", "0, 1e-3, 1", "1, 10", "cb1, cb2", prescriptions );
+static string const thinLayerInvalid = makeInput( "C3D8", "0, 1e-3, 1", "1, 10", "cb1, cb2", invalidPrescription );
 
 static void setupProblemFromXML( ProblemManager & problemManager, string const & xmlInput )
 {
@@ -161,7 +166,8 @@ public:
     r.numPrescribed0 = MpiWrapper::sum( r.numPrescribed0 );
     r.numPrescribed1 = MpiWrapper::sum( r.numPrescribed1 );
     r.numDegenerate = MpiWrapper::sum( r.numDegenerate );
-    r.numRejected = MpiWrapper::sum( r.numRejected );
+    r.numPrescribedDegenerate = MpiWrapper::sum( r.numPrescribedDegenerate );
+    r.numConsistentFinal = MpiWrapper::sum( r.numConsistentFinal );
     return r;
   }
 
@@ -329,7 +335,8 @@ TEST( ConsistencyAdaptation, DegeneracyLayer_ThinLayer )
   params.degeneracyTolerance = 1.0;
   r = test.classify( params );
   EXPECT_EQ( r.numDegenerate, 4 );
-  EXPECT_EQ( r.numRejected, 0 );
+  EXPECT_EQ( r.numPrescribedDegenerate, 0 );
+  EXPECT_EQ( r.numConsistentFinal, 40 );
   EXPECT_EQ( test.countFlag( 1 ), 40 );
   EXPECT_EQ( test.checkFaceLabels(), 180 - 16 );
 }
@@ -347,6 +354,7 @@ TEST( ConsistencyAdaptation, Prescription_ThinLayer )
   EXPECT_EQ( r.numPrescribed1, 4 );
   EXPECT_EQ( r.numPrescribed0, 4 );
   EXPECT_EQ( r.numDegenerate, 0 );
+  EXPECT_EQ( r.numConsistentFinal, 4 );
   EXPECT_EQ( test.countFlag( 1 ), 4 );
   EXPECT_EQ( test.checkFaceLabels(), 20 );
 
@@ -357,15 +365,22 @@ TEST( ConsistencyAdaptation, Prescription_ThinLayer )
   EXPECT_EQ( test.countFlag( 0 ), 4 );
   EXPECT_EQ( test.checkFaceLabels(), 180 - 16 );
 
-  // only the degeneracy layer rejects a prescribed consistent product
+  // a prescribed consistent product is final: the degeneracy layer reports the thin cells but keeps them
   params.adaptiveConsistency = true;
   params.degeneracyTolerance = 1.0;
   r = test.classify( params );
   EXPECT_EQ( r.numPrescribed1, 4 );
-  EXPECT_EQ( r.numDegenerate, 4 );
-  EXPECT_EQ( r.numRejected, 4 );
-  EXPECT_EQ( test.countFlag( 1 ), 0 );
-  EXPECT_EQ( test.checkFaceLabels(), 0 );
+  EXPECT_EQ( r.numDegenerate, 0 );
+  EXPECT_EQ( r.numPrescribedDegenerate, 4 );
+  EXPECT_EQ( r.numConsistentFinal, 4 );
+  EXPECT_EQ( test.countFlag( 1 ), 4 );
+  EXPECT_EQ( test.checkFaceLabels(), 20 );
+}
+
+TEST( ConsistencyAdaptation, Prescription_InvalidValue )
+{
+  // a value outside { -1, 0, 1 } is rejected (with the cell index) by the classification run at initialization
+  EXPECT_THROW( ConsistencyAdaptationTest test( thinLayerInvalid ), InputError );
 }
 
 int main( int argc, char * * argv )

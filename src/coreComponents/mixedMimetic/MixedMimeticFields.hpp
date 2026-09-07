@@ -59,12 +59,13 @@ DECLARE_FIELD( mfdFlag,
 
 DECLARE_FIELD( prescribedMfdFlag,
                "prescribedMfdFlag",
-               array1d< real64 >,
-               -1.0,
+               array1d< integer >,
+               -1,
                LEVEL_0,
                WRITE_AND_READ,
-               "User prescription of eta read from the mesh (real-valued so that it can be imported): negative = free "
-               "(the solver decides), 0 = diagonal product, 1 = consistent (MFD) product (rejected on a degenerate cell)" );
+               "Constraint on eta read from the mesh, not the flag itself (mfdFlag is the answer): -1 = free, the layers "
+               "decide; 0 = diagonal (TPFA) product; 1 = consistent (MFD) product; a prescribed value is final; "
+               "any other value is rejected" );
 
 DECLARE_FIELD( consistencyIndicator,
                "consistencyIndicator",

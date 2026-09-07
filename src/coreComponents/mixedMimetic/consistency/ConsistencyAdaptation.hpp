@@ -36,9 +36,9 @@ class NeighborCommunicator;
  * @brief Selects the inner product of every cell of the mixed mimetic discretization, eta = 1 for the
  *        consistent (MFD) product and eta = 0 for the diagonal (TPFA) product, through three layers
  *        applied in order: the residual-based consistency layer, the prescription read from the mesh
- *        and the degeneracy layer (admissibility of the consistent product, the only one allowed to
- *        override a prescription). The faces are then labelled: 0 when both cells use the diagonal
- *        product (the flux dof is condensed), 1 otherwise (the flux dof stays in the saddle point).
+ *        and the degeneracy layer (admissibility of the consistent product). A prescribed cell is
+ *        final: the two other layers act on the free cells only. The faces are then labelled: 0 when
+ *        both cells use the diagonal product (the flux dof is condensed), 1 otherwise (saddle point).
  */
 class ConsistencyAdaptation
 {
@@ -62,8 +62,9 @@ public:
     localIndex numConsistent = 0;   ///< cells with eta = 1 after the consistency layer
     localIndex numPrescribed0 = 0;  ///< cells prescribed the diagonal product
     localIndex numPrescribed1 = 0;  ///< cells prescribed the consistent product
-    localIndex numDegenerate = 0;   ///< cells switched to the diagonal product by the degeneracy layer
-    localIndex numRejected = 0;     ///< prescribed consistent products rejected by the degeneracy layer
+    localIndex numDegenerate = 0;   ///< free cells switched to the diagonal product by the degeneracy layer
+    localIndex numPrescribedDegenerate = 0; ///< cells prescribed the consistent product below the degeneracy tolerance (kept)
+    localIndex numConsistentFinal = 0; ///< cells with eta = 1 after the three layers
 
     /**
      * @brief Accumulate the counts of another mesh level.
@@ -76,7 +77,8 @@ public:
       numPrescribed0 += other.numPrescribed0;
       numPrescribed1 += other.numPrescribed1;
       numDegenerate += other.numDegenerate;
-      numRejected += other.numRejected;
+      numPrescribedDegenerate += other.numPrescribedDegenerate;
+      numConsistentFinal += other.numConsistentFinal;
     }
   };
 
@@ -123,8 +125,9 @@ private:
                                                                 stdVector< NeighborCommunicator > & neighbors );
 
   /**
-   * @brief Degeneracy layer: eta = 0 where the cell volume is below the tolerance (percent of its node star).
-   * @return the locally-owned cells switched, and how many of them were prescribed eta = 1
+   * @brief Degeneracy layer on the free cells: eta = 0 where the cell volume is below the tolerance
+   *        (percent of its node star); a prescribed cell is left unchanged.
+   * @return the locally-owned free cells switched, and the prescribed eta = 1 cells below the tolerance
    */
   static std::pair< localIndex, localIndex > applyDegeneracyLayer( MeshLevel & mesh,
                                                                    string_array const & regionNames,
