@@ -52,12 +52,12 @@ The flash algorithm:
 1. Initialize: An initial set of K-values is chosen using Wilson's formula.
 2. Solve for V: The Rachford-Rice equation is solved for the vapour fraction :math:`V` (using successive substitution, followed by Newton iterations).
 3. Compute compositions: The corresponding liquid (:math:`x_i`) and vapour (:math:`y_i`) mole fractions are computed.
-4. Evaluate EoS: These compositions are used to calculate the component fugacities :math:`\phi_{iL}` and :math:`\phi_{iV}` via the Equation of State.
-5. Check convergence: Convergence is reached when :math:`\sum_{i=1}^{N_c} (\ln \phi_{iL} - \ln \phi_{iV})^2 < \epsilon`.
-6. Update K-values: If not converged, the algorithm employs successive substitution iterations, constantly updating the K-values using fugacity coefficients derived from the EoS:
+4. Evaluate EoS: These compositions are used to calculate the component fugacity coefficients :math:`\phi_{iL}` and :math:`\phi_{iV}` via the Equation of State.
+5. Check convergence: Convergence is reached when :math:`\sqrt{\sum_{i=1}^{N_c} r_i^2} < \epsilon` where :math:`r_i = \ln \phi_{iL} - \ln \phi_{iV} + \ln x_i - \ln y_i` is the log fugacity ratio of each present component.
+6. Update K-values: If not converged, successive substitution updates the K-values as:
 
 .. math::
-    K_i^{(new)} = K_i^{(old)} \frac{\phi_{iL}}{\phi_{iV}} = K_i^{(old)} \exp \left( \ln \phi_i^L - \ln \phi_i^V \right)
+    K_i^{(new)} = K_i^{(old)} \exp \left( r_i \right) = K_i^{(old)} \frac{x_i \, \phi_{iL}}{y_i \, \phi_{iV}}
 
 The term "negative" flash arises because the algorithm temporarily permits the vapour fraction, :math:`V`, to converge to values slightly outside the physically meaningful bounds of :math:`[0, 1]`. This mathematical relaxation prevents the solver from getting artificially trapped at phase boundaries, vastly improving convergence robustness near the critical point or saturation envelopes. Upon convergence, if :math:`V` is negative or greater than unity, the system truncates to a single-phase solution.
 
@@ -70,7 +70,7 @@ Parameters
 ~~~~~~~~~~~~~~~~
 
 * ``stabilityThreshold``: Tangent plane distance below which a mixture is unstable (default: -1.0e-8). Unit: [dimensionless].
-* ``stabilityTolerance``: Tolerance for stationarity in the stability test. Unit: [dimensionless].
-* ``stabilityMaxIterations``: Maximum successive substitution steps for stability analysis. Unit: [dimensionless].
-* ``flashTolerance``: Convergence tolerance for the fugacity ratio error. Unit: [dimensionless].
-* ``flashMaxIterations``: Maximum successive substitution steps for the flash solve. Unit: [dimensionless].
+* ``stabilityTolerance``: Tolerance for stationarity in the stability test (default: 1.0e-8). Unit: [dimensionless].
+* ``stabilityMaxIterations``: Maximum successive substitution steps for stability analysis. A zero or negative value skips the stability test (default: 300). Unit: [dimensionless].
+* ``flashTolerance``: Convergence tolerance for the fugacity ratio error (default: 1.0e-8). Unit: [dimensionless].
+* ``flashMaxIterations``: Maximum successive substitution steps for the flash solve (default: 300). Unit: [dimensionless].

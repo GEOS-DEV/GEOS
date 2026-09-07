@@ -39,7 +39,7 @@ The dimensionless enthalpy departure is given by:
 .. math::
     \frac{H_{dep}}{RT} = Z - 1 + \frac{A + T\frac{\partial A}{\partial T}}{B(\delta_1 - \delta_2)} \ln \left( \frac{Z + \delta_1 B}{Z + \delta_2 B} \right)
 
-where :math:`Z` is the compressibility factor of the mixture.
+where :math:`Z` is the compressibility factor of the mixture and :math:`A` and :math:`B` are dimensionless mixture parameters (see :ref:`cubic-eos`).
 
 This model is recommended whenever non-isothermal compositional physics are required.
 
@@ -61,7 +61,7 @@ Because all inputs must be provided in molar units, if a user's specific heat ca
 .. math::
     a_{i,k} = \hat{a}_{i,k} M_i
 
-Implementing the Michaelides Model
+Liquid brine enthalpy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Michaelides (1981) enthalpy model which is used for the CO2-brine model (:ref:`CO2-EOS`) can be implemented using the polynomial framework by setting specific values for the water component. 

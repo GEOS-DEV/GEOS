@@ -27,9 +27,9 @@ The low-pressure, dilute gas viscosity :math:`\mu_{i}^*` of each pure component 
 
 .. math::
 
-    \xi_i = \frac{T_{c,i}^{1/6}}{M_i^{1/2} P_{c,i}^{2/3}}
+    \xi_i = \frac{T_{c,i}^{1/6}}{MW_i^{1/2} P_{c,i}^{2/3}}
 
-where :math:`T_{c,i}` is the critical temperature [K], :math:`P_{c,i}` is the critical pressure [atm], and :math:`M_i` is the molar weight [g/mol].
+where :math:`T_{c,i}` is the critical temperature [K], :math:`P_{c,i}` is the critical pressure [atm], and :math:`MW_i` is the molar weight [g/mol].
 
 For standard non-polar components, the dilute viscosity (in centipoise) depends on the reduced temperature :math:`T_{r,i} = T / T_{c,i}`:
 
@@ -41,7 +41,7 @@ For standard non-polar components, the dilute viscosity (in centipoise) depends 
 
     \mu_{i}^* = \frac{17.78 \times 10^{-5} (4.58 T_{r,i} - 1.67)^{0.625}}{\xi_i} \quad \text{for } T_{r,i} > 1.5
 
-For hydrogen gas (:math:`M_i < 2.1 \times 10^{-3}` kg/mol), the specific correlation is:
+For hydrogen gas (:math:`MW_i < 2.1 \times 10^{-3}` kg/mol), the specific correlation is:
 
 .. math::
 
@@ -53,7 +53,7 @@ The Herning-Zipperer mixing rule (Herning and Zipperer, 1936) evaluates the mixt
 
 .. math::
 
-    \mu^* = \frac{\sum_i y_i \mu_i^* \sqrt{M_i}}{\sum_i y_i \sqrt{M_i}}
+    \mu^* = \frac{\sum_i y_i \mu_i^* \sqrt{MW_i}}{\sum_i y_i \sqrt{MW_i}}
 
 The Wilke mixing rule (Wilke, 1950) evaluates the mixture viscosity as:
 
@@ -65,7 +65,7 @@ where the interaction parameter :math:`\phi_{ij}` is defined as:
 
 .. math::
 
-    \phi_{ij} = \frac{\left[1 + (\mu_i^*/\mu_j^*)^{1/2} (M_i/M_j)^{-1/4}\right]^2}{\sqrt{8(1 + M_i/M_j)}}
+    \phi_{ij} = \frac{\left[1 + (\mu_i^*/\mu_j^*)^{1/2} (MW_i/MW_j)^{-1/4}\right]^2}{\sqrt{8(1 + MW_i/MW_j)}}
 
 The Brokaw mixing rule (Brokaw, 1968) evaluates the mixture viscosity as:
 
@@ -73,7 +73,7 @@ The Brokaw mixing rule (Brokaw, 1968) evaluates the mixture viscosity as:
 
     \mu^* = \sum_i \frac{y_i \mu_i^*}{\sum_j y_j \phi_{ij} \sqrt{\mu_i^*/\mu_j^*}}
 
-where the interaction parameter :math:`\phi_{ij}` depends on the molar weight ratios :math:`A_{ij} = M_i / M_j` and :math:`B_{ij} = [4 M_i M_j / (M_i + M_j)^2]^{0.25}`:
+where the interaction parameter :math:`\phi_{ij}` depends on the molar weight ratios :math:`A_{ij} = MW_i / MW_j` and :math:`B_{ij} = [4 MW_i MW_j / (MW_i + MW_j)^2]^{0.25}`:
 
 .. math::
 
@@ -88,7 +88,7 @@ First, the mixture critical parameters are calculated using Kay's mixing rule:
 
 .. math::
 
-    T_c = \sum_i y_i T_{c,i}, \quad P_c = \sum_i y_i P_{c,i}, \quad V_c = \sum_i y_i V_{c,i}, \quad M = \sum_i y_i M_i
+    T_c = \sum_i y_i T_{c,i}, \quad P_c = \sum_i y_i P_{c,i}, \quad V_c = \sum_i y_i V_{c,i}, \quad M = \sum_i y_i MW_i
 
 The mixture viscosity-reducing parameter :math:`\xi` and reduced density :math:`\rho_r` are defined using the phase molar density :math:`\rho_m`:
 

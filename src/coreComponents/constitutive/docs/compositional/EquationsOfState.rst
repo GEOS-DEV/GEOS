@@ -7,6 +7,8 @@ An Equation of State (EoS) mathematically relates the pressure, volume, temperat
 
 The fugacity coefficient of a component is derived from the exact thermodynamic relationship involving the integration of the EoS volume departure with respect to pressure. 
 
+.. _cubic-eos:
+
 Cubic equation of state
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -45,10 +47,7 @@ where the coefficients are defined by the dimensionless mixture parameters :math
 .. math::
     E_0 = -[AB + \delta_1 \delta_2 B^2(B + 1)]
 
-The constants :math:`\delta_1` and :math:`\delta_2` determine the specific EoS used:
-
-* Peng-Robinson (PR): :math:`\delta_1 = 1 + \sqrt{2}`, :math:`\delta_2 = 1 - \sqrt{2}`
-* Soave-Redlich-Kwong (SRK): :math:`\delta_1 = 0`, :math:`\delta_2 = 1`
+The constants :math:`\delta_1` and :math:`\delta_2` determine the specific EoS used.
 
 The mixture parameters :math:`A` and :math:`B` are calculated using standard Van der Waals mixing rules over the phase mole fractions, :math:`x_i`:
 
@@ -68,33 +67,41 @@ where :math:`k_{ij}` are the binary interaction coefficients (BICs). The pure co
 
 where :math:`P_{r,i} = P/P_{c,i}` and :math:`T_{r,i} = T/T_{c,i}` are the reduced pressure and temperature of component :math:`i`. 
 
-The dimensionless constants :math:`\Omega_a` and :math:`\Omega_b` are derived mathematically by applying the critical point constraints (where the first and second pressure-volume derivatives vanish) to dictate the weight of the attractive and repulsive forces. The exact values implemented in the code are:
-
-* Peng-Robinson: :math:`\Omega_a = 0.457235529`, :math:`\Omega_b = 0.077796074`
-* Soave-Redlich-Kwong: :math:`\Omega_a = 0.42748`, :math:`\Omega_b = 0.08664`
+The dimensionless constants :math:`\Omega_a` and :math:`\Omega_b` are derived mathematically by applying the critical point constraints (where the first and second pressure-volume derivatives vanish) to dictate the weight of the attractive and repulsive forces. 
 
 The alpha function, :math:`\alpha_i`, accounts for the temperature dependence of the attractive parameter and relies on the acentric factor, :math:`\omega_i`, of each component. For both equations, it takes the form:
 
 .. math::
     \alpha_i = \left( 1 + m_i \left( 1 - \sqrt{T_{r,i}} \right) \right)^2
 
-The parameter :math:`m_i` is computed differently depending on the chosen equation of state:
+The parameter :math:`m_i` is computed differently depending on the chosen equation of state. 
 
-* Peng-Robinson:
-  If :math:`\omega_i < 0.49`:
-  
-  .. math::
-      m_i = 0.37464 + 1.54226 \omega_i - 0.26992 \omega_i^2
-      
-  If :math:`\omega_i \ge 0.49`:
-  
-  .. math::
-      m_i = 0.3796 + 1.485 \omega_i - 0.164423 \omega_i^2 + 0.016666 \omega_i^3
+The distinct parameters and constants used for the Peng-Robinson (PR) and Soave-Redlich-Kwong (SRK) equations are summarized in the table below:
 
-* Soave-Redlich-Kwong:
-  
-  .. math::
-      m_i = 0.480 + 1.574 \omega_i - 0.176 \omega_i^2
+.. list-table:: Comparison of EoS Specific Parameters
+   :widths: 15 45 40
+   :header-rows: 1
+
+   * - Parameter
+     - Peng-Robinson (PR)
+     - Soave-Redlich-Kwong (SRK)
+   * - :math:`\delta_1`
+     - :math:`1 + \sqrt{2}`
+     - :math:`0`
+   * - :math:`\delta_2`
+     - :math:`1 - \sqrt{2}`
+     - :math:`1`
+   * - :math:`\Omega_a`
+     - 0.457235529
+     - 0.42748
+   * - :math:`\Omega_b`
+     - 0.077796074
+     - 0.08664
+   * - :math:`m_i`
+     - :math:`0.37464 + 1.54226 \omega_i - 0.26992 \omega_i^2` (for :math:`\omega_i < 0.49`)
+       
+       :math:`0.3796 + 1.485 \omega_i - 0.164423 \omega_i^2 + 0.016666 \omega_i^3` (for :math:`\omega_i \ge 0.49`)
+     - :math:`0.480 + 1.574 \omega_i - 0.176 \omega_i^2`
 
 Finally, the fugacity coefficient, :math:`\phi_i`, for each component is calculated using the derived roots for :math:`Z`:
 
