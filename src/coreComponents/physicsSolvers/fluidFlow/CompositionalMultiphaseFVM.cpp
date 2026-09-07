@@ -145,7 +145,8 @@ void CompositionalMultiphaseFVM::postInputInitialization()
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
     auto const & upwindingParams = fluxApprox.upwindingParams();
     if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU ||
-        upwindingParams.upwindingScheme == UpwindingScheme::IHU )
+        upwindingParams.upwindingScheme == UpwindingScheme::IHU ||
+        upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
     {
       GEOS_ERROR( GEOS_FMT( "{} is not available for {}",
                             EnumStrings< UpwindingScheme >::toString( upwindingParams.upwindingScheme ),
@@ -273,7 +274,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       kernelFlags.set( KernelFlags::C1PPU );
     else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
       kernelFlags.set( KernelFlags::IHU );
-
+    else if( upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
+      kernelFlags.set( KernelFlags::HU2PH );
+    
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )

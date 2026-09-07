@@ -85,8 +85,6 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     // Register the face data for temperature
     faceManager.registerField< flow::faceTemperature >( getName() );
 
-
-
     // Register the bc face data for pressure
     faceManager.registerField< flow::bcPressure >( getName() );
 
@@ -108,11 +106,11 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
       reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     // Register boundary face indicator (1 for boundary faces with Dirichlet BCs, 0 for interior)
-    // Used to skip flux continuity constraints for boundary faces
     faceManager.registerField< flow::isBoundaryFace >( getName() );
 
-    // auxiliary data for the buoyancy coefficient
-    faceManager.registerField< flow::mimGravityCoefficient >( getName() );
+    // precomputed mimetic gravity-driven trans coefficient on faces
+    faceManager.registerField< flow::mimeticTransGgradZ >( getName() );
+
   } );
 }
 
@@ -243,67 +241,57 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
 {
   FlowSolverBase::precomputeData( mesh, regionNames );
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  array1d< RAJA::ReduceSum< serialReduce, real64 > > mimFaceGravCoefNumerator;
-  array1d< RAJA::ReduceSum< serialReduce, real64 > > mimFaceGravCoefDenominator;
-  mimFaceGravCoefNumerator.resize( faceManager.size() );
-  mimFaceGravCoefDenominator.resize( faceManager.size() );
-
-  // node data
-
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-  // face data
-
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getField< flow::transMultiplier >();
-
-  arrayView1d< real64 > const mimFaceGravCoef =
-    faceManager.getField< flow::mimGravityCoefficient >();
-
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-
-  real64 const lengthTolerance = m_lengthTolerance;
-
-  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                        CellElementSubRegion & subRegion )
+  // Pre-compute and initialize face mimeticTransGgradZ once (only for HybridMimetic discretization)
   {
-    arrayView2d< real64 const > const & elemCenter =
-      subRegion.template getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
-    string const & permModelName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
-    arrayView3d< real64 const > const & elemPerm =
-      getConstitutiveModel< PermeabilityBase >( subRegion, permModelName ).permeability();
-    arrayView1d< real64 const > const elemGravCoef =
-      subRegion.template getReference< array1d< real64 > >( flow::gravityCoefficient::key() );
-    arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
-    arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
 
-    // here we precompute some quantities (mimFaceFracCoef) used in the FluxKernel to assemble the one-sided gravity term in the transport
-    // scheme
-    // This one-sided gravity term is currently always treated with TPFA, as in MRST.
-    // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    compositionalMultiphaseHybridFVMKernels::
-      simpleKernelLaunchSelector< PrecomputeKernel,
-                                  mimeticInnerProduct::TPFAInnerProduct >( subRegion.numFacesPerElement(),
-                                                                           subRegion.size(),
-                                                                           faceManager.size(),
-                                                                           nodePosition,
-                                                                           faceToNodes,
-                                                                           elemCenter,
-                                                                           elemVolume,
-                                                                           elemPerm,
-                                                                           elemGravCoef,
-                                                                           elemToFaces,
-                                                                           transMultiplier,
-                                                                           lengthTolerance,
-                                                                           mimFaceGravCoefNumerator.toView(),
-                                                                           mimFaceGravCoefDenominator.toView(),
-                                                                           mimFaceGravCoef );
+    HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+    mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
+    real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_lengthTolerance;
 
-  } );
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+    {
+      FaceManager & faceManager = mesh.getFaceManager();
+      // Temporary accumulators
+      array1d< real64 > invSum( faceManager.size() ); invSum.setValues< parallelDevicePolicy<> >( 0.0 );
+      array1d< integer > count( faceManager.size() ); count.setValues< parallelDevicePolicy<> >( 0 );
 
+      NodeManager const & nodeManager = mesh.getNodeManager();
+      mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
+                                                                                  [&]( localIndex const, localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                                                       CellElementSubRegion const & subRegion )
+      {
+        GEOS_UNUSED_VAR( er );
+        GEOS_UNUSED_VAR( esr );
+        string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+        PrecomputeMimeticTransGgradZKernel::createAndLaunch< parallelDevicePolicy<> >( ip,
+                                                                                       nodeManager,
+                                                                                       faceManager,
+                                                                                       subRegion,
+                                                                                       permeability,
+                                                                                       lengthTolerance,
+                                                                                       invSum.toView(),
+                                                                                       count.toView() );
+      } );
+
+      // Reduce to effective value per face and write to field
+      arrayView1d< real64 > mimeticTransGgradZ = faceManager.getField< flow::mimeticTransGgradZ >();
+      arrayView1d< integer const > ghost = faceManager.ghostRank();
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+      {
+        if( ghost[kf] >= 0 )
+        {
+          return;
+        }
+        real64 const s = invSum[kf];
+        integer const c = count[kf];
+        mimeticTransGgradZ[kf] = (c > 0 && s > 0.0) ? static_cast< real64 >( c ) / s : 0.0;
+      } );
+    } );
+  }
 }
 
 void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
@@ -419,8 +407,8 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     // get the face-centered depth
     arrayView1d< real64 const > const & faceGravCoef =
       faceManager.getField< flow::gravityCoefficient >();
-    arrayView1d< real64 const > const & mimFaceGravCoef =
-      faceManager.getField< flow::mimGravityCoefficient >();
+    arrayView1d< real64 const > const & mimeticTransGgradZ =
+      faceManager.getField< flow::mimeticTransGgradZ >();
 
     // get the face-centered transMultiplier
     arrayView1d< real64 const > const & transMultiplier =
@@ -470,7 +458,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          isBoundaryFaceView,
                                          facePres,
                                          faceGravCoef,
-                                         mimFaceGravCoef,
+                                         mimeticTransGgradZ,
                                          transMultiplier,
                                          compFlowAccessors.get( flow::phaseMobility{} ),
                                          compFlowAccessors.get( flow::dPhaseMobility{} ),
@@ -814,8 +802,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
 
-      // CRITICAL: Move the SAME array views that were just modified back to device memory
-      // Don't get new views - use the views that evaluateBCFaceProperties actually modified
       // evaluateBCFaceProperties uses serialPolicy (host), DirichletFluxKernel uses parallelDevicePolicy (device)
       facePhaseMob.move( parallelDeviceMemorySpace, false );
       facePhaseMassDens.move( parallelDeviceMemorySpace, false );
@@ -985,12 +971,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         // Mathematical procedure to enforce prescribed value in Ax = b:
         // 1. For row i: Zero all entries except diagonal, set A[i,i] = 1, set b[i] = x_spec
         // 2. For all other rows k: subtract A[k,i] * x_spec from b[k], then set A[k,i] = 0
-        //
-        // Note: Step 2 (removing column influence) should ideally be done, but in practice
-        // for boundary face DOFs in hybrid FVM, the column entries from interior faces to
-        // boundary faces are typically zero or minimal because boundary faces don't strongly
-        // couple to interior equations. The strong coupling is boundary->interior (via fluxes).
-        // For exact enforcement in non-trivial cases, column zeroing would be needed.
 
         if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
@@ -1014,7 +994,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           // Set RHS to the prescribed boundary value (absolute value)
           localRhs[localRow] = presFace[kf] - presFaceBC[kf];
         }
-
       } );
     } );
 
