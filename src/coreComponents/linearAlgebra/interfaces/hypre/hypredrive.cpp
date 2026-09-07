@@ -2205,9 +2205,14 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
   checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
                                                     reinterpret_cast< HYPRE_Vector >( rhs.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetRHS" );
+  checkHypredriveCall( HYPREDRV_LinearSystemSetInitialGuess( m_hypredrive,
+                                                             reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
+                       "HYPREDRV_LinearSystemSetInitialGuess" );
   checkHypredriveCall( HYPREDRV_LinearSystemSetSolution( m_hypredrive,
                                                          reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
+  checkHypredriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypredrive ),
+                       "HYPREDRV_LinearSystemResetInitialGuess" );
 
   {
     // As during setup, hypre's Krylov and MGR kernels can raise benign floating point
