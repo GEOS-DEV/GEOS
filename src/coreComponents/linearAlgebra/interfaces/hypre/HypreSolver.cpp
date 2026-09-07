@@ -202,6 +202,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
   }
 }
 
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
 bool hasMatchingKrylovDofTags( HYPRE_IJVector const vector,
                                HYPRE_Int const numTags,
                                HYPRE_Int const * const tags )
@@ -227,6 +228,7 @@ bool hasMatchingKrylovDofTags( HYPRE_IJVector const vector,
   return localSize == 0 || (tags != nullptr &&
                             std::equal( tags, tags + localSize, hypre_VectorTags( localVector ) ));
 }
+#endif
 
 } // namespace
 
