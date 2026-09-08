@@ -60,7 +60,7 @@ struct HypreSolverWrapper : public HyprePrecWrapper
   /// DoF-component labels used by hypre's tagged Krylov reductions.
   array1d< HYPRE_Int > krylovDofTags;
   HYPRE_Int numKrylovDofTags = 1;
-  HypreVector dummy;
+  HypreVector setupVector;
 };
 
 HypreSolver::HypreSolver( LinearSolverParameters parameters )
@@ -271,7 +271,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
                                               hypre::dummySetup,
                                               m_precond.unwrapped().ptr ) );
 
-  // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup).
+  // Setup the solver (need a setup vector for rhs/sol to avoid hypre segfaulting in setup).
 #if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
   array1d< int > labels;
   hypre::fillKrylovDofLabels( mat, labels );
@@ -281,22 +281,22 @@ void HypreSolver::setup( HypreMatrix const & mat )
                               m_solver->numKrylovDofTags );
 #endif
   // hypre's Krylov work vectors borrow the setup vector's tag array, so keep
-  // the tagged dummy alive for the lifetime of the solver.
-  m_solver->dummy.create( mat.numLocalRows(), mat.comm() );
+  // the tagged setup vector alive for the lifetime of the solver.
+  m_solver->setupVector.create( mat.numLocalRows(), mat.comm() );
 #if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
   if( m_solver->numKrylovDofTags > 1 )
   {
-    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorSetTags( m_solver->dummy.unwrappedIJ(),
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorSetTags( m_solver->setupVector.unwrappedIJ(),
                                                  0,
                                                  m_solver->numKrylovDofTags,
                                                  m_solver->krylovDofTags.data() ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( m_solver->dummy.unwrappedIJ() ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( m_solver->setupVector.unwrappedIJ() ) );
   }
 #endif
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                          mat.unwrapped(),
-                                         m_solver->dummy.unwrapped(),
-                                         m_solver->dummy.unwrapped() ) );
+                                         m_solver->setupVector.unwrapped(),
+                                         m_solver->setupVector.unwrapped() ) );
 }
 
 int HypreSolver::doSolve( HypreVector const & rhs,
