@@ -32,6 +32,9 @@
 #endif
 
 #include <vtkArrayDispatch.h>
+
+#include <cmath>
+#include <type_traits>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
 #include <vtkVersionMacros.h>
@@ -3477,7 +3480,8 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
                  GEOS_FMT( "Destination wrapper for VTK field '{}' has {} entries, but {} cells were requested during import",
                            vtkArray->GetName(), wrapper.size(), cellIds.size() ) );
 
-  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
+  using ImportTypes = types::ListofTypeList< types::Join< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >,
+                                                          types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > > >;
   types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
@@ -3489,7 +3493,7 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
                           GEOS_FMT( "Mismatch in number of components for field {}", vtkArray->GetName() ) );
 
-    vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
+    bool const dispatched = vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::AllTypes >::Execute( vtkArray, [&]( auto const * srcArray )
     {
       vtkDataArrayAccessor< TYPEOFPTR( srcArray ) > data( srcArray );
       localIndex cellCount = 0;
@@ -3497,11 +3501,23 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
       {
         LvArray::forValuesInSlice( view[cellCount], [&, componentIdx = 0]( auto & val ) mutable
         {
-          val = data.Get( cellIdx, componentIdx++ );
+          using DstType = std::remove_reference_t< decltype( val ) >;
+          auto const src = data.Get( cellIdx, componentIdx++ );
+          // an integer field only accepts whole numbers from a floating point array
+          if constexpr ( std::is_integral< DstType >::value && std::is_floating_point< decltype( src ) >::value )
+          {
+            GEOS_THROW_IF( !std::isfinite( src ) || std::fabs( src - std::round( src ) ) > 0.0,
+                           GEOS_FMT( "Field '{}' targets an integer field but holds the non-integer value {} at cell {}",
+                                     vtkArray->GetName(), src, cellIdx ),
+                           InputError );
+          }
+          val = static_cast< DstType >( src );
         } );
         ++cellCount;
       }
     } );
+    GEOS_ERROR_IF( !dispatched,
+                   GEOS_FMT( "Field '{}' has unsupported type: {}", vtkArray->GetName(), vtkArray->GetDataTypeAsString() ) );
   }, wrapper );
 }
 
@@ -3593,9 +3609,8 @@ findArrayForImport( vtkDataSet & mesh,
                  GEOS_FMT( "Source field '{}' not found in dataset", sourceName ),
                  InputError );
 
-  int const dataType = curArray->GetDataType();
-  GEOS_ERROR_IF( dataType != VTK_FLOAT && dataType != VTK_DOUBLE,
-                 GEOS_FMT( "Source field '{}' has unsupported type: {} (expected floating point type)",
+  GEOS_ERROR_IF( !curArray->IsNumeric(),
+                 GEOS_FMT( "Source field '{}' has unsupported type: {} (expected a numeric type)",
                            sourceName, curArray->GetDataTypeAsString() ) );
   return vtkDataArray::SafeDownCast( curArray );
 }

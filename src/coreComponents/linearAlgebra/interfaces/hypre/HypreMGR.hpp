@@ -149,7 +149,8 @@ protected:
    * @param mgrData auxiliary MGR data
    */
   void setReduction( HyprePrecWrapper & precond,
-                     HypreMGRData & mgrData )
+                     HypreMGRData & mgrData,
+                     HYPRE_Int const numActiveLevels = numLevels )
 
   {
     // Ensure that if no F-relaxation or global smoothing is chosen the corresponding number
@@ -167,7 +168,7 @@ protected:
     }
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
-                                                                 m_numBlocks, numLevels,
+                                                                 m_numBlocks, numActiveLevels,
                                                                  m_numLabels, m_ptrLabels,
                                                                  mgrData.pointMarkers.data() ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ) );
