@@ -782,6 +782,15 @@ parameters = {
                'disableSurfaceTractionsOnDamage': ( None, True ),  # MPM: drop explicit surface tractions after damage.
                'disableSurfaceTractionsOnMelt': ( None, True ),  # MPM: drop explicit surface tractions after melt.
                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
+               'enableWeakInterfacePrimalEnrichment': ( None, True ),  # MPM: experimental serial primal weak-interface ridge enrichment.
+               'weakInterfacePrimalGeometryType': ( None, True ),  # MPM: 1=plane, 2=circle for exact prototype geometry.
+               'weakInterfacePrimalPointX': ( None, True ),
+               'weakInterfacePrimalPointY': ( None, True ),
+               'weakInterfacePrimalNormalX': ( None, True ),
+               'weakInterfacePrimalNormalY': ( None, True ),
+               'weakInterfacePrimalRadius': ( None, True ),
+               'weakInterfacePrimalMinMassRatio': ( None, True ),
+               'weakInterfacePrimalMassCFL': ( None, True ),
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.

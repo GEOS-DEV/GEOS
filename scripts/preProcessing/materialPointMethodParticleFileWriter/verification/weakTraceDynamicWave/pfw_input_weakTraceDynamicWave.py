@@ -41,17 +41,29 @@ pfw["mSubmitJobs"] = False
 refine = int(os.environ.get("WEAK_TRACE_REFINE", "1"))
 cpp = int(os.environ.get("WEAK_TRACE_CPP", "48"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
+default_particle_type = "1" if VARIANT == "primalEnrichment" else "2"
+particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
 left_length = float(os.environ.get("WEAK_TRACE_LEFT_LENGTH", "1.0"))
 right_length = float(os.environ.get("WEAK_TRACE_RIGHT_LENGTH", "1.5"))
 bar_length = left_length + right_length
+interface_x = -right_length
 bar_height = 0.12
 pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
-pfw["xpar"] = max(1, int(math.ceil(refine * bar_length)))
-pfw["ypar"] = max(1, refine)
+cells_x_blocks = max(1, int(math.ceil(refine * bar_length)))
+cells_y_blocks = max(1, refine)
+if VARIANT == "primalEnrichment":
+    # The primal enrichment prototype is serial-only. Keep the same cell count
+    # used by the other variants, but do not split the background grid over MPI
+    # partitions.
+    pfw["xpar"] = 1
+    pfw["ypar"] = 1
+else:
+    pfw["xpar"] = cells_x_blocks
+    pfw["ypar"] = cells_y_blocks
 pfw["zpar"] = 1
-pfw["nI"] = pfw["xpar"] * cpp
-pfw["nJ"] = pfw["ypar"] * max(8, cpp // 6)
+pfw["nI"] = cells_x_blocks * cpp
+pfw["nJ"] = cells_y_blocks * max(8, cpp // 6)
 pfw["nK"] = 3
 pfw["ppc"] = ppc
 
@@ -90,7 +102,8 @@ pfw["damageFieldPartitioning"] = 0
 pfw["weakDiscontinuityInsertion"] = "off"
 pfw["weakInterfaceTraceGeometry"] = "surface"
 pfw["cpdiDomainScaling"] = 0
-pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", "FLIP")
+default_update_method = "PIC" if VARIANT == "primalEnrichment" else "FLIP"
+pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", default_update_method)
 pfw["updateOrder"] = int(os.environ.get("WEAK_TRACE_UPDATE_ORDER", "1"))
 pfw["outputType"] = "silo"
 pfw["plotGridFields"] = 1
@@ -125,6 +138,16 @@ pfw["gridFieldNames"] = [
     "gridInterfaceTangentialVelocityJump",
     "gridInterfaceNormalDisplacementJump",
     "gridInterfaceTangentialDisplacementJump",
+    "gridWeakPrimalCrossMass",
+    "gridWeakPrimalRawMass",
+    "gridWeakPrimalRawMomentum",
+    "gridWeakPrimalRawInternalForce",
+    "gridWeakPrimalMean",
+    "gridWeakPrimalMass",
+    "gridWeakPrimalMassRatio",
+    "gridWeakPrimalVelocity",
+    "gridWeakPrimalAcceleration",
+    "gridWeakPrimalActive",
 ]
 pfw["plottableFields"] = ["particleStress", "particleVelocity", "particleDisplacement"]
 pfw["particleFileFields"] = [
@@ -176,7 +199,19 @@ pfw["prescribedBoundaryFTable"] = 1
 pfw["fTableInterpType"] = "Linear"
 pfw["fTable"] = f_table_rows
 
-if VARIANT == "traceContactGroups":
+pfw["enableWeakInterfacePrimalEnrichment"] = 0
+if VARIANT == "primalEnrichment":
+    pfw["enableContact"] = 0
+    pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["enableWeakInterfacePrimalEnrichment"] = 1
+    pfw["weakInterfacePrimalGeometryType"] = 1
+    pfw["weakInterfacePrimalPointX"] = float(os.environ.get("PRIMAL_WEAK_POINT_X", str(interface_x)))
+    pfw["weakInterfacePrimalPointY"] = float(os.environ.get("PRIMAL_WEAK_POINT_Y", "0.0"))
+    pfw["weakInterfacePrimalNormalX"] = float(os.environ.get("PRIMAL_WEAK_NORMAL_X", "1.0"))
+    pfw["weakInterfacePrimalNormalY"] = float(os.environ.get("PRIMAL_WEAK_NORMAL_Y", "0.0"))
+    pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+    pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
+elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
@@ -250,6 +285,7 @@ left = geom.box(
     vel=[0.0, 0.0, 0.0],
     mat=0,
     group=interface_group(0),
+    particleType=particle_type,
     dim=2,
     flaggedSurfaces=[False, False, True, False],
 )
@@ -260,12 +296,12 @@ right = geom.box(
     vel=[0.0, 0.0, 0.0],
     mat=1,
     group=interface_group(1),
+    particleType=particle_type,
     dim=2,
     flaggedSurfaces=[True, False, False, False],
 )
 pfw["objects"] = [mark_interface("left_interface", left), mark_interface("right_interface", right)]
 
-interface_x = -right_length
 tracer_x = [interface_x + offset for offset in [-0.75, -0.25, 0.25, 0.75]]
 tracer_points = [(x, 0.0, 0.0) for x in tracer_x]
 tracers.set_tracers(
@@ -307,4 +343,8 @@ pfw_expected = {
     "pulse_table_samples": pulse_table_samples,
     "update_method": pfw["updateMethod"],
     "update_order": pfw["updateOrder"],
+    "particle_type": particle_type,
+    "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+    "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
+    "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
 }

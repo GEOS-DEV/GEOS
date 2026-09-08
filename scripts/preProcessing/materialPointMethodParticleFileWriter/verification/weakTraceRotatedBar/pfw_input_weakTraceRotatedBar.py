@@ -43,7 +43,8 @@ pfw["mSubmitJobs"] = False
 refine = int(os.environ.get("WEAK_TRACE_REFINE", "1"))
 cpp = int(os.environ.get("WEAK_TRACE_CPP", "40"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
-particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", "2"))
+default_particle_type = "1" if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic") else "2"
+particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
 update_order_text = os.environ.get("WEAK_TRACE_UPDATE_ORDER", "")
 
 pfw["planeStrain"] = 1
@@ -64,7 +65,8 @@ pfw["zmin"] = -0.5 * thickness
 pfw["zmax"] = 0.5 * thickness
 
 # Time integration and diagnostics ------------------------------------------------------
-stop_time = float(os.environ.get("WEAK_TRACE_STOP_TIME", "20.0"))
+default_stop_time = "0.08" if VARIANT == "primalEnrichmentDynamic" else "20.0"
+stop_time = float(os.environ.get("WEAK_TRACE_STOP_TIME", default_stop_time))
 final_strain = float(os.environ.get("WEAK_TRACE_FINAL_STRAIN", "0.006"))
 pfw["endTime"] = stop_time
 pfw["plotInterval"] = stop_time / 80.0
@@ -124,6 +126,16 @@ pfw["gridFieldNames"] = [
     "gridInterfaceTangentialVelocityJump",
     "gridInterfaceNormalDisplacementJump",
     "gridInterfaceTangentialDisplacementJump",
+    "gridWeakPrimalCrossMass",
+    "gridWeakPrimalRawMass",
+    "gridWeakPrimalRawMomentum",
+    "gridWeakPrimalRawInternalForce",
+    "gridWeakPrimalMean",
+    "gridWeakPrimalMass",
+    "gridWeakPrimalMassRatio",
+    "gridWeakPrimalVelocity",
+    "gridWeakPrimalAcceleration",
+    "gridWeakPrimalActive",
 ]
 
 pfw["particleFileFields"] = [
@@ -147,8 +159,16 @@ pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"] = 1
 pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stop_time, 1.0 + final_strain, 1.0 + final_strain, 1.0]]
 
-# Trace controls ------------------------------------------------------------------------
-if VARIANT == "traceContactGroups":
+# Interface controls --------------------------------------------------------------------
+pfw["enableWeakInterfacePrimalEnrichment"] = 0
+if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
+    pfw["enableContact"] = 0
+    pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["enableWeakInterfacePrimalEnrichment"] = 1
+    pfw["weakInterfacePrimalGeometryType"] = 1
+    pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+    pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
+elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
@@ -227,6 +247,12 @@ s1 = 0.82
 # preserving the non-grid-aligned interface.
 s_interface = float(os.environ.get("WEAK_TRACE_INTERFACE_OFFSET", "0.006875"))
 
+if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
+    pfw["weakInterfacePrimalPointX"] = float(s_interface * a[0])
+    pfw["weakInterfacePrimalPointY"] = float(s_interface * a[1])
+    pfw["weakInterfacePrimalNormalX"] = float(a[0])
+    pfw["weakInterfacePrimalNormalY"] = float(a[1])
+
 def xy(s, t):
     return (s * a + t * b).tolist()
 
@@ -267,7 +293,7 @@ def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
         upper = geom.czTagWrapper("weakTraceUpperInterfaceCZTag", upper, cz_tag)
     return [lower, upper]
 
-if VARIANT == "singleField":
+if VARIANT in ("singleField", "primalEnrichment", "primalEnrichmentDynamic"):
     pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
 elif VARIANT == "falseElasticCZ":
     # Match the elastic-tie CZ reference path: one contact group, with the two
@@ -326,6 +352,8 @@ pfw_expected = {
     "bar_axis": [float(a[0]), float(a[1]), 0.0],
     "interface_normal": [float(a[0]), float(a[1]), 0.0],
     "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
+    "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+    "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),

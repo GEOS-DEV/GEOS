@@ -226,6 +226,19 @@ public:
     static constexpr char const * gridUncontactedVelocityString() { return "gridUncontactedVelocity"; }
     static constexpr char const * gridVelocityString() { return "gridVelocity"; }
     static constexpr char const * gridVPlusString() { return "gridVPlus"; }
+
+    // Experimental primal weak-interface enrichment (serial CPU prototype).
+    static constexpr char const * gridWeakPrimalCrossMassString() { return "gridWeakPrimalCrossMass"; }
+    static constexpr char const * gridWeakPrimalRawMassString() { return "gridWeakPrimalRawMass"; }
+    static constexpr char const * gridWeakPrimalRawMomentumString() { return "gridWeakPrimalRawMomentum"; }
+    static constexpr char const * gridWeakPrimalRawInternalForceString() { return "gridWeakPrimalRawInternalForce"; }
+    static constexpr char const * gridWeakPrimalMeanString() { return "gridWeakPrimalMean"; }
+    static constexpr char const * gridWeakPrimalMassString() { return "gridWeakPrimalMass"; }
+    static constexpr char const * gridWeakPrimalMassRatioString() { return "gridWeakPrimalMassRatio"; }
+    static constexpr char const * gridWeakPrimalVelocityString() { return "gridWeakPrimalVelocity"; }
+    static constexpr char const * gridWeakPrimalAccelerationString() { return "gridWeakPrimalAcceleration"; }
+    static constexpr char const * gridWeakPrimalActiveString() { return "gridWeakPrimalActive"; }
+
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
@@ -1462,6 +1475,7 @@ protected:
   int m_enableBoreholePressure;
   int m_enableConfiningPressure;
   int m_enableContact;
+  int m_enableWeakInterfacePrimalEnrichment;
   int m_enableWeakInterfaceTraceProjection;
   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   int m_enableSurfaceTension;
@@ -1664,6 +1678,14 @@ protected:
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
   mpm::WeakDiscontinuityInsertionOption m_weakDiscontinuityInsertion;
+  int m_weakInterfacePrimalGeometryType; // 1: plane, 2: circle
+  real64 m_weakInterfacePrimalPointX;
+  real64 m_weakInterfacePrimalPointY;
+  real64 m_weakInterfacePrimalNormalX;
+  real64 m_weakInterfacePrimalNormalY;
+  real64 m_weakInterfacePrimalRadius;
+  real64 m_weakInterfacePrimalMinMassRatio;
+  real64 m_weakInterfacePrimalMassCFL;
   mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
   real64 m_weakInterfaceTraceGapStabilization;
   real64 m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
@@ -1717,6 +1739,23 @@ private:
   };
 
   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
+
+  /// Map raw moments and internal force for the serial primal weak-interface mode.
+  void mapPrimalWeakInterfaceToGrid( ParticleManager & particleManager,
+                                     NodeManager & nodeManager );
+
+  /// Mass-orthogonalize and advance the enriched nodal coefficient.
+  void finalizePrimalWeakInterfaceGrid( real64 const dt,
+                                        NodeManager & nodeManager );
+
+  /// Add the enriched velocity and gradient to the ordinary PIC particle update.
+  void applyPrimalWeakInterfaceToParticles( real64 const dt,
+                                            ParticleManager & particleManager,
+                                            NodeManager & nodeManager );
+
+  /// Dimensionless signed distance used by the exact plane/circle prototype.
+  real64 primalWeakInterfaceSignedDistance( real64 const x,
+                                            real64 const y ) const;
 };
 
 } /* namespace geos */

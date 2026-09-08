@@ -39,7 +39,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups)
+ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups primalEnrichment primalEnrichmentDynamic)
 PLACEHOLDER_VARIANTS=(materialWeak materialWeakSurface dfgSurfaceFlags stressResidualPartition)
 
 selected_variants=()
@@ -111,6 +111,8 @@ out = Path(sys.argv[1])
 case_id = sys.argv[2]
 jsons = [Path(p) for p in sys.argv[3:]]
 labels = {
+    "primalEnrichment": "primal B-spline weak-interface enrichment",
+    "primalEnrichmentDynamic": "dynamic primal B-spline weak-interface enrichment",
     "singleField": "single-field baseline",
     "falseElasticCZ": "false-elastic CZ reference",
     "traceContactGroups": "trace projection, contact groups",

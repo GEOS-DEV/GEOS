@@ -126,6 +126,16 @@ pfw["gridFieldNames"] = [
     "gridInterfaceTangentialVelocityJump",
     "gridInterfaceNormalDisplacementJump",
     "gridInterfaceTangentialDisplacementJump",
+    "gridWeakPrimalCrossMass",
+    "gridWeakPrimalRawMass",
+    "gridWeakPrimalRawMomentum",
+    "gridWeakPrimalRawInternalForce",
+    "gridWeakPrimalMean",
+    "gridWeakPrimalMass",
+    "gridWeakPrimalMassRatio",
+    "gridWeakPrimalVelocity",
+    "gridWeakPrimalAcceleration",
+    "gridWeakPrimalActive",
 ]
 pfw["plottableFields"] = ["particleStress", "particleVelocity", "particleDisplacement"]
 pfw["particleFileFields"] = [
@@ -150,7 +160,18 @@ pfw["boundaryConditionTypes"] = [1, 1, 1, 1, 1, 1]
 pfw["prescribedBoundaryFTable"] = 0
 pfw["useEvents"] = 1
 
-if VARIANT == "traceContactGroups":
+pfw["enableWeakInterfacePrimalEnrichment"] = 0
+if VARIANT == "primalEnrichment":
+    pfw["enableContact"] = 0
+    pfw["enableWeakInterfaceTraceProjection"] = 0
+    pfw["enableWeakInterfacePrimalEnrichment"] = 1
+    pfw["weakInterfacePrimalGeometryType"] = 2
+    pfw["weakInterfacePrimalPointX"] = float(os.environ.get("PRIMAL_WEAK_CENTER_X", "0.0"))
+    pfw["weakInterfacePrimalPointY"] = float(os.environ.get("PRIMAL_WEAK_CENTER_Y", "0.0"))
+    pfw["weakInterfacePrimalRadius"] = float(os.environ.get("PRIMAL_WEAK_RADIUS", str(inclusion_radius)))
+    pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+    pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
+elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
@@ -214,7 +235,8 @@ if VARIANT == "falseElasticCZ":
     )
 pfw["mpmEventsString"] = "\n".join(event_blocks)
 
-particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", "2"))
+default_particle_type = "1" if VARIANT == "primalEnrichment" else "2"
+particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
 geometry_z_pad = float(os.environ.get("WEAK_TRACE_GEOMETRY_Z_PAD", str(2.0 * cell)))
 cylinder_zmin = pfw["zmin"] - geometry_z_pad
 cylinder_zmax = pfw["zmax"] + geometry_z_pad
@@ -356,4 +378,8 @@ pfw_expected = {
     "matrix_E": matrix_E,
     "inclusion_E": inclusion_E,
     "poisson": poisson,
+    "particle_type": particle_type,
+    "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+    "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
+    "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
 }
