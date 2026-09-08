@@ -51,7 +51,7 @@ public:
   real64 m_referenceTemperature{298.15};
   array2d< real64 > m_referenceEnthalpy;
   array2d< real64 > m_coefficients;
-  array1d< PhaseType > m_phaseTypes;
+  array1d< integer > m_phaseTypes;
 
 protected:
   void registerParametersImpl( MultiFluidBase * fluid ) override;
