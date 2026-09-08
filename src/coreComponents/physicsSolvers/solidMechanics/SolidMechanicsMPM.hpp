@@ -37,6 +37,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
+
 namespace geos
 {
 
@@ -238,6 +239,11 @@ public:
     static constexpr char const * gridWeakPrimalVelocityString() { return "gridWeakPrimalVelocity"; }
     static constexpr char const * gridWeakPrimalAccelerationString() { return "gridWeakPrimalAcceleration"; }
     static constexpr char const * gridWeakPrimalActiveString() { return "gridWeakPrimalActive"; }
+    static constexpr char const * gridWeakPrimalGeometryActiveString() { return "gridWeakPrimalGeometryActive"; }
+    static constexpr char const * gridWeakPrimalGeometryDistanceString() { return "gridWeakPrimalGeometryDistance"; }
+    static constexpr char const * gridWeakPrimalGeometryNormalString() { return "gridWeakPrimalGeometryNormal"; }
+    static constexpr char const * gridWeakPrimalGeometryFitResidualString() { return "gridWeakPrimalGeometryFitResidual"; }
+    static constexpr char const * gridWeakPrimalGeometrySegmentCountString() { return "gridWeakPrimalGeometrySegmentCount"; }
 
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
 
@@ -1678,14 +1684,23 @@ protected:
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
   mpm::WeakDiscontinuityInsertionOption m_weakDiscontinuityInsertion;
-  int m_weakInterfacePrimalGeometryType; // 1: plane, 2: circle
-  real64 m_weakInterfacePrimalPointX;
-  real64 m_weakInterfacePrimalPointY;
-  real64 m_weakInterfacePrimalNormalX;
-  real64 m_weakInterfacePrimalNormalY;
-  real64 m_weakInterfacePrimalRadius;
+  int m_weakInterfacePrimalGeometryType; // 3: particle-surface reconstruction
+  real64 m_weakInterfacePrimalPointX; // retained as a deprecated diagnostic input
+  real64 m_weakInterfacePrimalPointY; // retained as a deprecated diagnostic input
+  real64 m_weakInterfacePrimalNormalX; // retained as a deprecated diagnostic input
+  real64 m_weakInterfacePrimalNormalY; // retained as a deprecated diagnostic input
+  real64 m_weakInterfacePrimalRadius; // retained as a deprecated diagnostic input
   real64 m_weakInterfacePrimalMinMassRatio;
   real64 m_weakInterfacePrimalMassCFL;
+  int m_weakInterfacePrimalGeometryHalo;
+  int m_weakInterfacePrimalMinMarkersPerCell;
+  real64 m_weakInterfacePrimalMinNormalCoherence;
+  real64 m_weakInterfacePrimalMaxFitResidual;
+  real64 m_weakInterfacePrimalMinSegmentFraction;
+  int m_weakInterfacePrimalGeometryLogInterval;
+  stdVector< array1d< real64 > > m_weakPrimalParticleDistance;
+  stdVector< array2d< real64 > > m_weakPrimalParticleDistanceGradient;
+  stdVector< array1d< int > > m_weakPrimalParticleGeometryValid;
   mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
   real64 m_weakInterfaceTraceGapStabilization;
   real64 m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
@@ -1740,6 +1755,13 @@ private:
 
   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 
+  /// Reconstruct a continuous piecewise-linear interface from current particle
+  /// surface points/normals and cache a frozen unsigned-distance ridge at the
+  /// active particles for the current explicit step.
+  void reconstructPrimalWeakInterfaceGeometry( integer const cycleNumber,
+                                               ParticleManager & particleManager,
+                                               NodeManager & nodeManager );
+
   /// Map raw moments and internal force for the serial primal weak-interface mode.
   void mapPrimalWeakInterfaceToGrid( ParticleManager & particleManager,
                                      NodeManager & nodeManager );
@@ -1752,10 +1774,6 @@ private:
   void applyPrimalWeakInterfaceToParticles( real64 const dt,
                                             ParticleManager & particleManager,
                                             NodeManager & nodeManager );
-
-  /// Dimensionless signed distance used by the exact plane/circle prototype.
-  real64 primalWeakInterfaceSignedDistance( real64 const x,
-                                            real64 const y ) const;
 };
 
 } /* namespace geos */

@@ -798,6 +798,13 @@ def render_visit(args, subcases: list[dict], output_dir: Path, analytic: dict):
         ("surfaceNormal", "final", "grid_surface_normal_field0_final", "0"),
         ("surfaceNormal", "final", "grid_surface_normal_field1_final", "1"),
         ("explicitSurfaceNormal", "initial", "grid_explicit_surface_normal_initial", "all"),
+        ("primalMassRatio", "final", "grid_primal_mass_ratio_final", "all"),
+        ("primalActive", "final", "grid_primal_active_final", "all"),
+        ("primalGeometryActive", "final", "grid_primal_geometry_active_final", "all"),
+        ("primalGeometryDistance", "final", "grid_primal_geometry_distance_final", "all"),
+        ("primalGeometryFitResidual", "final", "grid_primal_geometry_fit_residual_final", "all"),
+        ("primalGeometrySegmentCount", "final", "grid_primal_geometry_segment_count_final", "all"),
+        ("primalGeometryNormal", "final", "grid_primal_geometry_normal_final", "all"),
     ]
     for subcase in subcases:
         if subcase.get("placeholder"):
@@ -951,7 +958,7 @@ def main() -> int:
         tex.append(latex_escape(s.get("label", s.get("variant", ""))) + " & " + compact_float(s.get("final_stiff_near_vm")) + " & " + compact_float(s.get("final_stiff_far_vm")) + " & " + compact_float(s.get("final_stiff_near_plastic")) + " & " + latex_escape(s.get("status", "")) + r" \\")
     tex.append(r"\bottomrule\end{tabular}}")
     if frames:
-        tex.append(r"\paragraph{VisIt field diagnostics.} The report includes particle pseudocolor frames for final von Mises stress and an intermediate-time $\sigma_{nn}=0.5\sigma_{xx}+0.5\sigma_{yy}+\sigma_{xy}$ trace-band view, plus nodal grid frames for interface mechanism, normal force, normal velocity jump, and normal displacement jump.  Grid surface normals are rendered as vector glyphs for each velocity field, with the explicit CZ partitioning normal rendered when that grid field is present.  The particle $\sigma_{nn}$ frame uses the same color limits for both material particle regions, capped by the bonded analytical stress at that render time, so local overshoots saturate instead of rescaling the two sides independently.")
+        tex.append(r"\paragraph{VisIt field diagnostics.} The report includes particle pseudocolor frames for final von Mises stress and an intermediate-time $\sigma_{nn}=0.5\sigma_{xx}+0.5\sigma_{yy}+\sigma_{xy}$ trace-band view, plus nodal grid frames for interface mechanism, normal force, normal velocity jump, and normal displacement jump.  For the primal weak-interface enrichment, it also renders enriched mass ratio, active enriched nodes, reconstructed-geometry activity, geometry distance, fit residual, segment count, and reconstructed geometry-normal vectors.  Grid surface normals are rendered as vector glyphs for each velocity field, with the explicit CZ partitioning normal rendered when that grid field is present.  The particle $\sigma_{nn}$ frame uses the same color limits for both material particle regions, capped by the bonded analytical stress at that render time, so local overshoots saturate instead of rescaling the two sides independently.")
     elif visit_messages:
         tex.append(r"\paragraph{VisIt field diagnostics.} VisIt field frames were requested but not generated in this post-processing environment.  See \texttt{weak\_trace\_rotated\_bar\_visit\_render\_log.txt} in the case output directory for the command or expression failure.")
     if final_layers:

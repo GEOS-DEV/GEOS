@@ -20,6 +20,12 @@ SCALAR_QUANTITY_FIELDS = {
     "traceActive": ("gridWeakInterfaceTraceActive", False, 0.0, 1.0),
     "traceSkipReason": ("gridWeakInterfaceTraceSkipReason", False, 0.0, 10.0),
     "traceContactSuppressed": ("gridWeakInterfaceTraceContactSuppressed", False, 0.0, 1.0),
+    "primalActive": ("gridWeakPrimalActive", False, 0.0, 1.0),
+    "primalMassRatio": ("gridWeakPrimalMassRatio", False, None, None),
+    "primalGeometryActive": ("gridWeakPrimalGeometryActive", False, 0.0, 1.0),
+    "primalGeometryDistance": ("gridWeakPrimalGeometryDistance", False, None, None),
+    "primalGeometryFitResidual": ("gridWeakPrimalGeometryFitResidual", False, None, None),
+    "primalGeometrySegmentCount": ("gridWeakPrimalGeometrySegmentCount", False, 0.0, None),
 }
 
 
@@ -33,6 +39,9 @@ VECTOR_QUANTITY_FIELDS = {
     "traceSurfaceJump": "gridWeakInterfaceTraceSurfaceJump",
     "traceVelocityJump": "gridWeakInterfaceTraceVelocityJump",
     "traceVelocityJumpPost": "gridWeakInterfaceTraceVelocityJumpPost",
+    "primalGeometryNormal": "gridWeakPrimalGeometryNormal",
+    "primalVelocity": "gridWeakPrimalVelocity",
+    "primalAcceleration": "gridWeakPrimalAcceleration",
 }
 
 

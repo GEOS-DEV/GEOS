@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+VERIFICATION_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+
+# Forward all arguments to the existing case runners.  Each primal variant is
+# guarded to one MPI rank by the solver and uses SinglePointBSpline particles.
+COMMON_ARGS=("$@")
+
+run_case() {
+  local folder=$1
+  local variant=$2
+  echo "[primalWeakInterfaceBsplineSurface] ${folder}/${variant}"
+  "$VERIFICATION_ROOT/$folder/runTest" \
+    --variant "$variant" \
+    "${COMMON_ARGS[@]}"
+}
+
+run_case weakTraceRotatedBar primalEnrichment
+run_case weakTraceDynamicWave primalEnrichment
+run_case weakTraceCircularInclusionRadial primalEnrichment

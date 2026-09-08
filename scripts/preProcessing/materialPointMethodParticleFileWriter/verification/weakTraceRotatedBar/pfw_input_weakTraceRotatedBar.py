@@ -136,6 +136,11 @@ pfw["gridFieldNames"] = [
     "gridWeakPrimalVelocity",
     "gridWeakPrimalAcceleration",
     "gridWeakPrimalActive",
+    "gridWeakPrimalGeometryActive",
+    "gridWeakPrimalGeometryDistance",
+    "gridWeakPrimalGeometryNormal",
+    "gridWeakPrimalGeometryFitResidual",
+    "gridWeakPrimalGeometrySegmentCount",
 ]
 
 pfw["particleFileFields"] = [
@@ -165,9 +170,15 @@ if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
     pfw["enableContact"] = 0
     pfw["enableWeakInterfaceTraceProjection"] = 0
     pfw["enableWeakInterfacePrimalEnrichment"] = 1
-    pfw["weakInterfacePrimalGeometryType"] = 1
+    pfw["weakInterfacePrimalGeometryType"] = 3
     pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
     pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
+    pfw["weakInterfacePrimalGeometryHalo"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_HALO", "1"))
+    pfw["weakInterfacePrimalMinMarkersPerCell"] = int(os.environ.get("PRIMAL_WEAK_MIN_MARKERS_PER_CELL", "1"))
+    pfw["weakInterfacePrimalMinNormalCoherence"] = float(os.environ.get("PRIMAL_WEAK_MIN_NORMAL_COHERENCE", "0.25"))
+    pfw["weakInterfacePrimalMaxFitResidual"] = float(os.environ.get("PRIMAL_WEAK_MAX_FIT_RESIDUAL", "0.35"))
+    pfw["weakInterfacePrimalMinSegmentFraction"] = float(os.environ.get("PRIMAL_WEAK_MIN_SEGMENT_FRACTION", "1.0e-4"))
+    pfw["weakInterfacePrimalGeometryLogInterval"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_LOG_INTERVAL", "1000"))
 elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
@@ -247,12 +258,6 @@ s1 = 0.82
 # preserving the non-grid-aligned interface.
 s_interface = float(os.environ.get("WEAK_TRACE_INTERFACE_OFFSET", "0.006875"))
 
-if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
-    pfw["weakInterfacePrimalPointX"] = float(s_interface * a[0])
-    pfw["weakInterfacePrimalPointY"] = float(s_interface * a[1])
-    pfw["weakInterfacePrimalNormalX"] = float(a[0])
-    pfw["weakInterfacePrimalNormalY"] = float(a[1])
-
 def xy(s, t):
     return (s * a + t * b).tolist()
 
@@ -293,8 +298,13 @@ def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
         upper = geom.czTagWrapper("weakTraceUpperInterfaceCZTag", upper, cz_tag)
     return [lower, upper]
 
-if VARIANT in ("singleField", "primalEnrichment", "primalEnrichmentDynamic"):
+if VARIANT == "singleField":
     pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
+elif VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
+    # The primal mode uses one common physical velocity field.  The weak-interface
+    # particles only provide the current surface point and normal used by the
+    # beginning-of-step polyline reconstruction.
+    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=False)
 elif VARIANT == "falseElasticCZ":
     # Match the elastic-tie CZ reference path: one contact group, with the two
     # cohesive fields split by opposing explicit surface normals.
@@ -354,6 +364,11 @@ pfw_expected = {
     "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
+    "primal_geometry_halo": pfw.get("weakInterfacePrimalGeometryHalo", None),
+    "primal_min_markers_per_cell": pfw.get("weakInterfacePrimalMinMarkersPerCell", None),
+    "primal_min_normal_coherence": pfw.get("weakInterfacePrimalMinNormalCoherence", None),
+    "primal_max_fit_residual": pfw.get("weakInterfacePrimalMaxFitResidual", None),
+    "primal_min_segment_fraction": pfw.get("weakInterfacePrimalMinSegmentFraction", None),
     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),

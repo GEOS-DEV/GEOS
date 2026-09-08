@@ -136,6 +136,11 @@ pfw["gridFieldNames"] = [
     "gridWeakPrimalVelocity",
     "gridWeakPrimalAcceleration",
     "gridWeakPrimalActive",
+    "gridWeakPrimalGeometryActive",
+    "gridWeakPrimalGeometryDistance",
+    "gridWeakPrimalGeometryNormal",
+    "gridWeakPrimalGeometryFitResidual",
+    "gridWeakPrimalGeometrySegmentCount",
 ]
 pfw["plottableFields"] = ["particleStress", "particleVelocity", "particleDisplacement"]
 pfw["particleFileFields"] = [
@@ -165,12 +170,15 @@ if VARIANT == "primalEnrichment":
     pfw["enableContact"] = 0
     pfw["enableWeakInterfaceTraceProjection"] = 0
     pfw["enableWeakInterfacePrimalEnrichment"] = 1
-    pfw["weakInterfacePrimalGeometryType"] = 2
-    pfw["weakInterfacePrimalPointX"] = float(os.environ.get("PRIMAL_WEAK_CENTER_X", "0.0"))
-    pfw["weakInterfacePrimalPointY"] = float(os.environ.get("PRIMAL_WEAK_CENTER_Y", "0.0"))
-    pfw["weakInterfacePrimalRadius"] = float(os.environ.get("PRIMAL_WEAK_RADIUS", str(inclusion_radius)))
+    pfw["weakInterfacePrimalGeometryType"] = 3
     pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
     pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
+    pfw["weakInterfacePrimalGeometryHalo"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_HALO", "1"))
+    pfw["weakInterfacePrimalMinMarkersPerCell"] = int(os.environ.get("PRIMAL_WEAK_MIN_MARKERS_PER_CELL", "1"))
+    pfw["weakInterfacePrimalMinNormalCoherence"] = float(os.environ.get("PRIMAL_WEAK_MIN_NORMAL_COHERENCE", "0.25"))
+    pfw["weakInterfacePrimalMaxFitResidual"] = float(os.environ.get("PRIMAL_WEAK_MAX_FIT_RESIDUAL", "0.35"))
+    pfw["weakInterfacePrimalMinSegmentFraction"] = float(os.environ.get("PRIMAL_WEAK_MIN_SEGMENT_FRACTION", "1.0e-4"))
+    pfw["weakInterfacePrimalGeometryLogInterval"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_LOG_INTERVAL", "1000"))
 elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
@@ -300,7 +308,7 @@ def annulus(name: str, mat: int, group: int):
 
 
 def mark_interface(name: str, obj):
-    if VARIANT == "traceContactGroups":
+    if VARIANT in ("traceContactGroups", "primalEnrichment"):
         return geom.surfaceFlagWrapper(name + "_weak", obj, int(geom.SurfaceFlag.WeakDiscontinuity))
     if VARIANT == "falseElasticCZ":
         return geom.czTagWrapper(name + "_cz_tag", geom.surfaceFlagWrapper(name + "_cz", obj, int(geom.SurfaceFlag.Cohesive)), 0)
@@ -382,4 +390,9 @@ pfw_expected = {
     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
     "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
+    "primal_geometry_halo": pfw.get("weakInterfacePrimalGeometryHalo", None),
+    "primal_min_markers_per_cell": pfw.get("weakInterfacePrimalMinMarkersPerCell", None),
+    "primal_min_normal_coherence": pfw.get("weakInterfacePrimalMinNormalCoherence", None),
+    "primal_max_fit_residual": pfw.get("weakInterfacePrimalMaxFitResidual", None),
+    "primal_min_segment_fraction": pfw.get("weakInterfacePrimalMinSegmentFraction", None),
 }
