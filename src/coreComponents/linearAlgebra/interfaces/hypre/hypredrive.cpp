@@ -439,6 +439,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::augmentedLagrangianContactMechanics:
     case StrategyType::lagrangianContactMechanicsBubbleStab:
     case StrategyType::solidMechanicsEmbeddedFractures:
+    case StrategyType::solidMechanicsMixedVEM:
       return false;
   }
 
@@ -1008,6 +1009,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
       return specialization;
     }
     case StrategyType::invalid:
+    case StrategyType::solidMechanicsMixedVEM:
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
     case StrategyType::singlePhaseReservoirHybridFVM:
@@ -1584,6 +1586,7 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
       return buildStrategyYaml< hypre::mgr::LagrangianContactMechanicsBubbleStabilization >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::solidMechanicsEmbeddedFractures:
       return buildStrategyYaml< hypre::mgr::SolidMechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
+    case StrategyType::solidMechanicsMixedVEM:
     case StrategyType::invalid:
       return false;
   }
