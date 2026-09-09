@@ -143,59 +143,59 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityP
   setUpDflux_dApertureMatrix( domain );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSystem( real64 const time_n,
-                                                                                    real64 const dt,
-                                                                                    DomainPartition & domain,
-                                                                                    DofManager const & dofManager,
-                                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                    arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSystem( real64 const time_n,
+//                                                                                     real64 const dt,
+//                                                                                     DomainPartition & domain,
+//                                                                                     DofManager const & dofManager,
+//                                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                                                     arrayView1d< real64 > const & localRhs )
+// {
+//   GEOS_MARK_FUNCTION;
 
-  // Synchronize fracture state
-  this->solidMechanicsSolver()->synchronizeFractureState( domain );
+//   // Synchronize fracture state
+//   this->solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  // setSparsityPattern owns the contact lookup tables and this matrix. Rather
-  // than lazily rebuilding a second copy of that prologue here, require that it
-  // has run: setupSystem( ..., setSparsity = false ) is not supported.
-  GEOS_ERROR_IF( !m_derivativeFluxResidual_dAperture,
-                 GEOS_FMT( "{}: setupSystem must be called with sparsity construction enabled before assembling.",
-                           this->getName() ) );
+//   // setSparsityPattern owns the contact lookup tables and this matrix. Rather
+//   // than lazily rebuilding a second copy of that prologue here, require that it
+//   // has run: setupSystem( ..., setSparsity = false ) is not supported.
+//   GEOS_ERROR_IF( !m_derivativeFluxResidual_dAperture,
+//                  GEOS_FMT( "{}: setupSystem must be called with sparsity construction enabled before assembling.",
+//                            this->getName() ) );
 
-  // Move without touching: zero() below memsets the entries in this space, and
-  // touching here would mark the immutable sparsity structure dirty on device.
-  m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
-  m_derivativeFluxResidual_dAperture->zero();
+//   // Move without touching: zero() below memsets the entries in this space, and
+//   // touching here would mark the immutable sparsity structure dirty on device.
+//   m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
+//   m_derivativeFluxResidual_dAperture->zero();
 
-  // Assemble element-based contributions (mechanics + flow accumulation)
-  assembleElementBasedContributions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+//   // Assemble element-based contributions (mechanics + flow accumulation)
+//   assembleElementBasedContributions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  // Assemble flux terms and get dFluidResidual/dAperture
-  this->flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                                  dt,
-                                                  domain,
-                                                  dofManager,
-                                                  localMatrix,
-                                                  localRhs,
-                                                  getDerivativeFluxResidual_dNormalJump(),
-                                                  &m_derivativeFluxResidual_dApertureOffsets );
+//   // Assemble flux terms and get dFluidResidual/dAperture
+//   this->flowSolver()->assembleHydrofracFluxTerms( time_n,
+//                                                   dt,
+//                                                   domain,
+//                                                   dofManager,
+//                                                   localMatrix,
+//                                                   localRhs,
+//                                                   getDerivativeFluxResidual_dNormalJump(),
+//                                                   &m_derivativeFluxResidual_dApertureOffsets );
 
-  // The flux kernel populates the derivative matrix in device memory. The
-  // coupling assembly below reads it on the host, so bring it over without
-  // touching it: touching would force a re-upload on the next assembly.
-  m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
+//   // The flux kernel populates the derivative matrix in device memory. The
+//   // coupling assembly below reads it on the host, so bring it over without
+//   // touching it: touching would force a re-upload on the next assembly.
+//   m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
-  // Assemble coupling terms (must be after flux assembly)
-  assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+//   // Assemble coupling terms (must be after flux assembly)
+//   assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  if constexpr ( hasWells )
-  {
-    this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-    this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  }
+//   if constexpr ( hasWells )
+//   {
+//     this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+//     this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+//   }
 
-}
+// }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
@@ -226,33 +226,33 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElem
   this->solidMechanicsSolver()->assembleContact( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
-                                                                                           real64 const dt,
-                                                                                           DomainPartition const & domain,
-                                                                                           DofManager const & dofManager,
-                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                           arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( time_n, dt );
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
+//                                                                                            real64 const dt,
+//                                                                                            DomainPartition const & domain,
+//                                                                                            DofManager const & dofManager,
+//                                                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                                                            arrayView1d< real64 > const & localRhs )
+// {
+//   GEOS_MARK_FUNCTION;
+//   GEOS_UNUSED_VAR( time_n, dt );
 
-  // These steps must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & regionNames )
-  {
-    // Assemble Force Residual w.r.t. pressure (Aup) - fracture pressure contribution
-    assembleForceResidualDerivativeWrtPressure( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
+//   // These steps must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & regionNames )
+//   {
+//     // Assemble Force Residual w.r.t. pressure (Aup) - fracture pressure contribution
+//     assembleForceResidualDerivativeWrtPressure( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
 
-    // Assemble Fluid mass residual w.r.t. displacement (Apu)
-    assembleFluidMassResidualDerivativeWrtDisplacement( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
-  } );
+//     // Assemble Fluid mass residual w.r.t. displacement (Apu)
+//     assembleFluidMassResidualDerivativeWrtDisplacement( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
+//   } );
 
-  // Assemble matrix cell pressure contribution on bubble DOFs (Abp_matrix)
-  // This must be outside the lambda because it uses regionBasedKernelApplication
-  assembleMatrixPressureBubbleContribution( dt, const_cast< DomainPartition & >( domain ), dofManager, localMatrix, localRhs );
-}
+//   // Assemble matrix cell pressure contribution on bubble DOFs (Abp_matrix)
+//   // This must be outside the lambda because it uses regionBasedKernelApplication
+//   assembleMatrixPressureBubbleContribution( dt, const_cast< DomainPartition & >( domain ), dofManager, localMatrix, localRhs );
+// }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState( DomainPartition & domain )

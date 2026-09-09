@@ -21,6 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSCONFORMINGFRACTURES_HPP_
 
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -39,7 +41,7 @@
 namespace geos
 {
 
-template< template< typename, typename > class POROMECHANICS_BASE, typename FLOW_SOLVER , typename CONTACT_SOLVER = SolidMechanicsLagrangeContact >
+template< template< typename, typename > class POROMECHANICS_BASE, typename FLOW_SOLVER = SinglePhaseBase , typename CONTACT_SOLVER = SolidMechanicsLagrangeContact >
 class PoromechanicsConformingFractures : public POROMECHANICS_BASE< FLOW_SOLVER, CONTACT_SOLVER >
 {
 public:
@@ -144,6 +146,12 @@ public:
                            dofManager,
                            localMatrix,
                            localRhs );
+  if constexpr ( std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >  )
+  {
+    this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  }
+    
   }
 
   virtual void updateState( DomainPartition & domain ) override
@@ -486,17 +494,23 @@ protected:
   {
     GEOS_UNUSED_VAR( time_n, dt );
     // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
     {
       /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
-      assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
-      assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
+      assembleForceResidualDerivativeWrtPressure( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
+      assembleFluidMassResidualDerivativeWrtDisplacement( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
     } );
+
+    //if hasStabilization via bubble - Apb
+    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+       assembleMatrixPressureBubbleContribution( dt, const_cast< DomainPartition & >( domain ), dofManager, localMatrix, localRhs );
+
   }
 
-  void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
+  void assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM(meshName),
+                                                   MeshLevel const & mesh,
                                                    string_array const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -601,11 +615,28 @@ protected:
     } );
   }
 
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const& meshName,
+                                                                   MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
+   * @Brief assemble the contribution of matrix cell pressure on bubble DOFs
+   * with full Jacobian for fully-implicit coupling.
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the local system matrix
+   * @param localRhs the local system right-hand side vector
+   */
+  virtual void assembleMatrixPressureBubbleContribution( real64 const GEOS_UNUSED_PARAM(dt),
+                                                 DomainPartition & GEOS_UNUSED_PARAM(domain),
+                                                 DofManager const & GEOS_UNUSED_PARAM(dofManager),
+                                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM(localMatrix),
+                                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM(localRhs) ) 
+    { GEOS_WARNING("Should override"); };
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {

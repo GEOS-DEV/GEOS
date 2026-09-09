@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
 #include "common/logger/Logger.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFracturesALM.hpp"
+// #include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
@@ -102,12 +102,12 @@ public:
                                    CRSMatrix< real64, globalIndex > & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override final;
 
-  virtual void assembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override final;
+  // virtual void assembleSystem( real64 const time,
+  //                              real64 const dt,
+  //                              DomainPartition & domain,
+  //                              DofManager const & dofManager,
+  //                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  //                              arrayView1d< real64 > const & localRhs ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -183,12 +183,12 @@ private:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs );
 
-  virtual void assembleCouplingTerms( real64 const time_n,
-                                      real64 const dt,
-                                      DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override final;
+  // virtual void assembleCouplingTerms( real64 const time_n,
+  //                                     real64 const dt,
+  //                                     DomainPartition const & domain,
+  //                                     DofManager const & dofManager,
+  //                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  //                                     arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                                    MeshLevel const & mesh,
@@ -202,7 +202,7 @@ private:
                                                            string_array const & regionNames,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs );
+                                                           arrayView1d< real64 > const & localRhs ) override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -265,20 +265,12 @@ private:
                                                DofManager const & dofManager,
                                                SparsityPatternView< globalIndex > const & pattern ) const;
 
-  /**
-   * @Brief assemble the contribution of matrix cell pressure on bubble DOFs
-   * with full Jacobian for fully-implicit coupling.
-   * @param dt the time step size
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the local system matrix
-   * @param localRhs the local system right-hand side vector
-   */
+
   void assembleMatrixPressureBubbleContribution( real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs );
+                                                 arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief Set up the Dflux_dApertureMatrix object
@@ -286,6 +278,7 @@ private:
    * @param domain
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain );
+
 
   // virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
   //                                         integer const solverType ) override;

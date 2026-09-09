@@ -30,6 +30,8 @@ namespace geos
 class ContactSolverBase : public SolidMechanicsLagrangianFEM
 {
 public:
+  static constexpr bool hasContactStabilization = false;
+
   ContactSolverBase( const string & name,
                      Group * const parent );
 

@@ -95,11 +95,12 @@ public:
 
 protected:
 
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                                   MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                   arrayView1d< real64 > const & localRhs ) override;
+                                                                   arrayView1d< real64 > const & localRhs ) override final;
 
   virtual integer numFluidComponents() const override { return 1; }
 
