@@ -345,6 +345,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
                               integer const numFaces,
                               real64 const volume,
                               real64 const diameter,
+                              StabilizationLength const stabilizationLength,
                               real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP],
                               MatrixSliceConst const & projection,
                               MatrixSlice const & workspace,
@@ -352,11 +353,23 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
 {
   integer const numStressDof = NUM_FACE_DOF * numFaces;
 
-  // kappa_E is the deviatoric compliance 1/(2 mu). The paper takes half the trace of D,
-  // equation (15); measured on a tetrahedral column this choice is slightly the better of
-  // the two, and it carries no lambda, so the stabilization does not drift as the material
-  // approaches incompressibility
-  real64 const stabScale = compliance[3][3] * diameter;
+  // kappa_E is the spectral norm of D, equation (15): its eigenvalues are 1/(2 mu) on the
+  // deviatoric subspace and 1/(2 mu + 3 lambda) on the hydrostatic one, so for lambda > 0
+  // the largest is 1/(2 mu), which is the shear diagonal of the orthonormal basis
+  //
+  // The length of equation (15). h_E is the choice of the paper. The hydraulic radius is
+  // the only length whose sum_f h |f| is |E| for every shape and element type: h_E gives
+  // h_E |dE|, unbounded on a flattened cell, and a per face |E| / |f| gives n_f |E|, which
+  // drifts across a mesh of mixed element types.
+  real64 surfaceArea = 0.0;
+  for( integer lf = 0; lf < numFaces; ++lf )
+  {
+    surfaceArea += faceGeom[lf].area;
+  }
+  real64 const length = ( stabilizationLength == StabilizationLength::hydraulicRadius )
+                        ? volume / surfaceArea
+                        : diameter;
+  real64 const stabScale = compliance[3][3] * length;
 
   real64 weight[NUM_SYM_COMP][NUM_SYM_COMP];
   for( integer a = 0; a < NUM_SYM_COMP; ++a )
@@ -500,6 +513,7 @@ inline void computeElementOperators( FaceGeometry const * const faceGeom,
                                      integer const numFaces,
                                      real64 const (&elemCenter)[3],
                                      real64 const diameter,
+                                     StabilizationLength const stabilizationLength,
                                      ElementMoments const & moments,
                                      real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP],
                                      MatrixSlice const & divergence,
@@ -515,7 +529,7 @@ inline void computeElementOperators( FaceGeometry const * const faceGeom,
   computeProjectionOperator( faceGeom, numFaces, elemCenter, moments,
                              divReconstruction.toSliceConst(), projection );
 
-  computeStiffness( faceGeom, numFaces, moments.volume, diameter, compliance,
+  computeStiffness( faceGeom, numFaces, moments.volume, diameter, stabilizationLength, compliance,
                     projection.toSliceConst(), workspace, stiffness );
 }
 

@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+
+<!-- Kirsch wellbore, displacement finite elements. -->
+<Problem>
+
+  <Included>
+    <File name="./kirschWellbore_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsLagrangianFEM
+      name="wellboreSolver"
+      discretization="FE1"
+      targetRegions="{ Omega }"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-5"
+        krylovMaxIter="2000"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace name="FE1" order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <!-- in situ far field, applied as sigma_inf . n on the outer boundary -->
+    <Traction
+      name="farField"
+      objectPath="faceManager"
+      setNames="{ rpos }"
+      tractionType="stress"
+      scale="1.0"
+      inputStress="{ -11.25e6, -9.0e6, -15.0e6, 0.0, 0.0, 0.0 }"/>
+
+    <!-- well pressure on the borehole wall -->
+    <Traction
+      name="wellLoad"
+      objectPath="faceManager"
+      setNames="{ rneg }"
+      tractionType="normal"
+      scale="-2.0e6"/>
+
+    <FieldSpecification
+      name="symmetryY" objectPath="nodeManager" fieldName="totalDisplacement"
+      component="1" scale="0.0" setNames="{ tneg }"/>
+    <FieldSpecification
+      name="symmetryX" objectPath="nodeManager" fieldName="totalDisplacement"
+      component="0" scale="0.0" setNames="{ tpos }"/>
+    <FieldSpecification
+      name="planeStrain" objectPath="nodeManager" fieldName="totalDisplacement"
+      component="2" scale="0.0" setNames="{ zneg, zpos }"/>
+  </FieldSpecifications>
+
+</Problem>

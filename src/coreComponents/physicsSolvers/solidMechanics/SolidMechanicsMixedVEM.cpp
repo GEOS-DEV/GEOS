@@ -22,6 +22,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mixedVEM/HybridMixedVEM.hpp"
@@ -140,6 +141,7 @@ void SolidMechanicsMixedVEM::initializePreSubGroups()
   MixedVEMDiscretization const & discretization = vemManager.getDiscretization( m_discretizationName );
 
   m_useHybridization = discretization.useHybridization();
+  m_stabilizationLength = discretization.stabilizationLength();
 
   // the interface operator is positive definite, the saddle point system is not
   LinearSolverParameters & params = m_linearSolverParameters.get();
@@ -575,6 +577,7 @@ void buildElementOperators( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                             arraySlice1d< localIndex const > const & elemToNodes,
                             real64 const (&elemCenter)[3],
                             real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP],
+                            StabilizationLength const stabilizationLength,
                             ElementScratch & scratch )
 {
   buildElementGeometry( nodePositions, faceToNodes, faceNormals, elemToFaces,
@@ -587,6 +590,7 @@ void buildElementOperators( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                            scratch.numFaces,
                            elemCenter,
                            diameter,
+                           stabilizationLength,
                            scratch.moments,
                            compliance,
                            scratch.divergence.toSlice(),
@@ -702,6 +706,91 @@ void SolidMechanicsMixedVEM::classifyFaces( real64 const time, MeshLevel & mesh 
                                              [&]( FieldSpecification const &,
                                                   SortedArrayView< localIndex const > const & )
   {} );
+
+  // GEOS builds a Traction specification from the face normal and integrates it as a nodal
+  // load; the mixed form needs the same vector as data on the face, so it is evaluated here
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
+  arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
+  arrayView2d< localIndex const > const faceToElementRegion = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const faceToElementSubRegion = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const faceToElement = faceManager.elementList();
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenters =
+    elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+  fsManager.apply< FaceManager,
+                   TractionBoundaryCondition >( time, mesh, TractionBoundaryCondition::catalogName(),
+                                                [&]( TractionBoundaryCondition const & bc,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     Group &,
+                                                     string const & )
+  {
+    using TractionType = TractionBoundaryCondition::TractionType;
+
+    TractionType const tractionType =
+      bc.getReference< TractionType >( TractionBoundaryCondition::viewKeyStruct::tractionTypeString() );
+    R2SymTensor const inputStress =
+      bc.getReference< R2SymTensor >( TractionBoundaryCondition::viewKeyStruct::inputStressString() );
+    R1Tensor const direction = bc.getDirection();
+    real64 const scale = bc.getScale();
+
+    forAll< serialPolicy >( targetSet.size(), [=]( localIndex const i )
+    {
+      localIndex const f = targetSet[i];
+
+      integer const side = ( faceToElement( f, 0 ) >= 0 ) ? 0 : 1;
+      localIndex const er = faceToElementRegion( f, side );
+      localIndex const esr = faceToElementSubRegion( f, side );
+      localIndex const ei = faceToElement( f, side );
+
+      // the specification is written on the outward normal, so orient it away from the cell
+      real64 df[3], n[3];
+      for( integer k = 0; k < 3; ++k )
+      {
+        df[k] = faceCenter( f, k ) - elemCenters[er][esr]( ei, k );
+        n[k] = faceNormal( f, k );
+      }
+      real64 const s = ( LvArray::tensorOps::AiBi< 3 >( df, n ) < 0.0 ) ? -1.0 : 1.0;
+      for( integer k = 0; k < 3; ++k )
+      {
+        n[k] *= s;
+      }
+
+      real64 t[3] = { 0.0, 0.0, 0.0 };
+      if( tractionType == TractionType::vector )
+      {
+        for( integer k = 0; k < 3; ++k )
+        {
+          t[k] = scale * direction[k];
+        }
+      }
+      else
+      {
+        real64 const sn[3] = { scale * n[0], scale * n[1], scale * n[2] };
+        if( tractionType == TractionType::normal )
+        {
+          for( integer k = 0; k < 3; ++k )
+          {
+            t[k] = sn[k];
+          }
+        }
+        else
+        {
+          t[0] = inputStress[0] * sn[0] + inputStress[5] * sn[1] + inputStress[4] * sn[2];
+          t[1] = inputStress[5] * sn[0] + inputStress[1] * sn[1] + inputStress[3] * sn[2];
+          t[2] = inputStress[4] * sn[0] + inputStress[3] * sn[1] + inputStress[2] * sn[2];
+        }
+      }
+
+      for( integer k = 0; k < 3; ++k )
+      {
+        traction( f, k ) = t[k];
+      }
+    } );
+  } );
 }
 
 void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
@@ -793,7 +882,8 @@ void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
         makeIsotropicCompliance( lambda, mu, compliance );
 
         buildElementOperators( nodePositions, faceToNodes, faceNormals,
-                               elemToFaces[k], elemToNodes[k], elemCenter, compliance, scratch );
+                               elemToFaces[k], elemToNodes[k], elemCenter, compliance,
+                               m_stabilizationLength, scratch );
 
         buildElementLoads( displacementTrace, tractionField, boundaryType, displacementMask,
                            elemToFaces[k], density( k, 0 ), gravity, scratch );
@@ -1240,7 +1330,8 @@ void SolidMechanicsMixedVEM::computeCellFields( DomainPartition & domain ) const
         makeIsotropicCompliance( lambda, mu, compliance );
 
         buildElementOperators( nodePositions, faceToNodes, faceNormals,
-                               elemToFaces[k], elemToNodes[k], elemCenter, compliance, scratch );
+                               elemToFaces[k], elemToNodes[k], elemCenter, compliance,
+                               m_stabilizationLength, scratch );
 
         if( m_useHybridization )
         {

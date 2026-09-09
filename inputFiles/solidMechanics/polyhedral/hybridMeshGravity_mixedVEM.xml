@@ -15,6 +15,9 @@
       discretization="mixedVEM1"
       targetRegions="{ Domain }"
       logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="5"/>      
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"

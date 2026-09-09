@@ -42,6 +42,18 @@ MixedVEMDiscretization::MixedVEMDiscretization( string const & name,
                     "unknowns are statically condensed. The global system is then the symmetric "
                     "positive definite interface problem H lambda = h, and the element stress and "
                     "displacement are recovered independently on each cell." );
+
+  registerWrapper( viewKeyStruct::stabilizationLengthString(), &m_stabilizationLength ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Length h of the stabilization term, equation (15) of the reference.\n"
+                    "If 0, the element diameter h_E is used, which is the choice of the paper.\n"
+                    "If 1, the hydraulic radius |E| / |dE| is used. It is the only length whose "
+                    "sum over the faces of h |f| is |E| for every shape and element type, so the "
+                    "stabilization keeps its balance against the consistency term on flattened or "
+                    "stretched cells, where h_E is the long diagonal of every face. It is more "
+                    "accurate on such meshes and costs iterations, the stabilization being "
+                    "smaller." );
 }
 
 MixedVEMDiscretization::CatalogInterface::CatalogType &

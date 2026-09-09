@@ -199,6 +199,7 @@ void computeFaceGeometry( COORDS const & X,
   geom.loopOrientation = ( signedArea < 0.0 ) ? -1.0 : 1.0;
   geom.area = LvArray::math::abs( signedArea );
 
+
   LvArray::tensorOps::copy< 3 >( geom.center, centroid );
   LvArray::tensorOps::scale< 3 >( geom.center, 1.0 / signedArea );
 

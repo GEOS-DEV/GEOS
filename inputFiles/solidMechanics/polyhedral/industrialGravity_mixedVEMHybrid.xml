@@ -34,17 +34,18 @@
 <Problem>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+    gravityVector="{ 0.0, 0.0, -9.8 }">
     <SolidMechanicsMixedVEM
       name="gravitySolver"
       discretization="mixedVEM1"
       targetRegions="{ Domain }"
       logLevel="1">
       <LinearSolverParameters
-        solverType="cg"
+        solverType="gmres"
         preconditionerType="amg"
         krylovTol="1.0e-8"
-        krylovMaxIter="1000"/>
+        krylovMaxIter="1000"
+        logLevel="1"/>
     </SolidMechanicsMixedVEM>
   </Solvers>
 
@@ -63,7 +64,7 @@
       regionAttribute="region"
       partitionMethod="parmetis"
       partitionRefinement="1"
-      file="/Users/oduran/Documents/GitHub/GEOS/build-macOS_arm-release/bin/industrial_3_mechanics.vtu"/>
+      file="./Aramis_tetdom_populated_v2.vtu"/>
   </Mesh>
 
   <ElementRegions>
@@ -90,7 +91,7 @@
       fieldName="displacementTrace"
       component="0"
       scale="0.0"
-      setNames="{ 1, 3, 9, 10, 11, 14, 15 }"/>
+      setNames="{ 7, 22 }"/>
 
     <FieldSpecification
       name="lateralY"
@@ -98,7 +99,7 @@
       fieldName="displacementTrace"
       component="1"
       scale="0.0"
-      setNames="{ 1, 3, 9, 10, 11, 14, 15 }"/>
+      setNames="{ 15, 31 }"/>
 
     <FieldSpecification
       name="bottomZ"
@@ -106,7 +107,7 @@
       fieldName="displacementTrace"
       component="2"
       scale="0.0"
-      setNames="{ 12 }"/>
+      setNames="{ 27 }"/>
   </FieldSpecifications>
 
   <Events

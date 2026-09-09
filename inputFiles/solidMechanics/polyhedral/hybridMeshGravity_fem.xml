@@ -15,13 +15,13 @@
       targetRegions="{ Domain }"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-3"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="cg"
+        solverType="gmres"
         preconditionerType="amg"
-        krylovTol="1.0e-6"
-        krylovMaxIter="500"/>
+        krylovTol="1.0e-5"
+        logLevel="1"/>
     </SolidMechanicsLagrangianFEM>
   </Solvers>
 

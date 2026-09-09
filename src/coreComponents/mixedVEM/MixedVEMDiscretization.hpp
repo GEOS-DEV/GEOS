@@ -21,6 +21,7 @@
 #define GEOS_MIXEDVEM_MIXEDVEMDISCRETIZATION_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "mixedVEM/MixedVEMTypes.hpp"
 
 namespace geos
 {
@@ -72,6 +73,9 @@ public:
   {
     /// @return The key for hybridization
     static constexpr char const * hybridizationString() { return "hybridization"; }
+
+    /// @return The key for stabilizationLength
+    static constexpr char const * stabilizationLengthString() { return "stabilizationLength"; }
   };
 
   /**
@@ -79,10 +83,23 @@ public:
    */
   bool useHybridization() const { return m_hybridization > 0; }
 
+  /**
+   * @brief @return the length used by the stabilization, equation (15)
+   */
+  mixedVEM::StabilizationLength stabilizationLength() const
+  {
+    return ( m_stabilizationLength > 0 )
+           ? mixedVEM::StabilizationLength::hydraulicRadius
+           : mixedVEM::StabilizationLength::elementDiameter;
+  }
+
 private:
 
   /// flag selecting the hybridized form instead of the mixed saddle point form
   integer m_hybridization;
+
+  /// flag selecting |E| / |dE| instead of h_E as the length of the stabilization
+  integer m_stabilizationLength;
 
 };
 

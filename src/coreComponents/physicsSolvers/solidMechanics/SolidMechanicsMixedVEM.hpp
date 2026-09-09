@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSMIXEDVEM_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "mixedVEM/MixedVEMTypes.hpp"
 
 namespace geos
 {
@@ -192,6 +193,9 @@ private:
 
   /// hybridization flag, read from the MixedVEMDiscretization named by m_discretizationName
   bool m_useHybridization;
+
+  /// length used by the stabilization, equation (15)
+  mixedVEM::StabilizationLength m_stabilizationLength;
 
   /// multiplier traces of the six global rigid body motions, the near null space of H
   mutable array1d< ParallelVector > m_nearNullSpace;

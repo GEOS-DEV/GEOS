@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+
+<!-- Kirsch wellbore: a circular hole in a medium under a far field in situ stress, with an
+     internal well pressure. Quarter symmetry, theta in [0, 90], plane strain in z.
+
+     The problem is posed on the total stress: the far field enters as a traction on the
+     outer boundary rather than as an initial stress, so the same statement is solved by the
+     displacement and the mixed forms. -->
+<Problem>
+
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D4 }"
+      radius="{ 0.1, 5.0 }"
+      theta="{ 0, 90 }"
+      zCoords="{ -1, 1 }"
+      nr="{ 30 }"
+      nt="{ 30 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, -1.0 },
+                    { 0.0, 0.0, 1.0 } }"
+      autoSpaceRadialElems="{ 2.0 }"
+      useCartesianOuterBoundary="0"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Omega"
+      cellBlocks="{ * }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="5.0e8"
+      defaultShearModulus="3.0e8"/>
+  </Constitutive>
+
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/wellboreSolver"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="plot"/>
+  </Outputs>
+
+</Problem>
