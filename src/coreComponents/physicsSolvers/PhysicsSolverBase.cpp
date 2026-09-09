@@ -1444,6 +1444,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     executionContext.nonlinearIteration = nonlinearIteration;
     executionContext.systemSetupTimestamp = getSystemSetupTimestamp();
     m_linearSolver->setExecutionContext( executionContext );
+    m_linearSolver->setNearNullKernel( getLinearSolverNearNullKernel() );
 
     if( isSetupNeeded )
     {

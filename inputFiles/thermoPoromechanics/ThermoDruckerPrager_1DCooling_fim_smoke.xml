@@ -54,7 +54,8 @@
       solidInternalEnergyModelName="rockInternalEnergy"
     />
 
-    <DruckerPrager 
+    <!-- SPHINX_DRUCKERPRAGER_SOLID -->
+    <DruckerPrager
       name="rockSolid"
       defaultDensity="2700"
       defaultBulkModulus="0.5e9"
@@ -63,7 +64,8 @@
       defaultFrictionAngle="15.27"
       defaultDilationAngle="0.0"
       defaultHardeningRate="0.0"
-      defaultDrainedLinearTEC="3e-7"/> 
+      defaultDrainedLinearTEC="3e-7"/>
+    <!-- SPHINX_DRUCKERPRAGER_SOLID_END -->
 
     <BiotPorosity
       name="rockPorosity"

@@ -18,8 +18,10 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas.txt, ../../MULTIPHASE_TABLES/pvtliquid.txt }"
-      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt"/>
+      pressureCoordinates="{1e6, 10e7}"
+      pressureInterval="5e4"
+      temperatureCoordinates="{367.15, 369.15}"
+      temperatureInterval="1" />
 
     <BiotPorosity
       name="rockPorosity"

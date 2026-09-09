@@ -23,6 +23,7 @@ set( simplePDESolvers_headers
      LaplaceFEMKernels.hpp
      PhaseFieldDamageFEM.hpp
      PhaseFieldDamageFEMKernels.hpp
+     PhaseFieldDamageFields.hpp
      PhaseFieldPressurizedDamageFEMKernels.hpp )
 
 # Specify solver sources

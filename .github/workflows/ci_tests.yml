@@ -333,7 +333,7 @@ jobs:
   #     - run: sysctl -n machdep.cpu.brand_string
 
 
-  # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
+  # If the 'ci: run device builds' PR label is found, the CUDA jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
     name: ${{ matrix.name }}
@@ -433,10 +433,57 @@ jobs:
       NPROC: ${{ matrix.NPROC }}
       CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
-      REQUIRED_LABEL: "ci: run CUDA builds"
+      REQUIRED_LABEL: "ci: run device builds"
     secrets: inherit
 
-  # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
+  # If the 'ci: run device builds' PR label is found, the ROCm job runs alongside
+  # the CPU and CUDA jobs. This is a build-only job, so the runner does not need
+  # an AMD GPU; the image supplies the amdclang 19/ROCm 6.4.3 toolchain and the
+  # generated /spack-generated.cmake host-config.
+  rocm_builds:
+    name: ${{ matrix.name }}
+    needs:
+      - is_not_draft_pull_request
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 24.04 - amdclang 19 + ROCm 6.4.3
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            BUILD_GENERATOR: "--ninja"
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-amdclang19.0.0-rocm6.4.3
+            ENABLE_HYPRE_DEVICE: HIP
+            ENABLE_HYPRE: ON
+            ENABLE_HYPREDRV: OFF
+            ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
+            RUNS_ON: streak2
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g -e ROCM_PATH=/opt/rocm-6.4.3 -e HIP_PATH=/opt/rocm-6.4.3 -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            HOST_CONFIG: /spack-generated.cmake
+
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      BUILD_GENERATOR: ${{ matrix.BUILD_GENERATOR }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
+      ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
+      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+      ENABLE_HYPREDRV: ${{ matrix.ENABLE_HYPREDRV }}
+      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
+      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+      NPROC: ${{ matrix.NPROC }}
+      CTEST_PARALLEL_LEVEL: ${{ matrix.CTEST_PARALLEL_LEVEL || matrix.NPROC }}
+      RUNS_ON: ${{ matrix.RUNS_ON }}
+      REQUIRED_LABEL: "ci: run device builds"
+    secrets: inherit
+
+  # Convenience job - passes when all other jobs have passed (including the GPU jobs).
   check_that_all_jobs_succeeded:
     runs-on: ubuntu-22.04
     needs:
@@ -446,6 +493,7 @@ jobs:
     - check_code_rules
     - cpu_builds
     - cuda_builds
+    - rocm_builds
     - run_integrated_tests
     if: ${{ always() }}
     steps:
@@ -455,6 +503,7 @@ jobs:
         echo "check_code_style_and_documentation: ${{needs.check_code_style_and_documentation.result}}"
         echo "cpu_builds: ${{needs.cpu_builds.result}}"
         echo "cuda_builds: ${{needs.cuda_builds.result}}"
+        echo "rocm_builds: ${{needs.rocm_builds.result}}"
         echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
@@ -462,5 +511,6 @@ jobs:
           needs.check_code_style_and_documentation.result == 'success' &&
           needs.cpu_builds.result == 'success' &&
           needs.cuda_builds.result == 'success' && 
+          needs.rocm_builds.result == 'success' &&
           needs.run_integrated_tests.result == 'success'
         }}
