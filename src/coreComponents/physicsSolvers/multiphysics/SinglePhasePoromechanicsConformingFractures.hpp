@@ -81,12 +81,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-
-  virtual void setMGRStrategy() override
-  {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
-  }
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   virtual void assembleSystem( real64 const time_n,
                                real64 const dt,
@@ -100,11 +95,12 @@ public:
 
 protected:
 
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                                   MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                   arrayView1d< real64 > const & localRhs ) override;
+                                                                   arrayView1d< real64 > const & localRhs ) override final;
 
   virtual integer numFluidComponents() const override { return 1; }
 

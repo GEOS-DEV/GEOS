@@ -572,7 +572,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
-                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                         stdMap< string, localIndex > const * const dR_dAperOffsets )
 {
   GEOS_MARK_FUNCTION;
 
@@ -583,7 +584,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                       MeshLevel const & mesh,
                                                                       string_array const & )
   {
@@ -619,6 +620,21 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
+      localIndex const dR_dAperOffset = [&]()
+      {
+        if( dR_dAperOffsets == nullptr )
+        {
+          return localIndex( 0 );
+        }
+        auto const offsetIt = dR_dAperOffsets->find( meshName );
+        GEOS_ERROR_IF( offsetIt == dR_dAperOffsets->end(),
+                       GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
+        return offsetIt->second;
+      }();
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       if( m_isThermal )
@@ -632,7 +648,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                                                           dt,
                                                                                           localMatrix.toViewConstSizes(),
                                                                                           localRhs.toView(),
-                                                                                          dR_dAper );
+                                                                                          dR_dAper,
+                                                                                          dR_dAperOffset );
       }
       else
       {
@@ -645,7 +662,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                                                           dt,
                                                                                           localMatrix.toViewConstSizes(),
                                                                                           localRhs.toView(),
-                                                                                          dR_dAper );
+                                                                                          dR_dAper,
+                                                                                          dR_dAperOffset );
       }
     } );
   } );
@@ -816,9 +834,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                          GEOS_FMT( faceBcLogMessage,
-                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                            this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                            setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -852,9 +870,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
-                                                                                 this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                                                 setName, targetGroup.getName(), numTargetFaces ),
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                                                         this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                         setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -874,7 +892,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
       } );
 
-      GEOS_ERROR_IF( pressureSets != temperatureSets, GEOS_FMT( incompleteBCLogmessage, this->getName(), time_n + dt ) );
+      GEOS_ERROR_IF( pressureSets != temperatureSets, GEOS_FMT_RUNTIME( incompleteBCLogmessage, this->getName(), time_n + dt ) );
 
       // Take BCs defined for "temperature" field and apply values to "faceTemperature"
       for( auto const & setName : temperatureSets )
@@ -924,9 +942,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                          GEOS_FMT( faceBcLogMessage,
-                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                            this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                            setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 

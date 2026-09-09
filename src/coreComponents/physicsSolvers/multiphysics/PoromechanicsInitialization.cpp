@@ -148,8 +148,8 @@ execute( real64 const time_n,
 namespace
 {
 typedef PoromechanicsInitialization< MultiphasePoromechanics<> > MultiphasePoromechanicsInitialization;
-typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures<> > MultiphasePoromechanicsConformingFracturesInitialization;
-typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFracturesALM<> > MultiphasePoromechanicsConformingFracturesALMInitialization;
+// typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures<> > MultiphasePoromechanicsConformingFracturesInitialization;
+// typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFracturesALM<> > MultiphasePoromechanicsConformingFracturesALMInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> > >
   CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization;
@@ -164,11 +164,11 @@ typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures >
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics<> > > HydrofractureInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( TaskBase, CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( TaskBase, CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( TaskBase, CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( TaskBase, CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsConformingFracturesInitialization, string const &, Group * const )

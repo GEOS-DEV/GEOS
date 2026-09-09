@@ -19,11 +19,16 @@
 
 #include "HypreUtils.hpp"
 
+#include "common/MpiWrapper.hpp"
+#include "linearAlgebra/common/common.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
 
+#include <algorithm>
 #include <numeric>
 
 namespace geos
@@ -31,6 +36,49 @@ namespace geos
 
 namespace hypre
 {
+
+namespace
+{
+array1d< int > s_testingKrylovDofLabels;
+}
+
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels )
+{
+  labels.clear();
+  if( DofManager const * const dofManager = mat.dofManager() )
+  {
+    dofManager->getLocalDofComponentLabels( labels );
+    return;
+  }
+  if( s_testingKrylovDofLabels.size() == mat.numLocalRows() )
+  {
+    labels.resize( s_testingKrylovDofLabels.size() );
+    for( localIndex i = 0; i < labels.size(); ++i )
+    {
+      labels[i] = s_testingKrylovDofLabels[i];
+    }
+  }
+}
+
+namespace testing
+{
+
+void setKrylovDofLabels( arrayView1d< int const > const & labels )
+{
+  s_testingKrylovDofLabels.resize( labels.size() );
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    s_testingKrylovDofLabels[i] = labels[i];
+  }
+}
+
+void clearKrylovDofLabels()
+{
+  s_testingKrylovDofLabels.clear();
+}
+
+}
 
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec )
 {

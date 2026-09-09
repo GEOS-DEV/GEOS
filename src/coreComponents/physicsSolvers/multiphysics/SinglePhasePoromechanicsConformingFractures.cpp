@@ -51,12 +51,16 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
-assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_PARAM(meshName),
+                                                    MeshLevel const & mesh,
                                                     string_array const & regionNames,
                                                     DofManager const & dofManager,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
+  
+//TODO refactor with contact browser and kernel
+
   GEOS_MARK_FUNCTION;
 
   using namespace contact;

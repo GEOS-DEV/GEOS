@@ -264,6 +264,13 @@ install( TARGETS mesh LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 if( ENABLE_VTK )
     # Avoid compiling with nvcc which sometimes segfaults in debug
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
+
+    # GCC 12 incorrectly diagnoses a use-after-free in VTK's header-only DIY
+    # reduction implementation when the all-to-all calls in this source are
+    # inlined. Suppress this third-party false positive for this source only.
+    if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
+        set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES COMPILE_OPTIONS "-Wno-use-after-free" )
+    endif()
 endif()
 
 if( GEOS_ENABLE_TESTS )

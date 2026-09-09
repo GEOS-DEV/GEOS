@@ -66,18 +66,19 @@ ReactiveBrineFluid< PHASE > ::
 ReactiveBrineFluid( string const & name, Group * const parent ):
   ReactiveMultiFluid( name, parent )
 {
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
-
-  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file.\n"
                     "If the table is requested to be output in the log, and it is too large,"
                     "a CSV file will be generated even if `writeCSV` is set to 0." );
+
+  registerWrapper( viewKeyStruct::salinityString(), &m_salinity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "The salinity of brine" ).
+    setDefaultValue( m_salinity );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -95,11 +96,10 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
 }
 
 template< typename PHASE >
-bool ReactiveBrineFluid< PHASE > ::isThermal() const
+bool ReactiveBrineFluid< PHASE >::isThermal() const
 {
-  return ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
+  return isThermalType();
 }
-
 
 template< typename PHASE >
 std::unique_ptr< ConstitutiveBase >
@@ -130,17 +130,20 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
   ReactiveMultiFluid::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                        "invalid number of phases",
-                        InputError, getDataContext() );
-  GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
-                        "invalid number of values in attribute ",
-                        InputError, getDataContext() );
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+
+  // Salinity must not be negative
+  GEOS_THROW_IF_LT_MSG( m_salinity, 0.0,
+                        GEOS_FMT( "{}: invalid salinity {}. "
+                                  "Value must not be negative", getFullName(), viewKeyStruct::salinityString() ),
+                        InputError );
 
   createPVTModels();
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels()
+void ReactiveBrineFluid< PHASE >::createPVTModels()
 {
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
@@ -211,8 +214,14 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
   };
 
+  BrineFluidParameters parameters;
+  parameters.m_salinity = m_salinity;
+
   // then, we are ready to instantiate the phase models
-  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1",
+                                       parameters,
+                                       m_componentNames,
+                                       m_componentMolarWeight,
                                        pvtOutputOpts );
 }
 

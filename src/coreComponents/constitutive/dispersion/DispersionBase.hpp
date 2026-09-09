@@ -119,6 +119,9 @@ public:
   virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
+  struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
+  {};
+
 protected:
 
   /// cell-wise dispersivity in the subregion

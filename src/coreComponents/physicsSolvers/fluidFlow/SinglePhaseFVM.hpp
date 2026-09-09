@@ -178,7 +178,8 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                              stdMap< string, localIndex > const * const dR_dAperOffsets ) override final;
 
   virtual void
   assembleHydrofracFluxTermsALM( real64 const time_n,

@@ -19,7 +19,9 @@
 
 #include "WellSolverBase.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -36,7 +38,7 @@ using namespace fields;
 
 WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
-  : PhysicsSolverBase( name, parent ),
+  : WellControls( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -44,6 +46,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
   m_keepVariablesConstantDuringInitStep( false )
+
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -63,40 +66,41 @@ WellSolverBase::WellSolverBase( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
 
+
   addLogLevel< logInfo::WellControl >();
 }
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
+  Group * baseChild = WellControls::createChild( childKey, childName );
+  if( baseChild != nullptr )
+  {
+    return baseChild;
+  }
   static std::set< string > const childTypes = {
-    keys::wellControls,
+    //keys::wellControls,
     PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
                  getDataContext() );
-  if( childKey == keys::wellControls )
-  {
-    return &registerGroup< WellControls >( childName );
-  }
-  else
-  {
-    PhysicsSolverBase::createChild( childKey, childName );
-    return nullptr;
-  }
+
+  PhysicsSolverBase::createChild( childKey, childName );
+  return nullptr;
+
 }
 
 void WellSolverBase::expandObjectCatalogs()
 {
-  createChild( keys::wellControls, keys::wellControls );
+  //createChild( keys::wellControls, keys::wellControls );
 }
 
 WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::postInputInitialization()
 {
-  PhysicsSolverBase::postInputInitialization();
+  WellControls::postInputInitialization();
 
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
@@ -151,9 +155,10 @@ void WellSolverBase::initializePostSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FunctionManager & functionManager = FunctionManager::getInstance();
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+  Group & meshBodies = domain.getMeshBodies();
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -208,95 +213,67 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartition & domain )
+
+
+void WellSolverBase::selectWellConstraint( real64 const & time_n,
+                                           real64 const & dt,
+                                           const integer coupledIterationNumber,
+                                           DomainPartition & domain )
 {
-  FunctionManager & functionManager = FunctionManager::getInstance();
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
 
-  // Set well element/perf status
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
   {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion & subRegion )
+    GEOS_UNUSED_VAR( meshBodyName );
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
     {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
       WellControls & wellControls = getWellControls( subRegion );
-
-      // Set perforation status
-
-      PerforationData & perforationData = *subRegion.getPerforationData();
-      string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
-      arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
-      // for now set to open
-      for( integer i=0; i<perforationData.size(); i++ )
+      // Intiialize well if it is open
+      // Well state estimated from reservoir conditions
+      if( wellControls.isWellOpen() )
       {
-        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
-        perfStatus[i]=PerforationData::PerforationStatus::OPEN;
-        if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
+        if( !wellControls.getWellState() )
         {
-          perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
+          wellControls.setWellState( 1 );
+
+          initializeWell( domain, meshLevel, subRegion, time_n );
         }
       }
-
-      array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
-      // global index local elements (size == subregion.size)
-      arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
-
-      arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
-      array1d< integer > & currentStatus = subRegion.getWellElementStatus();
-      // Local elements
-      array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
-
-      integer numLocalElements = subRegion.getNumLocalElements();
-      array1d< integer > segStatus( numLocalElements );
-
-      // Local perforations
-      for( integer j = 0; j < perforationData.size(); j++ )
+      else
       {
-        localIndex const iwelem = perfWellElemIndex[j];
-        if( elemGhostRank[iwelem] < 0 )
+        wellControls.setWellState( 0 );
+      }
+
+      if( wellControls.getWellState())
+      {
+        evaluateConstraints( time_n,
+                             subRegion );
+
+        // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+        // the well initialization code requires control type to by synced
+        integer owner = -1;
+        // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+        if( subRegion.isLocallyOwned() )
         {
-          if( perfStatus[j] )
-          {
-            segStatus[iwelem] +=1;
-          }
+          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
         }
-      }
-      // Broadcast segment status so all cores have same well status
-      subRegion.setElementStatus( segStatus );
-      integer numOpenElements = 0;
-      array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
-      for( integer i=0; i<currentStatus.size(); i++ )
-      {
-        numOpenElements += updatedStatus[i];
-      }
-      numOpenElements>0 ?  wellControls.setWellStatus( time_n, WellControls::Status::OPEN ) :  wellControls.setWellStatus( time_n, WellControls::Status::CLOSED );
-
-
-      // Set local well element status array
-      for( integer i=0; i<subRegion.size(); i++ )
-      {
-        integer gi = globalWellElementIndex[i];
-        localElemStatus[i] = currentStatus[gi];
+        owner = MpiWrapper::max( owner );
+        WellControls::Control wellControl = wellControls.getControl();
+        MpiWrapper::broadcast( wellControl, owner );
+        wellControls.setControl( wellControl );
       }
     } );
-
   } );
-}
-void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                        DomainPartition & domain )
-{
 
-  // Open close perfs
-  setPerforationStatus( time_n, domain );
-
-  // Initialize the primary and secondary variables for the first time step
-
-  initializeWells( domain, time_n );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -310,7 +287,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion & subRegion )
-    { updateSubRegionState( elemManager, subRegion ); } );
+    { updateSubRegionState( subRegion ); } );
   } );
 }
 
@@ -321,13 +298,39 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  string const wellDofKey = dofManager.getKey( wellElementDofName());
+
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
+
 
   // assemble the accumulation term in the mass balance equations
   assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+  //assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+    } );
+  } );
+
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( time, dt, domain );
 
@@ -389,8 +392,15 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
       } );
 
+      wellControls.forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
+      {
+        // set the reference well element where the BHP control is applied
+        real64 const refElev1 = constraint.getReferenceElevation();
+        constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
+      } );
+
       // set the reference well element where the BHP control is applied
-      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );
+      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );  // tjb remove
     } );
   } );
 }

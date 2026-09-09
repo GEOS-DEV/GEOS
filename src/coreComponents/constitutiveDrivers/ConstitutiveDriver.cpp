@@ -217,7 +217,7 @@ void ConstitutiveDriver::outputToConsole() const
   {
     for( integer col = 0; col < numColumns; ++col )
     {
-      tableRow[col].value = GEOS_FMT( format, m_table( step, col ) );
+      tableRow[col].value = GEOS_FMT_RUNTIME( format, m_table( step, col ) );
     }
     tableData.addRow( tableRow );
   }

@@ -93,6 +93,7 @@ private:
 
   /// Pointers to hypre functions for the krylov solver
   std::unique_ptr< HypreSolverWrapper > m_solver;
+
 };
 
 } // end geos namespace

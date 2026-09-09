@@ -105,7 +105,7 @@ struct StressComputation
 
   {
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];
@@ -305,7 +305,7 @@ struct VelocityComputation
       uz_np1[a] *= 1.0-((dt/2)*(dampingz[a]/mass[a]));
     } );
 
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];

@@ -17,8 +17,14 @@
 #include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsTask.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <gtest/gtest.h>
 
@@ -38,7 +44,6 @@ CommandLineOptions g_commandLineOptions;
 struct TestInputs
 {
   string xmlInput;
-  stdMap< string, string > tableFiles;
 
   string sourceFluxName;
   string sinkFluxName;
@@ -46,6 +51,7 @@ struct TestInputs
   string timeStepFluxStatsPath;
   string wholeSimFluxStatsPath;
   string flowSolverPath;
+  string statsTaskPath;
 
   // rates for each timesteps, for each phases
   array2d< real64 > sourceRates;
@@ -149,36 +155,7 @@ struct TestSet
 
 
 class FlowStatisticsTest : public ::testing::Test
-{
-public:
-
-  void writeTableFiles( stdMap< string, string > const & files )
-  {
-    for( auto const & [fileName, content] : files )
-    {
-      std::ofstream os( fileName );
-      ASSERT_TRUE( os.is_open() );
-      os << content;
-      os.close();
-
-      m_tableFileNames.push_back( fileName );
-    }
-  }
-
-  void TearDown() override
-  {
-    // removing temp table files
-    for( string const & fileName : m_tableFileNames )
-    {
-      ASSERT_TRUE( std::remove( fileName.c_str() ) == 0 );
-    }
-    m_tableFileNames.clear();
-  }
-
-private:
-  stdVector< string > m_tableFileNames;
-};
-
+{};
 
 
 class IterationTest : public IterationsStatistics
@@ -206,26 +183,18 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
   }
 }
 
-real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
+template< typename SolverType, typename StatTaskType >
+real64 getTotalFluidMass( ProblemManager & problem,
+                          SolverType & solver,
+                          StatTaskType const & statsTask )
 {
-  real64 totalMass = 0.0;
-  PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( string( flowSolverPath ) );
-  solver.forDiscretizationOnMeshTargets( problem.getDomainPartition().getMeshBodies(),
-                                         [&] ( string const &,
-                                               MeshLevel & mesh,
-                                               string_array const & )
-  {
-    mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
-    {
-      SinglePhaseStatistics::RegionStatistics & regionStats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
-        SinglePhaseStatistics::viewKeyStruct::regionStatisticsString() );
-
-      totalMass += regionStats.totalMass;
-    } );
-  } );
-  return totalMass;
+  MeshLevel & mesh = problem.getDomainPartition()
+                       .getMeshBody( 0 )
+                       .getMeshLevel( solver.getDiscretizationName() );
+  auto const & statsAggregator = statsTask.getStatisticsAggregator();
+  auto const & stats = statsAggregator.getRegionsStatistics( mesh );
+  return stats.m_totalMass;
 }
-
 
 /**
  * @brief Verification that the source flux statistics are correct for the current timestep
@@ -529,6 +498,7 @@ TestSet getTestSet()
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
@@ -565,8 +535,12 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
-  real64 firstMass;
+  SinglePhaseBase & flowSolver =
+    problem.getGroupByPath< SinglePhaseBase >( testSet.inputs.flowSolverPath );
+  singlePhaseStatistics::StatsTask & statsTask =
+    problem.getGroupByPath< singlePhaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
 
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
@@ -578,7 +552,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
     }
   } );
 
@@ -589,12 +563,12 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check singlephasestatistics results
-  real64 const lastMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
   real64 const massDiffTol = 1e-7;
   EXPECT_NEAR( lastMass - firstMass,
                -testSet.totalMassProd[0],
                massDiffTol * std::abs( testSet.totalMassProd[0] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
-                                                                                 SinglePhaseStatistics::catalogName() );
+                                                                                 singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 
@@ -657,8 +631,12 @@ TestSet getTestSet()
                           phaseNames="{ gas, water }"
                           componentNames="{ co2, water }"
                           componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                          flashModelParaFile="co2flash.txt" />
+                          pressureCoordinates="{1.5e7, 2.5e7}"
+                          pressureInterval="1e5"
+                          temperatureCoordinates="{370.15, 400.15}"
+                          temperatureInterval="2.0"
+                          ezrokhiDensityCoefficients="{0.1033, -2.2991e-5, -2.3658e-6}"
+                          ezrokhiViscosityCoefficients="{0, 0, 0}" />
 
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
@@ -791,21 +769,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
-
-  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
-
-  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
-
-
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
@@ -847,19 +817,31 @@ TestSet getTestSet()
 TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 {
   TestSet const testSet = getTestSet();
-  writeTableFiles( testSet.inputs.tableFiles );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
+  CompositionalMultiphaseBase & flowSolver =
+    problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+  compositionalMultiphaseStatistics::StatsTask & statsTask =
+    problem.getGroupByPath< compositionalMultiphaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
+
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+
+    static bool passedFirstTimeStep = false;
+    if( !passedFirstTimeStep )
+    {
+      passedFirstTimeStep = true;
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
+    }
   } );
 
   // run simulation
@@ -867,6 +849,14 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 
   checkWholeSimFluxStats( problem, testSet );
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
+
+  // check compositionalmultiphasestatistics results
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
+  real64 const massDiffTol = 1e-5;
+  EXPECT_NEAR( lastMass - firstMass,
+               -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),
+               massDiffTol * std::abs( testSet.totalMassProd[0] + testSet.totalMassProd[1] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
+                                                                                                            singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 
@@ -929,8 +919,12 @@ TestSet getTestSet()
                           phaseNames="{ gas, water }"
                           componentNames="{ co2, water }"
                           componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                          flashModelParaFile="co2flash.txt" />
+                          pressureCoordinates="{1.5e7, 2.5e7}"
+                          pressureInterval="1e5"
+                          temperatureCoordinates="{370.15, 400.15}"
+                          temperatureInterval="2.0"
+                          ezrokhiDensityCoefficients="{0.1033, -2.2991e-5, -2.3658e-6}"
+                          ezrokhiViscosityCoefficients="{0, 0, 0}" />
 
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
@@ -1063,21 +1057,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
-
-  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
-
-  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
-
-
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
@@ -1123,19 +1109,31 @@ TestSet getTestSet()
 TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 {
   TestSet const testSet = getTestSet();
-  writeTableFiles( testSet.inputs.tableFiles );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
+  CompositionalMultiphaseBase & flowSolver =
+    problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+  auto const & statsTask =
+    problem.getGroupByPath< compositionalMultiphaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
+
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+
+    static bool passedFirstTimeStep = false;
+    if( !passedFirstTimeStep )
+    {
+      passedFirstTimeStep = true;
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
+    }
   } );
 
   // run simulation
@@ -1143,6 +1141,14 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 
   checkWholeSimFluxStats( problem, testSet );
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
+
+  // check compositionalmultiphasestatistics results
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
+  real64 const massDiffTol = 1e-5;
+  EXPECT_NEAR( lastMass - firstMass,
+               -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),
+               massDiffTol * std::abs( testSet.totalMassProd[0] + testSet.totalMassProd[1] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
+                                                                                                            singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 

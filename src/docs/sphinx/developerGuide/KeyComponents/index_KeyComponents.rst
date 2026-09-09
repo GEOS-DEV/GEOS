@@ -28,6 +28,4 @@ The main code components are described here.
 
    ./../../../../coreComponents/constitutive/docs/constitutiveDeveloperGuide.rst
 
-   ./../../../../coreComponents/constitutive/PVTPackage/docs/main.rst
-
    ./AddingNewSolver
