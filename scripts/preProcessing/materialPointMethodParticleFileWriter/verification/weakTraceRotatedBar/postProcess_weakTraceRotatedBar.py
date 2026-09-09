@@ -985,8 +985,8 @@ def main() -> int:
             compact_float(s.get("interfaceMeanAbsTangentialSlipChange")) + r" \\"
         )
     tex.append(r"\bottomrule\end{tabular}}")
-    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without an active trace, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart; material weak entries report passive A/B jumps and no applied force.")
-    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ & p95 $|[\![u_n]\!]|$ & p95 $|[\![u_t]\!]|$ \\\midrule")
+    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 active C0 mortar support, 4 reserved legacy weak-trace support, 5 contact suppressed without an accepted mortar constraint, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart; material weak entries report passive A/B jumps and no applied force.")
+    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrrrr}\toprule Variant & CZ & contact & mortar active & legacy support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ & p95 $|[\![u_n]\!]|$ & p95 $|[\![u_t]\!]|$ \\\midrule")
     for s in summaries:
         tex.append(
             latex_escape(s.get("label", s.get("variant", ""))) + " & " +

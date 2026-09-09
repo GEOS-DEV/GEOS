@@ -39,6 +39,7 @@ pfw["mSubmitJobs"] = False
 refine = int(os.environ.get("WEAK_TRACE_REFINE", "1"))
 cpp = int(os.environ.get("WEAK_TRACE_CPP", "64"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
+surface_refinement_level = int(os.environ.get("WEAK_TRACE_SURFACE_REFINEMENT_LEVEL", "1"))
 inclusion_radius = float(os.environ.get("WEAK_TRACE_INCLUSION_RADIUS", "0.22"))
 outer_radius = float(os.environ.get("WEAK_TRACE_OUTER_RADIUS", "0.72"))
 domain_half_width = float(os.environ.get("WEAK_TRACE_DOMAIN_HALF_WIDTH", str(1.15 * outer_radius)))
@@ -51,6 +52,7 @@ pfw["nI"] = pfw["xpar"] * cpp
 pfw["nJ"] = pfw["ypar"] * cpp
 pfw["nK"] = 3
 pfw["ppc"] = ppc
+pfw["surfaceRefinementLevel"] = surface_refinement_level
 
 pfw["xmin"] = -domain_half_width
 pfw["xmax"] = domain_half_width
@@ -183,13 +185,16 @@ elif VARIANT == "traceContactGroups":
     pfw["enableContact"] = 1
     pfw["enableWeakInterfaceTraceProjection"] = 1
     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
-    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "30"))
+    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "0.6"))
+    pfw["weakInterfaceTraceSurfaceFitNeighbors"] = int(os.environ.get("WEAK_TRACE_SURFACE_FIT_NEIGHBORS", "4"))
+    pfw["weakInterfaceTraceMortarQuadratureOrder"] = int(os.environ.get("WEAK_TRACE_MORTAR_QUADRATURE_ORDER", "2"))
+    pfw["weakInterfaceTraceMassCutoffRatio"] = float(os.environ.get("WEAK_TRACE_MASS_CUTOFF_RATIO", "1.0e-12"))
     pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
     pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
     pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
-    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
+    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "1.0e-4"))
     pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
     pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
@@ -243,7 +248,11 @@ if VARIANT == "falseElasticCZ":
     )
 pfw["mpmEventsString"] = "\n".join(event_blocks)
 
-default_particle_type = "1" if VARIANT == "primalEnrichment" else "2"
+# The C0 mortar was developed first with cubic B-spline MPM.  CPDI remains
+# available with WEAK_TRACE_PARTICLE_TYPE=2 and uses the underlying Q1 grid
+# trace.  Linear single-point MPM is intentionally not used because the mortar
+# tie does not cure its cell-crossing instability.
+default_particle_type = "1" if VARIANT in ("traceContactGroups", "primalEnrichment") else "2"
 particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
 geometry_z_pad = float(os.environ.get("WEAK_TRACE_GEOMETRY_Z_PAD", str(2.0 * cell)))
 cylinder_zmin = pfw["zmin"] - geometry_z_pad
@@ -387,6 +396,9 @@ pfw_expected = {
     "inclusion_E": inclusion_E,
     "poisson": poisson,
     "particle_type": particle_type,
+    "trace_surface_fit_neighbors": pfw.get("weakInterfaceTraceSurfaceFitNeighbors", None),
+    "trace_mortar_quadrature_order": pfw.get("weakInterfaceTraceMortarQuadratureOrder", None),
+    "trace_mass_cutoff_ratio": pfw.get("weakInterfaceTraceMassCutoffRatio", None),
     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
     "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),

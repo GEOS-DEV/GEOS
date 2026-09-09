@@ -43,6 +43,7 @@ cpp = int(os.environ.get("WEAK_TRACE_CPP", "48"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
 default_particle_type = "1" if VARIANT == "primalEnrichment" else "2"
 particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
+surface_refinement_level = int(os.environ.get("WEAK_TRACE_SURFACE_REFINEMENT_LEVEL", "1"))
 left_length = float(os.environ.get("WEAK_TRACE_LEFT_LENGTH", "1.0"))
 right_length = float(os.environ.get("WEAK_TRACE_RIGHT_LENGTH", "1.5"))
 bar_length = left_length + right_length
@@ -52,10 +53,11 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 cells_x_blocks = max(1, int(math.ceil(refine * bar_length)))
 cells_y_blocks = max(1, refine)
-if VARIANT == "primalEnrichment":
-    # The primal enrichment prototype is serial-only. Keep the same cell count
-    # used by the other variants, but do not split the background grid over MPI
-    # partitions.
+serial_weak_interface_variant = VARIANT in ("traceContactGroups", "primalEnrichment")
+if serial_weak_interface_variant:
+    # The current C0 weak-interface implementations are serial-only. Keep the
+    # same cell count used by the other variants, but do not split the background
+    # grid over MPI partitions.
     pfw["xpar"] = 1
     pfw["ypar"] = 1
 else:
@@ -66,6 +68,7 @@ pfw["nI"] = cells_x_blocks * cpp
 pfw["nJ"] = cells_y_blocks * max(8, cpp // 6)
 pfw["nK"] = 3
 pfw["ppc"] = ppc
+pfw["surfaceRefinementLevel"] = surface_refinement_level
 
 pfw["xmin"] = -bar_length
 pfw["xmax"] = 0.0
@@ -102,9 +105,15 @@ pfw["damageFieldPartitioning"] = 0
 pfw["weakDiscontinuityInsertion"] = "off"
 pfw["weakInterfaceTraceGeometry"] = "surface"
 pfw["cpdiDomainScaling"] = 0
-default_update_method = "PIC" if VARIANT == "primalEnrichment" else "FLIP"
+if VARIANT == "primalEnrichment":
+    default_update_method = "PIC"
+elif VARIANT == "traceContactGroups":
+    default_update_method = "XPIC"
+else:
+    default_update_method = "FLIP"
 pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", default_update_method)
-pfw["updateOrder"] = int(os.environ.get("WEAK_TRACE_UPDATE_ORDER", "1"))
+default_update_order = "2" if str(pfw["updateMethod"]).upper() == "XPIC" else "1"
+pfw["updateOrder"] = int(os.environ.get("WEAK_TRACE_UPDATE_ORDER", default_update_order))
 pfw["outputType"] = "silo"
 pfw["plotGridFields"] = 1
 pfw["gridFieldNames"] = [

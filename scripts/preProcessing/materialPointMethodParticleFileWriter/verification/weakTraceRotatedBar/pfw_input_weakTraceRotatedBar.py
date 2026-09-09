@@ -45,6 +45,7 @@ cpp = int(os.environ.get("WEAK_TRACE_CPP", "40"))
 ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
 default_particle_type = "1" if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic") else "2"
 particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", default_particle_type))
+surface_refinement_level = int(os.environ.get("WEAK_TRACE_SURFACE_REFINEMENT_LEVEL", "1"))
 update_order_text = os.environ.get("WEAK_TRACE_UPDATE_ORDER", "")
 
 pfw["planeStrain"] = 1
@@ -55,6 +56,7 @@ pfw["nI"] = pfw["xpar"] * cpp
 pfw["nJ"] = pfw["ypar"] * cpp
 pfw["nK"] = 3
 pfw["ppc"] = ppc
+pfw["surfaceRefinementLevel"] = surface_refinement_level
 
 pfw["xmin"] = -0.55
 pfw["xmax"] = 0.55

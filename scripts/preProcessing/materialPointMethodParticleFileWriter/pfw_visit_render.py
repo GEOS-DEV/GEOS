@@ -469,6 +469,39 @@ def _define_particle_region_stress_component_candidates(name, particle_meshes, l
     return _unique_keep_order(names)
 
 
+def _particle_mesh_coord_expression(mesh, component):
+    return "coord({0})[{1}]".format(_quote_visit_var(mesh), int(component))
+
+
+def _define_particle_region_polar_stress_candidates(name, particle_meshes, radial=True):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        x = _particle_mesh_coord_expression(mesh, 0)
+        y = _particle_mesh_coord_expression(mesh, 1)
+        r2 = "(({x})*({x})+({y})*({y})+1.0e-300)".format(x=x, y=y)
+        base = "{0}_ParticleFields/particleStress".format(mesh)
+        sxx = _array_decompose_candidate(base, 0)
+        syy = _array_decompose_candidate(base, 1)
+        sxy = _array_decompose_candidate(base, 5)
+        if radial:
+            numerator = (
+                "(({x})*({x})*({sxx})+({y})*({y})*({syy})"
+                "+2.0*({x})*({y})*({sxy}))"
+            ).format(x=x, y=y, sxx=sxx, syy=syy, sxy=sxy)
+        else:
+            numerator = (
+                "(({y})*({y})*({sxx})+({x})*({x})*({syy})"
+                "-2.0*({x})*({y})*({sxy}))"
+            ).format(x=x, y=y, sxx=sxx, syy=syy, sxy=sxy)
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, "({0})/({1})".format(numerator, r2))
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
 def _define_stress_component_expression(name, all_names, label, legacy_index, particle_meshes=None):
     names = []
     for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes)):
@@ -733,6 +766,10 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
         return stress_component
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
+    if key in ("sigmann", "particlesigmann", "stressnn", "particlestressnn", "sigmarr", "stressrr"):
+        return _define_particle_region_polar_stress_candidates("sigma_nn", particle_meshes, radial=True)
+    if key in ("sigmatt", "particlesigmatt", "stresstt", "particlestresstt", "hoopstress", "sigmahoop"):
+        return _define_particle_region_polar_stress_candidates("sigma_tt", particle_meshes, radial=False)
     if key in ("particlevonmisesstress", "vonmisesstress", "vonmises", "equivalentstress", "misesstress"):
         return _derive_particle_von_mises_stress(all_names, particle_meshes=particle_meshes)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
@@ -911,6 +948,9 @@ def try_add_pseudocolor(
 def particle_region_for_variable(name):
     text = str(name)
     match = re.search(r"^particleStress[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"^sigma_(?:nn|tt)_(ParticleRegion[0-9]+)$", text)
     if match:
         return match.group(1)
     match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains_ParticleFields/particleStress(?:/|$)", text)

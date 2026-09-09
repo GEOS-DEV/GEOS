@@ -561,14 +561,17 @@ public:
                              NodeManager & nodeManager );
 
   /**
-   * @brief Enforces a coupled cut-cell weak-interface projection on nodal velocity fields.
+   * @brief Enforces a C0 P1 vertex-mortar tie between prescribed contact-group fields.
    *
-   * The current prototype is CPU-only, single-rank, plane strain, and uses
-   * prescribed surface geometry. It reconstructs one canonical interface segment
-   * per cut cell, collapses conforming/sliver cuts to nodal constraints, assembles
-   * the coupled mass-metric constraint matrix, and solves the multiplier system
-   * with preconditioned conjugate gradients. Field creation must already have
-   * occurred through the prescribed contact-group split.
+   * The current prototype is CPU-only, single-rank, and plane strain. It fits a
+   * signed-distance-like scalar at grid vertices from particle-carried oriented
+   * surface samples, extracts a connected piecewise-linear interface with a
+   * deterministic marching-triangle subdivision, and integrates one P1 mortar
+   * hat constraint at each reconstructed interface vertex. Overlapping constraints
+   * are enforced by alternating forward/reverse local mass-weighted projection
+   * sweeps. No global matrix, constitutive tangent, particle-volume correction,
+   * or EOS-density modification is used. Prescribed contact groups must already
+   * have created the two nodal velocity fields.
    */
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
@@ -1702,6 +1705,9 @@ protected:
   stdVector< array2d< real64 > > m_weakPrimalParticleDistanceGradient;
   stdVector< array1d< int > > m_weakPrimalParticleGeometryValid;
   mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
+  int m_weakInterfaceTraceSurfaceFitNeighbors;
+  int m_weakInterfaceTraceMortarQuadratureOrder;
+  real64 m_weakInterfaceTraceMassCutoffRatio;
   real64 m_weakInterfaceTraceGapStabilization;
   real64 m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
   real64 m_weakInterfaceTraceMaterialLRMinMeanMargin;
