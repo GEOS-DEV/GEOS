@@ -797,6 +797,7 @@ parameters = {
                'weakInterfacePrimalMaxFitResidual': ( None, True ),
                'weakInterfacePrimalMinSegmentFraction': ( None, True ),
                'weakInterfacePrimalGeometryLogInterval': ( None, True ),
+               'weakInterfacePrimalApplyVelocityGradient': ( None, True ),
                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.

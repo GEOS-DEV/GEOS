@@ -14,7 +14,7 @@ PREPARE_ONLY=0
 NO_VISIT=0
 ATS_FAST=0
 WALLTIME=""
-VARIANT_FILTER=""
+VARIANT_FILTERS=()
 GEOMETRY_ONLY=0
 DIAGNOSE_GEOMETRY=0
 
@@ -28,7 +28,7 @@ while [ "$#" -gt 0 ]; do
     --post-partition) POST_PARTITION="$2"; shift 2 ;;
     --jobs) JOBS="$2"; shift 2 ;;
     --walltime) WALLTIME="$2"; shift 2 ;;
-    --variant) VARIANT_FILTER="$2"; shift 2 ;;
+    --variant) VARIANT_FILTERS+=("$2"); shift 2 ;;
     --geometry-only) GEOMETRY_ONLY=1; shift ;;
     --diagnose-geometry) DIAGNOSE_GEOMETRY=1; shift ;;
     --force|-y) FORCE=1; ARGS+=("$1"); shift ;;
@@ -43,8 +43,8 @@ ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups primalEnrichment 
 PLACEHOLDER_VARIANTS=(materialWeak materialWeakSurface dfgSurfaceFlags stressResidualPartition)
 
 selected_variants=()
-if [ -n "$VARIANT_FILTER" ]; then
-  selected_variants=("$VARIANT_FILTER")
+if [ "${#VARIANT_FILTERS[@]}" -gt 0 ]; then
+  selected_variants=("${VARIANT_FILTERS[@]}")
 else
   selected_variants=("${ACTIVE_VARIANTS[@]}")
 fi

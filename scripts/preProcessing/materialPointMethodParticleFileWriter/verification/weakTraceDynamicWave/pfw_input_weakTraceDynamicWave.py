@@ -53,11 +53,12 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 cells_x_blocks = max(1, int(math.ceil(refine * bar_length)))
 cells_y_blocks = max(1, refine)
-serial_weak_interface_variant = VARIANT in ("traceContactGroups", "primalEnrichment")
+force_serial = os.environ.get("WEAK_TRACE_FORCE_SERIAL", "0").strip().lower() in ("1", "true", "yes", "on")
+serial_weak_interface_variant = force_serial or VARIANT in ("traceContactGroups", "primalEnrichment")
 if serial_weak_interface_variant:
-    # The current C0 weak-interface implementations are serial-only. Keep the
-    # same cell count used by the other variants, but do not split the background
-    # grid over MPI partitions.
+    # The current C0 weak-interface implementations are serial-only. The
+    # optional force-serial mode lets baseline comparisons use the same cell
+    # count without adding partition-boundary differences to the profile overlay.
     pfw["xpar"] = 1
     pfw["ypar"] = 1
 else:
@@ -357,6 +358,7 @@ pfw_expected = {
     "pulse_time_width": pulse_time_width,
     "pulse_velocity": pulse_velocity,
     "pulse_table_samples": pulse_table_samples,
+    "force_serial": force_serial,
     "update_method": pfw["updateMethod"],
     "update_order": pfw["updateOrder"],
     "particle_type": particle_type,

@@ -17,6 +17,19 @@ def float_env(name: str, default: float) -> float:
         return default
 
 
+def float_list_env(name: str) -> list[float]:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return []
+    values: list[float] = []
+    for item in raw.replace(";", ",").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        values.append(float(item))
+    return values
+
+
 LEFT_LENGTH = float_env("WEAK_TRACE_LEFT_LENGTH", 1.0)
 RIGHT_LENGTH = float_env("WEAK_TRACE_RIGHT_LENGTH", 1.5)
 
@@ -34,6 +47,9 @@ DYNAMIC_WAVE_ANALYTICAL = {
     "pulse_velocity": float_env("WEAK_TRACE_PULSE_VELOCITY", 0.02),
     "stop_time": float_env("WEAK_TRACE_STOP_TIME", 1.6),
 }
+PROFILE_TIMES = float_list_env("WEAK_TRACE_PROFILE_TIMES")
+if PROFILE_TIMES:
+    DYNAMIC_WAVE_ANALYTICAL["profile_times"] = PROFILE_TIMES
 
 
 VISIT_PLOTS = [

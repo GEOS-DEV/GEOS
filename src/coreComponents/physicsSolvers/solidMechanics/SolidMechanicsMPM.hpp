@@ -1701,6 +1701,7 @@ protected:
   real64 m_weakInterfacePrimalMaxFitResidual;
   real64 m_weakInterfacePrimalMinSegmentFraction;
   int m_weakInterfacePrimalGeometryLogInterval;
+  int m_weakInterfacePrimalApplyVelocityGradient;
   stdVector< array1d< real64 > > m_weakPrimalParticleDistance;
   stdVector< array2d< real64 > > m_weakPrimalParticleDistanceGradient;
   stdVector< array1d< int > > m_weakPrimalParticleGeometryValid;

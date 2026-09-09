@@ -357,6 +357,12 @@ def _define_tensor_expression(name, expression):
     return name
 
 
+def _define_vector_expression(name, expression):
+    print("Defining vector expression {0} = {1}".format(name, expression))
+    call_visit("DefineVectorExpression", name, expression)
+    return name
+
+
 def _unique_keep_order(values):
     out = []
     seen = set()
@@ -618,23 +624,82 @@ def _derive_particle_von_mises_stress(all_names, particle_meshes=None):
     return vm_names
 
 
-def _derive_plastic_strain_magnitude(scalars):
-    components = []
-    # Support grouped particlePlasticStrain/xx-style component expressions and
-    # legacy particlePlasticStrain_0...5 or material-specific plasticStrain_0_0...0_5 fields.
-    for i, label in enumerate(("xx", "yy", "zz", "yz", "xz", "xy")):
-        comp = _find_best_scalar(
-            scalars,
-            suffixes=_component_suffix_candidates("PlasticStrain", label, i),
-            contains=("plasticStrain",),
-        )
-        if comp:
-            components.append(comp)
-    if not components:
-        print("Could not derive plasticStrainMagnitude; no plastic-strain components found")
+def _plastic_strain_base_candidates(all_names, particle_meshes=None):
+    candidates = [
+        "{0}_ParticleFields/particlePlasticStrain".format(mesh) for mesh in particle_meshes or []
+    ] + [
+        "ParticleRegion1_ParticleDomains_ParticleFields/particlePlasticStrain",
+        "particlePlasticStrain",
+    ]
+    for name in all_names:
+        cname = _compact_name(name)
+        if cname.endswith("particleplasticstrain") or cname == "particleplasticstrain":
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _plastic_strain_leaf_candidates(all_names, label, legacy_index, particle_meshes=None):
+    labels = [label, label.lower(), label.upper(), str(legacy_index)]
+    candidates = []
+    for base in _plastic_strain_base_candidates(all_names, particle_meshes=particle_meshes):
+        for leaf in labels:
+            candidates.append("{0}/{1}".format(base, leaf))
+        candidates.append("{0}_{1}".format(base, legacy_index))
+    suffixes = _component_suffix_candidates("PlasticStrain", label.lower(), legacy_index)
+    for name in all_names:
+        cname = _compact_name(name)
+        if "plasticstrain" not in cname:
+            continue
+        if any(cname.endswith(_compact_name(suffix)) for suffix in suffixes):
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _plastic_strain_component_expression_candidates(all_names, label, legacy_index, particle_meshes=None):
+    expressions = []
+    for base in _plastic_strain_base_candidates(all_names, particle_meshes=particle_meshes):
+        expressions.append(_array_decompose_candidate(base, legacy_index))
+    for leaf in _plastic_strain_leaf_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes):
+        expressions.append(_indexed_candidate(leaf, 0))
+        expressions.append(_array_decompose_candidate(leaf, 0))
+        expressions.append(_quoted_candidate(leaf))
+    return _unique_keep_order(expressions)
+
+
+def _voigt_magnitude_expression(component_expressions):
+    weighted_terms = []
+    for index, component in enumerate(component_expressions):
+        weight = 2.0 if index >= 3 else 1.0
+        weighted_terms.append("{0}*({1})*({1})".format(weight, component))
+    return "sqrt(" + " + ".join(weighted_terms) + ")"
+
+
+def _derive_plastic_strain_magnitude(all_names, particle_meshes=None):
+    component_info = (
+        ("XX", 0),
+        ("YY", 1),
+        ("ZZ", 2),
+        ("YZ", 3),
+        ("XZ", 4),
+        ("XY", 5),
+    )
+    component_candidates = [
+        _plastic_strain_component_expression_candidates(all_names, label, index, particle_meshes=particle_meshes)
+        for label, index in component_info
+    ]
+    if not all(component_candidates):
+        print("Could not derive plasticStrainMagnitude; no complete particlePlasticStrain candidate set found")
         return None
-    expression = _visit_square_sum_expression(components)
-    return _define_scalar_expression("plasticStrainMagnitude", expression)
+    names = []
+    max_candidates = max(len(candidates) for candidates in component_candidates)
+    for i in range(max_candidates):
+        components = [
+            candidates[min(i, len(candidates) - 1)]
+            for candidates in component_candidates
+        ]
+        name = "plasticStrainMagnitude" if i == 0 else "plasticStrainMagnitude_candidate{0}".format(i)
+        names.append(_define_scalar_expression(name, _voigt_magnitude_expression(components)))
+    return names
 
 
 def _find_best_mesh(meshes, contains=()):
@@ -719,6 +784,14 @@ def _derive_velocity_component(scalars, stem, output_name, component, field_inde
     return _define_scalar_expression(output_name, expression)
 
 
+def _derive_grid_component(scalars, stem, output_name, component):
+    comp = _component_scalar(scalars, stem, component)
+    if not comp:
+        print("Could not derive {0}; missing {1} component {2}".format(output_name, stem, component))
+        return None
+    return _define_scalar_expression(output_name, _quote_visit_var(comp))
+
+
 def _derive_grid_displacement_magnitude(scalars):
     components = []
     for component in range(3):
@@ -753,6 +826,24 @@ def _derive_particle_displacement_magnitude(scalars, meshes):
     return _define_scalar_expression("particleDisplacementMagnitude", expression)
 
 
+def _define_particle_region_displacement_component_candidates(name, particle_meshes, component):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        reference_position = "{0}_ParticleFields/particleReferencePosition".format(mesh)
+        expression = "coord({0})[{1}] - {2}".format(
+            _quote_visit_var(mesh),
+            int(component),
+            _indexed_candidate(reference_position, component),
+        )
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, expression)
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
 def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=None, tensors=None, vectors=None):
     meshes = meshes or []
     arrays = arrays or []
@@ -773,11 +864,17 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
     if key in ("particlevonmisesstress", "vonmisesstress", "vonmises", "equivalentstress", "misesstress"):
         return _derive_particle_von_mises_stress(all_names, particle_meshes=particle_meshes)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
-        return _derive_plastic_strain_magnitude(scalars)
+        return _derive_plastic_strain_magnitude(all_names, particle_meshes=particle_meshes)
     if key in ("griddisplacementmagnitude", "griddisplacement", "backgrounddisplacement"):
         return _derive_grid_displacement_magnitude(scalars)
     if key in ("particledisplacementmagnitude", "particledisplacement", "displacementmagnitude"):
         return _derive_particle_displacement_magnitude(scalars, meshes)
+    if key in ("particledisplacementx", "particlexdisplacement", "xparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementX", particle_meshes, 0)
+    if key in ("particledisplacementy", "particleydisplacement", "yparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementY", particle_meshes, 1)
+    if key in ("particledisplacementz", "particlezdisplacement", "zparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementZ", particle_meshes, 2)
     if key in ("particlevelocityx", "particlexvelocity", "xparticlevelocity", "particlevx"):
         return _derive_velocity_component(scalars, "particleVelocity", "particleVelocityX", 0)
     if key in ("particlevelocityy", "particleyvelocity", "yparticlevelocity", "particlevy"):
@@ -790,6 +887,24 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
         return _derive_velocity_component(scalars, "gridVelocity", "gridVelocityY", 1, field_index=0)
     if key in ("gridvelocityz", "gridzvelocity", "zgridvelocity", "gridvz", "backgroundvelocityz"):
         return _derive_velocity_component(scalars, "gridVelocity", "gridVelocityZ", 2, field_index=0)
+    if key in ("gridweakprimalvelocityx", "weakprimalvelocityx", "primalvelocityx"):
+        return _derive_grid_component(scalars, "gridWeakPrimalVelocity", "gridWeakPrimalVelocityX", 0)
+    if key in ("gridweakprimalvelocityy", "weakprimalvelocityy", "primalvelocityy"):
+        return _derive_grid_component(scalars, "gridWeakPrimalVelocity", "gridWeakPrimalVelocityY", 1)
+    if key in ("gridweakprimalvelocityz", "weakprimalvelocityz", "primalvelocityz"):
+        return _derive_grid_component(scalars, "gridWeakPrimalVelocity", "gridWeakPrimalVelocityZ", 2)
+    if key in ("gridweakprimalaccelerationx", "weakprimalaccelerationx", "primalaccelerationx"):
+        return _derive_grid_component(scalars, "gridWeakPrimalAcceleration", "gridWeakPrimalAccelerationX", 0)
+    if key in ("gridweakprimalaccelerationy", "weakprimalaccelerationy", "primalaccelerationy"):
+        return _derive_grid_component(scalars, "gridWeakPrimalAcceleration", "gridWeakPrimalAccelerationY", 1)
+    if key in ("gridweakprimalaccelerationz", "weakprimalaccelerationz", "primalaccelerationz"):
+        return _derive_grid_component(scalars, "gridWeakPrimalAcceleration", "gridWeakPrimalAccelerationZ", 2)
+    if key in ("gridweakprimalrawinternalforcex", "weakprimalrawinternalforcex", "primalrawinternalforcex"):
+        return _derive_grid_component(scalars, "gridWeakPrimalRawInternalForce", "gridWeakPrimalRawInternalForceX", 0)
+    if key in ("gridweakprimalrawinternalforcey", "weakprimalrawinternalforcey", "primalrawinternalforcey"):
+        return _derive_grid_component(scalars, "gridWeakPrimalRawInternalForce", "gridWeakPrimalRawInternalForceY", 1)
+    if key in ("gridweakprimalrawinternalforcez", "weakprimalrawinternalforcez", "primalrawinternalforcez"):
+        return _derive_grid_component(scalars, "gridWeakPrimalRawInternalForce", "gridWeakPrimalRawInternalForceZ", 2)
     return None
 
 
@@ -950,6 +1065,9 @@ def particle_region_for_variable(name):
     match = re.search(r"^particleStress[A-Z]+_(ParticleRegion[0-9]+)$", text)
     if match:
         return match.group(1)
+    match = re.search(r"^particleDisplacement[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
     match = re.search(r"^sigma_(?:nn|tt)_(ParticleRegion[0-9]+)$", text)
     if match:
         return match.group(1)
@@ -1023,6 +1141,21 @@ def _known_vector_paths(requested):
             "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfaceNormal",
             "particleSurfaceNormal",
         ]
+    if key in ("gridexplicitsurfacenormal", "explicitsurfacenormal"):
+        return [
+            "CellRegion1_NodalFields/gridExplicitSurfaceNormal",
+            "gridExplicitSurfaceNormal",
+        ]
+    if key in ("gridprincipalexplicitsurfacenormal", "principalexplicitsurfacenormal"):
+        return [
+            "CellRegion1_NodalFields/gridPrincipalExplicitSurfaceNormal",
+            "gridPrincipalExplicitSurfaceNormal",
+        ]
+    if key in ("gridweakprimalgeometrynormal", "weakprimalgeometrynormal", "primalgeometrynormal"):
+        return [
+            "CellRegion1_NodalFields/gridWeakPrimalGeometryNormal",
+            "gridWeakPrimalGeometryNormal",
+        ]
     if key in ("particlesurfaceposition", "surfaceposition", "surfacePosition"):
         return [
             "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfacePosition",
@@ -1036,7 +1169,40 @@ def _known_vector_paths(requested):
     return [str(requested)] if requested else []
 
 
-def choose_vector(vectors, requested):
+def _vector_expression_name(requested):
+    return re.sub(r"[^A-Za-z0-9_]+", "_", str(requested)).strip("_") or "derivedVector"
+
+
+def _derive_vector_from_scalar_components(scalars, requested):
+    key = _compact_name(requested or "")
+    vector_stems = {
+        "particlesurfacenormal": ("particleSurfaceNormal", None),
+        "surfacenormal": ("particleSurfaceNormal", None),
+        "gridexplicitsurfacenormal": ("gridExplicitSurfaceNormal", None),
+        "explicitsurfacenormal": ("gridExplicitSurfaceNormal", None),
+        "gridprincipalexplicitsurfacenormal": ("gridPrincipalExplicitSurfaceNormal", None),
+        "principalexplicitsurfacenormal": ("gridPrincipalExplicitSurfaceNormal", None),
+        "gridweakprimalgeometrynormal": ("gridWeakPrimalGeometryNormal", None),
+        "weakprimalgeometrynormal": ("gridWeakPrimalGeometryNormal", None),
+        "primalgeometrynormal": ("gridWeakPrimalGeometryNormal", None),
+        "gridvelocity": ("gridVelocity", 0),
+    }
+    spec = vector_stems.get(key)
+    if spec is None:
+        return None
+    stem, field_index = spec
+    components = []
+    for component in range(3):
+        scalar_component = _component_scalar(scalars, stem, component, field_index=field_index)
+        if not scalar_component:
+            print("Could not derive vector {0}; missing component {1}".format(requested, component))
+            return None
+        components.append(_quote_visit_var(scalar_component))
+    expression = "{{{0},{1},{2}}}".format(*components)
+    return _define_vector_expression(_vector_expression_name(requested), expression)
+
+
+def choose_vector(vectors, requested, scalars=None):
     requested = str(requested or "").strip()
     if not requested:
         return None
@@ -1049,6 +1215,9 @@ def choose_vector(vectors, requested):
     found = _find_best_vector(vectors, contains=(requested,))
     if found and found not in candidates:
         candidates.append(found)
+    derived = _derive_vector_from_scalar_components(scalars or [], requested)
+    if derived and derived not in candidates:
+        candidates.append(derived)
     for candidate in _known_vector_paths(requested):
         if candidate not in candidates:
             candidates.append(candidate)
@@ -1089,8 +1258,8 @@ def configure_vector(scale, vector_count, stride):
         print("Could not configure Vector attributes: {0}".format(exc))
 
 
-def try_add_vector(vector_variable, vectors, scale, vector_count, stride):
-    resolved = choose_vector(vectors, vector_variable)
+def try_add_vector(vector_variable, vectors, scale, vector_count, stride, scalars=None):
+    resolved = choose_vector(vectors, vector_variable, scalars=scalars)
     if not resolved:
         print("Could not resolve requested vector overlay: {0}".format(vector_variable))
         return False
@@ -1512,7 +1681,7 @@ def main(argv=None):
         try_add_mesh(mesh_variable)
 
     for vector_variable in args.vector_variable:
-        try_add_vector(vector_variable, vectors, args.vector_scale, args.vector_count, args.vector_stride)
+        try_add_vector(vector_variable, vectors, args.vector_scale, args.vector_count, args.vector_stride, scalars=scalars)
 
     call_visit("DrawPlots")
 

@@ -27,7 +27,7 @@ def variant(name: str, label: str) -> dict:
 
 VARIANTS = [
     variant("singleField", "single-field baseline"),
-    variant("traceContactGroups", "weak trace, contact groups"),
+    variant("traceContactGroups", "C0 vertex mortar, contact groups"),
     variant("falseElasticCZ", "stiff elastic CZ reference"),
     variant("primalEnrichment", "primal B-spline weak-interface enrichment"),
 ]

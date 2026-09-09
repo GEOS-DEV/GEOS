@@ -2170,6 +2170,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_weakInterfacePrimalMaxFitResidual( 0.35 ),
   m_weakInterfacePrimalMinSegmentFraction( 1.0e-4 ),
   m_weakInterfacePrimalGeometryLogInterval( 1000 ),
+  m_weakInterfacePrimalApplyVelocityGradient( 1 ),
   m_weakPrimalParticleDistance(),
   m_weakPrimalParticleDistanceGradient(),
   m_weakPrimalParticleGeometryValid(),
@@ -3436,6 +3437,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "weakInterfacePrimalGeometryLogInterval", &m_weakInterfacePrimalGeometryLogInterval ).
     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalGeometryLogInterval ).setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Cycle interval for concise serial primal-interface geometry diagnostics; zero disables periodic logging after cycle zero." );
+  registerWrapper( "weakInterfacePrimalApplyVelocityGradient", &m_weakInterfacePrimalApplyVelocityGradient ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalApplyVelocityGradient ).setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Diagnostic flag: add the primal weak-interface enriched velocity-gradient contribution to particles." );
 
   registerWrapper( "weakInterfaceTraceGeometry", &m_weakInterfaceTraceGeometry ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3807,6 +3811,9 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfacePrimalMinSegmentFraction must be in [0,1]." );
     GEOS_ERROR_IF( m_weakInterfacePrimalGeometryLogInterval < 0,
                    "weakInterfacePrimalGeometryLogInterval must be nonnegative." );
+    GEOS_ERROR_IF( m_weakInterfacePrimalApplyVelocityGradient != 0 &&
+                   m_weakInterfacePrimalApplyVelocityGradient != 1,
+                   "weakInterfacePrimalApplyVelocityGradient must be 0 or 1." );
   }
 
   if( m_enableWeakInterfaceTraceProjection == 1 )
@@ -22861,6 +22868,7 @@ void SolidMechanicsMPM::applyPrimalWeakInterfaceToParticles( real64 const dt,
     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakPrimalAccelerationString() );
   arrayView1d< int const > const active =
     nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalActiveString() );
+  int const applyVelocityGradient = m_weakInterfacePrimalApplyVelocityGradient;
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -22941,9 +22949,12 @@ void SolidMechanicsMPM::applyPrimalWeakInterfaceToParticles( real64 const dt,
         particlePosition[p][i] +=
           ( velocityCorrection[i] - 0.5 * dt * accelerationCorrection[i] ) * dt;
         particleVelocity[p][i] += velocityCorrection[i];
-        for( int j = 0; j < 2; ++j )
+        if( applyVelocityGradient != 0 )
         {
-          particleVelocityGradient[p][i][j] += gradientCorrection[i][j];
+          for( int j = 0; j < 2; ++j )
+          {
+            particleVelocityGradient[p][i][j] += gradientCorrection[i][j];
+          }
         }
       }
     }

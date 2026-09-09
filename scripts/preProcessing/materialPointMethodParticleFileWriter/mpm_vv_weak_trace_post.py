@@ -1194,6 +1194,14 @@ def postprocess(
                 summary.update(circular_diag.get("max_errors", {}))
 
         for spec in visit_plot_specs:
+            allowed_variants = spec.get("variants")
+            if allowed_variants is not None:
+                if isinstance(allowed_variants, str):
+                    allowed = {allowed_variants}
+                else:
+                    allowed = {str(v) for v in allowed_variants}
+                if name not in allowed:
+                    continue
             plot_name = str(spec.get("name", spec.get("variable", "field"))).strip() or "field"
             dedupe_key = spec.get("dedupe_key", f"{name}_{plot_name}")
             frames = render_visit_frames(
