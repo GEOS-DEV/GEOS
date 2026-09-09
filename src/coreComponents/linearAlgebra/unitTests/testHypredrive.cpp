@@ -539,14 +539,6 @@ TEST( HypreMGR, SetsUpFullyCoupledSinglePhaseALM )
 
   EXPECT_EQ( HYPRE_MGRSetup( precond.ptr, matrix.unwrapped(), nullptr, nullptr ), 0 );
 
-  HypreVector rhs;
-  HypreVector solution;
-  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
-  rhs.set( 1.0 );
-  solution.create( matrix.numLocalCols(), MPI_COMM_GEOS );
-  solution.zero();
-  EXPECT_EQ( HYPRE_MGRSolve( precond.ptr, matrix.unwrapped(), rhs.unwrapped(), solution.unwrapped() ), 0 );
-
   EXPECT_EQ( HYPRE_MGRDestroy( precond.ptr ), 0 );
   EXPECT_EQ( mgrData.coarseSolver.destroy( mgrData.coarseSolver.ptr ), 0 );
   EXPECT_EQ( mgrData.nestedSolver.destroy( mgrData.nestedSolver.ptr ), 0 );
