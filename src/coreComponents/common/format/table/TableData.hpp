@@ -48,14 +48,21 @@ public:
   ///@endcond
 
   /**
-   * @brief Lexicographic sorting
-   * @param other The table data to compate
-   * @return true
+   * @brief Lexicographic comparison operator, can be used for ordering in containers.
+   * @param other The table data to compare against.
+   * @return true if this table is ordered before @p other
    */
   bool operator<( TableData const & other ) const;
 
   /**
-   * @brief Representing a data in TableData
+   * @brief Equality comparison of all cells.
+   * @param comparingTable Table to compare with
+   * @return true if row count and sizes match and if all cell values are identical in both tables.
+   */
+  bool operator==( TableData const & other ) const;
+
+  /**
+   * @brief Representing a single cell's data within a TableData row.
    */
   struct CellData
   {
@@ -64,21 +71,32 @@ public:
     /// The cell value
     string value;
 
-    /// @cond DO_NOT_DOCUMENT
-    bool operator==( CellData const & other ) const
-    {
-      return value == other.value;
-    }
+    /**
+     * @return Total size in bytes required to serialize this cell.
+     */
+    size_t getSerializedSize() const;
 
-    bool operator<( CellData const & other ) const
-    {
-      return value < other.value;
-    }
-    ///@endcond
+    /**
+     * @brief Serializes the cell type and value into the output buffer.
+     * @param out Buffer to append the serialized cell data to.
+     */
+    void serialize( stdVector< buffer_unit_type > & out ) const;
   };
+
+  /**
+   * @brief Returns the total serialized byte size of all rows in the table.
+   * @return Total size in bytes required to serialize the entire TableData.
+   */
+  size_t getSerializedSize() const;
 
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
+
+  /**
+   * @brief Serializes the tableData into the output buffer.
+   * @param serializedTableData Buffer to append the serialized tableData.
+   */
+  void serialize( stdVector< buffer_unit_type > & serializedTableData ) const;
 
   /**
    * @brief Add a row to the table.
@@ -130,14 +148,6 @@ public:
   { return m_rows; }
 
   /**
-   * @brief Comparison operator for data rows
-   * @param comparingTable The tableData values to compare
-   * @return The comparison result
-   */
-  inline bool operator==( TableData const & comparingTable ) const
-  { return getCellsData() == comparingTable.getCellsData(); }
-
-  /**
    * @brief Get all error messages
    * @return The list of error messages
    */
@@ -150,6 +160,17 @@ public:
    */
   TableErrorListing & getErrorsList()
   { return *m_errors; }
+
+  /**
+   * @brief Sorts the rows using a custom comparator functor.
+   * @tparam SortingFunc Type of the sorting comparator functor.
+   * @param sortingFunctor  Comparator functor used to sort the rows.
+   */
+  template< typename SortingFunc >
+  void sort( SortingFunc sortingFunctor )
+  {
+    std::sort( m_rows.begin(), m_rows.end(), sortingFunctor );
+  }
 
 private:
   /// @brief vector containing all rows with cell values
@@ -301,6 +322,105 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_columnValues.insert( columnValue );
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
+
+// Serialisation/ Deserialisation utils for common
+namespace basicSerialization
+{
+
+/**
+ * @tparam T The trivial type
+ * @return Returns the size occupied by a trivial type in memory.
+ */
+template< typename T >
+inline unsigned long sizeOfPrimitive( T )
+{ return sizeof(T); }
+
+/**
+ * @brief Returns the size of a string (header size + content).
+ * @param str The target string
+ * @return Size in bytes.
+ */
+inline unsigned long sizeOfString( string const & str )
+{ return sizeof(string::size_type) + str.size(); }
+
+/**
+ * @brief Write the data to the buffer.
+ * @tparam T The type of the data who must be trivially copiable
+ * @param data Destination variable.
+ * @param out The buffer to write in.
+ */
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > = true >
+void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out );
+
+/**
+ * @brief Write a string value to the buffer.
+ * @param data String variable.
+ * @param out The buffer to write in.
+ */
+void serializeString ( string const & data, stdVector< buffer_unit_type > & out );
+
+/**
+ * @brief Reads the data from the buffer and advances the pointer.
+ * @tparam T The type of the data who must be trivially copiable
+ * @param data Destination variable.
+ * @param ptr Current read pointer (advanced by sizeof(string)).
+ * @param end Safety: maximum buffer limit.
+ */
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > = true >
+void deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end );
+
+/**
+ * @brief Reads a string value from the buffer and advances the pointer.
+ * @param str Destination string variable.
+ * @param ptr Current read pointer (advanced by sizeof(string)).
+ * @param end Safety: maximum buffer limit.
+ */
+void deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end );
+}
+
+// Custom Comp function;
+namespace tableDataSorting
+{
+/**
+ * @brief Compare two string number string by  in ascending numerical order.
+ * @param a The string to compare
+ * @param b The string to compare
+ * @return True if a is greater than b
+ */
+bool positiveNumberStringComp( string_view a, string_view b );
+}
+
+/**
+ * @name Inlines definition
+ */
+///@{
+
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > >
+void basicSerialization::serializePrimitive( T const data,
+                                             stdVector< buffer_unit_type > & out )
+{
+  buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
+  buffer_unit_type const * end = begin + sizeof(data);
+  out.insert( out.end(), begin, end );
+}
+
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > >
+void basicSerialization::deserializePrimitive( T & data,
+                                               buffer_unit_type const * & ptr,
+                                               buffer_unit_type const * end )
+{
+  if( ptr + sizeof(T)> end )
+    throw std::runtime_error( "Buffer overflow" );
+
+  data = *reinterpret_cast< T const * >(ptr);
+  ptr += sizeof(T);
+}
+
+///@}
 
 }
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP */
