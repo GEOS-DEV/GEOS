@@ -173,11 +173,6 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
                                                               MATRIX && mat,
                                                               VEC && work )
 {
-  // The row count can be supplied at runtime while some callers use a C array
-  // whose first dimension is one (one row per block).  Access the contiguous
-  // row-major storage through a flat pointer so compilers do not diagnose the
-  // runtime block rows as an out-of-bounds access to that first dimension.
-  auto * const matData = &mat[0][0];
 
   for( integer k = 0; k < numBlocks; ++k )
   {
@@ -185,19 +180,19 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
     integer const ind = firstRow + numRowsToShift - 1;
     for( integer j = 0; j < numColsInBlock; ++j )
     {
-      work[j] = matData[ind * numColsInBlock + j];
+      work[j] = mat[ind][j];
     }
     for( integer i = ind; i > firstRow; --i )
     {
       for( integer j = 0; j < numColsInBlock; ++j )
       {
-        matData[i * numColsInBlock + j] = matData[(i - 1) * numColsInBlock + j];
-        work[j] += matData[(i - 1) * numColsInBlock + j];
+        mat[i][j] = mat[i-1][j];
+        work[j] += mat[i-1][j];
       }
     }
     for( integer j = 0; j < numColsInBlock; ++j )
     {
-      matData[firstRow * numColsInBlock + j] = work[j];
+      mat[firstRow][j] = work[j];
     }
   }
 }
