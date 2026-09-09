@@ -34,49 +34,52 @@ namespace mgr
 /**
  * @brief SolidMechanicsMixedVEM strategy.
  *
- * Hellinger-Reissner mixed virtual element elasticity, ordered as traction moments then
- * rigid motion moments,
+ * Hellinger-Reissner mixed VEM elasticity, traction moments then rigid motions,
  *
- *   A [sigma; u] = [M B^T ; B 0] [sigma; u] = [0 ; -f],
+ *   A [sigma; u] = [M B^T ; -B 0] [sigma; u] = [0 ; -f],
  *
- * of order N_sigma + N_u with N_sigma = 6 |F_h| and N_u = 6 |T_h|.
+ * with N_sigma = 6 |F_h| and N_u = 6 |T_h|.
  *
- * dofLabel: 0-5  = the six traction moments of T_h(f)
- * dofLabel: 6-11 = the six rigid motion moments of RM(E)
+ * Point markers 0-5 label the traction moments of T_h(f), 6-11 the RM(E) unknowns.
  *
- * One reduction with F = {sigma}, C = {u} and A_CC = 0. The divergence of a discrete
- * stress is a function of the traction moments alone, so every stress unknown is touched
- * by the constraint and the reduction is single level.
+ * One reduction with F = {sigma}, C = {u} and A_CC = 0: div Sigma_h(E) is fixed by the
+ * traction moments, so every F unknown couples to C and a single level suffices.
  *
- * With the interpolation surrogate Ahat_FF = diag(A_FF) the prolongation is
- * P = [W_p ; I], W_p = -diag(M)^{-1} B^T, restriction is by injection, and the Galerkin
- * coarse operator collapses to
+ * A_FF = blkdiag_f(D) + C_E, with D the equation (15) face Gram matrices and C_E element
+ * local of rank at most 2 rank(Pi_E). Block Jacobi interpolation takes that face blocking
+ * as the surrogate, Ahat_FF = blkdiag_f(A_FF); with restriction by injection
  *
- *   A_C = A_CC + A_CF W_p = -B diag(M)^{-1} B^T,
+ *   P = [W_p ; I], W_p = -Ahat_FF^{-1} B^T,
+ *   A_C = A_CC + A_CF W_p = B Ahat_FF^{-1} B^T,
  *
- * the discrete approximation of the Schur complement S = -B M^{-1} B^T. S is symmetric
- * negative definite, cell based, six unknowns per element on a face neighbour stencil,
- * with cond(S) = O(h^-2), so one BoomerAMG V-cycle is an h-uniform coarse solver.
+ * symmetric positive definite, approximating the Schur complement S = B M^{-1} B^T.
  *
- * A constant hydrostatic stress lies in ker B and carries a_h(sigma, sigma) that vanishes
- * as lambda grows, so the incompressible degeneracy sits in A_FF and never enters A_C.
- * Incompressibility robustness is therefore a property of the F-relaxation: a point
- * smoother there tracks sqrt(2 mu + 3 lambda), an inner multigrid solve does not.
+ * A_C is an interior penalty form: on interior faces (A_C u, u) = sum_f w_f |[u]_f|^2 with
+ * w_f ~ 2 mu |f| / h_E, plus boundary traces, and cond(A_C) = O(h^-2).
  *
- * The sweep count must be odd.
+ * F-relaxation is Jacobi. The lambda degenerate direction is a constant hydrostatic stress,
+ * which lies in ker B and is annihilated by the coarse correction, so a point smoother is
+ * lambda uniform here.
  *
- * The preconditioner is one MGR cycle and contains an inner multigrid solve, so it is not
- * a fixed linear operator and the outer Krylov method must be the flexible variant.
+ * The coarse solve is one BoomerAMG V-cycle with Chebyshev relaxation and unknown based
+ * coarsening on the six RM(E) functions. The near null space of A_C is the jump free
+ * fields, which classical interpolation does not reproduce, so the coarse cycle is not
+ * h-uniform and the iteration count grows slowly under refinement.
+ *
+ * The cycle is a fixed linear operator; a flexible outer Krylov method is not required.
  */
 class SolidMechanicsMixedVEM : public MGRStrategyBase< 1 >
 {
 public:
 
-  /// Number of F-relaxation sweeps, odd by construction
+  /// Number of Jacobi F-relaxation sweeps
   static constexpr HYPRE_Int numFRelaxSweeps = 3;
 
   /// Number of unknowns of RM(E) carried by the coarse operator
   static constexpr HYPRE_Int numCoarseFunctions = 6;
+
+  /// Number of traction moments carried by each face
+  static constexpr HYPRE_Int numFaceMoments = 6;
 
   /**
    * @brief Constructor.
@@ -84,19 +87,16 @@ public:
   explicit SolidMechanicsMixedVEM( arrayView1d< int const > const & )
     : MGRStrategyBase( 12 )
   {
-    static_assert( numFRelaxSweeps % 2 == 1, "MGR F-relaxation sweeps must be odd" );
-
     // Level 0: eliminate the traction moments, keep the rigid motions
     m_labels[0] = { 6, 7, 8, 9, 10, 11 };
 
     setupLabels();
 
-    m_levelFRelaxType[0]         = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[0]        = numFRelaxSweeps;
-    m_levelInterpType[0]         = MGRInterpolationType::jacobi;
+    m_levelInterpType[0]         = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
   }
 
   /**
@@ -113,6 +113,9 @@ public:
 
     setReduction( precond, mgrData );
 
+    // the equation (15) face Gram matrices are the block diagonal of A_FF
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetBlockJacobiBlockSize( precond.ptr, numFaceMoments ) );
+
     // one V-cycle on A_C, which carries six unknowns per element
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
@@ -120,8 +123,6 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, numCoarseFunctions ) );
     // error operator I - p(A) A is partition independent, unlike hybrid Gauss-Seidel's rank local splitting
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 16 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( mgrData.coarseSolver.ptr, 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;

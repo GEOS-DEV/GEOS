@@ -173,9 +173,8 @@ void SolidMechanicsMixedVEM::initializePreSubGroups()
         params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsMixedVEM;
       }
 
-      // one MGR cycle is nonlinear in its coarse solve, so the outer Krylov method has to
-      // be the flexible variant; a fixed basis of fifty vectors is enough here
-      params.solverType = LinearSolverParameters::SolverType::fgmres;
+      // one V-cycle coarse solve makes the cycle a fixed linear operator, so GMRES suffices
+      params.solverType = LinearSolverParameters::SolverType::gmres;
       params.krylov.maxRestart = 50;
     }
   }
@@ -455,9 +454,7 @@ SolidMechanicsMixedVEM::createPreconditioner( DomainPartition & domain ) const
 {
   LinearSolverParameters const & params = m_linearSolverParameters.get();
 
-  // only the hybridized form builds its preconditioner here, and then only if the input
-  // asked for the rigid body modes. The saddle point form is left to the backend, whose
-  // flexible GMRES the MGR cycle needs.
+  // only the hybridized AMG path builds its preconditioner here, from the rigid body modes
   bool const wantsNearNullSpace =
     m_useHybridization &&
     params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes &&
