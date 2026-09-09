@@ -18,7 +18,8 @@
       <LinearSolverParameters
         solverType="cg"
         preconditionerType="amg"
-        krylovTol="1.0e-6"/>
+        krylovTol="1.0e-5"
+        logLevel="1"/>
     </SolidMechanicsMixedVEM>
   </Solvers>
 

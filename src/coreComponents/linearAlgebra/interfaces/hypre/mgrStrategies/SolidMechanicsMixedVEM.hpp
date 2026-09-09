@@ -34,53 +34,49 @@ namespace mgr
 /**
  * @brief SolidMechanicsMixedVEM strategy.
  *
- * Mixed virtual element elasticity in saddle point form,
+ * Hellinger-Reissner mixed virtual element elasticity, ordered as traction moments then
+ * rigid motion moments,
  *
- *   [ K  B^T ] [ sigma ]   [  g ]
- *   [ B   0  ] [   u   ] = [ -f ],
+ *   A [sigma; u] = [M B^T ; B 0] [sigma; u] = [0 ; -f],
  *
- * with six face traction unknowns per face and six rigid body motion unknowns per cell.
+ * of order N_sigma + N_u with N_sigma = 6 |F_h| and N_u = 6 |T_h|.
  *
- * dofLabel: 0-5  = face stress, the six traction modes of T_h(f)
- * dofLabel: 6-11 = cell rigid body motion, the six modes of RM(E)
+ * dofLabel: 0-5  = the six traction moments of T_h(f)
+ * dofLabel: 6-11 = the six rigid motion moments of RM(E)
  *
- * Ingredients:
- * 1. F-points face stress (0-5), C-points rigid body motions (6-11)
- * 2. F-points smoother: l1-Jacobi, the stress block is symmetric positive definite
- * 3. C-points coarse-grid/Schur complement solver: boomer AMG on six functions per cell
- * 4. Global smoother: none
+ * One reduction with F = {sigma}, C = {u} and A_CC = 0. The divergence of a discrete
+ * stress is a function of the traction moments alone, so every stress unknown is touched
+ * by the constraint and the reduction is single level.
  *
- * The reduction follows the structure of K. Element by element the stiffness is
+ * With the interpolation surrogate Ahat_FF = diag(A_FF) the prolongation is
+ * P = [W_p ; I], W_p = -diag(M)^{-1} B^T, restriction is by injection, and the Galerkin
+ * coarse operator collapses to
  *
- *   K_E = [P_E ; Chat_E]^T [ W  -I ] [P_E ; Chat_E]  +  kappa_E h_E blockdiag_f( M2_f ),
- *                          [ -I  0 ]
+ *   A_C = A_CC + A_CF W_p = -B diag(M)^{-1} B^T,
  *
- * because the consistency term and the two stabilization cross terms all factor through
- * the six rows of P_E: the first part has rank at most twelve per element, while the
- * stabilization Gram term is exactly block diagonal with one 6x6 block M2_f per face.
+ * the discrete approximation of the Schur complement S = -B M^{-1} B^T. S is symmetric
+ * negative definite, cell based, six unknowns per element on a face neighbour stencil,
+ * with cond(S) = O(h^-2), so one BoomerAMG V-cycle is an h-uniform coarse solver.
  *
- * So the natural pivot for eliminating the stress is the 6x6 face block, not a scalar. The
- * six traction modes of a face are two constant tangential, one constant normal, one in
- * plane rotational and two linear normal functionals; they carry different scalings and
- * M2_f couples the last two. A scalar row sum averages all six into one number and loses
- * exactly the part of K that is genuinely diagonal, whereas a block Jacobi pivot keeps it.
+ * A constant hydrostatic stress lies in ker B and carries a_h(sigma, sigma) that vanishes
+ * as lambda grows, so the incompressible degeneracy sits in A_FF and never enters A_C.
+ * Incompressibility robustness is therefore a property of the F-relaxation: a point
+ * smoother there tracks sqrt(2 mu + 3 lambda), an inner multigrid solve does not.
  *
- * With D = blockdiag_f(K) the Galerkin coarse operator is
+ * The sweep count must be odd.
  *
- *   S = 0 - (-B) D^{-1} B^T = B D^{-1} B^T,
- *
- * which is sparse on the cell adjacency graph exactly as the scalar version is, since a
- * block diagonal inverse is still block diagonal: the better approximation costs no
- * fill in. It leaves 6 N_c unknowns instead of 6 N_f + 6 N_c, and it is definite rather
- * than indefinite because the balance is assembled as -(div sigma, v) = (f, v).
- *
- * K is symmetric positive definite, so F-relaxation is a full multigrid V-cycle rather
- * than a point smoother; with a rank twelve dense part per element a point smoother
- * leaves far too much of the stress error behind.
+ * The preconditioner is one MGR cycle and contains an inner multigrid solve, so it is not
+ * a fixed linear operator and the outer Krylov method must be the flexible variant.
  */
 class SolidMechanicsMixedVEM : public MGRStrategyBase< 1 >
 {
 public:
+
+  /// Number of F-relaxation sweeps, odd by construction
+  static constexpr HYPRE_Int numFRelaxSweeps = 3;
+
+  /// Number of unknowns of RM(E) carried by the coarse operator
+  static constexpr HYPRE_Int numCoarseFunctions = 6;
 
   /**
    * @brief Constructor.
@@ -88,15 +84,16 @@ public:
   explicit SolidMechanicsMixedVEM( arrayView1d< int const > const & )
     : MGRStrategyBase( 12 )
   {
-    // Level 0: eliminate the face stress, keep the rigid body motions
+    static_assert( numFRelaxSweeps % 2 == 1, "MGR F-relaxation sweeps must be odd" );
+
+    // Level 0: eliminate the traction moments, keep the rigid motions
     m_labels[0] = { 6, 7, 8, 9, 10, 11 };
 
     setupLabels();
 
-    // Level 0
     m_levelFRelaxType[0]         = MGRFRelaxationType::amgVCycle;
-    m_levelFRelaxIters[0]        = 1;
-    m_levelInterpType[0]         = MGRInterpolationType::l1jacobi;
+    m_levelFRelaxIters[0]        = numFRelaxSweeps;
+    m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
@@ -112,49 +109,16 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
+    GEOS_UNUSED_VAR( mgrParams );
+
     setReduction( precond, mgrData );
 
-    // The reduced system carries six rigid body motions per cell, so multigrid treats it
-    // as a system of six functions rather than a scalar problem.
-    //
-    // That alone is not enough. S is a discrete elasticity operator on the skeleton of
-    // cells and its near null space is the global rigid body motions, which on element E
-    // read (a + omega ^ x_E, omega). The three translations are constant per function and
-    // an unknown based coarsening reproduces them, but the three rotations are linear in
-    // the cell center and it cannot. Left out, the coarse correction never damps them and
-    // the iteration count grows with the mesh. Passing them as interpolation vectors is
-    // what makes the reduction mesh independent.
+    // one V-cycle on A_C, which carries six unknowns per element
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.coarseSolver.ptr, 0.6 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, numCoarseFunctions ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, 6 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( mgrData.coarseSolver.ptr, mgrParams.separateComponents ) );
-
-    if( !mgrData.nearNullSpace.empty() )
-    {
-      HYPRE_Int const nodal                 = 4;
-      HYPRE_Int const nodalDiag             = 1;
-      HYPRE_Int const relaxCoarse           = 8;
-      HYPRE_Int const interpVecVariant      = 2;
-      HYPRE_Int const qMax                  = 4;
-      HYPRE_Int const smoothInterpVectors   = 1;
-      HYPRE_Int const interpRefine          = 1;
-
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodal( mgrData.coarseSolver.ptr, nodal ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodalDiag( mgrData.coarseSolver.ptr, nodalDiag ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( mgrData.coarseSolver.ptr, relaxCoarse, 3 ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecVariant( mgrData.coarseSolver.ptr, interpVecVariant ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecQMax( mgrData.coarseSolver.ptr, qMax ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothInterpVectors( mgrData.coarseSolver.ptr, smoothInterpVectors ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpRefine( mgrData.coarseSolver.ptr, interpRefine ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( mgrData.coarseSolver.ptr,
-                                                             mgrData.nearNullSpace.size(),
-                                                             mgrData.nearNullSpace.data() ) );
-    }
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;

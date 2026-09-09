@@ -288,6 +288,25 @@ bool supportsGeneratedPreconditioner( LinearSolverParameters::PreconditionerType
   return false;
 }
 
+/**
+ * @brief Whether an MGR strategy has a generated hypredrive description.
+ * @param strategy the MGR strategy
+ * @return true unless the strategy is only implemented on the legacy hypre MGR path
+ */
+bool supportsGeneratedStrategy( LinearSolverParameters::MGR::StrategyType const strategy )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  switch( strategy )
+  {
+    case StrategyType::invalid:
+    case StrategyType::solidMechanicsMixedVEM:
+      return false;
+    default:
+      return true;
+  }
+}
+
 HYPRE_Int getAMGPrintLevel( integer const logLevel )
 {
   return ( logLevel == 2 || logLevel >= 4 ) ? 1 : 0;
@@ -1668,8 +1687,12 @@ bool shouldUse( LinearSolverParameters const & params )
     return false;
   }
 
+  // a strategy with no generated description is not a failure, it simply belongs to the
+  // legacy path, so do not opt into hypredrive only to fall back out of it
   return getSolverName( params.solverType ) != nullptr &&
-         supportsGeneratedPreconditioner( params.preconditionerType );
+         supportsGeneratedPreconditioner( params.preconditionerType ) &&
+         ( params.preconditionerType != LinearSolverParameters::PreconditionerType::mgr ||
+           supportsGeneratedStrategy( params.mgr.strategy ) );
 }
 
 bool buildInputArgsParseTarget( LinearSolverParameters const & params,

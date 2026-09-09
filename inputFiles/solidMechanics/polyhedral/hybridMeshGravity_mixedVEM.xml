@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
 
-<!-- Lowest-order mixed virtual element method, hybridized form. The element unknowns are
-     condensed out and the symmetric positive definite interface problem is solved for the
-     displacement trace, then the stress and displacement are recovered cell by cell. -->
+<!-- Lowest-order mixed virtual element method, saddle point form. The restrained
+     displacement components are natural here and only load the right hand side. -->
 <Problem>
 
   <Included>
@@ -17,9 +16,10 @@
       targetRegions="{ Domain }"
       logLevel="1">
       <LinearSolverParameters
-        solverType="cg"
-        preconditionerType="amg"
-        krylovTol="1.0e-6"/>
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-5"
+        logLevel="1"/>
     </SolidMechanicsMixedVEM>
   </Solvers>
 
@@ -27,7 +27,7 @@
     <MixedVEM>
       <MixedVEMDiscretization
         name="mixedVEM1"
-        hybridization="1"/>
+        hybridization="0"/>
     </MixedVEM>
   </NumericalMethods>
 

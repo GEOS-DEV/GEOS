@@ -40,7 +40,6 @@ struct HypreMGRData
   HyprePrecWrapper coarseSolver;      ///< MGR coarse solver pointer and functions
   HyprePrecWrapper mechSolver;        ///< MGR mechanics fine solver pointer and functions
   HyprePrecWrapper nestedSolver;      ///< Optional nested MGR F-relaxation wrapper
-  array1d< HYPRE_ParVector > nearNullSpace;  ///< Near null space of the coarse system, borrowed from the caller
 };
 
 namespace hypre

@@ -171,12 +171,10 @@ void SolidMechanicsMixedVEM::initializePreSubGroups()
         params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsMixedVEM;
       }
 
-      // the reduced system is an elasticity operator on the cells, so its coarse levels
-      // need the rigid body motions
-      if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
-      {
-        params.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
-      }
+      // one MGR cycle is nonlinear in its coarse solve, so the outer Krylov method has to
+      // be the flexible variant; a fixed basis of fifty vectors is enough here
+      params.solverType = LinearSolverParameters::SolverType::fgmres;
+      params.krylov.maxRestart = 50;
     }
   }
 }
@@ -455,13 +453,13 @@ SolidMechanicsMixedVEM::createPreconditioner( DomainPartition & domain ) const
 {
   LinearSolverParameters const & params = m_linearSolverParameters.get();
 
-  // the saddle point form only ever reaches multigrid through MGR; the hybridized form is
-  // handed straight to it, and then only if the input asked for the rigid body modes
+  // only the hybridized form builds its preconditioner here, and then only if the input
+  // asked for the rigid body modes. The saddle point form is left to the backend, whose
+  // flexible GMRES the MGR cycle needs.
   bool const wantsNearNullSpace =
+    m_useHybridization &&
     params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes &&
-    ( m_useHybridization
-      ? params.preconditionerType == LinearSolverParameters::PreconditionerType::amg
-      : params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr );
+    params.preconditionerType == LinearSolverParameters::PreconditionerType::amg;
 
   if( wantsNearNullSpace )
   {

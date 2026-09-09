@@ -20,7 +20,7 @@
     <VTKMesh
       name="mesh1"
       logLevel="1"
-      file="/Users/oduran/Documents/GitHub/GEOS/build-macOS_arm-release/bin/hybrid_mesh_l_4.vtu"/>
+      file="hybrid_mesh_l_3.vtu"/>
   </Mesh>
 
   <Geometry>
