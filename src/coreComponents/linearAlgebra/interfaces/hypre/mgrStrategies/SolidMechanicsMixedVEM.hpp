@@ -118,6 +118,9 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, numCoarseFunctions ) );
+    // error operator I - p(A) A is partition independent, unlike hybrid Gauss-Seidel's rank local splitting
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 16 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( mgrData.coarseSolver.ptr, 2 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
 
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
