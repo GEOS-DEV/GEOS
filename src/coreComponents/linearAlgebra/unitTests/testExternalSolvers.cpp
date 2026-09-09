@@ -65,9 +65,9 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
-#if defined(GEOS_USE_HIP)
-  // HYPRE's HIP implementation supports ILU(0) on device memory; level-1
-  // ILU uses a path that returns an error on the current ROCm stack.
+#if defined(GEOS_USE_HIP) || defined(GEOS_USE_CUDA)
+  // HYPRE's device ILU implementation supports ILU(0); level-1 ILU
+  // uses a path that returns an error on the current GPU stack.
   parameters.ifact.fill = 0;
 #else
   parameters.ifact.fill = 1;
