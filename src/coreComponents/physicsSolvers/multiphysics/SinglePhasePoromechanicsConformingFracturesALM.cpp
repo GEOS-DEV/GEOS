@@ -48,9 +48,10 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
 {}
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::postInputInitialization()
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling(DomainPartition const & domain,
+                              DofManager & dofManager) const
 {
-  Base::postInputInitialization();
+  // Base::postInputInitialization();
   // 1. Poromechanical coupling in the bulk (from base class)
   Base::setupCoupling( domain, dofManager );
 

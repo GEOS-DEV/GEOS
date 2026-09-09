@@ -40,6 +40,7 @@ public:
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_maxFaceNodes;
 
   /// True when the flow solver carries well degrees of freedom.
   static constexpr bool hasWells = std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >;
@@ -93,8 +94,8 @@ public:
    */
   /**@{*/
 
-  // virtual void setupCoupling( DomainPartition const & domain,
-  //                             DofManager & dofManager ) const override final;
+  virtual void setupCoupling( DomainPartition const & domain,
+                              DofManager & dofManager ) const override final;
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
@@ -165,7 +166,6 @@ private:
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
 
-  static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
 
   /**
    * @Brief assemble the element-based contributions
@@ -287,13 +287,8 @@ private:
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain );
 
-  /**
-  * @brief Force sequential mode with warning on explicit fully-implicit - temporary
-  */
-  void forceSequential();
-
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
-                                          integer const solverType ) override;
+  // virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+  //                                         integer const solverType ) override;
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
@@ -320,15 +315,13 @@ private:
 
 protected:
 
-  virtual void postInputInitialization() override final;
+  // virtual void postInputInitialization() override final;
 
-  //- to be overloaded.
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & GEOS_UNUSED_PARAM(mesh),
-                                                                  string_array const & GEOS_UNUSED_PARAM(regionNames),
-                                                                  DofManager const & GEOS_UNUSED_PARAM(dofManager),
-                                                                  CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM(localMatrix),
-                                                                  arrayView1d< real64 > const & GEOS_UNUSED_PARAM(localRhs) ) override 
-  { GEOS_ERROR("Sequential implementation only."); };
+  // virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+  //                                                                 string_array const & regionNames,
+  //                                                                 DofManager const & dofManager,
+  //                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  //                                                                 arrayView1d< real64 > const & localRhs ) override;
 
   virtual integer numFluidComponents() const { return 1; }
 
