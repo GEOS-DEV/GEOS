@@ -14,6 +14,7 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           METIS
                           MKL
                           MPI
+                          MPI_DESYNC_DETECTION
                           PARMETIS
                           PETSC
                           PYGEOSX

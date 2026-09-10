@@ -112,7 +112,7 @@ protected:
         makeDirsForPath( m_outputDir );
       }
       // wait till the dir is created by rank 0
-      MPI_Barrier( MPI_COMM_WORLD );
+      MpiWrapper::barrier( MPI_COMM_WORLD );
     }
   }
 

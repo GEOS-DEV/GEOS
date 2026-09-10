@@ -140,9 +140,7 @@ void MemoryLogging::memoryStatsReport() const
     return;
 
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
-  integer size;
-  MPI_Comm_size( MPI_COMM_WORLD, &size );
-  size_t nbRank = (std::size_t)size;
+  std::size_t const nbRank = static_cast< std::size_t >( MpiWrapper::commSize( MPI_COMM_WORLD ) );
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
   stdVector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );

@@ -44,6 +44,9 @@
 /// Enables use of MPI (CMake option ENABLE_MPI)
 #define GEOS_USE_MPI
 
+/// Enables detection of MPI desynchronization (CMake option ENABLE_MPI_DESYNC_DETECTION)
+#define GEOS_USE_MPI_DESYNC_DETECTION
+
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
 #define GEOS_USE_OPENMP
 
