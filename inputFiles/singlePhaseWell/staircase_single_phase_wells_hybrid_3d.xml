@@ -1,6 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <Included>
+    <File name="./staircase_single_phase_wells_hybrid_3d_base.xml"/>
+  </Included>
+
   <Solvers>
     <SinglePhaseReservoir
       name="reservoirSystem"
@@ -54,137 +59,4 @@
     </WellManager>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 5, 10 }"
-      yCoords="{ 0, 5, 10 }"
-      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-      nx="{ 5, 5 }"
-      ny="{ 5, 5 }"
-      nz="{ 3, 3, 3, 3 }"
-      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0, cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1, cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2, cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
-      <InternalWell
-        name="well_producer1"
-        wellRegionName="wellRegion1"
-        wellControlsName="wellControls1"
-        polylineNodeCoords="{ { 9.5, 0.5, 12 },
-                              { 9.5, 0.5, 0.05 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="20">
-        <Perforation
-          name="producer1_perf1"
-          distanceFromHead="11.95"/>
-      </InternalWell>
-      <InternalWell
-        name="well_injector1"
-        wellRegionName="wellRegion2"
-        wellControlsName="wellControls2"
-        polylineNodeCoords="{ { 9.5, 0.2, 12 },
-                              { 9.5, 0.2, 9.5 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="30">
-        <Perforation
-          name="injector1_perf1"
-          distanceFromHead="2.45"/>
-      </InternalWell>
-    </InternalMesh>
-  </Mesh>
-
-  <Events
-    maxTime="5e4">
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="5e3"
-      target="/Outputs/siloOutput"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="5e3"
-      target="/Solvers/reservoirSystem"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="2.5e4"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
-  </Events>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="Channel"
-      cellBlocks="{ cb-1_0_0, cb-0_0_0, cb-0_0_1, cb-0_1_1, cb-0_1_2, cb-1_1_2, cb-1_1_3, cb-1_0_3 }"
-      materialList="{ water, rock }"/>
-
-    <CellElementRegion
-      name="Barrier"
-      cellBlocks="{ cb-0_1_0, cb-1_1_0, cb-1_1_1, cb-1_0_1, cb-1_0_2, cb-0_0_2, cb-0_0_3, cb-0_1_3 }"
-      materialList="{ }"/>
-
-    <WellElementRegion
-      name="wellRegion1"
-      materialList="{ water }"/>
-
-    <WellElementRegion
-      name="wellRegion2"
-      materialList="{ water }"/>
-  </ElementRegions>
-
-  <NumericalMethods>
-    <FiniteVolume>
-      <HybridMimeticDiscretization
-        name="singlePhaseHybridMimetic"
-        innerProductType="simple"/>
-    </FiniteVolume>
-  </NumericalMethods>
-
-  <Constitutive>
-    <CompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="5e-10"
-      viscosibility="0.0"/>
-
-    <CompressibleSolidConstantPermeability
-      name="rock"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
-    <NullModel
-      name="nullSolid"/>
-
-    <PressurePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.1"
-      referencePressure="0.0"
-      compressibility="1.0e-9"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
-  </Constitutive>
-
-  <FieldSpecifications>
-    <FieldSpecification
-      name="initialPressure_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="pressure"
-      scale="1e6"/>
-  </FieldSpecifications>
-
-  <Outputs>
-    <Silo
-      name="siloOutput"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
 </Problem>

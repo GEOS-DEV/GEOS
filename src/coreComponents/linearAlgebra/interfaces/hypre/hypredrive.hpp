@@ -133,7 +133,7 @@ private:
 
   bool configureHypredrive( HypreMatrix const & mat );
 
-  void createHypredrive( HypreMatrix const & mat,
+  bool createHypredrive( HypreMatrix const & mat,
                          hypre::hypredrive::InputArgsParseTarget const & parseTarget,
                          std::string const & configurationSignature,
                          std::string const & structureSignature,
@@ -142,10 +142,15 @@ private:
   void refreshBoundObjects( HypreMatrix const & mat,
                             arrayView1d< int > const & pointMarkers );
 
+  void updateKrylovDofTags( arrayView1d< int > const & pointMarkers,
+                            MPI_Comm const & comm );
+
   void setupLegacy( HypreMatrix const & mat );
 
   void applyHypredrive( HypreVector const & rhs,
                         HypreVector & sol ) const;
+
+  void tagKrylovDofVector( HypreVector const & vec ) const;
 
   void syncExecutionAnnotations();
 
@@ -156,6 +161,10 @@ private:
   void destroyHypredrive();
 
   void resetHypredriveState();
+
+  char const * solverNameForLogs() const;
+
+  void reportGeneratedYamlFailure( char const * const reason );
 
   using Base::m_params;
   using Base::m_result;
@@ -178,6 +187,8 @@ private:
   mutable HypreVector m_dummyRhs;
   mutable HypreVector m_dummySol;
   mutable HypreVector m_residual;
+  array1d< HYPRE_Int > m_krylovDofTags;
+  HYPRE_Int m_numKrylovDofTags = 1;
   std::unique_ptr< HypreSolver > m_legacySolver;
 };
 

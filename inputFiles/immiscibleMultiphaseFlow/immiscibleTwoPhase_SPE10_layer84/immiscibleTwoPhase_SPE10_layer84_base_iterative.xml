@@ -16,6 +16,8 @@
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
+        logLevel="1"
+        krylovTol="1.0e-8"
         solverType="gmres"
         preconditionerType="mgr"/>
     </ImmiscibleMultiphaseFlow>

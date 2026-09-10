@@ -389,6 +389,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void saveState( WellElementSubRegion & subRegion );
+  virtual void resetShutInControlState() override;
   virtual void postRestartInitialization( ) override;
 
 
