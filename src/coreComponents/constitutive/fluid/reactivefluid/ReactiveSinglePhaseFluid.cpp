@@ -113,14 +113,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;
       m_numKineticReactions = 3;
-      m_solventDensity = serpentinizationSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::kineticCarbonate:
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;
       m_numKineticReactions = 1;
-      m_solventDensity = kineticCarbonateSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:
