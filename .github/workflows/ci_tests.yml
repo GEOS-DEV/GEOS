@@ -275,6 +275,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
       ENABLE_HYPRE: ON
+      ENABLE_HYPREDRV: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
@@ -455,7 +456,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu24.04-amdclang19.0.0-rocm6.4.3
             ENABLE_HYPRE_DEVICE: HIP
             ENABLE_HYPRE: ON
-            ENABLE_HYPREDRV: OFF
+            ENABLE_HYPREDRV: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             RUNS_ON: streak2

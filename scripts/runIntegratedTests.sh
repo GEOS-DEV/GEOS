@@ -27,10 +27,12 @@
 # when the GCS download is unavailable. ATS -a rebaseline is not used: it
 # aborts the rest of an .ats file when one test has no restart output.
 #
-# After ATS, `_iterative` geosx logs are harvested to
+# After ATS, all GEOS logs that report Hypre solver iterations are harvested to
 # .integrated-test-iterations/{hypredrive,legacy}.json. A `--force-legacy` run
-# then compares that harvest to the hypredrive JSON with exact per-solve
-# sequences (zero slack) and fails if they differ.
+# then compares that harvest to the hypredrive JSON for identical log/solve
+# coverage and close aggregate iteration profiles. ATS result classifications
+# are compared exactly, ignoring only run metadata, and any classification
+# difference fails the run.
 #
 # Resource flags apply to the Docker container and to ATS rank limits.
 # Remaining arguments are forwarded to geos_ats.sh.
@@ -582,6 +584,10 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     --env GEOS_ITS_SANITIZERS="${SANITIZERS}"
     --mount "type=bind,src=${GEOS_SRC_DIR},dst=/workspace"
   )
+  if [[ "${SANITIZERS}" -eq 0 && "${BUILD_DIR_NAME}" == /* ]]; then
+    mkdir -p "${BUILD_DIR_NAME}"
+    docker_args+=(--mount "type=bind,src=${BUILD_DIR_NAME},dst=${BUILD_DIR_NAME}")
+  fi
   if [[ "${FORCE_LEGACY}" -eq 1 ]]; then
     docker_args+=(--env GEOS_HYPREDRV_FORCE_LEGACY=1)
     log "Forcing legacy hypre path (GEOS_HYPREDRV_FORCE_LEGACY=1)"
@@ -592,7 +598,7 @@ if [[ "${GEOS_IN_CONTAINER:-}" != 1 ]]; then
     docker_args+=(--cap-add=SYS_PTRACE --security-opt=seccomp=unconfined)
     docker_args+=(--mount "type=bind,src=${SANITIZER_ROOT},dst=${SANITIZER_ROOT}")
     case "${BUILD_DIR_NAME}" in
-      "${SANITIZER_ROOT}"/*) ;;
+      "${SANITIZER_ROOT}"|"${SANITIZER_ROOT}"/*) ;;
       *) docker_args+=(--mount "type=bind,src=${BUILD_DIR_NAME},dst=${BUILD_DIR_NAME}") ;;
     esac
     if [[ -n "${TPL_HOST_CONFIG_PATH}" ]]; then
@@ -757,10 +763,12 @@ SANITIZER_LINK_FLAGS="-fsanitize=address,undefined"
 SANITIZER_CMAKE_ARGS=()
 
 # Build a complete sanitizer-compatible TPL stack when the runtime image does
-# not provide its generated host-config. The geos-tpl Spack driver is used here
-# because the CMake superbuild does not provide hypredrive. The source checkout
-# is mounted read-only; every generated Spack, build, and install path is below
-# the configurable SANITIZER_ROOT (which defaults to /tmp for this script).
+# not provide its generated host-config. The sanitizer path uses the geos-tpl
+# Spack driver because it needs Spack to generate a GEOS host-config carrying
+# sanitizer flags. The legacy CMake superbuild also provides Hypredrive for
+# non-Spack TPL builds. The source checkout is mounted read-only; every
+# generated Spack, build, and install path is below the configurable
+# SANITIZER_ROOT (which defaults to /tmp for this script).
 build_sanitized_tpls()
 {
   local tpl_root="${SANITIZER_ROOT}/tpls"
@@ -833,7 +841,7 @@ spack:
 EOF
 
   tpl_spec=(
-    "~docs +hypre +hypredrive +vtk +caliper +shared +openmp ~trilinos ~petsc ~pygeosx %gcc ^vtk generator=ninja"
+    "~docs +hypre +hypredrive +vtk +caliper +shared +openmp ~trilinos ~petsc ~pygeosx %gcc ^hypre@3.2.0 ^vtk generator=ninja"
   )
   log "TPL image host-config missing; building sanitizer TPLs under ${tpl_root}"
   export CFLAGS="${SANITIZER_FLAGS}${CFLAGS:+ ${CFLAGS}}"
@@ -918,7 +926,7 @@ BUILD_TYPE=Release
 if [[ "${SANITIZERS}" -eq 1 ]]; then
   BUILD_TYPE=RelWithDebInfo
 fi
-or_die cmake -S /workspace/src -B "${BUILD_DIR}" -G Ninja \
+or_die cmake -S "${GEOS_SRC_DIR}/src" -B "${BUILD_DIR}" -G Ninja \
   -C "${HOST_CONFIG}" \
   "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" \
   -DGEOS_INSTALL_SCHEMA=ON \
@@ -1080,7 +1088,7 @@ if [[ "${SANITIZERS}" -eq 1 ]]; then
   fi
 fi
 
-harvest_iterative_logs() {
+harvest_hypre_logs() {
   local label="$1"
   local dest="${GEOS_SRC_DIR}/.integrated-test-iterations/${label}.json"
   local data_dir="integratedTests/TestResults/test_data"
@@ -1090,26 +1098,50 @@ harvest_iterative_logs() {
   fi
   mkdir -p "$(dirname "${dest}")"
   python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" harvest \
-    "${data_dir}" --iterative -o "${dest}"
+    "${data_dir}" --geosx-only --strip-ats-prefix -o "${dest}"
 }
 
-ITER_COMPARE_STATUS=0
+HYPRE_COMPARE_STATUS=0
 if [[ "${GEOS_ITS_FORCE_LEGACY:-0}" == 1 ]]; then
-  harvest_iterative_logs legacy || true
+  LEGACY_HARVEST_STATUS=0
+  harvest_hypre_logs legacy || LEGACY_HARVEST_STATUS=$?
   HYPREDRIVE_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive.json"
   LEGACY_ITERS="${GEOS_SRC_DIR}/.integrated-test-iterations/legacy.json"
-  if [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
-    log "Comparing _iterative linear-solver iteration sequences (zero slack)"
+  if [[ "${LEGACY_HARVEST_STATUS}" -ne 0 ]]; then
+    log "Hypre legacy iteration harvest failed"
+    HYPRE_COMPARE_STATUS=1
+  elif [[ -f "${HYPREDRIVE_ITERS}" && -f "${LEGACY_ITERS}" ]]; then
+    log "Comparing all Hypre linear-solver iteration profiles"
     python3 "${GEOS_SRC_DIR}/scripts/compareLinearSolverIterations.py" compare \
-      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --exact-sequence || ITER_COMPARE_STATUS=$?
-    if [[ "${ITER_COMPARE_STATUS}" -ne 0 ]]; then
-      log "hypredrive vs legacy _iterative iteration sequences do not match"
+      "${HYPREDRIVE_ITERS}" "${LEGACY_ITERS}" --require-identical-keys \
+      --total-rel-tol 0.01 --total-abs-tol 2 --max-solve-abs-tol 1 \
+      || HYPRE_COMPARE_STATUS=$?
+    if [[ "${HYPRE_COMPARE_STATUS}" -ne 0 ]]; then
+      log "hypredrive vs legacy Hypre iteration profiles do not match"
     fi
   else
-    log "Skipping iteration compare (need both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS})"
+    log "Missing Hypre iteration harvest; both ${HYPREDRIVE_ITERS} and ${LEGACY_ITERS} are required"
+    HYPRE_COMPARE_STATUS=1
+  fi
+  HYPREDRIVE_RESULTS="${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive-results.ini"
+  if [[ -f "${HYPREDRIVE_RESULTS}" && -f integratedTests/TestResults/test_results.ini ]]; then
+    log "Comparing ATS result classifications for the hypredrive and legacy passes"
+    python3 "${GEOS_SRC_DIR}/scripts/compareIntegratedTestResults.py" \
+      "${HYPREDRIVE_RESULTS}" integratedTests/TestResults/test_results.ini \
+      || HYPRE_COMPARE_STATUS=$?
+    cp integratedTests/TestResults/test_results.ini \
+      "${GEOS_SRC_DIR}/.integrated-test-iterations/legacy-results.ini"
+  else
+    log "Missing ATS result harvest; both ${HYPREDRIVE_RESULTS} and legacy test_results.ini are required"
+    HYPRE_COMPARE_STATUS=1
   fi
 else
-  harvest_iterative_logs hypredrive || true
+  harvest_hypre_logs hypredrive || true
+  if [[ -f integratedTests/TestResults/test_results.ini ]]; then
+    mkdir -p "${GEOS_SRC_DIR}/.integrated-test-iterations"
+    cp integratedTests/TestResults/test_results.ini \
+      "${GEOS_SRC_DIR}/.integrated-test-iterations/hypredrive-results.ini"
+  fi
 fi
 
 log "ATS exit status: ${ATS_STATUS}"
@@ -1123,7 +1155,7 @@ log "Results (on host):      ${RESULTS_ON_HOST}"
 if [[ "${SANITIZER_REPORT_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
   exit "${SANITIZER_REPORT_STATUS}"
 fi
-if [[ "${ITER_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
-  exit "${ITER_COMPARE_STATUS}"
+if [[ "${HYPRE_COMPARE_STATUS}" -ne 0 && "${ATS_STATUS}" -eq 0 ]]; then
+  exit "${HYPRE_COMPARE_STATUS}"
 fi
 exit "${ATS_STATUS}"

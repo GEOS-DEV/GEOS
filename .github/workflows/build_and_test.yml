@@ -110,7 +110,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
+        # The device jobs query the same PR endpoint concurrently. Retry
+        # transient GitHub API throttling so an optional build does not turn a
+        # healthy matrix into a failure before compilation starts.
         pr_json=$(curl --fail --silent --show-error \
+          --retry 5 --retry-all-errors --retry-delay 5 --retry-max-time 90 \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
@@ -387,6 +391,7 @@ jobs:
       run: |
         EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
         DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_BASENAME_WE=${DATA_BASENAME%%.*}
         DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
         UPLOAD_HEADER_PRINTED=false
         GCP_CREDENTIALS_STATUS="not set"
@@ -399,8 +404,8 @@ jobs:
             echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
           fi
 
-          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" ]; then
-            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
           fi
 
           if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
@@ -409,8 +414,8 @@ jobs:
             mkdir -p "${TARGET_DIR}"
 
             for file in \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
                 cp "${file}" "${TARGET_DIR}"
@@ -419,11 +424,10 @@ jobs:
             done
           fi
 
-          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" ]; then
+          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" ]; then
             echo "No new baseline archive was generated."
           fi
         fi
-
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
             if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
@@ -434,8 +438,8 @@ jobs:
 
             for file in \
               "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
                 case "$(basename "${file}")" in

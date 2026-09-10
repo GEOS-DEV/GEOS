@@ -4,11 +4,6 @@ Notes
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
-
-PR #3996 (2026-09-05) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3996-17548-5611172.tar.gz>
-=====================
-Convert species concentration fed into HPCReact from molarity to molality
-
 PR #3994 (2026-09-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3994-17525-4ae3593.tar.gz>
 =====================
 Introduce mimetic inner products for saddle-point operators and align face-centroid computation with exact volume integration on planar polyhedra.
@@ -20,6 +15,12 @@ Move CO2 Brine parameters to xml
 PR #4083 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4083-17503-96f5eac.tar.gz>
 =====================
 Dispatch scaling wrt to fracture element type for ALM contact solver
+
+PR #4127 (2026-08-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4127-17440-e6bc364.tar.gz>
+=====================
+Refresh the integrated-test baseline after the Hypre/TPL update and the
+iterative test additions. The prior archive did not contain restart outputs
+for the iterative cases and caused ATS baseline-missing failures.
 
 PR #4096 (2026-08-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4096-17439-18734f3.tar.gz>
 =====================
@@ -40,6 +41,10 @@ Stop dumping linear systems from ATS decks (`writeLinearSystem` no longer set). 
 PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
 =====================
 Fluid reset after convergence failure
+
+PR #3972 (2026-08-DD) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4108-17194-fec5349.tar.gz>
+=====================
+Add MGR tests to ATS
 
 PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
 =====================

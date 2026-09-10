@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./deadoil_3ph_staircase_3d_base.xml"/>
+  </Included>
+
+  <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
+      targetRegions="{ Channel }"
+      temperature="300">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-10"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
+
+</Problem>
