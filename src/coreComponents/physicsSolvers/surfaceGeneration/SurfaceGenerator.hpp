@@ -614,6 +614,10 @@ private:
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
 
+  /// true once the initial conditions have been re-applied to the fracture elements, which only
+  /// happens the first time the fracture is generated
+  bool m_appliedInitialConditionsToFracture = false;
+
   /// set of separable faces
   SortedArray< localIndex > m_separableFaceSet;
 

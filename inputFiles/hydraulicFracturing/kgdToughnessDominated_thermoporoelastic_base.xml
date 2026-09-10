@@ -1,5 +1,10 @@
 <?xml version="1.0" ?>
 
+<!-- Thermoporoelastic (THM) variant of kgdToughnessDominated_poroelastic_base.xml.
+     Cold fluid is injected into hot rock: the matrix cools by conduction and advection across the
+     fracture walls, contracts, and the resulting thermal stress feeds back on the fracture opening.
+     isMatrixPoroelastic="1" is required, so that the matrix carries a temperature dof and the bulk
+     thermoporomechanics kernel assembles the thermal stress term. -->
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
@@ -11,13 +16,16 @@
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       isMatrixPoroelastic="1"
+      isThermal="1"
       maxNumResolves="2">
 
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
-        newtonMaxIter="20"
+        newtonMaxIter="50"
         lineSearchMaxCuts="3"/>
+      <!-- MGR has no strategy for thermal hydrofracture yet -->
       <LinearSolverParameters
+        solverType="direct"
         directParallel="0"/>
     </Hydrofracture>
 
@@ -31,7 +39,8 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"/>
+      targetRegions="{ Domain, Fracture }"
+      isThermal="1"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
@@ -59,35 +68,42 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ * }"
-      materialList="{ water, porousRock }"/>
+      materialList="{ water, porousRock, thermalCond }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, fractureFilling, fractureContact, hApertureModel }"/>
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel, fractureThermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
-    <CompressibleSinglePhaseFluid
+    <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="1.0e-6"
-      referencePressure="0.0"
-      compressibility="5e-10"
       referenceViscosity="1.0e-6"
-      viscosibility="0.0"/>
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="4.2e3"
+      referenceInternalEnergy="0.001"/>
 
     <PorousElasticIsotropic
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>  
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
+    <!-- defaultDrainedLinearTEC drives the thermal stress -->
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultYoungModulus="30.0e9"
-      defaultPoissonRatio="0.25"/>
+      defaultPoissonRatio="0.25"
+      defaultDrainedLinearTEC="3.0e-5"/>
 
     <BiotPorosity
       name="rockPorosity"
@@ -96,13 +112,30 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>  
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.16e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 3.0, 3.0, 3.0 }"/>
+
+    <!-- Conduction along the fracture, enhanced so that the cold front spreads over several metres
+         instead of the first two elements. -->
+    <SinglePhaseThermalConductivity
+      name="fractureThermalCond"
+      defaultThermalConductivityComponents="{ 3.0e6, 3.0e6, 3.0e6 }"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
-      permeabilityModelName="fracturePerm"/>
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <NullModel
       name="nullSolid"/>
@@ -121,7 +154,7 @@
 
     <HydraulicApertureTable
       name="hApertureModel"
-      apertureTableName="aperTable"/>  
+      apertureTableName="aperTable"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -148,6 +181,41 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
+
+    <FieldSpecification
+      name="initialPressureMatrix"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <!-- in-situ rock temperature -->
+    <FieldSpecification
+      name="initialTemperatureMatrix"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="temperature"
+      scale="350.0"/>
+
+    <!-- The initial fracture elements do not exist when the initial conditions are first applied,
+         so the SurfaceGenerator re-applies them once the elements have been created. -->
+    <FieldSpecification
+      name="initialTemperatureFracture"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="temperature"
+      scale="350.0"/>
+
+    <!-- cold injected fluid -->
+    <FieldSpecification
+      name="sourceTemperature"
+      objectPath="ElementRegions/Fracture"
+      fieldName="temperature"
+      scale="300.0"
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="xConstraint"
@@ -179,14 +247,14 @@
       scale="-5e-2"
       setNames="{ source }"/>
   </FieldSpecifications>
-  
+
   <Functions>
     <TableFunction
       name="aperTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
- 
+
   <Tasks>
     <PackCollection
       name="pressureCollection"
@@ -194,31 +262,31 @@
       fieldName="pressure"/>
 
     <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="temperature"/>
+
+    <PackCollection
       name="apertureCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="elementAperture"/> 
+      fieldName="elementAperture"/>
 
     <PackCollection
       name="hydraulicApertureCollection"
       objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="hydraulicAperture"/>  
-
-    <PackCollection
-      name="areaCollection"
-      objectPath="ElementRegions/Fracture/FractureSubRegion"
-      fieldName="elementArea"/> 
+      fieldName="hydraulicAperture"/>
   </Tasks>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="zeroViscosity_poroelastic"
+      plotFileRoot="kgdToughnessDominated_thermoporoelastic"
       plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/pressureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection, /Tasks/areaCollection}"
-      filename="kgdToughnessDominated_output" /> 
+      sources="{/Tasks/pressureCollection, /Tasks/temperatureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection}"
+      filename="kgdToughnessDominated_thermoporoelastic_output"/>
 
     <Restart
       name="restartOutput"/>

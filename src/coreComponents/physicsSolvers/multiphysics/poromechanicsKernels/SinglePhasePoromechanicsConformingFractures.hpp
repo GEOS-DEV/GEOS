@@ -149,6 +149,8 @@ public:
       {
         stack.dofColIndices[i * numDof + jdof] = offset + jdof;
       }
+      // one column per element, while complete() uses numEqn rows per element: a separate column offset
+      // would be needed if a caller ever combined numEqn > 1 with a non-zero m_dR_dAperOffset
       stack.localColIndices[ i ] = m_dR_dAperOffset + m_sei( iconn, i );
     }
   }
@@ -229,7 +231,7 @@ public:
         stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
         stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
 
-        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
+        kernelOp( k, regionIndex, subRegionIndex, elementIndex, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
         connectionIndex++;
       }
     }
@@ -252,7 +254,8 @@ public:
                                         localIndex const localRow )
     {
 
-      localIndex const row = m_dR_dAperOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+      // each element owns numEqn consecutive rows of dR_dAper; the mass balance is the first of them
+      localIndex const row = m_dR_dAperOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) ) * numEqn;
 
       m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
                                                                stack.localColIndices.data(),
@@ -263,10 +266,12 @@ public:
     } );
   }
 
-private:
+protected:
 
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
   localIndex const m_dR_dAperOffset;
+
+private:
 
   ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
 };
