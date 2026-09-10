@@ -27,7 +27,7 @@
 
   <NumericalMethods>
     <MixedVEM>
-      <MixedVEMDiscretization name="mixedVEM1" hybridization="0" stabilizationLength="1"/>
+      <MixedVEMDiscretization name="mixedVEM1" hybridization="0" stabilizationLength="0"/>
     </MixedVEM>
   </NumericalMethods>
 

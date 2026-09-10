@@ -20,7 +20,7 @@
     <VTKMesh
       name="mesh1"
       logLevel="1"
-      file="hybrid_mesh_l_2.vtu"/>
+      file="hybrid_mesh_l_4.vtu"/>
   </Mesh>
 
   <Geometry>
@@ -42,7 +42,7 @@
     <ElasticIsotropic
       name="rock"
       defaultDensity="2400"
-      defaultBulkModulus="5.5556e12"
+      defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
   </Constitutive>
 

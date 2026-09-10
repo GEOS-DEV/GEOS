@@ -40,11 +40,13 @@
       discretization="mixedVEM1"
       targetRegions="{ Domain }"
       logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="5"/>      
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
-        krylovTol="1.0e-8"
-        krylovMaxIter="1000"
+        krylovTol="1.0e-5"
         logLevel="1"/>
     </SolidMechanicsMixedVEM>
   </Solvers>
