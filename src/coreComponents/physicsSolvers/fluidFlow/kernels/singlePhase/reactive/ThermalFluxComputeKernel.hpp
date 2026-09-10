@@ -89,7 +89,7 @@ public:
   using Base::m_primarySpeciesMobileAggregateConc;
   using Base::m_referencePorosity;
   using Base::m_mobilePrimarySpeciesFlags;
-  using Base::m_solventDensity;
+  using Base::m_solventMassPerSolutionVolume;
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -122,7 +122,7 @@ public:
    * @param[in] thermalConductivityAccessors accessor for wrappers registered by the thermal conductivity model
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
-   * @param[in] solventDensity the density of the solvent (e.g., water) [kg/m3]
+   * @param[in] solventMassPerSolutionVolume mass of solvent per unit volume of solution [kg/m3]
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -142,7 +142,7 @@ public:
                      ThermalConductivityAccessors const & thermalConductivityAccessors,
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                     real64 const & solventDensity,
+                     real64 const & solventMassPerSolutionVolume,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -158,7 +158,7 @@ public:
             porosityAccessors,
             hasDiffusion,
             mobilePrimarySpeciesFlags,
-            solventDensity,
+            solventMassPerSolutionVolume,
             dt,
             localMatrix,
             localRhs ),
@@ -332,10 +332,10 @@ public:
         // Step 2.2: compute speciesFlux derivative wrt temperature
         for( integer is = 0; is < numSpecies; ++is )
         {
-          real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is] * m_solventDensity;
+          real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is] * m_solventMassPerSolutionVolume;
 
           // real64 const dAggregateConc_i_dTemp = m_dPrimarySpeciesMobileAggregateConcentration_dTemp[er_up][esr_up][ei_up][is];
-          // dSpeciesFlux_dT[k_up][is] += dAggregateConc_i_dTemp * m_solventDensity * fluxVal / fluidDens_up;
+          // dSpeciesFlux_dT[k_up][is] += dAggregateConc_i_dTemp * m_solventMassPerSolutionVolume * fluxVal / fluidDens_up;
           dSpeciesFlux_dT[k_up][is] += -aggregateConcMolarity_i * fluxVal * dDens_dTemp / (fluidDens_up * fluidDens_up);
 
           for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -493,7 +493,7 @@ public:
         // dSpeciesGrad_dT[ke] += stack.diffusionTransmissibility[connectionIndex][ke]
         //                        * m_dPrimarySpeciesMobileAggregateConcentration_dTemp[er][esr][ei][is];
 
-        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is] * m_solventDensity;
+        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is] * m_solventMassPerSolutionVolume;
       }
 
       for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
@@ -592,7 +592,7 @@ public:
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,
-                   real64 const solventDensity,
+                   real64 const solventMassPerSolutionVolume,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -627,7 +627,7 @@ public:
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, thermalFlowAccessors, fluidAccessors, reactiveFluidAccessors, thermalFluidAccessors,
                          permAccessors, diffusionAccessors, porosityAccessors, thermalConductivityAccessors,
-                         hasDiffusion, mobilePrimarySpeciesFlags, solventDensity, dt, localMatrix, localRhs );
+                         hasDiffusion, mobilePrimarySpeciesFlags, solventMassPerSolutionVolume, dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

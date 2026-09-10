@@ -156,11 +156,21 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      string const reactiveFluidModelName = m_isThermal? getConstitutiveName< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion ):
+                                            getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
+
       if( m_reactiveFluidModelName.empty() )
       {
-        m_reactiveFluidModelName = m_isThermal? getConstitutiveName< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion ):
-                                   getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
+        m_reactiveFluidModelName = reactiveFluidModelName;
       }
+
+      // The number of species, the dof layout and the molality-to-molarity conversion factor are all taken from a single reactive
+      // fluid model, and the flux kernels are launched per stencil rather than per region, so every subregion
+      // must share that model.
+      GEOS_THROW_IF_NE_MSG( reactiveFluidModelName, m_reactiveFluidModelName,
+                            GEOS_FMT( "SinglePhaseReactiveTransport {}: all regions must use the same reactive fluid model, but {} uses a different one",
+                                      getDataContext(), subRegion.getDataContext() ),
+                            InputError );
 
       // If at least one region has a diffusion model, consider it enabled for all
       string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
@@ -490,34 +500,20 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
     }
   }
 
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  real64 const solventMassPerSolutionVolume =
+    m_isThermal ? cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassPerSolutionVolume()
+                : cm.getConstitutiveRelation< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassPerSolutionVolume();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               string_array const & regionNames )
+                                                               string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-    real64 solventDensity = 1.0;
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
-    {
-      if( m_isThermal )
-      {
-        reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & fluid =
-          getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        solventDensity = fluid.solventDensity();
-      }
-      else
-      {
-        reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
-          getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-        solventDensity = fluid.solventDensity();
-      }
-    } );
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
@@ -529,7 +525,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
-                                                                               solventDensity,
+                                                                               solventMassPerSolutionVolume,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -545,7 +541,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
-                                                                               solventDensity,
+                                                                               solventMassPerSolutionVolume,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -602,16 +598,16 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
-    real64 const solventDensity = fluid.solventDensity();
+    real64 const solventMassPerSolutionVolume = fluid.solventMassPerSolutionVolume();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventDensity;
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassPerSolutionVolume;
 
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventDensity;
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassPerSolutionVolume;
       }
     } );
   }
@@ -621,16 +617,16 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
-    real64 const solventDensity = fluid.solventDensity();
+    real64 const solventMassPerSolutionVolume = fluid.solventMassPerSolutionVolume();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventDensity;
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassPerSolutionVolume;
 
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventDensity;
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassPerSolutionVolume;
       }
     } );
   }
@@ -650,13 +646,12 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
-    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r];
       }
     } );
   }
@@ -665,13 +660,12 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
-    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r];
       }
     } );
   }

@@ -62,7 +62,8 @@
       referencePressure="0.0"
       compressibility="0.0"
       viscosibility="0.0"
-      chemicalSystemType="momasEasy"/>
+      chemicalSystemType="momasEasy"
+      solventMassPerSolutionVolume="1"/>
 
     <CompressibleSolidConstantPermeability
       name="rock_a"

@@ -72,7 +72,7 @@ DECLARE_FIELD( primarySpeciesAggregateMole_n,
                array2dLayoutComp,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Aggregate amount of primary species in mole at the previous converged time step" );
 
 DECLARE_FIELD( kineticReactionMolarIncrements,
