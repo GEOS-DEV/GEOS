@@ -77,7 +77,7 @@ public:
     // step 2: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( m_primarySpeciesAggregateMole_n[ei][idof] ) );
       real64 const valAmount = LvArray::math::abs( m_localResidual[stack.localRow + idof + 1] ) / speciesAmountNormalizer;
       if( valAmount > stack.localValue[1] )
       {
@@ -99,7 +99,7 @@ public:
     // step 2: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( m_primarySpeciesAggregateMole_n[ei][idof] ) );
 
       stack.localValue[1] += m_localResidual[stack.localRow + idof + 1] * m_localResidual[stack.localRow + idof + 1];
       stack.localNormalizer[1] += speciesAmountNormalizer;
@@ -185,7 +185,7 @@ public:
     // step 3: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( m_primarySpeciesAggregateMole_n[ei][idof] ) );
       real64 const valAmount = LvArray::math::abs( m_localResidual[stack.localRow + idof + 2] ) / speciesAmountNormalizer;
       if( valAmount > stack.localValue[2] )
       {
@@ -214,7 +214,7 @@ public:
     // step 3: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( m_primarySpeciesAggregateMole_n[ei][idof] ) );
 
       stack.localValue[2] += m_localResidual[stack.localRow + idof + 2] * m_localResidual[stack.localRow + idof + 2];
       stack.localNormalizer[2] += speciesAmountNormalizer;

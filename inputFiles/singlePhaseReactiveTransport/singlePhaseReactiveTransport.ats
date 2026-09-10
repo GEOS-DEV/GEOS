@@ -31,6 +31,23 @@ decks = [
         restart_step=10,
         check_step=20,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="mixedReactionCarbonateSystemBdot_1D_smoke",
+        description=
+        '1D Carbonate mixed reaction with the B-dot activity model (1D, mixedReaction, bdot)',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=10,
+        check_step=20,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+
+    TestDeck(
+        name="mixedReactionCarbonateSystemBdot_2D_smoke",
+        description=
+        '2D Carbonate mixed reaction with the B-dot activity model (2D, mixedReaction, bdot)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=20,
+        check_step=40,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
 
 generate_geos_tests(decks)
