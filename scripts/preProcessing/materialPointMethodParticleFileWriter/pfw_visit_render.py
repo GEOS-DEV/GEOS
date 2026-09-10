@@ -475,6 +475,100 @@ def _define_particle_region_stress_component_candidates(name, particle_meshes, l
     return _unique_keep_order(names)
 
 
+_DEFORMATION_GRADIENT_COMPONENTS = {
+    "xx": (0, 0, 0),
+    "xy": (0, 1, 1),
+    "xz": (0, 2, 2),
+    "yx": (1, 0, 3),
+    "yy": (1, 1, 4),
+    "yz": (1, 2, 5),
+    "zx": (2, 0, 6),
+    "zy": (2, 1, 7),
+    "zz": (2, 2, 8),
+}
+
+
+def _deformation_gradient_base_candidates(all_names, particle_meshes=None):
+    candidates = [
+        "{0}_ParticleFields/particleDeformationGradient".format(mesh)
+        for mesh in particle_meshes or []
+    ] + [
+        "ParticleRegion1_ParticleDomains_ParticleFields/particleDeformationGradient",
+        "particleDeformationGradient",
+    ]
+    for name in all_names:
+        cname = _compact_name(name)
+        if cname.endswith("particledeformationgradient") or cname == "particledeformationgradient":
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _deformation_gradient_leaf_candidates(all_names, label, row, col, legacy_index, particle_meshes=None):
+    labels = [label, label.lower(), label.upper(), "{0}{1}".format(row, col), "{0}_{1}".format(row, col), str(legacy_index)]
+    candidates = []
+    for base in _deformation_gradient_base_candidates(all_names, particle_meshes=particle_meshes):
+        for leaf in labels:
+            candidates.append("{0}/{1}".format(base, leaf))
+        candidates.append("{0}_{1}".format(base, legacy_index))
+    for name in all_names:
+        cname = _compact_name(name)
+        if "deformationgradient" not in cname:
+            continue
+        if any(cname.endswith(_compact_name(suffix)) for suffix in labels):
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _define_particle_region_deformation_gradient_component_candidates(name, particle_meshes, label, row, col, legacy_index):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        base = "{0}_ParticleFields/particleDeformationGradient".format(mesh)
+        for leaf in (label, label.lower(), "{0}{1}".format(row, col), "{0}_{1}".format(row, col), str(legacy_index)):
+            names.append("{0}/{1}".format(base, leaf))
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, _array_decompose_candidate(base, legacy_index))
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
+def _derive_particle_deformation_gradient_component(all_names, requested, particle_meshes=None):
+    key = _compact_name(requested or "")
+    for label, (row, col, legacy_index) in _DEFORMATION_GRADIENT_COMPONENTS.items():
+        aliases = (
+            "particledeformationgradient{0}".format(label),
+            "deformationgradient{0}".format(label),
+            "particlef{0}".format(label),
+            "f{0}".format(label),
+            "particledeformationgradient{0}{1}".format(row, col),
+            "deformationgradient{0}{1}".format(row, col),
+            "particlef{0}{1}".format(row, col),
+            "f{0}{1}".format(row, col),
+        )
+        if key not in aliases:
+            continue
+        output_name = "particleDeformationGradient{0}".format(label.upper())
+        region_names = _define_particle_region_deformation_gradient_component_candidates(
+            output_name, particle_meshes, label.upper(), row, col, legacy_index
+        )
+        expressions = []
+        for base in _deformation_gradient_base_candidates(all_names, particle_meshes=particle_meshes):
+            expressions.append(_array_decompose_candidate(base, legacy_index))
+        for leaf in _deformation_gradient_leaf_candidates(all_names, label.upper(), row, col, legacy_index, particle_meshes=particle_meshes):
+            expressions.append(_indexed_candidate(leaf, 0))
+            expressions.append(_array_decompose_candidate(leaf, 0))
+            expressions.append(_quoted_candidate(leaf))
+        fallback_names = []
+        for i, expression in enumerate(_unique_keep_order(expressions)):
+            expr_name = output_name if i == 0 else "{0}_candidate{1}".format(output_name, i)
+            _define_scalar_expression(expr_name, expression)
+            fallback_names.append(expr_name)
+        return _unique_keep_order(region_names + fallback_names)
+    return None
+
+
 def _particle_mesh_coord_expression(mesh, component):
     return "coord({0})[{1}]".format(_quote_visit_var(mesh), int(component))
 
@@ -855,6 +949,9 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
     stress_component = _derive_particle_stress_component(all_names, requested, particle_meshes=particle_meshes)
     if stress_component:
         return stress_component
+    deformation_gradient_component = _derive_particle_deformation_gradient_component(all_names, requested, particle_meshes=particle_meshes)
+    if deformation_gradient_component:
+        return deformation_gradient_component
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
     if key in ("sigmann", "particlesigmann", "stressnn", "particlestressnn", "sigmarr", "stressrr"):

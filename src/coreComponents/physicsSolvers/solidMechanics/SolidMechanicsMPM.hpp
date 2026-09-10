@@ -563,15 +563,14 @@ public:
   /**
    * @brief Enforces a C0 P1 vertex-mortar tie between prescribed contact-group fields.
    *
-   * The current prototype is CPU-only, single-rank, and plane strain. It fits a
-   * signed-distance-like scalar at grid vertices from particle-carried oriented
-   * surface samples, extracts a connected piecewise-linear interface with a
-   * deterministic marching-triangle subdivision, and integrates one P1 mortar
-   * hat constraint at each reconstructed interface vertex. Overlapping constraints
-   * are enforced by alternating forward/reverse local mass-weighted projection
-   * sweeps. No global matrix, constitutive tangent, particle-volume correction,
-   * or EOS-density modification is used. Prescribed contact groups must already
-   * have created the two nodal velocity fields.
+   * The current implementation is CPU-only and plane strain. For MPI runs it
+   * reconstructs owned interface segments, replicates the resulting
+   * codimension-one mortar operator and the touched nodal field state, and then
+   * performs the same deterministic alternating projection on every rank.
+   * Periodically equivalent lateral nodes and crossings use canonical global
+   * grid keys. No global bulk matrix, constitutive tangent, particle-volume
+   * correction, or EOS-density modification is used. Prescribed contact groups
+   * must already have created the two nodal velocity fields.
    */
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
@@ -1707,6 +1706,9 @@ protected:
   stdVector< array1d< int > > m_weakPrimalParticleGeometryValid;
   mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
   int m_weakInterfaceTraceSurfaceFitNeighbors;
+  real64 m_weakInterfaceTraceSurfaceFitRadius;
+  real64 m_weakInterfaceTraceMinNormalCoherence;
+  real64 m_weakInterfaceTraceMaxFitResidual;
   int m_weakInterfaceTraceMortarQuadratureOrder;
   real64 m_weakInterfaceTraceMassCutoffRatio;
   real64 m_weakInterfaceTraceGapStabilization;
@@ -1717,12 +1719,15 @@ protected:
   real64 m_weakInterfaceTraceMinWeight;
   real64 m_weakInterfaceTraceCutTolerance;
   real64 m_weakInterfaceTraceMinSegmentFraction;
+  real64 m_weakInterfaceTraceMinFacetAreaFraction;
+  real64 m_weakInterfaceTraceMinTriangleQuality;
   real64 m_weakInterfaceTraceLinearSolverTolerance;
   real64 m_weakInterfaceTraceLinearSolverRegularization;
   array2d< int > m_weakInterfaceTracePairs;
   int m_weakInterfaceTraceProjectionIterations;
   real64 m_weakInterfaceTraceProjectionScale;
   int m_weakInterfaceTraceSuppressNodalContact;
+  int m_weakInterfaceTraceFallbackToSingleField;
   int m_writeParticleData;
   array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
   array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes

@@ -54,20 +54,22 @@ pfw["periodic"] = [False, False, False]
 cells_x_blocks = max(1, int(math.ceil(refine * bar_length)))
 cells_y_blocks = max(1, refine)
 force_serial = os.environ.get("WEAK_TRACE_FORCE_SERIAL", "0").strip().lower() in ("1", "true", "yes", "on")
-serial_weak_interface_variant = force_serial or VARIANT in ("traceContactGroups", "primalEnrichment")
+serial_weak_interface_variant = force_serial or VARIANT == "primalEnrichment"
 if serial_weak_interface_variant:
-    # The current C0 weak-interface implementations are serial-only. The
-    # optional force-serial mode lets baseline comparisons use the same cell
-    # count without adding partition-boundary differences to the profile overlay.
+    # The primal enrichment remains serial-only. WEAK_TRACE_FORCE_SERIAL keeps
+    # all comparison variants on one rank when a decomposition-independent
+    # profile overlay is desired.
     pfw["xpar"] = 1
     pfw["ypar"] = 1
 else:
-    pfw["xpar"] = cells_x_blocks
-    pfw["ypar"] = cells_y_blocks
+    pfw["xpar"] = int(os.environ.get("WEAK_TRACE_XPAR", str(cells_x_blocks)))
+    pfw["ypar"] = int(os.environ.get("WEAK_TRACE_YPAR", str(cells_y_blocks)))
 pfw["zpar"] = 1
 pfw["nI"] = cells_x_blocks * cpp
 pfw["nJ"] = cells_y_blocks * max(8, cpp // 6)
 pfw["nK"] = 3
+if pfw["nI"] % pfw["xpar"] != 0 or pfw["nJ"] % pfw["ypar"] != 0:
+    raise ValueError("WEAK_TRACE_NI/NJ must be divisible by WEAK_TRACE_XPAR/YPAR")
 pfw["ppc"] = ppc
 pfw["surfaceRefinementLevel"] = surface_refinement_level
 

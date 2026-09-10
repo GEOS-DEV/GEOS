@@ -806,8 +806,14 @@ parameters = {
                'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
                'weakInterfaceTraceGeometry': ( None, True ),  # MPM: trace geometry source: surface or materialLogisticRegression.
                'weakInterfaceTraceSurfaceFitNeighbors': ( None, True ),  # MPM: nearest oriented surface samples used for C0 nodal geometry reconstruction.
+               'weakInterfaceTraceSurfaceFitRadius': ( None, True ),  # MPM: marker-search radius in cell diagonals for 3D C0 interface reconstruction.
+               'weakInterfaceTraceMinNormalCoherence': ( None, True ),  # MPM: minimum oriented-normal coherence for accepting a local C0 surface fit.
+               'weakInterfaceTraceMaxFitResidual': ( None, True ),  # MPM: maximum normalized marker-to-plane residual for accepting a local C0 surface fit.
                'weakInterfaceTraceMortarQuadratureOrder': ( None, True ),  # MPM: one- or two-point Gauss integration on reconstructed interface segments.
                'weakInterfaceTraceMassCutoffRatio': ( None, True ),  # MPM: relative nodal mass cutoff for common A/B mortar support.
+               'weakInterfaceTraceMinFacetAreaFraction': ( None, True ),  # MPM: minimum 3D reconstructed facet area relative to cell width squared.
+               'weakInterfaceTraceMinTriangleQuality': ( None, True ),  # MPM: minimum accepted 3D reconstructed triangle shape quality.
+               'weakInterfaceTraceFallbackToSingleField': ( None, True ),  # MPM: locally fall back to a conservative single-field velocity when C0 reconstruction is rejected.
                'weakInterfaceTraceMaterialLRMaxMisfitFraction': ( None, True ),  # MPM: max wrong-side fraction for material-LR weak-interface insertion.
                'weakInterfaceTraceMaterialLRMinMeanMargin': ( None, True ),  # MPM: min normalized mean margin for material-LR weak-interface insertion.
                'weakInterfaceTraceMaterialLRMinParticlesPerSide': ( None, True ),  # MPM: min neighboring particles per material side for material-LR weak-interface insertion.

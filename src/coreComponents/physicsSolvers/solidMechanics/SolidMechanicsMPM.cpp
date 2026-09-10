@@ -50,6 +50,7 @@
 #include <chrono>
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <map>
 #include <set>
 #include <vector>
@@ -60,6 +61,7 @@
 #include <algorithm>
 #include <cctype>
 #include <limits>
+#include <numeric>
 #include <random>
 #include <thread>
 #include <tuple>
@@ -132,23 +134,52 @@ bool hasExplicitPartitionSurfaceNormal( VECTOR const & normal )
          explicitSurfaceNormalNormSquaredTolerance;
 }
 
+struct WeakInterfaceMortarNodeKey
+{
+  globalIndex i = 0;
+  globalIndex j = 0;
+  globalIndex k = 0;
+
+  bool operator<( WeakInterfaceMortarNodeKey const & other ) const
+  {
+    return std::tie( i, j, k ) < std::tie( other.i, other.j, other.k );
+  }
+
+  bool operator==( WeakInterfaceMortarNodeKey const & other ) const
+  {
+    return i == other.i && j == other.j && k == other.k;
+  }
+};
+
 struct WeakInterfaceTraceMarker
 {
   std::array< real64, 3 > point{};
   std::array< real64, 3 > normal{};
+  globalIndex particleID = -1;
   int group = -1;
 };
 
 struct WeakInterfaceMortarCrossingKey
 {
   int kind = 0; // 0: grid vertex, 1: grid or simplex edge.
-  localIndex node0 = -1;
-  localIndex node1 = -1;
+  WeakInterfaceMortarNodeKey node0{};
+  WeakInterfaceMortarNodeKey node1{};
 
   bool operator<( WeakInterfaceMortarCrossingKey const & other ) const
   {
-    return std::tie( kind, node0, node1 ) <
-           std::tie( other.kind, other.node0, other.node1 );
+    if( kind != other.kind )
+    {
+      return kind < other.kind;
+    }
+    if( node0 < other.node0 )
+    {
+      return true;
+    }
+    if( other.node0 < node0 )
+    {
+      return false;
+    }
+    return node1 < other.node1;
   }
 
   bool operator==( WeakInterfaceMortarCrossingKey const & other ) const
@@ -157,13 +188,15 @@ struct WeakInterfaceMortarCrossingKey
   }
 };
 
-WeakInterfaceMortarCrossingKey weakInterfaceMortarVertexKey( localIndex const node )
+WeakInterfaceMortarCrossingKey weakInterfaceMortarVertexKey(
+  WeakInterfaceMortarNodeKey const & node )
 {
-  return WeakInterfaceMortarCrossingKey{ 0, node, -1 };
+  return WeakInterfaceMortarCrossingKey{ 0, node, WeakInterfaceMortarNodeKey{} };
 }
 
-WeakInterfaceMortarCrossingKey weakInterfaceMortarEdgeKey( localIndex node0,
-                                                            localIndex node1 )
+WeakInterfaceMortarCrossingKey weakInterfaceMortarEdgeKey(
+  WeakInterfaceMortarNodeKey node0,
+  WeakInterfaceMortarNodeKey node1 )
 {
   if( node1 < node0 )
   {
@@ -178,19 +211,34 @@ struct WeakInterfaceMortarVertex
   std::array< real64, 3 > point{};
   std::array< real64, 3 > normal{};
   std::vector< localIndex > incidentSegments;
+  std::vector< localIndex > incidentFacets;
+  int component = -1;
 };
 
 struct WeakInterfaceMortarSegment
 {
   localIndex vertex0 = -1;
   localIndex vertex1 = -1;
+  std::array< real64, 3 > point0{};
+  std::array< real64, 3 > point1{};
   std::array< real64, 3 > normal{};
   real64 length = 0.0;
+  int component = -1;
+};
+
+struct WeakInterfaceMortarFacet
+{
+  std::array< localIndex, 3 > vertex{{ -1, -1, -1 }};
+  std::array< std::array< real64, 3 >, 3 > point{};
+  std::array< real64, 3 > normal{};
+  real64 area = 0.0;
+  real64 quality = 0.0;
+  int component = -1;
 };
 
 struct WeakInterfaceMortarCoefficient
 {
-  localIndex node = -1;
+  localIndex node = -1; // Index in the replicated interface-node state.
   real64 coefficient = 0.0;
 };
 
@@ -206,6 +254,198 @@ struct WeakInterfaceMortarConstraint
   real64 retainedSupportFraction = 0.0;
   real64 denominator = 0.0;
 };
+
+struct WeakInterfaceMortarCandidateCoefficient
+{
+  WeakInterfaceMortarNodeKey node{};
+  real64 coefficient = 0.0;
+};
+
+struct WeakInterfaceMortarConstraintCandidate
+{
+  std::vector< WeakInterfaceMortarCandidateCoefficient > coefficients;
+  std::vector< WeakInterfaceMortarCrossingKey > neighborVertexKeys;
+  WeakInterfaceMortarCrossingKey surfaceVertexKey{};
+  localIndex fieldA = -1;
+  localIndex fieldB = -1;
+  int interfaceID = -1;
+  std::array< real64, 3 > point{};
+  std::array< real64, 3 > normal{};
+  real64 measure = 0.0;
+};
+
+enum class WeakInterfaceMortarFallbackReason : int
+{
+  None = 0,
+  MissingPairMarkers = 20,
+  SurfaceFitQuality = 21,
+  DegenerateReconstruction = 22,
+  SurfaceTopology = 23,
+  MultipleInterfaceSupport = 24,
+  MortarBasis = 25,
+  MortarMassSupport = 26
+};
+
+char const * weakInterfaceMortarFallbackReasonName(
+  WeakInterfaceMortarFallbackReason const reason )
+{
+  switch( reason )
+  {
+    case WeakInterfaceMortarFallbackReason::None:
+      return "none";
+    case WeakInterfaceMortarFallbackReason::MissingPairMarkers:
+      return "missingPairMarkers";
+    case WeakInterfaceMortarFallbackReason::SurfaceFitQuality:
+      return "surfaceFitQuality";
+    case WeakInterfaceMortarFallbackReason::DegenerateReconstruction:
+      return "degenerateReconstruction";
+    case WeakInterfaceMortarFallbackReason::SurfaceTopology:
+      return "surfaceTopology";
+    case WeakInterfaceMortarFallbackReason::MultipleInterfaceSupport:
+      return "multipleInterfaceSupport";
+    case WeakInterfaceMortarFallbackReason::MortarBasis:
+      return "mortarBasis";
+    case WeakInterfaceMortarFallbackReason::MortarMassSupport:
+      return "mortarMassSupport";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * @brief Wire record for one locally owned reconstructed interface segment.
+ *
+ * The record is intentionally trivially copyable so the first CPU/MPI
+ * implementation can replicate the small codimension-one interface with one
+ * variable-size all-gather. Bulk grid and particle data remain distributed.
+ */
+struct WeakInterfaceMortarSegmentRecord
+{
+  WeakInterfaceMortarCrossingKey key0{};
+  WeakInterfaceMortarCrossingKey key1{};
+  std::array< real64, 3 > point0{};
+  std::array< real64, 3 > point1{};
+  std::array< real64, 3 > normal{};
+  globalIndex localOrdinal = -1;
+  int groupA = -1;
+  int groupB = -1;
+  int sourceRank = -1;
+};
+
+/**
+ * @brief Wire record for one locally owned reconstructed interface triangle.
+ */
+struct WeakInterfaceMortarFacetRecord
+{
+  std::array< WeakInterfaceMortarCrossingKey, 3 > key{};
+  std::array< std::array< real64, 3 >, 3 > point{};
+  std::array< real64, 3 > normal{};
+  globalIndex localOrdinal = -1;
+  int groupA = -1;
+  int groupB = -1;
+  int sourceRank = -1;
+};
+
+/**
+ * @brief A local reconstruction failure that is converted to a nodal
+ *        single-field fallback on every rank after the records are gathered.
+ */
+struct WeakInterfaceMortarFallbackPointRecord
+{
+  std::array< real64, 3 > point{};
+  WeakInterfaceMortarNodeKey cell{};
+  int groupA = -1;
+  int groupB = -1;
+  int reason = 0;
+  int sourceRank = -1;
+};
+
+/**
+ * @brief Replicated state for one grid-node/contact-field pair touched by the mortar.
+ */
+struct WeakInterfaceMortarNodeFieldRecord
+{
+  WeakInterfaceMortarNodeKey key{};
+  std::array< real64, 3 > velocity{};
+  std::array< real64, 3 > surfacePosition{};
+  real64 mass = 0.0;
+  real64 active = 0.0;
+  real64 surfaceFieldMass = 0.0;
+  globalIndex globalNode = -1;
+  int field = -1;
+  int sourceRank = -1;
+  int owned = 0;
+};
+
+template< typename RECORD >
+std::vector< RECORD > allGatherWeakInterfaceRecords(
+  std::vector< RECORD > const & localRecords )
+{
+  static_assert( std::is_trivially_copyable< RECORD >::value,
+                 "Weak-interface MPI records must be trivially copyable." );
+
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  if( commSize == 1 )
+  {
+    return localRecords;
+  }
+
+  std::size_t const localByteCountSize = localRecords.size() * sizeof( RECORD );
+  GEOS_ERROR_IF( localByteCountSize > static_cast< std::size_t >( std::numeric_limits< int >::max() ),
+                 "The local weak-interface MPI record buffer exceeds the MPI int-count limit." );
+  int const localByteCount = static_cast< int >( localByteCountSize );
+
+  array1d< int > byteCounts( commSize );
+  MPI_Allgather( &localByteCount,
+                 1,
+                 MPI_INT,
+                 byteCounts.data(),
+                 1,
+                 MPI_INT,
+                 MPI_COMM_GEOS );
+
+  stdVector< int > displacements( commSize, 0 );
+  std::size_t totalByteCountSize = 0;
+  for( int rank = 0; rank < commSize; ++rank )
+  {
+    GEOS_ERROR_IF( byteCounts[rank] < 0 ||
+                   totalByteCountSize + static_cast< std::size_t >( byteCounts[rank] ) >
+                     static_cast< std::size_t >( std::numeric_limits< int >::max() ),
+                   "The gathered weak-interface MPI record buffer exceeds the MPI int-count limit." );
+    if( rank > 0 )
+    {
+      displacements[rank] = static_cast< int >( totalByteCountSize );
+    }
+    totalByteCountSize += static_cast< std::size_t >( byteCounts[rank] );
+  }
+  int const totalByteCount = static_cast< int >( totalByteCountSize );
+  GEOS_ERROR_IF( totalByteCount % static_cast< int >( sizeof( RECORD ) ) != 0,
+                 "Invalid weak-interface MPI byte count." );
+
+  stdVector< char > packedRecords( totalByteCountSize );
+  char dummyByte = 0;
+  char const * sendBuffer = localRecords.empty()
+                            ? &dummyByte
+                            : reinterpret_cast< char const * >( localRecords.data() );
+  char * receiveBuffer = packedRecords.empty() ? &dummyByte : packedRecords.data();
+  MPI_Allgatherv( sendBuffer,
+                  localByteCount,
+                  MPI_BYTE,
+                  receiveBuffer,
+                  byteCounts.data(),
+                  displacements.data(),
+                  MPI_BYTE,
+                  MPI_COMM_GEOS );
+
+  std::vector< RECORD > gatheredRecords(
+    static_cast< std::size_t >( totalByteCount ) / sizeof( RECORD ) );
+  if( totalByteCount > 0 )
+  {
+    std::memcpy( gatheredRecords.data(), packedRecords.data(),
+                 static_cast< std::size_t >( totalByteCount ) );
+  }
+  return gatheredRecords;
+}
 
 // -------------------------------------------------------------------------------------------------
 // Serial CPU geometry support for the experimental primal weak-interface enrichment.  These
@@ -1818,15 +2058,10 @@ array2d< int > generateCombinations( array1d< array1d< int > > sets )
   return combinations;
 }
 
-/**
- * @brief Swaps swap.
- *
- * Executable statements are unchanged; comments document intent where practical.
- */
 template< typename T >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void swap( T & a, T & b )
+void swapLocalValues( T & a, T & b )
 {
   T temp = a;
   a = b;
@@ -1849,12 +2084,12 @@ localIndex partitionIterative( localIndex (& arr)[64], localIndex (& arr2)[64], 
     if( arr[j] <= x )
     {
       ++i;
-      swap( arr[i], arr[j] );
-      swap( arr2[i], arr2[j] );
+      swapLocalValues( arr[i], arr[j] );
+      swapLocalValues( arr2[i], arr2[j] );
     }
   }
-  swap( arr[i + 1], arr[h] );
-  swap( arr2[i + 1], arr2[h] );
+  swapLocalValues( arr[i + 1], arr[h] );
+  swapLocalValues( arr2[i + 1], arr2[h] );
   return (i + 1);
 }
 
@@ -2176,6 +2411,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_weakPrimalParticleGeometryValid(),
   m_weakInterfaceTraceGeometry( mpm::WeakInterfaceTraceGeometryOption::Surface ),
   m_weakInterfaceTraceSurfaceFitNeighbors( 4 ),
+  m_weakInterfaceTraceSurfaceFitRadius( 3.0 ),
+  m_weakInterfaceTraceMinNormalCoherence( 0.35 ),
+  m_weakInterfaceTraceMaxFitResidual( 0.35 ),
   m_weakInterfaceTraceMortarQuadratureOrder( 2 ),
   m_weakInterfaceTraceMassCutoffRatio( 1.0e-12 ),
   m_weakInterfaceTraceGapStabilization( 0.0 ),
@@ -2186,12 +2424,15 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_weakInterfaceTraceMinWeight( 1.0e-12 ),
   m_weakInterfaceTraceCutTolerance( 1.0e-8 ),
   m_weakInterfaceTraceMinSegmentFraction( 1.0e-4 ),
+  m_weakInterfaceTraceMinFacetAreaFraction( 1.0e-8 ),
+  m_weakInterfaceTraceMinTriangleQuality( 1.0e-4 ),
   m_weakInterfaceTraceLinearSolverTolerance( 1.0e-10 ),
   m_weakInterfaceTraceLinearSolverRegularization( 1.0e-12 ),
   m_weakInterfaceTracePairs(),
   m_weakInterfaceTraceProjectionIterations( 30 ),
   m_weakInterfaceTraceProjectionScale( 0.6 ),
   m_weakInterfaceTraceSuppressNodalContact( 1 ),
+  m_weakInterfaceTraceFallbackToSingleField( 1 ),
   m_writeParticleData( 0 ),
   m_xGlobalMax(),
   m_xGlobalMin(),
@@ -3452,13 +3693,31 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceSurfaceFitNeighbors ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Number of nearest oriented particle-surface samples used to reconstruct the nodal signed-distance-like field for the C0 P1 interface." );
+    setDescription( "Number of nearest oriented particle-surface samples used to reconstruct the nodal signed-distance-like field for the C0 P1 interface. Three-dimensional reconstruction uses at least eight samples." );
+
+  registerWrapper( "weakInterfaceTraceSurfaceFitRadius", &m_weakInterfaceTraceSurfaceFitRadius ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceSurfaceFitRadius ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum marker distance, measured in background-cell diagonals, used to identify the narrow band in which a C0 mortar surface may be reconstructed." );
+
+  registerWrapper( "weakInterfaceTraceMinNormalCoherence", &m_weakInterfaceTraceMinNormalCoherence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMinNormalCoherence ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum magnitude of the weighted mean oriented marker normal for accepting a local C0 mortar fit. Failed fits use the configured single-field fallback." );
+
+  registerWrapper( "weakInterfaceTraceMaxFitResidual", &m_weakInterfaceTraceMaxFitResidual ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMaxFitResidual ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum weighted RMS marker-to-local-plane residual normalized by the background-cell diagonal. Failed fits use the configured single-field fallback." );
 
   registerWrapper( "weakInterfaceTraceMortarQuadratureOrder", &m_weakInterfaceTraceMortarQuadratureOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceMortarQuadratureOrder ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Gauss quadrature order on each reconstructed 2D interface segment. Supported values are one and two." );
+    setDescription( "Quadrature order on the reconstructed interface. In 2D, orders one and two use one- and two-point segment rules. In 3D, order one uses the triangle centroid and order two uses a positive three-point degree-two triangle rule." );
 
   registerWrapper( "weakInterfaceTraceMassCutoffRatio", &m_weakInterfaceTraceMassCutoffRatio ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3506,13 +3765,25 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceCutTolerance ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Dimensionless nodal level-set zero tolerance relative to the in-plane cell diagonal during deterministic marching-triangle reconstruction." );
+    setDescription( "Dimensionless nodal level-set zero tolerance relative to the active background-cell diagonal during deterministic marching-simplex reconstruction." );
 
   registerWrapper( "weakInterfaceTraceMinSegmentFraction", &m_weakInterfaceTraceMinSegmentFraction ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceMinSegmentFraction ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Minimum reconstructed interface-segment length divided by the minimum in-plane cell width. Shorter P1 segments are discarded; they are not replaced by nodal ties." );
+    setDescription( "Minimum reconstructed 2D interface-segment length divided by the minimum active cell width. Shorter segments activate the configured single-field fallback." );
+
+  registerWrapper( "weakInterfaceTraceMinFacetAreaFraction", &m_weakInterfaceTraceMinFacetAreaFraction ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMinFacetAreaFraction ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum reconstructed 3D triangle area divided by the square of the minimum cell width. Smaller facets activate the configured single-field fallback." );
+
+  registerWrapper( "weakInterfaceTraceMinTriangleQuality", &m_weakInterfaceTraceMinTriangleQuality ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceMinTriangleQuality ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum 3D triangle quality 4*sqrt(3)*area/sum(edgeLengthSquared). Lower-quality facets activate the configured single-field fallback." );
 
   registerWrapper( "weakInterfaceTraceLinearSolverTolerance", &m_weakInterfaceTraceLinearSolverTolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3548,6 +3819,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_weakInterfaceTraceSuppressNodalContact ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Skip ordinary nodal contact for contact-group pairs handled by weak-interface trace projection." );
+
+  registerWrapper( "weakInterfaceTraceFallbackToSingleField", &m_weakInterfaceTraceFallbackToSingleField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_weakInterfaceTraceFallbackToSingleField ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When one, replace an unresolved local weak-interface construction by a conservative mass-weighted single-field nodal velocity. The fallback also activates wherever two reconstructed weak interfaces share the support of one grid node." );
 
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3825,6 +4102,13 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfaceTraceProjectionScale must be in [0, 1] for the relaxed local mortar projection." );
     GEOS_ERROR_IF( m_weakInterfaceTraceSurfaceFitNeighbors < 1,
                    "weakInterfaceTraceSurfaceFitNeighbors must be at least one." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceSurfaceFitRadius <= 0.0,
+                   "weakInterfaceTraceSurfaceFitRadius must be positive." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMinNormalCoherence < 0.0 ||
+                   m_weakInterfaceTraceMinNormalCoherence > 1.0,
+                   "weakInterfaceTraceMinNormalCoherence must be in [0, 1]." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMaxFitResidual <= 0.0,
+                   "weakInterfaceTraceMaxFitResidual must be positive." );
     GEOS_ERROR_IF( m_weakInterfaceTraceMortarQuadratureOrder != 1 &&
                    m_weakInterfaceTraceMortarQuadratureOrder != 2,
                    "weakInterfaceTraceMortarQuadratureOrder must be one or two." );
@@ -3839,6 +4123,12 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF( m_weakInterfaceTraceMinSegmentFraction < 0.0 ||
                    m_weakInterfaceTraceMinSegmentFraction > 1.0,
                    "weakInterfaceTraceMinSegmentFraction must be in [0, 1]." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMinFacetAreaFraction < 0.0 ||
+                   m_weakInterfaceTraceMinFacetAreaFraction > 1.0,
+                   "weakInterfaceTraceMinFacetAreaFraction must be in [0, 1]." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceMinTriangleQuality < 0.0 ||
+                   m_weakInterfaceTraceMinTriangleQuality > 1.0,
+                   "weakInterfaceTraceMinTriangleQuality must be in [0, 1]." );
     GEOS_ERROR_IF( m_weakInterfaceTraceLinearSolverTolerance <= 0.0,
                    "weakInterfaceTraceLinearSolverTolerance must be positive." );
     GEOS_ERROR_IF( m_weakInterfaceTraceLinearSolverRegularization < 0.0,
@@ -3847,18 +4137,18 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfaceTraceGapStabilization must be non-negative." );
     GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization > 0.0 ||
                    m_weakInterfaceTraceMaxGapCorrectionVelocity > 0.0,
-                   "The C0 vertex-mortar weak-interface prototype currently performs a pure velocity projection. "
+                   "The C0 vertex-mortar weak-interface implementation currently performs a pure velocity projection. "
                    "Set weakInterfaceTraceGapStabilization=0 and weakInterfaceTraceMaxGapCorrectionVelocity=0." );
     GEOS_ERROR_IF( m_enableContact != 1,
-                   "The C0 vertex-mortar weak-interface prototype requires enableContact=1 so prescribed "
+                   "The C0 vertex-mortar weak-interface implementation requires enableContact=1 so prescribed "
                    "contact groups create separate nodal velocity fields." );
-    GEOS_ERROR_IF( m_planeStrain != 1,
-                   "The C0 vertex-mortar weak-interface prototype currently supports plane strain only." );
+    GEOS_ERROR_IF( m_planeStrain != 0 && m_planeStrain != 1,
+                   "The C0 vertex-mortar weak-interface implementation requires planeStrain=0 or 1." );
     GEOS_ERROR_IF( m_damageFieldPartitioning != 0,
-                   "The C0 vertex-mortar weak-interface prototype currently requires damageFieldPartitioning=0." );
+                   "The C0 vertex-mortar weak-interface implementation currently requires damageFieldPartitioning=0." );
     GEOS_ERROR_IF( m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Off ||
                    m_weakInterfaceTraceGeometry != mpm::WeakInterfaceTraceGeometryOption::Surface,
-                   "The C0 vertex-mortar weak-interface prototype currently supports prescribed surface geometry only." );
+                   "The C0 vertex-mortar weak-interface implementation currently supports prescribed surface geometry only." );
     GEOS_ERROR_IF( m_weakInterfaceTraceMaterialLRMaxMisfitFraction < 0.0 ||
                    m_weakInterfaceTraceMaterialLRMaxMisfitFraction > 1.0,
                    "weakInterfaceTraceMaterialLRMaxMisfitFraction must be in [0, 1]." );
@@ -3875,6 +4165,9 @@ void SolidMechanicsMPM::postInputInitialization()
                    "weakInterfaceTraceGeometry=materialLogisticRegression requires weakDiscontinuityInsertion=material." );
     GEOS_ERROR_IF( m_updateMethod == mpm::UpdateMethodOption::FMPM && m_updateOrder > 1,
                    "Weak-interface trace projection is currently supported for FLIP/PIC/XPIC and first-order FMPM only." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceFallbackToSingleField != 0 &&
+                   m_weakInterfaceTraceFallbackToSingleField != 1,
+                   "weakInterfaceTraceFallbackToSingleField must be zero or one." );
   }
 
   // Initialize boundary condition types if they're not specified by the user
@@ -4683,7 +4976,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Flag for grid fields in the common nodal support of an accepted C0 vertex-mortar constraint." );
+        setDescription( "Flag for grid fields handled by an accepted C0 vertex-mortar constraint or by its conservative local single-field fallback." );
 
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -4693,7 +4986,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Maximum incident P1-mortar measure, normalized by the in-plane cell diagonal, for each active support node." );
+        setDescription( "Maximum incident P1-mortar measure normalized by the active cell length scale for each active support node; fallback nodes use one." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -4708,12 +5001,12 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Maximum normalized mortar coefficient c_aI/int(lambda_a ds) associated with each active support node." );
+        setDescription( "Maximum normalized mortar coefficient c_aI/int(lambda_a dGamma) associated with each active support node; fallback nodes use one." );
 
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic C0 vertex-mortar status: 0 means no accepted constraint support and 10 means active common support. Aggregate rejection counts are reported in the solver log." );
+        setDescription( "Diagnostic C0 vertex-mortar status: 0 none, 10 accepted mortar support, 20 missing pair markers, 21 failed surface fit, 22 degenerate reconstruction, 23 invalid topology, 24 multiple local interface sheets, 25 invalid mortar basis, and 26 insufficient common mass support." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -20067,7 +20360,7 @@ bool intersectRayParallelepiped( real64 (& origin)[3],
         {
             real64 t1 = ( 0.0 - o[i] ) / d[i];
             real64 t2 = ( 1.0 - o[i] ) / d[i];
-            if ( t1 > t2 ) swap( t1, t2 );
+            if ( t1 > t2 ) swapLocalValues( t1, t2 );
             tmin = LvArray::math::max( tmin, t1 );
             tmax = LvArray::math::min( tmax, t2 );
             if ( tmin > tmax )
@@ -24532,12 +24825,17 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
  *
  * Oriented particle-surface samples define a signed-distance-like scalar at the
  * Cartesian grid vertices. A deterministic P1 subdivision of every cell then
- * produces a C0 piecewise-linear interface. One multiplier hat is associated
- * with each reconstructed interface vertex and integrated over all incident
- * segments using the actual cubic B-spline trace basis, or the underlying Q1
- * grid trace for CPDI. Alternating forward/reverse local mass-metric corrections
- * enforce the bonded velocity trace without assembling a global matrix. The
- * method never changes particle mass, volume, reference density, or EOS state.
+ * produces a C0 piecewise-linear interface: marching triangles in plane strain
+ * and a six-tetrahedron Kuhn subdivision with triangular facets in 3D. One
+ * multiplier hat is associated with each reconstructed interface vertex and
+ * integrated over all incident segments/facets using the actual cubic B-spline
+ * trace basis, or the underlying Q1 grid trace for CPDI. Alternating
+ * forward/reverse local mass-metric corrections enforce the bonded velocity
+ * trace without assembling a global matrix. If the reconstructed geometry is
+ * locally unreliable, or if multiple weak interfaces enter one grid-node
+ * support, a conservative mass-weighted nodal single-field fallback is used.
+ * The method never changes particle mass, volume, reference density, or EOS
+ * state.
  */
 void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                                                              DomainPartition & domain,
@@ -24547,37 +24845,55 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( domain );
   GEOS_UNUSED_VAR( mesh );
 
-  GEOS_ERROR_IF( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1,
-                 "The C0 vertex-mortar weak-interface prototype currently supports one MPI rank only." );
 #ifdef GEOS_USE_DEVICE
-  GEOS_ERROR( "The C0 vertex-mortar weak-interface prototype currently supports CPU execution only." );
+  GEOS_ERROR( "The C0 vertex-mortar weak-interface implementation currently supports CPU execution only." );
 #endif
-  GEOS_ERROR_IF( m_planeStrain != 1,
-                 "The C0 vertex-mortar weak-interface prototype currently supports plane-strain problems only." );
+  GEOS_ERROR_IF( m_planeStrain != 0 && m_planeStrain != 1,
+                 "The C0 vertex-mortar weak-interface implementation requires planeStrain=0 or 1." );
   GEOS_ERROR_IF( m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Off,
-                 "The C0 vertex-mortar weak-interface prototype currently supports prescribed surface geometry only." );
+                 "The C0 vertex-mortar weak-interface implementation currently supports prescribed surface geometry only." );
   GEOS_ERROR_IF( m_weakInterfaceTraceGeometry != mpm::WeakInterfaceTraceGeometryOption::Surface,
-                 "The C0 vertex-mortar weak-interface prototype requires weakInterfaceTraceGeometry=surface." );
+                 "The C0 vertex-mortar weak-interface implementation requires weakInterfaceTraceGeometry=surface." );
   GEOS_ERROR_IF( m_damageFieldPartitioning != 0 || m_numContactFlags != 1,
-                 "The C0 vertex-mortar weak-interface prototype requires one velocity field per contact group "
+                 "The C0 vertex-mortar weak-interface implementation requires one velocity field per contact group "
                  "(damageFieldPartitioning=0 and no automatic weak-discontinuity insertion)." );
   GEOS_ERROR_IF( m_numVelocityFields != m_numContactGroups,
-                 "The C0 vertex-mortar weak-interface prototype requires the velocity-field index to equal "
+                 "The C0 vertex-mortar weak-interface implementation requires the velocity-field index to equal "
                  "the prescribed contact-group index." );
   GEOS_ERROR_IF( dt <= 0.0,
                  "The C0 vertex-mortar weak-interface projection requires a positive time step." );
 
+  SpatialPartition & partition =
+    dynamic_cast< SpatialPartition & >( domain.getGroup( domain.groupKeys.partitionManager ) );
+  arrayView1d< int const > const periodic = partition.getPeriodic();
+  GEOS_ERROR_IF( m_planeStrain == 1 && partition.getPartitions()[2] != 1,
+                 "Plane-strain C0 vertex-mortar runs require one MPI partition in z." );
+  GEOS_ERROR_IF( m_planeStrain == 1 && periodic[2] != 0,
+                 "Plane-strain C0 vertex-mortar runs do not support periodicity in z." );
+  for( int direction = 0; direction < ( m_planeStrain == 1 ? 2 : 3 ); ++direction )
+  {
+    GEOS_ERROR_IF( periodic[direction] != 0 &&
+                   partition.getPartitions()[direction] < 2,
+                   "The C0 vertex-mortar implementation requires at least two MPI "
+                   "partitions in each active periodic direction." );
+  }
+
   zeroWeakInterfaceTraceProjectionFields( nodeManager );
 
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   int const numDims = m_numDims;
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
   int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
   int const maxProjectionSweeps = m_weakInterfaceTraceProjectionIterations;
-  int const surfaceFitNeighbors = m_weakInterfaceTraceSurfaceFitNeighbors;
+  int const surfaceFitNeighbors = m_planeStrain == 1
+    ? m_weakInterfaceTraceSurfaceFitNeighbors
+    : LvArray::math::max( 8, m_weakInterfaceTraceSurfaceFitNeighbors );
+  real64 const surfaceFitRadius = m_weakInterfaceTraceSurfaceFitRadius;
+  real64 const minNormalCoherence = m_weakInterfaceTraceMinNormalCoherence;
+  real64 const maxFitResidual = m_weakInterfaceTraceMaxFitResidual;
   int const mortarQuadratureOrder = m_weakInterfaceTraceMortarQuadratureOrder;
   real64 const smallMass = m_smallMass;
   real64 const minRetainedSupportFraction = m_weakInterfaceTraceMinWeight;
@@ -24587,18 +24903,105 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   real64 const massCutoffRatio = m_weakInterfaceTraceMassCutoffRatio;
   real64 const cutToleranceFraction = m_weakInterfaceTraceCutTolerance;
   real64 const minSegmentFraction = m_weakInterfaceTraceMinSegmentFraction;
+  real64 const minFacetAreaFraction = m_weakInterfaceTraceMinFacetAreaFraction;
+  real64 const minTriangleQuality = m_weakInterfaceTraceMinTriangleQuality;
+  bool const fallbackToSingleField = m_weakInterfaceTraceFallbackToSingleField != 0;
 
   integer nEl[3] = {};
   LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
   real64 hEl[3] = {};
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-  real64 xLocalMin[3] = {};
-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+
+  std::array< real64, 3 > gridGlobalMin{};
+  std::array< real64, 3 > gridGlobalMax{};
+  std::array< real64, 3 > gridGlobalExtent{};
+  std::array< globalIndex, 3 > globalCellCount{};
+  for( int d = 0; d < 3; ++d )
+  {
+    gridGlobalMin[d] = partition.getGlobalMin()[d];
+    gridGlobalMax[d] = partition.getGlobalMax()[d];
+    gridGlobalExtent[d] = gridGlobalMax[d] - gridGlobalMin[d];
+    globalCellCount[d] = static_cast< globalIndex >(
+      LvArray::math::round( gridGlobalExtent[d] / hEl[d] ) );
+    GEOS_ERROR_IF( globalCellCount[d] < 1,
+                   "Invalid global background-grid cell count for the C0 mortar." );
+  }
+
+  auto positiveModulo = []( globalIndex value, globalIndex const modulus )
+  {
+    value %= modulus;
+    if( value < 0 )
+    {
+      value += modulus;
+    }
+    return value;
+  };
+
+  auto canonicalCoordinate = [&]( real64 const coordinate, int const direction )
+  {
+    if( periodic[direction] == 0 )
+    {
+      return coordinate;
+    }
+    real64 const extent = gridGlobalExtent[direction];
+    real64 wrapped = coordinate - gridGlobalMin[direction];
+    wrapped -= LvArray::math::floor( wrapped / extent ) * extent;
+    real64 const tolerance =
+      64.0 * DBL_EPSILON * LvArray::math::max( extent, 1.0 );
+    if( wrapped < 0.0 )
+    {
+      wrapped += extent;
+    }
+    if( wrapped <= tolerance || extent - wrapped <= tolerance )
+    {
+      wrapped = 0.0;
+    }
+    return gridGlobalMin[direction] + wrapped;
+  };
+
+  auto minimumImageDelta = [&]( real64 const delta, int const direction )
+  {
+    if( periodic[direction] == 0 )
+    {
+      return delta;
+    }
+    real64 const extent = gridGlobalExtent[direction];
+    return delta - LvArray::math::round( delta / extent ) * extent;
+  };
+
+  auto canonicalPoint = [&]( std::array< real64, 3 > point )
+  {
+    for( int d = 0; d < 3; ++d )
+    {
+      point[d] = canonicalCoordinate( point[d], d );
+    }
+    return point;
+  };
+
+  auto nodeKeyFromCoordinates = [&]( real64 const x,
+                                     real64 const y,
+                                     real64 const z )
+  {
+    real64 const coordinates[3] = { x, y, z };
+    globalIndex index[3] = {};
+    for( int d = 0; d < 3; ++d )
+    {
+      real64 const u = ( coordinates[d] - gridGlobalMin[d] ) / hEl[d];
+      index[d] = static_cast< globalIndex >( LvArray::math::round( u ) );
+      if( periodic[d] != 0 )
+      {
+        index[d] = positiveModulo( index[d], globalCellCount[d] );
+      }
+    }
+    return WeakInterfaceMortarNodeKey{ index[0], index[1], index[2] };
+  };
 
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
   arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
     nodeManager.referencePosition();
+  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
+  arrayView1d< globalIndex const > const gridLocalToGlobal = nodeManager.localToGlobalMap();
   arrayView2d< real64 const > const gridActive =
     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
   arrayView2d< real64 const > const gridMass =
@@ -24629,17 +25032,25 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
 
-  // The mortar trace must use the same background interpolation family as the
-  // particle calculation. Cubic B-spline particles use the full 4x4x4 trace
-  // stencil. Linear CPDI particles use the underlying trilinear grid field.
-  // Linear single-point MPM is deliberately rejected: the mortar construction
-  // does not remove its cell-crossing instability.
-  bool haveActiveParticleType = false;
-  bool haveBSplineParticles = false;
-  bool haveCPDIParticles = false;
-  bool haveSinglePointParticles = false;
-  bool haveUnsupportedParticles = false;
-  std::vector< WeakInterfaceTraceMarker > markers;
+  std::vector< WeakInterfaceMortarNodeKey > localNodeKeys(
+    static_cast< std::size_t >( nodeManager.size() ) );
+  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  {
+    WeakInterfaceMortarNodeKey const key = nodeKeyFromCoordinates(
+      gridPosition[node][0], gridPosition[node][1], gridPosition[node][2] );
+    localNodeKeys[static_cast< std::size_t >( node )] = key;
+  }
+
+  // Collect owned particle-carried interface markers and replicate only this
+  // codimension-one geometry. This is deliberately conservative for the first
+  // CPU/MPI implementation: the bulk grid and particles remain distributed,
+  // while all ranks build the same small interface operator.
+  bool localHaveActiveParticleType = false;
+  bool localHaveBSplineParticles = false;
+  bool localHaveCPDIParticles = false;
+  bool localHaveSinglePointParticles = false;
+  bool localHaveUnsupportedParticles = false;
+  std::vector< WeakInterfaceTraceMarker > localMarkers;
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -24650,23 +25061,24 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       return;
     }
 
-    haveActiveParticleType = true;
+    localHaveActiveParticleType = true;
     switch( subRegion.getParticleType() )
     {
       case ParticleType::SinglePointBSpline:
-        haveBSplineParticles = true;
+        localHaveBSplineParticles = true;
         break;
       case ParticleType::CPDI:
-        haveCPDIParticles = true;
+        localHaveCPDIParticles = true;
         break;
       case ParticleType::SinglePoint:
-        haveSinglePointParticles = true;
+        localHaveSinglePointParticles = true;
         break;
       default:
-        haveUnsupportedParticles = true;
+        localHaveUnsupportedParticles = true;
         break;
     }
 
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
     arrayView1d< integer const > const particleSurfaceFlag =
       subRegion.getParticleSurfaceFlag();
@@ -24686,42 +25098,87 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         continue;
       }
 
-      real64 const nx = particleSurfaceNormal[p][0];
-      real64 const ny = particleSurfaceNormal[p][1];
-      real64 const normalNorm = LvArray::math::sqrt( nx * nx + ny * ny );
+      std::array< real64, 3 > rawNormal{{
+        particleSurfaceNormal[p][0],
+        particleSurfaceNormal[p][1],
+        m_planeStrain == 1 ? 0.0 : particleSurfaceNormal[p][2]
+      }};
+      real64 const normalNorm = LvArray::math::sqrt(
+        rawNormal[0] * rawNormal[0] +
+        rawNormal[1] * rawNormal[1] +
+        rawNormal[2] * rawNormal[2] );
       if( normalNorm <= explicitSurfaceNormalTolerance )
       {
         continue;
       }
 
       WeakInterfaceTraceMarker marker;
+      marker.particleID = particleID[p];
       marker.group = particleGroup[p];
       marker.point[0] = particlePosition[p][0] + particleSurfacePosition[p][0];
       marker.point[1] = particlePosition[p][1] + particleSurfacePosition[p][1];
       marker.point[2] = particlePosition[p][2] + particleSurfacePosition[p][2];
-      marker.normal[0] = nx / normalNorm;
-      marker.normal[1] = ny / normalNorm;
-      marker.normal[2] = 0.0;
-      markers.emplace_back( marker );
+      marker.point = canonicalPoint( marker.point );
+      for( int d = 0; d < 3; ++d )
+      {
+        marker.normal[d] = rawNormal[d] / normalNorm;
+      }
+      localMarkers.emplace_back( marker );
     }
   } );
 
-  GEOS_ERROR_IF( !haveActiveParticleType,
+  int const haveActiveParticleType = MpiWrapper::allReduce(
+    localHaveActiveParticleType ? 1 : 0, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const haveBSplineParticles = MpiWrapper::allReduce(
+    localHaveBSplineParticles ? 1 : 0, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const haveCPDIParticles = MpiWrapper::allReduce(
+    localHaveCPDIParticles ? 1 : 0, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const haveSinglePointParticles = MpiWrapper::allReduce(
+    localHaveSinglePointParticles ? 1 : 0, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  int const haveUnsupportedParticles = MpiWrapper::allReduce(
+    localHaveUnsupportedParticles ? 1 : 0, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+
+  GEOS_ERROR_IF( haveActiveParticleType == 0,
                  "The C0 vertex-mortar weak-interface projection found no active particles." );
-  GEOS_ERROR_IF( haveSinglePointParticles,
+  GEOS_ERROR_IF( haveSinglePointParticles != 0,
                  "The C0 vertex-mortar weak-interface projection does not support linear single-point MPM. "
                  "Use SinglePointBSpline or CPDI to avoid the underlying cell-crossing instability." );
-  GEOS_ERROR_IF( haveUnsupportedParticles,
+  GEOS_ERROR_IF( haveUnsupportedParticles != 0,
                  "The C0 vertex-mortar weak-interface projection currently supports only "
                  "SinglePointBSpline and linear CPDI particles." );
-  GEOS_ERROR_IF( haveBSplineParticles && haveCPDIParticles,
+  GEOS_ERROR_IF( haveBSplineParticles != 0 && haveCPDIParticles != 0,
                  "The C0 vertex-mortar weak-interface projection does not yet support mixed "
                  "B-spline and CPDI particle subregions in one solve." );
+
+  std::vector< WeakInterfaceTraceMarker > markers =
+    allGatherWeakInterfaceRecords( localMarkers );
+  std::sort( markers.begin(), markers.end(),
+             []( WeakInterfaceTraceMarker const & left,
+                 WeakInterfaceTraceMarker const & right )
+  {
+    if( left.particleID != right.particleID )
+    {
+      return left.particleID < right.particleID;
+    }
+    if( left.group != right.group )
+    {
+      return left.group < right.group;
+    }
+    return std::tie( left.point[0], left.point[1], left.point[2] ) <
+           std::tie( right.point[0], right.point[1], right.point[2] );
+  } );
+  markers.erase( std::unique( markers.begin(), markers.end(),
+                              []( WeakInterfaceTraceMarker const & left,
+                                  WeakInterfaceTraceMarker const & right )
+  {
+    return left.particleID == right.particleID && left.group == right.group;
+  } ), markers.end() );
+
   GEOS_ERROR_IF( markers.empty(),
                  "The C0 vertex-mortar reconstruction found no active "
-                 "SurfaceFlag::WeakDiscontinuity particles with valid in-plane normals." );
+                 "SurfaceFlag::WeakDiscontinuity particles with valid normals." );
 
-  bool const useBSplineTrace = haveBSplineParticles;
+  bool const useBSplineTrace = haveBSplineParticles != 0;
 
   std::vector< std::pair< int, int > > selectedPairs;
   std::set< std::pair< int, int > > pairKeys;
@@ -24759,11 +25216,20 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   std::vector< real64 > maximumFieldMass( numVelocityFields, 0.0 );
   for( localIndex node = 0; node < nodeManager.size(); ++node )
   {
+    if( gridGhostRank[node] >= 0 )
+    {
+      continue;
+    }
     for( localIndex field = 0; field < numVelocityFields; ++field )
     {
       maximumFieldMass[field] =
         LvArray::math::max( maximumFieldMass[field], gridMass[node][field] );
     }
+  }
+  for( localIndex field = 0; field < numVelocityFields; ++field )
+  {
+    maximumFieldMass[field] = MpiWrapper::allReduce(
+      maximumFieldMass[field], MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
   }
 
   real64 const physicalMidZ = 0.5 * ( m_xGlobalMin[2] + m_xGlobalMax[2] );
@@ -24772,37 +25238,87 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     LvArray::math::min(
       static_cast< int >( nEl[2] ),
       static_cast< int >(
-        LvArray::math::floor( ( physicalMidZ - xLocalMin[2] ) / hEl[2] + 0.5 ) ) ) );
+        LvArray::math::floor( ( physicalMidZ - m_xLocalMin[2] ) / hEl[2] + 0.5 ) ) ) );
 
-  real64 const hInterface = LvArray::math::sqrt( hEl[0] * hEl[1] );
-  real64 const cellDiagonal =
-    LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] );
+  real64 const activeCellMeasure = m_planeStrain == 1
+    ? hEl[0] * hEl[1]
+    : hEl[0] * hEl[1] * hEl[2];
+  real64 const hInterface = m_planeStrain == 1
+    ? LvArray::math::sqrt( hEl[0] * hEl[1] )
+    : std::cbrt( activeCellMeasure );
+  real64 const cellDiagonal = m_planeStrain == 1
+    ? LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] )
+    : LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] +
+                           hEl[2] * hEl[2] );
   real64 const geometryTolerance =
     cutToleranceFraction * LvArray::math::max( cellDiagonal,
                                                 std::numeric_limits< real64 >::min() );
   real64 const minSegmentLength =
     minSegmentFraction * LvArray::math::min( hEl[0], hEl[1] );
+  real64 const minCellWidth = m_planeStrain == 1
+    ? LvArray::math::min( hEl[0], hEl[1] )
+    : LvArray::math::min( hEl[0], LvArray::math::min( hEl[1], hEl[2] ) );
+  real64 const minFacetArea =
+    minFacetAreaFraction * minCellWidth * minCellWidth;
   real64 const distanceWeightFloorSquared = 0.0625 * hInterface * hInterface;
+  real64 const surfaceFitRadiusSquared =
+    surfaceFitRadius * surfaceFitRadius * cellDiagonal * cellDiagonal;
 
-  auto addTraceBasis = [&]( std::array< real64, 3 > const & point,
-                            real64 const factor,
-                            std::map< localIndex, real64 > & coefficients )
+  auto globalNodeKeyFromIndices = [&]( globalIndex i,
+                                       globalIndex j,
+                                       globalIndex k )
   {
+    globalIndex indices[3] = { i, j, k };
+    for( int d = 0; d < 3; ++d )
+    {
+      if( periodic[d] != 0 )
+      {
+        indices[d] = positiveModulo( indices[d], globalCellCount[d] );
+      }
+    }
+    return WeakInterfaceMortarNodeKey{ indices[0], indices[1], indices[2] };
+  };
+
+  auto addTraceBasis = [&]( std::array< real64, 3 > point,
+                            real64 const factor,
+                            std::map< WeakInterfaceMortarNodeKey, real64 > & coefficients )
+  {
+    point = canonicalPoint( point );
     if( useBSplineTrace )
     {
-      int baseIJK[3] = {};
+      globalIndex baseIJK[3] = {};
       real64 weights[3][4] = {};
       for( int d = 0; d < 3; ++d )
       {
         real64 cellCoordinate = 0.0;
-        int const cell = computeLocalCellIndexWithBoundaryTolerance(
-          ( point[d] - xLocalMin[d] ) / hEl[d],
-          1,
-          nEl[d] - 2,
-          cellCoordinate );
-        if( cell < 1 || cell > nEl[d] - 2 )
+        globalIndex cell = 0;
+        real64 const u = ( point[d] - gridGlobalMin[d] ) / hEl[d];
+        if( periodic[d] != 0 )
         {
-          return false;
+          cell = static_cast< globalIndex >( LvArray::math::floor( u ) );
+          cellCoordinate = u - static_cast< real64 >( cell );
+          real64 const tolerance =
+            64.0 * DBL_EPSILON * LvArray::math::max( LvArray::math::abs( u ), 1.0 );
+          if( cell >= globalCellCount[d] &&
+              u <= static_cast< real64 >( globalCellCount[d] ) + tolerance )
+          {
+            cell = 0;
+            cellCoordinate = 0.0;
+          }
+          cell = positiveModulo( cell, globalCellCount[d] );
+        }
+        else
+        {
+          int const localCell = computeLocalCellIndexWithBoundaryTolerance(
+            u,
+            1,
+            static_cast< int >( globalCellCount[d] ) - 2,
+            cellCoordinate );
+          if( localCell < 1 || localCell > globalCellCount[d] - 2 )
+          {
+            return false;
+          }
+          cell = localCell;
         }
 
         real64 const s = cellCoordinate;
@@ -24839,9 +25355,17 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         {
           for( int k = 0; k < 4; ++k )
           {
-            localIndex const node = ijkMap[baseIJK[0] + i]
-                                                [baseIJK[1] + j]
-                                                [baseIJK[2] + k];
+            globalIndex const ii = baseIJK[0] + i;
+            globalIndex const jj = baseIJK[1] + j;
+            globalIndex const kk = baseIJK[2] + k;
+            if( ( periodic[0] == 0 && ( ii < 0 || ii > globalCellCount[0] ) ) ||
+                ( periodic[1] == 0 && ( jj < 0 || jj > globalCellCount[1] ) ) ||
+                ( periodic[2] == 0 && ( kk < 0 || kk > globalCellCount[2] ) ) )
+            {
+              return false;
+            }
+            WeakInterfaceMortarNodeKey const node =
+              globalNodeKeyFromIndices( ii, jj, kk );
             real64 const shapeValue =
               ( i == 3 && j == 3 && k == 3 )
               ? 1.0 - shapeSum
@@ -24857,18 +25381,37 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       return true;
     }
 
-    int cellIJK[3] = {};
+    globalIndex cellIJK[3] = {};
     real64 cellCoordinate[3] = {};
     for( int d = 0; d < 3; ++d )
     {
-      cellIJK[d] = computeLocalCellIndexWithBoundaryTolerance(
-        ( point[d] - xLocalMin[d] ) / hEl[d],
-        0,
-        nEl[d] - 1,
-        cellCoordinate[d] );
-      if( cellIJK[d] < 0 || cellIJK[d] > nEl[d] - 1 )
+      real64 const u = ( point[d] - gridGlobalMin[d] ) / hEl[d];
+      if( periodic[d] != 0 )
       {
-        return false;
+        cellIJK[d] = static_cast< globalIndex >( LvArray::math::floor( u ) );
+        cellCoordinate[d] = u - static_cast< real64 >( cellIJK[d] );
+        real64 const tolerance =
+          64.0 * DBL_EPSILON * LvArray::math::max( LvArray::math::abs( u ), 1.0 );
+        if( cellIJK[d] >= globalCellCount[d] &&
+            u <= static_cast< real64 >( globalCellCount[d] ) + tolerance )
+        {
+          cellIJK[d] = 0;
+          cellCoordinate[d] = 0.0;
+        }
+        cellIJK[d] = positiveModulo( cellIJK[d], globalCellCount[d] );
+      }
+      else
+      {
+        int const localCell = computeLocalCellIndexWithBoundaryTolerance(
+          u,
+          0,
+          static_cast< int >( globalCellCount[d] ) - 1,
+          cellCoordinate[d] );
+        if( localCell < 0 || localCell > globalCellCount[d] - 1 )
+        {
+          return false;
+        }
+        cellIJK[d] = localCell;
       }
     }
 
@@ -24896,9 +25439,17 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       {
         for( int k = 0; k < 2; ++k )
         {
-          localIndex const node = ijkMap[cellIJK[0] + i]
-                                              [cellIJK[1] + j]
-                                              [cellIJK[2] + k];
+          globalIndex const ii = cellIJK[0] + i;
+          globalIndex const jj = cellIJK[1] + j;
+          globalIndex const kk = cellIJK[2] + k;
+          if( ( periodic[0] == 0 && ii > globalCellCount[0] ) ||
+              ( periodic[1] == 0 && jj > globalCellCount[1] ) ||
+              ( periodic[2] == 0 && kk > globalCellCount[2] ) )
+          {
+            return false;
+          }
+          WeakInterfaceMortarNodeKey const node =
+            globalNodeKeyFromIndices( ii, jj, kk );
           real64 const shapeValue =
             ( i == 1 && j == 1 && k == 1 )
             ? 1.0 - shapeSum
@@ -24914,23 +25465,88 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     return true;
   };
 
-  std::vector< WeakInterfaceMortarConstraint > constraints;
+  auto rankOwnsCellCenter = [&]( real64 center, int const direction )
+  {
+    real64 const localMin = partition.getLocalMin()[direction];
+    real64 const localMax = partition.getLocalMax()[direction];
+    if( periodic[direction] != 0 )
+    {
+      real64 const localCenter = 0.5 * ( localMin + localMax );
+      center += LvArray::math::round(
+        ( localCenter - center ) / gridGlobalExtent[direction] ) *
+        gridGlobalExtent[direction];
+    }
+    real64 const tolerance =
+      128.0 * DBL_EPSILON * LvArray::math::max(
+        LvArray::math::max( LvArray::math::abs( localMin ),
+                            LvArray::math::abs( localMax ) ), 1.0 );
+    return center >= localMin - tolerance && center < localMax - tolerance;
+  };
+
+  std::vector< WeakInterfaceMortarSegmentRecord > localSegmentRecords;
+  std::vector< WeakInterfaceMortarFacetRecord > localFacetRecords;
+  std::vector< WeakInterfaceMortarFallbackPointRecord > localFallbackPointRecords;
   localIndex pairReconstructions = 0;
   localIndex totalPairMarkers = 0;
-  localIndex totalVertices = 0;
-  localIndex totalSegments = 0;
-  localIndex totalAmbiguousTriangles = 0;
-  localIndex rejectedShortSegments = 0;
-  localIndex rejectedBasisConstraints = 0;
-  localIndex rejectedSupportConstraints = 0;
-  localIndex rejectedMassConstraints = 0;
+  localIndex localOwnedPairCells = 0;
+  localIndex localAmbiguousSimplices = 0;
+  localIndex localRejectedSmallEntities = 0;
+  localIndex localRejectedFitCells = 0;
+  globalIndex localGeometryOrdinal = 0;
+
+  auto appendFallbackPoint = [&]( std::array< real64, 3 > const & point,
+                                  WeakInterfaceMortarNodeKey const & cell,
+                                  int const groupA,
+                                  int const groupB,
+                                  WeakInterfaceMortarFallbackReason const reason )
+  {
+    if( !fallbackToSingleField )
+    {
+      return;
+    }
+    WeakInterfaceMortarFallbackPointRecord record;
+    record.point = canonicalPoint( point );
+    record.cell = cell;
+    record.groupA = groupA;
+    record.groupB = groupB;
+    record.reason = static_cast< int >( reason );
+    record.sourceRank = rank;
+    localFallbackPointRecords.emplace_back( record );
+  };
+
+  auto physicalBoundaryMask = [&]( std::array< real64, 3 > const & point )
+  {
+    int mask = 0;
+    real64 const tolerance = 256.0 * DBL_EPSILON *
+      LvArray::math::max( LvArray::math::max( gridGlobalExtent[0], gridGlobalExtent[1] ),
+                          LvArray::math::max( gridGlobalExtent[2], 1.0 ) );
+    for( int d = 0; d < numDims; ++d )
+    {
+      if( periodic[d] != 0 )
+      {
+        continue;
+      }
+      if( LvArray::math::abs( point[d] - gridGlobalMin[d] ) <= tolerance )
+      {
+        mask |= 1 << ( 2 * d );
+      }
+      if( LvArray::math::abs( point[d] - gridGlobalMax[d] ) <= tolerance )
+      {
+        mask |= 1 << ( 2 * d + 1 );
+      }
+    }
+    return mask;
+  };
+
+  auto pointOnPhysicalBoundary = [&]( std::array< real64, 3 > const & point )
+  {
+    return physicalBoundaryMask( point ) != 0;
+  };
 
   for( std::pair< int, int > const & selectedPair : selectedPairs )
   {
     int const groupA = selectedPair.first;
     int const groupB = selectedPair.second;
-    localIndex const fieldA = groupA;
-    localIndex const fieldB = groupB;
 
     std::vector< WeakInterfaceTraceMarker > pairMarkers;
     localIndex markersA = 0;
@@ -24941,13 +25557,13 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       {
         continue;
       }
-
       WeakInterfaceTraceMarker marker = source;
       if( source.group == groupB )
       {
-        marker.normal[0] = -marker.normal[0];
-        marker.normal[1] = -marker.normal[1];
-        marker.normal[2] = 0.0;
+        for( int d = 0; d < 3; ++d )
+        {
+          marker.normal[d] = -marker.normal[d];
+        }
         ++markersB;
       }
       else
@@ -24961,603 +25577,2177 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     {
       GEOS_LOG_LEVEL_RANK_0(
         logInfo::MPMSubroutines,
-        "C0 weak-interface mortar skipped contact-group pair (" << groupA << "," << groupB <<
-        "): weak-interface surface markers on sides A/B=" << markersA << "/" << markersB << "." );
+        "C0 weak-interface mortar cannot reconstruct contact-group pair (" << groupA << "," << groupB <<
+        "): global weak-interface surface markers on sides A/B=" << markersA << "/" << markersB <<
+        ". A local single-field fallback is requested around the available markers." );
+      for( WeakInterfaceTraceMarker const & marker : pairMarkers )
+      {
+        appendFallbackPoint( marker.point,
+                             nodeKeyFromCoordinates( marker.point[0], marker.point[1], marker.point[2] ),
+                             groupA,
+                             groupB,
+                             WeakInterfaceMortarFallbackReason::MissingPairMarkers );
+      }
       continue;
     }
     ++pairReconstructions;
     totalPairMarkers += static_cast< localIndex >( pairMarkers.size() );
 
-    localIndex const numNodesX = nEl[0] + 1;
-    localIndex const numNodesY = nEl[1] + 1;
-    auto nodalPhiIndex = [=]( localIndex const i, localIndex const j )
+    auto cellKeyFromPoint = [&]( std::array< real64, 3 > const & point )
     {
-      return i + numNodesX * j;
+      globalIndex cellIndex[3]{};
+      for( int d = 0; d < 3; ++d )
+      {
+        real64 const coordinate = canonicalCoordinate( point[d], d );
+        cellIndex[d] = static_cast< globalIndex >(
+          LvArray::math::floor( ( coordinate - gridGlobalMin[d] ) / hEl[d] ) );
+        if( periodic[d] != 0 )
+        {
+          cellIndex[d] = positiveModulo( cellIndex[d], globalCellCount[d] );
+        }
+        else
+        {
+          cellIndex[d] = LvArray::math::max(
+            globalIndex( 0 ),
+            LvArray::math::min( globalCellCount[d] - 1, cellIndex[d] ) );
+        }
+      }
+      return WeakInterfaceMortarNodeKey{
+        cellIndex[0], cellIndex[1], cellIndex[2] };
     };
 
-    std::vector< real64 > nodalPhi(
-      static_cast< std::size_t >( numNodesX * numNodesY ), 0.0 );
-    int const nearestCount =
-      LvArray::math::min( surfaceFitNeighbors,
-                          static_cast< int >( pairMarkers.size() ) );
-
-    std::vector< std::pair< real64, localIndex > > distances;
-    distances.reserve( pairMarkers.size() );
-    for( localIndex j = 0; j < numNodesY; ++j )
+    // Bin the globally replicated marker surface into coarse bins at least as
+    // wide as the fit radius. Only the 3^numDims neighboring bins must then be
+    // searched at a grid node, avoiding the O(N_grid*N_marker) operation that
+    // would otherwise dominate a 3D run.
+    real64 const markerSearchRadius = surfaceFitRadius * cellDiagonal;
+    globalIndex markerBinCount[3] = { 1, 1, 1 };
+    real64 markerBinWidth[3] = { 1.0, 1.0, 1.0 };
+    for( int d = 0; d < numDims; ++d )
     {
-      for( localIndex i = 0; i < numNodesX; ++i )
+      markerBinCount[d] = LvArray::math::max(
+        globalIndex( 1 ),
+        static_cast< globalIndex >(
+          LvArray::math::floor( gridGlobalExtent[d] / markerSearchRadius ) ) );
+      markerBinWidth[d] = gridGlobalExtent[d] /
+                          static_cast< real64 >( markerBinCount[d] );
+    }
+    auto markerBinKeyFromPoint = [&]( std::array< real64, 3 > const & point )
+    {
+      globalIndex index[3]{};
+      for( int d = 0; d < numDims; ++d )
       {
-        localIndex const node = ijkMap[i][j][planeNodeK];
-        real64 const x = gridPosition[node][0];
-        real64 const y = gridPosition[node][1];
-        distances.clear();
-        for( localIndex markerIndex = 0;
-             markerIndex < static_cast< localIndex >( pairMarkers.size() );
-             ++markerIndex )
+        real64 const coordinate = canonicalCoordinate( point[d], d );
+        index[d] = static_cast< globalIndex >(
+          LvArray::math::floor( ( coordinate - gridGlobalMin[d] ) /
+                                markerBinWidth[d] ) );
+        if( periodic[d] != 0 )
         {
-          WeakInterfaceTraceMarker const & marker = pairMarkers[markerIndex];
-          real64 const dx = x - marker.point[0];
-          real64 const dy = y - marker.point[1];
-          distances.emplace_back( dx * dx + dy * dy, markerIndex );
+          index[d] = positiveModulo( index[d], markerBinCount[d] );
         }
-        std::partial_sort( distances.begin(),
-                           distances.begin() + nearestCount,
-	                           distances.end(),
-	                           []( auto const & left, auto const & right )
-	        {
-	          if( left.first < right.first )
-	          {
-	            return true;
-	          }
-	          if( right.first < left.first )
-	          {
-	            return false;
-	          }
-	          return left.second < right.second;
-	        } );
+        else
+        {
+          index[d] = LvArray::math::max(
+            globalIndex( 0 ),
+            LvArray::math::min( markerBinCount[d] - 1, index[d] ) );
+        }
+      }
+      return WeakInterfaceMortarNodeKey{ index[0], index[1], index[2] };
+    };
 
-        real64 weightedDistance = 0.0;
-        real64 weightSum = 0.0;
-        for( int neighbor = 0; neighbor < nearestCount; ++neighbor )
+    std::map< WeakInterfaceMortarNodeKey, std::vector< localIndex > > markerBins;
+    std::set< WeakInterfaceMortarNodeKey > markerCellKeys;
+    for( localIndex markerIndex = 0;
+         markerIndex < static_cast< localIndex >( pairMarkers.size() );
+         ++markerIndex )
+    {
+      markerBins[markerBinKeyFromPoint( pairMarkers[markerIndex].point )].emplace_back(
+        markerIndex );
+      markerCellKeys.insert( cellKeyFromPoint( pairMarkers[markerIndex].point ) );
+    }
+
+    localIndex const numNodesX = nEl[0] + 1;
+    localIndex const numNodesY = nEl[1] + 1;
+    localIndex const numNodesZ = m_planeStrain == 1 ? 1 : nEl[2] + 1;
+    auto nodalPhiIndex = [=]( localIndex const i,
+                              localIndex const j,
+                              localIndex const k )
+    {
+      return i + numNodesX * ( j + numNodesY * k );
+    };
+
+    struct NodalSurfaceFit
+    {
+      real64 phi = 0.0;
+      real64 coherence = 0.0;
+      real64 residual = std::numeric_limits< real64 >::max();
+      bool near = false;
+      bool valid = false;
+    };
+
+    std::vector< NodalSurfaceFit > nodalFit(
+      static_cast< std::size_t >( numNodesX * numNodesY * numNodesZ ) );
+    std::vector< std::pair< real64, localIndex > > distances;
+    std::vector< localIndex > nearbyMarkers;
+    for( localIndex k = 0; k < numNodesZ; ++k )
+    {
+      localIndex const gridK = m_planeStrain == 1 ? planeNodeK : k;
+      for( localIndex j = 0; j < numNodesY; ++j )
+      {
+        for( localIndex i = 0; i < numNodesX; ++i )
         {
-          real64 const distanceSquared = distances[neighbor].first;
-          WeakInterfaceTraceMarker const & marker =
-            pairMarkers[distances[neighbor].second];
-          real64 const dx = x - marker.point[0];
-          real64 const dy = y - marker.point[1];
-          real64 const tangentDistance = dx * marker.normal[0] + dy * marker.normal[1];
-          real64 const weight = 1.0 / ( distanceSquared + distanceWeightFloorSquared );
-          weightedDistance += weight * tangentDistance;
-          weightSum += weight;
+          localIndex const node = ijkMap[i][j][gridK];
+          std::array< real64, 3 > x{{
+            gridPosition[node][0], gridPosition[node][1],
+            m_planeStrain == 1 ? physicalMidZ : gridPosition[node][2]
+          }};
+          distances.clear();
+          nearbyMarkers.clear();
+          WeakInterfaceMortarNodeKey const baseBin = markerBinKeyFromPoint( x );
+          for( int dk = numDims > 2 ? -1 : 0; dk <= ( numDims > 2 ? 1 : 0 ); ++dk )
+          {
+            globalIndex kk = baseBin.k + dk;
+            if( periodic[2] != 0 )
+            {
+              kk = positiveModulo( kk, markerBinCount[2] );
+            }
+            else if( kk < 0 || kk >= markerBinCount[2] )
+            {
+              continue;
+            }
+            for( int dj = -1; dj <= 1; ++dj )
+            {
+              globalIndex jj = baseBin.j + dj;
+              if( periodic[1] != 0 )
+              {
+                jj = positiveModulo( jj, markerBinCount[1] );
+              }
+              else if( jj < 0 || jj >= markerBinCount[1] )
+              {
+                continue;
+              }
+              for( int di = -1; di <= 1; ++di )
+              {
+                globalIndex ii = baseBin.i + di;
+                if( periodic[0] != 0 )
+                {
+                  ii = positiveModulo( ii, markerBinCount[0] );
+                }
+                else if( ii < 0 || ii >= markerBinCount[0] )
+                {
+                  continue;
+                }
+                auto const bin = markerBins.find(
+                  WeakInterfaceMortarNodeKey{ ii, jj, kk } );
+                if( bin != markerBins.end() )
+                {
+                  nearbyMarkers.insert( nearbyMarkers.end(),
+                                        bin->second.begin(), bin->second.end() );
+                }
+              }
+            }
+          }
+          std::sort( nearbyMarkers.begin(), nearbyMarkers.end() );
+          nearbyMarkers.erase(
+            std::unique( nearbyMarkers.begin(), nearbyMarkers.end() ),
+            nearbyMarkers.end() );
+          distances.reserve( nearbyMarkers.size() );
+          for( localIndex const markerIndex : nearbyMarkers )
+          {
+            WeakInterfaceTraceMarker const & marker = pairMarkers[markerIndex];
+            real64 distanceSquared = 0.0;
+            for( int d = 0; d < numDims; ++d )
+            {
+              real64 const dx = minimumImageDelta( x[d] - marker.point[d], d );
+              distanceSquared += dx * dx;
+            }
+            distances.emplace_back( distanceSquared, markerIndex );
+          }
+          int const nearestCount = LvArray::math::min(
+            surfaceFitNeighbors, static_cast< int >( distances.size() ) );
+          if( nearestCount > 0 )
+          {
+            std::partial_sort( distances.begin(),
+                               distances.begin() + nearestCount,
+                               distances.end(),
+                               [&]( auto const & left, auto const & right )
+            {
+              if( left.first < right.first )
+              {
+                return true;
+              }
+              if( right.first < left.first )
+              {
+                return false;
+              }
+              WeakInterfaceTraceMarker const & leftMarker = pairMarkers[left.second];
+              WeakInterfaceTraceMarker const & rightMarker = pairMarkers[right.second];
+              return std::tie( leftMarker.particleID,
+                               leftMarker.group,
+                               leftMarker.point[0],
+                               leftMarker.point[1],
+                               leftMarker.point[2] ) <
+                     std::tie( rightMarker.particleID,
+                               rightMarker.group,
+                               rightMarker.point[0],
+                               rightMarker.point[1],
+                               rightMarker.point[2] );
+            } );
+          }
+
+          NodalSurfaceFit fit;
+          fit.near = nearestCount > 0 &&
+                     distances.front().first <= surfaceFitRadiusSquared;
+          real64 weightedDistance = 0.0;
+          real64 weightSum = 0.0;
+          std::array< real64, 3 > weightedNormal{};
+          std::array< real64, 3 > weightedMarkerDelta{};
+          for( int neighbor = 0; neighbor < nearestCount; ++neighbor )
+          {
+            real64 const distanceSquared = distances[neighbor].first;
+            WeakInterfaceTraceMarker const & marker =
+              pairMarkers[distances[neighbor].second];
+            std::array< real64, 3 > dx{};
+            real64 tangentDistance = 0.0;
+            for( int d = 0; d < numDims; ++d )
+            {
+              dx[d] = minimumImageDelta( x[d] - marker.point[d], d );
+              tangentDistance += dx[d] * marker.normal[d];
+            }
+            real64 const weight =
+              1.0 / ( distanceSquared + distanceWeightFloorSquared );
+            weightedDistance += weight * tangentDistance;
+            weightSum += weight;
+            for( int d = 0; d < numDims; ++d )
+            {
+              weightedNormal[d] += weight * marker.normal[d];
+              weightedMarkerDelta[d] -= weight * dx[d];
+            }
+          }
+
+          if( weightSum > std::numeric_limits< real64 >::min() )
+          {
+            fit.phi = weightedDistance / weightSum;
+            real64 normalNormSquared = 0.0;
+            for( int d = 0; d < numDims; ++d )
+            {
+              normalNormSquared += weightedNormal[d] * weightedNormal[d];
+              weightedMarkerDelta[d] /= weightSum;
+            }
+            real64 const normalNorm = LvArray::math::sqrt( normalNormSquared );
+            fit.coherence = normalNorm / weightSum;
+            if( normalNorm > explicitSurfaceNormalTolerance )
+            {
+              for( int d = 0; d < numDims; ++d )
+              {
+                weightedNormal[d] /= normalNorm;
+              }
+              real64 residualSquared = 0.0;
+              for( int neighbor = 0; neighbor < nearestCount; ++neighbor )
+              {
+                real64 const distanceSquared = distances[neighbor].first;
+                WeakInterfaceTraceMarker const & marker =
+                  pairMarkers[distances[neighbor].second];
+                real64 planeDistance = 0.0;
+                for( int d = 0; d < numDims; ++d )
+                {
+                  real64 const markerDelta =
+                    minimumImageDelta( marker.point[d] - x[d], d );
+                  planeDistance += weightedNormal[d] *
+                    ( markerDelta - weightedMarkerDelta[d] );
+                }
+                real64 const weight =
+                  1.0 / ( distanceSquared + distanceWeightFloorSquared );
+                residualSquared += weight * planeDistance * planeDistance;
+              }
+              fit.residual = LvArray::math::sqrt( residualSquared / weightSum ) /
+                             LvArray::math::max( cellDiagonal, 1.0e-30 );
+            }
+          }
+          fit.valid = fit.near &&
+                      fit.coherence >= minNormalCoherence &&
+                      fit.residual <= maxFitResidual;
+          nodalFit[nodalPhiIndex( i, j, k )] = fit;
         }
-        nodalPhi[nodalPhiIndex( i, j )] = weightedDistance / weightSum;
       }
     }
 
-    std::map< WeakInterfaceMortarCrossingKey, localIndex > vertexLookup;
-    std::map< std::pair< localIndex, localIndex >, localIndex > segmentLookup;
-    std::vector< WeakInterfaceMortarVertex > vertices;
-    std::vector< WeakInterfaceMortarSegment > segments;
-
-    auto getOrCreateVertex = [&]( WeakInterfaceMortarCrossingKey const & key,
-                                  std::array< real64, 3 > const & point )
+    auto localCellKey = [&]( std::array< std::array< real64, 3 >, 8 > const & points,
+                             int const numberOfCorners )
     {
+      std::array< real64, 3 > center{};
+      for( int corner = 0; corner < numberOfCorners; ++corner )
+      {
+        for( int d = 0; d < 3; ++d )
+        {
+          center[d] += points[corner][d] / static_cast< real64 >( numberOfCorners );
+        }
+      }
+      globalIndex index[3]{};
+      for( int d = 0; d < 3; ++d )
+      {
+        real64 const coordinate = canonicalCoordinate( center[d], d );
+        index[d] = static_cast< globalIndex >(
+          LvArray::math::floor( ( coordinate - gridGlobalMin[d] ) / hEl[d] ) );
+        if( periodic[d] != 0 )
+        {
+          index[d] = positiveModulo( index[d], globalCellCount[d] );
+        }
+      }
+      return WeakInterfaceMortarNodeKey{ index[0], index[1], index[2] };
+    };
+
+    if( m_planeStrain == 1 )
+    {
+      auto processTriangle = [&]( std::array< WeakInterfaceMortarNodeKey, 3 > const & triangleNodes,
+                                  std::array< std::array< real64, 3 >, 3 > const & trianglePoints,
+                                  std::array< real64, 3 > const & trianglePhi )
+      {
+        struct Crossing
+        {
+          WeakInterfaceMortarCrossingKey key{};
+          std::array< real64, 3 > point{};
+        };
+
+        std::vector< Crossing > crossings;
+        crossings.reserve( 3 );
+        auto appendCrossing = [&]( Crossing const & crossing )
+        {
+          for( Crossing const & existing : crossings )
+          {
+            if( existing.key == crossing.key )
+            {
+              return;
+            }
+          }
+          crossings.emplace_back( crossing );
+        };
+
+        int const edgeCorners[3][2] = { { 0, 1 }, { 1, 2 }, { 2, 0 } };
+        for( int edge = 0; edge < 3; ++edge )
+        {
+          int const a = edgeCorners[edge][0];
+          int const b = edgeCorners[edge][1];
+          real64 const phiA = trianglePhi[a];
+          real64 const phiB = trianglePhi[b];
+          bool const zeroA = LvArray::math::abs( phiA ) <= geometryTolerance;
+          bool const zeroB = LvArray::math::abs( phiB ) <= geometryTolerance;
+          if( zeroA && zeroB )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[a] ),
+                                      trianglePoints[a] } );
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[b] ),
+                                      trianglePoints[b] } );
+          }
+          else if( zeroA )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[a] ),
+                                      trianglePoints[a] } );
+          }
+          else if( zeroB )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[b] ),
+                                      trianglePoints[b] } );
+          }
+          else if( phiA * phiB < 0.0 )
+          {
+            real64 const fraction = phiA / ( phiA - phiB );
+            std::array< real64, 3 > point{};
+            for( int d = 0; d < 3; ++d )
+            {
+              point[d] = trianglePoints[a][d] +
+                         fraction * ( trianglePoints[b][d] - trianglePoints[a][d] );
+            }
+            appendCrossing( Crossing{ weakInterfaceMortarEdgeKey( triangleNodes[a],
+                                                                   triangleNodes[b] ),
+                                      point } );
+          }
+        }
+
+        if( crossings.size() < 2 )
+        {
+          return 0;
+        }
+        if( crossings.size() != 2 )
+        {
+          ++localAmbiguousSimplices;
+          return -1;
+        }
+
+        real64 const segmentDx = crossings[1].point[0] - crossings[0].point[0];
+        real64 const segmentDy = crossings[1].point[1] - crossings[0].point[1];
+        real64 const segmentLength =
+          LvArray::math::sqrt( segmentDx * segmentDx + segmentDy * segmentDy );
+        if( segmentLength <= minSegmentLength )
+        {
+          ++localRejectedSmallEntities;
+          return -1;
+        }
+
+        real64 const x0 = trianglePoints[0][0];
+        real64 const y0 = trianglePoints[0][1];
+        real64 const x1 = trianglePoints[1][0];
+        real64 const y1 = trianglePoints[1][1];
+        real64 const x2 = trianglePoints[2][0];
+        real64 const y2 = trianglePoints[2][1];
+        real64 const determinant =
+          ( x1 - x0 ) * ( y2 - y0 ) - ( x2 - x0 ) * ( y1 - y0 );
+        if( LvArray::math::abs( determinant ) <=
+            std::numeric_limits< real64 >::epsilon() * cellDiagonal * cellDiagonal )
+        {
+          return -1;
+        }
+
+        std::array< real64, 3 > segmentNormal{};
+        segmentNormal[0] =
+          ( trianglePhi[0] * ( y1 - y2 ) +
+            trianglePhi[1] * ( y2 - y0 ) +
+            trianglePhi[2] * ( y0 - y1 ) ) / determinant;
+        segmentNormal[1] =
+          ( trianglePhi[0] * ( x2 - x1 ) +
+            trianglePhi[1] * ( x0 - x2 ) +
+            trianglePhi[2] * ( x1 - x0 ) ) / determinant;
+        real64 const normalNorm = LvArray::math::sqrt(
+          segmentNormal[0] * segmentNormal[0] +
+          segmentNormal[1] * segmentNormal[1] );
+        if( normalNorm <= explicitSurfaceNormalTolerance )
+        {
+          return -1;
+        }
+        segmentNormal[0] /= normalNorm;
+        segmentNormal[1] /= normalNorm;
+
+        WeakInterfaceMortarSegmentRecord record;
+        record.key0 = crossings[0].key;
+        record.key1 = crossings[1].key;
+        record.point0 = crossings[0].point;
+        record.point1 = crossings[1].point;
+        record.normal = segmentNormal;
+        record.localOrdinal = localGeometryOrdinal++;
+        record.groupA = groupA;
+        record.groupB = groupB;
+        record.sourceRank = rank;
+        if( record.key1 < record.key0 )
+        {
+          std::swap( record.key0, record.key1 );
+          std::swap( record.point0, record.point1 );
+        }
+        localSegmentRecords.emplace_back( record );
+        return 1;
+      };
+
+      for( localIndex j = 0; j < nEl[1]; ++j )
+      {
+        for( localIndex i = 0; i < nEl[0]; ++i )
+        {
+          std::array< localIndex, 4 > const cornerLocalNodes = {{
+            ijkMap[i][j][planeNodeK],
+            ijkMap[i + 1][j][planeNodeK],
+            ijkMap[i][j + 1][planeNodeK],
+            ijkMap[i + 1][j + 1][planeNodeK]
+          }};
+          std::array< std::array< real64, 3 >, 8 > cellPoints{};
+          std::array< WeakInterfaceMortarNodeKey, 4 > cornerNodeKeys{};
+          std::array< real64, 4 > cornerPhi{};
+          bool nearCell = false;
+          bool validCell = true;
+          real64 minPhi = std::numeric_limits< real64 >::max();
+          real64 maxPhi = -std::numeric_limits< real64 >::max();
+          for( int corner = 0; corner < 4; ++corner )
+          {
+            localIndex const node = cornerLocalNodes[corner];
+            cellPoints[corner][0] = gridPosition[node][0];
+            cellPoints[corner][1] = gridPosition[node][1];
+            cellPoints[corner][2] = physicalMidZ;
+            cornerNodeKeys[corner] = localNodeKeys[static_cast< std::size_t >( node )];
+            localIndex const ii = corner == 1 || corner == 3 ? i + 1 : i;
+            localIndex const jj = corner >= 2 ? j + 1 : j;
+            NodalSurfaceFit const & fit = nodalFit[nodalPhiIndex( ii, jj, 0 )];
+            cornerPhi[corner] = fit.phi;
+            nearCell = nearCell || fit.near;
+            validCell = validCell && fit.valid;
+            minPhi = LvArray::math::min( minPhi, fit.phi );
+            maxPhi = LvArray::math::max( maxPhi, fit.phi );
+          }
+
+          real64 const centerX = 0.25 *
+            ( cellPoints[0][0] + cellPoints[1][0] +
+              cellPoints[2][0] + cellPoints[3][0] );
+          real64 const centerY = 0.25 *
+            ( cellPoints[0][1] + cellPoints[1][1] +
+              cellPoints[2][1] + cellPoints[3][1] );
+          if( !rankOwnsCellCenter( centerX, 0 ) ||
+              !rankOwnsCellCenter( centerY, 1 ) )
+          {
+            continue;
+          }
+          ++localOwnedPairCells;
+          WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 4 );
+          std::array< real64, 3 > const cellCenter{{ centerX, centerY, physicalMidZ }};
+          bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
+          bool const potentialCut = minPhi <= geometryTolerance &&
+                                    maxPhi >= -geometryTolerance;
+          if( !nearCell && !containsMarker )
+          {
+            continue;
+          }
+          if( !validCell )
+          {
+            ++localRejectedFitCells;
+            appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                 WeakInterfaceMortarFallbackReason::SurfaceFitQuality );
+            continue;
+          }
+          if( !potentialCut )
+          {
+            if( containsMarker )
+            {
+              ++localAmbiguousSimplices;
+              appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                   WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+            }
+            continue;
+          }
+
+          int added = 0;
+          int status = processTriangle(
+            {{ cornerNodeKeys[0], cornerNodeKeys[1], cornerNodeKeys[2] }},
+            {{ cellPoints[0], cellPoints[1], cellPoints[2] }},
+            {{ cornerPhi[0], cornerPhi[1], cornerPhi[2] }} );
+          if( status < 0 )
+          {
+            appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                 WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          }
+          added += LvArray::math::max( status, 0 );
+          status = processTriangle(
+            {{ cornerNodeKeys[3], cornerNodeKeys[2], cornerNodeKeys[1] }},
+            {{ cellPoints[3], cellPoints[2], cellPoints[1] }},
+            {{ cornerPhi[3], cornerPhi[2], cornerPhi[1] }} );
+          if( status < 0 )
+          {
+            appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                 WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          }
+          added += LvArray::math::max( status, 0 );
+          if( added == 0 )
+          {
+            appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                 WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          }
+        }
+      }
+    }
+    else
+    {
+      auto processTetrahedron = [&]( std::array< WeakInterfaceMortarNodeKey, 4 > const & tetraNodes,
+                                     std::array< std::array< real64, 3 >, 4 > const & tetraPoints,
+                                     std::array< real64, 4 > const & tetraPhi )
+      {
+        struct Crossing
+        {
+          WeakInterfaceMortarCrossingKey key{};
+          std::array< real64, 3 > point{};
+        };
+
+        std::vector< Crossing > crossings;
+        crossings.reserve( 4 );
+        auto appendCrossing = [&]( Crossing const & crossing )
+        {
+          for( Crossing const & existing : crossings )
+          {
+            if( existing.key == crossing.key )
+            {
+              return;
+            }
+          }
+          crossings.emplace_back( crossing );
+        };
+
+        int const edgeCorners[6][2] = {
+          { 0, 1 }, { 0, 2 }, { 0, 3 },
+          { 1, 2 }, { 1, 3 }, { 2, 3 }
+        };
+        for( int edge = 0; edge < 6; ++edge )
+        {
+          int const a = edgeCorners[edge][0];
+          int const b = edgeCorners[edge][1];
+          real64 const phiA = tetraPhi[a];
+          real64 const phiB = tetraPhi[b];
+          bool const zeroA = LvArray::math::abs( phiA ) <= geometryTolerance;
+          bool const zeroB = LvArray::math::abs( phiB ) <= geometryTolerance;
+          if( zeroA && zeroB )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( tetraNodes[a] ),
+                                      tetraPoints[a] } );
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( tetraNodes[b] ),
+                                      tetraPoints[b] } );
+          }
+          else if( zeroA )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( tetraNodes[a] ),
+                                      tetraPoints[a] } );
+          }
+          else if( zeroB )
+          {
+            appendCrossing( Crossing{ weakInterfaceMortarVertexKey( tetraNodes[b] ),
+                                      tetraPoints[b] } );
+          }
+          else if( phiA * phiB < 0.0 )
+          {
+            real64 const fraction = phiA / ( phiA - phiB );
+            std::array< real64, 3 > point{};
+            for( int d = 0; d < 3; ++d )
+            {
+              point[d] = tetraPoints[a][d] +
+                         fraction * ( tetraPoints[b][d] - tetraPoints[a][d] );
+            }
+            appendCrossing( Crossing{ weakInterfaceMortarEdgeKey( tetraNodes[a],
+                                                                   tetraNodes[b] ),
+                                      point } );
+          }
+        }
+
+        if( crossings.size() < 3 )
+        {
+          return 0;
+        }
+        if( crossings.size() > 4 )
+        {
+          ++localAmbiguousSimplices;
+          return -1;
+        }
+
+        real64 matrix[3][3] = {};
+        real64 rhs[3] = {};
+        for( int row = 0; row < 3; ++row )
+        {
+          rhs[row] = tetraPhi[row + 1] - tetraPhi[0];
+          for( int d = 0; d < 3; ++d )
+          {
+            matrix[row][d] = tetraPoints[row + 1][d] - tetraPoints[0][d];
+          }
+        }
+        real64 inverse[3][3] = {};
+        real64 const determinant = LvArray::tensorOps::invert< 3 >( inverse, matrix );
+        if( LvArray::math::abs( determinant ) <=
+            std::numeric_limits< real64 >::epsilon() * cellDiagonal * cellDiagonal * cellDiagonal )
+        {
+          return -1;
+        }
+        std::array< real64, 3 > gradient{};
+        for( int d = 0; d < 3; ++d )
+        {
+          for( int row = 0; row < 3; ++row )
+          {
+            gradient[d] += inverse[d][row] * rhs[row];
+          }
+        }
+        real64 const gradientNorm = LvArray::math::sqrt(
+          gradient[0] * gradient[0] + gradient[1] * gradient[1] +
+          gradient[2] * gradient[2] );
+        if( gradientNorm <= explicitSurfaceNormalTolerance )
+        {
+          return -1;
+        }
+        for( int d = 0; d < 3; ++d )
+        {
+          gradient[d] /= gradientNorm;
+        }
+
+        if( crossings.size() == 4 )
+        {
+          std::array< real64, 3 > centroid{};
+          for( Crossing const & crossing : crossings )
+          {
+            for( int d = 0; d < 3; ++d )
+            {
+              centroid[d] += 0.25 * crossing.point[d];
+            }
+          }
+          std::array< real64, 3 > axis =
+            LvArray::math::abs( gradient[0] ) < 0.8
+            ? std::array< real64, 3 >{{ 1.0, 0.0, 0.0 }}
+            : std::array< real64, 3 >{{ 0.0, 1.0, 0.0 }};
+          std::array< real64, 3 > tangent0{{
+            gradient[1] * axis[2] - gradient[2] * axis[1],
+            gradient[2] * axis[0] - gradient[0] * axis[2],
+            gradient[0] * axis[1] - gradient[1] * axis[0]
+          }};
+          real64 tangentNorm = LvArray::math::sqrt(
+            tangent0[0] * tangent0[0] + tangent0[1] * tangent0[1] +
+            tangent0[2] * tangent0[2] );
+          if( tangentNorm <= explicitSurfaceNormalTolerance )
+          {
+            return -1;
+          }
+          for( int d = 0; d < 3; ++d )
+          {
+            tangent0[d] /= tangentNorm;
+          }
+          std::array< real64, 3 > tangent1{{
+            gradient[1] * tangent0[2] - gradient[2] * tangent0[1],
+            gradient[2] * tangent0[0] - gradient[0] * tangent0[2],
+            gradient[0] * tangent0[1] - gradient[1] * tangent0[0]
+          }};
+          std::sort( crossings.begin(), crossings.end(),
+                     [&]( Crossing const & left, Crossing const & right )
+          {
+            std::array< real64, 3 > dl{};
+            std::array< real64, 3 > dr{};
+            for( int d = 0; d < 3; ++d )
+            {
+              dl[d] = left.point[d] - centroid[d];
+              dr[d] = right.point[d] - centroid[d];
+            }
+            real64 const angleLeft = std::atan2(
+              dl[0] * tangent1[0] + dl[1] * tangent1[1] + dl[2] * tangent1[2],
+              dl[0] * tangent0[0] + dl[1] * tangent0[1] + dl[2] * tangent0[2] );
+            real64 const angleRight = std::atan2(
+              dr[0] * tangent1[0] + dr[1] * tangent1[1] + dr[2] * tangent1[2],
+              dr[0] * tangent0[0] + dr[1] * tangent0[1] + dr[2] * tangent0[2] );
+            if( angleLeft < angleRight )
+            {
+              return true;
+            }
+            if( angleRight < angleLeft )
+            {
+              return false;
+            }
+            return left.key < right.key;
+          } );
+        }
+
+        auto appendFacet = [&]( int a, int b, int c )
+        {
+          std::array< Crossing, 3 > triangle{{ crossings[a], crossings[b], crossings[c] }};
+          std::array< real64, 3 > edge01{};
+          std::array< real64, 3 > edge02{};
+          std::array< real64, 3 > edge12{};
+          for( int d = 0; d < 3; ++d )
+          {
+            edge01[d] = triangle[1].point[d] - triangle[0].point[d];
+            edge02[d] = triangle[2].point[d] - triangle[0].point[d];
+            edge12[d] = triangle[2].point[d] - triangle[1].point[d];
+          }
+          std::array< real64, 3 > cross{{
+            edge01[1] * edge02[2] - edge01[2] * edge02[1],
+            edge01[2] * edge02[0] - edge01[0] * edge02[2],
+            edge01[0] * edge02[1] - edge01[1] * edge02[0]
+          }};
+          real64 const crossNorm = LvArray::math::sqrt(
+            cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2] );
+          real64 const area = 0.5 * crossNorm;
+          real64 const edgeLengthSquaredSum =
+            edge01[0] * edge01[0] + edge01[1] * edge01[1] + edge01[2] * edge01[2] +
+            edge02[0] * edge02[0] + edge02[1] * edge02[1] + edge02[2] * edge02[2] +
+            edge12[0] * edge12[0] + edge12[1] * edge12[1] + edge12[2] * edge12[2];
+          real64 const quality = edgeLengthSquaredSum > 0.0
+            ? 4.0 * LvArray::math::sqrt( 3.0 ) * area / edgeLengthSquaredSum
+            : 0.0;
+          if( area <= minFacetArea || quality < minTriangleQuality )
+          {
+            ++localRejectedSmallEntities;
+            return false;
+          }
+          real64 orientation = 0.0;
+          for( int d = 0; d < 3; ++d )
+          {
+            orientation += cross[d] * gradient[d];
+          }
+          if( orientation < 0.0 )
+          {
+            std::swap( triangle[1], triangle[2] );
+            for( int d = 0; d < 3; ++d )
+            {
+              cross[d] = -cross[d];
+            }
+          }
+
+          std::sort( triangle.begin(), triangle.end(),
+                     []( Crossing const & left, Crossing const & right )
+          {
+            return left.key < right.key;
+          } );
+          WeakInterfaceMortarFacetRecord record;
+          for( int corner = 0; corner < 3; ++corner )
+          {
+            record.key[corner] = triangle[corner].key;
+            record.point[corner] = triangle[corner].point;
+          }
+          for( int d = 0; d < 3; ++d )
+          {
+            record.normal[d] = gradient[d];
+          }
+          record.localOrdinal = localGeometryOrdinal++;
+          record.groupA = groupA;
+          record.groupB = groupB;
+          record.sourceRank = rank;
+          localFacetRecords.emplace_back( record );
+          return true;
+        };
+
+        if( crossings.size() == 3 )
+        {
+          return appendFacet( 0, 1, 2 ) ? 1 : -1;
+        }
+
+        auto diagonalLengthSquared = [&]( int a, int b )
+        {
+          real64 value = 0.0;
+          for( int d = 0; d < 3; ++d )
+          {
+            real64 const dx = crossings[a].point[d] - crossings[b].point[d];
+            value += dx * dx;
+          }
+          return value;
+        };
+        real64 const diagonal02 = diagonalLengthSquared( 0, 2 );
+        real64 const diagonal13 = diagonalLengthSquared( 1, 3 );
+        bool use02 = diagonal02 < diagonal13;
+        if( LvArray::math::abs( diagonal02 - diagonal13 ) <=
+            64.0 * DBL_EPSILON * LvArray::math::max( diagonal02, diagonal13 ) )
+        {
+          std::pair< WeakInterfaceMortarCrossingKey, WeakInterfaceMortarCrossingKey > const key02 =
+            crossings[0].key < crossings[2].key
+            ? std::make_pair( crossings[0].key, crossings[2].key )
+            : std::make_pair( crossings[2].key, crossings[0].key );
+          std::pair< WeakInterfaceMortarCrossingKey, WeakInterfaceMortarCrossingKey > const key13 =
+            crossings[1].key < crossings[3].key
+            ? std::make_pair( crossings[1].key, crossings[3].key )
+            : std::make_pair( crossings[3].key, crossings[1].key );
+          use02 = key02 < key13;
+        }
+        bool const ok0 = use02 ? appendFacet( 0, 1, 2 ) : appendFacet( 0, 1, 3 );
+        bool const ok1 = use02 ? appendFacet( 0, 2, 3 ) : appendFacet( 1, 2, 3 );
+        return ok0 && ok1 ? 2 : -1;
+      };
+
+      int const tetrahedra[6][4] = {
+        { 0, 1, 3, 7 },
+        { 0, 3, 2, 7 },
+        { 0, 2, 6, 7 },
+        { 0, 6, 4, 7 },
+        { 0, 4, 5, 7 },
+        { 0, 5, 1, 7 }
+      };
+      int const cornerI[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
+      int const cornerJ[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
+      int const cornerK[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+
+      for( localIndex k = 0; k < nEl[2]; ++k )
+      {
+        for( localIndex j = 0; j < nEl[1]; ++j )
+        {
+          for( localIndex i = 0; i < nEl[0]; ++i )
+          {
+            std::array< std::array< real64, 3 >, 8 > cellPoints{};
+            std::array< WeakInterfaceMortarNodeKey, 8 > cornerNodeKeys{};
+            std::array< real64, 8 > cornerPhi{};
+            bool nearCell = false;
+            bool validCell = true;
+            real64 minPhi = std::numeric_limits< real64 >::max();
+            real64 maxPhi = -std::numeric_limits< real64 >::max();
+            for( int corner = 0; corner < 8; ++corner )
+            {
+              localIndex const ii = i + cornerI[corner];
+              localIndex const jj = j + cornerJ[corner];
+              localIndex const kk = k + cornerK[corner];
+              localIndex const node = ijkMap[ii][jj][kk];
+              for( int d = 0; d < 3; ++d )
+              {
+                cellPoints[corner][d] = gridPosition[node][d];
+              }
+              cornerNodeKeys[corner] = localNodeKeys[static_cast< std::size_t >( node )];
+              NodalSurfaceFit const & fit = nodalFit[nodalPhiIndex( ii, jj, kk )];
+              cornerPhi[corner] = fit.phi;
+              nearCell = nearCell || fit.near;
+              validCell = validCell && fit.valid;
+              minPhi = LvArray::math::min( minPhi, fit.phi );
+              maxPhi = LvArray::math::max( maxPhi, fit.phi );
+            }
+
+            std::array< real64, 3 > cellCenter{};
+            for( int corner = 0; corner < 8; ++corner )
+            {
+              for( int d = 0; d < 3; ++d )
+              {
+                cellCenter[d] += 0.125 * cellPoints[corner][d];
+              }
+            }
+            if( !rankOwnsCellCenter( cellCenter[0], 0 ) ||
+                !rankOwnsCellCenter( cellCenter[1], 1 ) ||
+                !rankOwnsCellCenter( cellCenter[2], 2 ) )
+            {
+              continue;
+            }
+            ++localOwnedPairCells;
+            WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 8 );
+            bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
+            bool const potentialCut = minPhi <= geometryTolerance &&
+                                      maxPhi >= -geometryTolerance;
+            if( !nearCell && !containsMarker )
+            {
+              continue;
+            }
+            if( !validCell )
+            {
+              ++localRejectedFitCells;
+              appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                   WeakInterfaceMortarFallbackReason::SurfaceFitQuality );
+              continue;
+            }
+            if( !potentialCut )
+            {
+              if( containsMarker )
+              {
+                ++localAmbiguousSimplices;
+                appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                     WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+              }
+              continue;
+            }
+
+            int added = 0;
+            bool failed = false;
+            for( int tetra = 0; tetra < 6; ++tetra )
+            {
+              std::array< WeakInterfaceMortarNodeKey, 4 > tetraNodes{};
+              std::array< std::array< real64, 3 >, 4 > tetraPoints{};
+              std::array< real64, 4 > tetraPhi{};
+              for( int corner = 0; corner < 4; ++corner )
+              {
+                int const cellCorner = tetrahedra[tetra][corner];
+                tetraNodes[corner] = cornerNodeKeys[cellCorner];
+                tetraPoints[corner] = cellPoints[cellCorner];
+                tetraPhi[corner] = cornerPhi[cellCorner];
+              }
+              int const status = processTetrahedron( tetraNodes, tetraPoints, tetraPhi );
+              failed = failed || status < 0;
+              added += LvArray::math::max( status, 0 );
+            }
+            if( failed || added == 0 )
+            {
+              appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
+                                   WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::vector< WeakInterfaceMortarSegmentRecord > gatheredSegmentRecords =
+    allGatherWeakInterfaceRecords( localSegmentRecords );
+  std::vector< WeakInterfaceMortarFacetRecord > gatheredFacetRecords =
+    allGatherWeakInterfaceRecords( localFacetRecords );
+  std::vector< WeakInterfaceMortarFallbackPointRecord > gatheredFallbackPointRecords =
+    allGatherWeakInterfaceRecords( localFallbackPointRecords );
+
+  std::sort( gatheredSegmentRecords.begin(), gatheredSegmentRecords.end(),
+             []( WeakInterfaceMortarSegmentRecord const & left,
+                 WeakInterfaceMortarSegmentRecord const & right )
+  {
+    if( left.groupA != right.groupA ) return left.groupA < right.groupA;
+    if( left.groupB != right.groupB ) return left.groupB < right.groupB;
+    if( left.key0 < right.key0 ) return true;
+    if( right.key0 < left.key0 ) return false;
+    if( left.key1 < right.key1 ) return true;
+    if( right.key1 < left.key1 ) return false;
+    if( left.sourceRank != right.sourceRank ) return left.sourceRank < right.sourceRank;
+    return left.localOrdinal < right.localOrdinal;
+  } );
+  std::sort( gatheredFacetRecords.begin(), gatheredFacetRecords.end(),
+             []( WeakInterfaceMortarFacetRecord const & left,
+                 WeakInterfaceMortarFacetRecord const & right )
+  {
+    if( left.groupA != right.groupA ) return left.groupA < right.groupA;
+    if( left.groupB != right.groupB ) return left.groupB < right.groupB;
+    for( int corner = 0; corner < 3; ++corner )
+    {
+      if( left.key[corner] < right.key[corner] ) return true;
+      if( right.key[corner] < left.key[corner] ) return false;
+    }
+    if( left.sourceRank != right.sourceRank ) return left.sourceRank < right.sourceRank;
+    return left.localOrdinal < right.localOrdinal;
+  } );
+  std::sort( gatheredFallbackPointRecords.begin(), gatheredFallbackPointRecords.end(),
+             []( WeakInterfaceMortarFallbackPointRecord const & left,
+                 WeakInterfaceMortarFallbackPointRecord const & right )
+  {
+    return std::tie( left.groupA, left.groupB, left.cell.i, left.cell.j, left.cell.k,
+                     left.reason, left.sourceRank ) <
+           std::tie( right.groupA, right.groupB, right.cell.i, right.cell.j, right.cell.k,
+                     right.reason, right.sourceRank );
+  } );
+  gatheredFallbackPointRecords.erase(
+    std::unique( gatheredFallbackPointRecords.begin(), gatheredFallbackPointRecords.end(),
+                 []( WeakInterfaceMortarFallbackPointRecord const & left,
+                     WeakInterfaceMortarFallbackPointRecord const & right )
+  {
+    return left.groupA == right.groupA && left.groupB == right.groupB &&
+           left.cell == right.cell && left.reason == right.reason;
+  } ), gatheredFallbackPointRecords.end() );
+
+  localIndex const globalOwnedPairCells = MpiWrapper::allReduce(
+    localOwnedPairCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  localIndex const totalAmbiguousSimplices = MpiWrapper::allReduce(
+    localAmbiguousSimplices, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  localIndex const rejectedSmallEntities = MpiWrapper::allReduce(
+    localRejectedSmallEntities, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  localIndex const rejectedFitCells = MpiWrapper::allReduce(
+    localRejectedFitCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  std::vector< WeakInterfaceMortarConstraintCandidate > candidates;
+  std::set< WeakInterfaceMortarNodeKey > requiredNodeKeys;
+  std::map< WeakInterfaceMortarNodeKey, std::map< int, int > > fallbackFieldsByNodeKey;
+  localIndex totalVertices = 0;
+  localIndex totalSegments = 0;
+  localIndex totalFacets = 0;
+  localIndex duplicateSegments = 0;
+  localIndex duplicateFacets = 0;
+  localIndex rejectedBasisConstraints = 0;
+  localIndex nonmanifoldEntities = 0;
+  localIndex unexpectedBoundaryEntities = 0;
+  int nextInterfaceID = 0;
+
+  auto addFallbackField = [&]( WeakInterfaceMortarNodeKey const & node,
+                               int const field,
+                               WeakInterfaceMortarFallbackReason const reason )
+  {
+    if( !fallbackToSingleField )
+    {
+      return;
+    }
+    int & storedReason = fallbackFieldsByNodeKey[node][field];
+    storedReason = LvArray::math::max( storedReason, static_cast< int >( reason ) );
+    requiredNodeKeys.insert( node );
+  };
+
+  auto addFallbackAtPoint = [&]( std::array< real64, 3 > const & point,
+                                 int const fieldA,
+                                 int const fieldB,
+                                 WeakInterfaceMortarFallbackReason const reason )
+  {
+    if( !fallbackToSingleField )
+    {
+      return;
+    }
+    std::map< WeakInterfaceMortarNodeKey, real64 > support;
+    bool const valid = addTraceBasis( point, 1.0, support );
+    GEOS_UNUSED_VAR( valid );
+    for( auto const & entry : support )
+    {
+      addFallbackField( entry.first, fieldA, reason );
+      addFallbackField( entry.first, fieldB, reason );
+    }
+  };
+
+  for( WeakInterfaceMortarFallbackPointRecord const & record : gatheredFallbackPointRecords )
+  {
+    addFallbackAtPoint( record.point,
+                        record.groupA,
+                        record.groupB,
+                        static_cast< WeakInterfaceMortarFallbackReason >( record.reason ) );
+  }
+
+  real64 const gaussAbscissa = 1.0 / LvArray::math::sqrt( 3.0 );
+  real64 const gaussXi[2] = { -gaussAbscissa, gaussAbscissa };
+  real64 const gaussWeight[2] = { 1.0, 1.0 };
+  int const numGaussPoints = mortarQuadratureOrder == 1 ? 1 : 2;
+
+  for( std::pair< int, int > const & selectedPair : selectedPairs )
+  {
+    int const groupA = selectedPair.first;
+    int const groupB = selectedPair.second;
+    localIndex const fieldA = groupA;
+    localIndex const fieldB = groupB;
+
+    std::map< WeakInterfaceMortarCrossingKey, localIndex > vertexLookup;
+    std::vector< WeakInterfaceMortarVertex > vertices;
+    std::set< WeakInterfaceMortarCrossingKey > invalidVertexKeys;
+    real64 const duplicatePointTolerance = LvArray::math::max(
+      10.0 * geometryTolerance,
+      256.0 * DBL_EPSILON * LvArray::math::max( cellDiagonal, 1.0 ) );
+    auto getOrCreateGlobalVertex = [&]( WeakInterfaceMortarCrossingKey const & key,
+                                        std::array< real64, 3 > const & point )
+    {
+      std::array< real64, 3 > const canonical = canonicalPoint( point );
       auto const found = vertexLookup.find( key );
       if( found != vertexLookup.end() )
       {
+        real64 mismatchSquared = 0.0;
+        for( int d = 0; d < numDims; ++d )
+        {
+          real64 const dx = minimumImageDelta(
+            canonical[d] - vertices[found->second].point[d], d );
+          mismatchSquared += dx * dx;
+        }
+        if( mismatchSquared > duplicatePointTolerance * duplicatePointTolerance )
+        {
+          ++nonmanifoldEntities;
+          invalidVertexKeys.insert( key );
+          addFallbackAtPoint( canonical, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
+        }
         return found->second;
       }
       localIndex const vertex = static_cast< localIndex >( vertices.size() );
       WeakInterfaceMortarVertex value;
       value.key = key;
-      value.point = point;
+      value.point = canonical;
       vertices.emplace_back( std::move( value ) );
       vertexLookup.emplace( key, vertex );
       return vertex;
     };
 
-    auto processTriangle = [&]( std::array< localIndex, 3 > const & triangleNodes,
-                                std::array< std::array< real64, 3 >, 3 > const & trianglePoints,
-                                std::array< real64, 3 > const & trianglePhi )
+    if( m_planeStrain == 1 )
     {
-      struct Crossing
+      std::map< std::pair< WeakInterfaceMortarCrossingKey,
+                          WeakInterfaceMortarCrossingKey >, localIndex > segmentLookup;
+      std::vector< WeakInterfaceMortarSegment > segments;
+      for( WeakInterfaceMortarSegmentRecord const & record : gatheredSegmentRecords )
       {
-        WeakInterfaceMortarCrossingKey key{};
-        std::array< real64, 3 > point{};
-      };
-
-      std::vector< Crossing > crossings;
-      crossings.reserve( 3 );
-      auto appendCrossing = [&]( Crossing const & crossing )
-      {
-        for( Crossing const & existing : crossings )
+        if( record.groupA != groupA || record.groupB != groupB )
         {
-          if( existing.key == crossing.key )
+          continue;
+        }
+        std::pair< WeakInterfaceMortarCrossingKey,
+                   WeakInterfaceMortarCrossingKey > const segmentKey =
+          std::make_pair( record.key0, record.key1 );
+        auto const existing = segmentLookup.find( segmentKey );
+        if( existing != segmentLookup.end() )
+        {
+          ++duplicateSegments;
+          WeakInterfaceMortarSegment const & retained = segments[existing->second];
+          real64 normalDot = 0.0;
+          for( int d = 0; d < 2; ++d )
           {
-            return;
+            normalDot += retained.normal[d] * record.normal[d];
           }
-        }
-        crossings.emplace_back( crossing );
-      };
-
-      int const edgeCorners[3][2] = { { 0, 1 }, { 1, 2 }, { 2, 0 } };
-      for( int edge = 0; edge < 3; ++edge )
-      {
-        int const a = edgeCorners[edge][0];
-        int const b = edgeCorners[edge][1];
-        real64 const phiA = trianglePhi[a];
-        real64 const phiB = trianglePhi[b];
-        bool const zeroA = LvArray::math::abs( phiA ) <= geometryTolerance;
-        bool const zeroB = LvArray::math::abs( phiB ) <= geometryTolerance;
-
-        if( zeroA && zeroB )
-        {
-          appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[a] ),
-                                    trianglePoints[a] } );
-          appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[b] ),
-                                    trianglePoints[b] } );
-        }
-        else if( zeroA )
-        {
-          appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[a] ),
-                                    trianglePoints[a] } );
-        }
-        else if( zeroB )
-        {
-          appendCrossing( Crossing{ weakInterfaceMortarVertexKey( triangleNodes[b] ),
-                                    trianglePoints[b] } );
-        }
-        else if( phiA * phiB < 0.0 )
-        {
-          real64 const fraction = phiA / ( phiA - phiB );
-          std::array< real64, 3 > point{};
-          for( int d = 0; d < 3; ++d )
+          if( normalDot < minNormalCoherence )
           {
-            point[d] = trianglePoints[a][d] +
-                       fraction * ( trianglePoints[b][d] - trianglePoints[a][d] );
+            ++nonmanifoldEntities;
+            invalidVertexKeys.insert( record.key0 );
+            invalidVertexKeys.insert( record.key1 );
+            addFallbackAtPoint( record.point0, fieldA, fieldB,
+                                WeakInterfaceMortarFallbackReason::SurfaceTopology );
           }
-          appendCrossing( Crossing{ weakInterfaceMortarEdgeKey( triangleNodes[a],
-                                                                 triangleNodes[b] ),
-                                    point } );
+          continue;
         }
+        localIndex const vertex0 = getOrCreateGlobalVertex( record.key0, record.point0 );
+        localIndex const vertex1 = getOrCreateGlobalVertex( record.key1, record.point1 );
+        if( vertex0 == vertex1 )
+        {
+          addFallbackAtPoint( record.point0, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          continue;
+        }
+        WeakInterfaceMortarSegment segment;
+        segment.vertex0 = vertex0;
+        segment.vertex1 = vertex1;
+        segment.point0 = vertices[vertex0].point;
+        segment.point1 = segment.point0;
+        for( int d = 0; d < 3; ++d )
+        {
+          segment.point1[d] += minimumImageDelta(
+            vertices[vertex1].point[d] - segment.point0[d], d );
+        }
+        real64 dx = segment.point1[0] - segment.point0[0];
+        real64 dy = segment.point1[1] - segment.point0[1];
+        segment.length = LvArray::math::sqrt( dx * dx + dy * dy );
+        segment.normal = record.normal;
+        if( segment.length <= minSegmentLength )
+        {
+          invalidVertexKeys.insert( record.key0 );
+          invalidVertexKeys.insert( record.key1 );
+          addFallbackAtPoint( record.point0, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          continue;
+        }
+        localIndex const segmentIndex = static_cast< localIndex >( segments.size() );
+        segments.emplace_back( segment );
+        segmentLookup.emplace( segmentKey, segmentIndex );
+        vertices[vertex0].incidentSegments.emplace_back( segmentIndex );
+        vertices[vertex1].incidentSegments.emplace_back( segmentIndex );
       }
 
-      if( crossings.size() < 2 )
+      std::vector< std::vector< localIndex > > vertexNeighbors( vertices.size() );
+      for( localIndex segmentIndex = 0;
+           segmentIndex < static_cast< localIndex >( segments.size() );
+           ++segmentIndex )
       {
-        return;
+        WeakInterfaceMortarSegment const & segment = segments[segmentIndex];
+        vertexNeighbors[segment.vertex0].emplace_back( segment.vertex1 );
+        vertexNeighbors[segment.vertex1].emplace_back( segment.vertex0 );
+        for( int d = 0; d < 2; ++d )
+        {
+          vertices[segment.vertex0].normal[d] += segment.length * segment.normal[d];
+          vertices[segment.vertex1].normal[d] += segment.length * segment.normal[d];
+        }
+      }
+      for( std::vector< localIndex > & neighbors : vertexNeighbors )
+      {
+        std::sort( neighbors.begin(), neighbors.end() );
+        neighbors.erase( std::unique( neighbors.begin(), neighbors.end() ), neighbors.end() );
       }
 
-      int crossing0 = 0;
-      int crossing1 = 1;
-      if( crossings.size() > 2 )
+      int componentCount = 0;
+      for( localIndex start = 0; start < static_cast< localIndex >( vertices.size() ); ++start )
       {
-        ++totalAmbiguousTriangles;
-        real64 maximumDistanceSquared = -1.0;
-        for( int a = 0; a < static_cast< int >( crossings.size() ); ++a )
+        if( vertices[start].component >= 0 )
         {
-          for( int b = a + 1; b < static_cast< int >( crossings.size() ); ++b )
+          continue;
+        }
+        std::vector< localIndex > stack{ start };
+        vertices[start].component = componentCount;
+        while( !stack.empty() )
+        {
+          localIndex const vertex = stack.back();
+          stack.pop_back();
+          for( localIndex const neighbor : vertexNeighbors[vertex] )
           {
-            real64 const dx = crossings[a].point[0] - crossings[b].point[0];
-            real64 const dy = crossings[a].point[1] - crossings[b].point[1];
-            real64 const distanceSquared = dx * dx + dy * dy;
-            if( distanceSquared > maximumDistanceSquared )
+            if( vertices[neighbor].component < 0 )
             {
-              maximumDistanceSquared = distanceSquared;
-              crossing0 = a;
-              crossing1 = b;
+              vertices[neighbor].component = componentCount;
+              stack.emplace_back( neighbor );
             }
           }
         }
+        ++componentCount;
+      }
+      std::vector< int > componentInterfaceID( componentCount, -1 );
+      for( int component = 0; component < componentCount; ++component )
+      {
+        componentInterfaceID[component] = nextInterfaceID++;
+      }
+      for( WeakInterfaceMortarSegment & segment : segments )
+      {
+        segment.component = vertices[segment.vertex0].component;
       }
 
-      real64 const segmentDx =
-        crossings[crossing1].point[0] - crossings[crossing0].point[0];
-      real64 const segmentDy =
-        crossings[crossing1].point[1] - crossings[crossing0].point[1];
-      real64 const segmentLength =
-        LvArray::math::sqrt( segmentDx * segmentDx + segmentDy * segmentDy );
-      if( segmentLength <= minSegmentLength )
+      for( localIndex vertexIndex = 0;
+           vertexIndex < static_cast< localIndex >( vertices.size() );
+           ++vertexIndex )
       {
-        ++rejectedShortSegments;
-        return;
-      }
-
-      real64 const x0 = trianglePoints[0][0];
-      real64 const y0 = trianglePoints[0][1];
-      real64 const x1 = trianglePoints[1][0];
-      real64 const y1 = trianglePoints[1][1];
-      real64 const x2 = trianglePoints[2][0];
-      real64 const y2 = trianglePoints[2][1];
-      real64 const determinant =
-        ( x1 - x0 ) * ( y2 - y0 ) - ( x2 - x0 ) * ( y1 - y0 );
-      if( LvArray::math::abs( determinant ) <=
-          std::numeric_limits< real64 >::epsilon() * cellDiagonal * cellDiagonal )
-      {
-        return;
-      }
-
-      std::array< real64, 3 > segmentNormal{};
-      segmentNormal[0] =
-        ( trianglePhi[0] * ( y1 - y2 ) +
-          trianglePhi[1] * ( y2 - y0 ) +
-          trianglePhi[2] * ( y0 - y1 ) ) / determinant;
-      segmentNormal[1] =
-        ( trianglePhi[0] * ( x2 - x1 ) +
-          trianglePhi[1] * ( x0 - x2 ) +
-          trianglePhi[2] * ( x1 - x0 ) ) / determinant;
-      real64 const normalNorm = LvArray::math::sqrt(
-        segmentNormal[0] * segmentNormal[0] +
-        segmentNormal[1] * segmentNormal[1] );
-      if( normalNorm <= explicitSurfaceNormalTolerance )
-      {
-        return;
-      }
-      segmentNormal[0] /= normalNorm;
-      segmentNormal[1] /= normalNorm;
-
-      localIndex const vertex0 =
-        getOrCreateVertex( crossings[crossing0].key,
-                           crossings[crossing0].point );
-      localIndex const vertex1 =
-        getOrCreateVertex( crossings[crossing1].key,
-                           crossings[crossing1].point );
-      if( vertex0 == vertex1 )
-      {
-        return;
-      }
-      std::pair< localIndex, localIndex > const segmentKey =
-        vertex0 < vertex1 ? std::make_pair( vertex0, vertex1 ) :
-                            std::make_pair( vertex1, vertex0 );
-      auto const existingSegment = segmentLookup.find( segmentKey );
-      if( existingSegment != segmentLookup.end() )
-      {
-        WeakInterfaceMortarSegment & segment = segments[existingSegment->second];
-        real64 const alignment = segment.normal[0] * segmentNormal[0] +
-                                 segment.normal[1] * segmentNormal[1];
-        if( alignment < 0.0 )
+        WeakInterfaceMortarVertex & vertex = vertices[vertexIndex];
+        real64 incidentMeasure = 0.0;
+        for( localIndex const segmentIndex : vertex.incidentSegments )
         {
-          segmentNormal[0] = -segmentNormal[0];
-          segmentNormal[1] = -segmentNormal[1];
+          incidentMeasure += segments[segmentIndex].length;
         }
-        segment.normal[0] += segmentNormal[0];
-        segment.normal[1] += segmentNormal[1];
-        real64 const combinedNorm = LvArray::math::sqrt(
-          segment.normal[0] * segment.normal[0] +
-          segment.normal[1] * segment.normal[1] );
-        segment.normal[0] /= combinedNorm;
-        segment.normal[1] /= combinedNorm;
-        return;
-      }
-
-      localIndex const segmentIndex = static_cast< localIndex >( segments.size() );
-      WeakInterfaceMortarSegment segment;
-      segment.vertex0 = vertex0;
-      segment.vertex1 = vertex1;
-      segment.normal = segmentNormal;
-      segment.length = segmentLength;
-      segments.emplace_back( segment );
-      segmentLookup.emplace( segmentKey, segmentIndex );
-      vertices[vertex0].incidentSegments.emplace_back( segmentIndex );
-      vertices[vertex1].incidentSegments.emplace_back( segmentIndex );
-      for( int d = 0; d < 2; ++d )
-      {
-        vertices[vertex0].normal[d] += segmentLength * segmentNormal[d];
-        vertices[vertex1].normal[d] += segmentLength * segmentNormal[d];
-      }
-    };
-
-    for( localIndex j = 0; j < nEl[1]; ++j )
-    {
-      for( localIndex i = 0; i < nEl[0]; ++i )
-      {
-        std::array< localIndex, 4 > const cornerNodes = {{
-          ijkMap[i][j][planeNodeK],
-          ijkMap[i + 1][j][planeNodeK],
-          ijkMap[i][j + 1][planeNodeK],
-          ijkMap[i + 1][j + 1][planeNodeK]
-        }};
-        std::array< std::array< real64, 3 >, 4 > cornerPoints{};
-        for( int corner = 0; corner < 4; ++corner )
+        real64 const normalNorm = LvArray::math::sqrt(
+          vertex.normal[0] * vertex.normal[0] + vertex.normal[1] * vertex.normal[1] );
+        real64 const coherence = incidentMeasure > 0.0 ? normalNorm / incidentMeasure : 0.0;
+        if( normalNorm > explicitSurfaceNormalTolerance )
         {
-          cornerPoints[corner][0] = gridPosition[cornerNodes[corner]][0];
-          cornerPoints[corner][1] = gridPosition[cornerNodes[corner]][1];
-          cornerPoints[corner][2] = physicalMidZ;
+          vertex.normal[0] /= normalNorm;
+          vertex.normal[1] /= normalNorm;
         }
-        std::array< real64, 4 > const cornerPhi = {{
-          nodalPhi[nodalPhiIndex( i, j )],
-          nodalPhi[nodalPhiIndex( i + 1, j )],
-          nodalPhi[nodalPhiIndex( i, j + 1 )],
-          nodalPhi[nodalPhiIndex( i + 1, j + 1 )]
-        }};
-
-        // Use the same p10--p01 diagonal in every cell.  This deterministic
-        // P1 subdivision makes the reconstructed zero contour C0 across all
-        // Cartesian cell faces and avoids marching-squares face ambiguity.
-        processTriangle( {{ cornerNodes[0], cornerNodes[1], cornerNodes[2] }},
-                         {{ cornerPoints[0], cornerPoints[1], cornerPoints[2] }},
-                         {{ cornerPhi[0], cornerPhi[1], cornerPhi[2] }} );
-        processTriangle( {{ cornerNodes[3], cornerNodes[2], cornerNodes[1] }},
-                         {{ cornerPoints[3], cornerPoints[2], cornerPoints[1] }},
-                         {{ cornerPhi[3], cornerPhi[2], cornerPhi[1] }} );
-      }
-    }
-
-    if( segments.empty() )
-    {
-      GEOS_LOG_LEVEL_RANK_0(
-        logInfo::MPMSubroutines,
-        "C0 weak-interface mortar produced no P1 interface segments for contact-group pair (" <<
-        groupA << "," << groupB << ")." );
-      continue;
-    }
-
-    for( WeakInterfaceMortarVertex & vertex : vertices )
-    {
-      real64 const normalNorm = LvArray::math::sqrt(
-        vertex.normal[0] * vertex.normal[0] +
-        vertex.normal[1] * vertex.normal[1] );
-      if( normalNorm > explicitSurfaceNormalTolerance )
-      {
-        vertex.normal[0] /= normalNorm;
-        vertex.normal[1] /= normalNorm;
-      }
-    }
-
-    std::vector< std::vector< localIndex > > vertexNeighbors( vertices.size() );
-    for( WeakInterfaceMortarSegment const & segment : segments )
-    {
-      vertexNeighbors[segment.vertex0].emplace_back( segment.vertex1 );
-      vertexNeighbors[segment.vertex1].emplace_back( segment.vertex0 );
-    }
-    for( std::vector< localIndex > & neighbors : vertexNeighbors )
-    {
-      std::sort( neighbors.begin(), neighbors.end() );
-      neighbors.erase( std::unique( neighbors.begin(), neighbors.end() ),
-                       neighbors.end() );
-    }
-
-    // Recover a deterministic along-interface ordering for the symmetric
-    // forward/reverse local projection sweeps. Closed degree-two components
-    // follow their polyline; open components start at their lowest-id endpoint.
-    std::vector< localIndex > orderedVertices;
-    orderedVertices.reserve( vertices.size() );
-    std::vector< int > visited( vertices.size(), 0 );
-    while( orderedVertices.size() < vertices.size() )
-    {
-      localIndex start = -1;
-      for( localIndex vertex = 0;
-           vertex < static_cast< localIndex >( vertices.size() );
-           ++vertex )
-      {
-        if( visited[vertex] == 0 && vertexNeighbors[vertex].size() == 1 )
+        bool const badDegree = vertexNeighbors[vertexIndex].size() > 2 ||
+          ( vertexNeighbors[vertexIndex].size() == 1 && !pointOnPhysicalBoundary( vertex.point ) );
+        if( badDegree || coherence < minNormalCoherence )
         {
-          start = vertex;
-          break;
+          ++nonmanifoldEntities;
+          invalidVertexKeys.insert( vertex.key );
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
         }
       }
-      if( start < 0 )
+
+      totalVertices += static_cast< localIndex >( vertices.size() );
+      totalSegments += static_cast< localIndex >( segments.size() );
+      for( localIndex vertexIndex = 0;
+           vertexIndex < static_cast< localIndex >( vertices.size() );
+           ++vertexIndex )
       {
-        for( localIndex vertex = 0;
-             vertex < static_cast< localIndex >( vertices.size() );
-             ++vertex )
+        WeakInterfaceMortarVertex const & vertex = vertices[vertexIndex];
+        if( vertex.incidentSegments.empty() ||
+            invalidVertexKeys.find( vertex.key ) != invalidVertexKeys.end() )
         {
-          if( visited[vertex] == 0 )
+          continue;
+        }
+        std::map< WeakInterfaceMortarNodeKey, real64 > coefficientMap;
+        real64 measure = 0.0;
+        bool validBasis = true;
+        for( localIndex const segmentIndex : vertex.incidentSegments )
+        {
+          WeakInterfaceMortarSegment const & segment = segments[segmentIndex];
+          bool const vertexIsEndpoint0 = segment.vertex0 == vertexIndex;
+          for( int gauss = 0; gauss < numGaussPoints; ++gauss )
           {
-            start = vertex;
-            break;
+            real64 const xi = mortarQuadratureOrder == 1 ? 0.0 : gaussXi[gauss];
+            real64 const weight = mortarQuadratureOrder == 1 ? 2.0 : gaussWeight[gauss];
+            real64 const t = 0.5 * ( 1.0 + xi );
+            real64 const multiplierShape = vertexIsEndpoint0 ? 1.0 - t : t;
+            real64 const factor = 0.5 * segment.length * weight * multiplierShape;
+            std::array< real64, 3 > quadraturePoint{};
+            for( int d = 0; d < 3; ++d )
+            {
+              quadraturePoint[d] = segment.point0[d] +
+                                   t * ( segment.point1[d] - segment.point0[d] );
+            }
+            quadraturePoint[2] = physicalMidZ;
+            measure += factor;
+            if( !addTraceBasis( quadraturePoint, factor, coefficientMap ) )
+            {
+              validBasis = false;
+            }
           }
         }
-      }
-      if( start < 0 )
-      {
-        break;
-      }
-
-      localIndex previous = -1;
-      localIndex current = start;
-      while( current >= 0 && visited[current] == 0 )
-      {
-        orderedVertices.emplace_back( current );
-        visited[current] = 1;
-        localIndex next = -1;
-        for( localIndex const neighbor : vertexNeighbors[current] )
+        if( !validBasis || measure <= std::numeric_limits< real64 >::min() )
         {
-          if( neighbor != previous && visited[neighbor] == 0 )
+          ++rejectedBasisConstraints;
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::MortarBasis );
+          continue;
+        }
+        WeakInterfaceMortarConstraintCandidate candidate;
+        candidate.fieldA = fieldA;
+        candidate.fieldB = fieldB;
+        candidate.interfaceID = componentInterfaceID[vertex.component];
+        candidate.surfaceVertexKey = vertex.key;
+        for( localIndex const segmentIndex : vertex.incidentSegments )
+        {
+          WeakInterfaceMortarSegment const & segment = segments[segmentIndex];
+          localIndex const neighbor = segment.vertex0 == vertexIndex
+                                      ? segment.vertex1 : segment.vertex0;
+          candidate.neighborVertexKeys.emplace_back( vertices[neighbor].key );
+        }
+        std::sort( candidate.neighborVertexKeys.begin(),
+                   candidate.neighborVertexKeys.end() );
+        candidate.neighborVertexKeys.erase(
+          std::unique( candidate.neighborVertexKeys.begin(),
+                       candidate.neighborVertexKeys.end() ),
+          candidate.neighborVertexKeys.end() );
+        candidate.point = canonicalPoint( vertex.point );
+        candidate.normal = vertex.normal;
+        candidate.measure = measure;
+        for( auto const & entry : coefficientMap )
+        {
+          if( entry.second > 0.0 )
           {
-            next = neighbor;
-            break;
+            candidate.coefficients.push_back( { entry.first, entry.second } );
+            requiredNodeKeys.insert( entry.first );
           }
         }
-        previous = current;
-        current = next;
+        if( candidate.coefficients.empty() )
+        {
+          ++rejectedBasisConstraints;
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::MortarBasis );
+          continue;
+        }
+        candidates.emplace_back( std::move( candidate ) );
       }
     }
-
-    totalVertices += static_cast< localIndex >( vertices.size() );
-    totalSegments += static_cast< localIndex >( segments.size() );
-
-    real64 const fieldMassCutoffA =
-      LvArray::math::max( smallMass,
-                          massCutoffRatio * maximumFieldMass[fieldA] );
-    real64 const fieldMassCutoffB =
-      LvArray::math::max( smallMass,
-                          massCutoffRatio * maximumFieldMass[fieldB] );
-
-    real64 const gaussAbscissa = 1.0 / LvArray::math::sqrt( 3.0 );
-    real64 const gaussXi[2] = { -gaussAbscissa, gaussAbscissa };
-    real64 const gaussWeight[2] = { 1.0, 1.0 };
-    int const numGaussPoints = mortarQuadratureOrder == 1 ? 1 : 2;
-
-    for( localIndex const vertexIndex : orderedVertices )
+    else
     {
-      WeakInterfaceMortarVertex const & vertex = vertices[vertexIndex];
-      if( vertex.incidentSegments.empty() )
+      using FacetKey = std::array< WeakInterfaceMortarCrossingKey, 3 >;
+      std::map< FacetKey, localIndex > facetLookup;
+      std::vector< WeakInterfaceMortarFacet > facets;
+      for( WeakInterfaceMortarFacetRecord const & record : gatheredFacetRecords )
       {
-        continue;
-      }
-
-      std::map< localIndex, real64 > coefficientMap;
-      real64 measure = 0.0;
-      bool validBasis = true;
-      for( localIndex const segmentIndex : vertex.incidentSegments )
-      {
-        WeakInterfaceMortarSegment const & segment = segments[segmentIndex];
-        WeakInterfaceMortarVertex const & endpoint0 = vertices[segment.vertex0];
-        WeakInterfaceMortarVertex const & endpoint1 = vertices[segment.vertex1];
-        bool const vertexIsEndpoint0 = segment.vertex0 == vertexIndex;
-
-        for( int gauss = 0; gauss < numGaussPoints; ++gauss )
+        if( record.groupA != groupA || record.groupB != groupB )
         {
-          real64 const xi = mortarQuadratureOrder == 1 ? 0.0 : gaussXi[gauss];
-          real64 const weight = mortarQuadratureOrder == 1 ? 2.0 : gaussWeight[gauss];
-          real64 const t = 0.5 * ( 1.0 + xi );
-          real64 const multiplierShape = vertexIsEndpoint0 ? 1.0 - t : t;
-          real64 const factor = 0.5 * segment.length * weight * multiplierShape;
-          std::array< real64, 3 > quadraturePoint{};
+          continue;
+        }
+        auto const existing = facetLookup.find( record.key );
+        if( existing != facetLookup.end() )
+        {
+          ++duplicateFacets;
+          WeakInterfaceMortarFacet const & retained = facets[existing->second];
+          real64 normalDot = 0.0;
           for( int d = 0; d < 3; ++d )
           {
-            quadraturePoint[d] = endpoint0.point[d] +
-                                 t * ( endpoint1.point[d] - endpoint0.point[d] );
+            normalDot += retained.normal[d] * record.normal[d];
           }
-          quadraturePoint[2] = physicalMidZ;
-          measure += factor;
-          if( !addTraceBasis( quadraturePoint, factor, coefficientMap ) )
+          if( normalDot < minNormalCoherence )
+          {
+            ++nonmanifoldEntities;
+            for( WeakInterfaceMortarCrossingKey const & key : record.key )
+            {
+              invalidVertexKeys.insert( key );
+            }
+            addFallbackAtPoint( record.point[0], fieldA, fieldB,
+                                WeakInterfaceMortarFallbackReason::SurfaceTopology );
+          }
+          continue;
+        }
+        WeakInterfaceMortarFacet facet;
+        for( int corner = 0; corner < 3; ++corner )
+        {
+          facet.vertex[corner] = getOrCreateGlobalVertex( record.key[corner],
+                                                          record.point[corner] );
+        }
+        if( facet.vertex[0] == facet.vertex[1] ||
+            facet.vertex[0] == facet.vertex[2] ||
+            facet.vertex[1] == facet.vertex[2] )
+        {
+          addFallbackAtPoint( record.point[0], fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          continue;
+        }
+        facet.point[0] = vertices[facet.vertex[0]].point;
+        for( int corner = 1; corner < 3; ++corner )
+        {
+          facet.point[corner] = facet.point[0];
+          for( int d = 0; d < 3; ++d )
+          {
+            facet.point[corner][d] += minimumImageDelta(
+              vertices[facet.vertex[corner]].point[d] - facet.point[0][d], d );
+          }
+        }
+        std::array< real64, 3 > edge01{};
+        std::array< real64, 3 > edge02{};
+        std::array< real64, 3 > edge12{};
+        for( int d = 0; d < 3; ++d )
+        {
+          edge01[d] = facet.point[1][d] - facet.point[0][d];
+          edge02[d] = facet.point[2][d] - facet.point[0][d];
+          edge12[d] = facet.point[2][d] - facet.point[1][d];
+        }
+        std::array< real64, 3 > cross{{
+          edge01[1] * edge02[2] - edge01[2] * edge02[1],
+          edge01[2] * edge02[0] - edge01[0] * edge02[2],
+          edge01[0] * edge02[1] - edge01[1] * edge02[0]
+        }};
+        real64 const crossNorm = LvArray::math::sqrt(
+          cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2] );
+        facet.area = 0.5 * crossNorm;
+        real64 const edgeLengthSquaredSum =
+          edge01[0] * edge01[0] + edge01[1] * edge01[1] + edge01[2] * edge01[2] +
+          edge02[0] * edge02[0] + edge02[1] * edge02[1] + edge02[2] * edge02[2] +
+          edge12[0] * edge12[0] + edge12[1] * edge12[1] + edge12[2] * edge12[2];
+        facet.quality = edgeLengthSquaredSum > 0.0
+          ? 4.0 * LvArray::math::sqrt( 3.0 ) * facet.area / edgeLengthSquaredSum
+          : 0.0;
+        facet.normal = record.normal;
+        if( facet.area <= minFacetArea || facet.quality < minTriangleQuality )
+        {
+          for( WeakInterfaceMortarCrossingKey const & key : record.key )
+          {
+            invalidVertexKeys.insert( key );
+          }
+          addFallbackAtPoint( record.point[0], fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::DegenerateReconstruction );
+          continue;
+        }
+        localIndex const facetIndex = static_cast< localIndex >( facets.size() );
+        facets.emplace_back( facet );
+        facetLookup.emplace( record.key, facetIndex );
+        for( int corner = 0; corner < 3; ++corner )
+        {
+          vertices[facet.vertex[corner]].incidentFacets.emplace_back( facetIndex );
+        }
+      }
+
+      using EdgeKey = std::pair< localIndex, localIndex >;
+      std::map< EdgeKey, std::vector< localIndex > > edgeFacets;
+      for( localIndex facetIndex = 0;
+           facetIndex < static_cast< localIndex >( facets.size() );
+           ++facetIndex )
+      {
+        WeakInterfaceMortarFacet const & facet = facets[facetIndex];
+        for( int edge = 0; edge < 3; ++edge )
+        {
+          localIndex a = facet.vertex[edge];
+          localIndex b = facet.vertex[( edge + 1 ) % 3];
+          if( b < a ) std::swap( a, b );
+          edgeFacets[{ a, b }].emplace_back( facetIndex );
+        }
+      }
+      std::vector< std::vector< localIndex > > facetNeighbors( facets.size() );
+      for( auto const & edgeEntry : edgeFacets )
+      {
+        std::vector< localIndex > const & incident = edgeEntry.second;
+        if( incident.size() == 2 )
+        {
+          facetNeighbors[incident[0]].emplace_back( incident[1] );
+          facetNeighbors[incident[1]].emplace_back( incident[0] );
+        }
+        else if( incident.size() > 2 )
+        {
+          ++nonmanifoldEntities;
+          invalidVertexKeys.insert( vertices[edgeEntry.first.first].key );
+          invalidVertexKeys.insert( vertices[edgeEntry.first.second].key );
+          addFallbackAtPoint( vertices[edgeEntry.first.first].point,
+                              fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
+          addFallbackAtPoint( vertices[edgeEntry.first.second].point,
+                              fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
+        }
+        else if( incident.size() == 1 )
+        {
+          int const boundaryMask0 =
+            physicalBoundaryMask( vertices[edgeEntry.first.first].point );
+          int const boundaryMask1 =
+            physicalBoundaryMask( vertices[edgeEntry.first.second].point );
+          bool const allowedBoundary = ( boundaryMask0 & boundaryMask1 ) != 0;
+          if( !allowedBoundary )
+          {
+            ++unexpectedBoundaryEntities;
+            invalidVertexKeys.insert( vertices[edgeEntry.first.first].key );
+            invalidVertexKeys.insert( vertices[edgeEntry.first.second].key );
+            addFallbackAtPoint( vertices[edgeEntry.first.first].point,
+                                fieldA, fieldB,
+                                WeakInterfaceMortarFallbackReason::SurfaceTopology );
+            addFallbackAtPoint( vertices[edgeEntry.first.second].point,
+                                fieldA, fieldB,
+                                WeakInterfaceMortarFallbackReason::SurfaceTopology );
+          }
+        }
+      }
+
+      int componentCount = 0;
+      for( localIndex start = 0; start < static_cast< localIndex >( facets.size() ); ++start )
+      {
+        if( facets[start].component >= 0 )
+        {
+          continue;
+        }
+        std::vector< localIndex > stack{ start };
+        facets[start].component = componentCount;
+        while( !stack.empty() )
+        {
+          localIndex const facet = stack.back();
+          stack.pop_back();
+          for( localIndex const neighbor : facetNeighbors[facet] )
+          {
+            if( facets[neighbor].component < 0 )
+            {
+              facets[neighbor].component = componentCount;
+              stack.emplace_back( neighbor );
+            }
+          }
+        }
+        ++componentCount;
+      }
+      std::vector< int > componentInterfaceID( componentCount, -1 );
+      for( int component = 0; component < componentCount; ++component )
+      {
+        componentInterfaceID[component] = nextInterfaceID++;
+      }
+
+      for( localIndex vertexIndex = 0;
+           vertexIndex < static_cast< localIndex >( vertices.size() );
+           ++vertexIndex )
+      {
+        WeakInterfaceMortarVertex & vertex = vertices[vertexIndex];
+        std::set< int > components;
+        real64 incidentArea = 0.0;
+        for( localIndex const facetIndex : vertex.incidentFacets )
+        {
+          WeakInterfaceMortarFacet const & facet = facets[facetIndex];
+          components.insert( facet.component );
+          incidentArea += facet.area;
+          for( int d = 0; d < 3; ++d )
+          {
+            vertex.normal[d] += facet.area * facet.normal[d];
+          }
+        }
+        if( components.size() == 1 )
+        {
+          vertex.component = *components.begin();
+        }
+        else if( components.size() > 1 )
+        {
+          ++nonmanifoldEntities;
+          invalidVertexKeys.insert( vertex.key );
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
+        }
+        real64 const normalNorm = LvArray::math::sqrt(
+          vertex.normal[0] * vertex.normal[0] +
+          vertex.normal[1] * vertex.normal[1] +
+          vertex.normal[2] * vertex.normal[2] );
+        real64 const coherence = incidentArea > 0.0 ? normalNorm / incidentArea : 0.0;
+        if( normalNorm > explicitSurfaceNormalTolerance )
+        {
+          for( int d = 0; d < 3; ++d )
+          {
+            vertex.normal[d] /= normalNorm;
+          }
+        }
+        if( coherence < minNormalCoherence )
+        {
+          invalidVertexKeys.insert( vertex.key );
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::SurfaceTopology );
+        }
+      }
+
+      totalVertices += static_cast< localIndex >( vertices.size() );
+      totalFacets += static_cast< localIndex >( facets.size() );
+      real64 const barycentric[3][3] = {
+        { 2.0 / 3.0, 1.0 / 6.0, 1.0 / 6.0 },
+        { 1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0 },
+        { 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0 }
+      };
+      int const numTrianglePoints = mortarQuadratureOrder == 1 ? 1 : 3;
+      for( localIndex vertexIndex = 0;
+           vertexIndex < static_cast< localIndex >( vertices.size() );
+           ++vertexIndex )
+      {
+        WeakInterfaceMortarVertex const & vertex = vertices[vertexIndex];
+        if( vertex.incidentFacets.empty() || vertex.component < 0 ||
+            invalidVertexKeys.find( vertex.key ) != invalidVertexKeys.end() )
+        {
+          continue;
+        }
+        std::map< WeakInterfaceMortarNodeKey, real64 > coefficientMap;
+        real64 measure = 0.0;
+        bool validBasis = true;
+        for( localIndex const facetIndex : vertex.incidentFacets )
+        {
+          WeakInterfaceMortarFacet const & facet = facets[facetIndex];
+          int localVertex = -1;
+          for( int corner = 0; corner < 3; ++corner )
+          {
+            if( facet.vertex[corner] == vertexIndex )
+            {
+              localVertex = corner;
+            }
+          }
+          if( localVertex < 0 )
           {
             validBasis = false;
+            continue;
+          }
+          for( int q = 0; q < numTrianglePoints; ++q )
+          {
+            real64 lambda[3] = { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
+            real64 quadratureWeight = facet.area;
+            if( mortarQuadratureOrder != 1 )
+            {
+              for( int corner = 0; corner < 3; ++corner )
+              {
+                lambda[corner] = barycentric[q][corner];
+              }
+              quadratureWeight = facet.area / 3.0;
+            }
+            std::array< real64, 3 > quadraturePoint{};
+            for( int corner = 0; corner < 3; ++corner )
+            {
+              for( int d = 0; d < 3; ++d )
+              {
+                quadraturePoint[d] += lambda[corner] * facet.point[corner][d];
+              }
+            }
+            real64 const factor = quadratureWeight * lambda[localVertex];
+            measure += factor;
+            if( !addTraceBasis( quadraturePoint, factor, coefficientMap ) )
+            {
+              validBasis = false;
+            }
           }
         }
-      }
-
-      if( !validBasis || measure <= std::numeric_limits< real64 >::min() )
-      {
-        ++rejectedBasisConstraints;
-        continue;
-      }
-
-      real64 totalCoefficient = 0.0;
-      for( auto const & entry : coefficientMap )
-      {
-        totalCoefficient += entry.second;
-      }
-      if( totalCoefficient <= std::numeric_limits< real64 >::min() )
-      {
-        ++rejectedBasisConstraints;
-        continue;
-      }
-
-      WeakInterfaceMortarConstraint constraint;
-      constraint.fieldA = fieldA;
-      constraint.fieldB = fieldB;
-      constraint.point = vertex.point;
-      constraint.normal = vertex.normal;
-      constraint.measure = measure;
-
-      real64 retainedCoefficient = 0.0;
-      for( auto const & entry : coefficientMap )
-      {
-        localIndex const node = entry.first;
-        real64 const coefficient = entry.second;
-        if( coefficient <= 0.0 ||
-            gridActive[node][fieldA] <= 0.5 ||
-            gridActive[node][fieldB] <= 0.5 ||
-            gridMass[node][fieldA] <= fieldMassCutoffA ||
-            gridMass[node][fieldB] <= fieldMassCutoffB )
+        if( !validBasis || measure <= std::numeric_limits< real64 >::min() )
         {
+          ++rejectedBasisConstraints;
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::MortarBasis );
           continue;
         }
-        constraint.coefficients.push_back( { node, coefficient } );
-        retainedCoefficient += coefficient;
-      }
-
-      constraint.retainedSupportFraction = retainedCoefficient / totalCoefficient;
-      if( constraint.coefficients.empty() ||
-          constraint.retainedSupportFraction < minRetainedSupportFraction )
-      {
-        ++rejectedSupportConstraints;
-        continue;
-      }
-
-      real64 rawDenominator = 0.0;
-      for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
-      {
-        real64 const c = coefficient.coefficient;
-        rawDenominator += c * c *
-                          ( 1.0 / gridMass[coefficient.node][fieldA] +
-                            1.0 / gridMass[coefficient.node][fieldB] );
-      }
-      real64 const referenceDenominator =
-        measure * measure *
-        ( 1.0 / LvArray::math::max( maximumFieldMass[fieldA], smallMass ) +
-          1.0 / LvArray::math::max( maximumFieldMass[fieldB], smallMass ) );
-      constraint.denominator = rawDenominator +
-                               denominatorRegularization * referenceDenominator;
-      if( constraint.denominator <= std::numeric_limits< real64 >::min() )
-      {
-        ++rejectedMassConstraints;
-        continue;
-      }
-
-      real64 surfaceJumpWeight = 0.0;
-      for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
-      {
-        localIndex const node = coefficient.node;
-        if( gridSurfaceFieldMass[node][fieldA] <= smallMass ||
-            gridSurfaceFieldMass[node][fieldB] <= smallMass )
+        WeakInterfaceMortarConstraintCandidate candidate;
+        candidate.fieldA = fieldA;
+        candidate.fieldB = fieldB;
+        candidate.interfaceID = componentInterfaceID[vertex.component];
+        candidate.surfaceVertexKey = vertex.key;
+        for( localIndex const facetIndex : vertex.incidentFacets )
         {
+          WeakInterfaceMortarFacet const & facet = facets[facetIndex];
+          for( int corner = 0; corner < 3; ++corner )
+          {
+            localIndex const neighbor = facet.vertex[corner];
+            if( neighbor != vertexIndex )
+            {
+              candidate.neighborVertexKeys.emplace_back( vertices[neighbor].key );
+            }
+          }
+        }
+        std::sort( candidate.neighborVertexKeys.begin(),
+                   candidate.neighborVertexKeys.end() );
+        candidate.neighborVertexKeys.erase(
+          std::unique( candidate.neighborVertexKeys.begin(),
+                       candidate.neighborVertexKeys.end() ),
+          candidate.neighborVertexKeys.end() );
+        candidate.point = canonicalPoint( vertex.point );
+        candidate.normal = vertex.normal;
+        candidate.measure = measure;
+        for( auto const & entry : coefficientMap )
+        {
+          if( entry.second > 0.0 )
+          {
+            candidate.coefficients.push_back( { entry.first, entry.second } );
+            requiredNodeKeys.insert( entry.first );
+          }
+        }
+        if( candidate.coefficients.empty() )
+        {
+          ++rejectedBasisConstraints;
+          addFallbackAtPoint( vertex.point, fieldA, fieldB,
+                              WeakInterfaceMortarFallbackReason::MortarBasis );
           continue;
         }
-        for( int d = 0; d < 3; ++d )
-        {
-          constraint.surfaceJump[d] += coefficient.coefficient *
-            ( gridSurfacePosition[node][fieldA][d] -
-              gridSurfacePosition[node][fieldB][d] );
-        }
-        surfaceJumpWeight += coefficient.coefficient;
+        candidates.emplace_back( std::move( candidate ) );
       }
-      if( surfaceJumpWeight > 0.0 )
-      {
-        for( int d = 0; d < 3; ++d )
-        {
-          constraint.surfaceJump[d] /= surfaceJumpWeight;
-        }
-      }
-
-      constraints.emplace_back( std::move( constraint ) );
     }
   }
 
-  if( constraints.empty() )
+  // Determine whether the trace support of any grid node contains more than
+  // one locally connected interface sheet. Different material pairs and
+  // disconnected components are distinct sheets. A folded connected surface
+  // can also enter the same B-spline support twice; the induced surface-vertex
+  // graph then has more than one local component even though its global
+  // component identifier is the same. Such nodes do not admit a unique local
+  // mortar topology and are conservatively collapsed to one velocity field.
+  std::map< WeakInterfaceMortarNodeKey, std::vector< localIndex > > nodeCandidates;
+  for( localIndex candidateIndex = 0;
+       candidateIndex < static_cast< localIndex >( candidates.size() );
+       ++candidateIndex )
+  {
+    for( WeakInterfaceMortarCandidateCoefficient const & coefficient :
+         candidates[candidateIndex].coefficients )
+    {
+      nodeCandidates[coefficient.node].emplace_back( candidateIndex );
+    }
+  }
+
+  localIndex multipleInterfaceFallbackNodes = 0;
+  std::set< WeakInterfaceMortarNodeKey > fallbackOverlapNodeKeys;
+  for( auto const & entry : nodeCandidates )
+  {
+    std::vector< localIndex > localCandidates = entry.second;
+    std::sort( localCandidates.begin(), localCandidates.end() );
+    localCandidates.erase( std::unique( localCandidates.begin(), localCandidates.end() ),
+                           localCandidates.end() );
+
+    std::vector< localIndex > parent( localCandidates.size() );
+    std::iota( parent.begin(), parent.end(), 0 );
+    auto findRoot = [&]( localIndex value )
+    {
+      localIndex root = value;
+      while( parent[root] != root )
+      {
+        root = parent[root];
+      }
+      while( parent[value] != value )
+      {
+        localIndex const next = parent[value];
+        parent[value] = root;
+        value = next;
+      }
+      return root;
+    };
+    auto mergeRoots = [&]( localIndex const a, localIndex const b )
+    {
+      localIndex const rootA = findRoot( a );
+      localIndex const rootB = findRoot( b );
+      if( rootA != rootB )
+      {
+        parent[rootB] = rootA;
+      }
+    };
+    auto areSurfaceNeighbors = []( WeakInterfaceMortarConstraintCandidate const & left,
+                                   WeakInterfaceMortarConstraintCandidate const & right )
+    {
+      if( left.interfaceID != right.interfaceID )
+      {
+        return false;
+      }
+      if( left.surfaceVertexKey == right.surfaceVertexKey )
+      {
+        return true;
+      }
+      return std::binary_search( left.neighborVertexKeys.begin(),
+                                 left.neighborVertexKeys.end(),
+                                 right.surfaceVertexKey ) ||
+             std::binary_search( right.neighborVertexKeys.begin(),
+                                 right.neighborVertexKeys.end(),
+                                 left.surfaceVertexKey );
+    };
+
+    for( localIndex a = 0;
+         a < static_cast< localIndex >( localCandidates.size() );
+         ++a )
+    {
+      for( localIndex b = a + 1;
+           b < static_cast< localIndex >( localCandidates.size() );
+           ++b )
+      {
+        if( areSurfaceNeighbors( candidates[localCandidates[a]],
+                                 candidates[localCandidates[b]] ) )
+        {
+          mergeRoots( a, b );
+        }
+      }
+    }
+
+    std::set< localIndex > localSheets;
+    for( localIndex candidate = 0;
+         candidate < static_cast< localIndex >( localCandidates.size() );
+         ++candidate )
+    {
+      localSheets.insert( findRoot( candidate ) );
+    }
+
+    bool const multipleSheets = localSheets.size() > 1;
+    bool const overlapsQualityFallback =
+      fallbackFieldsByNodeKey.find( entry.first ) != fallbackFieldsByNodeKey.end();
+    if( !multipleSheets && !overlapsQualityFallback )
+    {
+      continue;
+    }
+    if( multipleSheets )
+    {
+      ++multipleInterfaceFallbackNodes;
+    }
+    if( overlapsQualityFallback )
+    {
+      fallbackOverlapNodeKeys.insert( entry.first );
+    }
+
+    for( localIndex const candidateIndex : localCandidates )
+    {
+      WeakInterfaceMortarConstraintCandidate const & candidate =
+        candidates[candidateIndex];
+      addFallbackField( entry.first, candidate.fieldA,
+                        multipleSheets
+                        ? WeakInterfaceMortarFallbackReason::MultipleInterfaceSupport
+                        : WeakInterfaceMortarFallbackReason::SurfaceTopology );
+      addFallbackField( entry.first, candidate.fieldB,
+                        multipleSheets
+                        ? WeakInterfaceMortarFallbackReason::MultipleInterfaceSupport
+                        : WeakInterfaceMortarFallbackReason::SurfaceTopology );
+    }
+  }
+
+
+  if( candidates.empty() && fallbackFieldsByNodeKey.empty() )
   {
     GEOS_LOG_LEVEL_RANK_0(
       logInfo::MPMSubroutines,
-      "C0 weak-interface vertex mortar: reconstructed pairs/markers/vertices/segments=" <<
-      pairReconstructions << "/" << totalPairMarkers << "/" << totalVertices << "/" <<
-      totalSegments << ", constraints=0, rejected(basis/support/mass)=" <<
-      rejectedBasisConstraints << "/" << rejectedSupportConstraints << "/" <<
-      rejectedMassConstraints << ", short segments=" << rejectedShortSegments <<
-      ", ambiguous triangles=" << totalAmbiguousTriangles << "." );
+      "C0 weak-interface mortar: global owned pair-cells=" << globalOwnedPairCells <<
+      ", reconstructed pairs/markers/vertices/segments/facets=" << pairReconstructions << "/" <<
+      totalPairMarkers << "/" << totalVertices << "/" << totalSegments << "/" << totalFacets <<
+      ", candidates=0, fallback nodes=0, rejected fit/basis=" << rejectedFitCells << "/" <<
+      rejectedBasisConstraints << ", small entities=" << rejectedSmallEntities <<
+      ", duplicate segments/facets=" << duplicateSegments << "/" << duplicateFacets <<
+      ", ambiguous simplices=" << totalAmbiguousSimplices << "." );
     return;
+  }
+
+  std::set< localIndex > participatingFields;
+  for( std::pair< int, int > const & selectedPair : selectedPairs )
+  {
+    participatingFields.insert( selectedPair.first );
+    participatingFields.insert( selectedPair.second );
+  }
+
+  std::vector< WeakInterfaceMortarNodeFieldRecord > localNodeFieldRecords;
+  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  {
+    WeakInterfaceMortarNodeKey const & key =
+      localNodeKeys[static_cast< std::size_t >( node )];
+    if( requiredNodeKeys.find( key ) == requiredNodeKeys.end() )
+    {
+      continue;
+    }
+    for( localIndex const field : participatingFields )
+    {
+      WeakInterfaceMortarNodeFieldRecord record;
+      record.key = key;
+      record.field = field;
+      record.sourceRank = rank;
+      record.owned = gridGhostRank[node] < 0 ? 1 : 0;
+      record.globalNode = gridLocalToGlobal[node];
+      record.mass = gridMass[node][field];
+      record.active = gridActive[node][field];
+      record.surfaceFieldMass = gridSurfaceFieldMass[node][field];
+      for( int d = 0; d < 3; ++d )
+      {
+        record.velocity[d] = gridVelocity[node][field][d];
+        record.surfacePosition[d] = gridSurfacePosition[node][field][d];
+      }
+      localNodeFieldRecords.emplace_back( record );
+    }
+  }
+
+  std::vector< WeakInterfaceMortarNodeFieldRecord > gatheredNodeFieldRecords =
+    allGatherWeakInterfaceRecords( localNodeFieldRecords );
+  std::sort( gatheredNodeFieldRecords.begin(), gatheredNodeFieldRecords.end(),
+             []( WeakInterfaceMortarNodeFieldRecord const & left,
+                 WeakInterfaceMortarNodeFieldRecord const & right )
+  {
+    if( left.key < right.key )
+    {
+      return true;
+    }
+    if( right.key < left.key )
+    {
+      return false;
+    }
+    if( left.field != right.field )
+    {
+      return left.field < right.field;
+    }
+    if( left.owned != right.owned )
+    {
+      return left.owned > right.owned;
+    }
+    if( left.globalNode != right.globalNode )
+    {
+      return left.globalNode < right.globalNode;
+    }
+    return left.sourceRank < right.sourceRank;
+  } );
+
+  std::vector< WeakInterfaceMortarNodeKey > interfaceNodeKeys(
+    requiredNodeKeys.begin(), requiredNodeKeys.end() );
+  std::map< WeakInterfaceMortarNodeKey, localIndex > interfaceNodeLookup;
+  for( localIndex node = 0;
+       node < static_cast< localIndex >( interfaceNodeKeys.size() );
+       ++node )
+  {
+    interfaceNodeLookup.emplace( interfaceNodeKeys[node], node );
   }
 
   auto flatFieldIndex = [=]( localIndex const node, localIndex const field )
   {
     return static_cast< std::size_t >( node * numVelocityFields + field );
   };
-  std::vector< std::array< real64, 3 > > originalVelocity(
-    static_cast< std::size_t >( nodeManager.size() * numVelocityFields ) );
-  std::vector< std::array< real64, 3 > > projectedVelocity = originalVelocity;
-  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  std::size_t const flatSize =
+    interfaceNodeKeys.size() * static_cast< std::size_t >( numVelocityFields );
+  std::vector< real64 > interfaceMass( flatSize, -1.0 );
+  std::vector< real64 > interfaceActive( flatSize, 0.0 );
+  std::vector< real64 > interfaceSurfaceFieldMass( flatSize, 0.0 );
+  std::vector< std::array< real64, 3 > > interfaceVelocity( flatSize );
+  std::vector< std::array< real64, 3 > > interfaceSurfacePosition( flatSize );
+  std::vector< int > interfaceRecordPriority( flatSize, -1 );
+  real64 maximumDuplicateStateDifference = 0.0;
+
+  for( WeakInterfaceMortarNodeFieldRecord const & record : gatheredNodeFieldRecords )
   {
-    for( localIndex field = 0; field < numVelocityFields; ++field )
+    auto const nodeFound = interfaceNodeLookup.find( record.key );
+    if( nodeFound == interfaceNodeLookup.end() ||
+        record.field < 0 || record.field >= numVelocityFields )
     {
-      std::size_t const flat = flatFieldIndex( node, field );
-      for( int component = 0; component < 3; ++component )
+      continue;
+    }
+    std::size_t const flat = flatFieldIndex( nodeFound->second, record.field );
+    int const priority = record.owned != 0 ? 2 : 1;
+    if( interfaceRecordPriority[flat] < 0 )
+    {
+      interfaceRecordPriority[flat] = priority;
+      interfaceMass[flat] = record.mass;
+      interfaceActive[flat] = record.active;
+      interfaceSurfaceFieldMass[flat] = record.surfaceFieldMass;
+      interfaceVelocity[flat] = record.velocity;
+      interfaceSurfacePosition[flat] = record.surfacePosition;
+    }
+    else
+    {
+      real64 difference = LvArray::math::abs( interfaceMass[flat] - record.mass );
+      for( int d = 0; d < 3; ++d )
       {
-        originalVelocity[flat][component] = gridVelocity[node][field][component];
-        projectedVelocity[flat][component] = gridVelocity[node][field][component];
+        difference = LvArray::math::max(
+          difference,
+          LvArray::math::abs( interfaceVelocity[flat][d] - record.velocity[d] ) );
+      }
+      maximumDuplicateStateDifference =
+        LvArray::math::max( maximumDuplicateStateDifference, difference );
+      if( priority > interfaceRecordPriority[flat] )
+      {
+        interfaceRecordPriority[flat] = priority;
+        interfaceMass[flat] = record.mass;
+        interfaceActive[flat] = record.active;
+        interfaceSurfaceFieldMass[flat] = record.surfaceFieldMass;
+        interfaceVelocity[flat] = record.velocity;
+        interfaceSurfacePosition[flat] = record.surfacePosition;
       }
     }
   }
+
+  std::vector< WeakInterfaceMortarConstraint > constraints;
+  localIndex rejectedSupportConstraints = 0;
+  localIndex rejectedMassConstraints = 0;
+  localIndex missingNodeStateContributions = 0;
+
+  auto fallbackCandidateSupport = [&]( WeakInterfaceMortarConstraintCandidate const & candidate,
+                                       WeakInterfaceMortarFallbackReason const reason )
+  {
+    if( !fallbackToSingleField )
+    {
+      return;
+    }
+    for( WeakInterfaceMortarCandidateCoefficient const & coefficient : candidate.coefficients )
+    {
+      addFallbackField( coefficient.node, candidate.fieldA, reason );
+      addFallbackField( coefficient.node, candidate.fieldB, reason );
+    }
+  };
+
+  for( WeakInterfaceMortarConstraintCandidate const & candidate : candidates )
+  {
+    real64 totalCoefficient = 0.0;
+    for( WeakInterfaceMortarCandidateCoefficient const & coefficient : candidate.coefficients )
+    {
+      totalCoefficient += coefficient.coefficient;
+    }
+    if( totalCoefficient <= std::numeric_limits< real64 >::min() )
+    {
+      ++rejectedBasisConstraints;
+      fallbackCandidateSupport( candidate,
+                                WeakInterfaceMortarFallbackReason::MortarBasis );
+      continue;
+    }
+
+    real64 const fieldMassCutoffA =
+      LvArray::math::max( smallMass,
+                          massCutoffRatio * maximumFieldMass[candidate.fieldA] );
+    real64 const fieldMassCutoffB =
+      LvArray::math::max( smallMass,
+                          massCutoffRatio * maximumFieldMass[candidate.fieldB] );
+
+    WeakInterfaceMortarConstraint constraint;
+    constraint.fieldA = candidate.fieldA;
+    constraint.fieldB = candidate.fieldB;
+    constraint.point = candidate.point;
+    constraint.normal = candidate.normal;
+    constraint.measure = candidate.measure;
+
+    real64 retainedCoefficient = 0.0;
+    for( WeakInterfaceMortarCandidateCoefficient const & coefficient : candidate.coefficients )
+    {
+      auto const nodeFound = interfaceNodeLookup.find( coefficient.node );
+      if( nodeFound == interfaceNodeLookup.end() )
+      {
+        ++missingNodeStateContributions;
+        continue;
+      }
+      localIndex const node = nodeFound->second;
+      std::size_t const flatA = flatFieldIndex( node, candidate.fieldA );
+      std::size_t const flatB = flatFieldIndex( node, candidate.fieldB );
+      if( interfaceRecordPriority[flatA] < 0 || interfaceRecordPriority[flatB] < 0 )
+      {
+        ++missingNodeStateContributions;
+        continue;
+      }
+      if( interfaceActive[flatA] <= 0.5 || interfaceActive[flatB] <= 0.5 ||
+          interfaceMass[flatA] <= fieldMassCutoffA ||
+          interfaceMass[flatB] <= fieldMassCutoffB )
+      {
+        continue;
+      }
+      constraint.coefficients.push_back( { node, coefficient.coefficient } );
+      retainedCoefficient += coefficient.coefficient;
+    }
+
+    constraint.retainedSupportFraction = retainedCoefficient / totalCoefficient;
+    if( constraint.coefficients.empty() ||
+        constraint.retainedSupportFraction < minRetainedSupportFraction )
+    {
+      ++rejectedSupportConstraints;
+      fallbackCandidateSupport( candidate,
+                                WeakInterfaceMortarFallbackReason::MortarMassSupport );
+      continue;
+    }
+
+    real64 rawDenominator = 0.0;
+    for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
+    {
+      real64 const c = coefficient.coefficient;
+      rawDenominator += c * c *
+                        ( 1.0 / interfaceMass[flatFieldIndex( coefficient.node,
+                                                              constraint.fieldA )] +
+                          1.0 / interfaceMass[flatFieldIndex( coefficient.node,
+                                                              constraint.fieldB )] );
+    }
+    real64 const referenceDenominator =
+      constraint.measure * constraint.measure *
+      ( 1.0 / LvArray::math::max( maximumFieldMass[constraint.fieldA], smallMass ) +
+        1.0 / LvArray::math::max( maximumFieldMass[constraint.fieldB], smallMass ) );
+    constraint.denominator = rawDenominator +
+                             denominatorRegularization * referenceDenominator;
+    if( constraint.denominator <= std::numeric_limits< real64 >::min() )
+    {
+      ++rejectedMassConstraints;
+      fallbackCandidateSupport( candidate,
+                                WeakInterfaceMortarFallbackReason::MortarMassSupport );
+      continue;
+    }
+
+    real64 surfaceJumpWeight = 0.0;
+    for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
+    {
+      std::size_t const flatA = flatFieldIndex( coefficient.node, constraint.fieldA );
+      std::size_t const flatB = flatFieldIndex( coefficient.node, constraint.fieldB );
+      if( interfaceSurfaceFieldMass[flatA] <= smallMass ||
+          interfaceSurfaceFieldMass[flatB] <= smallMass )
+      {
+        continue;
+      }
+      for( int d = 0; d < 3; ++d )
+      {
+        constraint.surfaceJump[d] += coefficient.coefficient *
+          ( interfaceSurfacePosition[flatA][d] -
+            interfaceSurfacePosition[flatB][d] );
+      }
+      surfaceJumpWeight += coefficient.coefficient;
+    }
+    if( surfaceJumpWeight > 0.0 )
+    {
+      for( int d = 0; d < 3; ++d )
+      {
+        constraint.surfaceJump[d] /= surfaceJumpWeight;
+      }
+    }
+
+    constraints.emplace_back( std::move( constraint ) );
+  }
+
+  // Mass-support and basis checks above can request fallback after the first
+  // local-sheet pass. Propagate any such fallback across every reconstructed
+  // interface whose trace uses the same grid node, so an unresolved interface
+  // is never combined with a different active mortar law in one nodal support.
+  for( auto const & entry : nodeCandidates )
+  {
+    if( fallbackFieldsByNodeKey.find( entry.first ) == fallbackFieldsByNodeKey.end() )
+    {
+      continue;
+    }
+    fallbackOverlapNodeKeys.insert( entry.first );
+    for( localIndex const candidateIndex : entry.second )
+    {
+      WeakInterfaceMortarConstraintCandidate const & candidate =
+        candidates[candidateIndex];
+      addFallbackField( entry.first, candidate.fieldA,
+                        WeakInterfaceMortarFallbackReason::SurfaceTopology );
+      addFallbackField( entry.first, candidate.fieldB,
+                        WeakInterfaceMortarFallbackReason::SurfaceTopology );
+    }
+  }
+
+  if( constraints.empty() && fallbackFieldsByNodeKey.empty() )
+  {
+    GEOS_LOG_LEVEL_RANK_0(
+      logInfo::MPMSubroutines,
+      "C0 weak-interface vertex mortar: global owned pair-cells=" << globalOwnedPairCells <<
+      ", reconstructed pairs/markers/vertices/segments/facets=" << pairReconstructions << "/" <<
+      totalPairMarkers << "/" << totalVertices << "/" << totalSegments << "/" << totalFacets <<
+      ", constraints=0, rejected(basis/support/mass)=" << rejectedBasisConstraints << "/" <<
+      rejectedSupportConstraints << "/" << rejectedMassConstraints <<
+      ", missing node-state contributions=" << missingNodeStateContributions <<
+      ", small entities=" << rejectedSmallEntities <<
+      ", duplicate segments/facets=" << duplicateSegments << "/" << duplicateFacets <<
+      ", ambiguous simplices=" << totalAmbiguousSimplices << "." );
+    return;
+  }
+
+  std::vector< std::array< real64, 3 > > originalVelocity = interfaceVelocity;
+  std::vector< std::array< real64, 3 > > projectedVelocity = originalVelocity;
 
   auto integratedVelocityJump = [&]( WeakInterfaceMortarConstraint const & constraint,
                                      int const component,
@@ -25592,86 +27782,241 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
 
   real64 kineticEnergyBefore = 0.0;
   std::array< real64, 3 > momentumBefore{};
-  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  for( localIndex node = 0;
+       node < static_cast< localIndex >( interfaceNodeKeys.size() );
+       ++node )
   {
     for( localIndex field = 0; field < numVelocityFields; ++field )
     {
-      if( gridActive[node][field] <= 0.5 || gridMass[node][field] <= smallMass )
+      std::size_t const flat = flatFieldIndex( node, field );
+      if( interfaceRecordPriority[flat] < 0 ||
+          interfaceActive[flat] <= 0.5 || interfaceMass[flat] <= smallMass )
       {
         continue;
       }
-      std::size_t const flat = flatFieldIndex( node, field );
       real64 velocitySquared = 0.0;
       for( int component = 0; component < numDims; ++component )
       {
         velocitySquared += originalVelocity[flat][component] *
                            originalVelocity[flat][component];
-        momentumBefore[component] += gridMass[node][field] *
+        momentumBefore[component] += interfaceMass[flat] *
                                      originalVelocity[flat][component];
       }
-      kineticEnergyBefore += 0.5 * gridMass[node][field] * velocitySquared;
+      kineticEnergyBefore += 0.5 * interfaceMass[flat] * velocitySquared;
     }
   }
 
   int sweepsPerformed = 0;
   real64 finalRelativeResidual = initialResidualNormSquared > 0.0 ? 1.0 : 0.0;
-  for( int sweep = 0; sweep < maxProjectionSweeps; ++sweep )
+  if( !constraints.empty() )
   {
-    bool const forward = sweep % 2 == 0;
-    for( localIndex ordinal = 0;
-         ordinal < static_cast< localIndex >( constraints.size() );
-         ++ordinal )
+    for( int sweep = 0; sweep < maxProjectionSweeps; ++sweep )
     {
-      localIndex const constraintIndex =
-        forward ? ordinal : static_cast< localIndex >( constraints.size() ) - 1 - ordinal;
-      WeakInterfaceMortarConstraint const & constraint = constraints[constraintIndex];
-      for( int component = 0; component < numDims; ++component )
+      bool const forward = sweep % 2 == 0;
+      for( localIndex ordinal = 0;
+           ordinal < static_cast< localIndex >( constraints.size() );
+           ++ordinal )
       {
-        real64 const residual =
-          integratedVelocityJump( constraint, component, projectedVelocity );
-        real64 const impulse =
-          -projectionScale * residual / constraint.denominator;
-        for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
-        {
-          localIndex const node = coefficient.node;
-          real64 const nodalImpulse = coefficient.coefficient * impulse;
-          projectedVelocity[flatFieldIndex( node, constraint.fieldA )][component] +=
-            nodalImpulse / gridMass[node][constraint.fieldA];
-          projectedVelocity[flatFieldIndex( node, constraint.fieldB )][component] -=
-            nodalImpulse / gridMass[node][constraint.fieldB];
-        }
-      }
-    }
-    sweepsPerformed = sweep + 1;
-
-    if( sweep % 2 == 1 || sweep + 1 == maxProjectionSweeps )
-    {
-      real64 residualNormSquared = 0.0;
-      for( WeakInterfaceMortarConstraint const & constraint : constraints )
-      {
+        localIndex const constraintIndex =
+          forward ? ordinal : static_cast< localIndex >( constraints.size() ) - 1 - ordinal;
+        WeakInterfaceMortarConstraint const & constraint = constraints[constraintIndex];
         for( int component = 0; component < numDims; ++component )
         {
-          real64 const averageJump =
-            integratedVelocityJump( constraint, component, projectedVelocity ) /
-            constraint.measure;
-          residualNormSquared += averageJump * averageJump;
+          real64 const residual =
+            integratedVelocityJump( constraint, component, projectedVelocity );
+          real64 const impulse =
+            -projectionScale * residual / constraint.denominator;
+          for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
+          {
+            localIndex const node = coefficient.node;
+            real64 const nodalImpulse = coefficient.coefficient * impulse;
+            projectedVelocity[flatFieldIndex( node, constraint.fieldA )][component] +=
+              nodalImpulse / interfaceMass[flatFieldIndex( node, constraint.fieldA )];
+            projectedVelocity[flatFieldIndex( node, constraint.fieldB )][component] -=
+              nodalImpulse / interfaceMass[flatFieldIndex( node, constraint.fieldB )];
+          }
         }
       }
-      if( initialResidualNormSquared <= std::numeric_limits< real64 >::min() )
+      sweepsPerformed = sweep + 1;
+
+      if( sweep % 2 == 1 || sweep + 1 == maxProjectionSweeps )
       {
-        finalRelativeResidual = 0.0;
-        break;
-      }
-      finalRelativeResidual =
-        LvArray::math::sqrt( residualNormSquared / initialResidualNormSquared );
-      if( finalRelativeResidual <= relativeTolerance )
-      {
-        break;
+        real64 residualNormSquared = 0.0;
+        for( WeakInterfaceMortarConstraint const & constraint : constraints )
+        {
+          for( int component = 0; component < numDims; ++component )
+          {
+            real64 const averageJump =
+              integratedVelocityJump( constraint, component, projectedVelocity ) /
+              constraint.measure;
+            residualNormSquared += averageJump * averageJump;
+          }
+        }
+        if( initialResidualNormSquared <= std::numeric_limits< real64 >::min() )
+        {
+          finalRelativeResidual = 0.0;
+          break;
+        }
+        finalRelativeResidual =
+          LvArray::math::sqrt( residualNormSquared / initialResidualNormSquared );
+        if( finalRelativeResidual <= relativeTolerance )
+        {
+          break;
+        }
       }
     }
   }
 
-  auto updateJumpDiagnostic = [&]( arrayView3d< real64 > const & diagnostic,
+  // Conservative local single-field fallback. A failed interface patch or a
+  // node whose B-spline support contains more than one distinct weak interface
+  // cannot be assigned a unique mortar topology. At those nodes, collapse all
+  // requested active material fields to their mass-weighted common velocity.
+  // This preserves nodal linear momentum and does not alter particle mass,
+  // volume, density, deformation gradient, or constitutive/EOS state.
+  std::vector< int > fallbackDiagnosticReason( flatSize, 0 );
+  std::vector< std::array< real64, 3 > > fallbackDiagnosticJump( flatSize );
+  std::vector< std::array< real64, 3 > > fallbackDiagnosticPoint( flatSize );
+  localIndex fallbackAppliedNodes = 0;
+  localIndex fallbackSkippedNodes = 0;
+  real64 maximumFallbackJumpBefore = 0.0;
+  real64 maximumFallbackJumpAfter = 0.0;
+  std::map< int, localIndex > fallbackReasonCounts;
+
+  for( auto const & fallbackEntry : fallbackFieldsByNodeKey )
+  {
+    auto const nodeFound = interfaceNodeLookup.find( fallbackEntry.first );
+    if( nodeFound == interfaceNodeLookup.end() )
+    {
+      ++fallbackSkippedNodes;
+      continue;
+    }
+    localIndex const node = nodeFound->second;
+    std::vector< localIndex > fields;
+    real64 totalMass = 0.0;
+    std::array< real64, 3 > totalMomentum{};
+    int nodeReason = 0;
+
+    for( auto const & fieldEntry : fallbackEntry.second )
+    {
+      localIndex const field = fieldEntry.first;
+      nodeReason = LvArray::math::max( nodeReason, fieldEntry.second );
+      if( field < 0 || field >= numVelocityFields )
+      {
+        continue;
+      }
+      std::size_t const flat = flatFieldIndex( node, field );
+      if( interfaceRecordPriority[flat] < 0 || interfaceActive[flat] <= 0.5 ||
+          interfaceMass[flat] <= smallMass )
+      {
+        continue;
+      }
+      fields.emplace_back( field );
+      totalMass += interfaceMass[flat];
+      for( int component = 0; component < numDims; ++component )
+      {
+        totalMomentum[component] +=
+          interfaceMass[flat] * projectedVelocity[flat][component];
+      }
+    }
+
+    if( fields.size() < 2 || totalMass <= std::numeric_limits< real64 >::min() )
+    {
+      ++fallbackSkippedNodes;
+      continue;
+    }
+
+    std::array< real64, 3 > commonVelocity{};
+    for( int component = 0; component < numDims; ++component )
+    {
+      commonVelocity[component] = totalMomentum[component] / totalMass;
+    }
+
+    for( std::size_t a = 0; a < fields.size(); ++a )
+    {
+      std::size_t const flatA = flatFieldIndex( node, fields[a] );
+      for( std::size_t b = a + 1; b < fields.size(); ++b )
+      {
+        std::size_t const flatB = flatFieldIndex( node, fields[b] );
+        for( int component = 0; component < numDims; ++component )
+        {
+          maximumFallbackJumpBefore = LvArray::math::max(
+            maximumFallbackJumpBefore,
+            LvArray::math::abs( projectedVelocity[flatA][component] -
+                                projectedVelocity[flatB][component] ) );
+        }
+      }
+    }
+
+    std::array< real64, 3 > nodePoint{{
+      gridGlobalMin[0] + static_cast< real64 >( fallbackEntry.first.i ) * hEl[0],
+      gridGlobalMin[1] + static_cast< real64 >( fallbackEntry.first.j ) * hEl[1],
+      gridGlobalMin[2] + static_cast< real64 >( fallbackEntry.first.k ) * hEl[2]
+    }};
+    nodePoint = canonicalPoint( nodePoint );
+
+    for( localIndex const field : fields )
+    {
+      std::size_t const flat = flatFieldIndex( node, field );
+      fallbackDiagnosticReason[flat] = nodeReason;
+      fallbackDiagnosticPoint[flat] = nodePoint;
+      for( int component = 0; component < numDims; ++component )
+      {
+        fallbackDiagnosticJump[flat][component] =
+          projectedVelocity[flat][component] - commonVelocity[component];
+        projectedVelocity[flat][component] = commonVelocity[component];
+      }
+    }
+
+    for( std::size_t a = 0; a < fields.size(); ++a )
+    {
+      std::size_t const flatA = flatFieldIndex( node, fields[a] );
+      for( std::size_t b = a + 1; b < fields.size(); ++b )
+      {
+        std::size_t const flatB = flatFieldIndex( node, fields[b] );
+        for( int component = 0; component < numDims; ++component )
+        {
+          maximumFallbackJumpAfter = LvArray::math::max(
+            maximumFallbackJumpAfter,
+            LvArray::math::abs( projectedVelocity[flatA][component] -
+                                projectedVelocity[flatB][component] ) );
+        }
+      }
+    }
+
+    ++fallbackAppliedNodes;
+    ++fallbackReasonCounts[nodeReason];
+  }
+
+  // Report the residual of the final state, including any fallback overrides.
+  if( !constraints.empty() )
+  {
+    real64 residualNormSquared = 0.0;
+    for( WeakInterfaceMortarConstraint const & constraint : constraints )
+    {
+      for( int component = 0; component < numDims; ++component )
+      {
+        real64 const averageJump =
+          integratedVelocityJump( constraint, component, projectedVelocity ) /
+          constraint.measure;
+        residualNormSquared += averageJump * averageJump;
+      }
+    }
+    finalRelativeResidual =
+      initialResidualNormSquared > std::numeric_limits< real64 >::min()
+      ? LvArray::math::sqrt( residualNormSquared / initialResidualNormSquared )
+      : 0.0;
+  }
+
+  std::vector< int > diagnosticActive( flatSize, 0 );
+  std::vector< int > diagnosticSkipReason( flatSize, 0 );
+  std::vector< real64 > diagnosticAnchorWeight( flatSize, 0.0 );
+  std::vector< real64 > diagnosticSupportWeight( flatSize, 0.0 );
+  std::vector< std::array< real64, 3 > > diagnosticPoint( flatSize );
+  std::vector< std::array< real64, 3 > > diagnosticSurfaceJump( flatSize );
+  std::vector< std::array< real64, 3 > > diagnosticVelocityJump( flatSize );
+  std::vector< std::array< real64, 3 > > diagnosticVelocityJumpPost( flatSize );
+
+  auto updateJumpDiagnostic = [&]( std::vector< std::array< real64, 3 > > & diagnostic,
                                    WeakInterfaceMortarConstraint const & constraint,
                                    std::array< real64, 3 > const & jump )
   {
@@ -25679,21 +28024,20 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       jump[0] * jump[0] + jump[1] * jump[1] + jump[2] * jump[2];
     for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
     {
-      localIndex const node = coefficient.node;
       localIndex const fields[2] = { constraint.fieldA, constraint.fieldB };
       real64 const signs[2] = { 1.0, -1.0 };
       for( int side = 0; side < 2; ++side )
       {
-        localIndex const field = fields[side];
+        std::size_t const flat = flatFieldIndex( coefficient.node, fields[side] );
         real64 const currentMagnitudeSquared =
-          diagnostic[node][field][0] * diagnostic[node][field][0] +
-          diagnostic[node][field][1] * diagnostic[node][field][1] +
-          diagnostic[node][field][2] * diagnostic[node][field][2];
+          diagnostic[flat][0] * diagnostic[flat][0] +
+          diagnostic[flat][1] * diagnostic[flat][1] +
+          diagnostic[flat][2] * diagnostic[flat][2];
         if( jumpMagnitudeSquared > currentMagnitudeSquared )
         {
           for( int component = 0; component < 3; ++component )
           {
-            diagnostic[node][field][component] = signs[side] * jump[component];
+            diagnostic[flat][component] = signs[side] * jump[component];
           }
         }
       }
@@ -25717,39 +28061,30 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         LvArray::math::max( maximumPostAverageJump,
                             LvArray::math::abs( postJump[component] ) );
     }
-    updateJumpDiagnostic( gridWeakInterfaceTraceVelocityJump,
-                          constraint,
-                          preJump );
-    updateJumpDiagnostic( gridWeakInterfaceTraceVelocityJumpPost,
-                          constraint,
-                          postJump );
+    updateJumpDiagnostic( diagnosticVelocityJump, constraint, preJump );
+    updateJumpDiagnostic( diagnosticVelocityJumpPost, constraint, postJump );
 
     for( WeakInterfaceMortarCoefficient const & coefficient : constraint.coefficients )
     {
-      localIndex const node = coefficient.node;
       real64 const normalizedCoefficient =
         coefficient.coefficient / constraint.measure;
       localIndex const fields[2] = { constraint.fieldA, constraint.fieldB };
       real64 const signs[2] = { 1.0, -1.0 };
       for( int side = 0; side < 2; ++side )
       {
-        localIndex const field = fields[side];
-        gridWeakInterfaceTraceActive[node][field] = 1;
-        gridWeakInterfaceTraceSkipReason[node][field] = 10;
-        gridWeakInterfaceTraceAnchorWeight[node][field] =
-          LvArray::math::max( gridWeakInterfaceTraceAnchorWeight[node][field],
-                              constraint.measure /
-                              LvArray::math::max( cellDiagonal, 1.0e-30 ) );
-        if( normalizedCoefficient >=
-            gridWeakInterfaceTraceSupportWeight[node][field] )
+        std::size_t const flat = flatFieldIndex( coefficient.node, fields[side] );
+        diagnosticActive[flat] = 1;
+        diagnosticSkipReason[flat] = 10;
+        diagnosticAnchorWeight[flat] = LvArray::math::max(
+          diagnosticAnchorWeight[flat],
+          constraint.measure / LvArray::math::max( cellDiagonal, 1.0e-30 ) );
+        if( normalizedCoefficient >= diagnosticSupportWeight[flat] )
         {
-          gridWeakInterfaceTraceSupportWeight[node][field] =
-            normalizedCoefficient;
+          diagnosticSupportWeight[flat] = normalizedCoefficient;
+          diagnosticPoint[flat] = constraint.point;
           for( int component = 0; component < 3; ++component )
           {
-            gridWeakInterfaceTracePoint[node][field][component] =
-              constraint.point[component] - gridPosition[node][component];
-            gridWeakInterfaceTraceSurfaceJump[node][field][component] =
+            diagnosticSurfaceJump[flat][component] =
               signs[side] * constraint.surfaceJump[component];
           }
         }
@@ -25757,22 +28092,50 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     }
   }
 
+  // Fallback diagnostics override accepted-mortar diagnostics at nodes where
+  // the local kinematics were deliberately collapsed to a single field.
+  for( auto const & fallbackEntry : fallbackFieldsByNodeKey )
+  {
+    auto const nodeFound = interfaceNodeLookup.find( fallbackEntry.first );
+    if( nodeFound == interfaceNodeLookup.end() )
+    {
+      continue;
+    }
+    localIndex const node = nodeFound->second;
+    for( auto const & fieldEntry : fallbackEntry.second )
+    {
+      localIndex const field = fieldEntry.first;
+      if( field < 0 || field >= numVelocityFields )
+      {
+        continue;
+      }
+      std::size_t const flat = flatFieldIndex( node, field );
+      if( fallbackDiagnosticReason[flat] == 0 )
+      {
+        continue;
+      }
+      diagnosticActive[flat] = 1;
+      diagnosticSkipReason[flat] = fallbackDiagnosticReason[flat];
+      diagnosticAnchorWeight[flat] = 1.0;
+      diagnosticSupportWeight[flat] = 1.0;
+      diagnosticPoint[flat] = fallbackDiagnosticPoint[flat];
+      diagnosticVelocityJump[flat] = fallbackDiagnosticJump[flat];
+      diagnosticVelocityJumpPost[flat] = std::array< real64, 3 >{};
+      diagnosticSurfaceJump[flat] = std::array< real64, 3 >{};
+    }
+  }
+
   real64 kineticEnergyAfter = 0.0;
   std::array< real64, 3 > momentumAfter{};
-  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  for( localIndex node = 0;
+       node < static_cast< localIndex >( interfaceNodeKeys.size() );
+       ++node )
   {
     for( localIndex field = 0; field < numVelocityFields; ++field )
     {
       std::size_t const flat = flatFieldIndex( node, field );
-      for( int component = 0; component < 3; ++component )
-      {
-        gridWeakInterfaceTraceForce[node][field][component] =
-          gridMass[node][field] *
-          ( projectedVelocity[flat][component] -
-            originalVelocity[flat][component] ) / dt;
-      }
-
-      if( gridActive[node][field] <= 0.5 || gridMass[node][field] <= smallMass )
+      if( interfaceRecordPriority[flat] < 0 ||
+          interfaceActive[flat] <= 0.5 || interfaceMass[flat] <= smallMass )
       {
         continue;
       }
@@ -25781,10 +28144,56 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       {
         velocitySquared += projectedVelocity[flat][component] *
                            projectedVelocity[flat][component];
-        momentumAfter[component] += gridMass[node][field] *
+        momentumAfter[component] += interfaceMass[flat] *
                                     projectedVelocity[flat][component];
       }
-      kineticEnergyAfter += 0.5 * gridMass[node][field] * velocitySquared;
+      kineticEnergyAfter += 0.5 * interfaceMass[flat] * velocitySquared;
+    }
+  }
+
+  // Scatter the replicated interface solution to every local owner/ghost copy.
+  // Periodically equivalent nodes share one canonical key and therefore receive
+  // exactly the same correction. No additive grid synchronization is needed:
+  // every copy is overwritten from the same replicated result, and the normal
+  // post-boundary owner-to-ghost replacement still runs before G2P.
+  for( localIndex node = 0; node < nodeManager.size(); ++node )
+  {
+    auto const globalNode = interfaceNodeLookup.find(
+      localNodeKeys[static_cast< std::size_t >( node )] );
+    if( globalNode == interfaceNodeLookup.end() )
+    {
+      continue;
+    }
+    localIndex const interfaceNode = globalNode->second;
+    for( localIndex field = 0; field < numVelocityFields; ++field )
+    {
+      std::size_t const flat = flatFieldIndex( interfaceNode, field );
+      gridWeakInterfaceTraceActive[node][field] = diagnosticActive[flat];
+      gridWeakInterfaceTraceSkipReason[node][field] = diagnosticSkipReason[flat];
+      gridWeakInterfaceTraceAnchorWeight[node][field] = diagnosticAnchorWeight[flat];
+      gridWeakInterfaceTraceSupportWeight[node][field] = diagnosticSupportWeight[flat];
+      for( int component = 0; component < 3; ++component )
+      {
+        real64 pointOffset = 0.0;
+        if( diagnosticActive[flat] != 0 )
+        {
+          pointOffset =
+            diagnosticPoint[flat][component] - gridPosition[node][component];
+          pointOffset = minimumImageDelta( pointOffset, component );
+        }
+        gridWeakInterfaceTracePoint[node][field][component] = pointOffset;
+        gridWeakInterfaceTraceSurfaceJump[node][field][component] =
+          diagnosticSurfaceJump[flat][component];
+        gridWeakInterfaceTraceVelocityJump[node][field][component] =
+          diagnosticVelocityJump[flat][component];
+        gridWeakInterfaceTraceVelocityJumpPost[node][field][component] =
+          diagnosticVelocityJumpPost[flat][component];
+
+        real64 const deltaVelocity =
+          projectedVelocity[flat][component] - originalVelocity[flat][component];
+        gridWeakInterfaceTraceForce[node][field][component] =
+          gridMass[node][field] * deltaVelocity / dt;
+      }
     }
   }
 
@@ -25797,24 +28206,64 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     momentumChangeSquared += change * change;
   }
 
+  std::ostringstream fallbackSummary;
+  bool firstFallbackReason = true;
+  for( auto const & reasonEntry : fallbackReasonCounts )
+  {
+    if( !firstFallbackReason )
+    {
+      fallbackSummary << ",";
+    }
+    firstFallbackReason = false;
+    WeakInterfaceMortarFallbackReason const reason =
+      static_cast< WeakInterfaceMortarFallbackReason >( reasonEntry.first );
+    fallbackSummary << weakInterfaceMortarFallbackReasonName( reason ) <<
+      "=" << reasonEntry.second;
+  }
+  if( firstFallbackReason )
+  {
+    fallbackSummary << "none";
+  }
+
   GEOS_LOG_LEVEL_RANK_0(
     logInfo::MPMSubroutines,
-    "C0 weak-interface vertex mortar: traceBasis=" <<
+    "C0 weak-interface vertex mortar MPI " <<
+    ( m_planeStrain == 1 ? "2D" : "3D" ) << ": traceBasis=" <<
     ( useBSplineTrace ? "cubicBSpline" : "trilinearCPDI" ) <<
-    ", reconstructed pairs/markers/vertices/segments=" << pairReconstructions << "/" <<
-    totalPairMarkers << "/" << totalVertices << "/" << totalSegments <<
+    ", ranks=" << MpiWrapper::commSize( MPI_COMM_GEOS ) <<
+    ", periodic(x/y/z)=" << periodic[0] << "/" << periodic[1] << "/" << periodic[2] <<
+    ", global owned pair-cells=" << globalOwnedPairCells <<
+    ", reconstructed pairs/markers/vertices/segments/facets=" << pairReconstructions << "/" <<
+    totalPairMarkers << "/" << totalVertices << "/" << totalSegments << "/" << totalFacets <<
+    ", gathered/local segment records=" << gatheredSegmentRecords.size() << "/" <<
+    localSegmentRecords.size() <<
+    ", gathered/local facet records=" << gatheredFacetRecords.size() << "/" <<
+    localFacetRecords.size() <<
     ", constraints=" << constraints.size() <<
-    ", rejected(basis/support/mass)=" << rejectedBasisConstraints << "/" <<
-    rejectedSupportConstraints << "/" << rejectedMassConstraints <<
-    ", short segments=" << rejectedShortSegments <<
-    ", ambiguous triangles=" << totalAmbiguousTriangles <<
+    ", interface nodes=" << interfaceNodeKeys.size() <<
+    ", fallback nodes(requested/applied/skipped/multiple-interface/quality-overlap)=" <<
+    fallbackFieldsByNodeKey.size() << "/" << fallbackAppliedNodes << "/" <<
+    fallbackSkippedNodes << "/" << multipleInterfaceFallbackNodes << "/" <<
+    fallbackOverlapNodeKeys.size() <<
+    ", fallback reasons={" << fallbackSummary.str() << "}" <<
+    ", rejected(fit/small/topology/basis/support/mass)=" << rejectedFitCells << "/" <<
+    rejectedSmallEntities << "/" << ( nonmanifoldEntities + unexpectedBoundaryEntities ) << "/" <<
+    rejectedBasisConstraints << "/" << rejectedSupportConstraints << "/" <<
+    rejectedMassConstraints <<
+    ", duplicate segments/facets=" << duplicateSegments << "/" << duplicateFacets <<
+    ", ambiguous simplices=" << totalAmbiguousSimplices <<
+    ", missing node-state contributions=" << missingNodeStateContributions <<
     ", sweeps=" << sweepsPerformed <<
     ", relative residual=" << finalRelativeResidual <<
-    ", max average jump(pre/post)=" << initialMaximumAverageJump << "/" <<
+    ", max average mortar jump(pre/post)=" << initialMaximumAverageJump << "/" <<
     maximumPostAverageJump <<
-    ", delta kinetic energy=" << kineticEnergyAfter - kineticEnergyBefore <<
+    ", max fallback field jump(pre/post)=" << maximumFallbackJumpBefore << "/" <<
+    maximumFallbackJumpAfter <<
+    ", max duplicate node-state difference=" << maximumDuplicateStateDifference <<
+    ", delta interface kinetic energy=" << kineticEnergyAfter - kineticEnergyBefore <<
     ", momentum change norm=" << LvArray::math::sqrt( momentumChangeSquared ) << "." );
 }
+
 
 /**
  * @brief Clears transient weak-trace projection fields before each projection solve.
