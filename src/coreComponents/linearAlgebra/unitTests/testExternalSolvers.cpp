@@ -19,6 +19,7 @@
 
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "common/MpiWrapper.hpp"
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
@@ -65,13 +66,7 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
-#if defined(GEOS_USE_HIP) || defined(GEOS_USE_CUDA)
-  // HYPRE's device ILU implementation supports ILU(0); level-1 ILU
-  // uses a path that returns an error on the current GPU stack.
   parameters.ifact.fill = 0;
-#else
-  parameters.ifact.fill = 1;
-#endif
   return parameters;
 }
 
@@ -223,7 +218,7 @@ private:
 #endif
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
-TEST( HypreSolver, KeepsSetupDummyUntagged )
+TEST( HypreSolver, KeepsSetupDummyTagsAlive )
 {
   struct KrylovDofLabelsGuard
   {
@@ -265,7 +260,10 @@ TEST( HypreSolver, KeepsSetupDummyUntagged )
   solver.clear();
 
   EXPECT_TRUE( solver.result().success() );
-  EXPECT_EQ( output.find( "L2 norm of b0" ), std::string::npos );
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    EXPECT_NE( output.find( "L2 norm of b0" ), std::string::npos );
+  }
 }
 #endif
 

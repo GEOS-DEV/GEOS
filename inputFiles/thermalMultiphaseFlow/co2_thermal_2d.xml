@@ -12,7 +12,7 @@
       initialDt="1e3"
       targetRelativePressureChangeInTimeStep="1"
       targetRelativeTemperatureChangeInTimeStep="1"
-      targetPhaseVolFractionChangeInTimeStep="1"      
+      targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
       <NonlinearSolverParameters
@@ -52,7 +52,7 @@
       name="source2"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{ 10.01,  0.01, 1.01 }"/>
-    
+
   </Geometry>
 
   <Events
@@ -139,7 +139,7 @@
       phaseNames="{ gas, water }"
       defaultPhaseDiffusivityMultipliers="{ 20, 1 }"
       diffusivityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
-    
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -177,13 +177,13 @@
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"       
+      setNames="{ sink }"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
       scale="7e6"/>
     <FieldSpecification
       name="sinkTemperature"
-      setNames="{ sink }"       
+      setNames="{ sink }"
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
       scale="368.15"/>
@@ -204,13 +204,13 @@
 
     <FieldSpecification
       name="sourcePressure"
-      setNames="{ source1, source2 }"     
+      setNames="{ source1, source2 }"
       objectPath="faceManager"
       fieldName="pressure"
       scale="1.45e7"/>
     <FieldSpecification
       name="sourceTemperature"
-      setNames="{ source1, source2 }"     
+      setNames="{ source1, source2 }"
       objectPath="faceManager"
       fieldName="temperature"
       scale="300.15"/>

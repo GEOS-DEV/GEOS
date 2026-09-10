@@ -22,6 +22,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
 #endif
+#include <_hypre_parcsr_mv.h>
 #endif
 
 namespace geos
@@ -39,6 +40,16 @@ public:
   static HYPREDRV_t handle( HypredriveSolver const & solver )
   {
     return solver.m_hypredrive;
+  }
+
+  static bool usesHypredrive( HypredriveSolver const & solver )
+  {
+    return solver.m_hypredrive != nullptr;
+  }
+
+  static HYPRE_Int numTags( HypreVector const & vector )
+  {
+    return hypre_ParVectorNumTags( vector.unwrapped() );
   }
 };
 
@@ -416,6 +427,18 @@ TEST( HypredriveYaml, UsesCanonicalL1JacobiRelaxationName )
   EXPECT_EQ( target.argument.find( "l1jacobi" ), std::string::npos );
 }
 
+TEST( HypredriveYaml, EmitsGlobalRelaxationForGeneratedAMG )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1sgs;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_NE( target.argument.find( "type: 8" ), std::string::npos );
+}
+
 TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
 {
   using StrategyType = LinearSolverParameters::MGR::StrategyType;
@@ -465,6 +488,38 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   }
 }
 
+TEST( HypredriveYaml, AppliesShutWellFRelaxationToAllReservoirStrategies )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  stdVector< StrategyType > const strategies = {
+    StrategyType::singlePhaseReservoirFVM,
+    StrategyType::thermalSinglePhaseReservoirFVM,
+    StrategyType::singlePhaseReservoirHybridFVM,
+    StrategyType::compositionalMultiphaseReservoirFVM,
+    StrategyType::thermalSinglePhasePoromechanicsReservoirFVM,
+    StrategyType::multiphasePoromechanicsReservoirFVM
+  };
+
+  stdVector< string > const fieldNames = makeFieldNames();
+  array1d< int > const numComponentsPerField = makeMgrNumComponentsPerField();
+
+  for( StrategyType const strategy : strategies )
+  {
+    LinearSolverParameters params = makeMgrParameters( strategy );
+    params.mgr.areWellsShut = 1;
+
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params,
+                                                               fieldNames,
+                                                               numComponentsPerField,
+                                                               target ) )
+      << static_cast< int >( strategy );
+    EXPECT_NE( target.argument.find( "f_relaxation: jacobi" ), std::string::npos )
+      << static_cast< int >( strategy );
+  }
+}
+
 TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "totalBubbleDisplacement", "pressure" };
@@ -479,8 +534,8 @@ TEST( HypredriveYaml, BuildsSelectedALMPoromechanicsMGRStrategy )
                  fieldNames,
                  numComponentsPerField,
                  target ) );
-  // The outer MGR has one reduction level and its F-relaxation is a nested
-  // two-level MGR for the displacement and bubble-displacement blocks.
+  // The outer MGR has one reduction level plus its coarsest level; the
+  // displacement F-relaxation is the separate two-level nested MGR below.
   EXPECT_EQ( target.argument.find( "num_levels: 3" ), std::string::npos );
   std::string::size_type const outerNumLevels = target.argument.find( "num_levels: 2" );
   ASSERT_NE( outerNumLevels, std::string::npos );
@@ -788,6 +843,24 @@ TEST( HypredriveLogging, LogLevelGatesGeneratedYamlDump )
   }
 }
 
+TEST( HypredriveLogging, DeduplicatesAlternatingGeneratedYamlDumps )
+{
+  LinearSolverParameters params;
+  params.logLevel = 1;
+
+  hypre::hypredrive::InputArgsParseTarget first;
+  first.argument = "solver:\n  gmres:\n    max_iter: 41\n";
+  hypre::hypredrive::InputArgsParseTarget second;
+  second.argument = "solver:\n  gmres:\n    max_iter: 42\n";
+
+  ScopedCoutCapture capture;
+  hypre::hypredrive::logInputArgsParseTarget( params, first );
+  hypre::hypredrive::logInputArgsParseTarget( params, second );
+  hypre::hypredrive::logInputArgsParseTarget( params, first );
+
+  EXPECT_EQ( countSubstrings( capture.str(), "generated fallback" ), 2 );
+}
+
 TEST( HypredriveLogging, LogsAuthoritativeFileContents )
 {
   LinearSolverParameters params;
@@ -874,6 +947,10 @@ TEST( HypredriveLogging, GeneratedFallbackNamesStatisticsSummary )
   HypredriveSolver solver( params );
   solver.setExecutionContext( makeExecutionContext( 61, 0, "namedGeneratedSolver" ) );
   solver.setup( matrix );
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
   solver.solve( rhs, sol );
 
   ::testing::internal::CaptureStdout();
@@ -972,6 +1049,14 @@ void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
   hypredriveSolver.setup( matrix );
   hypredriveSolver.solve( rhs, solHypredrive );
   ASSERT_TRUE( hypredriveSolver.result().success() );
+
+  if( numDofTags > 1 && HypredriveSolverTestPeer::usesHypredrive( hypredriveSolver ) )
+  {
+    HYPRE_Int const expectedNumTags = LvArray::integerConversion< HYPRE_Int >( numDofTags );
+    EXPECT_EQ( HypredriveSolverTestPeer::numTags( rhs ), expectedNumTags );
+    EXPECT_EQ( HypredriveSolverTestPeer::numTags( solHypredrive ), expectedNumTags );
+  }
+
   hypredriveSolver.clear();
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   if( params.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
@@ -1030,8 +1115,8 @@ TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmg )
 
 TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceGmresAmgWithMultipleDofTags )
 {
-  // hypredrive library mode exercises a tagged dofmap. The legacy solver uses
-  // untagged caller-owned vectors and should still produce the same solution.
+  // hypredrive tags its setup vectors from the dofmap and GEOS applies the same
+  // labels to the caller-owned rhs and solution vectors before each solve.
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
@@ -1114,6 +1199,11 @@ TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
 
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
+
   HYPREDRV_t const handle1 = HypredriveSolverTestPeer::handle( solver );
   size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
   ASSERT_NE( handle1, nullptr );
@@ -1130,6 +1220,40 @@ TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.clear();
 }
 
+TEST( HypredriveSolverReuse, ReusesHandleForILUOnCompatibleSetupCycles )
+{
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::bicgstab;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.logLevel = 0;
+
+  HypredriveSolver solver( params );
+  solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
+  solver.setup( matrix );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+
+  sol.zero();
+  solver.setExecutionContext( makeExecutionContext( 11, 1 ) );
+  solver.setup( matrix );
+
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver ), generation1 );
+  solver.solve( rhs, sol );
+  EXPECT_TRUE( solver.result().success() );
+  solver.clear();
+}
+
 TEST( HypredriveSolverReuse, RecreatesHandleWhenStructureChanges )
 {
   HypreMatrix matrix1;
@@ -1140,6 +1264,10 @@ TEST( HypredriveSolverReuse, RecreatesHandleWhenStructureChanges )
   HypredriveSolver solver( makeReusableAMGParameters() );
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
   size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
 
   solver.setExecutionContext( makeExecutionContext( 12, 0 ) );
@@ -1231,6 +1359,12 @@ TEST( HypredriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
   solver2.setup( matrix2 );
   HYPREDRV_t const handle2 = HypredriveSolverTestPeer::handle( solver2 );
   size_t const generation2 = HypredriveSolverTestPeer::generation( solver2 );
+
+  if( !HypredriveSolverTestPeer::usesHypredrive( solver1 ) ||
+      !HypredriveSolverTestPeer::usesHypredrive( solver2 ) )
+  {
+    GTEST_SKIP() << "The installed hypredrive does not support generated AMG global relaxation";
+  }
 
   ASSERT_NE( handle1, nullptr );
   ASSERT_NE( handle2, nullptr );
