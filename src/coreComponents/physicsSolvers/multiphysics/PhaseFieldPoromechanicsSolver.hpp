@@ -25,15 +25,18 @@
 #include "physicsSolvers/multiphysics/PhaseFieldFractureSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransport.hpp"
 
 namespace geos
 {
 
-class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, PhaseFieldDamageFEM >
+template< typename FLOW_SOLVER = SinglePhaseBase >
+class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanics< FLOW_SOLVER >, PhaseFieldDamageFEM >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, PhaseFieldDamageFEM >;
+  using Base = CoupledSolver< SinglePhasePoromechanics< FLOW_SOLVER >, PhaseFieldDamageFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -41,7 +44,7 @@ public:
   using Base::m_solution;
 
   PhaseFieldPoromechanicsSolver( const string & name,
-                                 Group * const parent );
+                                 dataRepository::Group * const parent );
 
   ~PhaseFieldPoromechanicsSolver() override = default;
 
@@ -51,7 +54,14 @@ public:
    */
   static string catalogName()
   {
-    return "PhaseFieldPoromechanics";
+    if constexpr ( std::is_same_v< FLOW_SOLVER, SinglePhaseBase > ) // special case
+    {
+      return "PhaseFieldPoromechanics";
+    }
+    else // default
+    {
+      return FLOW_SOLVER::catalogName() + "PhaseFieldPoromech";
+    }
   }
 
   string getCatalogName() const override { return catalogName(); }
@@ -73,7 +83,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the poromechanics solver
    */
-  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
+  SinglePhasePoromechanics< FLOW_SOLVER > * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -87,7 +97,7 @@ public:
     return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & Domain, integer const idx ) override final;
 
   void applyDamageOnTractionBC( DomainPartition & domain );
 

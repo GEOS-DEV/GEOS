@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Source, Rock }"
+      writeLinearSystem="0"
+      isUpdateReactivePorosity="1"
+      initialDt="1e-8"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock, diffusion }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ cb2 }"
+      materialList="{ water, rock, diffusion }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"
+      chemicalSystemType="ultramafic"/>
+
+    <ReactiveSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <ReactivePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      defaultInitialVolumeFractions="{ 0.1, 0.1, 0.1, 0.1, 0.1 }"
+      molarWeights="{ 0.140693, 0.084314, 0.060084, 0.277112, 0.058320 }"
+      mineralDensities="{ 3212.9, 3009.28, 2648.27, 2554.03, 2367.84 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 3.0e-10, 3.0e-10, 3.0e-10 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
+  </Constitutive>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

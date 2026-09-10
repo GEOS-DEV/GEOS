@@ -4,7 +4,6 @@ Notes
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
-
 PR #3994 (2026-09-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3994-17525-4ae3593.tar.gz>
 =====================
 Introduce mimetic inner products for saddle-point operators and align face-centroid computation with exact volume integration on planar polyhedra.
