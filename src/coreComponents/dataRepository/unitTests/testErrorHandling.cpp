@@ -415,6 +415,10 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
 
 TEST( ErrorHandling, VerifySignalHandlerLogs )
 {
+#if defined(__APPLE__)
+  GTEST_SKIP() << "Returning from a signal handler is not supported on macOS.";
+#endif
+
   ErrorLogger testErrorLogger;
 
   beginLocalLoggerTest( testErrorLogger, "errors.yaml" );
