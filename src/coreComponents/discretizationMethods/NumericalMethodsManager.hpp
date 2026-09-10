@@ -21,6 +21,7 @@
 #define GEOS_DISCRETIZATIONMETHODS_NUMERICALMETHODSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
@@ -100,6 +101,14 @@ private:
   FiniteVolumeManager m_finiteVolumeManager;
 
 };
+
+// NumericalMethodsManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline NumericalMethodsManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< NumericalMethodsManager >( m_gks.numericalMethodsManager ); }
+
+// NumericalMethodsManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline NumericalMethodsManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< NumericalMethodsManager >( m_gks.numericalMethodsManager ); }
 
 } /* namespace geos */
 

@@ -299,7 +299,7 @@ void WellManager::initializePostSubGroups()
   // Validate constitutive models
   if( isCompositional() )
   {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
     constitutive::ConstitutiveManager const & cm = domain.getConstitutiveManager();
     CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
     string const referenceFluidName = flowSolver.referenceFluidModelName();
@@ -466,7 +466,7 @@ void WellManager::postRestartInitialization()
 void WellManager::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
@@ -487,7 +487,7 @@ void WellManager::initializePostInitialConditionsPreSubGroups()
 }
 void WellManager::setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

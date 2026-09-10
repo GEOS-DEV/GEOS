@@ -111,6 +111,7 @@ MeshLevel::MeshLevel( string const & name,
 
 MeshLevel::MeshLevel( string const & name,
                       Group * const meshBody,
+                      CellBlockManagerABC & cellBlockManager,
                       MeshLevel const & source,
                       int const order ):
   MeshLevel( name, meshBody )
@@ -243,8 +244,6 @@ MeshLevel::MeshLevel( string const & name,
     } );
 
   } );
-
-  CellBlockManagerABC & cellBlockManager = meshBody->getGroup< CellBlockManagerABC >( keys::cellManager );
 
   cellBlockManager.generateHighOrderMaps( order,
                                           maxVertexGlobalID,

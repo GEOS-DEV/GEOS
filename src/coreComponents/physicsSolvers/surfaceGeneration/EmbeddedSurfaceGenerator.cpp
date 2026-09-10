@@ -86,7 +86,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
    */
 
   // Get domain
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   // Get geometric object manager
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();

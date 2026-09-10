@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 #include <gtest/gtest.h>
 
@@ -48,17 +49,16 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-  dataRepository::Group & commandLine =
-    problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
-  commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
+  CommandLine & commandLine = problemManager->getCommandLine();
+  commandLine.registerWrapper< integer >( commandLine.m_vks.xPartitionsOverride ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( problemManager->getName() );
   problemManager->processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain = problemManager->getDomainPartition();
-  MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
+  MeshManager & meshManager = problemManager->getMeshManager();
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();

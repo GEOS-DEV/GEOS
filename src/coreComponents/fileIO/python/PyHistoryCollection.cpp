@@ -20,6 +20,7 @@
 #include "fileIO/timeHistory/HistoryCollection.hpp"
 
 #include "PyHistoryCollectionType.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
 
 
@@ -97,7 +98,7 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *self->group );
 
   try
   {

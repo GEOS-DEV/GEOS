@@ -20,11 +20,13 @@
 #include "StencilDataCollection.hpp"
 
 #include "common/Units.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
@@ -62,10 +64,10 @@ StencilDataCollection::StencilDataCollection( const string & name,
 
 void StencilDataCollection::postInputInitialization()
 {
-  Group & problemManager = this->getGroupByPath( "/Problem" );
+  ProblemRepository & problem = ProblemRepository::get( *this );
 
   { // find targeted solver
-    Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
+    PhysicsSolverManager & physicsSolverManager = problem.getManager< PhysicsSolverManager >();
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
@@ -74,8 +76,7 @@ void StencilDataCollection::postInputInitialization()
   }
 
   { // find mesh & discretization
-//    DomainPartition & domain = problemManager.getDomainPartition();
-    DomainPartition & domain = problemManager.getGroup< DomainPartition >( "domain" );
+    DomainPartition & domain = problem.getManager< DomainPartition >();
 
     MeshBody const & meshBody = domain.getMeshBody( m_meshName );
     m_meshLevel = &meshBody.getBaseDiscretization();

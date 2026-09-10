@@ -14,6 +14,7 @@
  */
 
 #include "PackCollection.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 namespace geos
 {
@@ -60,7 +61,7 @@ void PackCollection::initializePostSubGroups( )
 {
   if( !m_initialized )
   {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
     m_collectionCount = collectAll() ? 1 : m_setNames.size();
     // determine whether we're collecting from a mesh object manager
     Group const * const targetObject = this->getTargetObject( domain, m_objectPath );

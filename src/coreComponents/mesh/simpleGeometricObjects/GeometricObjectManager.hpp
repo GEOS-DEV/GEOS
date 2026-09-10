@@ -21,6 +21,7 @@
 #define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_GEOMETRICOBJECTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "mesh/simpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 
 
@@ -83,6 +84,14 @@ private:
   static GeometricObjectManager * m_instance;
 
 };
+
+// GeometricObjectManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline GeometricObjectManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< GeometricObjectManager >( m_gks.geometricObjectManager ); }
+
+// GeometricObjectManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline GeometricObjectManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< GeometricObjectManager >( m_gks.geometricObjectManager ); }
 
 } /* namespace geos */
 
