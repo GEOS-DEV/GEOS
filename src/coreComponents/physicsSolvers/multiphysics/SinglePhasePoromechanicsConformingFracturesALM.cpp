@@ -47,19 +47,19 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
   : Base( name, parent )
 {}
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling(DomainPartition const & domain,
-                              DofManager & dofManager) const
-{
-  // Base::postInputInitialization();
-  // 1. Poromechanical coupling in the bulk (from base class)
-  Base::setupCoupling( domain, dofManager );
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling(DomainPartition const & domain,
+//                               DofManager & dofManager) const
+// {
+//   // Base::postInputInitialization();
+//   // 1. Poromechanical coupling in the bulk (from base class)
+//   Base::setupCoupling( domain, dofManager );
 
-  // 2. Pressure - bubble displacement coupling in the fracture
-  dofManager.addCoupling( m_pressureKey,
-                          contact::totalBubbleDisplacement::key(),
-                          DofManager::Connector::Elem );
-}
+//   // 2. Pressure - bubble displacement coupling in the fracture
+//   dofManager.addCoupling( m_pressureKey,
+//                           contact::totalBubbleDisplacement::key(),
+//                           DofManager::Connector::Elem );
+// }
 
 
 template< typename FLOW_SOLVER >
@@ -120,7 +120,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityP
   // Add the number of nonzeros induced by coupling
   addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
   addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-  addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );
+  addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
 
   // Allocate the coupled pattern in one pass. Growing an already populated
   // pattern row by row would shift every subsequent row of the contiguous
@@ -451,332 +451,332 @@ setUpDflux_dApertureMatrix( DomainPartition & domain )
   } );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                arrayView1d< localIndex > const & rowLengths ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+//                                 DofManager const & dofManager,
+//                                 arrayView1d< localIndex > const & rowLengths ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & )
+//   {
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const flowDofKey = dofManager.getKey( m_pressureKey );
+//     string const flowDofKey = dofManager.getKey( m_pressureKey );
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+//     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+//     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+//     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-    {
-      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize( iconn );
-        typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-        typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+//     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+//     {
+//       for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+//       {
+//         localIndex const numFluxElems = stencil.stencilSize( iconn );
+//         typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+//         typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+//         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-        FaceElementSubRegion const & elementSubRegion =
-          elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+//         FaceElementSubRegion const & elementSubRegion =
+//           elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
 
-        ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+//         ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
-        arrayView1d< globalIndex const > const faceElementDofNumber =
-          elementSubRegion.getReference< array1d< globalIndex > >( flowDofKey );
+//         arrayView1d< globalIndex const > const faceElementDofNumber =
+//           elementSubRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
-        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-        {
-          globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
-          globalIndex const rowNumber = activeFlowDOF - rankOffset;
+//         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+//         {
+//           globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+//           globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
-          if( rowNumber >= 0 && rowNumber < rowLengths.size() )
-          {
-            for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-            {
-              // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
-              // so we only add the coupling with the nodal displacements of the neighbors.
-              if( k1 != k0 )
-              {
-                localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                // Nodal displacement DOFs (3 per node, 2 faces)
-                rowLengths[rowNumber] += 3 * numNodesPerElement;
-                // Bubble DOFs (3 per face, 2 faces = 6 total)
-                rowLengths[rowNumber] += 6;
-              }
-            }
-          }
-        }
-      }
-    } );
-  } );
-}
+//           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+//           {
+//             for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+//             {
+//               // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+//               // so we only add the coupling with the nodal displacements of the neighbors.
+//               if( k1 != k0 )
+//               {
+//                 localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+//                 // Nodal displacement DOFs (3 per node, 2 faces)
+//                 rowLengths[rowNumber] += 3 * numNodesPerElement;
+//                 // Bubble DOFs (3 per face, 2 faces = 6 total)
+//                 rowLengths[rowNumber] += 6;
+//               }
+//             }
+//           }
+//         }
+//       }
+//     } );
+//   } );
+// }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    SparsityPatternView< globalIndex > const & pattern ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addTransmissibilityCouplingPattern( DomainPartition const & domain,
+//                                     DofManager const & dofManager,
+//                                     SparsityPatternView< globalIndex > const & pattern ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  using namespace contact;
+//   using namespace contact;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & )
+//   {
+//     FaceManager const & faceManager = mesh.getFaceManager();
+//     NodeManager const & nodeManager = mesh.getNodeManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-    string const flowDofKey = dofManager.getKey( m_pressureKey );
+//     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+//     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+//     string const flowDofKey = dofManager.getKey( m_pressureKey );
 
-    arrayView1d< globalIndex const > const &
-    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    arrayView1d< globalIndex const > const &
-    bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+//     arrayView1d< globalIndex const > const &
+//     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+//     arrayView1d< globalIndex const > const &
+//     bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    // Get the finite volume method used to compute the fluxes
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+//     // Get the finite volume method used to compute the fluxes
+//     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+//     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+//     FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
-    SurfaceElementRegion const & fractureRegion =
-      elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
-    FaceElementSubRegion const & fractureSubRegion =
-      fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+//     SurfaceElementRegion const & fractureRegion =
+//       elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
+//     FaceElementSubRegion const & fractureSubRegion =
+//       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
-                   this->getDataContext() << ": The fracture subregion must contain pressure field." );
+//     GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
+//                    this->getDataContext() << ": The fracture subregion must contain pressure field." );
 
-    arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
+//     arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
-    arrayView1d< globalIndex const > const &
-    flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( flowDofKey );
+//     arrayView1d< globalIndex const > const &
+//     flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( flowDofKey );
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    fvDiscretization.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-    {
-      forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize( iconn );
+//     fvDiscretization.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+//     {
+//       forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
+//       {
+//         localIndex const numFluxElems = stencil.stencilSize( iconn );
 
-        // A fracture connector has to be an edge shared by two faces
-        if( numFluxElems == 2 )
-        {
-          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+//         // A fracture connector has to be an edge shared by two faces
+//         if( numFluxElems == 2 )
+//         {
+//           typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-          // First index: face element. Second index: node
-          for( localIndex kf = 0; kf < 2; ++kf )
-          {
-            // Set row DOF index
-            // Note that the 1-kf index is intentional, as this is coupling the pressure of one face cell
-            // to the nodes of the adjacent cell
-            localIndex const rowIndex = flowDofNumber[sei[iconn][1 - kf]] - rankOffset;
+//           // First index: face element. Second index: node
+//           for( localIndex kf = 0; kf < 2; ++kf )
+//           {
+//             // Set row DOF index
+//             // Note that the 1-kf index is intentional, as this is coupling the pressure of one face cell
+//             // to the nodes of the adjacent cell
+//             localIndex const rowIndex = flowDofNumber[sei[iconn][1 - kf]] - rankOffset;
 
-            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
-            {
-              // Get fracture, face and region/subregion/element indices (for elements on both sides)
-              localIndex const fractureIndex = sei[iconn][kf];
+//             if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+//             {
+//               // Get fracture, face and region/subregion/element indices (for elements on both sides)
+//               localIndex const fractureIndex = sei[iconn][kf];
 
-              // Get the number of nodes
-              localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[fractureIndex][0] );
+//               // Get the number of nodes
+//               localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[fractureIndex][0] );
 
-              // Loop over the two sides of each fracture element
-              for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
-              {
-                localIndex const faceIndex = elem2dToFaces[fractureIndex][kf1];
+//               // Loop over the two sides of each fracture element
+//               for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
+//               {
+//                 localIndex const faceIndex = elem2dToFaces[fractureIndex][kf1];
 
-                // Save the list of DOF associated with nodes (displacement)
-                for( localIndex a = 0; a < numNodesPerFace; ++a )
-                {
-                  for( localIndex i = 0; i < 3; ++i )
-                  {
-                    globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                    pattern.insertNonZero( rowIndex, colIndex );
-                  }
-                }
+//                 // Save the list of DOF associated with nodes (displacement)
+//                 for( localIndex a = 0; a < numNodesPerFace; ++a )
+//                 {
+//                   for( localIndex i = 0; i < 3; ++i )
+//                   {
+//                     globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+//                     pattern.insertNonZero( rowIndex, colIndex );
+//                   }
+//                 }
 
-                // Save the list of DOF associated with bubble displacement
-                for( localIndex i = 0; i < 3; ++i )
-                {
-                  globalIndex const colIndex = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
-                  pattern.insertNonZero( rowIndex, colIndex );
-                }
-              }
-            }
-          }
-        }
-      } );
-    } );
-  } );
-}
+//                 // Save the list of DOF associated with bubble displacement
+//                 for( localIndex i = 0; i < 3; ++i )
+//                 {
+//                   globalIndex const colIndex = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
+//                   pattern.insertNonZero( rowIndex, colIndex );
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       } );
+//     } );
+//   } );
+// }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addPressureForceCouplingNNZ( DomainPartition const & domain,
-                             DofManager const & dofManager,
-                             arrayView1d< localIndex > const & rowLengths ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addPressureForceCouplingNNZ( DomainPartition const & domain,
+//                              DofManager const & dofManager,
+//                              arrayView1d< localIndex > const & rowLengths ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  using namespace contact;
+//   using namespace contact;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & )
+//   {
+//     FaceManager const & faceManager = mesh.getFaceManager();
+//     NodeManager const & nodeManager = mesh.getNodeManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+//     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+//     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
 
-    arrayView1d< globalIndex const > const &
-    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    arrayView1d< globalIndex const > const &
-    bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+//     arrayView1d< globalIndex const > const &
+//     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+//     arrayView1d< globalIndex const > const &
+//     bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
-    SurfaceElementRegion const & fractureRegion =
-      elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
-    FaceElementSubRegion const & fractureSubRegion =
-      fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+//     string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
+//     SurfaceElementRegion const & fractureRegion =
+//       elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+//     FaceElementSubRegion const & fractureSubRegion =
+//       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
+//     arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
-    // For each fracture element, add NNZ for (displacement_row, pressure_col) and (bubble_row, pressure_col)
-    forAll< serialPolicy >( fractureSubRegion.size(), [=, &rowLengths] ( localIndex const kfe )
-    {
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[kfe][0] );
+//     // For each fracture element, add NNZ for (displacement_row, pressure_col) and (bubble_row, pressure_col)
+//     forAll< serialPolicy >( fractureSubRegion.size(), [=, &rowLengths] ( localIndex const kfe )
+//     {
+//       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[kfe][0] );
 
-      // For displacement DOFs: add 1 pressure column per displacement DOF row
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        localIndex const faceIndex = elem2dToFaces[kfe][kf];
-        for( localIndex a = 0; a < numNodesPerFace; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            globalIndex const rowNumber = dispDofNumber[faceToNodeMap( faceIndex, a )] + i - rankOffset;
-            if( rowNumber >= 0 && rowNumber < rowLengths.size() )
-            {
-              rowLengths[rowNumber] += 1;  // One pressure column
-            }
-          }
-        }
-      }
+//       // For displacement DOFs: add 1 pressure column per displacement DOF row
+//       for( localIndex kf = 0; kf < 2; ++kf )
+//       {
+//         localIndex const faceIndex = elem2dToFaces[kfe][kf];
+//         for( localIndex a = 0; a < numNodesPerFace; ++a )
+//         {
+//           for( localIndex i = 0; i < 3; ++i )
+//           {
+//             globalIndex const rowNumber = dispDofNumber[faceToNodeMap( faceIndex, a )] + i - rankOffset;
+//             if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+//             {
+//               rowLengths[rowNumber] += 1;  // One pressure column
+//             }
+//           }
+//         }
+//       }
 
-      // For bubble DOFs: add 1 pressure column per bubble DOF row
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        localIndex const faceIndex = elem2dToFaces[kfe][kf];
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
-          if( rowNumber >= 0 && rowNumber < rowLengths.size() )
-          {
-            rowLengths[rowNumber] += 1;  // One pressure column
-          }
-        }
-      }
-    } );
-  } );
-}
+//       // For bubble DOFs: add 1 pressure column per bubble DOF row
+//       for( localIndex kf = 0; kf < 2; ++kf )
+//       {
+//         localIndex const faceIndex = elem2dToFaces[kfe][kf];
+//         for( localIndex i = 0; i < 3; ++i )
+//         {
+//           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
+//           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+//           {
+//             rowLengths[rowNumber] += 1;  // One pressure column
+//           }
+//         }
+//       }
+//     } );
+//   } );
+// }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addPressureForceCouplingPattern( DomainPartition const & domain,
-                                 DofManager const & dofManager,
-                                 SparsityPatternView< globalIndex > const & pattern ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addPressureForceCouplingPattern( DomainPartition const & domain,
+//                                  DofManager const & dofManager,
+//                                  SparsityPatternView< globalIndex > const & pattern ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  using namespace contact;
+//   using namespace contact;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & )
+//   {
+//     FaceManager const & faceManager = mesh.getFaceManager();
+//     NodeManager const & nodeManager = mesh.getNodeManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-    string const flowDofKey = dofManager.getKey( m_pressureKey );
+//     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+//     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+//     string const flowDofKey = dofManager.getKey( m_pressureKey );
 
-    arrayView1d< globalIndex const > const &
-    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    arrayView1d< globalIndex const > const &
-    bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+//     arrayView1d< globalIndex const > const &
+//     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+//     arrayView1d< globalIndex const > const &
+//     bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
-    SurfaceElementRegion const & fractureRegion =
-      elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
-    FaceElementSubRegion const & fractureSubRegion =
-      fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+//     string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
+//     SurfaceElementRegion const & fractureRegion =
+//       elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+//     FaceElementSubRegion const & fractureSubRegion =
+//       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
-    arrayView1d< globalIndex const > const &
-    flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( flowDofKey );
+//     arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
+//     arrayView1d< globalIndex const > const &
+//     flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( flowDofKey );
 
-    // For each fracture element, add pattern for (displacement_row, pressure_col) and (bubble_row, pressure_col)
-    forAll< serialPolicy >( fractureSubRegion.size(), [=] ( localIndex const kfe )
-    {
-      globalIndex const pressureColIndex = flowDofNumber[kfe];
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[kfe][0] );
+//     // For each fracture element, add pattern for (displacement_row, pressure_col) and (bubble_row, pressure_col)
+//     forAll< serialPolicy >( fractureSubRegion.size(), [=] ( localIndex const kfe )
+//     {
+//       globalIndex const pressureColIndex = flowDofNumber[kfe];
+//       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elem2dToFaces[kfe][0] );
 
-      // For displacement DOFs
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        localIndex const faceIndex = elem2dToFaces[kfe][kf];
-        for( localIndex a = 0; a < numNodesPerFace; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            globalIndex const rowIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + i - rankOffset;
-            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
-            {
-              pattern.insertNonZero( rowIndex, pressureColIndex );
-            }
-          }
-        }
-      }
+//       // For displacement DOFs
+//       for( localIndex kf = 0; kf < 2; ++kf )
+//       {
+//         localIndex const faceIndex = elem2dToFaces[kfe][kf];
+//         for( localIndex a = 0; a < numNodesPerFace; ++a )
+//         {
+//           for( localIndex i = 0; i < 3; ++i )
+//           {
+//             globalIndex const rowIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + i - rankOffset;
+//             if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+//             {
+//               pattern.insertNonZero( rowIndex, pressureColIndex );
+//             }
+//           }
+//         }
+//       }
 
-      // For bubble DOFs
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        localIndex const faceIndex = elem2dToFaces[kfe][kf];
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
-          if( rowIndex >= 0 && rowIndex < pattern.numRows() )
-          {
-            pattern.insertNonZero( rowIndex, pressureColIndex );
-          }
-        }
-      }
-    } );
-  } );
-}
+//       // For bubble DOFs
+//       for( localIndex kf = 0; kf < 2; ++kf )
+//       {
+//         localIndex const faceIndex = elem2dToFaces[kfe][kf];
+//         for( localIndex i = 0; i < 3; ++i )
+//         {
+//           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
+//           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+//           {
+//             pattern.insertNonZero( rowIndex, pressureColIndex );
+//           }
+//         }
+//       }
+//     } );
+//   } );
+// }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
@@ -1135,124 +1135,124 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   } );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    arrayView1d< localIndex > const & rowLengths ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
+//                                     DofManager const & dofManager,
+//                                     arrayView1d< localIndex > const & rowLengths ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  using namespace contact;
+//   using namespace contact;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & regionNames )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & regionNames )
+//   {
+//     FaceManager const & faceManager = mesh.getFaceManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-    string const flowDofKey = dofManager.getKey( m_pressureKey );
-    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+//     string const flowDofKey = dofManager.getKey( m_pressureKey );
+//     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    // Loop over matrix cell regions that have bubbles
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const, CellElementSubRegion const & subRegion )
-    {
-      arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
-      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
-      arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
+//     // Loop over matrix cell regions that have bubbles
+//     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+//                                                               [&]( localIndex const, CellElementSubRegion const & subRegion )
+//     {
+//       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
+//       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
+//       arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
-      forAll< serialPolicy >( bubbleElems.size(), [=, &rowLengths]( localIndex const kk )
-      {
-        localIndex const k = bubbleElems[kk];
-        localIndex const faceIndex = elemsToFaces[kk][0];
+//       forAll< serialPolicy >( bubbleElems.size(), [=, &rowLengths]( localIndex const kk )
+//       {
+//         localIndex const k = bubbleElems[kk];
+//         localIndex const faceIndex = elemsToFaces[kk][0];
 
-        // (bubble_row, pressure_col): 1 pressure column for each of the 3 bubble DOFs
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
-          if( rowNumber >= 0 && rowNumber < rowLengths.size() )
-          {
-            rowLengths[rowNumber] += 1;  // One pressure DOF from matrix cell
-          }
-        }
+//         // (bubble_row, pressure_col): 1 pressure column for each of the 3 bubble DOFs
+//         for( localIndex i = 0; i < 3; ++i )
+//         {
+//           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
+//           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+//           {
+//             rowLengths[rowNumber] += 1;  // One pressure DOF from matrix cell
+//           }
+//         }
 
-        // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb)
-        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
-        if( pRow >= 0 && pRow < rowLengths.size() )
-        {
-          rowLengths[pRow] += 3;  // Three bubble DOFs
-        }
-      } );
-    } );
-  } );
-}
+//         // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb)
+//         globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+//         if( pRow >= 0 && pRow < rowLengths.size() )
+//         {
+//           rowLengths[pRow] += 3;  // Three bubble DOFs
+//         }
+//       } );
+//     } );
+//   } );
+// }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
-                                        DofManager const & dofManager,
-                                        SparsityPatternView< globalIndex > const & pattern ) const
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
+//                                         DofManager const & dofManager,
+//                                         SparsityPatternView< globalIndex > const & pattern ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  using namespace contact;
+//   using namespace contact;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & regionNames )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & regionNames )
+//   {
+//     FaceManager const & faceManager = mesh.getFaceManager();
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-    string const flowDofKey = dofManager.getKey( m_pressureKey );
+//     string const bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
+//     string const flowDofKey = dofManager.getKey( m_pressureKey );
 
-    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-    // Loop over matrix cell regions that have bubbles
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const, CellElementSubRegion const & subRegion )
-    {
-      arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
-      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
-      arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
+//     // Loop over matrix cell regions that have bubbles
+//     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+//                                                               [&]( localIndex const, CellElementSubRegion const & subRegion )
+//     {
+//       arrayView1d< localIndex const > const bubbleElems = subRegion.bubbleElementsList();
+//       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceElementsList();
+//       arrayView1d< globalIndex const > const pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
-      forAll< serialPolicy >( bubbleElems.size(), [=]( localIndex const kk )
-      {
-        localIndex const k = bubbleElems[kk];
-        localIndex const faceIndex = elemsToFaces[kk][0];
-        globalIndex const pressureColIndex = pressureDofNumber[k];
+//       forAll< serialPolicy >( bubbleElems.size(), [=]( localIndex const kk )
+//       {
+//         localIndex const k = bubbleElems[kk];
+//         localIndex const faceIndex = elemsToFaces[kk][0];
+//         globalIndex const pressureColIndex = pressureDofNumber[k];
 
-        // (bubble_row, pressure_col) : A_bp
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
-          if( rowIndex >= 0 && rowIndex < pattern.numRows() )
-          {
-            pattern.insertNonZero( rowIndex, pressureColIndex );
-          }
-        }
+//         // (bubble_row, pressure_col) : A_bp
+//         for( localIndex i = 0; i < 3; ++i )
+//         {
+//           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
+//           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+//           {
+//             pattern.insertNonZero( rowIndex, pressureColIndex );
+//           }
+//         }
 
-        // (pressure_row, bubble_col) : A_pb -- transpose location
-        globalIndex const pRow = pressureDofNumber[k] - rankOffset;
-        if( pRow >= 0 && pRow < pattern.numRows() )
-        {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            pattern.insertNonZero( pRow, bubbleDofNumber[faceIndex] + i );
-          }
-        }
-      } );
-    } );
-  } );
-}
+//         // (pressure_row, bubble_col) : A_pb -- transpose location
+//         globalIndex const pRow = pressureDofNumber[k] - rankOffset;
+//         if( pRow >= 0 && pRow < pattern.numRows() )
+//         {
+//           for( localIndex i = 0; i < 3; ++i )
+//           {
+//             pattern.insertNonZero( pRow, bubbleDofNumber[faceIndex] + i );
+//           }
+//         }
+//       } );
+//     } );
+//   } );
+// }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::

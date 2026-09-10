@@ -81,15 +81,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
-
-  virtual void assembleSystem( real64 const time_n,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override
-  { Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()//TODO should we keep ?
 
   /**@}*/
 
@@ -102,7 +94,7 @@ protected:
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override final;
 
-  virtual integer numFluidComponents() const override { return 1; }
+  virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }
 
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 

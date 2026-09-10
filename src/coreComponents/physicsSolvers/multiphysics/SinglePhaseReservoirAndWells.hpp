@@ -111,6 +111,8 @@ public:
   void updateMass( CellElementSubRegion & subRegion ) const
   { flowSolver()->updateMass( subRegion ); }
 
+  integer numFluidComponents() const { return flowSolver()->numFluidComponents(); };
+
 protected:
 
   virtual void initializePreSubGroups() override;
