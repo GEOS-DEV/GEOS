@@ -25,6 +25,10 @@
 #include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
@@ -78,6 +82,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
 
   // setup monolithic coupled system
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  setupLinearSolverNearNullKernel( domain, dofManager );
 
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -96,6 +101,48 @@ void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagra
   GEOS_UNUSED_VAR( dofManager, localMatrix, rhs, solution, setSparsity );
 
   Base::sequentiallySetupSystem( domain );
+}
+
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupLinearSolverNearNullKernel(
+  DomainPartition & domain,
+  DofManager const & dofManager )
+{
+  m_linearSolverNearNullKernel.resize( 0 );
+#ifdef GEOS_USE_HYPREDRV
+  LinearSolverParameters const & linearSolverParameters = this->m_linearSolverParameters.get();
+  if( !hypre::hypredrive::shouldUse( linearSolverParameters ) )
+  {
+    return;
+  }
+
+  this->solidMechanicsSolver()->forDiscretizationOnMeshTargets(
+    domain.getMeshBodies(),
+    [&]( string const &, MeshLevel const & mesh, string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const dofIndex =
+      nodeManager.getReference< array1d< globalIndex > >(
+        dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+    array1d< ParallelVector > modes =
+      LAIHelperFunctions::computeRigidBodyModes< ParallelVector >( nodeManager.referencePosition(),
+                                                                   dofIndex,
+                                                                   dofManager.rankOffset(),
+                                                                   dofManager.numLocalDofs() );
+
+    // Each target's modes are supported on that target's displacement dofs and
+    // vanish elsewhere, so they are appended rather than summed: the near-null
+    // space of N mechanically independent bodies is 6N-dimensional, and summing
+    // into six vectors cannot span it. computeRigidBodyModes already returns
+    // them normalized, so no further scaling is needed.
+    for( ParallelVector & mode : modes )
+    {
+      m_linearSolverNearNullKernel.emplace_back( std::move( mode ) );
+    }
+  } );
+#else
+  GEOS_UNUSED_VAR( domain, dofManager );
+#endif
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
@@ -257,7 +304,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
   // step 1: apply the full poromechanics coupling on the target regions on the poromechanics solver
 
   set< string > poromechanicsRegionNames;
-
   this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
                                                                                  string_array const & regionNames )

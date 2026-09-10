@@ -57,18 +57,24 @@ char const * PreXmlInput =
                                   temperature="297.15"
                                   useMass="0">
       </CompositionalMultiphaseFVM>
-      <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
+      <WellManager name="compositionalMultiphaseWell"
                                    logLevel="1"
                                    targetRegions="{wellRegion1}"
                                    useMass="0">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="1.25"
-                        control="BHP"
-                        targetBHP="2e6"
-                        targetPhaseRate="1"
-                        targetPhaseName="oil"/>
-      </CompositionalMultiphaseWell>
+    <CompositionalMultiphaseWell
+      name="wellControls1"
+      control="BHP"
+      type="producer">
+      <ProductionPhaseVolumeRateConstraint
+        name="maxoilprod"
+        phaseName="oil"
+        phaseRate="1"/>
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="2e6"
+        referenceElevation="1.25"/>
+    </CompositionalMultiphaseWell>
+      </WellManager>
     </Solvers>
     <Mesh>
       <InternalMesh name="mesh1"
@@ -172,7 +178,7 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 
                                LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
   typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
@@ -214,7 +220,7 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 
                                 LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
   typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
@@ -257,7 +263,7 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 
                                LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
   typedef stdMap< real64, stdVector< int > > map_type;
   map_type refPerfTable;
@@ -299,7 +305,7 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 
                                 LAMBDA && perfFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
 
   typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
@@ -513,8 +519,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, plugTopDownPerfCheck )
   testPlugTopDownPerfCheck( *solver, domain,
                             [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 
@@ -527,8 +548,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, plugBottomUpPerfCheck )
   testPlugBottomUpPerfCheck( *solver, domain,
                              [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 TEST_F( CompositionalMultiphaseReservoirSolverTest, openTopDownPerfCheck )
@@ -540,8 +576,23 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openTopDownPerfCheck )
   testOpenTopDownPerfCheck( *solver, domain,
                             [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 
@@ -554,8 +605,24 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openBottomUpPerfCheck )
   testOpenBottomUpPerfCheck( *solver, domain,
                              [&] ( real64 time )
   {
-    WellSolverBase * wellSolverBase = solver->wellSolver();
-    wellSolverBase->setPerforationStatus( time, domain );
+
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.setPerforationStatus( time, subRegion );
+      } );
+    } );
   } );
 }
 

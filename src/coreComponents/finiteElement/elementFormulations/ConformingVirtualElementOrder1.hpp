@@ -694,6 +694,7 @@ public:
                        numQuadraturePoints )
   {}
 
+  GEOS_HOST_DEVICE
   virtual ~ConformingVirtualElementOrder1() override final = default;
 
 

@@ -19,8 +19,16 @@
 
 #include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "common/MpiWrapper.hpp"
+
+#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
+#include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
+#endif
 
 #include <gtest/gtest.h>
+
+#include <string>
 
 using namespace geos;
 
@@ -49,7 +57,7 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
-  parameters.ifact.fill = 1;
+  parameters.ifact.fill = 0;
   return parameters;
 }
 
@@ -88,6 +96,56 @@ LinearSolverParameters params_CG_AMG()
   parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
+
+#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
+TEST( HypreSolver, KeepsSetupDummyTagsAlive )
+{
+  struct KrylovDofLabelsGuard
+  {
+    ~KrylovDofLabelsGuard()
+    {
+      hypre::testing::clearKrylovDofLabels();
+    }
+  } clearKrylovDofLabels;
+
+  HypreMatrix matrix;
+  geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 10, matrix );
+
+  array1d< int > labels( matrix.numLocalRows() );
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    labels[i] = LvArray::integerConversion< int >( i % 2 );
+  }
+  hypre::testing::setKrylovDofLabels( labels.toViewConst() );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::fgmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.krylov.relTolerance = 1e-8;
+  params.krylov.maxIterations = 100;
+  params.logLevel = 3;
+
+  HypreSolver solver( params );
+  ::testing::internal::CaptureStdout();
+  solver.setup( matrix );
+  solver.solve( rhs, sol );
+  std::string const output = ::testing::internal::GetCapturedStdout();
+  solver.clear();
+
+  EXPECT_TRUE( solver.result().success() );
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    EXPECT_NE( output.find( "L2 norm of b0" ), std::string::npos );
+  }
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
 

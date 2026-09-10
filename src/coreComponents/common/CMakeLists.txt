@@ -90,7 +90,7 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray RAJA chai umpire)
+set( dependencyList ${parallelDeps} lvarray RAJA chai umpire::umpire)
 
 if (TARGET conduit::conduit)
   set( dependencyList ${dependencyList} conduit::conduit )

@@ -37,7 +37,6 @@
 #include "WrapperBase.hpp"
 
 // System includes
-#include <type_traits>
 #include <cstdlib>
 #include <type_traits>
 
@@ -48,6 +47,8 @@ namespace dataRepository
 {
 //template< typename U >
 //static void totalViewType( char * const dataType );
+
+using namespace wrapperLimits;
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
@@ -204,6 +205,7 @@ public:
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
     m_dimLabels = castedSource.m_dimLabels;
+    m_limits = castedSource.m_limits;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,6 +720,137 @@ public:
     return ss.str();
   }
 
+  /**
+   * @brief Set both bounds for this attribute's value.
+   * @param min the minimum allowed value (inclusive)
+   * @param max the maximum allowed value (inclusive)
+   * @param mode the enforcement mode
+   * @return pointer to Wrapper<T>
+   *
+   * @note @p min and @p max are std::optional(s).
+   *       Set them to std::nullopt to disable a limit.
+   *
+   * @code
+   * registerWrapper( viewKeysStruct::fooString(), &m_foo )
+   *   .setLimits( 0.0, 1.0 )  // sets a minimum value of 0.0 and a maximum value of 1.0
+   *   .setLimits( 0.0, std::nullopt )  // sets a minimum value of 0.0 and no maximum value
+   *   .setLimits( inclusive( 0.0 ), std::nullopt )  // sets an inclusive (default) minimum value
+   *   .setLimits( exclusive( 0.0 ), std::nullopt )  // sets an exclusive maximum value
+   * @endcode
+   */
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
+  setLimits( std::optional< LimitArg< limit_value_type_t< T > > > min,
+             std::optional< LimitArg< limit_value_type_t< T > > > max,
+             LimitsMode mode = LimitsMode::Error )
+  {
+    using LimitT = limit_value_type_t< T >;
+    std::optional< Bound< LimitT > > const minBound = toBound< LimitT >( min );
+    std::optional< Bound< LimitT > > const maxBound = toBound< LimitT >( max );
+    if( minBound.has_value() && maxBound.has_value() )
+    {
+      GEOS_ASSERT_LE_MSG( minBound.value(), maxBound.value(),
+                          "Min value should be less or equal to max value." );
+    }
+    m_limits.min = minBound;
+    m_limits.max = maxBound;
+    m_limitsMode = mode;
+    return *this;
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
+  setLimits( std::optional< LimitArg< limit_value_type_t< T > > >,
+             std::optional< LimitArg< limit_value_type_t< T > > >,
+             LimitsMode GEOS_UNUSED_PARAM( mode ) )
+  {
+    static_assert( is_limitable_v< U >,
+                   "setLimits is only supported on scalar arithmetic types." );
+    return *this;
+  }
+
+  /**
+   * @brief Accessor for the minimum bound of this attribute's value.
+   * @return optional containing the typed minimum value, empty if not set
+   * @note Only available when T is a limitable type
+   */
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
+  getMinBound() const
+  {
+    return m_limits.min;
+  }
+
+  /**
+   * @brief Accessor for the maximum bound of this attribute's value.
+   * @return optional containing the typed maximum value, empty if not set
+   * @note Only available when T is a limitable type
+   */
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
+  getMaxBound() const
+  {
+    return m_limits.max;
+  }
+
+  /**
+   * @copydoc WrapperBase::getLimitsString()
+   */
+  virtual string getLimitsString() const override
+  {
+    return getLimitsStringImpl();
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U >, string >
+  getLimitsStringImpl() const
+  {
+    return m_limits.getRangeStr();
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable_v< U >, string >
+  getLimitsStringImpl() const
+  {
+    return string();
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && !traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    validateLimitValue( reference() );
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    auto const values = m_data->toViewConst();
+    for( limit_value_type_t< T > value : values )
+    {
+      validateLimitValue( value );
+    }
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable_v< U >, void >
+  validateLimits()
+  {
+    /* no-op */
+  }
+
+
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
                                  xmlWrapper::xmlNodePos const & nodePos ) override
   {
@@ -748,6 +881,11 @@ public:
                                                                        rtTypes::getTypeRegex< T >( getRTTypeName() ),
                                                                        targetNode,
                                                                        getDefaultValueStruct() );
+        }
+
+        if( m_successfulReadFromInput )
+        {
+          validateLimits();
         }
       }
       catch( std::exception const & ex )
@@ -1086,6 +1224,35 @@ private:
     return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
   }
 
+  template< typename V >
+  void validateLimitValue( V const & value ) const
+  {
+    bool const belowMin = m_limits.min.has_value() ? isValueBelowMin( value, *m_limits.min ) : false;
+    bool const aboveMax = m_limits.max.has_value() ? isValueAboveMax( value, *m_limits.max ) : false;
+    if( !belowMin && !aboveMax )
+    {
+      return;
+    }
+
+    string const msg = GEOS_FMT( "Value {} is outside the allowed range {}.",
+                                 value, m_limits.getRangeStr() );
+
+    switch( m_limitsMode )
+    {
+      case LimitsMode::Warning:
+        GEOS_WARNING( msg, getDataContext() );
+        break;
+
+      case LimitsMode::Error:
+        GEOS_THROW( msg, InputError, getDataContext() );
+        break;
+
+      default:
+        GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
+        break;
+    }
+  }
+
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
   bool m_ownsData;
@@ -1100,6 +1267,9 @@ private:
 
   /// stores dimension labels (used mainly for plotting) for multidimensional arrays, empty member otherwise
   wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
+
+  /// stores the (optional) min/max bounds for the wrapped value.
+  Limits< T > m_limits;
 };
 
 }

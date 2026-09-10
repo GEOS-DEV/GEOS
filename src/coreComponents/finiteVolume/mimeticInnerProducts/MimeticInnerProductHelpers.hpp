@@ -20,6 +20,8 @@
 #ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
 #define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
 
+#include "mesh/utilities/ComputationalGeometry.hpp"
+
 namespace geos
 {
 namespace mimeticInnerProduct
@@ -46,6 +48,114 @@ struct MimeticInnerProductHelpers
     result[ 0 ][ 0 ] = values[ 0 ];
     result[ 1 ][ 1 ] = values[ 1 ];
     result[ 2 ][ 2 ] = values[ 2 ];
+  }
+
+  /**
+   * @brief Compute the vector from cell center to facet center.
+   * @param[out] cellToFacetVec output vector
+   * @param[in] facetCenter facet center coordinate
+   * @param[in] cellCenter cell center coordinate
+   */
+  GEOS_HOST_DEVICE
+  static
+  void computeCellToFacetVector( real64 (& cellToFacetVec)[ 3 ],
+                                 real64 const (&facetCenter)[ 3 ],
+                                 arraySlice1d< real64 const > const & cellCenter )
+  {
+    LvArray::tensorOps::copy< 3 >( cellToFacetVec, facetCenter );
+    LvArray::tensorOps::subtract< 3 >( cellToFacetVec, cellCenter );
+  }
+
+  /**
+   * @brief Ensure the facet normal points outward from the cell.
+   * @param[in] cellToFacetVec vector from cell center to face center
+   * @param[in,out] faceNormal face normal (may be flipped)
+   */
+  GEOS_HOST_DEVICE
+  static
+  void orientNormalOutward( real64 const (&cellToFacetVec)[ 3 ],
+                            real64 (& faceNormal)[ 3 ] )
+  {
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFacetVec, faceNormal ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
+    }
+  }
+
+  /**
+   * @brief In a given element, compute the cell-to-face vectors C, the outward area-weighted
+   *        face normals N, and the face areas.
+   * @tparam NF number of faces in the element
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
+   * @param[in] elemCenter the center of the element
+   * @param[in] areaTolerance the tolerance used in the face area calculations
+   * @param[out] C the cell-to-face vectors, one row per face
+   * @param[out] N the outward area-weighted face normals, one row per face
+   * @param[out] faceArea the face areas
+   */
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static
+  void computeCellToFaceGeometry( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                  ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                  arraySlice1d< localIndex const > const & elemToFaces,
+                                  arraySlice1d< real64 const > const & elemCenter,
+                                  real64 const & areaTolerance,
+                                  real64 (& C)[ NF ][ 3 ],
+                                  real64 (& N)[ NF ][ 3 ],
+                                  real64 (& faceArea)[ NF ] )
+  {
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+      real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
+
+      faceArea[ifaceLoc] =
+        computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+                                                   nodePosition,
+                                                   faceCenter,
+                                                   faceNormal,
+                                                   areaTolerance );
+
+      computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+      orientNormalOutward( cellToFaceVec, faceNormal );
+
+      for( int d = 0; d < 3; ++d )
+      {
+        C[ifaceLoc][d] = cellToFaceVec[d];
+        N[ifaceLoc][d] = faceArea[ifaceLoc] * faceNormal[d];
+      }
+    }
+  }
+
+  /**
+   * @brief Compute the consistency term CKCt = C K^{-1} C^T / elemVolume of the inner product matrix.
+   * @tparam NF number of faces in the element
+   * @param[in] C the cell-to-face vectors, one row per face
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[out] CKCt the consistency term C K^{-1} C^T / elemVolume
+   */
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static
+  void computeConsistencyTerm( real64 const (&C)[ NF ][ 3 ],
+                               real64 const & elemVolume,
+                               real64 const (&elemPerm)[ 3 ],
+                               real64 (& CKCt)[ NF ][ NF ] )
+  {
+    // Kinv assumes diagonal K
+    real64 Kinv[ 3 ][ 3 ] = {{ 0 }};
+    for( int d = 0; d < 3; ++d )
+    {
+      Kinv[d][d] = 1.0 / elemPerm[d];
+    }
+
+    real64 work[ 3 ][ NF ] = {{ 0 }};
+    LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work, Kinv, C );
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( CKCt, C, work );
+    LvArray::tensorOps::scale< NF, NF >( CKCt, 1.0 / elemVolume );
   }
 
   /**

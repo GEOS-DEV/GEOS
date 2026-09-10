@@ -42,7 +42,9 @@
       lengthScale="0.02"
       defaultCriticalFractureEnergy="5"
       criticalStrainEnergy="0.0"
-      degradationLowerLimit="1e-6"/>
+      degradationLowerLimit="1e-6"
+      fractureModelType="Brittle"
+      localDissipationOption="Quadratic"/>
 
     <ReactiveCompressibleSinglePhaseFluid
       name="water"

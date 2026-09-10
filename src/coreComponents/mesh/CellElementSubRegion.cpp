@@ -409,7 +409,7 @@ void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
-  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=, this] ( localIndex const k )
   {
     calculateElementCenterAndVolume( k, X );
   } );

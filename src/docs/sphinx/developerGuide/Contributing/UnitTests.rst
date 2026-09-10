@@ -38,3 +38,22 @@ Often times it makes sense to write a unit test that is meant to be run with mul
                  NUM_MPI_TASKS ${NUMBER_OF_MPI_TASKS} )
 
 With this addition ``make test`` or calling ``ctest`` directly will run ``testWithMPI`` via something analogous to ``mpirun -n NUMBER_OF_MPI_TASKS testWithMPI``.
+
+Parallel CTest Execution
+------------------------
+Generated build-system test targets run CTest in parallel by default. GEOS sets
+``CMAKE_CTEST_ARGUMENTS`` to pass ``--parallel`` to CTest unless the host-config
+or CMake command line defines ``CMAKE_CTEST_ARGUMENTS`` explicitly. CTest chooses
+the default parallel level and uses the ``PROCESSORS`` property from
+``NUM_MPI_TASKS`` tests when scheduling MPI tests with serial tests.
+
+The default can be changed when configuring GEOS:
+
+::
+
+  -DGEOS_CTEST_PARALLEL_LEVEL=OFF
+  -DGEOS_CTEST_PARALLEL_LEVEL=8
+
+``OFF`` keeps the generated ``test`` and ``build_test`` targets serial. A
+nonnegative integer is passed as ``ctest --parallel <N>``. Developers can still
+call ``ctest -j <N>`` directly from the build directory for one-off runs.

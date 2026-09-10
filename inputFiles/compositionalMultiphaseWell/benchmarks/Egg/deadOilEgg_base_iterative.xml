@@ -36,120 +36,189 @@
       logLevel="1"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }"
-      maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
         control="BHP"
-        referenceElevation="28"
-        targetBHP="3.9e7"
-        targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e6"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="3.9e7"
+          referenceElevation="28"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="producer"
         control="BHP"
-        referenceElevation="28"
-        targetBHP="3.9e7"
-        targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
-
+        maxCompFractionChange="0.5">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e6"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="3.9e7"
+          referenceElevation="28"/>
+      </CompositionalMultiphaseWell>
       <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
-
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls3"
         type="producer"
         control="BHP"
-        referenceElevation="28"
-        targetBHP="3.9e7"
-        targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e6"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="3.9e7"
+          referenceElevation="28"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls4"
         type="producer"
         control="BHP"
-        referenceElevation="28"
-        targetBHP="3.9e7"
-        targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e6"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="3.9e7"
+          referenceElevation="28"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls5"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls6"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls7"
         type="injector"
         control="totalVolRate"
-        referenceElevation="40"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="40"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls8"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls9"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls10"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls11"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-      <WellControls
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls12"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20"
-        targetBHP="9e7"
-        targetTotalRate="8e-3"
-        injectionTemperature="297.15"
-        injectionStream="{ 0.0, 1.0 }"/>
-    </CompositionalMultiphaseWell>
+        maxCompFractionChange="0.5">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="9e7"
+          referenceElevation="20"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="8e-3"
+          injectionStream="{ 0.0, 1.0 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
@@ -210,7 +279,6 @@
       timeFrequency="7.5e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
-
   </Events>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
@@ -375,7 +443,6 @@
 
     <Restart
       name="restartOutput"/>
-
   </Outputs>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
@@ -384,22 +451,22 @@
     <PackCollection
       name="wellRateCollection1"
       objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection2"
       objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementonnectionRate"/>
 
     <PackCollection
       name="wellRateCollection3"
       objectPath="ElementRegions/wellRegion3/wellRegion3UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection4"
       objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
   </Tasks>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->

@@ -20,17 +20,16 @@
 
 #include "PhaseFieldPoromechanicsSolver.hpp"
 
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 template< typename FLOW_SOLVER >
 PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::PhaseFieldPoromechanicsSolver( const string & name,
@@ -71,16 +70,12 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::mapSolutionBetweenSolvers( re
 
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
 
-      string const & damageFieldName = this->damageSolver()->getFieldName();
+      string const & discretizationName = damageSolver()->getDiscretizationName();
 
-      string const & discretizationName = this->damageSolver()->getDiscretizationName();
-
-      //should get reference to damage field here.
-      arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+      arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      // begin region loop
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, xNodes, nodalDamage]
                                                                   ( localIndex const,
                                                                   CellElementSubRegion & elementSubRegion )
@@ -105,7 +100,7 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::mapSolutionBetweenSolvers( re
           {
             using FE_TYPE = TYPEOFREF( finiteElement );
 
-            DamageAndDamageGradientInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
+            DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
 
             interpolationKernel.interpolateDamageAndGradient( elemToNodes, xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial );
           } );
@@ -115,7 +110,7 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::mapSolutionBetweenSolvers( re
   }
   else if( solverType == static_cast< integer >( SolverType::Poromechanics ) )
   {
-    this->poromechancisSolver()->flowSolver()->updatePressureGradient( domain );
+    poromechanicsSolver()->flowSolver()->updatePressureGradient( domain );
   }
 }
 
@@ -132,10 +127,8 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::applyDamageOnTractionBC( Doma
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
-    string const & damageFieldName = this->damageSolver()->getFieldName();
-
     // Get an array of nodal damage values
-    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
 
     fsManager.forSubGroups< TractionBoundaryCondition >( [&] ( TractionBoundaryCondition & fs )
     {
